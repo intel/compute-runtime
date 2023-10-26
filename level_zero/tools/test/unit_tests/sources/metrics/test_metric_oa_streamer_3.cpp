@@ -11,9 +11,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-using ::testing::_;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
@@ -70,29 +67,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
 
     openMetricsAdapterSubDevice(0);
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[0], isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(10)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockCommandBufferGet(_))
-        .Times(10)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0], getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(contextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
+    mockMetricsLibrarySubDevices[0]->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrarySubDevices[0]->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -174,12 +150,9 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalcu
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);

@@ -17,9 +17,6 @@
 
 using namespace MetricsLibraryApi;
 
-using ::testing::_;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
@@ -74,21 +71,13 @@ void MetricContextFixture::tearDown() {
 
 void MetricContextFixture::openMetricsAdapter() {
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
-    adapter.openMetricsDeviceOutDevice = &metricsDevice;
+    mockMetricEnumeration->getMetricsAdapterResult = &adapter;
 
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&adapter));
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
 
 void MetricContextFixture::openMetricsAdapterGroup() {
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
 
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
@@ -177,48 +166,34 @@ void MetricMultiDeviceFixture::tearDown() {
 
 void MetricMultiDeviceFixture::openMetricsAdapter() {
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
+    mockMetricEnumeration->getMetricsAdapterResult = &adapter;
+
     adapter.openMetricsSubDeviceOutDevice = &metricsDevice;
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
-
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&adapter));
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterSubDevice(uint32_t subDeviceIndex) {
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], loadMetricsDiscovery())
-        .Times(0);
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
-    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&adapter));
+    mockMetricEnumerationSubDevices[subDeviceIndex]->getMetricsAdapterResult = &adapter;
+
+    adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterDeviceAndSubDeviceNoCountVerify(uint32_t subDeviceIndex) {
 
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
-    adapter.openMetricsSubDeviceOutDevice = &metricsDevice;
+    mockMetricEnumeration->getMetricsAdapterResult = &adapter;
+    mockMetricEnumerationSubDevices[subDeviceIndex]->getMetricsAdapterResult = &adapter;
 
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .WillRepeatedly(Return(&adapter));
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
-
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[subDeviceIndex], getMetricsAdapter())
-        .WillRepeatedly(Return(&adapter));
+    adapter.openMetricsSubDeviceOutDevice = &metricsDevice;
 }
 
 void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
@@ -303,67 +278,67 @@ void Mock<MetricsLibrary>::setMockedApi(MockMetricsLibraryApi *mockedApi) {
 }
 
 StatusCode MockMetricsLibraryApi::contextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockContextCreate(clientType, createData, handle);
+    return Mock<MetricsLibrary>::g_mockApi->contextCreateImpl(clientType, createData, handle);
 }
 
 StatusCode MockMetricsLibraryApi::contextDelete(const ContextHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockContextDelete(handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::getParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value) {
-    return Mock<MetricsLibrary>::g_mockApi->MockGetParameter(parameter, type, value);
+    return Mock<MetricsLibrary>::g_mockApi->getParameterImpl(parameter, type, value);
 }
 
 StatusCode MockMetricsLibraryApi::commandBufferGet(const CommandBufferData_1_0 *data) {
-    return Mock<MetricsLibrary>::g_mockApi->MockCommandBufferGet(data);
+    return Mock<MetricsLibrary>::g_mockApi->commandBufferGetImpl(data);
 }
 
 StatusCode MockMetricsLibraryApi::commandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size) {
-    return Mock<MetricsLibrary>::g_mockApi->MockCommandBufferGetSize(data, size);
+    return Mock<MetricsLibrary>::g_mockApi->commandBufferGetSizeImpl(data, size);
 }
 
 StatusCode MockMetricsLibraryApi::queryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockQueryCreate(createData, handle);
+    return Mock<MetricsLibrary>::g_mockApi->queryCreateImpl(createData, handle);
 }
 
 StatusCode MockMetricsLibraryApi::queryDelete(const QueryHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockQueryDelete(handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::overrideCreate(const OverrideCreateData_1_0 *createData, OverrideHandle_1_0 *handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockOverrideCreate(createData, handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::overrideDelete(const OverrideHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockOverrideDelete(handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::markerCreate(const MarkerCreateData_1_0 *createData, MarkerHandle_1_0 *handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockMarkerCreate(createData, handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::markerDelete(const MarkerHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockMarkerDelete(handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::configurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockConfigurationCreate(createData, handle);
+    return Mock<MetricsLibrary>::g_mockApi->configurationCreateImpl(createData, handle);
 }
 
 StatusCode MockMetricsLibraryApi::configurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData) {
-    return Mock<MetricsLibrary>::g_mockApi->MockConfigurationActivate(handle, activateData);
+    return Mock<MetricsLibrary>::g_mockApi->configurationActivateImpl(handle, activateData);
 }
 
 StatusCode MockMetricsLibraryApi::configurationDeactivate(const ConfigurationHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockConfigurationDeactivate(handle);
+    return Mock<MetricsLibrary>::g_mockApi->configurationDeactivateImpl(handle);
 }
 
 StatusCode MockMetricsLibraryApi::configurationDelete(const ConfigurationHandle_1_0 handle) {
-    return Mock<MetricsLibrary>::g_mockApi->MockConfigurationDelete(handle);
+    return StatusCode::Success;
 }
 
 StatusCode MockMetricsLibraryApi::getData(GetReportData_1_0 *data) {
-    return Mock<MetricsLibrary>::g_mockApi->MockGetData(data);
+    return Mock<MetricsLibrary>::g_mockApi->getDataImpl(data);
 }
 
 Mock<MetricQuery>::Mock() {}

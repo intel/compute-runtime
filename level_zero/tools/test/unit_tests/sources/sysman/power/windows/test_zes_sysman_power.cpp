@@ -122,12 +122,12 @@ TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerP
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
+        EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_TRUE(properties.canControl);
         EXPECT_TRUE(properties.isEnergyThresholdSupported);
-        EXPECT_EQ(properties.maxLimit, pKmdSysManager->mockMaxPowerLimit);
-        EXPECT_EQ(properties.minLimit, pKmdSysManager->mockMinPowerLimit);
-        EXPECT_EQ(properties.defaultLimit, pKmdSysManager->mockTpdDefault);
+        EXPECT_EQ(static_cast<uint32_t>(properties.maxLimit), pKmdSysManager->mockMaxPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.minLimit), pKmdSysManager->mockMinPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.defaultLimit), pKmdSysManager->mockTpdDefault);
     }
 }
 
@@ -144,12 +144,12 @@ TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerP
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
+        EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_FALSE(properties.canControl);
         EXPECT_FALSE(properties.isEnergyThresholdSupported);
-        EXPECT_EQ(properties.maxLimit, pKmdSysManager->mockMaxPowerLimit);
-        EXPECT_EQ(properties.minLimit, pKmdSysManager->mockMinPowerLimit);
-        EXPECT_EQ(properties.defaultLimit, pKmdSysManager->mockTpdDefault);
+        EXPECT_EQ(static_cast<uint32_t>(properties.maxLimit), pKmdSysManager->mockMaxPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.minLimit), pKmdSysManager->mockMinPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.defaultLimit), pKmdSysManager->mockTpdDefault);
     }
 }
 

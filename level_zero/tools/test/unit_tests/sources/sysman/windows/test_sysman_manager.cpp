@@ -11,17 +11,9 @@
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::DoAll;
-using ::testing::InSequence;
-using ::testing::Invoke;
-using ::testing::NiceMock;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {

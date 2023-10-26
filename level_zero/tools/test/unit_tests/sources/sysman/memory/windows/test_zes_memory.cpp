@@ -139,8 +139,8 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenCallingGett
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.physicalSize, pKmdSysManager->mockMemoryPhysicalSize);
-        EXPECT_EQ(properties.numChannels, pKmdSysManager->mockMemoryChannels);
-        EXPECT_EQ(properties.busWidth, pKmdSysManager->mockMemoryBus);
+        EXPECT_EQ(static_cast<uint32_t>(properties.numChannels), pKmdSysManager->mockMemoryChannels);
+        EXPECT_EQ(static_cast<uint32_t>(properties.busWidth), pKmdSysManager->mockMemoryBus);
     }
 }
 

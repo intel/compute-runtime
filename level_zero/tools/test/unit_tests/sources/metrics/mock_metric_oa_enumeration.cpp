@@ -15,9 +15,6 @@ namespace ult {
 Mock<MetricEnumeration>::Mock(::L0::OaMetricSourceImp &metricSource) : MetricEnumeration(metricSource) {
 }
 
-Mock<MetricEnumeration>::~Mock() {
-}
-
 MockMetricsDiscoveryApi *Mock<MetricEnumeration>::globalMockApi = nullptr;
 
 TCompletionCode MockMetricsDiscoveryApi::openAdapterGroup(IAdapterGroupLatest **group) {

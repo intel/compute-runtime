@@ -28,7 +28,7 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
 
-        pMemoryManager = new ::testing::NiceMock<MockMemoryManagerSysman>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager = new MockMemoryManagerSysman(*neoDevice->getExecutionEnvironment());
 
         pMemoryManager->localMemorySupported[0] = false;
 
@@ -89,8 +89,8 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetP
     EXPECT_EQ(properties.address.bus, pKmdSysManager->mockBus[KmdSysman::PciDomainsType::PciRootPort]);
     EXPECT_EQ(properties.address.device, pKmdSysManager->mockDevice[KmdSysman::PciDomainsType::PciRootPort]);
     EXPECT_EQ(properties.address.function, pKmdSysManager->mockFunction[KmdSysman::PciDomainsType::PciRootPort]);
-    EXPECT_EQ(properties.maxSpeed.gen, pKmdSysManager->mockMaxLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
-    EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(static_cast<uint32_t>(properties.maxSpeed.gen), pKmdSysManager->mockMaxLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(static_cast<uint32_t>(properties.maxSpeed.width), pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallinggetPciBdfAndkmdSysmanCallFailsThenUnknownValuesArereturned) {
@@ -102,10 +102,10 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallinggetPciBdfAndkmdS
     zes_pci_properties_t properties = {};
     WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getPciBdf(properties));
-    EXPECT_EQ(0, properties.address.domain);
-    EXPECT_EQ(0, properties.address.bus);
-    EXPECT_EQ(0, properties.address.device);
-    EXPECT_EQ(0, properties.address.function);
+    EXPECT_EQ(0u, properties.address.domain);
+    EXPECT_EQ(0u, properties.address.bus);
+    EXPECT_EQ(0u, properties.address.device);
+    EXPECT_EQ(0u, properties.address.function);
     delete pPciImp;
 }
 
@@ -121,8 +121,8 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetP
     EXPECT_EQ(properties.address.bus, pKmdSysManager->mockBus[KmdSysman::PciDomainsType::PciRootPort]);
     EXPECT_EQ(properties.address.device, pKmdSysManager->mockDevice[KmdSysman::PciDomainsType::PciRootPort]);
     EXPECT_EQ(properties.address.function, pKmdSysManager->mockFunction[KmdSysman::PciDomainsType::PciRootPort]);
-    EXPECT_EQ(properties.maxSpeed.gen, pKmdSysManager->mockMaxLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
-    EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(static_cast<uint32_t>(properties.maxSpeed.gen), pKmdSysManager->mockMaxLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(static_cast<uint32_t>(properties.maxSpeed.width), pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPciBdfAndRequestMultpileFailsThenFailureIsReturned) {
@@ -224,8 +224,8 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     zes_pci_state_t state;
     ze_result_t result = zesDevicePciGetState(device, &state);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(state.speed.gen, pKmdSysManager->mockCurrentLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
-    EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(static_cast<uint32_t>(state.speed.gen), pKmdSysManager->mockCurrentLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(static_cast<uint32_t>(state.speed.width), pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsWithNoLocalMemoryThenVerifyzetSysmanPciGetBarsCallSucceeds) {
@@ -234,8 +234,8 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     zes_pci_state_t state;
     ze_result_t result = zesDevicePciGetState(device, &state);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(state.speed.gen, pKmdSysManager->mockCurrentLinkSpeed[KmdSysman::PciDomainsType::PciCurrentDevice]);
-    EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
+    EXPECT_EQ(static_cast<uint32_t>(state.speed.gen), pKmdSysManager->mockCurrentLinkSpeed[KmdSysman::PciDomainsType::PciCurrentDevice]);
+    EXPECT_EQ(static_cast<uint32_t>(state.speed.width), pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenValidCurrentMaxBandwidthIsReturned) {

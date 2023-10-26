@@ -75,6 +75,8 @@ struct Mock<TemperatureKmdSysManager> : public TemperatureKmdSysManager {
             case KmdSysman::TemperatureDomainsType::TemperatureDomainHBM: {
                 *pValue = mockTempMemory;
             } break;
+            default:
+                break;
             }
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);

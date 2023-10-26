@@ -36,7 +36,7 @@ struct Mock<PowerKmdSysManager> : public PowerKmdSysManager {
     uint64_t mockEnergyCounter64Bit = 32323232323232;
     uint32_t mockFrequencyTimeStamp = 38400000;
 
-    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
         pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
 

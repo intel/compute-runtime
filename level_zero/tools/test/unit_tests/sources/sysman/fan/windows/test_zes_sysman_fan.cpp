@@ -102,9 +102,9 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowS
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
+        EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_TRUE(properties.canControl);
-        EXPECT_EQ(properties.maxPoints, pKmdSysManager->mockFanMaxPoints);
+        EXPECT_EQ(static_cast<uint32_t>(properties.maxPoints), pKmdSysManager->mockFanMaxPoints);
         EXPECT_EQ(properties.maxRPM, -1);
         EXPECT_EQ(properties.supportedModes, zes_fan_speed_mode_t::ZES_FAN_SPEED_MODE_TABLE);
         EXPECT_EQ(properties.supportedUnits, zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT);
@@ -147,9 +147,9 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowS
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
+        EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_TRUE(properties.canControl);
-        EXPECT_EQ(properties.maxPoints, pKmdSysManager->mockFanMaxPoints);
+        EXPECT_EQ(static_cast<uint32_t>(properties.maxPoints), pKmdSysManager->mockFanMaxPoints);
         EXPECT_EQ(properties.maxRPM, -1);
         EXPECT_EQ(properties.supportedModes, zes_fan_speed_mode_t::ZES_FAN_SPEED_MODE_TABLE);
         EXPECT_EQ(properties.supportedUnits, zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT);

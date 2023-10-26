@@ -11,8 +11,6 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
-#include "gmock/gmock.h"
-
 namespace L0 {
 namespace ult {
 

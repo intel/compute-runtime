@@ -14,11 +14,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -68,9 +64,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
     QueryHandle_1_0 queryHandle = {&value};
     ContextHandle_1_0 contextHandle = {&value};
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
     openMetricsAdapter();
 
     setupDefaultMocksForMetricDevice(metricsDevice);
@@ -118,9 +111,6 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWhenZetMetricQueryPoolCreateI
     poolDesc.count = 1;
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
     EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, nullptr, &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(poolHandle, nullptr);
     EXPECT_EQ(zetMetricQueryPoolDestroy(poolHandle), ZE_RESULT_SUCCESS);
@@ -150,32 +140,8 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWhenAppendMetricQueryBeginAnd
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(3)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(_))
-        .Times(3)
-        .WillRepeatedly(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, nullptr, &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(zetMetricQueryCreate(poolHandle, 0, &queryHandle), ZE_RESULT_SUCCESS);
@@ -214,32 +180,8 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndCompletionEventWhenAppendM
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(2)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(_))
-        .Times(2)
-        .WillRepeatedly(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -313,32 +255,8 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(2)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(_))
-        .Times(2)
-        .WillRepeatedly(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -410,32 +328,8 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(2)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(_))
-        .Times(2)
-        .WillRepeatedly(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -493,28 +387,8 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhen
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(2)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Failed)));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeResult = StatusCode::Failed;
 
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -579,9 +453,7 @@ TEST_F(MetricQueryPoolTest, givenUninitializedMetricEnumerationWhenGetQueryRepor
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     auto &metricsLibrary = metricSource.getMetricsLibrary();
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(false));
+    mockMetricEnumeration->isInitializedResult = false;
 
     const uint32_t invalidSize = metricsLibrary.getQueryReportGpuSize();
 
@@ -642,40 +514,10 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGroupsIsCalle
 
     metric.GetParamsResult = &metricParams;
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationCreate(_, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<1>(metricsLibraryConfigurationHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->configurationCreateOutHandle = metricsLibraryConfigurationHandle;
+    mockMetricsLibrary->g_mockApi->configurationActivationCounter = 1;
+    mockMetricsLibrary->g_mockApi->configurationDeactivationCounter = 1;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;

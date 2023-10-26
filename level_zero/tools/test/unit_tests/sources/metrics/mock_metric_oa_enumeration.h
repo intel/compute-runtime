@@ -13,8 +13,6 @@
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 
-#include "gmock/gmock.h"
-
 namespace L0 {
 namespace ult {
 
@@ -217,10 +215,19 @@ class Mock<IMetricSet_1_5> : public IMetricSet_1_5 {
     ADDMETHOD_NOBASE(Activate, TCompletionCode, TCompletionCode::CC_OK, ());
     ADDMETHOD_NOBASE(Deactivate, TCompletionCode, TCompletionCode::CC_OK, ());
     ADDMETHOD_NOBASE(SetApiFiltering, TCompletionCode, TCompletionCode::CC_OK, (uint32_t apiMask));
-    MOCK_METHOD(TCompletionCode, CalculateMetrics, (const unsigned char *rawData, uint32_t rawDataSize, TTypedValue_1_0 *out, uint32_t outSize, uint32_t *outReportCount, bool enableContextFiltering), (override));
+    ADDMETHOD_NOBASE(CalculateMetrics, TCompletionCode, TCompletionCode::CC_OK, (const unsigned char *rawData, uint32_t rawDataSize, TTypedValue_1_0 *out, uint32_t outSize, uint32_t *outReportCount, bool enableContextFiltering));
     ADDMETHOD_NOBASE(CalculateIoMeasurementInformation, TCompletionCode, TCompletionCode::CC_OK, (TTypedValue_1_0 * out, uint32_t outSize));
-    MOCK_METHOD(IMetricSet_1_5 *, GetComplementaryMetricSet, (uint32_t index), (override));
-    MOCK_METHOD(TCompletionCode, CalculateMetrics, (const unsigned char *rawData, uint32_t rawDataSize, TTypedValue_1_0 *out, uint32_t outSize, uint32_t *outReportCount, TTypedValue_1_0 *outMaxValues, uint32_t outMaxValuesSize), (override));
+    ADDMETHOD_NOBASE(GetComplementaryMetricSet, IMetricSet_1_5 *, nullptr, (uint32_t index));
+
+    TCompletionCode CalculateMetrics(const unsigned char *rawData, uint32_t rawDataSize, TTypedValue_1_0 *out, uint32_t outSize, uint32_t *outReportCount, TTypedValue_1_0 *outMaxValues, uint32_t outMaxValuesSize) override {
+        if (calculateMetricsOutReportCount) {
+            *outReportCount = *calculateMetricsOutReportCount;
+        }
+        return calculateMetricsResult;
+    }
+
+    uint32_t *calculateMetricsOutReportCount = nullptr;
+    TCompletionCode calculateMetricsResult = TCompletionCode::CC_OK;
 };
 
 template <>
@@ -242,7 +249,9 @@ class Mock<IInformation_1_0> : public IInformation_1_0 {
 template <>
 struct Mock<MetricEnumeration> : public MetricEnumeration {
     Mock(::L0::OaMetricSourceImp &metricSource);
-    ~Mock() override;
+    ~Mock() override = default;
+
+    using BaseClass = MetricEnumeration;
 
     using MetricEnumeration::cleanupMetricsDiscovery;
     using MetricEnumeration::hMetricsDiscovery;
@@ -254,15 +263,20 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
     void setMockedApi(MockMetricsDiscoveryApi *mockedApi);
 
     // Mock metric enumeration functions.
-    MOCK_METHOD(bool, isInitialized, (), (override));
-    MOCK_METHOD(ze_result_t, loadMetricsDiscovery, (), (override));
-    MOCK_METHOD(MetricsDiscovery::IAdapter_1_9 *, getMetricsAdapter, (), (override));
-    MOCK_METHOD(bool, getAdapterId, (uint32_t & drmMajor, uint32_t &drmMinor), (override));
+    ADDMETHOD(isInitialized, bool, false, true, (), ());
+    ADDMETHOD(loadMetricsDiscovery, ze_result_t, false, ZE_RESULT_SUCCESS, (), ());
+    ADDMETHOD_NOBASE(getMetricsAdapter, MetricsDiscovery::IAdapter_1_9 *, nullptr, ());
+
+    bool getAdapterId(uint32_t &drmMajor, uint32_t &drmMinor) override {
+        if (getAdapterIdCallBase) {
+            return MetricEnumeration::getAdapterId(drmMajor, drmMinor);
+        }
+        drmMajor = getAdapterIdOutMajor;
+        drmMinor = getAdapterIdOutMinor;
+        return getAdapterIdResult;
+    }
 
     // Not mocked metrics enumeration functions.
-    bool baseIsInitialized() { return MetricEnumeration::isInitialized(); }
-    IAdapter_1_9 *baseGetMetricsAdapter() { return MetricEnumeration::getMetricsAdapter(); }
-    bool baseGetAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) { return MetricEnumeration::getAdapterId(adapterMajor, adapterMinor); }
     ze_result_t baseLoadMetricsDiscovery() { return MetricEnumeration::loadMetricsDiscovery(); }
 
     // Mock metrics discovery api.
@@ -270,25 +284,36 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
 
     // Original metric enumeration obtained from metric context.
     ::L0::MetricEnumeration *metricEnumeration = nullptr;
+
+    uint32_t getAdapterIdOutMajor = 0u;
+    uint32_t getAdapterIdOutMinor = 0u;
+    bool getAdapterIdResult = true;
+    bool getAdapterIdCallBase = false;
 };
 
 template <>
 struct Mock<MetricGroup> : public OaMetricGroupImp {
-    Mock() {}
+    ~Mock() override = default;
 
-    MOCK_METHOD(ze_result_t, metricGet, (uint32_t *, zet_metric_handle_t *), (override));
-    MOCK_METHOD(ze_result_t, calculateMetricValues, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, zet_typed_value_t *), (override));
-    MOCK_METHOD(ze_result_t, calculateMetricValuesExp, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, uint32_t *, uint32_t *, zet_typed_value_t *), (override));
-    MOCK_METHOD(ze_result_t, getProperties, (zet_metric_group_properties_t * properties), (override));
-    MOCK_METHOD(bool, activate, (), (override));
-    MOCK_METHOD(bool, deactivate, (), (override));
+    ADDMETHOD_NOBASE(metricGet, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t *, zet_metric_handle_t *));
+    ADDMETHOD_NOBASE(calculateMetricValues, ze_result_t, ZE_RESULT_SUCCESS, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, zet_typed_value_t *));
+    ADDMETHOD_NOBASE(calculateMetricValuesExp, ze_result_t, ZE_RESULT_SUCCESS, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, uint32_t *, uint32_t *, zet_typed_value_t *));
+    ADDMETHOD_NOBASE(activate, bool, true, ());
+    ADDMETHOD_NOBASE(deactivate, bool, true, ());
+
     zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override {
         return nullptr;
     }
-    MOCK_METHOD(ze_result_t, waitForReports, (const uint32_t));
-    MOCK_METHOD(ze_result_t, openIoStream, (uint32_t &, uint32_t &));
-    MOCK_METHOD(ze_result_t, readIoStream, (uint32_t &, uint8_t &));
-    MOCK_METHOD(ze_result_t, closeIoStream, ());
+
+    ze_result_t getProperties(zet_metric_group_properties_t *properties) override {
+        if (getPropertiesOutProperties) {
+            *properties = *getPropertiesOutProperties;
+        }
+        return getPropertiesResult;
+    }
+
+    zet_metric_group_properties_t *getPropertiesOutProperties = nullptr;
+    ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS;
 };
 
 struct MetricGroupImpTest : public OaMetricGroupImp {

@@ -9,11 +9,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -23,9 +19,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenUninitializedMetricsLibraryWhenGetGp
     auto &metricsLibrary = metricSource.getMetricsLibrary();
     CommandBufferData_1_0 commandBuffer = {};
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(false));
+    mockMetricEnumeration->isInitializedResult = false;
 
     const bool result = metricsLibrary.getGpuCommands(commandBuffer);
 
@@ -98,53 +92,20 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenValidArgumentsWhenZetMetricGroupCalc
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
 
     for (uint32_t i = 0; i < subDeviceCount; ++i) {
-        EXPECT_CALL(*mockMetricEnumerationSubDevices[i], isInitialized())
-            .Times(1)
-            .WillOnce(Return(true));
 
-        EXPECT_CALL(*mockMetricsLibrarySubDevices[i], getContextData(_, _))
-            .Times(1)
-            .WillOnce(Return(true));
+        mockMetricsLibrarySubDevices[i]->getMetricQueryReportSizeOutSize = metricsSetParams.QueryReportSize;
     }
 
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0], getMetricQueryReportSize(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgReferee<0>(metricsSetParams.QueryReportSize), Return(true)));
+    mockMetricsLibrary->getMetricQueryReportSizeOutSize = metricsSetParams.QueryReportSize;
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryCreate(_, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(metricsLibraryQueryHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryDelete(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockGetParameter(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(value), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockGetData(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->queryCreateOutHandle = metricsLibraryQueryHandle;
+    mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -248,42 +209,10 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGr
 
     metric.GetParamsResult = &metricParams;
 
-    for (uint32_t i = 0; i < subDeviceCount; ++i) {
-        EXPECT_CALL(*mockMetricEnumerationSubDevices[i], isInitialized())
-            .Times(1)
-            .WillOnce(Return(true));
-
-        EXPECT_CALL(*mockMetricsLibrarySubDevices[i], getContextData(_, _))
-            .Times(1)
-            .WillOnce(Return(true));
-    }
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationCreate(_, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(metricsLibraryConfigurationHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationActivate(_, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDeactivate(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockConfigurationDelete(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->configurationCreateOutHandle = metricsLibraryConfigurationHandle;
+    mockMetricsLibrary->g_mockApi->configurationActivationCounter = subDeviceCount;
+    mockMetricsLibrary->g_mockApi->configurationDeactivationCounter = subDeviceCount;
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -309,7 +238,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenMetricQueryPoolIsDestroyedWhenMetric
 
     zet_device_handle_t metricDevice = devices[0]->toHandle();
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
-    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 
@@ -368,38 +296,9 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenMetricQueryPoolIsDestroyedWhenMetric
 
     metric.GetParamsResult = &metricParams;
 
-    for (uint32_t i = 0; i < subDeviceCount; ++i) {
-        EXPECT_CALL(*mockMetricEnumerationSubDevices[i], isInitialized())
-            .Times(1)
-            .WillOnce(Return(true));
-
-        EXPECT_CALL(*mockMetricsLibrarySubDevices[i], getContextData(_, _))
-            .Times(1)
-            .WillOnce(Return(true));
-    }
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryCreate(_, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(metricsLibraryQueryHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryDelete(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockGetParameter(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(value), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(subDeviceCount)
-        .WillRepeatedly(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
+    mockMetricsLibrary->g_mockApi->queryCreateOutHandle = metricsLibraryQueryHandle;
+    mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
 
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);

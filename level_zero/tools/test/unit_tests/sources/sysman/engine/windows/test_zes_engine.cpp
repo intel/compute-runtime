@@ -81,14 +81,14 @@ TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGr
     pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGroupsIfEngineSupportIsAbsentThenZeroHandlesAreReturned) {
     pKmdSysManager->mockNumSupportedEngineGroups = 0;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenUnsupportedEngineHandleWhenGettingEngineActivityThenFailureIsReturned) {
@@ -107,8 +107,8 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngine
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
-        EXPECT_EQ(properties.type, pKmdSysManager->mockEngineTypes[engineGroupIndex++]);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(static_cast<uint32_t>(properties.type), static_cast<uint32_t>(pKmdSysManager->mockEngineTypes[engineGroupIndex++]));
     }
 }
 

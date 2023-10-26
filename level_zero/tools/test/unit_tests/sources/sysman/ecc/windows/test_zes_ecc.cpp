@@ -11,9 +11,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::Matcher;
-using ::testing::NiceMock;
-
 namespace L0 {
 namespace ult {
 
@@ -32,7 +29,7 @@ class ZesEccFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pFwUtilInterfaceOld = pWddmSysmanImp->pFwUtilInterface;
-        pMockFwInterface = std::make_unique<NiceMock<Mock<EccFwInterface>>>();
+        pMockFwInterface = std::make_unique<Mock<EccFwInterface>>();
         pWddmSysmanImp->pFwUtilInterface = pMockFwInterface.get();
 
         pEccImp = static_cast<L0::EccImp *>(pSysmanDeviceImp->pEcc);

@@ -11,10 +11,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::Return;
 
 namespace L0 {
 
@@ -52,13 +49,6 @@ using MetricInitializationTest = Test<MetricContextFixture>;
 TEST_F(MetricInitializationTest, GivenOaDependenciesAreAvailableThenMetricInitializationIsSuccess) {
 
     GlobalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
     OaMetricSourceImp::osLibraryLoadFunction = MockOsLibrary::load;
     EXPECT_EQ(device->getMetricDeviceContext().enableMetricApi(), ZE_RESULT_SUCCESS);
     OaMetricSourceImp::osLibraryLoadFunction = NEO::OsLibrary::load;

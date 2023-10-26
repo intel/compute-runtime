@@ -12,9 +12,6 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-using ::testing::_;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
@@ -187,15 +184,10 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetMetri
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 256;
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[0], loadMetricsDiscovery())
-        .Times(0);
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&adapterGroup);
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[0], getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&adapter));
+    mockMetricEnumerationSubDevices[0]->getMetricsAdapterResult = &adapter;
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -638,29 +630,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenMultipleMarkerInsertionsWhenZetComman
 
     openMetricsAdapter();
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[0], isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(10)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockCommandBufferGet(_))
-        .Times(10)
-        .WillRepeatedly(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0], getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(contextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrarySubDevices[0]->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
+    mockMetricsLibrarySubDevices[0]->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrarySubDevices[0]->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 

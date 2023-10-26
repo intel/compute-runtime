@@ -11,8 +11,6 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 
-#include "gmock/gmock.h"
-
 using namespace NEO;
 void cleanTestHelpers() {}
 
@@ -24,24 +22,6 @@ void applyWorkarounds() {
     if (sysmanUltsEnableEnv != nullptr) {
         sysmanUltsEnable = (strcmp(sysmanUltsEnableEnv, "1") == 0);
     }
-    {
-        class BaseClass {
-          public:
-            int method(int param) { return 1; }
-        };
-        class MockClass : public BaseClass {
-          public:
-            MOCK_METHOD1(method, int(int param));
-        };
-        ::testing::NiceMock<MockClass> mockObj;
-        EXPECT_CALL(mockObj, method(::testing::_))
-            .Times(1);
-        mockObj.method(2);
-    }
-}
-
-void initGTest(int &argc, char **argv) {
-    testing::InitGoogleMock(&argc, argv);
 }
 
 bool isPlatformSupported(const HardwareInfo &hwInfoForTests) {

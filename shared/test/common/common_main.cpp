@@ -72,7 +72,6 @@ extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
 void applyWorkarounds();
-void initGTest(int &argc, char **argv);
 bool isPlatformSupported(const HardwareInfo &hwInfoForTests);
 void setupTestFiles(std::string testBinaryFiles, int32_t revId);
 std::string getBaseExecutionDir();
@@ -165,7 +164,7 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    initGTest(argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
     HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;
 
     uint32_t euPerSubSlice = 0;

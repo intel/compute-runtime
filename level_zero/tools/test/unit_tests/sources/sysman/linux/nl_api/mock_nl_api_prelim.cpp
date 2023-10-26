@@ -9,6 +9,8 @@
 
 #include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
 
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 

@@ -75,23 +75,92 @@ struct MockMetricsLibraryApi {
     static StatusCode ML_STDCALL configurationDelete(const ConfigurationHandle_1_0 handle);
     static StatusCode ML_STDCALL getData(GetReportData_1_0 *data);
 
-    // Mocked api functions.
-    MOCK_METHOD(StatusCode, MockContextCreate, (ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle));
-    MOCK_METHOD(StatusCode, MockContextDelete, (const ContextHandle_1_0 handle));
-    MOCK_METHOD(StatusCode, MockGetParameter, (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value));
-    MOCK_METHOD(StatusCode, MockCommandBufferGet, (const CommandBufferData_1_0 *data));
-    MOCK_METHOD(StatusCode, MockCommandBufferGetSize, (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size));
-    MOCK_METHOD(StatusCode, MockQueryCreate, (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle));
-    MOCK_METHOD(StatusCode, MockQueryDelete, (const QueryHandle_1_0 handle));
-    MOCK_METHOD(StatusCode, MockOverrideCreate, (const OverrideCreateData_1_0 *createData, OverrideHandle_1_0 *handle));
-    MOCK_METHOD(StatusCode, MockOverrideDelete, (const OverrideHandle_1_0 handle));
-    MOCK_METHOD(StatusCode, MockMarkerCreate, (const MarkerCreateData_1_0 *createData, MarkerHandle_1_0 *handle));
-    MOCK_METHOD(StatusCode, MockMarkerDelete, (const MarkerHandle_1_0 handle));
-    MOCK_METHOD(StatusCode, MockConfigurationCreate, (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle));
-    MOCK_METHOD(StatusCode, MockConfigurationActivate, (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData));
-    MOCK_METHOD(StatusCode, MockConfigurationDeactivate, (const ConfigurationHandle_1_0 handle));
-    MOCK_METHOD(StatusCode, MockConfigurationDelete, (const ConfigurationHandle_1_0 handle));
-    MOCK_METHOD(StatusCode, MockGetData, (GetReportData_1_0 * data));
+    StatusCode contextCreateImpl(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {
+        *handle = contextCreateOutHandle;
+
+        return contextCreateResult;
+    }
+
+    StatusCode queryCreateImpl(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle) {
+        *handle = queryCreateOutHandle;
+        if (!queryCreateResults.empty()) {
+            auto retVal = queryCreateResults.back();
+            queryCreateResults.pop_back();
+            return retVal;
+        }
+        return queryCreateResult;
+    }
+
+    StatusCode configurationCreateImpl(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle) {
+        *handle = configurationCreateOutHandle;
+
+        return configurationCreateResult;
+    }
+
+    StatusCode configurationActivateImpl(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData) {
+        EXPECT_LT(0u, configurationActivationCounter);
+        configurationActivationCounter--;
+
+        return configurationActivateResult;
+    }
+
+    StatusCode configurationDeactivateImpl(const ConfigurationHandle_1_0 handle) {
+        EXPECT_LT(0u, configurationDeactivationCounter);
+        configurationDeactivationCounter--;
+
+        return configurationDeactivateResult;
+    }
+    StatusCode getParameterImpl(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value) {
+        *value = getParameterOutValue;
+        return getParameterResult;
+    }
+    StatusCode commandBufferGetImpl(const CommandBufferData_1_0 *data) {
+        return commandBufferGetResult;
+    }
+
+    StatusCode commandBufferGetSizeImpl(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size) {
+        *size = commandBufferGetSizeOutSize;
+        return commandBufferGetSizeResult;
+    }
+
+    StatusCode getDataImpl(GetReportData_1_0 *data) {
+        if (getDataExpectedData) {
+            EXPECT_EQ(data->Query.Slot, getDataExpectedData->Query.Slot);
+            EXPECT_EQ(data->Query.SlotsCount, getDataExpectedData->Query.SlotsCount);
+            EXPECT_EQ(data->Query.Handle.data, getDataExpectedData->Query.Handle.data);
+            EXPECT_EQ(data->Query.Data, getDataExpectedData->Query.Data);
+            EXPECT_EQ(data->Query.DataSize, getDataExpectedData->Query.DataSize);
+            EXPECT_EQ(data->Type, getDataExpectedData->Type);
+        }
+
+        if (!getDataResults.empty()) {
+            auto retVal = getDataResults.back();
+            getDataResults.pop_back();
+            return retVal;
+        }
+        return getDataResult;
+    }
+
+    ContextHandle_1_0 contextCreateOutHandle{};
+    QueryHandle_1_0 queryCreateOutHandle{};
+    ConfigurationHandle_1_0 configurationCreateOutHandle{};
+    TypedValue_1_0 getParameterOutValue{};
+    CommandBufferSize_1_0 commandBufferGetSizeOutSize{};
+    GetReportData_1_0 *getDataExpectedData = nullptr;
+    std::vector<StatusCode> queryCreateResults;
+    std::vector<StatusCode> getDataResults;
+    StatusCode contextCreateResult = StatusCode::Success;
+    StatusCode queryCreateResult = StatusCode::Success;
+    StatusCode configurationCreateResult = StatusCode::Success;
+    StatusCode configurationActivateResult = StatusCode::Success;
+    StatusCode configurationDeactivateResult = StatusCode::Success;
+    StatusCode getParameterResult = StatusCode::Success;
+    StatusCode commandBufferGetResult = StatusCode::Success;
+    StatusCode commandBufferGetSizeResult = StatusCode::Success;
+    StatusCode getDataResult = StatusCode::Success;
+
+    uint32_t configurationActivationCounter = 0u;
+    uint32_t configurationDeactivationCounter = 0u;
 };
 
 template <>
@@ -107,10 +176,13 @@ struct Mock<MetricsLibrary> : public MetricsLibrary {
     // Api mock enable/disable.
     void setMockedApi(MockMetricsLibraryApi *mockedApi);
 
-    // Mocked metrics library functions.
-    MOCK_METHOD(bool, load, (), (override));
-    MOCK_METHOD(bool, getContextData, (::L0::Device &, ContextCreateData_1_0 &), (override));
-    MOCK_METHOD(bool, getMetricQueryReportSize, (size_t & rawDataSize), (override));
+    ADDMETHOD_NOBASE(load, bool, true, ());
+    ADDMETHOD_NOBASE(getContextData, bool, true, (::L0::Device &, ContextCreateData_1_0 &));
+
+    bool getMetricQueryReportSize(size_t &rawDataSize) override {
+        rawDataSize = getMetricQueryReportSizeOutSize;
+        return getMetricQueryReportSizeResult;
+    }
 
     // Not mocked metrics library functions.
     bool metricsLibraryGetContextData(::L0::Device &device, ContextCreateData_1_0 &contextData) { return MetricsLibrary::getContextData(device, contextData); }
@@ -122,6 +194,9 @@ struct Mock<MetricsLibrary> : public MetricsLibrary {
     // We cannot use a static instance here since the gtest validates memory usage,
     // and mocked functions will stay in memory longer than the test.
     static MockMetricsLibraryApi *g_mockApi; // NOLINT(readability-identifier-naming)
+
+    size_t getMetricQueryReportSizeOutSize{};
+    bool getMetricQueryReportSizeResult = true;
 };
 
 template <>
@@ -129,8 +204,8 @@ struct Mock<MetricQueryPool> : public MetricQueryPool {
     Mock();
     ~Mock() override;
 
-    MOCK_METHOD(ze_result_t, metricQueryCreate, (uint32_t, zet_metric_query_handle_t *), (override));
-    MOCK_METHOD(ze_result_t, destroy, (), (override));
+    ADDMETHOD_NOBASE(metricQueryCreate, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t, zet_metric_query_handle_t *));
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
 };
 
 template <>
@@ -138,9 +213,9 @@ struct Mock<MetricQuery> : public MetricQuery {
     Mock();
     ~Mock() override;
 
-    MOCK_METHOD(ze_result_t, getData, (size_t *, uint8_t *), (override));
-    MOCK_METHOD(ze_result_t, reset, (), (override));
-    MOCK_METHOD(ze_result_t, destroy, (), (override));
+    ADDMETHOD_NOBASE(getData, ze_result_t, ZE_RESULT_SUCCESS, (size_t *, uint8_t *));
+    ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
 };
 
 class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {

@@ -25,7 +25,7 @@ struct Mock<EccFwInterface> : public EccFwInterface {
     uint8_t mockCurrentState = 0;
     uint8_t mockPendingState = 0;
 
-    ze_result_t fwDeviceInit() {
+    ze_result_t fwDeviceInit() override {
         return mockFwDeviceInit;
     }
 

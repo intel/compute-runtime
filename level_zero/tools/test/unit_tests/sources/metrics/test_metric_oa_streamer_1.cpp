@@ -13,11 +13,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -43,9 +39,7 @@ TEST_F(MetricStreamerTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenI
 
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
-    EXPECT_CALL(metricGroup, getProperties(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
+    metricGroup.getPropertiesOutProperties = &metricGroupProperties;
 
     // Metric streamer open.
     EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
@@ -86,14 +80,6 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     metricsSetParams.RawReportSize = 256;
 
     openMetricsAdapter();
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -168,14 +154,6 @@ TEST_F(MetricStreamerTest, givenRawReportSizeAsZeroWhenZetMetricStreamerOpenIsCa
     metricsSetParams.RawReportSize = 0;
 
     openMetricsAdapter();
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -389,40 +367,11 @@ TEST_F(MetricStreamerTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExtI
     QueryHandle_1_0 queryHandle = {&value};
     ContextHandle_1_0 contextHandle = {&value};
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
+    metricGroup.getPropertiesOutProperties = &metricGroupProperties;
 
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(0);
-
-    EXPECT_CALL(metricGroup, getProperties(_))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryCreate(_, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<1>(queryHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockQueryDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockGetParameter(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(value), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(contextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->queryCreateOutHandle = queryHandle;
+    mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
 
     // Metric query pool create.
     EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
@@ -757,15 +706,6 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
-MATCHER_P(streamerMarkerDataAreEqual, marker, "") {
-    const uint32_t streamerMarkerLowBitsMask = 0x1FFFFFF;
-    const uint32_t streamerMarkerHighBitsShift = 25;
-
-    return (arg->CommandsType == ObjectType::MarkerStreamUser) &&
-           (arg->MarkerStreamUser.Value == (marker & streamerMarkerLowBitsMask)) &&
-           (arg->MarkerStreamUser.Reserved == (marker >> streamerMarkerHighBitsShift));
-}
-
 TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStreamerMarkerIsCalledThenReturnsSuccess) {
 
     // One api: device handle.
@@ -823,21 +763,8 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
 
     openMetricsAdapter();
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(contextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -847,14 +774,6 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
     metricsSet.GetParamsResult = &metricsSetParams;
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(streamerMarkerDataAreEqual(markerValue)))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
 
     // Metric group count.
     uint32_t metricGroupCount = 0;
@@ -943,21 +862,8 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
 
     openMetricsAdapter();
 
-    EXPECT_CALL(*mockMetricEnumeration, isInitialized())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary, getContextData(_, _))
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<2>(contextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
-        .Times(1)
-        .WillOnce(Return(StatusCode::Success));
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
@@ -967,14 +873,6 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
     metricsSet.GetParamsResult = &metricsSetParams;
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGetSize(_, _))
-        .Times(10)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
-
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(_))
-        .Times(10)
-        .WillRepeatedly(Return(StatusCode::Success));
 
     // Metric group count.
     uint32_t metricGroupCount = 0;

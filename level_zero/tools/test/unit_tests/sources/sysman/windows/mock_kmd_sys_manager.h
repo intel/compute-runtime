@@ -9,8 +9,6 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
-#include "gmock/gmock.h"
-
 namespace L0 {
 namespace ult {
 
@@ -306,14 +304,14 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         }
     }
 
-    ze_result_t requestSingle(KmdSysman::RequestProperty &In, KmdSysman::ResponseProperty &Out) {
+    ze_result_t requestSingle(KmdSysman::RequestProperty &In, KmdSysman::ResponseProperty &Out) override {
         if (mockRequestSingle == false) {
             return KmdSysManager::requestSingle(In, Out);
         }
         return mockRequestSingleResult;
     }
 
-    ze_result_t requestMultiple(std::vector<KmdSysman::RequestProperty> &vIn, std::vector<KmdSysman::ResponseProperty> &vOut) {
+    ze_result_t requestMultiple(std::vector<KmdSysman::RequestProperty> &vIn, std::vector<KmdSysman::ResponseProperty> &vOut) override {
         if (mockRequestMultiple == false) {
             return KmdSysManager::requestMultiple(vIn, vOut);
         } else {
@@ -422,7 +420,7 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
         }
     }
 
-    NTSTATUS escape(uint32_t escapeOp, uint64_t pInPtr, uint32_t dataInSize, uint64_t pOutPtr, uint32_t dataOutSize) {
+    NTSTATUS escape(uint32_t escapeOp, uint64_t pInPtr, uint32_t dataInSize, uint64_t pOutPtr, uint32_t dataOutSize) override {
         if (mockEscapeResult != STATUS_SUCCESS) {
             return mockEscapeResult;
         }

@@ -13,12 +13,8 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "metrics_discovery_api.h"
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {

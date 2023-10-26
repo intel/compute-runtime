@@ -9,7 +9,6 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/nl_api/mock_iaf_nl_api_prelim.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <limits>

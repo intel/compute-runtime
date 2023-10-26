@@ -23,9 +23,6 @@ void cleanTestHelpers() {
     delete platformsImpl;
 }
 
-void initGTest(int &argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-}
 bool isPlatformSupported(const HardwareInfo &hwInfoForTests) {
     return true;
 }

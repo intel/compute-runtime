@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
     uint32_t mockFrequencyTimeStamp = 38400000;
     uint32_t mockFrequencyActivity = 1200000;
 
-    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
+    void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
         pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
 
@@ -71,9 +71,6 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
     }
 
     void setActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
-        uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pRequest);
-        pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderIn);
-
         pResponse->outDataSize = 0;
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }

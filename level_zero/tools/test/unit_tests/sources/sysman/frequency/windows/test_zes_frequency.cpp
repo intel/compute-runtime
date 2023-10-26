@@ -104,7 +104,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequ
     pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNKNOWN;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidPowerHandlesIsReturned) {
@@ -206,7 +206,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCa
             EXPECT_EQ(numClocks, count);
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
-            EXPECT_EQ(1, count);
+            EXPECT_EQ(1u, count);
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEDIA) {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
             EXPECT_EQ(numClocks, count);
@@ -489,52 +489,43 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetModeThenVerifyCallSucceeds) {
     pKmdSysManager->allowSetCalls = false;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         zes_oc_mode_t mode = ZES_OC_MODE_OFF;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &mode));
         EXPECT_DOUBLE_EQ(ZES_OC_MODE_INTERPOLATIVE, mode);
-        domainIndex++;
     }
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallFails) {
     pKmdSysManager->allowSetCalls = false;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         double freqTarget = 1400.0;
         EXPECT_NE(ZE_RESULT_SUCCESS, zesFrequencyOcSetFrequencyTarget(handle, freqTarget));
-        domainIndex++;
     }
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallFails) {
     pKmdSysManager->allowSetCalls = false;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         double voltageTarget = 1040.0, voltageOffset = 20.0;
         EXPECT_NE(ZE_RESULT_SUCCESS, zesFrequencyOcSetVoltageTarget(handle, voltageTarget, voltageOffset));
-        domainIndex++;
     }
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetModeThenVerifyCallFails) {
     pKmdSysManager->allowSetCalls = false;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         zes_oc_mode_t mode = ZES_OC_MODE_OVERRIDE;
         EXPECT_NE(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
-        domainIndex++;
     }
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallSucceed) {
     pKmdSysManager->allowSetCalls = true;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         double freqTarget = 1400.0;
@@ -542,13 +533,11 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
         double newFreqTarget = 0.0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetFrequencyTarget(handle, &newFreqTarget));
         EXPECT_DOUBLE_EQ(newFreqTarget, freqTarget);
-        domainIndex++;
     }
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallSucceed) {
     pKmdSysManager->allowSetCalls = true;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         double voltageTarget = 1040.0, voltageOffset = 20.0;
@@ -557,7 +546,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetVoltageTarget(handle, &newVoltageTarget, &newVoltageOffset));
         EXPECT_DOUBLE_EQ(voltageTarget, newVoltageTarget);
         EXPECT_DOUBLE_EQ(voltageOffset, newVoltageOffset);
-        domainIndex++;
     }
 }
 
@@ -587,7 +575,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetModeThenVerifyCallSucceed) {
     pKmdSysManager->allowSetCalls = true;
-    uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
 
@@ -616,8 +603,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetMode(handle, mode));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetMode(handle, &newmode));
         EXPECT_EQ(newmode, ZES_OC_MODE_OVERRIDE);
-
-        domainIndex++;
     }
 }
 

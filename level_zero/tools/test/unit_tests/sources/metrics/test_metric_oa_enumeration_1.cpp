@@ -12,21 +12,14 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <unordered_map>
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
 using MetricEnumerationTest = Test<MetricContextFixture>;
 TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetricGroupIsCalledThenNoMetricGroupsAreReturned) {
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(0);
 
     mockMetricEnumeration->openAdapterGroup = [](MetricsDiscovery::IAdapterGroupLatest **) -> TCompletionCode { return TCompletionCode::CC_ERROR_GENERAL; };
 
@@ -36,9 +29,6 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetr
 }
 
 TEST_F(MetricEnumerationTest, givenCorrectMetricDiscoveryWhenLoadMetricsDiscoveryIsCalledThenReturnsSuccess) {
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1);
 
     EXPECT_EQ(mockMetricEnumeration->loadMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
@@ -1799,12 +1789,9 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalcula
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     uint32_t metricGroupCount = 1;
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -1861,12 +1848,9 @@ TEST_F(MetricEnumerationTest, givenFailedCalculateMetricsWhenZetMetricGroupCalcu
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsResult = TCompletionCode::CC_ERROR_GENERAL;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_ERROR_GENERAL));
 
     uint32_t metricGroupCount = 1;
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -1988,12 +1972,9 @@ TEST_F(MetricEnumerationTest, givenCorrectRawDataHeaderWhenZetMetricGroupCalcula
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2131,15 +2112,12 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndLowerProvidedCalculate
     metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
 
+    uint32_t returnedMetricCount = 2;
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    uint32_t returnedMetricCount = 2;
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -2198,10 +2176,6 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
 
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
     metric.GetParamsResult = &metricParams;
 
     // Metric group handles.
@@ -2259,10 +2233,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgPointee<4>(metricsSetParams.MetricsCount), Return(TCompletionCode::CC_OK)));
+    metricsSet.calculateMetricsOutReportCount = &metricsSetParams.MetricsCount;
 
     metric.GetParamsResult = &metricParams;
 
@@ -2342,7 +2313,8 @@ TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCal
 TEST_F(MetricEnumerationTest, givenInitializedMetricEnumerationWhenIsInitializedIsCalledThenMetricEnumerationWillNotBeInitializedAgain) {
 
     mockMetricEnumeration->initializationState = ZE_RESULT_SUCCESS;
-    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
+    mockMetricEnumeration->isInitializedCallBase = true;
+    EXPECT_EQ(mockMetricEnumeration->isInitialized(), true);
 }
 
 TEST_F(MetricEnumerationTest, givenNotInitializedMetricEnumerationWhenIsInitializedIsCalledThenMetricEnumerationWillBeInitialized) {
@@ -2382,18 +2354,11 @@ TEST_F(MetricEnumerationTest, givenNotInitializedMetricEnumerationWhenIsInitiali
     metric.GetParamsResult = &metricParams;
 
     mockMetricEnumeration->initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
-    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
+    mockMetricEnumeration->isInitializedCallBase = true;
+    EXPECT_EQ(mockMetricEnumeration->isInitialized(), true);
 }
 
 TEST_F(MetricEnumerationTest, givenLoadedMetricsLibraryAndDiscoveryAndMetricsLibraryInitializedWhenLoadDependenciesThenReturnSuccess) {
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
 
     mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
 
@@ -2404,9 +2369,7 @@ TEST_F(MetricEnumerationTest, givenLoadedMetricsLibraryAndDiscoveryAndMetricsLib
 
 TEST_F(MetricEnumerationTest, givenNotLoadedMetricsLibraryAndDiscoveryWhenLoadDependenciesThenReturnFail) {
 
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE));
+    mockMetricEnumeration->loadMetricsDiscoveryResult = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     EXPECT_EQ(metricSource.loadDependencies(), false);
@@ -2420,19 +2383,9 @@ TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLeg
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
+    mockMetricEnumeration->getMetricsAdapterResult = &mockAdapter;
 
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&mockAdapter));
     mockAdapter.openMetricsDeviceOutDevice = &mockDevice;
 
     setupDefaultMocksForMetricDevice(mockDevice);
@@ -2443,7 +2396,8 @@ TEST_F(MetricEnumerationTest, givenRootDeviceWhenLoadDependenciesIsCalledThenLeg
 
     EXPECT_EQ(metricSource.loadDependencies(), true);
     EXPECT_EQ(metricSource.isInitialized(), true);
-    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
+    mockMetricEnumeration->isInitializedCallBase = true;
+    EXPECT_EQ(mockMetricEnumeration->isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 

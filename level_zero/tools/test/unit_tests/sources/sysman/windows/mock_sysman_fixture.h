@@ -18,11 +18,8 @@
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/mocks/mock_sysman_env_vars.h"
 
-#include "gmock/gmock.h"
-
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
 using namespace NEO;
 
 namespace L0 {

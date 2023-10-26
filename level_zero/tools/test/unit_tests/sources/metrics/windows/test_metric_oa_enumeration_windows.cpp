@@ -11,11 +11,7 @@
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -48,13 +44,10 @@ TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAda
     adapterGroup.GetAdapterResult = &adapter;
     adapter.GetParamsResult = &adapterParams;
 
-    EXPECT_CALL(*mockMetricEnumeration, getAdapterId(_, _))
-        .Times(1)
-        .WillOnce(DoAll(::testing::SetArgReferee<0>(adapterParams.SystemId.Luid.HighPart), ::testing::SetArgReferee<1>(adapterParams.SystemId.Luid.LowPart), Return(true)));
+    mockMetricEnumeration->getAdapterIdOutMajor = adapterParams.SystemId.Luid.HighPart;
+    mockMetricEnumeration->getAdapterIdOutMinor = adapterParams.SystemId.Luid.LowPart;
 
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce([&]() { return mockMetricEnumeration->baseGetMetricsAdapter(); });
+    mockMetricEnumeration->getMetricsAdapterResult = &adapter;
 
     EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 

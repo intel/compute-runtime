@@ -9,7 +9,7 @@
 
 #include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "mock_nl_api_prelim.h"
 
 #include <limits>

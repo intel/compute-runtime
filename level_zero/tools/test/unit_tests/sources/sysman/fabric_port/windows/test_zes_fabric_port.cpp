@@ -13,8 +13,6 @@ extern bool sysmanUltsEnable;
 namespace L0 {
 namespace ult {
 
-constexpr auto maxNumPorts = 32u;
-
 class SysmanFabricPortFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<FabricDeviceImp> pFabricDevice;

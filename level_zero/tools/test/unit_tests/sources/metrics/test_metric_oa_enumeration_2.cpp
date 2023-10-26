@@ -12,11 +12,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -141,19 +137,8 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
-
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&mockAdapter));
+    mockMetricEnumeration->getMetricsAdapterResult = &mockAdapter;
 
     mockAdapter.openMetricsSubDeviceOutDevice = &mockDevice;
     mockAdapter.openMetricsDeviceOutDevice = &mockDevice;
@@ -166,7 +151,8 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
 
     EXPECT_EQ(metricSource.loadDependencies(), true);
     EXPECT_EQ(metricSource.isInitialized(), true);
-    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
+    mockMetricEnumeration->isInitializedCallBase = true;
+    EXPECT_EQ(mockMetricEnumeration->isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->cleanupMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
@@ -182,9 +168,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenSubDeviceWhenOpenMetricsDiscoveryI
 
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
 
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[1], getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&mockAdapter));
+    mockMetricEnumerationSubDevices[1]->getMetricsAdapterResult = &mockAdapter;
 
     mockAdapter.openMetricsSubDeviceOutDevice = &mockDevice;
 
@@ -204,10 +188,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenSubDeviceWhenOpenMetricsDiscoveryI
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
-
-    EXPECT_CALL(*mockMetricEnumerationSubDevices[1], getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&mockAdapter));
+    mockMetricEnumerationSubDevices[1]->getMetricsAdapterResult = &mockAdapter;
 
     mockAdapter.openMetricsSubDeviceOutDevice = &mockDevice;
 
@@ -226,18 +207,8 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
-
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&mockAdapter));
+    mockMetricEnumeration->getMetricsAdapterResult = &mockAdapter;
 
     mockAdapter.openMetricsSubDeviceResult = TCompletionCode::CC_ERROR_GENERAL;
 
@@ -247,7 +218,8 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
 
     EXPECT_EQ(metricSource.loadDependencies(), true);
     EXPECT_EQ(metricSource.isInitialized(), true);
-    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), false);
+    mockMetricEnumeration->isInitializedCallBase = true;
+    EXPECT_EQ(mockMetricEnumeration->isInitialized(), false);
     EXPECT_EQ(0u, mockDevice.GetParamsCalled);
 }
 
@@ -259,19 +231,9 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesAndO
     Mock<IAdapter_1_9> mockAdapter;
     Mock<IMetricsDevice_1_5> mockDevice;
 
-    EXPECT_CALL(*mockMetricsLibrary, load())
-        .Times(1)
-        .WillOnce(Return(true));
-
-    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
     mockMetricEnumeration->globalMockApi->adapterGroup = reinterpret_cast<IAdapterGroupLatest *>(&mockAdapterGroup);
 
-    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
-        .Times(1)
-        .WillOnce(Return(&mockAdapter));
+    mockMetricEnumeration->getMetricsAdapterResult = &mockAdapter;
 
     mockAdapter.openMetricsSubDeviceOutDevice = &mockDevice;
     mockAdapter.openMetricsDeviceResult = TCompletionCode::CC_ERROR_GENERAL;
@@ -471,12 +433,9 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(subDeviceCount)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -700,12 +659,9 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenErrorGeneralOnCalculateMetricsWhen
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsResult = TCompletionCode::CC_ERROR_GENERAL;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_ERROR_GENERAL));
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -851,12 +807,9 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenFirstSubDe
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(subDeviceCount - 1)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -935,12 +888,9 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenSecondSubD
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(subDeviceCount - 1)
-        .WillRepeatedly(DoAll(::testing::SetArgPointee<4>(returnedMetricCount), Return(TCompletionCode::CC_OK)));
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
@@ -1020,9 +970,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
 
     metric.GetParamsResult = &metricParams;
 
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(0);
-
     // Metric group handles.
     uint32_t metricGroupCount = 1;
     EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -1093,10 +1040,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     metricsSet.GetMetricResult = &metric;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(0);
-
     // Metric group handles.
     uint32_t metricGroupCount = 1;
     EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -1177,9 +1120,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     metricsSet.GetMetricResult = &metric;
 
     metric.GetParamsResult = &metricParams;
-
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(0);
 
     // Metric group handles.
     uint32_t metricGroupCount = 1;
