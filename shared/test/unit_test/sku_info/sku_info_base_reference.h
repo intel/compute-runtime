@@ -44,7 +44,6 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrPpgtt64KBWalkOptimization = 1;
         refFtrTable.FtrUnified3DMediaCompressionFormats = 1;
         refFtrTable.Ftr57bGPUAddressing = 1;
-        refFtrTable.FtrTile64Optimization = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
