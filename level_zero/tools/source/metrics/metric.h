@@ -29,11 +29,10 @@ static constexpr uint64_t nsecPerSec = 1000000000ull;
 
 class MetricSource {
   public:
-    enum class SourceType {
-        Undefined,
-        Oa,
-        IpSampling
-    };
+    static constexpr uint32_t metricSourceTypeUndefined = 0u;
+    static constexpr uint32_t metricSourceTypeOa = 1u;
+    static constexpr uint32_t metricSourceTypeIpSampling = 2u;
+
     virtual void enable() = 0;
     virtual bool isAvailable() = 0;
     virtual ze_result_t appendMetricMemoryBarrier(CommandList &commandList) = 0;
@@ -64,7 +63,7 @@ class MetricDeviceContext {
     static ze_result_t enableMetricApi();
 
   protected:
-    std::map<MetricSource::SourceType, std::unique_ptr<MetricSource>> metricSources;
+    std::map<uint32_t, std::unique_ptr<MetricSource>> metricSources;
 
   private:
     bool enable();

@@ -643,7 +643,7 @@ ze_result_t IpSamplingMetricImp::getProperties(zet_metric_properties_t *pPropert
 
 template <>
 IpSamplingMetricSourceImp &MetricDeviceContext::getMetricSource<IpSamplingMetricSourceImp>() const {
-    return static_cast<IpSamplingMetricSourceImp &>(*metricSources.at(MetricSource::SourceType::IpSampling));
+    return static_cast<IpSamplingMetricSourceImp &>(*metricSources.at(MetricSource::metricSourceTypeIpSampling));
 }
 
 } // namespace L0

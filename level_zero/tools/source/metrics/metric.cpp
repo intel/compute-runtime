@@ -42,8 +42,8 @@ MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevi
 
         multiDeviceCapable = !isSubDevice && device.isImplicitScalingCapable();
     }
-    metricSources[MetricSource::SourceType::Oa] = OaMetricSourceImp::create(*this);
-    metricSources[MetricSource::SourceType::IpSampling] = IpSamplingMetricSourceImp::create(*this);
+    metricSources[MetricSource::metricSourceTypeOa] = OaMetricSourceImp::create(*this);
+    metricSources[MetricSource::metricSourceTypeIpSampling] = IpSamplingMetricSourceImp::create(*this);
 }
 
 bool MetricDeviceContext::enable() {

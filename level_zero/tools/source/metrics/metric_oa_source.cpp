@@ -173,7 +173,7 @@ void OaMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricOAOsInterface
 
 template <>
 OaMetricSourceImp &MetricDeviceContext::getMetricSource<OaMetricSourceImp>() const {
-    return static_cast<OaMetricSourceImp &>(*metricSources.at(MetricSource::SourceType::Oa));
+    return static_cast<OaMetricSourceImp &>(*metricSources.at(MetricSource::metricSourceTypeOa));
 }
 
 } // namespace L0
