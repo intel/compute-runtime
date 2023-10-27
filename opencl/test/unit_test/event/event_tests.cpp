@@ -1210,7 +1210,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
 
     virtualEvent->submitCommand(false);
 
-    uint32_t expectedLockCounter = pDevice->getDefaultEngine().commandStreamReceiver->getClearColorAllocation() ? 4u : 3u;
+    uint32_t expectedLockCounter = pDevice->getDefaultEngine().commandStreamReceiver->getClearColorAllocation() ? 5u : 4u;
 
     EXPECT_EQ(expectedLockCounter, pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter);
 }

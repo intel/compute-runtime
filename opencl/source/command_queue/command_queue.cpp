@@ -152,6 +152,9 @@ CommandQueue::~CommandQueue() {
         if (NEO::Debugger::isDebugEnabled(isInternalUsage) && device->getDevice().getL0Debugger()) {
             device->getDevice().getL0Debugger()->notifyCommandQueueDestroyed(&device->getDevice());
         }
+        if (gpgpuEngine) {
+            gpgpuEngine->commandStreamReceiver->releasePreallocationRequest();
+        }
     }
 
     timestampPacketContainer.reset();
@@ -215,6 +218,7 @@ void CommandQueue::initializeGpgpuInternals() const {
     }
 
     gpgpuEngine->commandStreamReceiver->initializeResources();
+    gpgpuEngine->commandStreamReceiver->requestPreallocation();
     gpgpuEngine->commandStreamReceiver->initDirectSubmission();
 
     if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) && !this->gpgpuEngine->commandStreamReceiver->isUpdateTagFromWaitEnabled()) {

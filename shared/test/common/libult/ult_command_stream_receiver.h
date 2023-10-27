@@ -135,6 +135,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::pipelineSupportFlags;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
+    using BaseClass::CommandStreamReceiver::requestedPreallocationsAmount;
     using BaseClass::CommandStreamReceiver::requiredPrivateScratchSize;
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
     using BaseClass::CommandStreamReceiver::resourcesInitialized;

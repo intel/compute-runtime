@@ -258,16 +258,46 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
     commandStream.replaceGraphicsAllocation(allocation);
 }
 
+void CommandStreamReceiver::preallocateCommandBuffer() {
+    const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
+                                                                 isMultiOsContextCapable(), false, deviceBitfield};
+    auto allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+    getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    this->makeResident(*allocation);
+}
+
 void CommandStreamReceiver::fillReusableAllocationsList() {
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
     for (auto i = 0u; i < amountToFill; i++) {
-        const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
-                                                                     isMultiOsContextCapable(), false, deviceBitfield};
-        auto allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-        getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-        this->makeResident(*allocation);
+        preallocateCommandBuffer();
     }
+}
+
+void CommandStreamReceiver::requestPreallocation() {
+    auto preallocationsPerQueue = getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
+    if (DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
+        preallocationsPerQueue = DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
+    }
+    auto lock = obtainUniqueOwnership();
+    requestedPreallocationsAmount += preallocationsPerQueue;
+    const int64_t amountToPreallocate = static_cast<int64_t>(requestedPreallocationsAmount.load()) - preallocatedAmount;
+    DEBUG_BREAK_IF(amountToPreallocate > preallocationsPerQueue);
+    if (amountToPreallocate > 0) {
+        for (auto i = 0u; i < amountToPreallocate; i++) {
+            preallocateCommandBuffer();
+        }
+        preallocatedAmount += static_cast<uint32_t>(amountToPreallocate);
+    }
+}
+
+void CommandStreamReceiver::releasePreallocationRequest() {
+    auto preallocationsPerQueue = getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
+    if (DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
+        preallocationsPerQueue = DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
+    }
+    DEBUG_BREAK_IF(preallocationsPerQueue > requestedPreallocationsAmount);
+    requestedPreallocationsAmount -= preallocationsPerQueue;
 }
 
 bool CommandStreamReceiver::initializeResources() {

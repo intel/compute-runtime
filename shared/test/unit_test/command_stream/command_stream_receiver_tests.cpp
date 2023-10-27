@@ -173,6 +173,40 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagDisabledWhenCallFillReusableAllocat
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueEqualZeroWhenRequestPreallocationCalledThenDoNotAllocateCommandBuffer) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreallocationCalledThenAllocateCommandBufferIfNeeded) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->releasePreallocationRequest();
+    EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(2u, commandStreamReceiver->getResidencyAllocations().size());
+}
+
 HWTEST_F(CommandStreamReceiverTest, whenRegisterClientThenIncrementClientNum) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto numClients = csr.getNumClients();

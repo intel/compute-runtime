@@ -165,6 +165,7 @@ class ProductHelper {
     virtual bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const = 0;
     virtual bool isTranslationExceptionSupported() const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
+    virtual uint32_t getCommandBuffersPreallocatedPerCommandQueue() const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;

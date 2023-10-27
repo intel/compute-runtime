@@ -119,6 +119,7 @@ class ProductHelperHw : public ProductHelper {
     bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const override;
     bool isTranslationExceptionSupported() const override;
     uint32_t getMaxNumSamplers() const override;
+    uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;

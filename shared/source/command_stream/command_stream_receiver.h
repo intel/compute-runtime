@@ -432,6 +432,10 @@ class CommandStreamReceiver {
 
     virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout) { return false; }
 
+    void requestPreallocation();
+    void releasePreallocationRequest();
+    void preallocateCommandBuffer();
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -448,6 +452,9 @@ class CommandStreamReceiver {
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
     std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
     std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
+    std::atomic<uint32_t> preallocatedAmount{0};
+    std::atomic<uint32_t> requestedPreallocationsAmount{0};
+
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
     std::unique_ptr<ScratchSpaceController> scratchSpaceController;
     std::unique_ptr<TagAllocatorBase> profilingTimeStampAllocator;

@@ -981,6 +981,30 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
     delete pCmdQ;
 }
 
+HWTEST_F(CommandQueueTests, givenPreallocationsPerQueueWhenInitializeGpgpuCalledThenCSRRequestPreallocationIsCalled) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
+    auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+
+    EXPECT_EQ(0u, commandStreamReceiver.requestedPreallocationsAmount);
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver.getResidencyAllocations().size());
+
+    mockCmdQ->initializeGpgpu();
+
+    EXPECT_EQ(1u, commandStreamReceiver.requestedPreallocationsAmount);
+    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver.getResidencyAllocations().size());
+
+    mockCmdQ.reset();
+    EXPECT_EQ(0u, commandStreamReceiver.requestedPreallocationsAmount);
+    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver.getResidencyAllocations().size());
+}
+
 struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
