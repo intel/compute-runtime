@@ -717,8 +717,8 @@ char const *GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() const {
 
 template <typename GfxFamily>
 uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double resolution) const {
-    UNRECOVERABLE_IF(resolution > 127.0);
-    constexpr auto timestampMask = maxNBitValue(57);
+    auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
+    auto timestampMask = maxNBitValue(64 - numBitsForResolution);
     return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
 }
 

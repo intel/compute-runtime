@@ -149,14 +149,33 @@ HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThe
     EXPECT_EQ(0U, configs.size());
 }
 
-TEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGetGpuTimeStampInNSIsCalledThenCorrectValueIsReturned) {
+TEST_F(GfxCoreHelperTest, whenGetGpuTimeStampInNSIsCalledThenTimestampIsMaskedBasedOnResolution) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
     auto timeStamp0 = 0x00ff'ffff'ffff;
     auto timeStamp1 = 0xfe00'00ff'ffff'ffff;
-    auto resolution = 123.0;
-    auto result = static_cast<uint64_t>(timeStamp0 * resolution);
-    EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp0, resolution));
-    EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp1, resolution));
+    auto timeStamp2 = 0xff00'00ff'ffff'ffff;
+    {
+        auto resolution = 135.0;
+        auto result = static_cast<uint64_t>(timeStamp0 * resolution);
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp0, resolution));
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp1, resolution));
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp2, resolution));
+    }
+    {
+        auto resolution = 128.0;
+        auto result = static_cast<uint64_t>(timeStamp0 * resolution);
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp0, resolution));
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp1, resolution));
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp2, resolution));
+    }
+    {
+        auto resolution = 127.0;
+        auto result = static_cast<uint64_t>(timeStamp0 * resolution);
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp0, resolution));
+        EXPECT_EQ(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp1, resolution));
+        EXPECT_NE(result, gfxCoreHelper.getGpuTimeStampInNS(timeStamp2, resolution));
+    }
 }
 
 TEST(DwordBuilderTest, WhenSettingNonMaskedBitsThenOnlySelectedBitAreSet) {
