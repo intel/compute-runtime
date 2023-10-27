@@ -121,6 +121,7 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 
     internalAllocationStorage->cleanAllocationList(-1, REUSABLE_ALLOCATION);
     internalAllocationStorage->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    internalAllocationStorage->cleanAllocationList(-1, DEFERRED_DEALLOCATION);
     getMemoryManager()->unregisterEngineForCsr(this);
 }
 
@@ -221,6 +222,9 @@ WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(TaskCou
         waitStatus = this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
     }
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
+    if (allocationUsage == TEMPORARY_ALLOCATION) {
+        internalAllocationStorage->cleanAllocationList(requiredTaskCount, DEFERRED_DEALLOCATION);
+    }
 
     return waitStatus;
 }

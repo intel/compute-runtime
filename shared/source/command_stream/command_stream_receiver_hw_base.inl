@@ -1265,6 +1265,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     if (blocking) {
         const auto waitStatus = waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, QueueThrottle::MEDIUM);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
+        internalAllocationStorage->cleanAllocationList(newTaskCount, DEFERRED_DEALLOCATION);
 
         if (waitStatus == WaitStatus::GpuHang) {
             return CompletionStamp::gpuHang;

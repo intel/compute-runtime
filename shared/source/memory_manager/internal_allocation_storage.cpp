@@ -40,10 +40,6 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
 
 void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) {
     freeAllocationsList(waitTaskCount, allocationLists[allocationUsage]);
-
-    if (allocationUsage == TEMPORARY_ALLOCATION) {
-        freeAllocationsList(waitTaskCount, allocationLists[DEFERRED_DEALLOCATION]);
-    }
 }
 
 void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {

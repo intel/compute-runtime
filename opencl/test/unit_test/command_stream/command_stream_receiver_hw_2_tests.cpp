@@ -847,9 +847,9 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
 
     flushBcsTask(&bcsCsr, blitProperties, true, *pDevice);
 
-    EXPECT_EQ(1u, mockInternalAllocationsStorage->cleanAllocationsCalled);
+    EXPECT_EQ(2u, mockInternalAllocationsStorage->cleanAllocationsCalled);
     EXPECT_EQ(bcsCsr.taskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
-    EXPECT_TRUE(TEMPORARY_ALLOCATION == mockInternalAllocationsStorage->lastCleanAllocationUsage);
+    EXPECT_TRUE(DEFERRED_DEALLOCATION == mockInternalAllocationsStorage->lastCleanAllocationUsage);
 }
 
 HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddresses) {

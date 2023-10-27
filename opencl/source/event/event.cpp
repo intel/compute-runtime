@@ -463,6 +463,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
+    allocationStorage->cleanAllocationList(this->taskCount, DEFERRED_DEALLOCATION);
 
     return WaitStatus::Ready;
 }
@@ -499,6 +500,7 @@ void Event::updateExecutionStatus() {
         unblockEventsBlockedByThis(CL_COMPLETE);
         auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
         allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
+        allocationStorage->cleanAllocationList(this->taskCount, DEFERRED_DEALLOCATION);
         return;
     }
 
