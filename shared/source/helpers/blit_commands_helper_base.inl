@@ -200,6 +200,9 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 
     dispatchPreBlitCommand(linearStream, *waArgs.rootDeviceEnvironment);
     auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
+    const auto maxWidth = getMaxBlitWidth(*waArgs.rootDeviceEnvironment);
+    const auto maxHeight = getMaxBlitHeight(*waArgs.rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+
     appendColorDepth(blitProperties, bltCmd);
 
     for (uint64_t slice = 0; slice < blitProperties.copySize.z; slice++) {
@@ -207,10 +210,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
             uint64_t offset = 0;
             uint64_t sizeToBlit = blitProperties.copySize.x;
             while (sizeToBlit != 0) {
-                if (sizeToBlit > getMaxBlitWidth(*waArgs.rootDeviceEnvironment)) {
+                if (sizeToBlit > maxWidth) {
                     // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
-                    width = getMaxBlitWidth(*waArgs.rootDeviceEnvironment);
-                    height = std::min((sizeToBlit / width), getMaxBlitHeight(*waArgs.rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed));
+                    width = maxWidth;
+                    height = std::min((sizeToBlit / width), maxHeight);
                 } else {
                     // dispatch 1D blt: (1 .. maxBlitWidth) x 1
                     width = sizeToBlit;
@@ -253,6 +256,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     auto blitCmd = GfxFamily::cmdInitXyColorBlt;
     auto &rootDeviceEnvironment = *waArgs.rootDeviceEnvironment;
+    const auto maxWidth = getMaxBlitWidth(rootDeviceEnvironment);
+    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, true);
 
     blitCmd.setFillColor(pattern);
     blitCmd.setColorDepth(depth);
@@ -263,12 +268,12 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         tmpCmd.setDestinationBaseAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
         uint64_t height = 0;
         uint64_t width = 0;
-        if (sizeToFill <= getMaxBlitWidth(rootDeviceEnvironment)) {
+        if (sizeToFill <= maxWidth) {
             width = sizeToFill;
             height = 1;
         } else {
-            width = getMaxBlitWidth(rootDeviceEnvironment);
-            height = std::min((sizeToFill / width), getMaxBlitHeight(rootDeviceEnvironment, true));
+            width = maxWidth;
+            height = std::min((sizeToFill / width), maxHeight);
             if (height > 1) {
                 appendTilingEnable(tmpCmd);
             }
@@ -476,12 +481,14 @@ size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(const Vec3<s
     uint64_t width = 1;
     uint64_t height = 1;
     uint64_t sizeToBlit = copySize.x;
+    const auto maxWidth = getMaxBlitWidth(rootDeviceEnvironment);
+    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed);
 
     while (sizeToBlit != 0) {
         if (sizeToBlit > getMaxBlitWidth(rootDeviceEnvironment)) {
             // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
-            width = getMaxBlitWidth(rootDeviceEnvironment);
-            height = std::min((sizeToBlit / width), getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed));
+            width = maxWidth;
+            height = std::min((sizeToBlit / width), maxHeight);
 
         } else {
             // dispatch 1D blt: (1 .. maxBlitWidth) x 1
