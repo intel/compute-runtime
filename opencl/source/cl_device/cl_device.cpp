@@ -48,12 +48,15 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
         auto pClSubDevice = std::make_unique<ClDevice>(*subDevice, rootClDevice, platform);
         pClSubDevice->incRefInternal();
         pClSubDevice->decRefApi();
+        pClSubDevice->internalParentDevice = this;
 
-        auto &deviceInfo = pClSubDevice->deviceInfo;
-        deviceInfo.parentDevice = this;
-        deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
-        deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
-        deviceInfo.partitionType[2] = 0;
+        if (!device.getExecutionEnvironment()->isExposingSubDevicesAsDevices()) {
+            auto &deviceInfo = pClSubDevice->deviceInfo;
+            deviceInfo.parentDevice = this;
+            deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
+            deviceInfo.partitionType[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA;
+            deviceInfo.partitionType[2] = 0;
+        }
 
         subDevices.push_back(std::move(pClSubDevice));
     }
@@ -70,25 +73,25 @@ ClDevice::~ClDevice() {
 }
 
 void ClDevice::incRefInternal() {
-    if (deviceInfo.parentDevice == nullptr) {
+    if (internalParentDevice == nullptr) {
         BaseObject<_cl_device_id>::incRefInternal();
         return;
     }
-    auto pParentDevice = static_cast<ClDevice *>(deviceInfo.parentDevice);
+    auto pParentDevice = static_cast<ClDevice *>(internalParentDevice);
     pParentDevice->incRefInternal();
 }
 
 unique_ptr_if_unused<ClDevice> ClDevice::decRefInternal() {
-    if (deviceInfo.parentDevice == nullptr) {
+    if (internalParentDevice == nullptr) {
         return BaseObject<_cl_device_id>::decRefInternal();
     }
-    auto pParentDevice = static_cast<ClDevice *>(deviceInfo.parentDevice);
+    auto pParentDevice = static_cast<ClDevice *>(internalParentDevice);
     return pParentDevice->decRefInternal();
 }
 
 void ClDevice::retainApi() {
     auto parentDeviceId = deviceInfo.parentDevice;
-    if ((parentDeviceId && !getExecutionEnvironment()->isExposingSubDevicesAsDevices())) {
+    if (parentDeviceId) {
         auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
         pParentClDevice->incRefInternal();
         this->incRefApi();
@@ -96,7 +99,7 @@ void ClDevice::retainApi() {
 };
 unique_ptr_if_unused<ClDevice> ClDevice::releaseApi() {
     auto parentDeviceId = deviceInfo.parentDevice;
-    if (!parentDeviceId || getExecutionEnvironment()->isExposingSubDevicesAsDevices()) {
+    if (!parentDeviceId) {
         return unique_ptr_if_unused<ClDevice>(this, false);
     }
     auto pParentClDevice = static_cast<ClDevice *>(parentDeviceId);
