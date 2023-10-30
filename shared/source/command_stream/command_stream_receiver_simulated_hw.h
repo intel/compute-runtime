@@ -85,9 +85,9 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         }
         return AubMemDump::AddressSpaceValues::TraceNonlocal;
     }
-    PhysicalAddressAllocator *createPhysicalAddressAllocator(bool subDevicesAsDevices, const HardwareInfo *hwInfo) {
-        const auto bankSize = AubHelper::getPerTileLocalMemorySize(subDevicesAsDevices, hwInfo);
-        const auto devicesCount = GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, hwInfo);
+    PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
+        const auto bankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
+        const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {

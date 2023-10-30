@@ -735,7 +735,7 @@ TEST(ClDeviceHelperTest, givenNonZeroNumberOfTilesWhenPrepareDeviceEnvironmentsC
     HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleSubDevices.set(0);
 
-    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(false, &hwInfo);
+    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 3u);
 }
 
@@ -751,6 +751,6 @@ TEST(ClDeviceHelperTest, givenZeroNumberOfTilesWhenPrepareDeviceEnvironmentsCoun
     HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleSubDevices.set(0);
 
-    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(false, &hwInfo);
+    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
