@@ -21,7 +21,6 @@ PerformanceHandleContext::~PerformanceHandleContext() {
             delete pPerformance;
             pPerformance = nullptr;
         }
-        handleList.pop_back();
     }
 }
 
