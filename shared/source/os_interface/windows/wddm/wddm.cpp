@@ -1033,20 +1033,56 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     return status;
 }
 
+bool Wddm::getDeviceExecutionState(D3DKMT_DEVICESTATE_TYPE stateType, void *privateData) {
+    D3DKMT_GETDEVICESTATE getDevState = {};
+    NTSTATUS status = STATUS_SUCCESS;
+
+    getDevState.hDevice = device;
+    getDevState.StateType = stateType;
+
+    status = getGdi()->getDeviceState(&getDevState);
+    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+    if (status != STATUS_SUCCESS) {
+        return false;
+    }
+
+    if (stateType == D3DKMT_DEVICESTATE_PAGE_FAULT) {
+        if (privateData != nullptr) {
+            *reinterpret_cast<D3DKMT_DEVICEPAGEFAULT_STATE *>(privateData) = getDevState.PageFaultState;
+        }
+        return true;
+    } else if (stateType == D3DKMT_DEVICESTATE_EXECUTION) {
+        if (privateData != nullptr) {
+            *reinterpret_cast<D3DKMT_DEVICEEXECUTION_STATE *>(privateData) = getDevState.ExecutionState;
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool Wddm::getDeviceState() {
     if (checkDeviceState) {
-        D3DKMT_GETDEVICESTATE getDevState = {};
-        NTSTATUS status = STATUS_SUCCESS;
-
-        getDevState.hDevice = device;
-        getDevState.StateType = D3DKMT_DEVICESTATE_EXECUTION;
-
-        status = getGdi()->getDeviceState(&getDevState);
-        DEBUG_BREAK_IF(status != STATUS_SUCCESS);
-        PRINT_DEBUG_STRING(getDevState.ExecutionState == D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY, stderr, "Device execution error, out of memory %d\n", getDevState.ExecutionState);
-        if (status == STATUS_SUCCESS) {
-            DEBUG_BREAK_IF(getDevState.ExecutionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
-            return getDevState.ExecutionState == D3DKMT_DEVICEEXECUTION_ACTIVE;
+        D3DKMT_DEVICEEXECUTION_STATE executionState = D3DKMT_DEVICEEXECUTION_ACTIVE;
+        auto status = getDeviceExecutionState(D3DKMT_DEVICESTATE_EXECUTION, &executionState);
+        if (status) {
+            DEBUG_BREAK_IF(executionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
+            if (executionState == D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY) {
+                PRINT_DEBUG_STRING(true, stderr, "Device execution error, out of memory %d\n", executionState);
+            } else if (executionState == D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT) {
+                PRINT_DEBUG_STRING(true, stderr, "Device execution error, page fault\n", executionState);
+                D3DKMT_DEVICEPAGEFAULT_STATE pageFaultState = {};
+                status = getDeviceExecutionState(D3DKMT_DEVICESTATE_PAGE_FAULT, &pageFaultState);
+                if (status) {
+                    PRINT_DEBUG_STRING(true, stderr, "faulted gpuva 0x%" PRIx64 ", ", pageFaultState.FaultedVirtualAddress);
+                    PRINT_DEBUG_STRING(true, stderr, "pipeline stage %d, bind table entry %u, flags 0x%x, error code(is device) %u, error code %u\n",
+                                       pageFaultState.FaultedPipelineStage, pageFaultState.FaultedBindTableEntry, pageFaultState.PageFaultFlags,
+                                       pageFaultState.FaultErrorCode.IsDeviceSpecificCodeReservedBit, pageFaultState.FaultErrorCode.DeviceSpecificCode);
+                }
+            } else if (executionState != D3DKMT_DEVICEEXECUTION_ACTIVE) {
+                PRINT_DEBUG_STRING(true, stderr, "Device execution error %d\n", executionState);
+            }
+            return executionState == D3DKMT_DEVICEEXECUTION_ACTIVE;
         }
         return false;
     }

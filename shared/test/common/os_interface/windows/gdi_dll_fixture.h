@@ -58,6 +58,7 @@ struct GdiDllFixture {
         setAdapterBDFFcn =
             reinterpret_cast<decltype(&setAdapterBDF)>(mockGdiDll->getProcAddress("setAdapterBDF"));
         setMockDeviceExecutionStateFcn = reinterpret_cast<decltype(&setMockDeviceExecutionState)>(mockGdiDll->getProcAddress("setMockDeviceExecutionState"));
+        setMockGetDeviceStateReturnValueFcn = reinterpret_cast<decltype(&setMockGetDeviceStateReturnValue)>(mockGdiDll->getProcAddress("setMockGetDeviceStateReturnValue"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
@@ -104,4 +105,5 @@ struct GdiDllFixture {
     decltype(&getLastPriority) getLastPriorityFcn = nullptr;
     decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;
     decltype(&setMockDeviceExecutionState) setMockDeviceExecutionStateFcn = nullptr;
+    decltype(&setMockGetDeviceStateReturnValue) setMockGetDeviceStateReturnValueFcn = nullptr;
 };

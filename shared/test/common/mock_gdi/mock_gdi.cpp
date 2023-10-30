@@ -23,6 +23,8 @@ uint64_t gGpuAddressSpace = 0ull;
 uint32_t gLastPriority = 0ull;
 ADAPTER_BDF gAdapterBDF{};
 D3DKMT_DEVICEEXECUTION_STATE gExecutionState = D3DKMT_DEVICEEXECUTION_ACTIVE;
+NTSTATUS gGetDeviceStateExecutionReturnValue = STATUS_SUCCESS;
+NTSTATUS gGetDeviceStatePageFaultReturnValue = STATUS_SUCCESS;
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
@@ -646,7 +648,19 @@ NTSTATUS __stdcall mockD3DKMTEvict(IN OUT D3DKMT_EVICT *) {
 }
 
 NTSTATUS __stdcall mockD3DKMTGetDeviceState(IN OUT D3DKMT_GETDEVICESTATE *getDevState) {
-    getDevState->ExecutionState = gExecutionState;
+    if (getDevState->StateType == D3DKMT_DEVICESTATE_EXECUTION) {
+        getDevState->ExecutionState = gExecutionState;
+        return gGetDeviceStateExecutionReturnValue;
+    } else if (getDevState->StateType == D3DKMT_DEVICESTATE_PAGE_FAULT) {
+        getDevState->PageFaultState = {};
+        getDevState->PageFaultState.FaultedPipelineStage = DXGK_RENDER_PIPELINE_STAGE_UNKNOWN;
+        getDevState->PageFaultState.FaultedBindTableEntry = 2;
+        getDevState->PageFaultState.PageFaultFlags = DXGK_PAGE_FAULT_WRITE;
+        getDevState->PageFaultState.FaultErrorCode.IsDeviceSpecificCodeReservedBit = 1;
+        getDevState->PageFaultState.FaultErrorCode.DeviceSpecificCode = 10;
+        getDevState->PageFaultState.FaultedVirtualAddress = 0xABC000;
+        return gGetDeviceStatePageFaultReturnValue;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -755,4 +769,12 @@ D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *getSetContextSchedulingPriorityDataCall() {
 
 void setMockDeviceExecutionState(D3DKMT_DEVICEEXECUTION_STATE newState) {
     gExecutionState = newState;
+}
+
+void setMockGetDeviceStateReturnValue(NTSTATUS newReturnValue, bool execution) {
+    if (execution) {
+        gGetDeviceStateExecutionReturnValue = newReturnValue;
+    } else {
+        gGetDeviceStatePageFaultReturnValue = newReturnValue;
+    }
 }

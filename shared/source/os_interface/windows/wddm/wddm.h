@@ -214,6 +214,9 @@ class Wddm : public DriverModel {
         }
     }
 
+    bool getDeviceExecutionState(D3DKMT_DEVICESTATE_TYPE stateType, void *privateData);
+    bool getDeviceState();
+
   protected:
     bool translateTopologyInfo(TopologyMapping &mapping);
 
@@ -223,7 +226,6 @@ class Wddm : public DriverModel {
     bool createPagingQueue();
     bool destroyPagingQueue();
     bool destroyDevice();
-    bool getDeviceState();
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
     bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
     bool adjustEvictNeededParameter(bool evictNeeded) {

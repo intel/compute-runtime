@@ -133,6 +133,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "setMockDeviceExecutionState") {
         return reinterpret_cast<void *>(setMockDeviceExecutionState);
     }
+    if (procName == "setMockGetDeviceStateReturnValue") {
+        return reinterpret_cast<void *>(setMockGetDeviceStateReturnValue);
+    }
     if (procName == "getMockAllocation") {
         return reinterpret_cast<void *>(getMockAllocation);
     }

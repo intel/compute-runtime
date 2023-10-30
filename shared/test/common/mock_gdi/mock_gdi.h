@@ -104,5 +104,5 @@ bool *getRegisterTrimNotificationFailCall();
 uint32_t getLastPriority();
 void setAdapterBDF(ADAPTER_BDF &adapterBDF);
 void setMockDeviceExecutionState(D3DKMT_DEVICEEXECUTION_STATE newState);
-
+void setMockGetDeviceStateReturnValue(NTSTATUS newReturnValue, bool execution);
 void initGfxPartition();

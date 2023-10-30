@@ -490,12 +490,37 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceEx
     wddm->checkDeviceState = true;
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
+
     ::testing::internal::CaptureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
     std::string output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_TRUE(wddm->getDeviceState());
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFailThenNoMessageIsVisible) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = true;
+    auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
+    setMockDeviceExecutionStateFcn(executionState);
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, true);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_FALSE(wddm->getDeviceState());
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, true);
+
     ::testing::internal::CaptureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
     output = testing::internal::GetCapturedStderr();
@@ -509,16 +534,112 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceE
     wddm->checkDeviceState = false;
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
+
     ::testing::internal::CaptureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
     std::string output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+
     ::testing::internal::CaptureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
     output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string(""), output);
+}
+
+TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsPageFaultThenProperMessageIsVisible) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = true;
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_FALSE(wddm->getDeviceState());
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expected = "Device execution error, page fault\nfaulted gpuva 0xabc000, pipeline stage 0, bind table entry 2, flags 0x1, error code(is device) 1, error code 10\n";
+    EXPECT_EQ(expected, output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_TRUE(wddm->getDeviceState());
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFailureThenBasicMessageDisplayed) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = true;
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, false);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_FALSE(wddm->getDeviceState());
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expected = "Device execution error, page fault\n";
+    EXPECT_EQ(expected, output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, false);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_TRUE(wddm->getDeviceState());
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsOtherNonActiveStateThenGenericMessageDisplayed) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.EnableDebugBreak.set(false);
+
+    wddm->checkDeviceState = true;
+    auto executionState = D3DKMT_DEVICEEXECUTION_RESET;
+    setMockDeviceExecutionStateFcn(executionState);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_FALSE(wddm->getDeviceState());
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expected = std::string("Device execution error " + std::to_string(executionState) + "\n");
+    EXPECT_EQ(expected, output);
+
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_TRUE(wddm->getDeviceState());
+    output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+}
+
+TEST_F(WddmTests, givenGetDeviceExecutionStatusWhenGdiCallFailsThenReturnFalse) {
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, true);
+    setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
+
+    auto status = wddm->getDeviceExecutionState(D3DKMT_DEVICESTATE_EXECUTION, nullptr);
+    EXPECT_FALSE(status);
+
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, true);
+
+    status = wddm->getDeviceExecutionState(D3DKMT_DEVICESTATE_EXECUTION, nullptr);
+    EXPECT_TRUE(status);
+}
+
+TEST_F(WddmTests, givenGetDeviceExecutionStatusWhenUnsupportedStatusProvidedThenReturnsFalse) {
+    auto status = wddm->getDeviceExecutionState(D3DKMT_DEVICESTATE_PRESENT, nullptr);
+    EXPECT_FALSE(status);
+}
+
+TEST_F(WddmTests, givenGetDeviceExecutionStatusWhenGettingPageFaultStatusReturnsFailThenReturnFalse) {
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, false);
+    auto status = wddm->getDeviceExecutionState(D3DKMT_DEVICESTATE_PAGE_FAULT, nullptr);
+    EXPECT_FALSE(status);
+
+    setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, false);
+    status = wddm->getDeviceExecutionState(D3DKMT_DEVICESTATE_PAGE_FAULT, nullptr);
+    EXPECT_TRUE(status);
 }
 
 TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetTrueWhenCreateWddmThenCheckDeviceStateIsTrue) {
