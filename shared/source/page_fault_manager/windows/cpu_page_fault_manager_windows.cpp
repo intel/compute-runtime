@@ -25,7 +25,7 @@ std::unique_ptr<PageFaultManager> PageFaultManager::create() {
 std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler;
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
-    registerFaultHandler();
+    PageFaultManagerWindows::registerFaultHandler();
 }
 
 PageFaultManagerWindows::~PageFaultManagerWindows() {
