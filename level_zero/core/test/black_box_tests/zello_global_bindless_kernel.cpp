@@ -5,7 +5,7 @@
  *
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #include <process.h>
 #pragma warning(disable : 4996)
@@ -16,7 +16,7 @@
 #include <iostream>
 #include <vector>
 
-#ifdef WIN32
+#ifdef _WIN32
 const char *fSeparator = "\\";
 #elif defined(__linux__)
 const char *fSeparator = "/";

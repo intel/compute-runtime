@@ -72,7 +72,7 @@ set(TEST_TARGETS
 include_directories(common)
 
 foreach(TEST_NAME ${TEST_TARGETS})
-  if(MSVC)
+  if(WIN32)
     if(${TEST_NAME} STREQUAL "zello_host_ipc_copy_dma_buf")
       continue()
     endif()
