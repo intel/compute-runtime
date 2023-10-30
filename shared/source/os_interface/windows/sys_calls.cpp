@@ -23,8 +23,8 @@ bool isShutdownInProgress() {
         return true;
     }
 
-    auto RtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
-    return RtlDllShutdownInProgress();
+    auto rtlDllShutdownInProgress = reinterpret_cast<BOOLEAN(WINAPI *)()>(GetProcAddress(handle, "RtlDllShutdownInProgress"));
+    return rtlDllShutdownInProgress();
 }
 
 namespace SysCalls {

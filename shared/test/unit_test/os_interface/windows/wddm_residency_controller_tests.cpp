@@ -74,7 +74,7 @@ class MockOsContextWin : public OsContextWin {
 struct WddmResidencyControllerTest : ::testing::Test {
     const uint32_t osContextId = 0u;
 
-    void SetUp() {
+    void SetUp() override {
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
@@ -94,7 +94,7 @@ struct WddmResidencyControllerTest : ::testing::Test {
 struct WddmResidencyControllerWithGdiTest : ::testing::Test {
     const uint32_t osContextId = 0u;
 
-    void SetUp() {
+    void SetUp() override {
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
@@ -117,7 +117,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
 };
 
 struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerTest {
-    void SetUp() {
+    void SetUp() override {
         wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
         wddm->resetGdi(new MockGdi());
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
@@ -139,7 +139,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     }
 
-    void TearDown() {
+    void TearDown() override {
         osContext->decRefInternal();
     }
 
@@ -155,7 +155,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
 struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
     const uint32_t osContextId = 0u;
 
-    void SetUp() {
+    void SetUp() override {
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[0].get()));
         wddm->init();
         gdi = new MockGdi();
@@ -177,7 +177,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     }
 
-    void TearDown() {
+    void TearDown() override {
         osContext->decRefInternal();
     }
 

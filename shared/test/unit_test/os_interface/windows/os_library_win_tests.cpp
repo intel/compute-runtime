@@ -55,11 +55,11 @@ void trimFileName(char *buff, size_t length) {
     }
 }
 
-DWORD WINAPI GetModuleFileNameAMock(HMODULE hModule, LPSTR lpFilename, DWORD nSize) {
+DWORD WINAPI getModuleFileNameAMock(HMODULE hModule, LPSTR lpFilename, DWORD nSize) {
     return snprintf(lpFilename, nSize, "z:\\SomeFakeName.dll");
 }
 
-HMODULE WINAPI LoadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
+HMODULE WINAPI loadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
     if (mockWillFailInNonSystem32 && dwFlags != LOAD_LIBRARY_SEARCH_SYSTEM32)
         return NULL;
 
@@ -75,21 +75,21 @@ HMODULE WINAPI LoadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags
     return (HMODULE)1;
 }
 
-UINT WINAPI GetSystemDirectoryAMock(LPSTR lpBuffer, UINT uSize) {
+UINT WINAPI getSystemDirectoryAMock(LPSTR lpBuffer, UINT uSize) {
     const char path[] = "C:\\System";
     strcpy_s(lpBuffer, sizeof(path), path);
     return sizeof(path) - 1; // do not include terminating null
 }
 
 TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToSystem32) {
-    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
+    auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
 TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
-    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
+    auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
     VariableBackup<bool> bkpM(&mockWillFailInNonSystem32, false);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
@@ -97,7 +97,7 @@ TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
 }
 
 TEST(OSLibraryWinTest, WhenCreatingFullSystemPathThenProperPathIsConstructed) {
-    auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
+    auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
     VariableBackup<bool> bkpM(&mockWillFailInNonSystem32, false);
 
     auto fullPath = OsLibrary::createFullSystemPath("test");

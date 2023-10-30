@@ -79,7 +79,7 @@ TEST_F(glSharingTests, givenMockGlWhenGlBufferIsCreatedThenMemObjectHasGlHandler
     EXPECT_NE(nullptr, glBuffer->getGraphicsAllocation(rootDeviceIndex));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(4096u, glBuffer->getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize());
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
 
     EXPECT_EQ(bufferId, mockGlSharing->dllParam->getBufferInfo().bufferName);
     EXPECT_EQ(4096u, glBuffer->getSize());
@@ -167,7 +167,7 @@ TEST_F(glSharingTests, givenGlClBufferWhenAskedForCLGLGetInfoThenIdAndTypeIsRetu
     auto retVal = CL_SUCCESS;
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
 
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
 
     cl_gl_object_type objectType = 0u;
     cl_GLuint objectId = 0u;
@@ -210,7 +210,7 @@ TEST_F(glSharingTests, givenClBufferWhenAskedForCLGLGetInfoThenErrorIsReturned) 
 TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredThenAcuqireCountIsIncremented) {
     auto retVal = CL_SUCCESS;
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
 
     auto memObject = castToObject<Buffer>(glBuffer);
     EXPECT_FALSE(memObject->isMemObjZeroCopy());
@@ -219,8 +219,8 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredThenAcuqireCountIsIncremen
     auto currentGraphicsAllocation = memObject->getGraphicsAllocation(rootDeviceIndex);
 
     memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
 
     auto currentGraphicsAllocation2 = memObject->getGraphicsAllocation(rootDeviceIndex);
 
@@ -236,16 +236,16 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
     auto memObject = castToObject<MemObj>(glBuffer);
 
     memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
 
     memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
 
     memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
     memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -278,14 +278,14 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceAfterReleaseThenAcuqi
     auto memObject = castToObject<MemObj>(glBuffer);
 
     memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
 
     memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
 
     memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(3, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
+    EXPECT_EQ(3, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -299,10 +299,10 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquireCountIsDecrementedToZeroThe
     sharingHandler->acquire(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
 
     sharingHandler->release(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(0, mockGlSharing->dllParam->getParam("GLReleaseSharedBufferCalled"));
+    EXPECT_EQ(0, mockGlSharing->dllParam->getParam("glReleaseSharedBufferCalled"));
 
     sharingHandler->release(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLReleaseSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSharedBufferCalled"));
     EXPECT_EQ(bufferId, mockGlSharing->dllParam->getBufferInfo().bufferName);
 }
 
@@ -336,10 +336,10 @@ TEST_F(glSharingTests, givenHwCommandQueueWhenAcquireIsCalledThenAcquireCountIsI
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(0u, buffer->acquireCount);
 
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     EXPECT_EQ(1u, buffer->acquireCount);
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
@@ -348,7 +348,7 @@ TEST_F(glSharingTests, givenHwCommandQueueWhenAcquireIsCalledThenAcquireCountIsI
 
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(3, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(3, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     EXPECT_EQ(1u, buffer->acquireCount);
 
     retVal = clReleaseCommandQueue(commandQueue);
@@ -366,7 +366,7 @@ TEST_F(glSharingTests, givenHwCommandQueueWhenAcquireIsCalledWithIncorrectWaitli
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(0u, buffer->acquireCount);
 
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 0, &glBuffer, 1, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 
@@ -498,7 +498,7 @@ TEST_F(glSharingTests, givenHwCommandQueueWhenReleaseIsCalledWithIncorrectWaitli
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(0u, buffer->acquireCount);
 
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -524,7 +524,7 @@ TEST_F(glSharingTests, givenContextWithoutSharingWhenAcquireIsCalledThenErrorIsR
     EXPECT_EQ(0u, buffer->acquireCount);
 
     context.releaseSharingFunctions(CLGL_SHARING);
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 
@@ -544,10 +544,10 @@ TEST_F(glSharingTests, givenContextWithoutSharingWhenReleaseIsCalledThenErrorIsR
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(0u, buffer->acquireCount);
 
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glBuffer, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
     EXPECT_EQ(1u, buffer->acquireCount);
 
     context.releaseSharingFunctions(CLGL_SHARING);
@@ -626,15 +626,15 @@ TEST_F(glSharingTests, givenMockGLWhenFunctionsAreCalledThenCallsAreReceived) {
     EXPECT_EQ(1u, mockGlSharingFunctions->makeCurrent(glContext, glDisplay));
 
     EXPECT_EQ(1, mockGlSharing->dllParam->getGLSetSharedOCLContextStateReturnedValue());
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLReleaseSharedBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLReleaseSharedRenderBufferCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLReleaseSharedTextureCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentDisplayCalled"));
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLMakeCurrentCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedRenderBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glAcquireSharedTextureCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSharedBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSharedRenderBufferCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSharedTextureCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentContextCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetCurrentDisplayCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glMakeCurrentCalled"));
 }
 
 TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenOglContextFunctionIsCalled) {
@@ -1003,18 +1003,18 @@ TEST(glSharingContextSwitch, givenContextOrBkpContextHandleAsCurrentWhenSwitchAt
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().currentDisplay == display);
     }
 
-    EXPECT_EQ(0, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled"));
-    EXPECT_EQ(1, mockGlSharing.dllParam->getParam("GLGetCurrentContextCalled"));
-    EXPECT_EQ(1, mockGlSharing.dllParam->getParam("GLGetCurrentDisplayCalled"));
+    EXPECT_EQ(0, mockGlSharing.dllParam->getParam("glMakeCurrentCalled"));
+    EXPECT_EQ(1, mockGlSharing.dllParam->getParam("glGetCurrentContextCalled"));
+    EXPECT_EQ(1, mockGlSharing.dllParam->getParam("glGetCurrentDisplayCalled"));
 
     mockGlSharing.overrideGetCurrentValues(bkpContext, display);
     {
         GLContextGuard guard(*mockGlSharing.sharingFunctions);
-        EXPECT_EQ(0, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled"));
+        EXPECT_EQ(0, mockGlSharing.dllParam->getParam("glMakeCurrentCalled"));
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().currentContext == bkpContext);
     }
 
-    EXPECT_EQ(1, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled")); // destructor
+    EXPECT_EQ(1, mockGlSharing.dllParam->getParam("glMakeCurrentCalled")); // destructor
     EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == bkpContext);
 }
 
@@ -1030,10 +1030,10 @@ TEST(glSharingContextSwitch, givenUnknownCurrentContextAndNoFailsOnCallWhenSwitc
     {
         GLContextGuard guard(*mockGlSharing.sharingFunctions);
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().currentContext == unknownContext);
-        EXPECT_EQ(1, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled"));
+        EXPECT_EQ(1, mockGlSharing.dllParam->getParam("glMakeCurrentCalled"));
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == context);
     }
-    EXPECT_EQ(2, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled")); // destructor
+    EXPECT_EQ(2, mockGlSharing.dllParam->getParam("glMakeCurrentCalled")); // destructor
     EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == unknownContext);
 }
 
@@ -1049,10 +1049,10 @@ TEST(glSharingContextSwitch, givenUnknownCurrentContextAndOneFailOnCallWhenSwitc
     {
         GLContextGuard guard(*mockGlSharing.sharingFunctions);
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().currentContext == unknownContext);
-        EXPECT_EQ(2, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled"));
+        EXPECT_EQ(2, mockGlSharing.dllParam->getParam("glMakeCurrentCalled"));
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == bkpContext);
     }
-    EXPECT_EQ(3, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled")); // destructor
+    EXPECT_EQ(3, mockGlSharing.dllParam->getParam("glMakeCurrentCalled")); // destructor
     EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == unknownContext);
 }
 
@@ -1068,10 +1068,10 @@ TEST(glSharingContextSwitch, givenUnknownCurrentContextAndMultipleFailOnCallWhen
     {
         GLContextGuard guard(*mockGlSharing.sharingFunctions);
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().currentContext == unknownContext);
-        EXPECT_EQ(6, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled"));
+        EXPECT_EQ(6, mockGlSharing.dllParam->getParam("glMakeCurrentCalled"));
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == bkpContext);
     }
-    EXPECT_EQ(7, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled")); // destructor
+    EXPECT_EQ(7, mockGlSharing.dllParam->getParam("glMakeCurrentCalled")); // destructor
     EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == unknownContext);
 }
 
@@ -1088,19 +1088,19 @@ TEST(glSharingContextSwitch, givenZeroCurrentContextWhenSwitchAttemptedThenMakeS
     {
         GLContextGuard guard(*mockGlSharing.sharingFunctions);
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().currentContext == zeroContext);
-        EXPECT_EQ(1, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled"));
+        EXPECT_EQ(1, mockGlSharing.dllParam->getParam("glMakeCurrentCalled"));
         EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == bkpContext);
     }
-    EXPECT_EQ(2, mockGlSharing.dllParam->getParam("GLMakeCurrentCalled")); // destructor
+    EXPECT_EQ(2, mockGlSharing.dllParam->getParam("glMakeCurrentCalled")); // destructor
     EXPECT_TRUE(mockGlSharing.dllParam->getGlMockReturnedValues().madeCurrentContext == zeroContext);
 }
 
 TEST(glSharingContextSwitch, givenSharingFunctionsWhenGlDeleteContextIsNotPresentThenItIsNotCalled) {
     auto glSharingFunctions = new GLSharingFunctionsWindows();
     GlDllHelper dllParam;
-    auto currentGlDeleteContextCalledCount = dllParam.getParam("GLDeleteContextCalled");
+    auto currentGlDeleteContextCalledCount = dllParam.getParam("glDeleteContextCalled");
     delete glSharingFunctions;
-    EXPECT_EQ(currentGlDeleteContextCalledCount, dllParam.getParam("GLDeleteContextCalled"));
+    EXPECT_EQ(currentGlDeleteContextCalledCount, dllParam.getParam("glDeleteContextCalled"));
 }
 
 HWTEST_F(glSharingTests, givenSyncObjectWhenCreateEventIsCalledThenCreateGLSyncObj) {
@@ -1117,12 +1117,12 @@ HWTEST_F(glSharingTests, givenSyncObjectWhenCreateEventIsCalledThenCreateGLSyncO
     EXPECT_TRUE(eventObj->peekExecutionStatus() == CL_SUBMITTED);
     EXPECT_EQ(CompletionStamp::notReady, eventObj->taskLevel);
     EXPECT_EQ(CompletionStamp::notReady, eventObj->getTaskLevel());
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLRetainSyncCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glRetainSyncCalled"));
 
     eventObj->setStatus(CL_COMPLETE);
     EXPECT_EQ(0u, eventObj->getTaskLevel());
     clReleaseEvent(event);
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLReleaseSyncCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSyncCalled"));
 }
 
 HWTEST_F(glSharingTests, givenEventCreatedFromFenceObjectWhenItIsPassedToAcquireThenItsStatusIsUpdated) {
@@ -1162,13 +1162,13 @@ TEST_F(glSharingTests, givenSyncEventWhenUpdateExecutionStatusIsCalledThenGLGetS
 
     mockGlSharing->setGetSyncivReturnValue(GL_UNSIGNALED);
     syncEvent->updateExecutionStatus();
-    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetSyncivCalled"));
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glGetSyncivCalled"));
     EXPECT_TRUE(syncEvent->updateEventAndReturnCurrentStatus() == CL_SUBMITTED);
-    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLGetSyncivCalled")); // updateExecutionStatus called in peekExecutionStatus
+    EXPECT_EQ(2, mockGlSharing->dllParam->getParam("glGetSyncivCalled")); // updateExecutionStatus called in peekExecutionStatus
 
     mockGlSharing->setGetSyncivReturnValue(GL_SIGNALED);
     syncEvent->updateExecutionStatus();
-    EXPECT_EQ(3, mockGlSharing->dllParam->getParam("GLGetSyncivCalled"));
+    EXPECT_EQ(3, mockGlSharing->dllParam->getParam("glGetSyncivCalled"));
     EXPECT_TRUE(syncEvent->peekExecutionStatus() == CL_COMPLETE);
 
     delete syncEvent;

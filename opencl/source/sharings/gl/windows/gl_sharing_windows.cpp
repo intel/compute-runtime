@@ -18,7 +18,7 @@ extern const char *openglDllName;
 namespace NEO {
 GLSharingFunctionsWindows::GLSharingFunctionsWindows(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle)
     : glHDCType(glhdcType), glHGLRCHandle(glhglrcHandle), glHGLRCHandleBkpCtx(glhglrcHandleBkpCtx), glHDCHandle(glhdcHandle) {
-    initGLFunctions();
+    GLSharingFunctionsWindows::initGLFunctions();
     updateOpenGLContext();
     createBackupContext();
 }

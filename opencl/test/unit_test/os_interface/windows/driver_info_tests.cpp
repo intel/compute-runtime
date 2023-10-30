@@ -41,13 +41,13 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump,
 
 class DriverInfoDeviceTest : public ::testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         hwInfo = defaultHwInfo.get();
         commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily];
         commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily] = createMockCommandStreamReceiver;
     }
 
-    void TearDown() {
+    void TearDown() override {
         commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily] = commandStreamReceiverCreateFunc;
     }
 

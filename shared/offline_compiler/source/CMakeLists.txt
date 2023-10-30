@@ -277,7 +277,7 @@ target_link_libraries(${OCLOC_NAME} ${OCLOC_NAME}_lib)
 create_project_source_tree(${OCLOC_NAME})
 set_target_properties(${OCLOC_NAME} PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})
 
-if(MSVC)
+if(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(OCLOC_BITNESS_SUFFIX 32)
   elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)

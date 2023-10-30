@@ -18,28 +18,28 @@ extern "C" {
 const char *glString = "Intel";
 const char *glVersion = "4.0";
 const char *arrayStringi[2]{"GL_OES_framebuffer_object", "GL_EXT_framebuffer_object"};
-int GLAcquireSharedBufferCalled = 0;
-int GLAcquireSharedRenderBufferCalled = 0;
-int GLAcquireSharedTextureCalled = 0;
-int GLDeleteContextCalled = 0;
-int GLGetCurrentContextCalled = 0;
-int GLGetCurrentDisplayCalled = 0;
-int GLGetSyncivCalled = 0;
-int GLMakeCurrentCalled = 0;
-int GLReleaseSharedBufferCalled = 0;
-int GLReleaseSharedRenderBufferCalled = 0;
-int GLReleaseSharedTextureCalled = 0;
-int GLReleaseSyncCalled = 0;
-int GLRetainSyncCalled = 0;
-int WGLCreateContextCalled = 0;
-int WGLDeleteContextCalled = 0;
-int WGLShareListsCalled = 0;
+int glAcquireSharedBufferCalled = 0;
+int glAcquireSharedRenderBufferCalled = 0;
+int glAcquireSharedTextureCalled = 0;
+int glDeleteContextCalled = 0;
+int glGetCurrentContextCalled = 0;
+int glGetCurrentDisplayCalled = 0;
+int glGetSyncivCalled = 0;
+int glMakeCurrentCalled = 0;
+int glReleaseSharedBufferCalled = 0;
+int glReleaseSharedRenderBufferCalled = 0;
+int glReleaseSharedTextureCalled = 0;
+int glReleaseSyncCalled = 0;
+int glRetainSyncCalled = 0;
+int wglCreateContextCalled = 0;
+int wglDeleteContextCalled = 0;
+int wglShareListsCalled = 0;
 CL_GL_BUFFER_INFO bufferInfoInput = {0};
 CL_GL_BUFFER_INFO bufferInfoOutput = {0};
 CL_GL_RESOURCE_INFO textureInfoInput = {0};
 CL_GL_RESOURCE_INFO textureInfoOutput = {0};
 NEO::GLMockReturnedValues glMockReturnedValues = {0};
-GLboolean GLSetSharedOCLContextStateReturnedValue = 1u;
+GLboolean glSetSharedOCLContextStateReturnedValue = 1u;
 bool glGetLuidFuncAvailable = true;
 int glGetLuidCalled = 0;
 
@@ -50,11 +50,11 @@ const unsigned char *WINAPI glGetString(unsigned int name) {
         return reinterpret_cast<const unsigned char *>(glVersion);
     return reinterpret_cast<const unsigned char *>("");
 };
-GLboolean WINAPI wglSetSharedOCLContextStateINTELMock(HDC HDCHandle, HGLRC ContextHandle, unsigned char State,
+GLboolean WINAPI wglSetSharedOCLContextStateINTELMock(HDC hdcHandle, HGLRC contextHandle, unsigned char state,
                                                       void *pContextInfo) {
     ((NEO::ContextInfo *)pContextInfo)->contextHandle = 1;
     ((NEO::ContextInfo *)pContextInfo)->deviceHandle = 2;
-    return GLSetSharedOCLContextStateReturnedValue;
+    return glSetSharedOCLContextStateReturnedValue;
 };
 GLboolean WINAPI mockGLAcquireSharedBuffer(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
 
@@ -64,12 +64,12 @@ GLboolean WINAPI mockGLAcquireSharedBuffer(GLDisplay, GLContext, GLContext, GLvo
     pBufferInfo->globalShareHandle = bufferInfoOutput.globalShareHandle;
     pBufferInfo->pGmmResInfo = bufferInfoOutput.pGmmResInfo;
     pBufferInfo->bufferOffset = bufferInfoOutput.bufferOffset;
-    GLAcquireSharedBufferCalled++;
+    glAcquireSharedBufferCalled++;
     return (GLboolean)1;
 };
 GLboolean WINAPI mockGLReleaseSharedBuffer(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
     bufferInfoInput = *static_cast<CL_GL_BUFFER_INFO *>(pResourceInfo);
-    GLReleaseSharedBufferCalled++;
+    glReleaseSharedBufferCalled++;
     return (GLboolean)1;
 };
 GLboolean WINAPI mockGLAcquireSharedRenderBuffer(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
@@ -78,12 +78,12 @@ GLboolean WINAPI mockGLAcquireSharedRenderBuffer(GLDisplay, GLContext, GLContext
     pTextureInfo->globalShareHandle = textureInfoOutput.globalShareHandle;
     pTextureInfo->pGmmResInfo = textureInfoOutput.pGmmResInfo;
     pTextureInfo->glInternalFormat = GL_RGBA8;
-    GLAcquireSharedRenderBufferCalled++;
+    glAcquireSharedRenderBufferCalled++;
     return (GLboolean)1;
 };
 GLboolean WINAPI mockGLReleaseSharedRenderBuffer(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
     textureInfoInput = *static_cast<CL_GL_RESOURCE_INFO *>(pResourceInfo);
-    GLReleaseSharedRenderBufferCalled++;
+    glReleaseSharedRenderBufferCalled++;
     return (GLboolean)1;
 };
 GLboolean WINAPI mockGLAcquireSharedTexture(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
@@ -102,33 +102,33 @@ GLboolean WINAPI mockGLAcquireSharedTexture(GLDisplay, GLContext, GLContext, GLv
     pTextureInfo->textureBufferOffset = textureInfoOutput.textureBufferOffset;
     pTextureInfo->numberOfSamples = textureInfoOutput.numberOfSamples;
     pTextureInfo->isAuxEnabled = textureInfoOutput.isAuxEnabled;
-    GLAcquireSharedTextureCalled++;
+    glAcquireSharedTextureCalled++;
     return (GLboolean)1;
 };
 GLboolean WINAPI mockGLReleaseSharedTexture(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
     textureInfoInput = *static_cast<CL_GL_RESOURCE_INFO *>(pResourceInfo);
-    GLReleaseSharedTextureCalled++;
+    glReleaseSharedTextureCalled++;
     return (GLboolean)1;
 };
-GLboolean WINAPI mockGlRetainSync(GLDisplay HDCHandle, GLContext ContextHandle, GLContext BackupContextHandle,
+GLboolean WINAPI mockGlRetainSync(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle,
                                   GLvoid *pSyncInfo) {
-    GLRetainSyncCalled++;
+    glRetainSyncCalled++;
     GL_CL_SYNC_INFO *syncInfo = (GL_CL_SYNC_INFO *)(pSyncInfo);
     syncInfo->pSync = (void *)0x123;
     return GL_TRUE;
 };
-GLboolean WINAPI mockGlReleaseSync(GLDisplay HDCHandle, GLContext ContextHandle, GLContext BackupContextHandle,
+GLboolean WINAPI mockGlReleaseSync(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle,
                                    GLvoid *pSync) {
-    GLReleaseSyncCalled++;
+    glReleaseSyncCalled++;
     return GL_TRUE;
 };
 void WINAPI mockGlGetSynciv(GLvoid *pSync, GLenum pname, GLint *value) {
-    GLGetSyncivCalled++;
+    glGetSyncivCalled++;
     *value = glMockReturnedValues.syncivRetVal;
 };
 const unsigned char *_stdcall glGetStringiMock(unsigned int name, unsigned int index) { return reinterpret_cast<const unsigned char *>(arrayStringi[index]); };
 GLDisplay WINAPI mockGLGetCurrentDisplay() {
-    GLGetCurrentDisplayCalled++;
+    glGetCurrentDisplayCalled++;
     return glMockReturnedValues.currentDisplay;
 };
 
@@ -185,27 +185,27 @@ PROC WINAPI wglGetProcAddress(LPCSTR name) {
     return nullptr;
 }
 HGLRC WINAPI wglGetCurrentContext() {
-    GLGetCurrentContextCalled++;
+    glGetCurrentContextCalled++;
     return glMockReturnedValues.currentContext;
 };
 HDC WINAPI wglGetCurrentDC() { return mockGLGetCurrentDisplay(); };
-HGLRC WINAPI wglCreateContext(HDC Arg1) {
-    WGLCreateContextCalled++;
+HGLRC WINAPI wglCreateContext(HDC arg1) {
+    wglCreateContextCalled++;
     return (GLContext)0x101;
 };
-BOOL WINAPI wglDeleteContext(HGLRC Arg1) {
-    WGLDeleteContextCalled++;
-    GLDeleteContextCalled++;
+BOOL WINAPI wglDeleteContext(HGLRC arg1) {
+    wglDeleteContextCalled++;
+    glDeleteContextCalled++;
     return (GLboolean)1;
 };
 void WINAPI glGetIntegerv(GLenum pname, GLint *params) { return NEO::MockGLSharingFunctions::glGetIntegervTest(pname, params); };
 BOOL WINAPI wglShareLists(HGLRC arg1, HGLRC arg2) {
-    WGLShareListsCalled++;
+    wglShareListsCalled++;
     return 1;
 };
 
 BOOL WINAPI wglMakeCurrent(HDC arg1, HGLRC arg2) {
-    GLMakeCurrentCalled++;
+    glMakeCurrentCalled++;
     glMockReturnedValues.madeCurrentContext = arg2;
     if (glMockReturnedValues.forceMakeCurrentCallFail) {
         if (glMockReturnedValues.failsCounter < glMockReturnedValues.numberOfCallFails) {
@@ -222,71 +222,71 @@ void *WINAPI mockLoader(const char *name) {
     return nullptr;
 };
 void resetParam(const char *name) {
-    if (strcmp(name, "GLAcquireSharedBufferCalled") == 0) {
-        GLAcquireSharedBufferCalled = 0;
+    if (strcmp(name, "glAcquireSharedBufferCalled") == 0) {
+        glAcquireSharedBufferCalled = 0;
     }
-    if (strcmp(name, "GLAcquireSharedRenderBufferCalled") == 0) {
-        GLAcquireSharedRenderBufferCalled = 0;
+    if (strcmp(name, "glAcquireSharedRenderBufferCalled") == 0) {
+        glAcquireSharedRenderBufferCalled = 0;
     }
-    if (strcmp(name, "GLAcquireSharedTextureCalled") == 0) {
-        GLAcquireSharedTextureCalled = 0;
+    if (strcmp(name, "glAcquireSharedTextureCalled") == 0) {
+        glAcquireSharedTextureCalled = 0;
     }
-    if (strcmp(name, "GLDeleteContextCalled") == 0) {
-        GLDeleteContextCalled = 0;
+    if (strcmp(name, "glDeleteContextCalled") == 0) {
+        glDeleteContextCalled = 0;
     }
-    if (strcmp(name, "GLGetCurrentContextCalled") == 0) {
-        GLGetCurrentContextCalled = 0;
+    if (strcmp(name, "glGetCurrentContextCalled") == 0) {
+        glGetCurrentContextCalled = 0;
     }
-    if (strcmp(name, "GLGetCurrentDisplayCalled") == 0) {
-        GLGetCurrentDisplayCalled = 0;
+    if (strcmp(name, "glGetCurrentDisplayCalled") == 0) {
+        glGetCurrentDisplayCalled = 0;
     }
-    if (strcmp(name, "GLGetSyncivCalled") == 0) {
-        GLGetSyncivCalled = 0;
+    if (strcmp(name, "glGetSyncivCalled") == 0) {
+        glGetSyncivCalled = 0;
     }
-    if (strcmp(name, "GLMakeCurrentCalled") == 0) {
-        GLMakeCurrentCalled = 0;
+    if (strcmp(name, "glMakeCurrentCalled") == 0) {
+        glMakeCurrentCalled = 0;
     }
-    if (strcmp(name, "GLReleaseSharedBufferCalled") == 0) {
-        GLReleaseSharedBufferCalled = 0;
+    if (strcmp(name, "glReleaseSharedBufferCalled") == 0) {
+        glReleaseSharedBufferCalled = 0;
     }
-    if (strcmp(name, "GLReleaseSharedRenderBufferCalled") == 0) {
-        GLReleaseSharedRenderBufferCalled = 0;
+    if (strcmp(name, "glReleaseSharedRenderBufferCalled") == 0) {
+        glReleaseSharedRenderBufferCalled = 0;
     }
-    if (strcmp(name, "GLReleaseSharedTextureCalled") == 0) {
-        GLReleaseSharedTextureCalled = 0;
+    if (strcmp(name, "glReleaseSharedTextureCalled") == 0) {
+        glReleaseSharedTextureCalled = 0;
     }
-    if (strcmp(name, "GLReleaseSyncCalled") == 0) {
-        GLReleaseSyncCalled = 0;
+    if (strcmp(name, "glReleaseSyncCalled") == 0) {
+        glReleaseSyncCalled = 0;
     }
-    if (strcmp(name, "GLRetainSyncCalled") == 0) {
-        GLRetainSyncCalled = 0;
+    if (strcmp(name, "glRetainSyncCalled") == 0) {
+        glRetainSyncCalled = 0;
     }
-    if (strcmp(name, "WGLCreateContextCalled") == 0) {
-        WGLCreateContextCalled = 0;
+    if (strcmp(name, "wglCreateContextCalled") == 0) {
+        wglCreateContextCalled = 0;
     }
-    if (strcmp(name, "WGLDeleteContextCalled") == 0) {
-        WGLDeleteContextCalled = 0;
+    if (strcmp(name, "wglDeleteContextCalled") == 0) {
+        wglDeleteContextCalled = 0;
     }
-    if (strcmp(name, "WGLShareListsCalled") == 0) {
-        WGLShareListsCalled = 0;
+    if (strcmp(name, "wglShareListsCalled") == 0) {
+        wglShareListsCalled = 0;
     }
     if (strcmp(name, "") == 0) {
-        GLAcquireSharedBufferCalled = 0;
-        GLAcquireSharedRenderBufferCalled = 0;
-        GLAcquireSharedTextureCalled = 0;
-        GLDeleteContextCalled = 0;
-        GLGetCurrentContextCalled = 0;
-        GLGetCurrentDisplayCalled = 0;
-        GLGetSyncivCalled = 0;
-        GLMakeCurrentCalled = 0;
-        GLReleaseSharedBufferCalled = 0;
-        GLReleaseSharedRenderBufferCalled = 0;
-        GLReleaseSharedTextureCalled = 0;
-        GLReleaseSyncCalled = 0;
-        GLRetainSyncCalled = 0;
-        WGLCreateContextCalled = 0;
-        WGLDeleteContextCalled = 0;
-        WGLShareListsCalled = 0;
+        glAcquireSharedBufferCalled = 0;
+        glAcquireSharedRenderBufferCalled = 0;
+        glAcquireSharedTextureCalled = 0;
+        glDeleteContextCalled = 0;
+        glGetCurrentContextCalled = 0;
+        glGetCurrentDisplayCalled = 0;
+        glGetSyncivCalled = 0;
+        glMakeCurrentCalled = 0;
+        glReleaseSharedBufferCalled = 0;
+        glReleaseSharedRenderBufferCalled = 0;
+        glReleaseSharedTextureCalled = 0;
+        glReleaseSyncCalled = 0;
+        glRetainSyncCalled = 0;
+        wglCreateContextCalled = 0;
+        wglDeleteContextCalled = 0;
+        wglShareListsCalled = 0;
         glGetLuidCalled = 0;
         glGetLuidFuncAvailable = true;
     }
@@ -301,53 +301,53 @@ void resetParam(const char *name) {
     }
 };
 int getParam(const char *name) {
-    if (strcmp(name, "GLAcquireSharedBufferCalled") == 0) {
-        return GLAcquireSharedBufferCalled;
+    if (strcmp(name, "glAcquireSharedBufferCalled") == 0) {
+        return glAcquireSharedBufferCalled;
     }
-    if (strcmp(name, "GLAcquireSharedRenderBufferCalled") == 0) {
-        return GLAcquireSharedRenderBufferCalled;
+    if (strcmp(name, "glAcquireSharedRenderBufferCalled") == 0) {
+        return glAcquireSharedRenderBufferCalled;
     }
-    if (strcmp(name, "GLAcquireSharedTextureCalled") == 0) {
-        return GLAcquireSharedTextureCalled;
+    if (strcmp(name, "glAcquireSharedTextureCalled") == 0) {
+        return glAcquireSharedTextureCalled;
     }
-    if (strcmp(name, "GLDeleteContextCalled") == 0) {
-        return GLDeleteContextCalled;
+    if (strcmp(name, "glDeleteContextCalled") == 0) {
+        return glDeleteContextCalled;
     }
-    if (strcmp(name, "GLGetCurrentContextCalled") == 0) {
-        return GLGetCurrentContextCalled;
+    if (strcmp(name, "glGetCurrentContextCalled") == 0) {
+        return glGetCurrentContextCalled;
     }
-    if (strcmp(name, "GLGetCurrentDisplayCalled") == 0) {
-        return GLGetCurrentDisplayCalled;
+    if (strcmp(name, "glGetCurrentDisplayCalled") == 0) {
+        return glGetCurrentDisplayCalled;
     }
-    if (strcmp(name, "GLGetSyncivCalled") == 0) {
-        return GLGetSyncivCalled;
+    if (strcmp(name, "glGetSyncivCalled") == 0) {
+        return glGetSyncivCalled;
     }
-    if (strcmp(name, "GLMakeCurrentCalled") == 0) {
-        return GLMakeCurrentCalled;
+    if (strcmp(name, "glMakeCurrentCalled") == 0) {
+        return glMakeCurrentCalled;
     }
-    if (strcmp(name, "GLReleaseSharedBufferCalled") == 0) {
-        return GLReleaseSharedBufferCalled;
+    if (strcmp(name, "glReleaseSharedBufferCalled") == 0) {
+        return glReleaseSharedBufferCalled;
     }
-    if (strcmp(name, "GLReleaseSharedRenderBufferCalled") == 0) {
-        return GLReleaseSharedRenderBufferCalled;
+    if (strcmp(name, "glReleaseSharedRenderBufferCalled") == 0) {
+        return glReleaseSharedRenderBufferCalled;
     }
-    if (strcmp(name, "GLReleaseSharedTextureCalled") == 0) {
-        return GLReleaseSharedTextureCalled;
+    if (strcmp(name, "glReleaseSharedTextureCalled") == 0) {
+        return glReleaseSharedTextureCalled;
     }
-    if (strcmp(name, "GLReleaseSyncCalled") == 0) {
-        return GLReleaseSyncCalled;
+    if (strcmp(name, "glReleaseSyncCalled") == 0) {
+        return glReleaseSyncCalled;
     }
-    if (strcmp(name, "GLRetainSyncCalled") == 0) {
-        return GLRetainSyncCalled;
+    if (strcmp(name, "glRetainSyncCalled") == 0) {
+        return glRetainSyncCalled;
     }
-    if (strcmp(name, "WGLCreateContextCalled") == 0) {
-        return WGLCreateContextCalled;
+    if (strcmp(name, "wglCreateContextCalled") == 0) {
+        return wglCreateContextCalled;
     }
-    if (strcmp(name, "WGLDeleteContextCalled") == 0) {
-        return WGLDeleteContextCalled;
+    if (strcmp(name, "wglDeleteContextCalled") == 0) {
+        return wglDeleteContextCalled;
     }
-    if (strcmp(name, "WGLShareListsCalled") == 0) {
-        return WGLShareListsCalled;
+    if (strcmp(name, "wglShareListsCalled") == 0) {
+        return wglShareListsCalled;
     }
     if (strcmp(name, "glGetLuidCalled") == 0) {
         return glGetLuidCalled;
@@ -376,6 +376,6 @@ void glSetString(const char *name, unsigned int var) {
     }
 };
 void glSetStringi(const char *name, unsigned int index) { arrayStringi[index] = name; };
-void setGLSetSharedOCLContextStateReturnedValue(GLboolean value) { GLSetSharedOCLContextStateReturnedValue = static_cast<GLboolean>(value); };
-GLboolean getGLSetSharedOCLContextStateReturnedValue() { return GLSetSharedOCLContextStateReturnedValue; };
+void setGLSetSharedOCLContextStateReturnedValue(GLboolean value) { glSetSharedOCLContextStateReturnedValue = static_cast<GLboolean>(value); };
+GLboolean getGLSetSharedOCLContextStateReturnedValue() { return glSetSharedOCLContextStateReturnedValue; };
 }

@@ -33,7 +33,7 @@ ze_result_t setDriverTeardownHandleInLoader(const char *loaderLibraryName) {
 
 } // namespace L0
 
-BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { // NOLINT(readability-identifier-naming)
     if (fdwReason == DLL_PROCESS_DETACH) {
         L0::setDriverTeardownHandleInLoader("ze_loader.dll");
         L0::globalDriverTeardown();

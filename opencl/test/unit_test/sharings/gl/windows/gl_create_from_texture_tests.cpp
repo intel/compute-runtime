@@ -139,9 +139,9 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     if (target == GL_RENDERBUFFER_EXT) {
-        EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
+        EXPECT_EQ(1, glSharing->dllParam->getParam("glAcquireSharedRenderBufferCalled"));
     } else {
-        EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
+        EXPECT_EQ(1, glSharing->dllParam->getParam("glAcquireSharedTextureCalled"));
     }
 
     EXPECT_EQ(GmmTypesConverter::getCubeFaceIndex(target), glImage->getCubeFaceIndex());
