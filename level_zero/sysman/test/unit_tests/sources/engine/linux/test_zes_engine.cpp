@@ -7,45 +7,40 @@
 
 #include "shared/source/os_interface/linux/memory_info.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-
-#include "mock_engine.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
 constexpr uint32_t handleComponentCount = 6u;
+constexpr uint32_t microSecondsToNanoSeconds = 1000u;
+
 class ZesEngineFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
-    L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
-    std::unique_ptr<MockEngineSysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
-    std::unique_ptr<MockEngineFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
+};
+
+class ZesEngineFixtureI915 : public ZesEngineFixture {
+  protected:
+    std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
-
-        pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<MockEngineSysfsAccess>();
-        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-
-        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<MockEngineFsAccess>();
-        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-
         MockEngineNeoDrm *pDrm = new MockEngineNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrm>(pDrm));
 
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
-        pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
+        pPmuInterface->mockPmuFd = 10;
+        pPmuInterface->mockActiveTime = 987654321;
+        pPmuInterface->mockTimestamp = 87654321;
+        VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        pFsAccess->mockReadVal = 23;
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
@@ -54,21 +49,28 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
-        pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
-        pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
-        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
-
         SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
+
+        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            uint32_t mockReadVal = 23;
+            std::ostringstream oStream;
+            oStream << mockReadVal;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
+        });
+
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
     }
 };
 
-TEST_F(ZesEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(ZesEngineFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);
@@ -83,7 +85,7 @@ TEST_F(ZesEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGr
     EXPECT_EQ(count, handleComponentCount);
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
     auto handle = getEngineHandles(handleComponentCount);
 
@@ -112,19 +114,19 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertie
     EXPECT_FALSE(properties.onSubdevice);
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
 
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
-        EXPECT_EQ(mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
-        EXPECT_EQ(mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
+        EXPECT_EQ(pPmuInterface->mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
+        EXPECT_EQ(pPmuInterface->mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
     pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
@@ -132,35 +134,39 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEn
 
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
-        EXPECT_EQ(mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
-        EXPECT_EQ(mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
+        EXPECT_EQ(pPmuInterface->mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
+        EXPECT_EQ(pPmuInterface->mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
     }
 }
 
-TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCallingZesEngineGetActivityAndPMUGetEventTypeFailsThenVerifyEngineGetActivityReturnsFailure) {
+TEST_F(ZesEngineFixtureI915, GivenTestDiscreteDevicesAndValidEngineHandleWhenCallingZesEngineGetActivityAndPMUGetEventTypeFailsThenVerifyEngineGetActivityReturnsFailure) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        return -1;
+    });
+
     pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
-    pSysfsAccess->mockReadSymLinkError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     auto pOsEngineTest1 = L0::Sysman::OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
 
     zes_engine_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
-    pFsAccess->mockReadVal = 0;
-    pFsAccess->mockReadErrorVal = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     auto pOsEngineTest2 = L0::Sysman::OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest2->getActivity(&stats));
 }
 
-TEST_F(ZesEngineFixture, GivenTestIntegratedDevicesAndValidEngineHandleWhenCallingZesEngineGetActivityAndPMUGetEventTypeFailsThenVerifyEngineGetActivityReturnsFailure) {
-    zes_engine_stats_t stats = {};
-    pFsAccess->mockReadVal = 0;
-    pFsAccess->mockReadErrorVal = ZE_RESULT_ERROR_NOT_AVAILABLE;
+TEST_F(ZesEngineFixtureI915, GivenTestIntegratedDevicesAndValidEngineHandleWhenCallingZesEngineGetActivityAndPMUGetEventTypeFailsThenVerifyEngineGetActivityReturnsFailure) {
 
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        return -1;
+    });
+
+    zes_engine_stats_t stats = {};
     auto pOsEngineTest1 = L0::Sysman::OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {
     pPmuInterface->mockPmuReadFailureReturnValue = -1;
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
@@ -171,13 +177,22 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
+TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint32_t mockReadVal = 23;
+        std::ostringstream oStream;
+        oStream << mockReadVal;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     pPmuInterface->mockPerfEventFailureReturnValue = -1;
-    MockEnginePmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
 }
 
-TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
+TEST_F(ZesEngineFixtureI915, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
     std::set<std::pair<zes_engine_group_t, L0::Sysman::EngineInstanceSubDeviceId>> engineGroupInstance;
 
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
@@ -187,7 +202,7 @@ TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndIns
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman));
 }
 
-TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
+TEST_F(ZesEngineFixtureI915, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
     auto drm = std::make_unique<DrmMockEngine>((const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment())));
     ASSERT_NE(nullptr, drm);
     std::vector<MemoryRegion> memRegions{
@@ -199,7 +214,7 @@ TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThen
     EXPECT_EQ(2u, engineInfo->engines.size());
 }
 
-TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngineInfoWithVideoThenEngineInfoIsCreatedWithEngines) {
+TEST_F(ZesEngineFixtureI915, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngineInfoWithVideoThenEngineInfoIsCreatedWithEngines) {
     auto drm = std::make_unique<DrmMockEngine>((const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment())));
     ASSERT_NE(nullptr, drm);
     std::vector<MemoryRegion> memRegions{
@@ -211,7 +226,7 @@ TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngin
     EXPECT_EQ(2u, engineInfo->engines.size());
 }
 
-TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQueryFailsThenFailureIsReturned) {
+TEST_F(ZesEngineFixtureI915, GivenEngineInfoWithVideoQueryFailsThenFailureIsReturned) {
     auto drm = std::make_unique<DrmMockEngineInfoFailing>((const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment())));
     ASSERT_NE(nullptr, drm);
     EXPECT_FALSE(drm->sysmanQueryEngineInfo());

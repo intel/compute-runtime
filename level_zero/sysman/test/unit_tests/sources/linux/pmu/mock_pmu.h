@@ -45,13 +45,6 @@ struct MockPmuInterface : public MockPmuInterfaceImpForSysman {
     ADDMETHOD_NOBASE(getErrorNo, int, EINVAL, ());
 };
 
-struct MockPmuFsAccess : public L0::Sysman::FsAccess {
-    ze_result_t read(const std::string file, uint32_t &val) override {
-        val = 18;
-        return ZE_RESULT_SUCCESS;
-    }
-};
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

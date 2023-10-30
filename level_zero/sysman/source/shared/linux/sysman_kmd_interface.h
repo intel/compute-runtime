@@ -108,9 +108,11 @@ class SysmanKmdInterface {
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
     virtual bool clientInfoAvailableInFdInfo() = 0;
+    virtual bool isGroupEngineInterfaceAvailable() const = 0;
+    void initFsAccessInterface(const NEO::Drm &drm);
     FsAccessInterface *getFsAccess();
     ProcFsAccessInterface *getProcFsAccess();
-    SysFsAccessInterface *getSysFsAccess(std::string deviceName);
+    SysFsAccessInterface *getSysFsAccess();
     virtual std::string getEngineBasePath(uint32_t subDeviceId) const = 0;
     virtual bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() = 0;
     virtual ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
@@ -122,12 +124,14 @@ class SysmanKmdInterface {
     void convertSysfsValueUnit(const SysfsValueUnit dstUnit, const SysfsValueUnit srcUnit,
                                const uint64_t srcValue, uint64_t &dstValue) const;
     virtual std::optional<std::string> getEngineClassString(uint16_t engineClass) = 0;
+    virtual uint32_t getEventType(const bool isIntegratedDevice) = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
     std::unique_ptr<ProcFsAccessInterface> pProcfsAccess;
     std::unique_ptr<SysFsAccessInterface> pSysfsAccess;
     virtual const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() = 0;
+    uint32_t getEventTypeImpl(std::string &dirName, const bool isIntegratedDevice);
 };
 
 class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
@@ -142,6 +146,7 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() override;
+    bool isGroupEngineInterfaceAvailable() const override { return false; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override { return "engine"; };
     bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return false; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
@@ -150,6 +155,7 @@ class SysmanKmdInterfaceI915 : public SysmanKmdInterface {
                                              ze_bool_t onSubdevice,
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
+    uint32_t getEventType(const bool isIntegratedDevice) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -177,6 +183,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() override;
+    bool isGroupEngineInterfaceAvailable() const override { return true; }
     bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return true; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                              LinuxSysmanImp *pLinuxSysmanImp,
@@ -184,6 +191,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
                                              ze_bool_t onSubdevice,
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
+    uint32_t getEventType(const bool isIntegratedDevice) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

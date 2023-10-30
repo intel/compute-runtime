@@ -18,6 +18,8 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanKmdInterface;
+
 class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
   public:
     PmuInterfaceImp() = delete;
@@ -31,11 +33,9 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
     virtual int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags);
     decltype(&read) readFunction = read;
     decltype(&syscall) syscallFunction = syscall;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:
-    uint32_t getEventType();
-    FsAccess *pFsAccess = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
     static const std::string deviceDir;
     static const std::string sysDevicesDir;

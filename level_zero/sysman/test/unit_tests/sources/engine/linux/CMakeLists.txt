@@ -21,6 +21,13 @@ else()
   )
 endif()
 
+if(NEO_ENABLE_XE_DRM_DETECTION)
+  list(APPEND L0_TESTS_SYSMAN_ENGINE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_engine_xe.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_engine_xe.h
+  )
+endif()
+
 if(UNIX)
   target_sources(${TARGET_NAME}
                  PRIVATE

@@ -18,6 +18,8 @@
 namespace L0 {
 namespace Sysman {
 
+using NEO::PrelimI915::I915_SAMPLE_BUSY;
+
 zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t type) {
     if (type == ZES_ENGINE_GROUP_RENDER_SINGLE) {
         return ZES_ENGINE_GROUP_RENDER_ALL;
@@ -88,7 +90,27 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 }
 
 void LinuxEngineImp::init() {
-    fd = pSysmanKmdInterface->getEngineActivityFd(engineGroup, engineInstance, subDeviceId, pPmuInterface);
+    uint64_t config = UINT64_MAX;
+    switch (engineGroup) {
+    case ZES_ENGINE_GROUP_ALL:
+        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COMPUTE_ALL:
+    case ZES_ENGINE_GROUP_RENDER_ALL:
+        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COPY_ALL:
+        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_MEDIA_ALL:
+        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        break;
+    default:
+        auto engineClass = engineGroupToEngineClass.find(engineGroup);
+        config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
+        break;
+    }
+    fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {

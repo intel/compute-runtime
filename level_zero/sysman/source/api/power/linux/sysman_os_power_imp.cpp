@@ -253,7 +253,7 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess(pLinuxSysmanImp->getDeviceName());
+    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {

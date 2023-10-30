@@ -12,16 +12,18 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
-#include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
+#include "drm/i915_drm.h"
 #include "drm/xe_drm.h"
 
 namespace L0 {
 namespace Sysman {
-using NEO::PrelimI915::I915_SAMPLE_BUSY;
+
+const std::string deviceDir("device");
+const std::string sysDevicesDir("/sys/devices/");
 
 SysmanKmdInterface::SysmanKmdInterface() = default;
 
@@ -78,29 +80,25 @@ std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &d
     return pSysmanKmdInterface;
 }
 
-FsAccessInterface *SysmanKmdInterface::getFsAccess() {
+void SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
+    pFsAccess = FsAccessInterface::create();
+    pProcfsAccess = ProcFsAccessInterface::create();
+    std::string deviceName;
+    pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
+    pSysfsAccess = SysFsAccessInterface::create(deviceName);
+}
 
-    if (nullptr == pFsAccess.get()) {
-        pFsAccess = FsAccessInterface::create();
-    }
+FsAccessInterface *SysmanKmdInterface::getFsAccess() {
     UNRECOVERABLE_IF(nullptr == pFsAccess.get());
     return pFsAccess.get();
 }
 
 ProcFsAccessInterface *SysmanKmdInterface::getProcFsAccess() {
-
-    if (nullptr == pProcfsAccess.get()) {
-        pProcfsAccess = ProcFsAccessInterface::create();
-    }
     UNRECOVERABLE_IF(nullptr == pProcfsAccess.get());
     return pProcfsAccess.get();
 }
 
-SysFsAccessInterface *SysmanKmdInterface::getSysFsAccess(std::string deviceName) {
-
-    if (nullptr == pSysfsAccess.get()) {
-        pSysfsAccess = SysFsAccessInterface::create(deviceName);
-    }
+SysFsAccessInterface *SysmanKmdInterface::getSysFsAccess() {
     UNRECOVERABLE_IF(nullptr == pSysfsAccess.get());
     return pSysfsAccess.get();
 }
@@ -209,30 +207,33 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t
 
 int64_t SysmanKmdInterfaceI915::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
     uint64_t config = UINT64_MAX;
-    switch (engineGroup) {
-    case ZES_ENGINE_GROUP_ALL:
-        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_COMPUTE_ALL:
-    case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_COPY_ALL:
-        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
-        break;
-    default:
-        auto engineClass = engineGroupToEngineClass.find(engineGroup);
-        config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
-        break;
-    }
+    auto engineClass = engineGroupToEngineClass.find(engineGroup);
+    config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
     return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
 }
 
 int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
-    return -1;
+    uint64_t config = UINT64_MAX;
+
+    switch (engineGroup) {
+    case ZES_ENGINE_GROUP_ALL:
+        config = XE_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COMPUTE_ALL:
+    case ZES_ENGINE_GROUP_RENDER_ALL:
+        config = XE_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COPY_ALL:
+        config = XE_PMU_COPY_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_MEDIA_ALL:
+        config = XE_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        break;
+    default:
+        break;
+    }
+
+    return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
 }
 
 std::string SysmanKmdInterfaceI915::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
@@ -376,6 +377,40 @@ void SysmanKmdInterface::convertSysfsValueUnit(const SysfsValueUnit dstUnit, con
             dstValue = srcValue * 1000u;
         }
     }
+}
+
+uint32_t SysmanKmdInterface::getEventTypeImpl(std::string &dirName, const bool isIntegratedDevice) {
+    auto pSysFsAccess = getSysFsAccess();
+    auto pFsAccess = getFsAccess();
+
+    if (!isIntegratedDevice) {
+        std::string bdfDir;
+        ze_result_t result = pSysFsAccess->readSymLink(deviceDir, bdfDir);
+        if (ZE_RESULT_SUCCESS != result) {
+            return 0;
+        }
+        const auto loc = bdfDir.find_last_of('/');
+        auto bdf = bdfDir.substr(loc + 1);
+        std::replace(bdf.begin(), bdf.end(), ':', '_');
+        dirName = dirName + "_" + bdf;
+    }
+
+    const std::string eventTypeSysfsNode = sysDevicesDir + dirName + "/" + "type";
+    auto eventTypeVal = 0u;
+    if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
+        return 0;
+    }
+    return eventTypeVal;
+}
+
+uint32_t SysmanKmdInterfaceI915::getEventType(const bool isIntegratedDevice) {
+    std::string i915DirName = "i915";
+    return getEventTypeImpl(i915DirName, isIntegratedDevice);
+}
+
+uint32_t SysmanKmdInterfaceXe::getEventType(const bool isIntegratedDevice) {
+    std::string xeDirName = "xe";
+    return getEventTypeImpl(xeDirName, isIntegratedDevice);
 }
 
 } // namespace Sysman

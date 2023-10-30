@@ -190,6 +190,20 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned) {
 
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     pPmuInterface->mockPmuReadCorrectable = true;
     pRasFwUtilInterface->mockMemorySuccess = false;
 
@@ -221,6 +235,20 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSu
 }
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateForGtAfterClearThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
 
     pPmuInterface->mockPmuReadAfterClear = true;
 
@@ -595,6 +623,20 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidHandleWhenGettingRasPropertiesThen
 }
 
 TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
 
     pPmuInterface->mockPmuReadTile = true;
     pSysfsAccess->isMultiTileArch = true;

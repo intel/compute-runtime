@@ -17,6 +17,7 @@ namespace ult {
 constexpr uint32_t mockHandleCount = 2u;
 constexpr int mockReadPipeFd = 8;
 constexpr int mockWritePipeFd = 9;
+constexpr uint32_t pmuDriverType = 16u;
 class SysmanEventsFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockEventsFsAccess> pFsAccess;
@@ -1752,6 +1753,21 @@ TEST_F(SysmanEventsFixture,
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -1777,6 +1793,21 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventThenAfterReceivingEventRegisterEventAgainToReceiveEvent) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -1807,6 +1838,21 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -1832,6 +1878,21 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -1858,6 +1919,21 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {

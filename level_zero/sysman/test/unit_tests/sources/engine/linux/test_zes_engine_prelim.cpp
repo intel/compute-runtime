@@ -28,7 +28,6 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
     std::unique_ptr<MockEngineFsAccess> pFsAccess;
     L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
-    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
 
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -51,8 +50,6 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(productFamily);
-        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
@@ -64,12 +61,19 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
-        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
-
         SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
+
+        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            std::ostringstream oStream;
+            oStream << 23;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
+        });
+
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -236,9 +240,15 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZes
 
 TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
 
-    pPmuInterface->mockPerfEventOpenRead = true;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << 23;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
 
-    MockEnginePmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
+    pPmuInterface->mockPerfEventOpenRead = true;
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
 }
 
@@ -279,6 +289,15 @@ TEST_F(ZesEngineFixture, GivenValidDrmObjectWhenCallingsysmanQueryEngineInfoMeth
 }
 
 TEST_F(ZesEngineFixture, GivenValidEngineHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumEngineGroupsSucceeds) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << 23;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);
@@ -300,7 +319,6 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockEngineFsAccess> pFsAccess;
     L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
-    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
 
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
@@ -320,8 +338,6 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(productFamily);
-        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
 
         pDrm->mockReadSysmanQueryEngineInfoMultiDevice = true;
         pSysfsAccess->mockReadSymLinkSuccess = true;
@@ -337,10 +353,18 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
-        std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {
+
+        VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            std::ostringstream oStream;
+            oStream << 23;
+            std::string value = oStream.str();
+            memcpy(buf, value.data(), count);
+            return count;
+        });
+
         std::vector<zes_engine_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;

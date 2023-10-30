@@ -66,6 +66,7 @@ ze_result_t LinuxSysmanImp::init() {
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
 
     pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm());
+    pSysmanKmdInterface->initFsAccessInterface(*getDrm());
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
