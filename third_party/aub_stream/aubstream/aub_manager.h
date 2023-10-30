@@ -57,6 +57,7 @@ class AubManager {
 
     virtual bool reservePhysicalMemory(AllocationParams allocationParams, PhysicalAllocationInfo &physicalAllocInfo) = 0;
     virtual bool mapGpuVa(uint64_t gfxAddress, size_t size, PhysicalAllocationInfo physicalAllocInfo) = 0;
+    virtual bool mapGpuVa2(uint64_t physicalAddress, AllocationParams params) { return false; }
 
     virtual bool reserveOnlyPhysicalSpace(AllocationParams allocationParams, PhysicalAllocationInfo &physicalAllocInfo) { return false; }
     virtual bool mapSystemMemoryToPhysicalAddress(uint64_t physAddress, size_t size, size_t alignment, bool isLocalMemory, const void *p) { return false; }
