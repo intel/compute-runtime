@@ -89,7 +89,7 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto osContextCount = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment).size());
-        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(this->isExposingSubDevicesAsDevices(), hwInfo);
+        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
 
@@ -186,7 +186,7 @@ void ExecutionEnvironment::parseAffinityMask() {
     if (exposeSubDevicesAsApiDevices) {
         for (uint32_t currentRootDevice = 0u; currentRootDevice < static_cast<uint32_t>(rootDeviceEnvironments.size()); currentRootDevice++) {
             auto hwInfo = rootDeviceEnvironments[currentRootDevice]->getHardwareInfo();
-            hwSubDevicesCount = GfxCoreHelper::getSubDevicesCount(this->isExposingSubDevicesAsDevices(), hwInfo);
+            hwSubDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             uint32_t currentSubDevice = 0;
             mapOfIndices.push_back(std::make_tuple(currentRootDevice, currentSubDevice));
             for (currentSubDevice = 1; currentSubDevice < hwSubDevicesCount; currentSubDevice++) {
@@ -231,7 +231,7 @@ void ExecutionEnvironment::parseAffinityMask() {
         // cards as devices
         if (rootDeviceIndex < numRootDevices) {
             auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(this->isExposingSubDevicesAsDevices(), hwInfo);
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
 
             if (subEntries.size() > 1) {
                 uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);

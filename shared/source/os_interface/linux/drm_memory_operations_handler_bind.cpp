@@ -170,10 +170,8 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bo
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(this->rootDeviceIndex);
     std::vector<GraphicsAllocation *> evictCandidates;
-    bool subDevicesAsDevices = rootDeviceEnvironment.executionEnvironment.isExposingSubDevicesAsDevices();
 
-    for (auto subdeviceIndex = 0u; subdeviceIndex < GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, rootDeviceEnvironment.getHardwareInfo());
-         subdeviceIndex++) {
+    for (auto subdeviceIndex = 0u; subdeviceIndex < GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()); subdeviceIndex++) {
         for (auto &allocation : allocationsForEviction) {
             bool evict = true;
 

@@ -41,7 +41,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
 
     forceSkipResourceCleanupRequired = true;
 
-    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(executionEnvironment.isExposingSubDevicesAsDevices(), &this->peekHwInfo()));
+    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->localMemoryEnabled, "", this->getType());
     auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
@@ -173,7 +173,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (withAubDump) {
         auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
-        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex, executionEnvironment.isExposingSubDevicesAsDevices());
+        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex);
         if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
             fullName.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
         }

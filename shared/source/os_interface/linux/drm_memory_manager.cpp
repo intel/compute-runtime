@@ -1439,7 +1439,7 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     }
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.isExposingSubDevicesAsDevices(), hwInfo);
+    uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
     size_t size = 0;
 
     for (uint32_t i = 0; i < subDevicesCount; i++) {

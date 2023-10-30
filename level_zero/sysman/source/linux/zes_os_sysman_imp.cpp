@@ -58,7 +58,7 @@ ze_result_t LinuxSysmanImp::init() {
     }
     DEBUG_BREAK_IF(nullptr == pSysfsAccess);
 
-    subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(false, &pParentSysmanDeviceImp->getHardwareInfo());
+    subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pParentSysmanDeviceImp->getHardwareInfo());
     if (subDeviceCount == 1) {
         subDeviceCount = 0;
     }

@@ -84,7 +84,7 @@ SubDevice *Device::createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_s
 
 bool Device::genericSubDevicesAllowed() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
-    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->isExposingSubDevicesAsDevices(), &getHardwareInfo());
+    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
     deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
@@ -99,7 +99,7 @@ bool Device::engineInstancedSubDevicesAllowed() {
     bool notAllowed = !DebugManager.flags.EngineInstancedSubDevices.get();
     notAllowed |= engineInstanced;
     notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
-    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(executionEnvironment->isExposingSubDevicesAsDevices(), &getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
+    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
 
     if (notAllowed) {
         return false;
@@ -147,7 +147,7 @@ bool Device::createEngineInstancedSubDevices() {
 
 bool Device::createGenericSubDevices() {
     UNRECOVERABLE_IF(!subdevices.empty());
-    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->isExposingSubDevicesAsDevices(), &getHardwareInfo());
+    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
 
     subdevices.resize(subDeviceCount, nullptr);
 
@@ -752,7 +752,7 @@ bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
         uuid = this->uuid.id;
 
         auto hwInfo = getHardwareInfo();
-        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->isExposingSubDevicesAsDevices(), &hwInfo);
+        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
 
         if (subDevicesCount > 1 && deviceBitfield.count() == 1) {
             // In case of no sub devices created (bits set in affinity mask == 1), return the UUID of enabled sub-device.
@@ -873,7 +873,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
 
     bool allocFailed = false;
 
-    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->isExposingSubDevicesAsDevices(), executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
     auto dispatchGlobalsSize = deviceCount * dispatchGlobalsStride;
     auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, deviceCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 
