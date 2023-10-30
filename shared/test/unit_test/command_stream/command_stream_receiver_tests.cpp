@@ -173,6 +173,19 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagDisabledWhenCallFillReusableAllocat
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestPreallocationCalledThenDoNotAllocateCommandBuffer) {
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->releasePreallocationRequest();
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueEqualZeroWhenRequestPreallocationCalledThenDoNotAllocateCommandBuffer) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
