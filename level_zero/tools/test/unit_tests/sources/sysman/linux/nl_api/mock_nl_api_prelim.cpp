@@ -106,8 +106,8 @@ int MockNlApi::genlHandleMsg(struct nl_msg *msg, void *arg) {
     MyNlattr *head = new MyNlattr;
     MyNlattr *next = head;
 
-    info.attrs = new struct nlattr *[pOps->o_cmds[cmdIndex].c_maxattr];
-    for (auto i = 0; i < pOps->o_cmds[cmdIndex].c_maxattr; i++) {
+    info.attrs = new struct nlattr *[_IAF_ATTR_COUNT];
+    for (auto i = 0; i < _IAF_ATTR_COUNT; i++) {
         info.attrs[i] = nullptr;
     }
     next = addDefaultAttribs(info, next);

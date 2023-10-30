@@ -3187,6 +3187,8 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
         mapping.sliceIndices[i] = i;
     }
 
+    ASSERT_NE(0u, hwInfo.gtSystemInfo.SliceCount);
+
     mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.subsliceIndices[i] = i;

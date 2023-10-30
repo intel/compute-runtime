@@ -421,6 +421,7 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
     EXPECT_EQ(&NEO::gtpinFreeBuffer, driverServices.bufferDeallocate);
     EXPECT_EQ(&NEO::gtpinMapBuffer, driverServices.bufferMap);
     ASSERT_EQ(&NEO::gtpinUnmapBuffer, driverServices.bufferUnMap);
+    ASSERT_NE(nullptr, driverServices.bufferUnMap);
 
     retFromGtPin = (*driverServices.bufferUnMap)(nullptr, nullptr);
     EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
