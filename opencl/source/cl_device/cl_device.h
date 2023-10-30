@@ -151,6 +151,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     Device &device;
     ClDevice &rootClDevice;
     std::vector<std::unique_ptr<ClDevice>> subDevices;
+    cl_device_id internalParentDevice = nullptr;
     cl_platform_id platformId;
     std::string name;
     std::unique_ptr<DriverInfo> driverInfo;
