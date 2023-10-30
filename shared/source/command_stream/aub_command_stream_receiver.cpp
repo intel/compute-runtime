@@ -25,13 +25,13 @@
 namespace NEO {
 AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
-std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex, bool subDevicesAsDevices) {
+std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex) {
     std::string hwPrefix = hardwarePrefix[hwInfo.platform.eProductFamily];
 
     // Generate the full filename
     const auto &gtSystemInfo = hwInfo.gtSystemInfo;
     std::stringstream strfilename;
-    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(subDevicesAsDevices, &hwInfo);
+    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
     strfilename << hwPrefix << "_";
     if (subDevicesCount > 1) {
@@ -64,7 +64,7 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
                                                         uint32_t rootDeviceIndex,
                                                         const DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName, rootDeviceIndex, executionEnvironment.isExposingSubDevicesAsDevices());
+    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName, rootDeviceIndex);
     if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
         filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
     }

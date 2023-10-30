@@ -231,7 +231,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(pDevice->getExecutionEnvironment()->isExposingSubDevicesAsDevices(), &pDevice->getHardwareInfo()));
+    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
 
     EXPECT_EQ(32 * MemoryConstants::gigaByte, allocator->getBankSize());
@@ -245,7 +245,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(pDevice->getExecutionEnvironment()->isExposingSubDevicesAsDevices(), &pDevice->getHardwareInfo()));
+    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
 
     EXPECT_EQ(8 * MemoryConstants::gigaByte, allocator->getBankSize());
