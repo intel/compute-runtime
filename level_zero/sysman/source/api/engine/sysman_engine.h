@@ -7,7 +7,7 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/sysman/source/sysman_device.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
 #include <level_zero/zes_api.h>
 
 #include <map>

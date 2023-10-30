@@ -11,10 +11,10 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
+#include "level_zero/sysman/source/device/os_sysman.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
-#include "level_zero/sysman/source/os_sysman.h"
 #include "level_zero/sysman/source/sysman_const.h"
-#include "level_zero/sysman/source/sysman_device_imp.h"
 
 #include <map>
 #include <mutex>

@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/sysman/source/sysman_device.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
 
 #include <unordered_map>
 

@@ -6,7 +6,7 @@
  */
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
 namespace L0 {
 

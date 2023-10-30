@@ -7,7 +7,7 @@
 
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
 
-#include "level_zero/sysman/source/sysman_device_imp.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 namespace L0 {
 namespace Sysman {

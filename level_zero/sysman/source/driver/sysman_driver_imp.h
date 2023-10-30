@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/sysman_driver.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 
 #include <mutex>
 

@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/product_helper.h"
 
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 #include <level_zero/zes_api.h>
 
 #include <array>

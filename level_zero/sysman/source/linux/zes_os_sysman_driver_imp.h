@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/linux/udev/udev_lib.h"
-#include "level_zero/sysman/source/os_sysman_driver.h"
 
 namespace L0 {
 namespace Sysman {

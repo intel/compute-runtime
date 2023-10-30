@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 #include <level_zero/zes_api.h>
 
 #include <memory>

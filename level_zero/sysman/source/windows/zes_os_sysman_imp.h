@@ -9,10 +9,10 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/sysman/source/device/os_sysman.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/os_sysman.h"
-#include "level_zero/sysman/source/sysman_device.h"
-#include "level_zero/sysman/source/sysman_device_imp.h"
 #include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
 
 namespace NEO {

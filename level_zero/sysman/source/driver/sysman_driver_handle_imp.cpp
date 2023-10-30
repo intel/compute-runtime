@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -14,9 +14,9 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
-#include "level_zero/sysman/source/os_sysman_driver.h"
-#include "level_zero/sysman/source/sysman_device.h"
-#include "level_zero/sysman/source/sysman_driver.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/driver/os_sysman_driver.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 
 #include <cstring>
 #include <vector>

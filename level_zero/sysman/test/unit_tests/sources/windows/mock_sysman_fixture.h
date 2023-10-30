@@ -9,8 +9,8 @@
 
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "level_zero/sysman/source/sysman_driver.h"
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_wddm.h"

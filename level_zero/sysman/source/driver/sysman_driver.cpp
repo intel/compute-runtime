@@ -12,9 +12,9 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
-#include "level_zero/sysman/source/sysman_driver_imp.h"
-#include "level_zero/sysman/source/sysman_hw_device_id.h"
+#include "level_zero/sysman/source/device/sysman_hw_device_id.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver_imp.h"
 
 #include <cstring>
 #include <vector>

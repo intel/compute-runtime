@@ -8,7 +8,7 @@
 #include "level_zero/sysman/source/api/performance/sysman_performance.h"
 
 #include "level_zero/sysman/source/api/performance/sysman_performance_imp.h"
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 #include <algorithm>
 

@@ -6,7 +6,7 @@
  */
 
 #include "level_zero/sysman/source/api/scheduler/sysman_scheduler_imp.h"
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 #include <algorithm>
 

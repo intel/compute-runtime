@@ -9,7 +9,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 namespace L0 {
 namespace Sysman {

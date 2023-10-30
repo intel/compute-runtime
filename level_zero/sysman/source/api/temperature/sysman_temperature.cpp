@@ -8,7 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 namespace L0 {
 namespace Sysman {

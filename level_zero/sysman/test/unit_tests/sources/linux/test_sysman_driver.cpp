@@ -12,9 +12,9 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
-#include "level_zero/sysman/source/sysman_device.h"
-#include "level_zero/sysman/source/sysman_driver_handle.h"
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_drm.h"
 

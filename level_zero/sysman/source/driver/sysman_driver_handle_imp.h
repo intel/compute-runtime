@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/sysman_driver_handle.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 
 #include <string>
 #include <unordered_map>

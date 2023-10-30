@@ -11,7 +11,7 @@
 
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 namespace L0 {
 namespace Sysman {

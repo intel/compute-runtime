@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/sysman_driver_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver_imp.h"
 
 namespace L0 {
 namespace Sysman {

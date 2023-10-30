@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "level_zero/sysman/source/sysman_hw_device_id.h"
+#include "level_zero/sysman/source/device/sysman_hw_device_id.h"
 
 #include <fcntl.h>
 

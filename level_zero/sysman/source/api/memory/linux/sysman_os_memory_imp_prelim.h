@@ -10,9 +10,9 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/sysman/source/api/memory/sysman_os_memory.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/sysman_device_imp.h"
 
 #include <map>
 

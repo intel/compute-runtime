@@ -1,0 +1,19 @@
+#
+# Copyright (C) 2023 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+target_sources(${L0_STATIC_LIB_NAME}
+               PRIVATE
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_driver.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_driver_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_driver.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_driver_handle.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_driver_handle_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_driver_handle_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/os_sysman_driver.h
+)
+
+add_subdirectories()

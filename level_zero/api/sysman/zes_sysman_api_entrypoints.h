@@ -8,9 +8,9 @@
 #pragma once
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/sysman/source/sysman_device.h"
-#include "level_zero/sysman/source/sysman_driver.h"
-#include "level_zero/sysman/source/sysman_driver_handle.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
 namespace L0 {

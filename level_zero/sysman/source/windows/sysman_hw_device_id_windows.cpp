@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/os_interface.h"
 
-#include "level_zero/sysman/source/sysman_hw_device_id.h"
+#include "level_zero/sysman/source/device/sysman_hw_device_id.h"
 
 namespace L0 {
 namespace Sysman {

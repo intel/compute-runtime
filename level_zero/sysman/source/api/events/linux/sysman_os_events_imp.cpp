@@ -12,9 +12,9 @@
 
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp_prelim.h"
+#include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
 
 #include <sys/stat.h>
 

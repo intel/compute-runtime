@@ -10,9 +10,9 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
+#include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/sysman_const.h"
-#include "level_zero/sysman/source/sysman_device.h"
 
 namespace L0 {
 namespace Sysman {

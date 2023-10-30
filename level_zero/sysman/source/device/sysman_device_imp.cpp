@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/sysman_device_imp.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 
@@ -14,7 +14,7 @@
 #include "level_zero/sysman/source/api/fan/sysman_fan_imp.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
-#include "level_zero/sysman/source/os_sysman.h"
+#include "level_zero/sysman/source/device/os_sysman.h"
 
 #include <vector>
 

@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/sysman/source/api/engine/sysman_os_engine.h"
-#include "level_zero/sysman/source/sysman_device_imp.h"
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 #include <unistd.h>
 

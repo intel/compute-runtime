@@ -10,8 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
 
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
-#include "level_zero/sysman/source/sysman_device_imp.h"
 
 #include <algorithm>
 #include <errno.h>
