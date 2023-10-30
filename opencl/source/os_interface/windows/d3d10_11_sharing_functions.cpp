@@ -116,12 +116,12 @@ std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_me
         bool success;
         std::tie(cached, success) = textureFormatCache.emplace(imageType, std::vector<DXGI_FORMAT>(0));
         if (!success) {
-            return DXGINoFormats;
+            return dxgiNoFormats;
         }
-        std::vector<DXGI_FORMAT> &cached_formats = cached->second;
+        std::vector<DXGI_FORMAT> &cachedFormats = cached->second;
         std::vector<DXGI_FORMAT> planarFormats(0);
 
-        constexpr DXGI_FORMAT DXGIFormats[] = {
+        constexpr DXGI_FORMAT dxgiFormats[] = {
             DXGI_FORMAT_R32G32B32A32_TYPELESS,
             DXGI_FORMAT_R32G32B32A32_FLOAT,
             DXGI_FORMAT_R32G32B32A32_UINT,
@@ -238,19 +238,19 @@ std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_me
             DXGI_FORMAT_V208,
             DXGI_FORMAT_V408,
             DXGI_FORMAT_FORCE_UINT};
-        cached_formats.reserve(arrayCount(DXGIFormats));
-        for (auto DXGIFormat : DXGIFormats) {
+        cachedFormats.reserve(arrayCount(dxgiFormats));
+        for (auto dxgiFormat : dxgiFormats) {
             UINT format = 0;
-            if (checkFormatSupport(DXGIFormat, &format)) {
+            if (checkFormatSupport(dxgiFormat, &format)) {
                 if (memObjectFormatSupport(imageType, format)) {
-                    cached_formats.push_back(DXGIFormat);
-                    if (D3DSharing<D3D>::isFormatWithPlane1(DXGIFormat)) {
-                        planarFormats.push_back(DXGIFormat);
+                    cachedFormats.push_back(dxgiFormat);
+                    if (D3DSharing<D3D>::isFormatWithPlane1(dxgiFormat)) {
+                        planarFormats.push_back(dxgiFormat);
                     }
                 }
             }
         }
-        cached_formats.shrink_to_fit();
+        cachedFormats.shrink_to_fit();
         textureFormatPlane1Cache.emplace(imageType, planarFormats);
     }
 

@@ -15,11 +15,11 @@ namespace SysCalls {
 extern bool mmapAllowExtendedPointers;
 }
 
-BOOL WINAPI ULTVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
+BOOL WINAPI ultVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
     return 1;
 }
 
-LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type) {
+LPVOID WINAPI ultVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type) {
     if (castToUint64(inPtr) > maxNBitValue(48) && SysCalls::mmapAllowExtendedPointers) {
         return inPtr;
     }
@@ -27,10 +27,10 @@ LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type
 }
 
 OSMemoryWindows::VirtualFreeFcn getVirtualFree() {
-    return ULTVirtualFree;
+    return ultVirtualFree;
 }
 
 OSMemoryWindows::VirtualAllocFcn getVirtualAlloc() {
-    return ULTVirtualAlloc;
+    return ultVirtualAlloc;
 }
 } // namespace NEO

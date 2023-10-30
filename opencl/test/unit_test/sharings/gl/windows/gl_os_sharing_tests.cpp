@@ -47,12 +47,12 @@ struct MockOSInterface : OSInterface {
 
 TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupContextIsCreated) {
     GLType GLHDCType = CL_WGL_HDC_KHR;
-    GLContext GLHGLRCHandle = 0;
-    GLDisplay GLHDCHandle = 0;
+    GLContext glHGLRCHandle = 0;
+    GLDisplay glHDCHandle = 0;
     int32_t expectedContextAttrs[3] = {0};
     GlDllHelper dllHelper;
 
-    auto glSharingFunctions = new GlSharingFunctionsMock(GLHDCType, GLHGLRCHandle, GLHGLRCHandle, GLHDCHandle);
+    auto glSharingFunctions = new GlSharingFunctionsMock(GLHDCType, glHGLRCHandle, glHGLRCHandle, glHDCHandle);
 
     EXPECT_EQ(1, dllHelper.getParam("WGLCreateContextCalled"));
     EXPECT_EQ(1, dllHelper.getParam("WGLShareListsCalled"));
@@ -77,8 +77,8 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupConte
 struct GlArbSyncEventOsTest : public ::testing::Test {
     void SetUp() override {
         rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(executionEnvironment);
-        sharing.GLContextHandle = 0x2cU;
-        sharing.GLDeviceHandle = 0x3cU;
+        sharing.glContextHandle = 0x2cU;
+        sharing.glDeviceHandle = 0x3cU;
         wddm = new WddmMock(*rootDeviceEnvironment);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         osInterface = rootDeviceEnvironment->osInterface.get();
@@ -144,7 +144,7 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
     EXPECT_EQ(1U, syncInfo.serverSynchronizationObject);
     EXPECT_EQ(2U, syncInfo.clientSynchronizationObject);
     EXPECT_EQ(3U, syncInfo.submissionSynchronizationObject);
-    EXPECT_EQ(sharing.GLContextHandle, syncInfo.hContextToBlock);
+    EXPECT_EQ(sharing.glContextHandle, syncInfo.hContextToBlock);
     EXPECT_NE(nullptr, syncInfo.event);
     EXPECT_NE(nullptr, syncInfo.eventName);
     EXPECT_NE(nullptr, syncInfo.submissionEvent);

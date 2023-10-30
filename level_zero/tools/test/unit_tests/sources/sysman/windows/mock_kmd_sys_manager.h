@@ -22,7 +22,7 @@ struct MockEventHandle {
     bool inited = false;
 };
 
-uint64_t convertTStoMicroSec(uint64_t TS, uint32_t freq);
+uint64_t convertTStoMicroSec(uint64_t ts, uint32_t freq);
 
 class MockKmdSysManager : public KmdSysManager {};
 

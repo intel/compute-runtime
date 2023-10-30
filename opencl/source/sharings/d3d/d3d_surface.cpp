@@ -228,11 +228,11 @@ const std::vector<D3DFORMAT> D3DSurface::D3DPlane2Formats =
 
 cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, ImagePlane &imagePlane) {
     imagePlane = ImagePlane::NO_PLANE;
-    static const cl_image_format unknown_format = {0, 0};
+    static const cl_image_format unknownFormat = {0, 0};
 
     auto element = D3DtoClFormatConversions.find(d3dFormat);
     if (element == D3DtoClFormatConversions.end()) {
-        imgFormat = unknown_format;
+        imgFormat = unknownFormat;
         return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
     }
 
@@ -250,7 +250,7 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
             imagePlane = ImagePlane::PLANE_UV;
             return CL_SUCCESS;
         default:
-            imgFormat = unknown_format;
+            imgFormat = unknownFormat;
             return CL_INVALID_VALUE;
         }
 
@@ -269,7 +269,7 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
             return CL_SUCCESS;
 
         default:
-            imgFormat = unknown_format;
+            imgFormat = unknownFormat;
             return CL_INVALID_VALUE;
         }
     }

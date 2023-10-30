@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,8 @@ class Context;
 
 struct GlCreateContextProperties {
     GLType GLHDCType = 0;
-    GLContext GLHGLRCHandle = 0;
-    GLDisplay GLHDCHandle = 0;
+    GLContext glHGLRCHandle = 0;
+    GLDisplay glHDCHandle = 0;
 };
 
 class GlSharingContextBuilder : public SharingContextBuilder {

@@ -20,8 +20,8 @@ ze_result_t WddmSysmanImp::init() {
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     UNRECOVERABLE_IF(nullptr == pDevice);
 
-    NEO::OSInterface &OsInterface = pDevice->getOsInterface();
-    auto driverModel = OsInterface.getDriverModel();
+    NEO::OSInterface &osInterface = pDevice->getOsInterface();
+    auto driverModel = osInterface.getDriverModel();
     if (driverModel) {
         pWddm = driverModel->as<NEO::Wddm>();
     }

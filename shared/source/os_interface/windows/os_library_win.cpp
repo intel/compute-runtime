@@ -39,7 +39,7 @@ decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA
 decltype(&GetSystemDirectoryA) OsLibrary::getSystemDirectoryA = GetSystemDirectoryA;
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
-__inline HINSTANCE GetModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
+__inline HINSTANCE getModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
 
 void OsLibrary::getLastErrorString(std::string *errorValue) {
     DWORD errorID = GetLastError();
@@ -58,7 +58,7 @@ void OsLibrary::getLastErrorString(std::string *errorValue) {
 
 HMODULE OsLibrary::loadDependency(const std::string &dependencyFileName) const {
     char dllPath[MAX_PATH];
-    DWORD length = getModuleFileNameA(GetModuleHINSTANCE(), dllPath, MAX_PATH);
+    DWORD length = getModuleFileNameA(getModuleHINSTANCE(), dllPath, MAX_PATH);
     for (DWORD idx = length; idx > 0; idx--) {
         if (dllPath[idx - 1] == '\\') {
             dllPath[idx] = '\0';
@@ -101,7 +101,7 @@ void *OsLibrary::getProcAddress(const std::string &procName) {
 
 std::string OsLibrary::getFullPath() {
     char dllPath[MAX_PATH];
-    getModuleFileNameA(GetModuleHINSTANCE(), dllPath, MAX_PATH);
+    getModuleFileNameA(getModuleHINSTANCE(), dllPath, MAX_PATH);
     return std::string(dllPath);
 }
 } // namespace Windows

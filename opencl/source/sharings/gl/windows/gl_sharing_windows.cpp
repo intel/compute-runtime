@@ -17,14 +17,14 @@ extern const char *openglDllName;
 
 namespace NEO {
 GLSharingFunctionsWindows::GLSharingFunctionsWindows(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle)
-    : GLHDCType(glhdcType), GLHGLRCHandle(glhglrcHandle), GLHGLRCHandleBkpCtx(glhglrcHandleBkpCtx), GLHDCHandle(glhdcHandle) {
+    : glHDCType(glhdcType), glHGLRCHandle(glhglrcHandle), glHGLRCHandleBkpCtx(glhglrcHandleBkpCtx), glHDCHandle(glhdcHandle) {
     initGLFunctions();
     updateOpenGLContext();
     createBackupContext();
 }
 GLSharingFunctionsWindows::~GLSharingFunctionsWindows() {
     if (pfnWglDeleteContext) {
-        pfnWglDeleteContext(GLHGLRCHandleBkpCtx);
+        pfnWglDeleteContext(glHGLRCHandleBkpCtx);
     }
 }
 
@@ -35,32 +35,32 @@ bool GLSharingFunctionsWindows::isGlSharingEnabled() {
 
 void GLSharingFunctionsWindows::createBackupContext() {
     if (pfnWglCreateContext) {
-        GLHGLRCHandleBkpCtx = pfnWglCreateContext(GLHDCHandle);
-        pfnWglShareLists(GLHGLRCHandle, GLHGLRCHandleBkpCtx);
+        glHGLRCHandleBkpCtx = pfnWglCreateContext(glHDCHandle);
+        pfnWglShareLists(glHGLRCHandle, glHGLRCHandleBkpCtx);
     }
 }
 
 GLboolean GLSharingFunctionsWindows::setSharedOCLContextState() {
-    ContextInfo CtxInfo = {0};
-    GLboolean retVal = GLSetSharedOCLContextState(GLHDCHandle, GLHGLRCHandle, CL_TRUE, &CtxInfo);
+    ContextInfo ctxInfo = {0};
+    GLboolean retVal = glSetSharedOCLContextState(glHDCHandle, glHGLRCHandle, CL_TRUE, &ctxInfo);
     if (retVal == GL_FALSE) {
         return GL_FALSE;
     }
-    GLContextHandle = CtxInfo.contextHandle;
-    GLDeviceHandle = CtxInfo.deviceHandle;
+    glContextHandle = ctxInfo.contextHandle;
+    glDeviceHandle = ctxInfo.deviceHandle;
 
     return retVal;
 }
 
 bool GLSharingFunctionsWindows::isOpenGlExtensionSupported(const unsigned char *pExtensionString) {
-    bool LoadedNull = (glGetStringi == nullptr) || (glGetIntegerv == nullptr);
-    if (LoadedNull) {
+    bool loadedNull = (glGetStringi == nullptr) || (glGetIntegerv == nullptr);
+    if (loadedNull) {
         return false;
     }
 
-    cl_int NumberOfExtensions = 0;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &NumberOfExtensions);
-    for (cl_int i = 0; i < NumberOfExtensions; i++) {
+    cl_int numberOfExtensions = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &numberOfExtensions);
+    for (cl_int i = 0; i < numberOfExtensions; i++) {
         std::basic_string<unsigned char> pString = glGetStringi(GL_EXTENSIONS, i);
         if (pString == pExtensionString) {
             return true;
@@ -71,10 +71,10 @@ bool GLSharingFunctionsWindows::isOpenGlExtensionSupported(const unsigned char *
 
 bool GLSharingFunctionsWindows::isOpenGlSharingSupported() {
 
-    std::basic_string<unsigned char> Vendor = glGetString(GL_VENDOR);
+    std::basic_string<unsigned char> vendor = glGetString(GL_VENDOR);
     const unsigned char intelVendor[] = "Intel";
 
-    if ((Vendor.empty()) || (Vendor != intelVendor)) {
+    if ((vendor.empty()) || (vendor != intelVendor)) {
         return false;
     }
     std::basic_string<unsigned char> Version = glGetString(GL_VERSION);
@@ -82,13 +82,13 @@ bool GLSharingFunctionsWindows::isOpenGlSharingSupported() {
         return false;
     }
 
-    bool IsOpenGLES = false;
+    bool isOpenGLES = false;
     const unsigned char versionES[] = "OpenGL ES";
     if (Version.find(versionES) != std::string::npos) {
-        IsOpenGLES = true;
+        isOpenGLES = true;
     }
 
-    if (IsOpenGLES == true) {
+    if (isOpenGLES == true) {
         const unsigned char versionES1[] = "OpenGL ES 1.";
         if (Version.find(versionES1) != std::string::npos) {
             const unsigned char supportGLOES[] = "GL_OES_framebuffer_object";
@@ -132,8 +132,8 @@ GLboolean GLSharingFunctionsWindows::initGLFunctions() {
 
     if (glLibrary->isLoaded()) {
         GlFunctionHelper wglLibrary(glLibrary.get(), "wglGetProcAddress");
-        GLGetCurrentContext = (*glLibrary)["wglGetCurrentContext"];
-        GLGetCurrentDisplay = (*glLibrary)["wglGetCurrentDC"];
+        glGetCurrentContext = (*glLibrary)["wglGetCurrentContext"];
+        glGetCurrentDisplay = (*glLibrary)["wglGetCurrentDC"];
         glGetString = (*glLibrary)["glGetString"];
         glGetIntegerv = (*glLibrary)["glGetIntegerv"];
         pfnWglCreateContext = (*glLibrary)["wglCreateContext"];
@@ -141,16 +141,16 @@ GLboolean GLSharingFunctionsWindows::initGLFunctions() {
         pfnWglShareLists = (*glLibrary)["wglShareLists"];
         wglMakeCurrent = (*glLibrary)["wglMakeCurrent"];
 
-        GLSetSharedOCLContextState = wglLibrary["wglSetSharedOCLContextStateINTEL"];
-        GLAcquireSharedBuffer = wglLibrary["wglAcquireSharedBufferINTEL"];
-        GLReleaseSharedBuffer = wglLibrary["wglReleaseSharedBufferINTEL"];
-        GLAcquireSharedRenderBuffer = wglLibrary["wglAcquireSharedRenderBufferINTEL"];
-        GLReleaseSharedRenderBuffer = wglLibrary["wglReleaseSharedRenderBufferINTEL"];
-        GLAcquireSharedTexture = wglLibrary["wglAcquireSharedTextureINTEL"];
-        GLReleaseSharedTexture = wglLibrary["wglReleaseSharedTextureINTEL"];
-        GLRetainSync = wglLibrary["wglRetainSyncINTEL"];
-        GLReleaseSync = wglLibrary["wglReleaseSyncINTEL"];
-        GLGetSynciv = wglLibrary["wglGetSyncivINTEL"];
+        glSetSharedOCLContextState = wglLibrary["wglSetSharedOCLContextStateINTEL"];
+        glAcquireSharedBuffer = wglLibrary["wglAcquireSharedBufferINTEL"];
+        glReleaseSharedBuffer = wglLibrary["wglReleaseSharedBufferINTEL"];
+        glAcquireSharedRenderBuffer = wglLibrary["wglAcquireSharedRenderBufferINTEL"];
+        glReleaseSharedRenderBuffer = wglLibrary["wglReleaseSharedRenderBufferINTEL"];
+        glAcquireSharedTexture = wglLibrary["wglAcquireSharedTextureINTEL"];
+        glReleaseSharedTexture = wglLibrary["wglReleaseSharedTextureINTEL"];
+        glRetainSync = wglLibrary["wglRetainSyncINTEL"];
+        glReleaseSync = wglLibrary["wglReleaseSyncINTEL"];
+        glGetSynciv = wglLibrary["wglGetSyncivINTEL"];
         glGetStringi = wglLibrary["glGetStringi"];
         glGetLuid = wglLibrary["wglGetLuidINTEL"];
     }

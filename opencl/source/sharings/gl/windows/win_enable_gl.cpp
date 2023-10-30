@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,19 +27,19 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
 
     switch (propertyType) {
     case CL_GL_CONTEXT_KHR:
-        contextData->GLHGLRCHandle = (GLContext)propertyValue;
+        contextData->glHGLRCHandle = (GLContext)propertyValue;
         return true;
     case CL_WGL_HDC_KHR:
         contextData->GLHDCType = (GLType)CL_WGL_HDC_KHR;
-        contextData->GLHDCHandle = (GLDisplay)propertyValue;
+        contextData->glHDCHandle = (GLDisplay)propertyValue;
         return true;
     case CL_GLX_DISPLAY_KHR:
         contextData->GLHDCType = (GLType)CL_GLX_DISPLAY_KHR;
-        contextData->GLHDCHandle = (GLDisplay)propertyValue;
+        contextData->glHDCHandle = (GLDisplay)propertyValue;
         return true;
     case CL_EGL_DISPLAY_KHR:
         contextData->GLHDCType = (GLType)CL_EGL_DISPLAY_KHR;
-        contextData->GLHDCHandle = (GLDisplay)propertyValue;
+        contextData->glHDCHandle = (GLDisplay)propertyValue;
         return true;
     }
     return false;
@@ -49,9 +49,9 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
     if (contextData.get() == nullptr)
         return true;
 
-    if (contextData->GLHGLRCHandle) {
-        context.registerSharing(new GLSharingFunctionsWindows(contextData->GLHDCType, contextData->GLHGLRCHandle,
-                                                              nullptr, contextData->GLHDCHandle));
+    if (contextData->glHGLRCHandle) {
+        context.registerSharing(new GLSharingFunctionsWindows(contextData->GLHDCType, contextData->glHGLRCHandle,
+                                                              nullptr, contextData->glHDCHandle));
     }
 
     contextData.reset(nullptr);

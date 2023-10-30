@@ -17,7 +17,7 @@
 std::string lastTest("");
 static int newStdOut = -1;
 
-LONG WINAPI UltExceptionFilter(
+LONG WINAPI ultExceptionFilter(
     _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
     std::cout << "UnhandledException: 0x" << std::hex << exceptionInfo->ExceptionRecord->ExceptionCode << std::dec
               << " on test: " << lastTest << std::endl;
@@ -41,7 +41,7 @@ int setAbrt(bool enableAbrt) {
         newStdOut = _dup(1);
     }
 
-    SetUnhandledExceptionFilter(&UltExceptionFilter);
+    SetUnhandledExceptionFilter(&ultExceptionFilter);
     if (enableAbrt) {
         oldSigAbrt = signal(SIGABRT, handleSIGABRT);
     }

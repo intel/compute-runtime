@@ -171,7 +171,7 @@ class D3DSharingFunctions : public SharingFunctions {
     D3DDevice *d3dDevice = nullptr;
     ID3D11DeviceContext *d3d11DeviceContext = nullptr;
 
-    std::vector<DXGI_FORMAT> DXGINoFormats;
+    std::vector<DXGI_FORMAT> dxgiNoFormats;
     std::vector<std::pair<D3DResource *, cl_uint>> trackedResources;
     std::map<cl_mem_object_type, std::vector<DXGI_FORMAT>> textureFormatCache;
     std::map<cl_mem_object_type, std::vector<DXGI_FORMAT>> textureFormatPlane1Cache;

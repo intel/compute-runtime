@@ -18,9 +18,9 @@ extern bool sysmanUltsEnable;
 namespace L0 {
 namespace ult {
 
-uint64_t convertTStoMicroSec(uint64_t TS, uint32_t freq) {
+uint64_t convertTStoMicroSec(uint64_t ts, uint32_t freq) {
     double timeFactor = 1.0 / static_cast<double>(freq);
-    timeFactor = static_cast<double>(TS) * timeFactor;
+    timeFactor = static_cast<double>(ts) * timeFactor;
     timeFactor *= static_cast<double>(microFacor);
     return static_cast<uint64_t>(timeFactor);
 }

@@ -57,7 +57,7 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
 }
 
 bool RegistryReader::getSettingIntCommon(const char *settingName, int64_t &value) {
-    HKEY Key{};
+    HKEY key{};
     DWORD success = ERROR_SUCCESS;
     bool retVal = false;
 
@@ -65,13 +65,13 @@ bool RegistryReader::getSettingIntCommon(const char *settingName, int64_t &value
                                       registryReadRootKey.c_str(),
                                       0,
                                       KEY_READ,
-                                      &Key);
+                                      &key);
 
     if (ERROR_SUCCESS == success) {
         DWORD size = sizeof(int64_t);
         int64_t regData;
 
-        success = SysCalls::regQueryValueExA(Key,
+        success = SysCalls::regQueryValueExA(key,
                                              settingName,
                                              NULL,
                                              NULL,
@@ -81,7 +81,7 @@ bool RegistryReader::getSettingIntCommon(const char *settingName, int64_t &value
             value = regData;
             retVal = true;
         }
-        RegCloseKey(Key);
+        RegCloseKey(key);
     }
     return retVal;
 }
@@ -126,7 +126,7 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
 }
 
 bool RegistryReader::getSettingStringCommon(const char *settingName, std::string &keyValue) {
-    HKEY Key{};
+    HKEY key{};
     DWORD success = ERROR_SUCCESS;
     bool retVal = false;
 
@@ -134,12 +134,12 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
                                       registryReadRootKey.c_str(),
                                       0,
                                       KEY_READ,
-                                      &Key);
+                                      &key);
     if (ERROR_SUCCESS == success) {
         DWORD regType = REG_NONE;
         DWORD regSize = 0;
 
-        success = SysCalls::regQueryValueExA(Key,
+        success = SysCalls::regQueryValueExA(key,
                                              settingName,
                                              NULL,
                                              &regType,
@@ -148,7 +148,7 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
         if (ERROR_SUCCESS == success) {
             if (regType == REG_SZ || regType == REG_MULTI_SZ) {
                 auto regData = std::make_unique<char[]>(regSize);
-                success = SysCalls::regQueryValueExA(Key,
+                success = SysCalls::regQueryValueExA(key,
                                                      settingName,
                                                      NULL,
                                                      &regType,
@@ -161,7 +161,7 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
             } else if (regType == REG_BINARY) {
                 size_t charCount = regSize / sizeof(wchar_t);
                 auto regData = std::make_unique<wchar_t[]>(charCount);
-                success = SysCalls::regQueryValueExA(Key,
+                success = SysCalls::regQueryValueExA(key,
                                                      settingName,
                                                      NULL,
                                                      &regType,
@@ -179,7 +179,7 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
                 }
             }
         }
-        RegCloseKey(Key);
+        RegCloseKey(key);
     }
     return retVal;
 }

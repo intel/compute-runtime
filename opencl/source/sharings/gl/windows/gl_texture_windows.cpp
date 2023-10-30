@@ -95,12 +95,12 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     if (imgDesc.image_array_size > 1 || imgDesc.image_depth > 1) {
-        GMM_REQ_OFFSET_INFO GMMReqInfo = {};
-        GMMReqInfo.ArrayIndex = imgDesc.image_array_size > 1 ? 1 : 0;
-        GMMReqInfo.Slice = imgDesc.image_depth > 1 ? 1 : 0;
-        GMMReqInfo.ReqLock = 1;
-        gmm->gmmResourceInfo->getOffset(GMMReqInfo);
-        imgDesc.image_slice_pitch = GMMReqInfo.Lock.Offset;
+        GMM_REQ_OFFSET_INFO gmmReqInfo = {};
+        gmmReqInfo.ArrayIndex = imgDesc.image_array_size > 1 ? 1 : 0;
+        gmmReqInfo.Slice = imgDesc.image_depth > 1 ? 1 : 0;
+        gmmReqInfo.ReqLock = 1;
+        gmm->gmmResourceInfo->getOffset(gmmReqInfo);
+        imgDesc.image_slice_pitch = gmmReqInfo.Lock.Offset;
     } else {
         imgDesc.image_slice_pitch = alloc->getUnderlyingBufferSize();
     }

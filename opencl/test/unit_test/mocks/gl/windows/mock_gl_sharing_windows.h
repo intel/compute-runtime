@@ -81,21 +81,21 @@ class GlSharingFunctionsMock : public GLSharingFunctionsWindows {
     };
     ~GlSharingFunctionsMock() override = default;
 
-    using GLSharingFunctionsWindows::GLAcquireSharedBuffer;
-    using GLSharingFunctionsWindows::GLAcquireSharedRenderBuffer;
-    using GLSharingFunctionsWindows::GLAcquireSharedTexture;
-    using GLSharingFunctionsWindows::GLGetCurrentContext;
-    using GLSharingFunctionsWindows::GLGetCurrentDisplay;
+    using GLSharingFunctionsWindows::glAcquireSharedBuffer;
+    using GLSharingFunctionsWindows::glAcquireSharedRenderBuffer;
+    using GLSharingFunctionsWindows::glAcquireSharedTexture;
+    using GLSharingFunctionsWindows::glGetCurrentContext;
+    using GLSharingFunctionsWindows::glGetCurrentDisplay;
     using GLSharingFunctionsWindows::glGetIntegerv;
     using GLSharingFunctionsWindows::glGetString;
     using GLSharingFunctionsWindows::glGetStringi;
-    using GLSharingFunctionsWindows::GLGetSynciv;
-    using GLSharingFunctionsWindows::GLReleaseSharedBuffer;
-    using GLSharingFunctionsWindows::GLReleaseSharedRenderBuffer;
-    using GLSharingFunctionsWindows::GLReleaseSharedTexture;
-    using GLSharingFunctionsWindows::GLReleaseSync;
-    using GLSharingFunctionsWindows::GLRetainSync;
-    using GLSharingFunctionsWindows::GLSetSharedOCLContextState;
+    using GLSharingFunctionsWindows::glGetSynciv;
+    using GLSharingFunctionsWindows::glReleaseSharedBuffer;
+    using GLSharingFunctionsWindows::glReleaseSharedRenderBuffer;
+    using GLSharingFunctionsWindows::glReleaseSharedTexture;
+    using GLSharingFunctionsWindows::glReleaseSync;
+    using GLSharingFunctionsWindows::glRetainSync;
+    using GLSharingFunctionsWindows::glSetSharedOCLContextState;
     using GLSharingFunctionsWindows::isOpenGlExtensionSupported;
     using GLSharingFunctionsWindows::pfnWglCreateContext;
     using GLSharingFunctionsWindows::pfnWglDeleteContext;
@@ -104,8 +104,8 @@ class GlSharingFunctionsMock : public GLSharingFunctionsWindows {
     using GLSharingFunctionsWindows::wglMakeCurrent;
 
     using GLSharingFunctionsWindows::glArbEventMapping;
-    using GLSharingFunctionsWindows::GLContextHandle;
-    using GLSharingFunctionsWindows::GLDeviceHandle;
+    using GLSharingFunctionsWindows::glContextHandle;
+    using GLSharingFunctionsWindows::glDeviceHandle;
 
     using GLSharingFunctionsWindows::getSupportedFormats;
     using GLSharingFunctionsWindows::pfnGlArbSyncObjectCleanup;
@@ -113,30 +113,30 @@ class GlSharingFunctionsMock : public GLSharingFunctionsWindows {
     using GLSharingFunctionsWindows::pfnGlArbSyncObjectSignal;
     using GLSharingFunctionsWindows::pfnGlArbSyncObjectWaitServer;
 
-    GlSharingFunctionsMock(GLType GLHDCType, GLContext GLHGLRCHandle, GLContext GLHGLRCHandleBkpCtx, GLDisplay GLHDCHandle)
-        : GLSharingFunctionsWindows(GLHDCType, GLHGLRCHandle, GLHGLRCHandleBkpCtx, GLHDCHandle) {
+    GlSharingFunctionsMock(GLType GLHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle)
+        : GLSharingFunctionsWindows(GLHDCType, glHGLRCHandle, glHGLRCHandleBkpCtx, glHDCHandle) {
         initMembers();
         updateOpenGLContext();
         createBackupContext();
     }
     GlSharingFunctionsMock();
 
-    void setHandles(GLType GLHDCType, GLContext GLHGLRCHandle, GLContext GLHGLRCHandleBkpCtx, GLDisplay GLHDCHandle) {
-        this->GLHDCType = GLHDCType;
-        this->GLHGLRCHandle = GLHGLRCHandle;
-        this->GLHGLRCHandleBkpCtx = GLHGLRCHandleBkpCtx;
-        this->GLHDCHandle = GLHDCHandle;
+    void setHandles(GLType GLHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle) {
+        this->glHDCType = GLHDCType;
+        this->glHGLRCHandle = glHGLRCHandle;
+        this->glHGLRCHandleBkpCtx = glHGLRCHandleBkpCtx;
+        this->glHDCHandle = glHDCHandle;
     }
 
-    void setGLAcquireSharedBufferMock(PFNOGLAcquireSharedBufferINTEL mock) { GLAcquireSharedBuffer = mock; }
+    void setGLAcquireSharedBufferMock(PFNOGLAcquireSharedBufferINTEL mock) { glAcquireSharedBuffer = mock; }
 
-    void setGLAcquireSharedTextureMock(PFNOGLAcquireSharedTextureINTEL mock) { GLAcquireSharedTexture = mock; }
+    void setGLAcquireSharedTextureMock(PFNOGLAcquireSharedTextureINTEL mock) { glAcquireSharedTexture = mock; }
 };
 
 class MockGlSharing {
   public:
     MockGlSharing() {}
-    MockGlSharing(GLType GLHDCType, GLContext GLHGLRCHandle, GLContext GLHGLRCHandleBkpCtx, GLDisplay GLHDCHandle);
+    MockGlSharing(GLType GLHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle);
     void uploadDataToBufferInfo() {
         dllParam->loadBuffer(bufferInfoOutput);
     }

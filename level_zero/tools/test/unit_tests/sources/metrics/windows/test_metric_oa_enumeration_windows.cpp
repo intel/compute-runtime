@@ -38,7 +38,7 @@ TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAda
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    std::unique_ptr<MetricOAOsInterface> OAOsInterface = MetricOAOsInterface::create(*device);
+    std::unique_ptr<MetricOAOsInterface> oaOsInterface = MetricOAOsInterface::create(*device);
 
     adapterGroup.GetParamsResult = &adapterGroupParams;
     adapterGroup.GetAdapterResult = &adapter;
@@ -52,7 +52,7 @@ TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAda
     EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 
     uint64_t timerResolution;
-    EXPECT_EQ(OAOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(oaOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 } // namespace ult
 } // namespace L0

@@ -18,8 +18,8 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t WddmSysmanImp::init() {
-    NEO::OSInterface &OsInterface = *(pParentSysmanDeviceImp->getRootDeviceEnvironment()).osInterface;
-    auto driverModel = OsInterface.getDriverModel();
+    NEO::OSInterface &osInterface = *(pParentSysmanDeviceImp->getRootDeviceEnvironment()).osInterface;
+    auto driverModel = osInterface.getDriverModel();
 
     if (driverModel && (driverModel->getDriverModelType() == NEO::DriverModelType::WDDM)) {
         pWddm = driverModel->as<NEO::Wddm>();

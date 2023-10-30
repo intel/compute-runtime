@@ -812,12 +812,12 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    void *host_ptr = (void *)0x1212341;
-    void *host_ptr2 = (void *)0x2212341;
+    void *hostPtr = reinterpret_cast<void *>(0x1212341);
+    void *hostPtr2 = reinterpret_cast<void *>(0x2212341);
     auto size = 17262u;
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, host_ptr);
-    GraphicsAllocation *graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, host_ptr2);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, hostPtr);
+    GraphicsAllocation *graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, hostPtr2);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
 
@@ -827,12 +827,12 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     const auto firstWaitResult = csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
     EXPECT_EQ(WaitStatus::Ready, firstWaitResult);
     // graphicsAllocation2 still lives
-    EXPECT_EQ(host_ptr2, graphicsAllocation2->getUnderlyingBuffer());
+    EXPECT_EQ(hostPtr2, graphicsAllocation2->getUnderlyingBuffer());
 
     auto hostPtrManager = memoryManager->getHostPtrManager();
 
-    auto alignedPtr = alignDown(host_ptr, MemoryConstants::pageSize);
-    auto alignedPtr2 = alignDown(host_ptr2, MemoryConstants::pageSize);
+    auto alignedPtr = alignDown(hostPtr, MemoryConstants::pageSize);
+    auto alignedPtr2 = alignDown(hostPtr2, MemoryConstants::pageSize);
 
     auto fragment = hostPtrManager->getFragment({alignedPtr2, csr->getRootDeviceIndex()});
     ASSERT_NE(nullptr, fragment);

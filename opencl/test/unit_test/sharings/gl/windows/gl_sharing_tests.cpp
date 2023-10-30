@@ -638,41 +638,41 @@ TEST_F(glSharingTests, givenMockGLWhenFunctionsAreCalledThenCallsAreReceived) {
 }
 
 TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenOglContextFunctionIsCalled) {
-    GLType GLHDCType = 0;
-    GLContext GLHGLRCHandle = 0;
-    GLDisplay GLHDCHandle = 0;
+    GLType glHDCType = 0;
+    GLContext glHGLRCHandle = 0;
+    GLDisplay glHDCHandle = 0;
     GlDllHelper getDllParam;
 
-    GlSharingFunctionsMock glSharingFunctions(GLHDCType, GLHGLRCHandle, GLHGLRCHandle, GLHDCHandle);
+    GlSharingFunctionsMock glSharingFunctions(glHDCType, glHGLRCHandle, glHGLRCHandle, glHDCHandle);
     EXPECT_EQ(1, getDllParam.getGLSetSharedOCLContextStateReturnedValue());
 }
 
 TEST(glSharingBasicTest, givenInvalidExtensionNameWhenCheckGLExtensionSupportedThenReturnFalse) {
     MockGLSharingFunctions glSharingFunctions;
     const unsigned char invalidExtension[] = "InvalidExtensionName";
-    bool RetVal = glSharingFunctions.isOpenGlExtensionSupported(invalidExtension);
-    EXPECT_FALSE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlExtensionSupported(invalidExtension);
+    EXPECT_FALSE(retVal);
 }
 
 TEST(glSharingBasicTest, givenglGetIntegervIsNullWhenCheckGLExtensionSupportedThenReturnFalse) {
     MockGLSharingFunctions glSharingFunctions;
     glSharingFunctions.glGetIntegerv = nullptr;
     const unsigned char invalidExtension[] = "InvalidExtensionName";
-    bool RetVal = glSharingFunctions.isOpenGlExtensionSupported(invalidExtension);
-    EXPECT_FALSE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlExtensionSupported(invalidExtension);
+    EXPECT_FALSE(retVal);
 }
 
 TEST(glSharingBasicTest, givenValidExtensionNameWhenCheckGLExtensionSupportedThenReturnTrue) {
     MockGLSharingFunctions glSharingFunctions;
     const unsigned char supportGLOES[] = "GL_OES_framebuffer_object";
-    bool RetVal = glSharingFunctions.isOpenGlExtensionSupported(supportGLOES);
-    EXPECT_TRUE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlExtensionSupported(supportGLOES);
+    EXPECT_TRUE(retVal);
 }
 
 TEST(glSharingBasicTest, givenWhenCheckGLSharingSupportedThenReturnTrue) {
     MockGLSharingFunctions glSharingFunctions;
-    bool RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_TRUE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_TRUE(retVal);
 }
 
 TEST(glSharingBasicTest, givenVendorisNullWhenCheckGLSharingSupportedThenReturnFalse) {
@@ -683,48 +683,48 @@ TEST(glSharingBasicTest, givenVendorisNullWhenCheckGLSharingSupportedThenReturnF
     MockGLSharingFunctions glSharingFunctions;
     glSharingFunctions.glGetString = invalidGetStringFcn;
 
-    bool RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_FALSE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_FALSE(retVal);
 }
 
 TEST(glSharingBasicTest, givenVersionisNullWhenCheckGLSharingSupportedThenReturnFalse) {
 
     MockGLSharingFunctions glSharingFunctions;
     glSharingFunctions.dllParam->glSetString("", GL_VERSION); // version returns null
-    bool RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_FALSE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_FALSE(retVal);
     glSharingFunctions.dllParam->glSetString("Int..", GL_VENDOR);
-    RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_FALSE(RetVal);
+    retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_FALSE(retVal);
 }
 
 TEST(glSharingBasicTest, givenVersionisGlesWhenCheckGLSharingSupportedThenReturnFalse) {
     MockGLSharingFunctions glSharingFunctions;
 
     glSharingFunctions.dllParam->glSetString("OpenGL ES", GL_VERSION);
-    bool RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_TRUE(RetVal);
+    bool retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_TRUE(retVal);
 
     glSharingFunctions.dllParam->glSetString("OpenGL ES 1.", GL_VERSION);
-    RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_TRUE(RetVal);
+    retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_TRUE(retVal);
 
     glSharingFunctions.dllParam->glSetString("2.0", GL_VERSION);
-    RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_TRUE(RetVal);
+    retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_TRUE(retVal);
 
     glSharingFunctions.dllParam->glSetStringi("GL_EXT_framebuffer_o...", 1);
-    RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_FALSE(RetVal);
+    retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_FALSE(retVal);
 
     glSharingFunctions.dllParam->glSetStringi("GL_EXT_framebuffer_object", 1);
-    RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_TRUE(RetVal);
+    retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_TRUE(retVal);
 
     glSharingFunctions.dllParam->glSetString("OpenGL ES 1.", GL_VERSION);
     glSharingFunctions.dllParam->glSetStringi("GL_OES_framebuffer_o...", 0);
-    RetVal = glSharingFunctions.isOpenGlSharingSupported();
-    EXPECT_FALSE(RetVal);
+    retVal = glSharingFunctions.isOpenGlSharingSupported();
+    EXPECT_FALSE(retVal);
 }
 
 TEST(glSharingBasicTest, givensetSharedOCLContextStateWhenCallThenCorrectValue) {
@@ -735,41 +735,41 @@ TEST(glSharingBasicTest, givensetSharedOCLContextStateWhenCallThenCorrectValue) 
     EXPECT_EQ(1u, glSharingFunctions.setSharedOCLContextState());
 }
 TEST(glSharingBasicTest, givenGlSharingFunctionsWhenItIsConstructedThenFunctionsAreLoaded) {
-    GLType GLHDCType = 0;
-    GLContext GLHGLRCHandle = 0;
-    GLDisplay GLHDCHandle = 0;
+    GLType glHDCType = 0;
+    GLContext glHGLRCHandle = 0;
+    GLDisplay glHDCHandle = 0;
 
-    GlSharingFunctionsMock glSharingFunctions(GLHDCType, GLHGLRCHandle, GLHGLRCHandle, GLHDCHandle);
+    GlSharingFunctionsMock glSharingFunctions(glHDCType, glHGLRCHandle, glHGLRCHandle, glHDCHandle);
 
-    EXPECT_NE(nullptr, glSharingFunctions.GLGetCurrentContext);
-    EXPECT_NE(nullptr, glSharingFunctions.GLGetCurrentDisplay);
+    EXPECT_NE(nullptr, glSharingFunctions.glGetCurrentContext);
+    EXPECT_NE(nullptr, glSharingFunctions.glGetCurrentDisplay);
     EXPECT_NE(nullptr, glSharingFunctions.glGetString);
     EXPECT_NE(nullptr, glSharingFunctions.glGetIntegerv);
     EXPECT_NE(nullptr, glSharingFunctions.pfnWglCreateContext);
     EXPECT_NE(nullptr, glSharingFunctions.pfnWglDeleteContext);
     EXPECT_NE(nullptr, glSharingFunctions.pfnWglShareLists);
     EXPECT_NE(nullptr, glSharingFunctions.wglMakeCurrent);
-    EXPECT_NE(nullptr, glSharingFunctions.GLSetSharedOCLContextState);
-    EXPECT_NE(nullptr, glSharingFunctions.GLAcquireSharedBuffer);
-    EXPECT_NE(nullptr, glSharingFunctions.GLReleaseSharedBuffer);
-    EXPECT_NE(nullptr, glSharingFunctions.GLAcquireSharedRenderBuffer);
-    EXPECT_NE(nullptr, glSharingFunctions.GLReleaseSharedRenderBuffer);
-    EXPECT_NE(nullptr, glSharingFunctions.GLAcquireSharedTexture);
-    EXPECT_NE(nullptr, glSharingFunctions.GLReleaseSharedTexture);
-    EXPECT_NE(nullptr, glSharingFunctions.GLRetainSync);
-    EXPECT_NE(nullptr, glSharingFunctions.GLReleaseSync);
-    EXPECT_NE(nullptr, glSharingFunctions.GLGetSynciv);
+    EXPECT_NE(nullptr, glSharingFunctions.glSetSharedOCLContextState);
+    EXPECT_NE(nullptr, glSharingFunctions.glAcquireSharedBuffer);
+    EXPECT_NE(nullptr, glSharingFunctions.glReleaseSharedBuffer);
+    EXPECT_NE(nullptr, glSharingFunctions.glAcquireSharedRenderBuffer);
+    EXPECT_NE(nullptr, glSharingFunctions.glReleaseSharedRenderBuffer);
+    EXPECT_NE(nullptr, glSharingFunctions.glAcquireSharedTexture);
+    EXPECT_NE(nullptr, glSharingFunctions.glReleaseSharedTexture);
+    EXPECT_NE(nullptr, glSharingFunctions.glRetainSync);
+    EXPECT_NE(nullptr, glSharingFunctions.glReleaseSync);
+    EXPECT_NE(nullptr, glSharingFunctions.glGetSynciv);
     EXPECT_NE(nullptr, glSharingFunctions.glGetStringi);
 }
 
 TEST(glSharingBasicTest, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupportedFormatsThenOnlyNumEntiresAreReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
     cl_GLenum glFormats[3] = {};
 
-    auto retVal = glSharingFunctions.getSupportedFormats(flags, image_type, 1, glFormats, &numImageFormats);
+    auto retVal = glSharingFunctions.getSupportedFormats(flags, imageType, 1, glFormats, &numImageFormats);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -782,13 +782,13 @@ TEST(glSharingBasicTest, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
 TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrectListIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE, CL_MEM_KERNEL_READ_AND_WRITE};
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
     for (auto flag : flags) {
 
-        auto result = glSharingFunctions.getSupportedFormats(flag, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+        auto result = glSharingFunctions.getSupportedFormats(flag, imageType, arrayCount(glFormats), glFormats, &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
         EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
@@ -802,13 +802,13 @@ TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrect
 TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThenCorrectListIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER, CL_MEM_OBJECT_IMAGE2D_ARRAY};
+    cl_mem_object_type imageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER, CL_MEM_OBJECT_IMAGE2D_ARRAY};
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
-    for (auto image_type : image_types) {
+    for (auto imageType : imageTypes) {
 
-        auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+        auto result = glSharingFunctions.getSupportedFormats(flags, imageType, arrayCount(glFormats), glFormats, &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
         EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
@@ -822,10 +822,10 @@ TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThen
 TEST(glSharingBasicTest, givenZeroNumEntriesWhenGettingSupportedFormatsThenNumFormatsIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
 
-    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, 0, nullptr, &numImageFormats);
+    auto result = glSharingFunctions.getSupportedFormats(flags, imageType, 0, nullptr, &numImageFormats);
 
     EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
@@ -834,9 +834,9 @@ TEST(glSharingBasicTest, givenZeroNumEntriesWhenGettingSupportedFormatsThenNumFo
 TEST(glSharingBasicTest, givenNullNumImageFormatsWhenGettingSupportedFormatsThenNumFormatsIsNotDereferenced) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
 
-    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, 0, nullptr, nullptr);
+    auto result = glSharingFunctions.getSupportedFormats(flags, imageType, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, result);
 }
@@ -844,11 +844,11 @@ TEST(glSharingBasicTest, givenNullNumImageFormatsWhenGettingSupportedFormatsThen
 TEST(glSharingBasicTest, givenInvalidImageTypeWhenGettingSupportedFormatsThenIvalidValueErrorIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_PIPE;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_PIPE;
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
-    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+    auto result = glSharingFunctions.getSupportedFormats(flags, imageType, arrayCount(glFormats), glFormats, &numImageFormats);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
     EXPECT_EQ(0u, numImageFormats);
@@ -857,11 +857,11 @@ TEST(glSharingBasicTest, givenInvalidImageTypeWhenGettingSupportedFormatsThenIva
 TEST(glSharingBasicTest, givenInvalidFlagsWhenGettingSupportedFormatsThenIvalidValueErrorIsReturned) {
     MockGLSharingFunctions glSharingFunctions;
     cl_mem_flags flags = CL_MEM_NO_ACCESS_INTEL;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
-    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+    auto result = glSharingFunctions.getSupportedFormats(flags, imageType, arrayCount(glFormats), glFormats, &numImageFormats);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
     EXPECT_EQ(0u, numImageFormats);
@@ -1283,14 +1283,14 @@ TEST_F(glSharingTests, WhenArbSyncEventCreationFailsThenGetOrCreateGlArbSyncEven
 TEST_F(glSharingTests, whenGetGlDeviceHandleIsCalledThenProperHandleIsReturned) {
     auto *sharing = static_cast<GlSharingFunctionsMock *>(context.getSharing<GLSharingFunctions>());
     ASSERT_NE(nullptr, sharing);
-    sharing->GLDeviceHandle = 0x2c;
+    sharing->glDeviceHandle = 0x2c;
     EXPECT_EQ(0x2cU, sharing->getGLDeviceHandle());
 }
 
 TEST_F(glSharingTests, whenGetGlContextHandleIsCalledThenProperHandleIsReturned) {
     auto *sharing = static_cast<GlSharingFunctionsMock *>(context.getSharing<GLSharingFunctions>());
     ASSERT_NE(nullptr, sharing);
-    sharing->GLContextHandle = 0x2c;
+    sharing->glContextHandle = 0x2c;
     EXPECT_EQ(0x2cU, sharing->getGLContextHandle());
 }
 

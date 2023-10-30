@@ -171,17 +171,17 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
             EXPECT_EQ(glImage->getImageDesc().image_row_pitch, gmmRowPitch);
         }
 
-        size_t ImageInfoRowPitch = 0;
-        retVal = clGetImageInfo(glImage, CL_IMAGE_ROW_PITCH, sizeof(size_t), &ImageInfoRowPitch, NULL);
+        size_t imageInfoRowPitch = 0;
+        retVal = clGetImageInfo(glImage, CL_IMAGE_ROW_PITCH, sizeof(size_t), &imageInfoRowPitch, NULL);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_EQ(rowPitch, ImageInfoRowPitch);
+        ASSERT_EQ(rowPitch, imageInfoRowPitch);
 
-        size_t ImageInfoSlicePitch = 0;
+        size_t imageInfoSlicePitch = 0;
         slicePitch *= !(glImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D || glImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D || glImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER);
 
-        retVal = clGetImageInfo(glImage, CL_IMAGE_SLICE_PITCH, sizeof(size_t), &ImageInfoSlicePitch, NULL);
+        retVal = clGetImageInfo(glImage, CL_IMAGE_SLICE_PITCH, sizeof(size_t), &imageInfoSlicePitch, NULL);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_EQ(slicePitch, ImageInfoSlicePitch);
+        ASSERT_EQ(slicePitch, imageInfoSlicePitch);
     }
 
     EXPECT_EQ(glImage->getImageDesc().image_height, gmm->gmmResourceInfo->getBaseHeight());
@@ -193,12 +193,12 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
     }
 
     if (imgDesc.imageArraySize > 1 || imgDesc.imageDepth > 1) {
-        GMM_REQ_OFFSET_INFO GMMReqInfo = {};
-        GMMReqInfo.ArrayIndex = imgDesc.imageArraySize > 1 ? 1 : 0;
-        GMMReqInfo.Slice = imgDesc.imageDepth > 1 ? 1 : 0;
-        GMMReqInfo.ReqLock = 1;
-        gmm->gmmResourceInfo->getOffset(GMMReqInfo);
-        size_t expectedSlicePitch = GMMReqInfo.Lock.Offset;
+        GMM_REQ_OFFSET_INFO gmmReqInfo = {};
+        gmmReqInfo.ArrayIndex = imgDesc.imageArraySize > 1 ? 1 : 0;
+        gmmReqInfo.Slice = imgDesc.imageDepth > 1 ? 1 : 0;
+        gmmReqInfo.ReqLock = 1;
+        gmm->gmmResourceInfo->getOffset(gmmReqInfo);
+        size_t expectedSlicePitch = gmmReqInfo.Lock.Offset;
         EXPECT_EQ(glImage->getImageDesc().image_slice_pitch, expectedSlicePitch);
     } else {
         EXPECT_EQ(glImage->getImageDesc().image_slice_pitch, imgInfo.size);

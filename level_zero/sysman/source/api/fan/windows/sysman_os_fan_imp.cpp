@@ -35,8 +35,8 @@ ze_result_t WddmFanImp::getProperties(zes_fan_properties_t *pProperties) {
     request.requestId = KmdSysman::Requests::Fans::CurrentNumOfControlPoints;
     request.dataSize = sizeof(uint32_t);
 
-    uint32_t FanPoints = 2;
-    memcpy_s(request.dataBuffer, sizeof(uint32_t), &FanPoints, sizeof(uint32_t));
+    uint32_t fanPoints = 2;
+    memcpy_s(request.dataBuffer, sizeof(uint32_t), &fanPoints, sizeof(uint32_t));
 
     vRequests.push_back(request);
 
@@ -56,8 +56,8 @@ ze_result_t WddmFanImp::getProperties(zes_fan_properties_t *pProperties) {
     pProperties->canControl = (vResponses[0].returnCode == KmdSysman::Success);
 
     if (vResponses[1].returnCode == KmdSysman::Success) {
-        memcpy_s(&FanPoints, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
-        pProperties->maxPoints = maxPoints = static_cast<int32_t>(FanPoints);
+        memcpy_s(&fanPoints, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
+        pProperties->maxPoints = maxPoints = static_cast<int32_t>(fanPoints);
     }
     pProperties->maxRPM = -1;
     pProperties->supportedModes = zes_fan_speed_mode_t::ZES_FAN_SPEED_MODE_TABLE;
@@ -132,13 +132,13 @@ ze_result_t WddmFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTab
     singleRequest.commandId = KmdSysman::Command::Get;
     singleRequest.componentId = KmdSysman::Component::FanComponent;
     singleRequest.requestId = KmdSysman::Requests::Fans::MaxFanControlPointsSupported;
-    uint32_t FanPoints = 2;
+    uint32_t fanPoints = 2;
 
     if (pKmdSysManager->requestSingle(singleRequest, singleResponse) == ZE_RESULT_SUCCESS) {
         if (singleResponse.returnCode == KmdSysman::Success) {
-            memcpy_s(&FanPoints, sizeof(uint32_t), singleResponse.dataBuffer, sizeof(uint32_t));
+            memcpy_s(&fanPoints, sizeof(uint32_t), singleResponse.dataBuffer, sizeof(uint32_t));
         }
-        maxPoints = static_cast<int32_t>(FanPoints);
+        maxPoints = static_cast<int32_t>(fanPoints);
     }
 
     if (pSpeedTable->numPoints == 0 || pSpeedTable->numPoints > maxPoints) {

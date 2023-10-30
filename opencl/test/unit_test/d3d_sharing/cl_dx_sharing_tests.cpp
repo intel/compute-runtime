@@ -143,7 +143,7 @@ static const DXGI_FORMAT DXGIformats[] = {
     DXGI_FORMAT_FORCE_UINT};
 
 template <typename T>
-struct clIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing::Test {
+struct ClIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing::Test {
     std::vector<DXGI_FORMAT> retrievedFormats;
     ArrayRef<const DXGI_FORMAT> availableFormats;
 
@@ -185,8 +185,8 @@ IDXGIAdapter *MockD3DSharingFunctions<D3DTypesHelper::D3D10>::getDxgiDescAdapter
 template <>
 IDXGIAdapter *MockD3DSharingFunctions<D3DTypesHelper::D3D11>::getDxgiDescAdapterRequested{};
 
-typedef clIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D10> clIntelSharingFormatQueryDX10;
-typedef clIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D11> clIntelSharingFormatQueryDX11;
+typedef ClIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D10> clIntelSharingFormatQueryDX10;
+typedef ClIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D11> clIntelSharingFormatQueryDX11;
 
 TEST_F(clIntelSharingFormatQueryDX10, givenInvalidContextWhenDX10TextureFormatsRequestedThenInvalidContextError) {
     retVal = clGetSupportedD3D10TextureFormatsINTEL(NULL, CL_MEM_READ_WRITE, 0,
