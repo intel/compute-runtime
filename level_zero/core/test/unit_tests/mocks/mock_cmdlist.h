@@ -61,6 +61,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::currentDynamicStateBaseAddress;
     using BaseClass::currentIndirectObjectBaseAddress;
     using BaseClass::currentSurfaceStateBaseAddress;
+    using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;
@@ -168,6 +169,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
+    using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;

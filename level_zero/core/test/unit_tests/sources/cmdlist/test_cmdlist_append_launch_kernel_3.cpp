@@ -878,9 +878,11 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
     {
         immCmdList0->hostSynchronize(0);
         EXPECT_EQ(1u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         immCmdList1->hostSynchronize(0);
         EXPECT_EQ(2u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     }
 
     // implicit wait
@@ -894,12 +896,20 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
         uint32_t hostCopyData = 0;
+        auto hostAddress0 = static_cast<uint64_t *>(immCmdList0->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer());
+        auto hostAddress1 = static_cast<uint64_t *>(immCmdList1->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer());
+
+        *hostAddress0 = 1;
+        *hostAddress1 = 1;
 
         immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false, false);
-        EXPECT_EQ(1u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+        EXPECT_EQ(immCmdList0->dcFlushSupport ? 1u : 2u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         immCmdList1->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, false, false);
         EXPECT_EQ(2u, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         context->freeMem(deviceAlloc);
     }
@@ -2080,27 +2090,45 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
     EXPECT_FALSE(immCmdList->latestFlushIsHostVisible);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
-    EXPECT_FALSE(immCmdList->latestFlushIsHostVisible);
+    EXPECT_EQ(immCmdList->dcFlushSupport ? false : true, immCmdList->latestFlushIsHostVisible);
 
     EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
     immCmdList->hostSynchronize(0, 1, false);
-    EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-    EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    if (immCmdList->dcFlushSupport) {
+        EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
+        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    } else {
+        EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+        EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    }
 
     events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 
     immCmdList->hostSynchronize(0, 1, false);
-    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
-    EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    if (immCmdList->dcFlushSupport) {
+        EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    } else {
+        EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
+        EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    }
 
     // handle post sync operations
     immCmdList->hostSynchronize(0, 1, true);
-    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
-    EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    if (immCmdList->dcFlushSupport) {
+        EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    } else {
+        EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
+        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    }
 }
 
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;

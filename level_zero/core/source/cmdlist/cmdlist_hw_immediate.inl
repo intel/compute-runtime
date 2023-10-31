@@ -943,11 +943,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
         }
     }
 
+    this->latestFlushIsHostVisible = !this->dcFlushSupport;
+
     if (signalEvent) {
         signalEvent->setCsr(this->csr, isInOrderExecutionEnabled());
-        this->latestFlushIsHostVisible = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-    } else {
-        this->latestFlushIsHostVisible = false;
+        this->latestFlushIsHostVisible |= signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     return inputRet;
