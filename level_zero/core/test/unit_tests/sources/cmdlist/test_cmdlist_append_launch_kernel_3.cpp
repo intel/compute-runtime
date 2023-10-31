@@ -17,6 +17,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -26,6 +27,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -866,6 +868,11 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
     auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto mockAlloc = std::make_unique<MockGraphicsAllocation>();
+
+    auto internalAllocStorage = ultCsr->getInternalAllocationStorage();
+    internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
 
     immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -2082,6 +2089,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenCl
 HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynchronizeThenUseInOrderSync, IsAtLeastSkl) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
+    auto mockAlloc = std::make_unique<MockGraphicsAllocation>();
+
+    auto internalAllocStorage = ultCsr->getInternalAllocationStorage();
+    internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, true);
@@ -2129,6 +2141,37 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
         EXPECT_EQ(2u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     }
+}
+
+HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchronizeThenUseInternalCounter, IsAtLeastSkl) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto mockAlloc = std::make_unique<MockGraphicsAllocation>();
+
+    auto internalAllocStorage = ultCsr->getInternalAllocationStorage();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+
+    EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    immCmdList->hostSynchronize(0, 1, true);
+
+    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+
+    internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
+
+    immCmdList->hostSynchronize(0, 1, true);
+
+    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 }
 
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
@@ -3331,6 +3374,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     immCmdList->inOrderAllocationOffset = counterOffset;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto mockAlloc = std::make_unique<MockGraphicsAllocation>();
+
+    auto internalAllocStorage = ultCsr->getInternalAllocationStorage();
+    internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
