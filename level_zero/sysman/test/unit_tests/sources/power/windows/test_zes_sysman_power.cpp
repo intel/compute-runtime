@@ -42,7 +42,7 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 
-    std::vector<zes_pwr_handle_t> get_power_handles(uint32_t count) {
+    std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
         std::vector<zes_pwr_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -97,7 +97,7 @@ TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerP
     // Setting allow set calls or not
     init(true);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -119,7 +119,7 @@ TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerP
     // Setting allow set calls or not
     init(false);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         zes_power_properties_t properties;
@@ -141,7 +141,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     // Setting allow set calls or not
     init(true);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         zes_power_energy_counter_t energyCounter;
@@ -158,7 +158,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsAllo
     // Setting allow set calls or not
     init(false);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
@@ -182,7 +182,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
     // Setting allow set calls or not
     init(false);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
@@ -205,7 +205,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThreshold
     // Setting allow set calls or not
     init(false);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         double energyThreshold = 2000;
@@ -220,7 +220,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingEnergyThreshold
     // Setting allow set calls or not
     init(true);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         double energyThreshold = 2000;
@@ -241,7 +241,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
     // Setting allow set calls or not
     init(true);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
         zes_power_sustained_limit_t sustained;
@@ -250,8 +250,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
 
         uint32_t powerIncrement = 1500;
         uint32_t timeIncrement = 12000;
-        uint32_t AcPeakPower = 56000;
-        uint32_t DcPeakPower = 44100;
+        uint32_t acPeakPower = 56000;
+        uint32_t dcPeakPower = 44100;
 
         ze_result_t result = zesPowerGetLimits(handle, &sustained, &burst, &peak);
 
@@ -260,8 +260,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
         sustained.power += powerIncrement;
         sustained.interval += timeIncrement;
         burst.power += powerIncrement;
-        peak.powerAC = AcPeakPower;
-        peak.powerDC = DcPeakPower;
+        peak.powerAC = acPeakPower;
+        peak.powerDC = dcPeakPower;
 
         result = zesPowerSetLimits(handle, &sustained, &burst, &peak);
 
@@ -287,7 +287,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPower
     // Setting allow set calls or not
     init(true);
 
-    auto handles = get_power_handles(powerHandleComponentCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         uint32_t limitCount = 0;
 

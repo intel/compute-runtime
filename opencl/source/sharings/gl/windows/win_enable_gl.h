@@ -15,7 +15,7 @@ namespace NEO {
 class Context;
 
 struct GlCreateContextProperties {
-    GLType GLHDCType = 0;
+    GLType glHDCType = 0;
     GLContext glHGLRCHandle = 0;
     GLDisplay glHDCHandle = 0;
 };

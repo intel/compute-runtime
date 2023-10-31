@@ -30,15 +30,15 @@ bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyT
         contextData->glHGLRCHandle = (GLContext)propertyValue;
         return true;
     case CL_WGL_HDC_KHR:
-        contextData->GLHDCType = (GLType)CL_WGL_HDC_KHR;
+        contextData->glHDCType = (GLType)CL_WGL_HDC_KHR;
         contextData->glHDCHandle = (GLDisplay)propertyValue;
         return true;
     case CL_GLX_DISPLAY_KHR:
-        contextData->GLHDCType = (GLType)CL_GLX_DISPLAY_KHR;
+        contextData->glHDCType = (GLType)CL_GLX_DISPLAY_KHR;
         contextData->glHDCHandle = (GLDisplay)propertyValue;
         return true;
     case CL_EGL_DISPLAY_KHR:
-        contextData->GLHDCType = (GLType)CL_EGL_DISPLAY_KHR;
+        contextData->glHDCType = (GLType)CL_EGL_DISPLAY_KHR;
         contextData->glHDCHandle = (GLDisplay)propertyValue;
         return true;
     }
@@ -50,7 +50,7 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
         return true;
 
     if (contextData->glHGLRCHandle) {
-        context.registerSharing(new GLSharingFunctionsWindows(contextData->GLHDCType, contextData->glHGLRCHandle,
+        context.registerSharing(new GLSharingFunctionsWindows(contextData->glHDCType, contextData->glHGLRCHandle,
                                                               nullptr, contextData->glHDCHandle));
     }
 

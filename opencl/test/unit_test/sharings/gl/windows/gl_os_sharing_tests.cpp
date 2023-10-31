@@ -46,13 +46,13 @@ struct MockOSInterface : OSInterface {
 };
 
 TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupContextIsCreated) {
-    GLType GLHDCType = CL_WGL_HDC_KHR;
+    GLType glHDCType = CL_WGL_HDC_KHR;
     GLContext glHGLRCHandle = 0;
     GLDisplay glHDCHandle = 0;
     int32_t expectedContextAttrs[3] = {0};
     GlDllHelper dllHelper;
 
-    auto glSharingFunctions = new GlSharingFunctionsMock(GLHDCType, glHGLRCHandle, glHGLRCHandle, glHDCHandle);
+    auto glSharingFunctions = new GlSharingFunctionsMock(glHDCType, glHGLRCHandle, glHGLRCHandle, glHDCHandle);
 
     EXPECT_EQ(1, dllHelper.getParam("wglCreateContextCalled"));
     EXPECT_EQ(1, dllHelper.getParam("wglShareListsCalled"));

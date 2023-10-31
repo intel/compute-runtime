@@ -20,7 +20,7 @@ using namespace NEO;
 
 LARGE_INTEGER valueToSet = {};
 
-BOOL WINAPI QueryPerformanceCounterMock(
+BOOL WINAPI queryPerformanceCounterMock(
     _Out_ LARGE_INTEGER *lpPerformanceCount) {
     *lpPerformanceCount = valueToSet;
     return true;
@@ -139,7 +139,7 @@ TEST_F(OSTimeWinTest, givenOsTimeWinWhenGetCpuRawTimestampIsCalledThenReturnsNon
 }
 
 TEST_F(OSTimeWinTest, givenHighValueOfCpuTimestampWhenItIsObtainedThenItHasProperValue) {
-    osTime->overrideQueryPerformanceCounterFunction(QueryPerformanceCounterMock);
+    osTime->overrideQueryPerformanceCounterFunction(queryPerformanceCounterMock);
     LARGE_INTEGER frequency = {};
     frequency.QuadPart = 190457;
     osTime->setFrequency(frequency);

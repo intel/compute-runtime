@@ -77,27 +77,27 @@ bool GLSharingFunctionsWindows::isOpenGlSharingSupported() {
     if ((vendor.empty()) || (vendor != intelVendor)) {
         return false;
     }
-    std::basic_string<unsigned char> Version = glGetString(GL_VERSION);
-    if (Version.empty()) {
+    std::basic_string<unsigned char> version = glGetString(GL_VERSION);
+    if (version.empty()) {
         return false;
     }
 
     bool isOpenGLES = false;
     const unsigned char versionES[] = "OpenGL ES";
-    if (Version.find(versionES) != std::string::npos) {
+    if (version.find(versionES) != std::string::npos) {
         isOpenGLES = true;
     }
 
     if (isOpenGLES == true) {
         const unsigned char versionES1[] = "OpenGL ES 1.";
-        if (Version.find(versionES1) != std::string::npos) {
+        if (version.find(versionES1) != std::string::npos) {
             const unsigned char supportGLOES[] = "GL_OES_framebuffer_object";
             if (isOpenGlExtensionSupported(supportGLOES) == false) {
                 return false;
             }
         }
     } else {
-        if (Version[0] < '3') {
+        if (version[0] < '3') {
             const unsigned char supportGLEXT[] = "GL_EXT_framebuffer_object";
             if (isOpenGlExtensionSupported(supportGLEXT) == false) {
                 return false;

@@ -113,16 +113,16 @@ class GlSharingFunctionsMock : public GLSharingFunctionsWindows {
     using GLSharingFunctionsWindows::pfnGlArbSyncObjectSignal;
     using GLSharingFunctionsWindows::pfnGlArbSyncObjectWaitServer;
 
-    GlSharingFunctionsMock(GLType GLHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle)
-        : GLSharingFunctionsWindows(GLHDCType, glHGLRCHandle, glHGLRCHandleBkpCtx, glHDCHandle) {
+    GlSharingFunctionsMock(GLType glHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle)
+        : GLSharingFunctionsWindows(glHDCType, glHGLRCHandle, glHGLRCHandleBkpCtx, glHDCHandle) {
         initMembers();
         updateOpenGLContext();
         createBackupContext();
     }
     GlSharingFunctionsMock();
 
-    void setHandles(GLType GLHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle) {
-        this->glHDCType = GLHDCType;
+    void setHandles(GLType glHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle) {
+        this->glHDCType = glHDCType;
         this->glHGLRCHandle = glHGLRCHandle;
         this->glHGLRCHandleBkpCtx = glHGLRCHandleBkpCtx;
         this->glHDCHandle = glHDCHandle;
@@ -136,7 +136,7 @@ class GlSharingFunctionsMock : public GLSharingFunctionsWindows {
 class MockGlSharing {
   public:
     MockGlSharing() {}
-    MockGlSharing(GLType GLHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle);
+    MockGlSharing(GLType glHDCType, GLContext glHGLRCHandle, GLContext glHGLRCHandleBkpCtx, GLDisplay glHDCHandle);
     void uploadDataToBufferInfo() {
         dllParam->loadBuffer(bufferInfoOutput);
     }
