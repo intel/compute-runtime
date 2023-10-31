@@ -15,7 +15,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <dirent.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 namespace L0 {
@@ -33,94 +32,81 @@ static ze_result_t getResult(int err) {
     }
 }
 
-void FdCache::eraseLeastUsedEntryFromCache() {
-    auto it = fdMap.begin();
-    uint32_t fdCountRef = it->second.second;
-    std::map<std::string, std::pair<int, uint32_t>>::iterator leastUsedIterator = it;
-    while (++it != fdMap.end()) {
-        if (it->second.second < fdCountRef) {
-            fdCountRef = it->second.second;
-            leastUsedIterator = it;
-        }
-    }
-    NEO::SysCalls::close(leastUsedIterator->second.first);
-    fdMap.erase(leastUsedIterator);
-}
-
-int FdCache::getFd(std::string file) {
-    int fd = -1;
-    if (fdMap.find(file) == fdMap.end()) {
-        fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
-        if (fd < 0) {
-            return -1;
-        }
-        if (fdMap.size() == maxSize) {
-            eraseLeastUsedEntryFromCache();
-        }
-        fdMap[file] = std::make_pair(fd, 1);
-    } else {
-        auto &fdPair = fdMap[file];
-        fdPair.second++;
-    }
-    return fdMap[file].first;
-}
-
-FdCache::~FdCache() {
-    for (auto it = fdMap.begin(); it != fdMap.end(); ++it) {
-        NEO::SysCalls::close(it->second.second);
-    }
-    fdMap.clear();
-}
-
-template <typename T>
-ze_result_t FsAccess::readValue(const std::string file, T &val) {
-
-    std::string readVal(64, '\0');
-    int fd = pFdCache->getFd(file);
-    if (fd < 0) {
-        return getResult(errno);
-    }
-
-    ssize_t bytesRead = NEO::SysCalls::pread(fd, readVal.data(), readVal.size(), 0);
-    if (bytesRead < 0) {
-        return getResult(errno);
-    }
-
-    std::istringstream stream(readVal);
-    stream >> val;
-    if (stream.fail()) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
 // Generic Filesystem Access
 FsAccess::FsAccess() {
-    pFdCache = std::make_unique<FdCache>();
 }
-
-FsAccess::FsAccess(const FsAccess &fsAccess) : pFdCache(std::unique_ptr<FdCache>(new FdCache())) {}
 
 FsAccess *FsAccess::create() {
     return new FsAccess();
 }
 
 ze_result_t FsAccess::read(const std::string file, uint64_t &val) {
-    return readValue<uint64_t>(file, val);
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FsAccess::read(const std::string file, double &val) {
-    return readValue<double>(file, val);
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FsAccess::read(const std::string file, int32_t &val) {
-    return readValue<int32_t>(file, val);
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FsAccess::read(const std::string file, uint32_t &val) {
-    return readValue<uint32_t>(file, val);
-}
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
 
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
+}
 ze_result_t FsAccess::read(const std::string file, std::string &val) {
     // Read a single line from text file without trailing newline
     std::ifstream fs;
@@ -441,19 +427,75 @@ ze_result_t SysfsAccess::read(const std::string file, std::string &val) {
 }
 
 ze_result_t SysfsAccess::read(const std::string file, int32_t &val) {
-    return FsAccess::read(fullPath(file), val);
+    std::string str;
+    ze_result_t result;
+
+    result = FsAccess::read(fullPath(file), str);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    std::istringstream stream(str);
+    stream >> val;
+
+    if (stream.fail()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysfsAccess::read(const std::string file, uint32_t &val) {
-    return FsAccess::read(fullPath(file), val);
+    std::string str;
+    ze_result_t result;
+
+    result = FsAccess::read(fullPath(file), str);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    std::istringstream stream(str);
+    stream >> val;
+
+    if (stream.fail()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysfsAccess::read(const std::string file, double &val) {
-    return FsAccess::read(fullPath(file), val);
+    std::string str;
+    ze_result_t result;
+
+    result = FsAccess::read(fullPath(file), str);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    std::istringstream stream(str);
+    stream >> val;
+
+    if (stream.fail()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysfsAccess::read(const std::string file, uint64_t &val) {
-    return FsAccess::read(fullPath(file), val);
+    std::string str;
+    ze_result_t result;
+
+    result = FsAccess::read(fullPath(file), str);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    std::istringstream stream(str);
+    stream >> val;
+
+    if (stream.fail()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysfsAccess::read(const std::string file, std::vector<std::string> &val) {

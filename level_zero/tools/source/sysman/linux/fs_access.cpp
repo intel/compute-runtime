@@ -31,55 +31,17 @@ static ze_result_t getResult(int err) {
     }
 }
 
-void FdCache::eraseLeastUsedEntryFromCache() {
-    auto it = fdMap.begin();
-    uint32_t fdCountRef = it->second.second;
-    std::map<std::string, std::pair<int, uint32_t>>::iterator leastUsedIterator = it;
-    while (++it != fdMap.end()) {
-        if (it->second.second < fdCountRef) {
-            fdCountRef = it->second.second;
-            leastUsedIterator = it;
-        }
-    }
-    NEO::SysCalls::close(leastUsedIterator->second.first);
-    fdMap.erase(leastUsedIterator);
-}
-
-int FdCache::getFd(std::string file) {
-    int fd = -1;
-    if (fdMap.find(file) == fdMap.end()) {
-        fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
-        if (fd < 0) {
-            return -1;
-        }
-        if (fdMap.size() == maxSize) {
-            eraseLeastUsedEntryFromCache();
-        }
-        fdMap[file] = std::make_pair(fd, 1);
-    } else {
-        auto &fdPair = fdMap[file];
-        fdPair.second++;
-    }
-    return fdMap[file].first;
-}
-
-FdCache::~FdCache() {
-    for (auto it = fdMap.begin(); it != fdMap.end(); ++it) {
-        NEO::SysCalls::close(it->second.second);
-    }
-    fdMap.clear();
-}
-
 template <typename T>
 ze_result_t FsAccess::readValue(const std::string file, T &val) {
 
     std::string readVal(64, '\0');
-    int fd = pFdCache->getFd(file);
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
     if (fd < 0) {
         return getResult(errno);
     }
 
     ssize_t bytesRead = NEO::SysCalls::pread(fd, readVal.data(), readVal.size(), 0);
+    NEO::SysCalls::close(fd);
     if (bytesRead < 0) {
         return getResult(errno);
     }
@@ -95,10 +57,7 @@ ze_result_t FsAccess::readValue(const std::string file, T &val) {
 
 // Generic Filesystem Access
 FsAccess::FsAccess() {
-    pFdCache = std::make_unique<FdCache>();
 }
-
-FsAccess::FsAccess(const FsAccess &fsAccess) : pFdCache(std::unique_ptr<FdCache>(new FdCache())) {}
 
 FsAccess *FsAccess::create() {
     return new FsAccess();

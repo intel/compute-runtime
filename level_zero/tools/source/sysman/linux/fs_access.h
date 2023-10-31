@@ -16,8 +16,6 @@
 #include <fstream>
 #include <iostream>
 #include <list>
-#include <map>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <sys/stat.h>
@@ -28,25 +26,9 @@
 
 namespace L0 {
 
-class FdCache {
-  public:
-    FdCache() = default;
-    ~FdCache();
-
-    static const int maxSize = 10;
-    int getFd(std::string file);
-
-  protected:
-    std::map<std::string, std::pair<int, uint32_t>> fdMap = {};
-
-  private:
-    void eraseLeastUsedEntryFromCache();
-};
-
 class FsAccess {
   public:
     static FsAccess *create();
-    FsAccess(const FsAccess &fsAccess);
     virtual ~FsAccess() = default;
 
     virtual ze_result_t canRead(const std::string file);
@@ -79,7 +61,6 @@ class FsAccess {
   private:
     template <typename T>
     ze_result_t readValue(const std::string file, T &val);
-    std::unique_ptr<FdCache> pFdCache = nullptr;
 };
 
 class ProcfsAccess : private FsAccess {
