@@ -27,6 +27,7 @@ class FdCacheInterface {
     int getFd(std::string file);
 
   protected:
+    // Map of File name to pair of file descriptor and reference count to file.
     std::map<std::string, std::pair<int, uint32_t>> fdMap = {};
 
   private:
