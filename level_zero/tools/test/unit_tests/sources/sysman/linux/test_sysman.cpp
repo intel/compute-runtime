@@ -488,11 +488,56 @@ TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUp
     // Get Fd after the cache is full.
     EXPECT_LE(0, pFdCache->getFd("dummy.txt"));
 
-    // Verify Cache have the elemets that are accessed more number of times
+    // Verify Cache have the elements that are accessed more number of times
     EXPECT_NE(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile0.txt"));
 
     // Verify cache doesn't have an element that is accessed less number of times.
     EXPECT_EQ(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile9.txt"));
+}
+
+TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosedAndCacheIsUpdatedProperly) {
+
+    class MockFdCache : public FdCache {
+      public:
+        using FdCache::fdMap;
+    };
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        EXPECT_EQ(fileDescriptor, 1);
+        return 0;
+    });
+
+    MockFdCache *pFdCache = new MockFdCache();
+    std::string fileName = {};
+    for (auto i = 0; i < L0::FdCache::maxSize; i++) {
+        fileName = "mockfile" + std::to_string(i) + ".txt";
+        EXPECT_LE(0, pFdCache->getFd(fileName));
+    }
+
+    fileName = "mockfile0.txt";
+    for (auto i = 0; i < 3; i++) {
+        EXPECT_LE(0, pFdCache->getFd(fileName));
+    }
+
+    for (auto i = 1; i < L0::FdCache::maxSize - 1; i++) {
+        fileName = "mockfile" + std::to_string(i) + ".txt";
+        EXPECT_LE(0, pFdCache->getFd(fileName));
+    }
+
+    // Get Fd after the cache is full.
+    EXPECT_LE(0, pFdCache->getFd("dummy.txt"));
+
+    // Verify Cache have the elements that are accessed more number of times
+    EXPECT_NE(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile0.txt"));
+
+    // Verify cache doesn't have an element that is accessed less number of times.
+    EXPECT_EQ(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile9.txt"));
+
+    delete pFdCache;
 }
 
 TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndUnsignedIntegerWhenCallingReadThenSuccessIsReturned) {

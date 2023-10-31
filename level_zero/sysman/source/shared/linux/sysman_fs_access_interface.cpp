@@ -64,7 +64,7 @@ int FdCacheInterface::getFd(std::string file) {
 
 FdCacheInterface::~FdCacheInterface() {
     for (auto it = fdMap.begin(); it != fdMap.end(); ++it) {
-        NEO::SysCalls::close(it->second.second);
+        NEO::SysCalls::close(it->second.first);
     }
     fdMap.clear();
 }
