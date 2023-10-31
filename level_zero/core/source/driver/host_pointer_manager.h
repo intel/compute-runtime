@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/device_bitfield.h"
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -26,7 +25,7 @@ class MemoryManager;
 namespace L0 {
 struct Device;
 
-struct HostPointerData : NEO::NonAssignableClass {
+struct HostPointerData {
     HostPointerData(uint32_t maxRootDeviceIndex)
         : hostPtrAllocations(maxRootDeviceIndex),
           maxRootDeviceIndex(maxRootDeviceIndex) {

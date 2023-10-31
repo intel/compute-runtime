@@ -7,14 +7,12 @@
 
 #pragma once
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-
 #include <iterator>
 
 namespace NEO {
 
 template <typename DataType>
-struct Range : NonAssignableClass {
+struct Range {
     using iterator = DataType *;
     using const_iterator = const DataType *;
     using reverse_iterator = std::reverse_iterator<iterator>;

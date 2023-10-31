@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/ze_api.h"
@@ -44,7 +43,7 @@ class FdCache {
     void eraseLeastUsedEntryFromCache();
 };
 
-class FsAccess : NEO::NonAssignableClass {
+class FsAccess {
   public:
     static FsAccess *create();
     FsAccess(const FsAccess &fsAccess);

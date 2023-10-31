@@ -26,11 +26,4 @@ class NonCopyableClass {
     NonCopyableClass(NonCopyableClass &&) = default;
     NonCopyableClass &operator=(NonCopyableClass &&) = default;
 };
-
-class NonAssignableClass {
-  public:
-    NonAssignableClass() = default;
-    NonAssignableClass &operator=(const NonAssignableClass &) = delete;
-    NonAssignableClass &operator=(NonAssignableClass &&) = delete;
-};
 } // namespace NEO
