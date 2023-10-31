@@ -606,7 +606,7 @@ struct MockTileDebugSessionLinuxi915 : TileDebugSessionLinuxi915 {
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
 };
 
-struct DebugApiLinuxFixture : public DeviceFixture {
+struct DebugApiLinuxPrelimFixture : public DeviceFixture {
     void setUp() {
         setUp(nullptr);
     }
@@ -620,9 +620,9 @@ struct DebugApiLinuxFixture : public DeviceFixture {
     static constexpr uint8_t bufferSize = 16;
 };
 
-struct DebugApiPageFaultEventFixture : public DebugApiLinuxFixture {
+struct DebugApiPageFaultEventFixture : public DebugApiLinuxPrelimFixture {
     void setUp() {
-        DebugApiLinuxFixture::setUp();
+        DebugApiLinuxPrelimFixture::setUp();
         zet_debug_config_t config = {};
         config.pid = 0x1234;
 
@@ -642,7 +642,7 @@ struct DebugApiPageFaultEventFixture : public DebugApiLinuxFixture {
     }
 
     void tearDown() {
-        DebugApiLinuxFixture::tearDown();
+        DebugApiLinuxPrelimFixture::tearDown();
     }
 
     void buildPfi915Event() {

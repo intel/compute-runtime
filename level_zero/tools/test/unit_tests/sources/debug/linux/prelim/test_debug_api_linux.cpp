@@ -448,7 +448,7 @@ TEST(DebugSessionLinuxi915Test, GivenContextStateSaveAreaBindInfoWhenGettingCSSA
     EXPECT_EQ(0x400u, sessionMock->getContextStateSaveAreaSize(5));
 }
 
-using DebugSessionLinuxi915FenceMode = Test<DebugApiLinuxFixture>;
+using DebugSessionLinuxi915FenceMode = Test<DebugApiLinuxPrelimFixture>;
 
 TEST_F(DebugSessionLinuxi915FenceMode, GivenDebuggerOpenVersionGreaterEqual3WhenDebugSessionCreatedThanBlockingOnFenceModeIsSet) {
 
@@ -471,7 +471,7 @@ TEST_F(DebugSessionLinuxi915FenceMode, GivenDebuggerOpenVersionGreaterEqual3When
     EXPECT_TRUE(linuxSession->blockOnFenceMode);
 }
 
-using DebugApiLinuxTest = Test<DebugApiLinuxFixture>;
+using DebugApiLinuxTest = Test<DebugApiLinuxPrelimFixture>;
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerOpenVersion1AndSuccessfulInitializationWhenCreatingDebugSessionThenBlockOnFenceModeIsFalse) {
     zet_debug_config_t config = {};
@@ -3604,9 +3604,9 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventOfKnownClassWhenHandlingEventThenGpuAddr
     EXPECT_EQ(contextSaveAddress, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextStateSaveAreaGpuVa);
 }
 
-struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture, public MockDebugSessionLinuxi915Helper {
+struct DebugApiLinuxVmBindFixture : public DebugApiLinuxPrelimFixture, public MockDebugSessionLinuxi915Helper {
     void setUp() {
-        DebugApiLinuxFixture::setUp();
+        DebugApiLinuxPrelimFixture::setUp();
 
         zet_debug_config_t config = {};
         config.pid = 0x1234;
@@ -3623,7 +3623,7 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture, public MockDebu
     }
 
     void tearDown() {
-        DebugApiLinuxFixture::tearDown();
+        DebugApiLinuxPrelimFixture::tearDown();
     }
 
     const uint64_t zebinModuleClassHandle = 101;
@@ -5967,7 +5967,7 @@ TEST_F(DebugApiLinuxPageFaultEventTest, GivenPageFaultEventWhenHandlingEventThen
     }
 }
 
-using DebugApiLinuxAttentionTest = Test<DebugApiLinuxFixture>;
+using DebugApiLinuxAttentionTest = Test<DebugApiLinuxPrelimFixture>;
 
 TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEventThenNewlyStoppedThreadsSaved) {
     zet_debug_config_t config = {};
@@ -6687,7 +6687,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenAlreadyStoppedThreadsWhenHandlingAttEven
     EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
 }
 
-using DebugApiLinuxAsyncThreadTest = Test<DebugApiLinuxFixture>;
+using DebugApiLinuxAsyncThreadTest = Test<DebugApiLinuxPrelimFixture>;
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingInternalEventsAsyncThenDetachEventIsGenerated) {
     zet_debug_config_t config = {};
@@ -7103,12 +7103,12 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
     EXPECT_EQ(0u, session->apiEvents.size());
 }
 
-struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
+struct DebugApiRegistersAccessFixture : public DebugApiLinuxPrelimFixture {
     void setUp() {
         hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.gtSystemInfo.SubSliceCount = 6 * hwInfo.gtSystemInfo.SliceCount;
 
-        DebugApiLinuxFixture::setUp(&hwInfo);
+        DebugApiLinuxPrelimFixture::setUp(&hwInfo);
 
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
@@ -7125,7 +7125,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
     }
 
     void tearDown() {
-        DebugApiLinuxFixture::tearDown();
+        DebugApiLinuxPrelimFixture::tearDown();
     }
     NEO::HardwareInfo hwInfo;
     std::unique_ptr<MockDebugSessionLinuxi915> session;

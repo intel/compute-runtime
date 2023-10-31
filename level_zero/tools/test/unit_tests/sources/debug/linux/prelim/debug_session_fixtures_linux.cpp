@@ -12,7 +12,7 @@
 namespace L0 {
 namespace ult {
 
-void DebugApiLinuxFixture::setUp(NEO::HardwareInfo *hwInfo) {
+void DebugApiLinuxPrelimFixture::setUp(NEO::HardwareInfo *hwInfo) {
     if (hwInfo != nullptr) {
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
         DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);

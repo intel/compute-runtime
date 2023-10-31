@@ -7,7 +7,8 @@
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
-#include "level_zero/tools/test/unit_tests/sources/debug/linux/prelim/debug_session_fixtures_linux.h"
+#include "level_zero/tools/source/debug/linux/debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 
 namespace L0 {
 namespace ult {
