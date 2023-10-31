@@ -172,7 +172,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     this->commandContainer.addToResidencyContainer(&inOrderExecInfo->inOrderDependencyCounterAllocation);
 
-    if (signalEvent && signalEvent->isInOrderExecEvent()) {
+    if (signalEvent && signalEvent->isCounterBased()) {
         signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, this->inOrderAllocationOffset);
     }
 
@@ -495,7 +495,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
 
-    if (event->isInOrderExecEvent()) {
+    if (event->isCounterBased()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -2430,7 +2430,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
-        if (event->isInOrderExecEvent()) {
+        if (event->isCounterBased()) {
             if (!event->getInOrderExecDataAllocation()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
             }

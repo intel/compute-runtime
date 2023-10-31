@@ -19,11 +19,11 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
+    using BaseClass::counterBased;
     using BaseClass::csrs;
     using BaseClass::Event;
     using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddress;
-    using BaseClass::inOrderExecEvent;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
