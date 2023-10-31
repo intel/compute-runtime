@@ -80,8 +80,8 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
     }
 
-    if (NEO::DebugManager.flags.ForceInOrderEvents.get() == 1) {
-        event->enableInOrderMode();
+    if (eventPool->isCounterBased() || NEO::DebugManager.flags.ForceInOrderEvents.get() == 1) {
+        event->enableCounterBasedMode();
     }
 
     return event;
@@ -150,7 +150,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryInOrderEventStatus() {
+ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
     if (!this->inOrderExecInfo.get()) {
         return ZE_RESULT_NOT_READY;
     }
@@ -281,8 +281,8 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         return ZE_RESULT_SUCCESS;
     }
 
-    if (this->inOrderExecEvent) {
-        return queryInOrderEventStatus();
+    if (this->counterBased) {
+        return queryCounterBasedEventStatus();
     } else {
         return queryStatusEventPackets();
     }
@@ -396,7 +396,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSignal() {
-    if (this->isInOrderExecEvent()) {
+    if (this->isCounterBased()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -447,7 +447,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     do {
-        if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1 && this->inOrderExecEvent) {
+        if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1 && this->counterBased) {
             ret = waitForUserFence(timeout);
         } else {
             ret = queryStatus();
@@ -494,7 +494,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    if (this->isInOrderExecEvent()) {
+    if (this->isCounterBased()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 

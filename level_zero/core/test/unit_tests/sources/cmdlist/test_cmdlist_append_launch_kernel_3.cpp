@@ -670,7 +670,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenRetur
 
 struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     struct MockEvent : public EventImp<uint32_t> {
-        using EventImp<uint32_t>::inOrderExecEvent;
+        using EventImp<uint32_t>::counterBased;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
         using EventImp<uint32_t>::inOrderExecSignalValue;
@@ -700,6 +700,9 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
         eventPoolDesc.count = numEvents;
 
+        ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+        eventPoolDesc.pNext = &counterBasedExtension;
+
         if (timestampEvent) {
             eventPoolDesc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
         }
@@ -712,8 +715,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
             events.emplace_back(DestroyableZeUniquePtr<MockEvent>(static_cast<MockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
-            EXPECT_FALSE(events.back()->inOrderExecEvent);
-            events.back()->inOrderExecEvent = true;
+            EXPECT_TRUE(events.back()->counterBased);
         }
 
         return eventPool;
@@ -847,7 +849,7 @@ HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListTh
 
     eventDesc.index = 0;
     auto event = std::unique_ptr<MockEvent>(static_cast<MockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-    EXPECT_TRUE(event->inOrderExecEvent);
+    EXPECT_TRUE(event->counterBased);
 
     auto handle = event->toHandle();
 
@@ -858,7 +860,7 @@ HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListTh
 
 HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusThenReturnNotReady, IsAtLeastSkl) {
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = true;
+    events[0]->counterBased = true;
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->queryStatus());
 }
@@ -964,7 +966,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 
     // non in-order event
-    events[1]->inOrderExecEvent = false;
+    events[1]->counterBased = false;
     events[1]->hostSynchronize(2);
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 }
@@ -978,7 +980,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledT
 
     EXPECT_EQ(MemoryConstants::pageSize64k, immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBufferSize());
 
-    EXPECT_TRUE(events[0]->inOrderExecEvent);
+    EXPECT_TRUE(events[0]->counterBased);
     EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(&events[0]->inOrderExecInfo->inOrderDependencyCounterAllocation, &immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation);
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
@@ -1005,11 +1007,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenDontSetIn
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    EXPECT_FALSE(events[0]->inOrderExecEvent);
+    EXPECT_FALSE(events[0]->counterBased);
     EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
     EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
@@ -1056,7 +1058,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingSemaphoreThenProg
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1120,7 +1122,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1164,7 +1166,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAsMaskWhenDispatchingStoreDataIm
 
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1278,7 +1280,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPre
     auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
     auto eventHandle = events[0]->toHandle();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -1370,7 +1372,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgram
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1450,7 +1452,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKer
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1548,7 +1550,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxed
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -2042,7 +2044,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenCl
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->signalScope = 0;
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
@@ -2192,7 +2194,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenAskingForNonWalkerSigna
     auto eventPool1 = createEvents<FamilyType>(1, true);
     auto eventPool2 = createEvents<FamilyType>(1, false);
     auto eventPool3 = createEvents<FamilyType>(1, false);
-    events[2]->inOrderExecEvent = false;
+    events[2]->counterBased = false;
 
     EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
     EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[1].get()));
@@ -2351,7 +2353,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     uint64_t inOrderSyncVa = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
 
@@ -2457,7 +2459,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, true);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     uint8_t ptr[64] = {};
 
@@ -3036,7 +3038,7 @@ HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWa
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto eventHandle = events[0]->toHandle();
 
@@ -3345,7 +3347,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     auto offset = cmdStream->getUsed();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto eventHandle = events[0]->toHandle();
 
@@ -4203,7 +4205,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
     auto eventHandle = events[0]->toHandle();
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
@@ -4666,7 +4668,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();
-    events[0]->inOrderExecEvent = false;
+    events[0]->counterBased = false;
 
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
     auto regularCopyOnlyCmdList = createRegularCmdList<gfxCoreFamily>(true);
