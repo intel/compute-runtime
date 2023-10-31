@@ -101,11 +101,6 @@ void RootDeviceEnvironment::prepareForCleanup() const {
 }
 
 bool RootDeviceEnvironment::initAilConfiguration() {
-    if (!DebugManager.flags.EnableAIL.get()) {
-        return true;
-    }
-    auto ailConfiguration = AILConfiguration::get(hwInfo->platform.eProductFamily);
-
     if (ailConfiguration == nullptr) {
         return true;
     }
@@ -161,6 +156,7 @@ void RootDeviceEnvironment::initHelpers() {
     initApiGfxCoreHelper();
     initCompilerProductHelper();
     initReleaseHelper();
+    initAilConfigurationHelper();
 }
 
 void RootDeviceEnvironment::initGfxCoreHelper() {
@@ -186,8 +182,18 @@ void RootDeviceEnvironment::initReleaseHelper() {
     }
 }
 
+void RootDeviceEnvironment::initAilConfigurationHelper() {
+    if (ailConfiguration == nullptr && DebugManager.flags.EnableAIL.get()) {
+        ailConfiguration = AILConfiguration::create(this->getHardwareInfo()->platform.eProductFamily);
+    }
+}
+
 ReleaseHelper *RootDeviceEnvironment::getReleaseHelper() const {
     return releaseHelper.get();
+}
+
+AILConfiguration *RootDeviceEnvironment::getAILConfigurationHelper() const {
+    return ailConfiguration.get();
 }
 
 BuiltIns *RootDeviceEnvironment::getBuiltIns() {

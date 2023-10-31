@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string_helpers.h"
 
@@ -71,8 +72,7 @@ T *Program::create(
 
     if (CL_SUCCESS == retVal) {
 
-        auto &hwInfo = pContext->getDevice(0)->getHardwareInfo();
-        auto ail = AILConfiguration::get(hwInfo.platform.eProductFamily);
+        auto ail = pContext->getDevice(0)->getRootDeviceEnvironment().getAILConfigurationHelper();
         if (ail) {
             ail->modifyKernelIfRequired(combinedString);
         }

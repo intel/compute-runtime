@@ -28,11 +28,7 @@ std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"s
 
 const std::set<std::string_view> applicationsContextSyncFlag = {};
 
-AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT] = {};
-
-AILConfiguration *AILConfiguration::get(PRODUCT_FAMILY productFamily) {
-    return ailConfigurationTable[productFamily];
-}
+AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
 
 void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {
     auto search = applicationMap.find(processName);
