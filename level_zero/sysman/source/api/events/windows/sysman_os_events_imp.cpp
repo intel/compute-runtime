@@ -175,11 +175,11 @@ WddmEventsImp::WddmEventsImp(OsSysman *pOsSysman) {
     // create an exit event with a default security decriptor with no name
     bool manualResetObject = FALSE;
     bool isEventStateSignalled = FALSE;
-    exitHandle = createWddmEvent(NULL, manualResetObject, isEventStateSignalled, NULL);
+    exitHandle = WddmEventsImp::createWddmEvent(NULL, manualResetObject, isEventStateSignalled, NULL);
 }
 
 WddmEventsImp::~WddmEventsImp() {
-    closeWddmHandle(exitHandle);
+    WddmEventsImp::closeWddmHandle(exitHandle);
 }
 
 OsEvents *OsEvents::create(OsSysman *pOsSysman) {

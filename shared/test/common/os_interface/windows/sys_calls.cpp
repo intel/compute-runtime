@@ -292,7 +292,7 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
             if (strcmp(lpValueName, "settingSourceString") == 0) {
                 const auto settingSource = "registry";
                 if (lpData) {
-                    strcpy(reinterpret_cast<char *>(lpData), settingSource);
+                    strcpy_s(reinterpret_cast<char *>(lpData), strlen(settingSource) + 1u, settingSource);
                 } else {
                     *lpcbData = static_cast<DWORD>(strlen(settingSource) + 1u);
                     if (lpType) {
@@ -330,7 +330,7 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
                 }
             } else if (driverStorePath && (strcmp(lpValueName, "DriverStorePathForComputeRuntime") == 0)) {
                 if (lpData) {
-                    strcpy(reinterpret_cast<char *>(lpData), driverStorePath);
+                    strcpy_s(reinterpret_cast<char *>(lpData), strlen(driverStorePath) + 1u, driverStorePath);
                 }
                 if (lpcbData) {
                     *lpcbData = static_cast<DWORD>(strlen(driverStorePath) + 1u);

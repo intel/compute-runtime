@@ -41,7 +41,7 @@ class WddmWithKmDafMock : public Wddm {
 
 class WddmKmDafListenerTest : public ::testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         executionEnvironment.initializeMemoryManager();
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
@@ -51,7 +51,7 @@ class WddmKmDafListenerTest : public ::testing::Test {
         wddmWithKmDafMock->init();
         wddmWithKmDafMock->featureTable->flags.ftrKmdDaf = true;
     }
-    void TearDown() {
+    void TearDown() override {
     }
 
     MockExecutionEnvironment executionEnvironment{};

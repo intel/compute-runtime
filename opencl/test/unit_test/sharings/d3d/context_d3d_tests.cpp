@@ -35,7 +35,7 @@ TEST(D3DContextTest, givenDispatchTableThenItContainsValidEntries) {
     EXPECT_EQ(&clEnqueueReleaseDX9ObjectsINTEL, context.dispatch.crtDispatch->clEnqueueReleaseDX9ObjectsINTEL);
 }
 
-struct clIntelSharingFormatQueryDX9 : public ApiTests {
+struct ClIntelSharingFormatQueryDX9 : public ApiTests {
     std::vector<D3DFORMAT> supportedNonPlanarFormats;
     std::vector<D3DFORMAT> supportedPlanarFormats;
     std::vector<D3DFORMAT> supportedPlane1Formats;
@@ -71,7 +71,7 @@ struct clIntelSharingFormatQueryDX9 : public ApiTests {
 
 namespace ULT {
 
-TEST_F(clIntelSharingFormatQueryDX9, givenInvalidContextWhenMediaSurfaceFormatsRequestedThenInvalidContextError) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenInvalidContextWhenMediaSurfaceFormatsRequestedThenInvalidContextError) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(nullptr, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0,
                                                        static_cast<cl_uint>(retrievedFormats.size()),
                                                        &retrievedFormats[0],
@@ -79,7 +79,7 @@ TEST_F(clIntelSharingFormatQueryDX9, givenInvalidContextWhenMediaSurfaceFormatsR
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenInvalidFlagsWhenMediaSurfaceFormatsRequestedThenInvalidValueError) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenInvalidFlagsWhenMediaSurfaceFormatsRequestedThenInvalidValueError) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(
         pContext, 0, CL_MEM_OBJECT_IMAGE2D, 0,
         static_cast<cl_uint>(retrievedFormats.size()),
@@ -87,13 +87,13 @@ TEST_F(clIntelSharingFormatQueryDX9, givenInvalidFlagsWhenMediaSurfaceFormatsReq
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenInvalidImageTypeWhenMediaSurfaceFormatsRequestedThenInvalidValueError) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenInvalidImageTypeWhenMediaSurfaceFormatsRequestedThenInvalidValueError) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, 0, 0, static_cast<cl_uint>(retrievedFormats.size()),
                                                        &retrievedFormats[0], &numImageFormats);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestedMediaSurfaceFormatsBelowMaximumThenExceedingFormatAreaRemainsUntouched) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenValidParametersWhenRequestedMediaSurfaceFormatsBelowMaximumThenExceedingFormatAreaRemainsUntouched) {
     for (cl_uint i = 0; i <= static_cast<cl_uint>(retrievedFormats.size()); ++i) {
         retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, i,
                                                            &retrievedFormats[0], &numImageFormats);
@@ -104,7 +104,7 @@ TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestedMediaSurfa
     }
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlane0ThenAllKnownFormatsAreIncludedInTheResult) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlane0ThenAllKnownFormatsAreIncludedInTheResult) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0,
                                                        static_cast<cl_uint>(retrievedFormats.size()),
                                                        &retrievedFormats[0],
@@ -124,7 +124,7 @@ TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurf
     }
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlane1ThenOnlyPlanarFormatsAreIncludedInTheResult) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlane1ThenOnlyPlanarFormatsAreIncludedInTheResult) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 1,
                                                        static_cast<cl_uint>(retrievedFormats.size()),
                                                        &retrievedFormats[0],
@@ -144,7 +144,7 @@ TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurf
     }
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlane2ThenOnlyYV12FormatIsIncludedInTheResult) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlane2ThenOnlyYV12FormatIsIncludedInTheResult) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 2,
                                                        static_cast<cl_uint>(retrievedFormats.size()),
                                                        &retrievedFormats[0],
@@ -163,7 +163,7 @@ TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurf
     }
 }
 
-TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlaneGraterThan2ThenZeroNumFormatsIsReturned) {
+TEST_F(ClIntelSharingFormatQueryDX9, givenValidParametersWhenRequestingMediaSurfaceFormatsForPlaneGraterThan2ThenZeroNumFormatsIsReturned) {
     retVal = clGetSupportedDX9MediaSurfaceFormatsINTEL(pContext, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 3,
                                                        0,
                                                        nullptr,

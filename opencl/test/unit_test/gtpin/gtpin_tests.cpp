@@ -423,7 +423,7 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
     ASSERT_EQ(&NEO::gtpinUnmapBuffer, driverServices.bufferUnMap);
     ASSERT_NE(nullptr, driverServices.bufferUnMap);
 
-    retFromGtPin = (*driverServices.bufferUnMap)(nullptr, nullptr);
+    retFromGtPin = NEO::gtpinUnmapBuffer(nullptr, nullptr);
     EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
 
     cl_context ctxt = (cl_context)((Context *)pContext);
