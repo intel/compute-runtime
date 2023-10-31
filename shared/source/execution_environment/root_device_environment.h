@@ -40,6 +40,7 @@ class ApiGfxCoreHelper;
 class CompilerProductHelper;
 class GraphicsAllocation;
 class ReleaseHelper;
+class AILConfiguration;
 
 struct AllocationProperties;
 struct HardwareInfo;
@@ -85,7 +86,9 @@ struct RootDeviceEnvironment : NonCopyableClass {
     void initApiGfxCoreHelper();
     void initCompilerProductHelper();
     void initReleaseHelper();
+    void initAilConfigurationHelper();
     ReleaseHelper *getReleaseHelper() const;
+    AILConfiguration *getAILConfigurationHelper() const;
     template <typename HelperType>
     HelperType &getHelper() const;
     const ProductHelper &getProductHelper() const;
@@ -108,6 +111,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<ProductHelper> productHelper;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;
+    std::unique_ptr<AILConfiguration> ailConfiguration;
 
     std::unique_ptr<AssertHandler> assertHandler;
 

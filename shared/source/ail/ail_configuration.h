@@ -10,6 +10,7 @@
 #include "igfxfmid.h"
 
 #include <cstdint>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -43,13 +44,23 @@ enum class AILEnumeration : uint32_t {
     AIL_MAX_OPTIONS_COUNT
 };
 
+class AILConfiguration;
+using AILConfigurationCreateFunctionType = std::unique_ptr<AILConfiguration> (*)();
+extern AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
+
 class AILConfiguration {
   public:
+    static std::unique_ptr<AILConfiguration> create(PRODUCT_FAMILY product) {
+        auto ailConfigurationCreateFunction = ailConfigurationFactory[product];
+        if (ailConfigurationCreateFunction == nullptr) {
+            return nullptr;
+        }
+        auto ailConfiguration = ailConfigurationCreateFunction();
+        return ailConfiguration;
+    }
     AILConfiguration() = default;
 
     MOCKABLE_VIRTUAL bool initProcessExecutableName();
-
-    static AILConfiguration *get(PRODUCT_FAMILY productFamily);
 
     virtual void apply(RuntimeCapabilityTable &runtimeCapabilityTable);
 
@@ -59,6 +70,8 @@ class AILConfiguration {
 
     virtual bool isContextSyncFlagRequired() = 0;
 
+    virtual ~AILConfiguration() = default;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -67,15 +80,13 @@ class AILConfiguration {
     MOCKABLE_VIRTUAL bool isKernelHashCorrect(const std::string &kernelSources, uint64_t expectedHash) const;
 };
 
-extern AILConfiguration *ailConfigurationTable[IGFX_MAX_PRODUCT];
-
 extern const std::set<std::string_view> applicationsContextSyncFlag;
 
 template <PRODUCT_FAMILY Product>
 class AILConfigurationHw : public AILConfiguration {
   public:
-    static AILConfigurationHw<Product> &get() {
-        static AILConfigurationHw<Product> ailConfiguration;
+    static std::unique_ptr<AILConfiguration> create() {
+        auto ailConfiguration = std::unique_ptr<AILConfiguration>(new AILConfigurationHw());
         return ailConfiguration;
     }
 
@@ -89,7 +100,8 @@ class AILConfigurationHw : public AILConfiguration {
 template <PRODUCT_FAMILY product>
 struct EnableAIL {
     EnableAIL() {
-        ailConfigurationTable[product] = &AILConfigurationHw<product>::get();
+        auto ailConfigurationCreateFunction = AILConfigurationHw<product>::create;
+        ailConfigurationFactory[product] = ailConfigurationCreateFunction;
     }
 };
 
