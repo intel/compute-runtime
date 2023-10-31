@@ -2366,24 +2366,22 @@ TEST_F(ProgramTests, GivenFailedBinaryWhenCreatingFromIlThenInvalidBinaryErrorIs
 TEST_F(ProgramTests, GivenSuccessfullyBuiltBinaryWhenCreatingFromIlThenValidProgramIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
     cl_int retVal = CL_SUCCESS;
-    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), retVal);
+    auto prog = clUniquePtr(Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), retVal));
     ASSERT_NE(nullptr, prog);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    prog->release();
 }
 
 TEST_F(ProgramTests, givenProgramCreatedFromILWhenCompileIsCalledThenReuseTheILInsteadOfCallingCompilerInterface) {
     const uint32_t spirv[16] = {0x03022307};
     cl_int errCode = 0;
-    auto pProgram = Program::createFromIL<MockProgram>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
-    ASSERT_NE(nullptr, pProgram); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    auto pProgram = clUniquePtr(Program::createFromIL<MockProgram>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode));
+    ASSERT_NE(nullptr, pProgram);
     auto debugVars = NEO::getIgcDebugVars();
     debugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(debugVars);
     auto compilerErr = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, compilerErr);
     gEnvironment->fclPopDebugVars();
-    pProgram->release();
 }
 
 TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhenCompileIsCalledThenReuseTheILInsteadOfCallingCompilerInterface) {

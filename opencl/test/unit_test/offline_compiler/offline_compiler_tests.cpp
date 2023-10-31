@@ -2565,8 +2565,7 @@ TEST(OfflineCompilerTest, WhenParsingCmdLineThenOptionsAreReadCorrectly) {
         "ocloc",
         NEO::CompilerOptions::greaterThan4gbBuffersRequired.data()};
 
-    MockOfflineCompiler *mockOfflineCompiler = new MockOfflineCompiler();
-    ASSERT_NE(nullptr, mockOfflineCompiler);
+    auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
 
     testing::internal::CaptureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
@@ -2575,8 +2574,6 @@ TEST(OfflineCompilerTest, WhenParsingCmdLineThenOptionsAreReadCorrectly) {
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     size_t found = internalOptions.find(argv.begin()[1]);
     EXPECT_NE(std::string::npos, found);
-
-    delete mockOfflineCompiler;
 }
 
 TEST(OfflineCompilerTest, GivenUnknownIsaConfigValueWhenInitHardwareInfoThenInvalidDeviceIsReturned) {

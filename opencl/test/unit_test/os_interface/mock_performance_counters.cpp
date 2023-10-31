@@ -402,8 +402,7 @@ PerformanceCounters *PerformanceCountersMetricsLibraryFixture::initDeviceWithPer
 
     EXPECT_NE(metricsLibraryInterface->api, nullptr);
 
-    auto rawPerformanceCounters = performanceCounters.get();
     device->setPerfCounters(std::move(performanceCounters));
-    return rawPerformanceCounters;
+    return device->getPerformanceCounters();
 }
 } // namespace NEO
