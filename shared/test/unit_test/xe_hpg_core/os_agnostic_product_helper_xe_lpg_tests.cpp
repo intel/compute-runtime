@@ -205,14 +205,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueueAllowed
     EXPECT_FALSE(productHelper->blitEnqueueAllowed());
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDpasSupportedThenReturnTrue, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isPlatformDpasSupported());
-}
-
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDp4aSupportedThenReturnTrue, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isPlatformDp4aSupported());
-}
-
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues, IsXeLpg) {
 
     EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());

@@ -7,6 +7,7 @@
 
 #include "level_zero/api/driver_experimental/tracing/zet_tracing.h"
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/source/inc/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 #include <level_zero/zes_api.h>
