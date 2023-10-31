@@ -1291,13 +1291,14 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         }
     }
 
+    TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
     auto taskCountToWait = taskCount;
+    queueOwnership.unlock();
 
     waitStatus = waitUntilComplete(taskCountToWait, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
     {
-        TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
-
+        queueOwnership.lock();
         /*
            Check if queue resources cleanup after wait is possible.
            If new submission happened during wait, we need to query completion (without waiting).

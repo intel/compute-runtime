@@ -241,6 +241,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
+        std::lock_guard<std::mutex> guard(mutex);
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
         latestWaitForCompletionWithTimeoutWaitParams = params;
         waitForCompletionWithTimeoutTaskCountCalled++;
@@ -320,6 +321,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         addAubCommentCalled = true;
     }
     bool flushBatchedSubmissions() override {
+        auto commandStreamReceieverOwnership = this->obtainUniqueOwnership();
         flushBatchedSubmissionsCalled = true;
 
         if (shouldFailFlushBatchedSubmissions) {
@@ -473,6 +475,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     LinearStream *lastFlushedCommandStream = nullptr;
     const IndirectHeap *recordedSsh = nullptr;
 
+    std::mutex mutex;
     std::atomic<uint32_t> recursiveLockCounter;
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};
     uint32_t makeSurfacePackNonResidentCalled = false;
