@@ -110,10 +110,11 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
 
 #endif
 
+    auto contextRecord = *ep->ContextRecord;
     while (callstackCounter < maxCallstackDepth) {
         symbol->Name[255] = '\0';
 
-        if (!StackWalk64(machine, hProcess, hThread, &stackFrame, ep->ContextRecord, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, 0)) {
+        if (!StackWalk64(machine, hProcess, hThread, &stackFrame, &contextRecord, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, 0)) {
             break;
         }
 
