@@ -1085,26 +1085,6 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnl
     EXPECT_TRUE(commandList->flushTaskSubmissionEnabled());
 }
 
-HWTEST2_F(CommandListCreate, givenAllValuesTbxAndSyncModeFlagsWhenCheckingWaitlistEventSyncRequiredThenExpectTrueOnlyForTbxTrueAndAsyncMode, IsAtLeastSkl) {
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-
-    cmdList.isSyncModeQueue = true;
-    cmdList.isTbxMode = false;
-    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
-
-    cmdList.isSyncModeQueue = true;
-    cmdList.isTbxMode = true;
-    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
-
-    cmdList.isSyncModeQueue = false;
-    cmdList.isTbxMode = false;
-    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
-
-    cmdList.isSyncModeQueue = false;
-    cmdList.isTbxMode = true;
-    EXPECT_TRUE(cmdList.eventWaitlistSyncRequired());
-}
-
 using CommandListStateBaseAddressPrivateHeapTest = Test<CommandListPrivateHeapsFixture>;
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,

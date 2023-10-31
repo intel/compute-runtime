@@ -560,9 +560,7 @@ TEST_F(MemoryAllocatorTest, GivenAlignmentWhenAllocatingSystemMemoryThenAllocate
 
 TEST_F(MemoryAllocatorTest, WhenAllocatingGraphicsMemoryThenAllocationHasCorrectProperties) {
     unsigned int alignment = 4096;
-    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-    memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment())[0],
-                                                                                                PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, allocation);

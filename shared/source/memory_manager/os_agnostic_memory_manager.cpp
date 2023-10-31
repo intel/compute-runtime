@@ -300,6 +300,8 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         delete gfxAllocation->getGmm(handleId);
     }
 
+    removeAllocationFromDownloadAllocationsInCsr(gfxAllocation);
+
     if (gfxAllocation->getGpuAddress() == dummyAddress) {
         delete gfxAllocation;
         return;
@@ -690,6 +692,12 @@ void OsAgnosticMemoryManager::handleFenceCompletion(GraphicsAllocation *allocati
         if (usedByContext) {
             engine.commandStreamReceiver->pollForCompletion();
         }
+    }
+}
+
+void OsAgnosticMemoryManager::removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) {
+    for (const auto &engineControl : getRegisteredEngines(alloc->getRootDeviceIndex())) {
+        engineControl.commandStreamReceiver->removeDownloadAllocation(alloc);
     }
 }
 

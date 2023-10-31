@@ -47,6 +47,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override;
     void downloadAllocations() override;
     void downloadAllocationTbx(GraphicsAllocation &gfxAllocation);
+    void removeDownloadAllocation(GraphicsAllocation *alloc) override;
 
     void processEviction() override;
     SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;

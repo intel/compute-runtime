@@ -300,10 +300,6 @@ struct CommandList : _ze_command_list_handle_t {
         return prefetchContext;
     }
 
-    bool eventWaitlistSyncRequired() const {
-        return this->isTbxMode && !this->isSyncModeQueue;
-    }
-
     NEO::HeapAddressModel getCmdListHeapAddressModel() const {
         return this->cmdListHeapAddressModel;
     }

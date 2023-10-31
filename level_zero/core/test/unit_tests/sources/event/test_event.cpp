@@ -3567,19 +3567,19 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBe
 }
 
 TEST_F(EventTests, whenAppendAdditionalCsrThenStoreUniqueCsr) {
-    auto csr1 = reinterpret_cast<NEO::CommandStreamReceiver *>(0x1234);
-    auto csr2 = reinterpret_cast<NEO::CommandStreamReceiver *>(0x5678);
+    auto csr1 = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    auto csr2 = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     EXPECT_EQ(event->csrs.size(), 1u);
 
-    event->appendAdditionalCsr(csr1);
+    event->appendAdditionalCsr(csr1.get());
     EXPECT_EQ(event->csrs.size(), 2u);
 
-    event->appendAdditionalCsr(csr2);
+    event->appendAdditionalCsr(csr2.get());
     EXPECT_EQ(event->csrs.size(), 3u);
 
-    event->appendAdditionalCsr(csr1);
+    event->appendAdditionalCsr(csr1.get());
     EXPECT_EQ(event->csrs.size(), 3u);
 
     event->destroy();

@@ -179,7 +179,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr, bool &lockingFailed);
     bool waitForEventsFromHost();
-    void checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
     TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc);
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();

@@ -625,7 +625,6 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
-    using BaseClass::eventWaitlistSyncRequired;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;

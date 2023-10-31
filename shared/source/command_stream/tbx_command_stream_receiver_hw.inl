@@ -629,4 +629,10 @@ void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         hardwareContextController->dumpSurface(*surfaceInfo.get());
     }
 }
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::removeDownloadAllocation(GraphicsAllocation *alloc) {
+    auto lockCSR = this->obtainUniqueOwnership();
+    this->allocationsForDownload.erase(alloc);
+}
 } // namespace NEO
