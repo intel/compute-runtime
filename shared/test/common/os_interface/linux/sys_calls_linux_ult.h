@@ -46,6 +46,7 @@ extern DIR *(*sysCallsOpendir)(const char *name);
 extern struct dirent *(*sysCallsReaddir)(DIR *dir);
 extern int (*sysCallsClosedir)(DIR *dir);
 extern int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize);
+extern int (*sysCallsClose)(int fileDescriptor);
 
 extern int flockRetVal;
 extern int closeFuncRetVal;
