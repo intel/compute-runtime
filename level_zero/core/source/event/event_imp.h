@@ -81,7 +81,7 @@ struct EventImp : public Event {
     void setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet);
     void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
                                          const uint32_t count, const ze_kernel_timestamp_result_t *pKernelTimestampsBuffer);
-    void copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, uint64_t copyData);
+    void copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const uint64_t &copyData);
 };
 
 } // namespace L0

@@ -336,7 +336,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, uint64_t copyData) {
+void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const uint64_t &copyData) {
     memcpy_s(dstHostAddr, copySize, &copyData, copySize);
 
     if (this->tbxMode) {
