@@ -80,6 +80,10 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         sfenceMode = static_cast<DirectSubmissionSfenceMode>(DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
     }
 
+    if (DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.get() != -1) {
+        this->inputMonitorFenceDispatchRequirement = !!(DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.get());
+    }
+
     int32_t disableCacheFlushKey = DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.get();
     if (disableCacheFlushKey != -1) {
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
@@ -947,7 +951,13 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     }
 
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
-    bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds);
+    bool inputRequiredMonitorFence = false;
+    if (this->inputMonitorFenceDispatchRequirement) {
+        inputRequiredMonitorFence = batchBuffer.dispatchMonitorFence;
+    } else {
+        inputRequiredMonitorFence = batchBuffer.hasStallingCmds;
+    }
+    bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(inputRequiredMonitorFence);
 
     size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
 
@@ -989,7 +999,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     currentQueueWorkCount++;
     DirectSubmissionDiagnostics::diagnosticModeOneSubmit(diagnostic.get());
 
-    uint64_t flushValue = updateTagValue(batchBuffer.hasStallingCmds);
+    uint64_t flushValue = updateTagValue(dispatchMonitorFence);
     if (flushValue == DirectSubmissionHw<GfxFamily, Dispatcher>::updateTagValueFail) {
         return false;
     }

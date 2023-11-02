@@ -55,6 +55,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::hwInfo;
     using BaseClass::immWritePostSyncOffset;
+    using BaseClass::inputMonitorFenceDispatchRequirement;
     using BaseClass::isDisablePrefetcherRequired;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContext;

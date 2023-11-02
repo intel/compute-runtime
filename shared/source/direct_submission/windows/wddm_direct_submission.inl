@@ -153,7 +153,7 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requir
         }
     }
 
-    if (!this->disableMonitorFence || requireMonitorFence) {
+    if (requireMonitorFence) {
         return this->updateTagValueImpl();
     }
     return 0ull;

@@ -448,7 +448,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcomple
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
-    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(false);
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
     EXPECT_EQ(value, actualTagValue);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
@@ -465,7 +465,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenUpdatingTagVa
     wddmDirectSubmission.disableMonitorFence = true;
     EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
-    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(false);
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
     EXPECT_EQ(0ull, actualTagValue);
     EXPECT_EQ(value, contextFence.currentFenceValue);
 }
@@ -481,7 +481,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWh
     wddmDirectSubmission.disableMonitorFence = true;
     EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
-    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(true);
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
     EXPECT_EQ(value, actualTagValue);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
@@ -740,6 +740,7 @@ HWTEST_F(WddmDirectSubmissionTest,
     FlushStampTracker flushStamp(true);
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
     wddmDirectSubmission.disableMonitorFence = false;
 
     bool ret = wddmDirectSubmission.initialize(true, true);
@@ -812,4 +813,130 @@ HWTEST_F(WddmDirectSubmissionTest,
     wddmDirectSubmission.disableMonitorFence = true;
 
     EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenWddmDirectSubmissionWithDisabledMonitorFenceWhenInputPolicyIsStallingCommandAndBatchBufferDispatchedWithExplicitMonitorFenceFlagThenDispatchNoPostSyncOperation) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(0);
+
+    BatchBuffer batchBuffer = {};
+    GraphicsAllocation *clientCommandBuffer = nullptr;
+    std::unique_ptr<LinearStream> clientStream;
+
+    auto memoryManager = executionEnvironment->memoryManager.get();
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+    clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+    ASSERT_NE(nullptr, clientCommandBuffer);
+
+    clientStream = std::make_unique<LinearStream>(clientCommandBuffer);
+    clientStream->getSpace(0x40);
+
+    memset(clientStream->getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(clientStream->getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = clientCommandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = clientCommandBuffer->getGpuAddress();
+    batchBuffer.stream = clientStream.get();
+    batchBuffer.dispatchMonitorFence = true;
+
+    FlushStampTracker flushStamp(true);
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    bool ret = wddmDirectSubmission.initialize(true, true);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
+
+    size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
+    ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool foundFenceUpdate = false;
+    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            foundFenceUpdate = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(foundFenceUpdate);
+
+    memoryManager->freeGraphicsMemory(clientCommandBuffer);
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenWddmDirectSubmissionWithDisabledMonitorFenceWhenInputPolicyIsExplicitMonitorFenceAndBatchBufferDispatchedWithStallingCommandFlagThenDispatchNoPostSyncOperation) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(1);
+
+    BatchBuffer batchBuffer = {};
+    GraphicsAllocation *clientCommandBuffer = nullptr;
+    std::unique_ptr<LinearStream> clientStream;
+
+    auto memoryManager = executionEnvironment->memoryManager.get();
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+    clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+    ASSERT_NE(nullptr, clientCommandBuffer);
+
+    clientStream = std::make_unique<LinearStream>(clientCommandBuffer);
+    clientStream->getSpace(0x40);
+
+    memset(clientStream->getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(clientStream->getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = clientCommandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = clientCommandBuffer->getGpuAddress();
+    batchBuffer.stream = clientStream.get();
+    batchBuffer.hasStallingCmds = true;
+
+    FlushStampTracker flushStamp(true);
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
+    wddmDirectSubmission.disableMonitorFence = true;
+
+    bool ret = wddmDirectSubmission.initialize(true, true);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
+
+    size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
+    ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool foundFenceUpdate = false;
+    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            foundFenceUpdate = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(foundFenceUpdate);
+
+    memoryManager->freeGraphicsMemory(clientCommandBuffer);
 }

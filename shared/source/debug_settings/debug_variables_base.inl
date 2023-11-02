@@ -386,6 +386,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrdering, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingForBcs, -1, "-1: default, 0 - disable, 1 - enable. If set, enable RelaxedOrdering feature for BCS engine")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingQueueSizeLimit, -1, "-1: default, >0: Max gpu queue size. If limit is reached, scheduler wont consume new work")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingMinNumberOfClients, -1, "-1: default, >0: Enables RelaxedOrdering mode only if specified number of clients is assigned to given CSR.")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMonitorFenceInputPolicy, -1, "-1: default, 0: stalling command flag, 1: explicit monitor fence flag. Selects policy to dispatch monitor fence upon input flag, either for every stalling command or explicit motor fence dispatch")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 
 /*FEATURE FLAGS*/
