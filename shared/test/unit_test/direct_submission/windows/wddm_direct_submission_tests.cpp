@@ -54,6 +54,24 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
 
 using WddmDirectSubmissionTest = WddmDirectSubmissionFixture<PreemptionMode::ThreadGroup>;
 
+struct WddmDirectSubmissionWithMockGdiDllFixture : public WddmFixtureWithMockGdiDll {
+    void setUp() {
+        DebugManager.flags.ForcePreemptionMode.set(PreemptionMode::ThreadGroup);
+
+        WddmFixtureWithMockGdiDll::setUp();
+        init();
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment.get(), 0u));
+        osContextWin = static_cast<NEO::OsContextWin *>(device->getDefaultEngine().osContext);
+        osContextWin->ensureContextInitialized();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockDevice> device;
+    NEO::OsContextWin *osContextWin = nullptr;
+};
+
+using WddmDirectSubmissionWithMockGdiDllTest = Test<WddmDirectSubmissionWithMockGdiDllFixture>;
+
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThenExpectProperCommandsDispatched) {
     std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
         std::make_unique<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device->getDefaultEngine().commandStreamReceiver);
@@ -428,6 +446,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcomple
     contextFence.currentFenceValue = value;
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
     uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(false);
     EXPECT_EQ(value, actualTagValue);
@@ -444,6 +463,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenUpdatingTagVa
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     wddmDirectSubmission.disableMonitorFence = true;
+    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
     uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(false);
     EXPECT_EQ(0ull, actualTagValue);
@@ -459,11 +479,72 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWh
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     wddmDirectSubmission.disableMonitorFence = true;
+    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
     uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(true);
     EXPECT_EQ(value, actualTagValue);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
+}
+
+HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenNoMonitorFenceHangDetectedWhenUpdatingTagValueThenReturnUpdatedFenceCounter) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionDetectGpuHang.set(1);
+
+    VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
+
+    MonitoredFence &contextFence = osContextWin->getResidencyController().getMonitoredFence();
+    VariableBackup<volatile uint64_t> backupWddmMonitorFence(contextFence.cpuAddress);
+    *contextFence.cpuAddress = 1;
+    contextFence.currentFenceValue = 2u;
+
+    *getMonitorFenceCpuAddressSelectorFcn() = true;
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.detectGpuHang);
+    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
+
+    VariableBackup<volatile uint64_t> backupRingMonitorFence(wddmDirectSubmission.ringFence.cpuAddress);
+    *wddmDirectSubmission.ringFence.cpuAddress = 1;
+
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(true);
+    EXPECT_EQ(2u, actualTagValue);
+}
+
+HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenWddmMonitorFenceHangDetectedWhenUpdatingTagValueThenReturnFail) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionDetectGpuHang.set(1);
+
+    VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
+
+    MonitoredFence &contextFence = osContextWin->getResidencyController().getMonitoredFence();
+    VariableBackup<volatile uint64_t> backupWddmMonitorFence(contextFence.cpuAddress);
+    *contextFence.cpuAddress = std::numeric_limits<uint64_t>::max();
+
+    *getMonitorFenceCpuAddressSelectorFcn() = true;
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.detectGpuHang);
+    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
+
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(true);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), actualTagValue);
+}
+
+HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenRingMonitorFenceHangDetectedWhenUpdatingTagValueThenReturnFail) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionDetectGpuHang.set(1);
+
+    VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
+
+    *getMonitorFenceCpuAddressSelectorFcn() = true;
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(wddmDirectSubmission.detectGpuHang);
+    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
+
+    VariableBackup<volatile uint64_t> backupRingMonitorFence(wddmDirectSubmission.ringFence.cpuAddress);
+    *wddmDirectSubmission.ringFence.cpuAddress = std::numeric_limits<uint64_t>::max();
+
+    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(true);
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), actualTagValue);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleStopRingBufferThenExpectCompletionFenceUpdated) {

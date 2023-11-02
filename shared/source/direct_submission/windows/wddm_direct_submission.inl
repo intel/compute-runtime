@@ -143,6 +143,16 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requireMonitorFence) {
+    if (this->detectGpuHang) {
+        bool osHang = wddm->isGpuHangDetected(*osContextWin);
+        bool ringHang = *ringFence.cpuAddress == Wddm::gpuHangIndication;
+
+        if (osHang || ringHang) {
+            wddm->getDeviceState();
+            return DirectSubmissionHw<GfxFamily, Dispatcher>::updateTagValueFail;
+        }
+    }
+
     if (!this->disableMonitorFence || requireMonitorFence) {
         return this->updateTagValueImpl();
     }

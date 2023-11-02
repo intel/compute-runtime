@@ -26,6 +26,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::dcFlushRequired;
     using BaseClass::deallocateResources;
     using BaseClass::deferredTasksListAllocation;
+    using BaseClass::detectGpuHang;
     using BaseClass::diagnostic;
     using BaseClass::DirectSubmissionHw;
     using BaseClass::disableCacheFlush;

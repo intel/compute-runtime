@@ -253,6 +253,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStarted
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsNotStartedThenExpectAllocationsCreatedAndCommandsNotDispatched) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.detectGpuHang);
 
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);

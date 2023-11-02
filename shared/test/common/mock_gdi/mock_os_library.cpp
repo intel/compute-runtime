@@ -169,6 +169,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "getMonitorFenceCpuFenceAddress") {
         return reinterpret_cast<void *>(getMonitorFenceCpuFenceAddress);
     }
+    if (procName == "getMonitorFenceCpuAddressSelector") {
+        return reinterpret_cast<void *>(getMonitorFenceCpuAddressSelector);
+    }
     if (procName == "getCreateSynchronizationObject2FailCall") {
         return reinterpret_cast<void *>(getCreateSynchronizationObject2FailCall);
     }

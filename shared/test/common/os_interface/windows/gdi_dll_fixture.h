@@ -45,6 +45,8 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&getDestroySynchronizationObjectData)>(mockGdiDll->getProcAddress("getDestroySynchronizationObjectData"));
         getMonitorFenceCpuFenceAddressFcn =
             reinterpret_cast<decltype(&getMonitorFenceCpuFenceAddress)>(mockGdiDll->getProcAddress("getMonitorFenceCpuFenceAddress"));
+        getMonitorFenceCpuAddressSelectorFcn =
+            reinterpret_cast<decltype(&getMonitorFenceCpuAddressSelector)>(mockGdiDll->getProcAddress("getMonitorFenceCpuAddressSelector"));
         getCreateSynchronizationObject2FailCallFcn =
             reinterpret_cast<decltype(&getCreateSynchronizationObject2FailCall)>(mockGdiDll->getProcAddress("getCreateSynchronizationObject2FailCall"));
         getFailOnSetContextSchedulingPriorityCallFcn =
@@ -98,6 +100,7 @@ struct GdiDllFixture {
     decltype(&getSubmitCommandToHwQueueData) getSubmitCommandToHwQueueDataFcn = nullptr;
     decltype(&getDestroySynchronizationObjectData) getDestroySynchronizationObjectDataFcn = nullptr;
     decltype(&getMonitorFenceCpuFenceAddress) getMonitorFenceCpuFenceAddressFcn = nullptr;
+    decltype(&getMonitorFenceCpuAddressSelector) getMonitorFenceCpuAddressSelectorFcn = nullptr;
     decltype(&getCreateSynchronizationObject2FailCall) getCreateSynchronizationObject2FailCallFcn = nullptr;
     decltype(&getFailOnSetContextSchedulingPriorityCall) getFailOnSetContextSchedulingPriorityCallFcn = nullptr;
     decltype(&getSetContextSchedulingPriorityDataCall) getSetContextSchedulingPriorityDataCallFcn = nullptr;

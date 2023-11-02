@@ -2731,3 +2731,27 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNumClientsWhenAskingIfRelax
     EXPECT_EQ(4u, ultCsr->getNumClients());
     EXPECT_TRUE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
 }
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhenStartingFailsDuringDispatchCommandBufferThenExpectReturnFalse) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    FlushStampTracker flushStamp(true);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.initialize(false, true));
+    directSubmission.submitReturn = false;
+
+    EXPECT_FALSE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhenUpdateMonitorFenceTagFailsDuringDispatchCommandBufferThenExpectReturnFalse) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    FlushStampTracker flushStamp(true);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.initialize(false, true));
+    directSubmission.updateTagValueReturn = std::numeric_limits<uint64_t>::max();
+
+    EXPECT_FALSE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+}

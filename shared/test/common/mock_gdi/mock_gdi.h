@@ -97,6 +97,7 @@ D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData();
 D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData();
 D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData();
 VOID *getMonitorFenceCpuFenceAddress();
+bool *getMonitorFenceCpuAddressSelector();
 bool *getCreateSynchronizationObject2FailCall();
 bool *getFailOnSetContextSchedulingPriorityCall();
 D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *getSetContextSchedulingPriorityDataCall();

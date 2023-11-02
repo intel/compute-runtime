@@ -114,6 +114,8 @@ class DirectSubmissionHw {
     virtual uint64_t switchRingBuffers();
     virtual void handleSwitchRingBuffers() = 0;
     GraphicsAllocation *switchRingBuffersAllocations();
+
+    constexpr static uint64_t updateTagValueFail = std::numeric_limits<uint64_t>::max();
     virtual uint64_t updateTagValue(bool requireMonitorFence) = 0;
     virtual bool dispatchMonitorFenceRequired(bool requireMonitorFence);
     virtual void getTagAddressValue(TagData &tagData) = 0;
@@ -238,6 +240,7 @@ class DirectSubmissionHw {
     bool completionFenceSupported = false;
     bool isDisablePrefetcherRequired = false;
     bool dcFlushRequired = false;
+    bool detectGpuHang = false;
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;

@@ -492,6 +492,8 @@ NTSTATUS __stdcall mockD3DKMTUnlock2(IN CONST D3DKMT_UNLOCK2 *unlock2) {
 }
 
 uint64_t cpuFence = 0;
+uint64_t ringFence = 0;
+bool useRingCpuFence = false;
 
 static bool createSynchronizationObject2FailCall = false;
 
@@ -509,7 +511,11 @@ NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESY
 
     monitorFenceGpuAddress += monitorFenceGpuNextAddressOffset;
 
-    synchObject->Info.MonitoredFence.FenceValueCPUVirtualAddress = &cpuFence;
+    if (useRingCpuFence) {
+        synchObject->Info.MonitoredFence.FenceValueCPUVirtualAddress = &ringFence;
+    } else {
+        synchObject->Info.MonitoredFence.FenceValueCPUVirtualAddress = &cpuFence;
+    }
     synchObject->Info.MonitoredFence.FenceValueGPUVirtualAddress = monitorFenceGpuAddress;
     synchObject->hSyncObject = 4;
     return STATUS_SUCCESS;
@@ -740,7 +746,15 @@ D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData() {
 }
 
 VOID *getMonitorFenceCpuFenceAddress() {
-    return &cpuFence;
+    if (useRingCpuFence) {
+        return &ringFence;
+    } else {
+        return &cpuFence;
+    }
+}
+
+bool *getMonitorFenceCpuAddressSelector() {
+    return &useRingCpuFence;
 }
 
 bool *getCreateSynchronizationObject2FailCall() {

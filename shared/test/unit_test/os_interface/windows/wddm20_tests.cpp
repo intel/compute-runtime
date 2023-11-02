@@ -342,7 +342,10 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenCpuValueDifferentThanGpuHangIndicationWhe
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenGpuHangIndicationWhenCheckingForGpuHangThenTrueIsReturned) {
-    *osContext->getResidencyController().getMonitoredFence().cpuAddress = NEO::Wddm::gpuHangIndication;
+    auto fenceCpuAddress = osContext->getResidencyController().getMonitoredFence().cpuAddress;
+    VariableBackup<volatile uint64_t> backupWddmMonitorFence(fenceCpuAddress);
+
+    *fenceCpuAddress = NEO::Wddm::gpuHangIndication;
     EXPECT_TRUE(wddm->isGpuHangDetected(*osContext));
 }
 

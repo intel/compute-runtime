@@ -63,6 +63,10 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
+    if (DebugManager.flags.DirectSubmissionDetectGpuHang.get() != -1) {
+        detectGpuHang = !!DebugManager.flags.DirectSubmissionDetectGpuHang.get();
+    }
+
     if (hwInfo->capabilityTable.isIntegratedDevice) {
         miMemFenceRequired = false;
     } else {
@@ -938,7 +942,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         this->stopRingBuffer(false);
     }
 
-    this->startRingBuffer();
+    if (!this->startRingBuffer()) {
+        return false;
+    }
 
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
     bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds);
@@ -984,6 +990,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     DirectSubmissionDiagnostics::diagnosticModeOneSubmit(diagnostic.get());
 
     uint64_t flushValue = updateTagValue(batchBuffer.hasStallingCmds);
+    if (flushValue == DirectSubmissionHw<GfxFamily, Dispatcher>::updateTagValueFail) {
+        return false;
+    }
     flushStamp.setStamp(flushValue);
 
     return ringStart;
