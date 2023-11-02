@@ -36,7 +36,6 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
     args.dcFlushEnable = dcFlushRequired;
     args.workloadPartitionOffset = partitionedWorkload;
     args.notifyEnable = useNotifyEnable;
-    args.tlbInvalidation = true;
     args.textureCacheInvalidationEnable = true;
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
