@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

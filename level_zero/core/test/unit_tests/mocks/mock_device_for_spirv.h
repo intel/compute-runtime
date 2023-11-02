@@ -15,7 +15,7 @@ namespace L0 {
 namespace ult {
 
 template <bool useImagesBuiltins, bool isStateless>
-class MockDeviceForSpv : public Mock<DeviceImp> {
+class MockDeviceForSpv : public MockDeviceImp {
   protected:
     bool wasModuleCreated = false;
     bool useImagesBuiltinsPrev = false;
@@ -23,7 +23,7 @@ class MockDeviceForSpv : public Mock<DeviceImp> {
     std::unique_ptr<L0::Module> mockModulePtr;
 
   public:
-    MockDeviceForSpv(NEO::Device *device, NEO::ExecutionEnvironment *ex, L0::DriverHandleImp *driverHandle) : Mock<DeviceImp>(device, ex) {
+    MockDeviceForSpv(NEO::Device *device, NEO::ExecutionEnvironment *ex, L0::DriverHandleImp *driverHandle) : MockDeviceImp(device, ex) {
         this->driverHandle = driverHandle;
         wasModuleCreated = false;
     }

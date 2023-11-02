@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/diagnostics/linux/mock_zes_sysman_diagnostics.h"

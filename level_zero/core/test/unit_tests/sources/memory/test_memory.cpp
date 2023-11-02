@@ -3813,7 +3813,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
@@ -5752,7 +5752,7 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
         DebugManagerStateRestore restorer;
 
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();

@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware/windows/mock_zes_sysman_firmware.h"
 
 extern bool sysmanUltsEnable;

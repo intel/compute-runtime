@@ -9,6 +9,7 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

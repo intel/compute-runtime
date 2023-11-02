@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/source/sysman/temperature/windows/os_temperature_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/temperature/windows/mock_temperature.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"

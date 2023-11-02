@@ -5,8 +5,11 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
 #include "mock_pci.h"

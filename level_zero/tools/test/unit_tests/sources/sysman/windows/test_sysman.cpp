@@ -9,6 +9,7 @@
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 

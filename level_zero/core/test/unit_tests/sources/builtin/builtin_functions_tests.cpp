@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_compiler_interface_spirv.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"

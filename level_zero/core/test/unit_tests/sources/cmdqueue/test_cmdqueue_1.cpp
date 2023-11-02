@@ -13,6 +13,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -966,7 +967,7 @@ HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenSupportedReque
 }
 
 HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenSupportedRequestWhenCreatingBcsCommandQueueThenAssignNextAvailableContext) {
-    auto defaultBcsIndex = static_cast<MockDevice *>(device->getNEODevice())->defaultBcsEngineIndex;
+    auto defaultBcsIndex = static_cast<NEO::MockDevice *>(device->getNEODevice())->defaultBcsEngineIndex;
     uint32_t expectedIndex = defaultBcsIndex;
     constexpr uint32_t iterationCount = 3;
 

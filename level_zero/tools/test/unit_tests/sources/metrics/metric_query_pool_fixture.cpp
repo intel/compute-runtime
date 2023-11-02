@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
+
+#include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/driver/driver_imp.h"
 

@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -673,7 +674,7 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<NEO::UltDeviceFactory> deviceFactory;
-    MockDevice *rootDevice = nullptr;
+    NEO::MockDevice *rootDevice = nullptr;
 };
 
 HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecutingThenEnableSingleSliceDispatch, IsAtLeastXeHpCore) {

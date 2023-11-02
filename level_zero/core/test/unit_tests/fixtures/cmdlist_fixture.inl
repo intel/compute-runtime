@@ -11,6 +11,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"

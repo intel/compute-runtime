@@ -764,7 +764,7 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithVal
 struct DriverTestMultipleFamilySupport : public ::testing::Test {
     void SetUp() override {
 
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices);
         for (auto i = 0u; i < numRootDevices; i++) {
@@ -846,7 +846,7 @@ TEST(MultiSubDeviceDriverTest, whenInitializingDriverHandleWithMultipleDevicesWi
 struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
     void SetUp() override {
 
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);

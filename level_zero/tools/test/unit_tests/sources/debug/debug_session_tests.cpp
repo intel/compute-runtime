@@ -21,6 +21,7 @@
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_registers_access.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
 #include "common/StateSaveAreaHeader.h"
 #include "encode_surface_state_args.h"
@@ -45,7 +46,7 @@ TEST(DeviceWithDebugSessionTest, GivenSlicesEnabledWithEarlierSlicesDisabledThen
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto sessionMock = std::make_unique<MockDebugSession>(zet_debug_config_t{0x1234}, &deviceImp);
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     EXPECT_EQ(1u, sessionMock->allThreads.count(EuThread::ThreadId(0, 0, numSubslicesPerSlice - 1, 0, 0)));
@@ -80,7 +81,7 @@ TEST(DebugSessionTest, givenApplyResumeWaCalledThenWAIsApplied) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
@@ -102,7 +103,7 @@ TEST(DebugSessionTest, givenAllStoppedThreadsWhenInterruptCalledThenErrorNotAvai
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -124,7 +125,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptWhenSendInterruptCalledThenInterru
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->interruptSent = true;
@@ -139,7 +140,7 @@ TEST(DebugSessionTest, givenPendingInterruptWhenNewInterruptForThreadCalledThenE
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -157,7 +158,7 @@ TEST(DebugSessionTest, givenInterruptAlreadySentWhenSendInterruptCalledSecondTim
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -185,7 +186,7 @@ TEST(DebugSessionTest, givenInterruptRequestWhenInterruptImpFailsInSendInterrupt
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -212,7 +213,7 @@ TEST(DebugSessionTest, givenPendingInteruptWhenHandlingThreadWithAttentionThenPe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -262,7 +263,7 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -300,7 +301,7 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -378,7 +379,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAd
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -396,7 +397,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceException
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -417,7 +418,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEven
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -449,7 +450,7 @@ TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNot
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->threadStopped = 0;
@@ -466,7 +467,7 @@ TEST(DebugSessionTest, givenStoppedThreadAndNoSrMagicWhenAddingNewlyStoppedThenT
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -501,7 +502,7 @@ TEST(DebugSessionTest, givenStoppedThreadAndValidSrMagicWhenAddingNewlyStoppedTh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -539,7 +540,7 @@ TEST(DebugSessionTest, givenNoInterruptsSentWhenGenerateEventsAndResumeCalledThe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -556,7 +557,7 @@ TEST(DebugSessionTest, givenTriggerEventsWhenGenerateEventsAndResumeCalledThenEv
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -593,7 +594,7 @@ TEST(DebugSessionTest, givenPendingInterruptAfterTimeoutWhenGenerateEventsAndRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -623,7 +624,7 @@ TEST(DebugSessionTest, givenPendingInterruptBeforeTimeoutWhenGenerateEventsAndRe
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -648,7 +649,7 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCheckingThreadSta
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readSystemRoutineIdentRetVal = false;
@@ -666,7 +667,7 @@ TEST(DebugSessionTest, givenPendingInterruptsWhenGeneratingEventsThenStoppedEven
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -694,7 +695,7 @@ TEST(DebugSessionTest, givenEmptyStateSaveAreaWhenGetStateSaveAreaCalledThenRead
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     decltype(sessionMock->stateSaveAreaHeader) emptyHeader;
@@ -711,7 +712,7 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -762,7 +763,7 @@ TEST(DebugSessionTest, givenPFThreadWithAIPEqStartIPWhenCallingFillResumeAndStop
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -792,7 +793,7 @@ TEST(DebugSessionTest, givenDbgRegAndCRThenisAIPequalToThreadStartIPReturnsCorre
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->callBaseisAIPequalToThreadStartIP = true;
@@ -809,7 +810,7 @@ TEST(DebugSessionTest, givenThreadsStoppedWithPageFaultWhenCallingfillResumeAndS
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -848,7 +849,7 @@ TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThrea
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     std::vector<EuThread::ThreadId> resumeThreads;
@@ -876,7 +877,7 @@ TEST(DebugSessionTest, givenThreadsToResumeWhenResumeAccidentallyStoppedThreadsC
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     sessionMock->skipCheckThreadIsResumed = false;
@@ -907,7 +908,7 @@ TEST(DebugSessionTest, givenCr0RegisterWhenIsFEOrFEHOnlyExceptionReasonThenTrueR
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -933,7 +934,7 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -968,7 +969,7 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1015,7 +1016,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1090,7 +1091,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
@@ -1142,7 +1143,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsAndInvalidStateSaveAreaWhenRes
     hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->forceZeroStateSaveAreaSize = true;
@@ -1196,7 +1197,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenResumeCalledThenStoppedThreadsAreCh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1217,7 +1218,7 @@ TEST(DebugSessionTest, givenAllThreadsRunningWhenResumeCalledThenErrorUnavailabl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1232,7 +1233,7 @@ TEST(DebugSessionTest, givenErrorFromResumeImpWhenResumeCalledThenErrorReturned)
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->resumeImpResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1251,7 +1252,7 @@ TEST(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readSbaBufferResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1268,7 +1269,7 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1285,7 +1286,7 @@ HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledTh
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->readRegistersResult = ZE_RESULT_SUCCESS;
@@ -1323,7 +1324,7 @@ TEST(DebugSessionTest, givenNullptrStateSaveAreaGpuVaWhenCallingCheckIsThreadRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1343,7 +1344,7 @@ TEST(DebugSessionTest, whenCallingCheckThreadIsResumedWithoutSrMagicThenThreadIs
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1379,7 +1380,7 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCallingCheckThrea
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1401,7 +1402,7 @@ TEST(DebugSessionTest, givenSipVersion1WhenCallingCheckThreadIsResumedWithSaveAr
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1434,7 +1435,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1469,7 +1470,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterEqualToPrevousThenThreadHasNotBeen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1501,7 +1502,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterBiggerThanPreviousThenThreadIsResu
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1533,7 +1534,7 @@ TEST(DebugSessionTest, givenSrMagicWithCounterOverflowingZeroThenThreadIsResumed
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1556,7 +1557,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1601,7 +1602,7 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1648,7 +1649,7 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1694,7 +1695,7 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
@@ -1748,7 +1749,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1793,7 +1794,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
@@ -1833,7 +1834,7 @@ TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderI
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     session->readMemoryBuffer.resize(stateSaveAreaHeader.size());
@@ -1851,7 +1852,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenGettingNotStoppedThreadsThenOnlyRun
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1878,7 +1879,7 @@ TEST(DebugSessionTest, givenSizeBiggerThanPreviousWhenAllocatingStateSaveAreaMem
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -1896,7 +1897,7 @@ TEST(DebugSessionTest, givenTheSameSizeWhenAllocatingStateSaveAreaMemoryThenNewM
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -2923,7 +2924,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -2988,7 +2989,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3056,7 +3057,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenValidAddressesSizesAndOffsetsThenSl
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3160,7 +3161,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3226,7 +3227,7 @@ TEST(DebugSessionTest, givenCanonicalOrDecanonizedAddressWhenCheckingValidAddres
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
@@ -3248,7 +3249,7 @@ TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsRet
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     auto gmmHelper = neoDevice->getGmmHelper();
@@ -3344,7 +3345,7 @@ TEST(DebugSessionTest, GivenRootDeviceAndTileAttachWhenDebugSessionIsCreatedThen
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, false);
     ASSERT_NE(nullptr, sessionMock);

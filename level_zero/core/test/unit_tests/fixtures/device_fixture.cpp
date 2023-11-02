@@ -11,6 +11,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
@@ -31,7 +32,7 @@ void DeviceFixture::setUp() {
 
 void DeviceFixture::setUpImpl(NEO::HardwareInfo *hwInfo) {
     hardwareInfo = hwInfo;
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hardwareInfo, 0u);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(hardwareInfo, 0u);
     setupWithExecutionEnvironment(*executionEnvironment);
 }
 
@@ -154,7 +155,7 @@ void MultiDeviceFixtureCombinedHierarchy::setUp() {
 
 void MultipleDevicesWithCustomHwInfo::setUp() {
 
-    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
     std::vector<std::unique_ptr<NEO::Device>> devices;
     NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
@@ -235,7 +236,7 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
         expectedComputeEngineCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
     }
 
-    MockDevice *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    NEO::MockDevice *mockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(mockDevice));

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"

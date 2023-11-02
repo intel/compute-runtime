@@ -20,6 +20,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_spirv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_spirv.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_built_ins.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_built_ins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver.cpp

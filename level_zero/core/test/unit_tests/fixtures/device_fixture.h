@@ -10,14 +10,15 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 
 class MockPageFaultManager;
 namespace NEO {
+class MockDevice;
 struct UltDeviceFactory;
 class MockMemoryManager;
 class OsAgnosticMemoryManager;

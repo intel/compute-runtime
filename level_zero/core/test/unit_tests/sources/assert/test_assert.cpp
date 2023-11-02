@@ -33,7 +33,7 @@ using CommandListImmediateWithAssert = Test<DeviceFixture>;
 
 TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -52,7 +52,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
 
 TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestructorDoesNotCrash) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     Mock<Module> module(&l0Device, nullptr, ModuleType::User);
 
@@ -66,7 +66,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestruct
 
 TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferIsAddedToResidencyAndCrossThreadDataPatched) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -91,7 +91,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
 
 TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThenImplicitArgsAssertBufferPtrIsSet) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -126,7 +126,7 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
 
 TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenAssertHandlerIsCreated) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     Mock<Module> module(&l0Device, nullptr, ModuleType::User);
     Mock<KernelImp> kernel;
@@ -144,7 +144,7 @@ TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenA
 
 TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetTrue) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     ze_result_t returnValue;
 
     Mock<KernelImp> kernel;
@@ -163,7 +163,7 @@ TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKerne
 
 TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKernelWithAssertAppendedIsFalse) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     ze_result_t returnValue;
 
     std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList(ult::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,

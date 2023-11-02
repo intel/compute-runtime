@@ -8,6 +8,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 namespace L0 {

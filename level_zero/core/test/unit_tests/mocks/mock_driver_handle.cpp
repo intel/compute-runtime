@@ -18,7 +18,7 @@ namespace ult {
 using MockDriverHandle = Mock<L0::ult::DriverHandle>;
 
 Mock<DriverHandle>::Mock() {
-    this->devices.push_back(new Mock<Device>);
+    this->devices.push_back(new MockDevice);
 };
 
 NEO::MemoryManager *Mock<DriverHandle>::getMemoryManager() {

@@ -7,6 +7,7 @@
 
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gen9/cmdlist_gen9.h"

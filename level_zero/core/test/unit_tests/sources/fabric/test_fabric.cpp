@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/test.h"
@@ -158,7 +159,7 @@ TEST_F(FabricVertexFixture, givenFabricVerticesAreCreatedWhenzeFabricVertexGetPr
 TEST(FabricEngineInstanceTest, GivenEngineInstancedDeviceWhenFabricVerticesAreCreatedThenSkipCreationForEngineInstanced) {
 
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
     std::vector<std::unique_ptr<NEO::Device>> devices(1);
     devices[0].reset(static_cast<NEO::Device *>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u)));
 

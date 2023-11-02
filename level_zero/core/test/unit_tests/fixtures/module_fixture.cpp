@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -81,7 +82,7 @@ void ModuleImmutableDataFixture::setUp() {
         this->copyHwInfo.platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
         hwInfo = &this->copyHwInfo;
     }
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
     memoryManager = new MockImmutableMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);

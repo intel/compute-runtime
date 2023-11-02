@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/sysman/test/unit_tests/sources/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 

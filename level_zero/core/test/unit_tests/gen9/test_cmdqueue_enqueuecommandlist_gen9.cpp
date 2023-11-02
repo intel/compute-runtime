@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 

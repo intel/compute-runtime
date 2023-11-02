@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"

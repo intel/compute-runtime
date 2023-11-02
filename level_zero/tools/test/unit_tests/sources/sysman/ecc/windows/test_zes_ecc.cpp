@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/driver_info.h"
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/ecc/windows/mock_ecc.h"
 
 extern bool sysmanUltsEnable;

@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"

@@ -7,10 +7,12 @@
 
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/prelim/debug_session_fixtures_linux.h"
@@ -35,7 +37,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenCallingFunctionsThe
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto session = std::make_unique<MockTileDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, nullptr);
     ASSERT_NE(nullptr, session);
@@ -54,7 +56,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenCallingFunctionsThe
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -99,7 +101,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -124,7 +126,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto rootSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 

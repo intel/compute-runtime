@@ -15,6 +15,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
@@ -146,7 +147,7 @@ TEST_F(DebugApiTest, givenSubDeviceWhenCallingDebugAttachThenErrorIsReturned) {
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.isSubdevice = true;
 
     auto result = zetDebugAttach(deviceImp.toHandle(), &config, &debugSession);
@@ -203,7 +204,7 @@ TEST_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaia
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.isSubdevice = true;
 
     auto result = zetDeviceGetDebugProperties(deviceImp.toHandle(), &debugProperties);
@@ -216,7 +217,7 @@ TEST_F(DebugApiTest, givenDeviceWithDebugSessionWhenDebugAttachIsCalledThenSessi
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     zet_debug_session_handle_t debugSession = nullptr;
@@ -230,7 +231,7 @@ TEST_F(DebugApiTest, givenDeviceWithDebugSessionWhenDebugDetachIsCalledThenSucce
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     zet_debug_session_handle_t debugSession = deviceImp.debugSession->toHandle();
@@ -241,7 +242,7 @@ TEST_F(DebugApiTest, givenDeviceWithDebugSessionWhenDebugDetachIsCalledThenSucce
 }
 
 TEST_F(DebugApiTest, givenDeviceWithoutSessionWhenDebugDetachIsCalledThenSuccessIsReturned) {
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     zet_debug_session_handle_t debugSession = 0;
     auto result = zetDebugDetach(debugSession);
@@ -254,7 +255,7 @@ TEST_F(DebugApiTest, WhenUnsupportedFunctionCalledThenErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     zet_debug_session_handle_t session = deviceImp.debugSession->toHandle();
@@ -395,7 +396,7 @@ TEST(DebugSessionTest, givenDebugSessionWhenConvertingToAndFromHandleCorrectHand
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
     L0::DebugSession *session = debugSession.get();
 
@@ -411,7 +412,7 @@ TEST(DebugSessionTest, givenDebugSessionWhenGettingConnectedDeviceThenCorrectDev
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
     L0::DebugSession *session = debugSession.get();
 
@@ -425,7 +426,7 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
     L0::DebugSession *session = debugSession.get();
     deviceImp.debugSession.reset(session);
@@ -442,7 +443,7 @@ TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenCreatingSessionThe
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.isSubdevice = true;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
@@ -463,7 +464,7 @@ TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenDebugAttachCalledT
     neoDevice->incRefInternal();
     auto neoSubdevice = std::unique_ptr<NEO::SubDevice>(neoDevice->createSubDevice(0));
 
-    auto deviceImp = std::make_unique<Mock<L0::DeviceImp>>(neoSubdevice.get(), neoSubdevice->getExecutionEnvironment());
+    auto deviceImp = std::make_unique<MockDeviceImp>(neoSubdevice.get(), neoSubdevice->getExecutionEnvironment());
     deviceImp->isSubdevice = true;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
@@ -484,7 +485,7 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCor
     osInterface->debugAttachAvailable = false;
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.isSubdevice = false;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
@@ -505,7 +506,7 @@ TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCa
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
     testing::internal::CaptureStdout();

@@ -937,7 +937,7 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
 
-    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*neoMockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->threadArbPolicies = {ThreadArbitrationPolicy::AgeBased,
@@ -968,7 +968,7 @@ HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingScheduling
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
 
-    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*neoMockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->threadArbPolicies = {ThreadArbitrationPolicy::NotPresent};
@@ -1282,7 +1282,7 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrd
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, neoDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
-    auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
+    auto deviceImp = static_cast<MockDeviceImp *>(device);
     ze_command_queue_desc_t desc = {};
     EXPECT_EQ(desc.ordinal, 0u);
 
@@ -1326,7 +1326,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, neoDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
-    auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
+    auto deviceImp = static_cast<MockDeviceImp *>(device);
     ze_command_queue_desc_t desc = {};
     EXPECT_EQ(desc.ordinal, 0u);
 
@@ -1361,7 +1361,7 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenD
     int nodeOrdinal = -1;
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
-    auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
+    auto deviceImp = static_cast<MockDeviceImp *>(device);
     ze_command_queue_desc_t desc = {};
     EXPECT_EQ(desc.ordinal, 0u);
 
@@ -2126,7 +2126,7 @@ struct MultipleDevicesFixture : public ::testing::Test {
 
         DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
@@ -2472,7 +2472,7 @@ template <bool p2pAccessDevice0, bool p2pAtomicAccessDevice0, bool p2pAccessDevi
 struct MultipleDevicesP2PFixture : public ::testing::Test {
     void SetUp() override {
 
-        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
@@ -2832,8 +2832,8 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenQueryPeerStatsCalledThen
 }
 
 TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerReturnsFalse) {
-    struct MockDeviceFail : public Mock<DeviceImp> {
-        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+    struct MockDeviceFail : public MockDeviceImp {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
             this->commandList.appendMemoryCopyResult = ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -2870,7 +2870,7 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerRet
 }
 
 TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerReturnsFalse) {
-    struct MockDeviceFail : public Mock<DeviceImp> {
+    struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
             ze_result_t destroy() override {
                 return ZE_RESULT_SUCCESS;
@@ -2881,7 +2881,7 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
                                             ze_fence_handle_t hFence, bool performMigration) override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
-        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
         }
 
@@ -2916,7 +2916,7 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
 }
 
 TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFailsThenCanAccessPeerReturnsFalse) {
-    struct MockDeviceFail : public Mock<DeviceImp> {
+    struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
             ze_result_t destroy() override {
                 return ZE_RESULT_SUCCESS;
@@ -2927,7 +2927,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
                                             ze_fence_handle_t hFence, bool performMigration) override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
-        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
         }
 
@@ -2963,7 +2963,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
 }
 
 TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDeviceDoesFailThenCanAccessPeerReturnsFalse) {
-    struct MockDeviceFail : public Mock<DeviceImp> {
+    struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
             ze_result_t destroy() override {
                 return ZE_RESULT_SUCCESS;
@@ -2976,7 +2976,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
             }
         };
 
-        MockDeviceFail(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
         }
 
@@ -3795,7 +3795,7 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
     RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*neoMockDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
@@ -3860,7 +3860,7 @@ TEST(DevicePropertyFlagDiscreteDeviceTest, givenDiscreteDeviceThenCorrectDeviceP
 }
 
 TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSuccessIsReturned) {
-    Mock<Device> device;
+    MockDevice device;
     ze_result_t result = ZE_RESULT_SUCCESS;
     ze_device_image_properties_t imageProperties;
 

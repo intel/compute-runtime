@@ -3101,10 +3101,10 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.featureTable.ftrBcsInfo.set(0);
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
         device->incRefInternal();
-        Mock<L0::DeviceImp> deviceImp(device.get(), device->getExecutionEnvironment());
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
 
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->heapInfo.kernelHeapSize = 1;
@@ -3157,14 +3157,14 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.PrintDebugMessages.set(1);
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
         auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Internal);
         if (!bcsEngine) {
             GTEST_SKIP();
         }
         device->incRefInternal();
-        Mock<L0::DeviceImp> deviceImp(device.get(), device->getExecutionEnvironment());
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
 
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
         bcsCsr->callBaseFlushBcsTask = false;

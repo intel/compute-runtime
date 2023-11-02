@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -191,9 +192,9 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCor
 }
 
 template <NEO::AllocationType AllocType>
-class DeviceHostPtrFailMock : public Mock<DeviceImp> {
+class DeviceHostPtrFailMock : public MockDeviceImp {
   public:
-    using Mock<L0::DeviceImp>::Mock;
+    using MockDeviceImp::MockDeviceImp;
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override {
         return nullptr;
     }
@@ -1428,9 +1429,9 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
 }
 
 template <NEO::AllocationType AllocType>
-class MyDeviceMock : public Mock<DeviceImp> {
+class MyDeviceMock : public MockDeviceImp {
   public:
-    using Mock<L0::DeviceImp>::Mock;
+    using MockDeviceImp::MockDeviceImp;
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override {
         auto alloc = std::make_unique<NEO::MockGraphicsAllocation>(const_cast<void *>(buffer), reinterpret_cast<uintptr_t>(buffer), size);
         alloc->allocationType = AllocType;

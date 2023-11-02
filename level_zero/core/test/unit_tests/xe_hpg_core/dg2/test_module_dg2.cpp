@@ -8,6 +8,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

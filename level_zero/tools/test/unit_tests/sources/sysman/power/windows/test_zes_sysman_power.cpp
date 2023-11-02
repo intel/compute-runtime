@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/tools/source/sysman/power/windows/os_power_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/power/windows/mock_power.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 

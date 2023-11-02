@@ -23,6 +23,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -31,6 +32,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
@@ -189,7 +191,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -234,7 +236,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithMultipleSlic
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -276,7 +278,7 @@ TEST(DebugSessionLinuxi915Test, GivenDeviceWithSingleSliceWhenCallingAreRequeste
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
 
@@ -386,7 +388,7 @@ TEST(DebugSessionLinuxi915Test, GivenRootDebugSessionWhenCreateTileSessionCalled
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     struct DebugSession : public DebugSessionLinuxi915 {
         using DebugSessionLinuxi915::createTileSession;
@@ -408,7 +410,7 @@ TEST(DebugSessionLinuxi915Test, GivenRootLinuxSessionWhenCallingTileSepcificFunc
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -425,7 +427,7 @@ TEST(DebugSessionLinuxi915Test, GivenContextStateSaveAreaBindInfoWhenGettingCSSA
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -991,7 +993,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto mockSession = new MockDebugSessionLinuxi915(config, &deviceImp, 10);
     mockSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
     deviceImp.debugSession.reset(mockSession);

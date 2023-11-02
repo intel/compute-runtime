@@ -7,38 +7,22 @@
 
 #pragma once
 
-#include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/source/helpers/hw_info.h"
 
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/tools/source/sysman/sysman_imp.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
-#include "mock_sysman_env_vars.h"
+#include "gtest/gtest.h"
 
-using namespace NEO;
+namespace NEO {
+class MockDevice;
+}
 
 namespace L0 {
 namespace ult {
 
 class SysmanMultiDeviceInfoFixture : public ::testing::Test {
   public:
-    void SetUp() override {
-        if (!sysmanUltsEnable) {
-            GTEST_SKIP();
-        }
-        hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
-        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
-        hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
-        hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
-        neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
-
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
-    }
+    void SetUp() override;
     void TearDown() override {}
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;

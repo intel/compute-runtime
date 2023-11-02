@@ -6,8 +6,10 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
+#include <level_zero/zes_api.h>
 
 #include <sstream>
 

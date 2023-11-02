@@ -29,8 +29,6 @@ class MetricIpSamplingLinuxTest : public DeviceFixture,
 
 HWTEST2_F(MetricIpSamplingLinuxTest, GivenUnsupportedProductFamilyIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsNotXeHpcCore) {
 
-    auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = productFamily;
     EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
 }
 

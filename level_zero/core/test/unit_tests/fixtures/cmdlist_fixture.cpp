@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"

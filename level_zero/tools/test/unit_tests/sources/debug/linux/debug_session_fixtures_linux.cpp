@@ -7,12 +7,14 @@
 
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 
+#include "shared/test/common/mocks/mock_device.h"
+
 namespace L0 {
 namespace ult {
 
 void DebugApiLinuxFixture::setUp(NEO::HardwareInfo *hwInfo) {
     if (hwInfo != nullptr) {
-        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
+        auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
         DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
     } else {
         DeviceFixture::setUp();

@@ -13,6 +13,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_api.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_common.h
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_common.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_registers_access.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_registers_access.h
 )
 

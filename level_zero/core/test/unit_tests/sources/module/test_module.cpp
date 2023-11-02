@@ -24,6 +24,7 @@
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
@@ -36,6 +37,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -179,7 +181,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
 
     auto hwInfo = *NEO::defaultHwInfo;
     hwInfo.featureTable.flags.ftrLocalMemory = true;
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
     executionEnvironment->memoryManager.reset(new MockMemoryManager(false, true, false, *executionEnvironment));
 
     uint32_t blitterCalled = 0;
@@ -193,7 +195,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
 
     auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0);
-    Mock<L0::DeviceImp> device(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp device(neoMockDevice, neoMockDevice->getExecutionEnvironment());
     device.driverHandle = driverHandle.get();
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device.getHwInfo());

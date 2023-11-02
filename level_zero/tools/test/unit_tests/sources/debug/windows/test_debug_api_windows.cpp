@@ -8,12 +8,14 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
@@ -621,7 +623,7 @@ TEST_F(DebugApiWindowsTest, givenInvalidTopologyDebugAttachCalledThenUnsupported
     auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
@@ -640,7 +642,7 @@ TEST_F(DebugApiWindowsTest, givenSubDeviceWhenDebugAttachCalledThenUnsupportedEr
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.isSubdevice = true;
 
     auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);

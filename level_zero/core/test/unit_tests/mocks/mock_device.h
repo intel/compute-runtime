@@ -11,25 +11,19 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/test/unit_tests/mock.h"
-#include "level_zero/core/test/unit_tests/white_box.h"
 
 namespace L0 {
 namespace ult {
 
-template <>
-struct WhiteBox<::L0::Device> : public ::L0::Device {
+struct Device : public ::L0::Device {
     using Base = L0::Device;
     using Base::implicitScalingCapable;
     using L0::Device::getNEODevice;
     using L0::Device::neoDevice;
 };
 
-using Device = WhiteBox<::L0::Device>;
-
-template <>
-struct Mock<Device> : public Device {
-    Mock() = default;
+struct MockDevice : public Device {
+    ~MockDevice() override = default;
 
     ADDMETHOD_NOBASE(canAccessPeer, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hPeerDevice, ze_bool_t *value));
     ADDMETHOD_NOBASE(createCommandList, ze_result_t, ZE_RESULT_SUCCESS, (const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList));
@@ -104,8 +98,7 @@ struct Mock<Device> : public Device {
     }
 };
 
-template <>
-struct Mock<L0::DeviceImp> : public L0::DeviceImp {
+struct MockDeviceImp : public L0::DeviceImp {
     using Base = L0::DeviceImp;
     using Base::adjustCommandQueueDesc;
     using Base::debugSession;
@@ -113,9 +106,7 @@ struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base::implicitScalingCapable;
     using Base::neoDevice;
 
-    Mock() = default;
-
-    explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
+    MockDeviceImp(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();
         Base::execEnvironment = execEnv;
         Base::neoDevice = device;
