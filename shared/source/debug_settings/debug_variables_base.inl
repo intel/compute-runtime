@@ -97,6 +97,7 @@ DECLARE_DEBUG_VARIABLE(std::string, OverridePlatformName, std::string("unk"), "O
 DECLARE_DEBUG_VARIABLE(std::string, WddmResidencyLoggerOutputDirectory, std::string("unk"), "Selects non-default output directory for Wddm Residency logger file")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "Place memory only in selected tiles indicated by bit mask; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "If compression is required, set AUX_CCS_E, but force CompressionEnable filed; 0 should result in uncompressed read/write; values = -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int64_t, WddmPagingFenceCpuWaitDelayTime, 0, "Amount of microseconds after waitng for paging fence on CPU")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1Caching, -1, "Program L1 cache policy for surface state and stateless accesses; values = -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationEnabled, -1, "Require AUX translation for kernels; values = -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableExperimentalCommandBuffer, 0, "Inject experimental command buffer")

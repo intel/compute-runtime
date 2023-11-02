@@ -47,6 +47,7 @@ class WddmMock : public Wddm {
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
+    using Wddm::pagingFenceDelayTime;
     using Wddm::pagingQueue;
     using Wddm::platformSupportsEvictIfNecessary;
     using Wddm::populateAdditionalAdapterInfoOptions;
@@ -98,6 +99,7 @@ class WddmMock : public Wddm {
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
     uint64_t *getPagingFenceAddress() override;
     void waitOnPagingFenceFromCpu() override;
+    void delayPagingFenceFromCpu(int64_t delayTime) override;
     void createPagingFenceLogger() override;
     bool verifyAdapterLuid(LUID adapterLuid) const override {
         if (callBaseVerifyAdapterLuid) {
@@ -163,6 +165,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
     WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
     WddmMockHelpers::CallResult setAllocationPriorityResult;
+    WddmMockHelpers::CallResult delayPagingFenceFromCpuResult;
 
     StackVec<WddmMockHelpers::MakeResidentCall, 2> makeResidentParamsPassed{};
     bool makeResidentStatus = true;

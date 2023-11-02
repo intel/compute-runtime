@@ -1727,3 +1727,41 @@ TEST_F(WddmTestWithMockGdiDll, givenNonZeroMaxDualSubSlicesSupportedWhenQueryAda
     EXPECT_EQ(expectedMaxDSS, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
     EXPECT_NE(maxSS / 2, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
 }
+
+struct WddmPagingFenceTest : public WddmTest {
+    void SetUp() override {
+        DebugManager.flags.WddmPagingFenceCpuWaitDelayTime.set(WddmPagingFenceTest::defaultTestDelay);
+        WddmTest::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestore;
+    static constexpr int64_t defaultTestDelay = 10;
+};
+
+TEST_F(WddmPagingFenceTest, givenPagingFenceDelayNonZeroWhenCurrentPagingFenceValueNotGreaterThanPagingFenceObjectThenNoPagingFenceDelayCalled) {
+    EXPECT_EQ(WddmPagingFenceTest::defaultTestDelay, wddm->pagingFenceDelayTime);
+    wddm->mockPagingFence = 0u;
+    wddm->currentPagingFenceValue = 1u;
+
+    wddm->waitOnPagingFenceFromCpu();
+    EXPECT_EQ(0u, wddm->delayPagingFenceFromCpuResult.called);
+}
+
+TEST_F(WddmPagingFenceTest, givenPagingFenceDelayNonZeroWhenCurrentPagingFenceValueGreaterThanPagingFenceObjectThenPagingFenceDelayCalled) {
+    EXPECT_EQ(WddmPagingFenceTest::defaultTestDelay, wddm->pagingFenceDelayTime);
+    wddm->mockPagingFence = 0u;
+    wddm->currentPagingFenceValue = 2u;
+
+    wddm->waitOnPagingFenceFromCpu();
+    EXPECT_EQ(1u, wddm->delayPagingFenceFromCpuResult.called);
+}
+
+TEST_F(WddmPagingFenceTest, givenPagingFenceDelayZeroWhenCurrentPagingFenceValueGreaterThanPagingFenceObjectThenNoPagingFenceDelayCalled) {
+    EXPECT_EQ(WddmPagingFenceTest::defaultTestDelay, wddm->pagingFenceDelayTime);
+    wddm->mockPagingFence = 0u;
+    wddm->currentPagingFenceValue = 3u;
+    wddm->pagingFenceDelayTime = 0;
+
+    wddm->waitOnPagingFenceFromCpu();
+    EXPECT_EQ(0u, wddm->delayPagingFenceFromCpuResult.called);
+}

@@ -171,6 +171,7 @@ class Wddm : public DriverModel {
         return gmmMemory.get();
     }
     MOCKABLE_VIRTUAL void waitOnPagingFenceFromCpu();
+    MOCKABLE_VIRTUAL void delayPagingFenceFromCpu(int64_t delayTime);
 
     void setGmmInputArgs(void *args) override;
 
@@ -270,6 +271,7 @@ class Wddm : public DriverModel {
     RootDeviceEnvironment &rootDeviceEnvironment;
 
     uint64_t *pagingFenceAddress = nullptr;
+    int64_t pagingFenceDelayTime = 0;
 
     uintptr_t maximumApplicationAddress = 0;
     uintptr_t minAddress = 0;

@@ -73,6 +73,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
     forceCheck = true;
 #endif
     checkDeviceState = (DebugManager.flags.EnableDeviceStateVerification.get() != -1) ? DebugManager.flags.EnableDeviceStateVerification.get() : forceCheck;
+    pagingFenceDelayTime = DebugManager.flags.WddmPagingFenceCpuWaitDelayTime.get();
 }
 
 Wddm::~Wddm() {
@@ -1264,10 +1265,25 @@ void Wddm::virtualFree(void *ptr, size_t size) {
 
 void Wddm::waitOnPagingFenceFromCpu() {
     perfLogStartWaitTime(residencyLogger.get(), currentPagingFenceValue);
-    while (currentPagingFenceValue > *getPagingFenceAddress())
-        perfLogResidencyEnteredWait(residencyLogger.get());
+    if (currentPagingFenceValue > *getPagingFenceAddress()) {
+        while (currentPagingFenceValue > *getPagingFenceAddress()) {
+            perfLogResidencyEnteredWait(residencyLogger.get());
+        }
+        if (pagingFenceDelayTime > 0) {
+            delayPagingFenceFromCpu(pagingFenceDelayTime);
+        }
+    }
 
     perfLogResidencyWaitPagingeFenceLog(residencyLogger.get(), *getPagingFenceAddress(), false);
+}
+
+void Wddm::delayPagingFenceFromCpu(int64_t delayTime) {
+    int64_t timeDiff = 0u;
+    auto waitStartTime = std::chrono::high_resolution_clock::now();
+    while (timeDiff < delayTime) {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
+    }
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {

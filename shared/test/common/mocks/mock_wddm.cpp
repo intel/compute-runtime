@@ -318,6 +318,11 @@ void WddmMock::waitOnPagingFenceFromCpu() {
     Wddm::waitOnPagingFenceFromCpu();
 }
 
+void WddmMock::delayPagingFenceFromCpu(int64_t delayTime) {
+    delayPagingFenceFromCpuResult.called++;
+    Wddm::delayPagingFenceFromCpu(delayTime);
+}
+
 void WddmMock::createPagingFenceLogger() {
     if (callBaseCreatePagingLogger) {
         Wddm::createPagingFenceLogger();
