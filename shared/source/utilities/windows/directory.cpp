@@ -43,6 +43,6 @@ std::vector<std::string> getFiles(const std::string &path) {
 
 void createDirectory(const std::string &path) {
     [[maybe_unused]] auto status = _mkdir(path.c_str());
-    DEBUG_BREAK_IF(status != 0);
+    DEBUG_BREAK_IF(status != 0 && errno != EEXIST);
 }
 }; // namespace NEO::Directory
