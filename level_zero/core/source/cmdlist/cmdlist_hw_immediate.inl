@@ -894,11 +894,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    auto internalAllocStorage = this->csr->getInternalAllocationStorage();
-
-    auto tempAllocsCleanupRequired = handlePostWaitOperations && !internalAllocStorage->getTemporaryAllocations().peekIsEmpty();
-
-    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible);
+    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !handlePostWaitOperations && this->latestFlushIsHostVisible);
 
     if (inOrderWaitAllowed) {
         status = synchronizeInOrderExecution(timeout);
@@ -917,10 +913,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     if (handlePostWaitOperations && status != ZE_RESULT_NOT_READY) {
         if (status == ZE_RESULT_SUCCESS) {
             this->cmdQImmediate->unregisterCsrClient();
-
-            if (tempAllocsCleanupRequired) {
-                internalAllocStorage->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-            }
+            this->csr->getInternalAllocationStorage()->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
         }
 
         this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
