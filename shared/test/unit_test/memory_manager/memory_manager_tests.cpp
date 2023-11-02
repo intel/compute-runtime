@@ -3089,3 +3089,22 @@ TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphics
 
     memoryManager.freeGraphicsMemory(allocation);
 }
+
+TEST(AllocationListTest, givenAllocationInListWhenFreeAllGraphicsAllocationsCalledThenHeadAndTailIsNullptr) {
+    AllocationsList allocList;
+    EXPECT_EQ(nullptr, allocList.peekHead());
+    EXPECT_EQ(nullptr, allocList.peekTail());
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    auto mockGfxAllocation = std::make_unique<MockGraphicsAllocation>();
+    allocList.pushFrontOne(*mockGfxAllocation.release());
+    EXPECT_NE(nullptr, allocList.peekHead());
+    EXPECT_NE(nullptr, allocList.peekTail());
+    EXPECT_FALSE(allocList.peekIsEmpty());
+
+    MockDevice mockDevice;
+    allocList.freeAllGraphicsAllocations(&mockDevice);
+    EXPECT_EQ(nullptr, allocList.peekHead());
+    EXPECT_EQ(nullptr, allocList.peekTail());
+    EXPECT_TRUE(allocList.peekIsEmpty());
+}

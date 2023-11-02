@@ -93,5 +93,6 @@ void AllocationsList::freeAllGraphicsAllocations(Device *neoDevice) {
         curr = currNext;
     }
     head = nullptr;
+    tail = nullptr;
 }
 } // namespace NEO
