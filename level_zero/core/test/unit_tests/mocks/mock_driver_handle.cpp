@@ -81,6 +81,19 @@ void Mock<DriverHandle>::setupDevices(std::vector<std::unique_ptr<NEO::Device>> 
     }
 }
 
+NEO::GraphicsAllocation *Mock<DriverHandle>::getDriverSystemMemoryAllocation(void *ptr,
+                                                                             size_t size,
+                                                                             uint32_t rootDeviceIndex,
+                                                                             uintptr_t *gpuAddress) {
+    auto svmData = svmAllocsManager->getSVMAlloc(ptr);
+    if (svmData != nullptr) {
+        if (gpuAddress != nullptr) {
+            *gpuAddress = reinterpret_cast<uintptr_t>(ptr);
+        }
+        return svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    }
+    return nullptr;
+}
 Mock<DriverHandle>::~Mock(){};
 
 } // namespace ult

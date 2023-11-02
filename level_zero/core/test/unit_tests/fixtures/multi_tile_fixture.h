@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,7 @@
 
 #pragma once
 
-#include "shared/test/common/helpers/variable_backup.h"
-
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 struct ContextImp;

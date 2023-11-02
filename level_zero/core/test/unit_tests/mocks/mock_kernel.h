@@ -6,10 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
@@ -89,37 +85,8 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
               (uint32_t argIndex, ze_image_handle_t argVal),
               (argIndex, argVal));
 
-    Mock() : BaseClass() {
-        NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
-        iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
-        kernelTokens.header = &kernelHeader;
-
-        iOpenCL::SPatchExecutionEnvironment execEnv = {};
-        execEnv.NumGRFRequired = 128;
-        execEnv.LargestCompiledSIMDSize = 8;
-        kernelTokens.tokens.executionEnvironment = &execEnv;
-
-        this->kernelImmData = &immutableData;
-
-        auto allocation = new NEO::GraphicsAllocation(0,
-                                                      NEO::AllocationType::KERNEL_ISA,
-                                                      nullptr,
-                                                      0,
-                                                      0,
-                                                      4096,
-                                                      NEO::MemoryPool::System4KBPages,
-                                                      NEO::MemoryManager::maxOsContextCount);
-
-        immutableData.isaGraphicsAllocation.reset(allocation);
-
-        NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
-        immutableData.kernelDescriptor = &descriptor;
-        immutableData.kernelInfo = &info;
-        crossThreadData.reset(new uint8_t[100]);
-    }
-    ~Mock() override {
-        delete immutableData.isaGraphicsAllocation.release();
-    }
+    Mock();
+    ~Mock() override;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {}
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {

@@ -32,6 +32,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_l0.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_pointer_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_module.h

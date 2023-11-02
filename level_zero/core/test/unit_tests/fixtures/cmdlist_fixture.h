@@ -7,29 +7,24 @@
 
 #pragma once
 
-#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
-
 class CommandListFixture : public DeviceFixture {
   public:
+    CommandListFixture();
+    ~CommandListFixture() override;
     void setUp();
     void tearDown();
 
-    std::unique_ptr<L0::ult::CommandList> commandList;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
     std::unique_ptr<EventPool> eventPool;
-    std::unique_ptr<Event> event;
+    std::unique_ptr<WhiteBox<L0::Event>> event;
 };
 
 struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture {
@@ -39,7 +34,7 @@ struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture 
         SingleRootMultiSubDeviceFixture::tearDown();
     }
 
-    std::unique_ptr<L0::ult::CommandList> commandList;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
@@ -78,11 +73,11 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     uint32_t getMocs(bool l3On);
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
-    std::unique_ptr<L0::ult::CommandList> commandList;
-    std::unique_ptr<L0::ult::CommandList> commandListImmediate;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandListImmediate;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
-    L0::ult::CommandQueue *commandQueue;
+    WhiteBox<L0::CommandQueue> *commandQueue;
     size_t expectedSbaCmds = 0;
     NEO::EngineGroupType engineGroupType;
 
@@ -121,7 +116,7 @@ struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixtur
     template <typename FamilyType>
     void testBodySystolicAndScratchOnSecondCommandList();
 
-    std::unique_ptr<L0::ult::CommandList> commandList2;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList2;
 };
 
 struct CmdListStateComputeModeStateFixture : public ModuleMutableCommandListFixture {
@@ -150,7 +145,7 @@ struct CommandListGlobalHeapsFixtureInit : public CommandListStateBaseAddressFix
     void setUp();
     void setUpParams(int32_t globalHeapMode);
     void tearDown();
-    std::unique_ptr<L0::ult::CommandList> commandListPrivateHeap;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandListPrivateHeap;
 };
 
 template <int32_t globalHeapMode>
@@ -164,7 +159,7 @@ struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixtu
     void setUp();
     void tearDown();
 
-    std::unique_ptr<L0::ult::CommandList> commandListImmediateCoexisting;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandListImmediateCoexisting;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
 };
@@ -184,7 +179,7 @@ struct ImmediateCmdListSharedHeapsFlushTaskFixtureInit : public ImmediateCmdList
     template <typename FamilyType>
     void testBody(NonKernelOperation operation);
 
-    void appendNonKernelOperation(L0::ult::CommandList *currentCmdList, NonKernelOperation operation);
+    void appendNonKernelOperation(WhiteBox<L0::CommandList> *currentCmdList, NonKernelOperation operation);
 
     void validateDispatchFlags(bool nonKernel, NEO::ImmediateDispatchFlags &recordedImmediateFlushTaskFlags, const NEO::IndirectHeap *recordedSsh);
 
@@ -335,8 +330,8 @@ struct PrimaryBatchBufferPreamblelessCmdListFixture : public PrimaryBatchBufferC
     void setUp();
     void tearDown();
 
-    std::unique_ptr<L0::ult::CommandList> commandList2;
-    std::unique_ptr<L0::ult::CommandList> commandList3;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList2;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList3;
 };
 
 struct ImmediateFlushTaskCmdListFixture : public ModuleMutableCommandListFixture {

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"

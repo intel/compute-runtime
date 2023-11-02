@@ -34,7 +34,7 @@ namespace ult {
 class MockBuiltins;
 
 struct DeviceFixture {
-
+    virtual ~DeviceFixture() = default;
     void setUp();
     void setUpImpl(NEO::HardwareInfo *hwInfo);
     void tearDown();

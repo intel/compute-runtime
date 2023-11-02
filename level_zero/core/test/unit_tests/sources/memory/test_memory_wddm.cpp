@@ -7,8 +7,10 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 
 namespace L0 {
 namespace ult {

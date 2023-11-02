@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -55,16 +54,7 @@ struct Mock<DriverHandle> : public DriverHandle {
     NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr,
                                                              size_t size,
                                                              uint32_t rootDeviceIndex,
-                                                             uintptr_t *gpuAddress) override {
-        auto svmData = svmAllocsManager->getSVMAlloc(ptr);
-        if (svmData != nullptr) {
-            if (gpuAddress != nullptr) {
-                *gpuAddress = reinterpret_cast<uintptr_t>(ptr);
-            }
-            return svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-        }
-        return nullptr;
-    }
+                                                             uintptr_t *gpuAddress) override;
 };
 } // namespace ult
 } // namespace L0

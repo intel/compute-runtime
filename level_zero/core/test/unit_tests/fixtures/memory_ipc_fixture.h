@@ -6,33 +6,27 @@
  */
 
 #pragma once
-
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+class MockDevice;
+class MemoryManagerMemHandleMock;
+} // namespace NEO
 
 namespace L0 {
 namespace ult {
 
 struct DriverHandleGetFdMock : public L0::DriverHandleImp {
-    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
-        this->allocationTypeRequested = allocationType;
-        if (mockFd == allocationMap.second) {
-            return allocationMap.first;
-        }
-        return nullptr;
-    }
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
+                         NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
 
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
@@ -46,61 +40,18 @@ struct ContextFdMock : public L0::ContextImp {
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
-                               size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
-        if (ZE_RESULT_SUCCESS == res) {
-            driverHandle->allocationMap.first = *ptr;
-            driverHandle->allocationMap.second = driverHandle->mockFd;
-        }
-
-        return res;
-    }
+                               size_t alignment, void **ptr) override;
 
     ze_result_t allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                              size_t size,
-                             size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocHostMem(hostDesc, size, alignment, ptr);
-        if (ZE_RESULT_SUCCESS == res) {
-            driverHandle->allocationMap.first = *ptr;
-            driverHandle->allocationMap.second = driverHandle->mockFd;
-        }
-
-        return res;
-    }
+                             size_t alignment, void **ptr) override;
 
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
-                                      ze_device_handle_t *phDevice) override {
-        ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
-        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext && !memPropTest) {
-            ze_base_properties_t *baseProperties =
-                reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
-            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
-                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                    reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
-                extendedMemoryExportProperties->fd = driverHandle->mockFd;
-            }
-        }
-
-        return res;
-    }
+                                      ze_device_handle_t *phDevice) override;
 
     ze_result_t getImageAllocProperties(Image *image,
-                                        ze_image_allocation_ext_properties_t *pAllocProperties) override {
-
-        ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
-        if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
-            ze_base_properties_t *baseProperties =
-                reinterpret_cast<ze_base_properties_t *>(pAllocProperties->pNext);
-            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
-                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                    reinterpret_cast<ze_external_memory_export_fd_t *>(pAllocProperties->pNext);
-                extendedMemoryExportProperties->fd = driverHandle->mockFd;
-            }
-        }
-
-        return res;
-    }
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override;
 
     ze_result_t closeIpcMemHandle(const void *ptr) override {
         return ZE_RESULT_SUCCESS;
@@ -110,24 +61,7 @@ struct ContextFdMock : public L0::ContextImp {
 };
 
 struct MemoryExportImportTest : public ::testing::Test {
-    void SetUp() override {
-
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<DriverHandleGetFdMock>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
-
-        context = std::make_unique<ContextFdMock>(driverHandle.get());
-        EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-        auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-    }
+    void SetUp() override;
 
     void TearDown() override {
     }
@@ -139,18 +73,10 @@ struct MemoryExportImportTest : public ::testing::Test {
 };
 
 struct DriverHandleGetMemHandleMock : public L0::DriverHandleImp {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override {
-        if (mockHandle == allocationHandleMap.second) {
-            return allocationHandleMap.first;
-        }
-        return nullptr;
-    }
-    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
-        if (mockFd == allocationFdMap.second) {
-            return allocationFdMap.first;
-        }
-        return nullptr;
-    }
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override;
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
+                         NEO::AllocationType allocationType, void *basePointer,
+                         NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
 
     const int mockFd = 57;
     std::pair<void *, int> allocationFdMap;
@@ -165,51 +91,14 @@ struct ContextMemHandleMock : public L0::ContextImp {
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
-                               size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
-        if (ZE_RESULT_SUCCESS == res) {
-            driverHandle->allocationFdMap.first = *ptr;
-            driverHandle->allocationFdMap.second = driverHandle->mockFd;
-            driverHandle->allocationHandleMap.first = *ptr;
-            driverHandle->allocationHandleMap.second = driverHandle->mockHandle;
-        }
-
-        return res;
-    }
+                               size_t alignment, void **ptr) override;
 
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
-                                      ze_device_handle_t *phDevice) override {
-        ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
-        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
-            ze_base_properties_t *baseProperties =
-                reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
-            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
-                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                    reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
-                extendedMemoryExportProperties->fd = driverHandle->mockFd;
-            }
-        }
-
-        return res;
-    }
+                                      ze_device_handle_t *phDevice) override;
 
     ze_result_t getImageAllocProperties(Image *image,
-                                        ze_image_allocation_ext_properties_t *pAllocProperties) override {
-
-        ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
-        if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
-            ze_base_properties_t *baseProperties =
-                reinterpret_cast<ze_base_properties_t *>(pAllocProperties->pNext);
-            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
-                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                    reinterpret_cast<ze_external_memory_export_fd_t *>(pAllocProperties->pNext);
-                extendedMemoryExportProperties->fd = driverHandle->mockFd;
-            }
-        }
-
-        return res;
-    }
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override;
 
     ze_result_t closeIpcMemHandle(const void *ptr) override {
         return ZE_RESULT_SUCCESS;
@@ -219,32 +108,10 @@ struct ContextMemHandleMock : public L0::ContextImp {
 };
 
 struct MemoryExportImportWSLTest : public ::testing::Test {
-    void SetUp() override {
+    void SetUp() override;
 
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<DriverHandleGetMemHandleMock>();
-        prevMemoryManager = driverHandle->getMemoryManager();
-        currMemoryManager = new MemoryManagerMemHandleMock();
-        driverHandle->setMemoryManager(currMemoryManager);
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
+    void TearDown() override;
 
-        context = std::make_unique<ContextMemHandleMock>(driverHandle.get());
-        EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-        auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-    }
-
-    void TearDown() override {
-        driverHandle->setMemoryManager(prevMemoryManager);
-        delete currMemoryManager;
-    }
     std::unique_ptr<DriverHandleGetMemHandleMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -255,12 +122,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
 };
 
 struct DriverHandleGetWinHandleMock : public L0::DriverHandleImp {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override {
-        if (mockHandle == allocationMap.second) {
-            return allocationMap.first;
-        }
-        return nullptr;
-    }
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override;
 
     uint64_t mockHandle = 57;
     std::pair<void *, uint64_t> allocationMap;
@@ -273,69 +135,22 @@ struct ContextHandleMock : public L0::ContextImp {
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
-                               size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
-        if (ZE_RESULT_SUCCESS == res) {
-            driverHandle->allocationMap.first = *ptr;
-            driverHandle->allocationMap.second = driverHandle->mockHandle;
-        }
-
-        return res;
-    }
+                               size_t alignment, void **ptr) override;
 
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
-                                      ze_device_handle_t *phDevice) override {
-        ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
-        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
-            ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
-                reinterpret_cast<ze_external_memory_export_win32_handle_t *>(pMemAllocProperties->pNext);
-            extendedMemoryExportProperties->handle = reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(driverHandle->mockHandle));
-        }
-
-        return res;
-    }
+                                      ze_device_handle_t *phDevice) override;
 
     ze_result_t getImageAllocProperties(Image *image,
-                                        ze_image_allocation_ext_properties_t *pAllocProperties) override {
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override;
 
-        ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
-        if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
-            ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
-                reinterpret_cast<ze_external_memory_export_win32_handle_t *>(pAllocProperties->pNext);
-            extendedMemoryExportProperties->handle = reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(driverHandle->mockHandle));
-        }
-
-        return res;
-    }
-
-    ze_result_t freeMem(const void *ptr) override {
-        L0::ContextImp::freeMem(ptr);
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t freeMem(const void *ptr) override;
 
     DriverHandleGetWinHandleMock *driverHandle = nullptr;
 };
 
 struct MemoryExportImportWinHandleTest : public ::testing::Test {
-    void SetUp() override {
-
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<DriverHandleGetWinHandleMock>();
-        driverHandle->initialize(std::move(devices));
-        device = driverHandle->devices[0];
-
-        context = std::make_unique<ContextHandleMock>(driverHandle.get());
-        EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-        auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-    }
+    void SetUp() override;
 
     void TearDown() override {
     }
@@ -347,13 +162,8 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
 };
 
 struct DriverHandleGetIpcHandleMock : public DriverHandleImp {
-    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
-        EXPECT_EQ(handle, static_cast<uint64_t>(mockFd));
-        if (mockFd == allocationMap.second) {
-            return allocationMap.first;
-        }
-        return nullptr;
-    }
+    void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
+                         NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
 
     const int mockFd = 999;
     std::pair<void *, int> allocationMap;
@@ -366,30 +176,9 @@ struct ContextGetIpcHandleMock : public L0::ContextImp {
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
-                               size_t alignment, void **ptr) override {
-        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
-        if (ZE_RESULT_SUCCESS == res) {
-            driverHandle->allocationMap.first = *ptr;
-            driverHandle->allocationMap.second = driverHandle->mockFd;
-        }
+                               size_t alignment, void **ptr) override;
 
-        return res;
-    }
-
-    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override {
-        uint64_t handle = driverHandle->mockFd;
-        NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-        ipcData = {};
-        ipcData.handle = handle;
-        auto type = Context::parseUSMType(allocData->memoryType);
-        if (type == ZE_MEMORY_TYPE_HOST) {
-            ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
 
     DriverHandleGetIpcHandleMock *driverHandle = nullptr;
 };
@@ -477,77 +266,16 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
   public:
     MemoryManagerOpenIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerIpcMock(executionEnvironment) {}
 
-    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        return allocateGraphicsMemoryWithProperties(properties, nullptr);
-    }
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
 
-    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *externalPtr) override {
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *externalPtr) override;
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
-        if (failOnCreateGraphicsAllocationFromSharedHandle) {
-            return nullptr;
-        }
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
-    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
-        if (failOnCreateGraphicsAllocationFromSharedHandle) {
-            return nullptr;
-        }
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
-    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    };
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle,
+                                                                      const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation,
+                                                                      bool reuseSharedAllocation, void *mapPointer) override;
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
+                                                                               AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
+    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override;
 
     void freeGraphicsMemory(GraphicsAllocation *gfxAllocation) override {
         delete gfxAllocation;
@@ -567,52 +295,15 @@ struct ContextIpcMock : public L0::ContextImp {
         driverHandle = inDriverHandle;
     }
 
-    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override {
-        uint64_t handle = mockFd;
-        NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-        ipcData = {};
-        ipcData.handle = handle;
-        auto type = Context::parseUSMType(allocData->memoryType);
-        if (type == ZE_MEMORY_TYPE_HOST) {
-            ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) override;
 
     const int mockFd = 999;
 };
 
 struct MemoryOpenIpcHandleTest : public ::testing::Test {
-    void SetUp() override {
+    void SetUp() override;
+    void TearDown() override;
 
-        neoDevice =
-            NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<DriverHandleImp>();
-        driverHandle->initialize(std::move(devices));
-        prevMemoryManager = driverHandle->getMemoryManager();
-        currMemoryManager = new MemoryManagerOpenIpcMock(*neoDevice->executionEnvironment);
-        driverHandle->setMemoryManager(currMemoryManager);
-        device = driverHandle->devices[0];
-
-        context = std::make_unique<ContextIpcMock>(driverHandle.get());
-        EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-        auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-    }
-
-    void TearDown() override {
-        driverHandle->setMemoryManager(prevMemoryManager);
-        delete currMemoryManager;
-    }
     NEO::MemoryManager *prevMemoryManager = nullptr;
     NEO::MemoryManager *currMemoryManager = nullptr;
     std::unique_ptr<DriverHandleImp> driverHandle;
@@ -663,94 +354,16 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     void *lockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override { return nullptr; };
     void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override{};
 
-    NEO::GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) override {
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
+    NEO::GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) override;
 
-    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
-        if (failOnCreateGraphicsAllocationFromSharedHandle) {
-            return nullptr;
-        }
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
+                                                                               AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
 
-    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
-        if (failOnCreateGraphicsAllocationFromNTHandle) {
-            return nullptr;
-        }
-
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
-    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
-        if (failOnCreateGraphicsAllocationFromSharedHandle) {
-            return nullptr;
-        }
-        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
-        auto gmmHelper = getGmmHelper(0);
-        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                                  NEO::AllocationType::BUFFER,
-                                                                  ptr,
-                                                                  0x1000,
-                                                                  0u,
-                                                                  MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount,
-                                                                  canonizedGpuAddress);
-        alloc->setGpuBaseAddress(0xabcd);
-        return alloc;
-    }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override;
+    NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties,
+                                                                      bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
 
     void freeGraphicsMemory(NEO::GraphicsAllocation *alloc, bool isImportedAllocation) override {
         delete alloc;
@@ -763,42 +376,9 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
 };
 
 struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
-    void SetUp() override {
-        DebugManagerStateRestore restorer;
-        DebugManager.flags.EnableImplicitScaling.set(1);
+    void SetUp() override;
 
-        neoDevice =
-            NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-        driverHandle = std::make_unique<DriverHandleImp>();
-        driverHandle->initialize(std::move(devices));
-        prevMemoryManager = driverHandle->getMemoryManager();
-        currMemoryManager = new MemoryManagerIpcImplicitScalingMock(*neoDevice->executionEnvironment);
-        driverHandle->setMemoryManager(currMemoryManager);
-
-        prevSvmAllocsManager = driverHandle->svmAllocsManager;
-        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, false);
-        driverHandle->svmAllocsManager = currSvmAllocsManager;
-
-        device = driverHandle->devices[0];
-
-        context = std::make_unique<ContextIpcMock>(driverHandle.get());
-        EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
-        auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
-        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
-    }
-
-    void TearDown() override {
-        driverHandle->svmAllocsManager = prevSvmAllocsManager;
-        delete currSvmAllocsManager;
-        driverHandle->setMemoryManager(prevMemoryManager);
-        delete currMemoryManager;
-    }
+    void TearDown() override;
 
     NEO::SVMAllocsManager *prevSvmAllocsManager;
     NEO::SVMAllocsManager *currSvmAllocsManager;

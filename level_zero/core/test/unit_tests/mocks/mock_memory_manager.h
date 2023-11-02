@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,6 @@
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 #include <unordered_map>
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
 
 namespace L0 {
 namespace ult {
@@ -32,7 +27,3 @@ using MemoryManagerMock = WhiteBox<::NEO::OsAgnosticMemoryManager>;
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

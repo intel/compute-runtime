@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -19,6 +20,8 @@
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 #include "gtest/gtest.h"
@@ -26,6 +29,8 @@
 namespace L0 {
 namespace ult {
 
+CommandListFixture::CommandListFixture() = default;
+CommandListFixture ::~CommandListFixture() = default;
 void CommandListFixture::setUp() {
     DeviceFixture::setUp();
     ze_result_t returnValue;
