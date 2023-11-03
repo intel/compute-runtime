@@ -2288,7 +2288,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
     // Dont chunk for sizes less than chunkThreshold or if debugging is enabled
     if (!executionEnvironment.isDebuggingEnabled() &&
-        (drm.getChunkingMode() & 0x01) &&
+        (drm.getChunkingMode() & chunkingModeShared) &&
         !(chunkingSize & (MemoryConstants::chunkThreshold - 1)) &&
         size >= drm.getMinimalSizeForChunking()) {
         numHandles = 1;

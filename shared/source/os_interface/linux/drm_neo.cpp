@@ -1157,7 +1157,11 @@ bool Drm::isChunkingAvailable() {
             int ret = ioctlHelper->isChunkingAvailable();
             if (ret) {
                 chunkingAvailable = true;
-                chunkingMode = DebugManager.flags.EnableBOChunking.get();
+                if (DebugManager.flags.EnableBOChunking.get() == -1) {
+                    chunkingMode = chunkingModeDevice;
+                } else {
+                    chunkingMode = DebugManager.flags.EnableBOChunking.get();
+                }
             }
 
             if (DebugManager.flags.MinimalAllocationSizeForChunking.get() != -1) {
@@ -1167,8 +1171,8 @@ bool Drm::isChunkingAvailable() {
             printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
                              "Chunking available: %d; enabled for: shared allocations %d, device allocations %d; minimalChunkingSize: %zd\n",
                              chunkingAvailable,
-                             (chunkingMode & 0x01),
-                             (chunkingMode & 0x02),
+                             (chunkingMode & chunkingModeShared),
+                             (chunkingMode & chunkingModeDevice),
                              minimalChunkingSize);
         });
     }
