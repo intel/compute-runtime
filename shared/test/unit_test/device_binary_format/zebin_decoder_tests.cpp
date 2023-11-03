@@ -5033,6 +5033,46 @@ TEST(PopulateArgDescriptor, GivenConstDataBufferArgWithoutBTIThenItIsPopulatedCo
     EXPECT_EQ(0U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenIndirectDataPointerZeInfoWhenDecodeZeInfoThenIndirectDataPointerIsPopulatedCorrectly) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: indirect_data_pointer
+                  offset: 16
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    const auto indirectDataPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress;
+    EXPECT_EQ(16u, indirectDataPointerAddress.offset);
+    EXPECT_EQ(8u, indirectDataPointerAddress.pointerSize);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerZeInfoWhenDecodeZeInfoThenScratchPointerIsPopulatedCorrectly) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: scratch_pointer
+                  offset: 24
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
+    EXPECT_EQ(24u, scratchPointerAddress.offset);
+    EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
     ConstStringRef zeinfo = R"===(
         kernels:

@@ -121,6 +121,8 @@ inline constexpr ConstStringRef rtGlobalBuffer("rt_global_buffer");
 inline constexpr ConstStringRef dataConstBuffer("const_base");
 inline constexpr ConstStringRef dataGlobalBuffer("global_base");
 inline constexpr ConstStringRef assertBuffer("assert_buffer");
+inline constexpr ConstStringRef indirectDataPointer("indirect_data_pointer");
+inline constexpr ConstStringRef scratchPointer("scratch_pointer");
 
 namespace Image {
 inline constexpr ConstStringRef width("image_width");
@@ -488,6 +490,8 @@ enum ArgType : uint8_t {
     ArgTypeDataConstBuffer,
     ArgTypeDataGlobalBuffer,
     ArgTypeAssertBuffer,
+    ArgTypeIndirectDataPointer,
+    ArgTypeScratchPointer,
     ArgTypeMax
 };
 

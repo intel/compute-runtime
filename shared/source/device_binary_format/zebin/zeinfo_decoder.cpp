@@ -1058,6 +1058,11 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         arg.pointerSize = src.size;
         return DecodeError::Success;
     };
+    auto populateArgToInlineData = [&src](auto &arg) {
+        arg.offset = src.offset;
+        arg.pointerSize = src.size;
+        return DecodeError::Success;
+    };
     auto populateWithOffset = [&src](auto &dst) {
         dst = src.offset;
         return DecodeError::Success;
@@ -1238,6 +1243,12 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::ArgTypePrivateBaseStateless:
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.privateMemoryAddress);
+
+    case Types::Kernel::ArgTypeScratchPointer:
+        return populateArgToInlineData(dst.payloadMappings.implicitArgs.scratchPointerAddress);
+
+    case Types::Kernel::ArgTypeIndirectDataPointer:
+        return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress);
 
     case Types::Kernel::ArgTypePrintfBuffer:
         dst.kernelAttributes.flags.usesPrintf = true;

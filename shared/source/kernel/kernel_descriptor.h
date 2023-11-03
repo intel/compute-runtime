@@ -185,6 +185,8 @@ struct KernelDescriptor {
             CrossThreadDataOffset localMemoryStatelessWindowSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset localMemoryStatelessWindowStartAddres = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset implicitArgsBuffer = undefined<CrossThreadDataOffset>;
+            ArgDescInlineDataPointer indirectDataPointerAddress;
+            ArgDescInlineDataPointer scratchPointerAddress;
         } implicitArgs;
 
         std::vector<std::unique_ptr<ArgDescriptorExtended>> explicitArgsExtendedDescriptors;

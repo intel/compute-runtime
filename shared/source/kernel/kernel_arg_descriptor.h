@@ -16,6 +16,7 @@ namespace NEO {
 using CrossThreadDataOffset = uint16_t;
 using DynamicStateHeapOffset = uint16_t;
 using SurfaceStateHeapOffset = uint16_t;
+using InlineDataOffset = uint8_t;
 
 template <typename T>
 static constexpr T undefined = std::numeric_limits<T>::max();
@@ -43,6 +44,11 @@ struct ArgDescPointer final {
     bool isPureStateful() const {
         return false == accessedUsingStatelessAddressingMode;
     }
+};
+
+struct ArgDescInlineDataPointer {
+    InlineDataOffset offset = 0u;
+    uint8_t pointerSize = 0u;
 };
 
 enum class NEOImageType : uint8_t {
