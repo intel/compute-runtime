@@ -683,9 +683,3 @@ TEST_F(IoctlPrelimHelperTests, givenInitializeGetGpuTimeFunctionNotCalledWhenSet
     auto ret = ioctlHelper.setGpuCpuTimes(&pGpuCpuTime, osTime.get());
     EXPECT_EQ(false, ret);
 }
-
-TEST_F(IoctlPrelimHelperTests, givenUpstreamWhenGetFdFromVmExportIsCalledThenFalseIsReturned) {
-    uint32_t vmId = 0, flags = 0;
-    int32_t fd = 0;
-    EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
-}

@@ -142,9 +142,6 @@ struct ContextImp : Context {
     ze_result_t createImage(ze_device_handle_t hDevice,
                             const ze_image_desc_t *desc,
                             ze_image_handle_t *phImage) override;
-    ze_result_t getVirtualAddressSpaceIpcHandle(ze_device_handle_t hDevice,
-                                                ze_ipc_mem_handle_t *pIpcHandle) override;
-    ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) override;
 
     std::map<uint32_t, ze_device_handle_t> &getDevices() {
         return devices;

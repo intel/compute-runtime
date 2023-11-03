@@ -561,10 +561,6 @@ std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) 
 
 void IoctlHelper::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {}
 
-bool IoctlHelper::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) {
-    return false;
-}
-
 uint32_t IoctlHelper::createGem(uint64_t size, uint32_t memoryBanks) {
     GemCreate gemCreate = {};
     gemCreate.size = size;

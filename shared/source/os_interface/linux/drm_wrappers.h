@@ -261,7 +261,6 @@ enum class DrmIoctl {
     GemClosFree,
     GemCacheReserve,
     Version,
-    VmExport,
 };
 
 enum class DrmParam {

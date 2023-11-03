@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <bitset>
@@ -116,7 +115,6 @@ class IoctlHelperXe : public IoctlHelper {
     bool getTimestampFrequency(uint64_t &frequency);
 
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
-    bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     bool isImmediateVmBindRequired() const override;
 
   private:
@@ -165,10 +163,5 @@ class IoctlHelperXe : public IoctlHelper {
 
     drm_xe_engine_class_instance *defaultEngine = nullptr;
 };
-
-template <typename... XeLogArgs>
-void IoctlHelperXe::xeLog(XeLogArgs &&...args) const {
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, args...);
-}
 
 } // namespace NEO

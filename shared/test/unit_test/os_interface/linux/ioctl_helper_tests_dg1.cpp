@@ -171,12 +171,3 @@ DG1TEST_F(IoctlHelperTestsDg1, whenGettingDrmParamStringThenProperStringIsReturn
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamMinEuInPool).c_str(), "I915_PARAM_MIN_EU_IN_POOL");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamCsTimestampFrequency).c_str(), "I915_PARAM_CS_TIMESTAMP_FREQUENCY");
 }
-
-DG1TEST_F(IoctlHelperTestsDg1, givenUpstreamWhenGetFdFromVmExportIsCalledThenFalseIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto &ioctlHelper = *drm->getIoctlHelper();
-    uint32_t vmId = 0, flags = 0;
-    int32_t fd = 0;
-    EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
-}
