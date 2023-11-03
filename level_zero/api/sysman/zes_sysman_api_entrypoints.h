@@ -41,6 +41,28 @@ ze_result_t zesDeviceGet(
     }
 }
 
+ze_result_t zesDriverGetExtensionProperties(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_driver_extension_properties_t *pExtensionProperties) {
+    if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getExtensionProperties(pCount, pExtensionProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesDriverGetExtensionFunctionAddress(
+    zes_driver_handle_t hDriver,
+    const char *name,
+    void **ppFunctionAddress) {
+    if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getExtensionFunctionAddress(name, ppFunctionAddress);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 ze_result_t zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
@@ -718,6 +740,18 @@ ze_result_t zesFirmwareFlash(
         return L0::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesFirmwareGetFlashProgress(
+    zes_firmware_handle_t hFirmware,
+    uint32_t *pCompletionPercent) {
+    if (L0::sysmanInitFromCore) {
+        return L0::Firmware::fromHandle(hFirmware)->firmwareGetFlashProgress(pCompletionPercent);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetFlashProgress(pCompletionPercent);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -1835,6 +1869,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesFirmwareFlash(
         size);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFirmwareGetFlashProgress(
+    zes_firmware_handle_t hFirmware,
+    uint32_t *pCompletionPercent) {
+    return L0::zesFirmwareGetFlashProgress(
+        hFirmware,
+        pCompletionPercent);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumFrequencyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
@@ -2555,6 +2597,27 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGet(
     return L0::zesDriverGet(
         pCount,
         phDrivers);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetExtensionProperties(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_driver_extension_properties_t *pExtensionProperties) {
+    return L0::zesDriverGetExtensionProperties(
+        hDriver,
+        pCount,
+        pExtensionProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDriverGetExtensionFunctionAddress(
+    zes_driver_handle_t hDriver,
+    const char *name,
+    void **ppFunctionAddress) {
+    return L0::zesDriverGetExtensionFunctionAddress(
+        hDriver,
+        name,
+        ppFunctionAddress);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceSetOverclockWaiver(

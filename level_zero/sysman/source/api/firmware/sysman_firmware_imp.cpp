@@ -28,6 +28,10 @@ ze_result_t FirmwareImp::firmwareFlash(void *pImage, uint32_t size) {
     return pOsFirmware->osFirmwareFlash(pImage, size);
 }
 
+ze_result_t FirmwareImp::firmwareGetFlashProgress(uint32_t *pCompletionPercent) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initalizedFwType) {
     pOsFirmware = OsFirmware::create(pOsSysman, initalizedFwType);
     fwType = initalizedFwType;

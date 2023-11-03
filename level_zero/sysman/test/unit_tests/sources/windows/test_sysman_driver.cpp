@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/core/source/get_extension_function_lookup_map.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_driver.h"
 
 #include "gtest/gtest.h"
@@ -38,6 +39,21 @@ TEST(zesInit, whenCallingZesInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCal
     auto result = zesInit(ZE_INIT_FLAG_VPU_ONLY);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
     EXPECT_EQ(0u, driver.initCalledCount);
+}
+
+TEST_F(SysmanDriverHandleTest,
+       givenInitializedDriverWhenZesDriverGetPropertiesIsCalledThenUnsupportedIsReturned) {
+    uint32_t pCount = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDriverGetExtensionProperties(driverHandle->toHandle(), &pCount, nullptr));
+}
+
+TEST_F(SysmanDriverHandleTest,
+       givenDriverWhenGetExtensionFunctionAddressIsCalledWithValidAndInvalidFunctionNamesThenCorrectResultIsReturned) {
+    driverHandle->extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
+    void *funPtr = nullptr;
+
+    auto result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zexDriverImportUnKnownPointer", &funPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 } // namespace ult

@@ -218,5 +218,16 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhe
     EXPECT_STREQ("unknown", properties.version);
 }
 
+TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareFlashProgressThenUnsupportedIsReturned) {
+    initFirmware();
+
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFwTypes[0]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    auto handles = getFirmwareHandles(mockHandleCount);
+    uint32_t completionPercent = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareGetFlashProgress(handles[1], &completionPercent));
+}
+
 } // namespace ult
 } // namespace L0

@@ -296,6 +296,41 @@ TEST_F(SysmanDriverHandleTest, whenQueryingForDevicesWithCountGreaterThanZeroAnd
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, result);
 }
 
+TEST_F(SysmanDriverHandleTest,
+       givenInitializedDriverWhenzesDriverGetExtensionPropertiesIsCalledThenUnsupportedIsReturned) {
+    uint32_t count = 0;
+    ze_result_t result = zesDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+
+    ze_driver_handle_t driverHandle = {};
+    result = zesDriverGet(&count, &driverHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, driverHandle);
+    uint32_t pCount = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDriverGetExtensionProperties(driverHandle, &pCount, nullptr));
+}
+
+TEST_F(SysmanDriverHandleTest,
+       givenDriverWhenGetExtensionFunctionAddressIsCalledWithValidAndInvalidFunctionNamesThenCorrectResultIsReturned) {
+    uint32_t count = 0;
+    ze_result_t result = zesDriverGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, count);
+
+    ze_driver_handle_t driverHandle = {};
+    result = zesDriverGet(&count, &driverHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, driverHandle);
+    void *funPtr = nullptr;
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

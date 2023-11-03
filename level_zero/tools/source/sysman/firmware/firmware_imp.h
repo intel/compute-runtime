@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class FirmwareImp : public Firmware, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t firmwareGetProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t firmwareFlash(void *pImage, uint32_t size) override;
+    ze_result_t firmwareGetFlashProgress(uint32_t *pCompletionPercent) override;
     FirmwareImp() = default;
     FirmwareImp(OsSysman *pOsSysman, const std::string &fwType);
     ~FirmwareImp() override;

@@ -99,7 +99,8 @@ zesGetDriverProcAddrTable(
     pDdiTable->pfnEventListen = L0::zesDriverEventListen;
     pDdiTable->pfnEventListenEx = L0::zesDriverEventListenEx;
     pDdiTable->pfnGet = L0::zesDriverGet;
-
+    pDdiTable->pfnGetExtensionProperties = L0::zesDriverGetExtensionProperties;
+    pDdiTable->pfnGetExtensionFunctionAddress = L0::zesDriverGetExtensionFunctionAddress;
     return result;
 }
 
@@ -197,6 +198,7 @@ zesGetFirmwareProcAddrTable(
 
     pDdiTable->pfnGetProperties = L0::zesFirmwareGetProperties;
     pDdiTable->pfnFlash = L0::zesFirmwareFlash;
+    pDdiTable->pfnGetFlashProgress = L0::zesFirmwareGetFlashProgress;
 
     return result;
 }

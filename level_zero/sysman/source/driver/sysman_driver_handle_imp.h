@@ -19,6 +19,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     SysmanDriverHandleImp();
     ze_result_t initialize(NEO::ExecutionEnvironment &executionEnvironment);
     ze_result_t getDevice(uint32_t *pCount, zes_device_handle_t *phDevices) override;
+    ze_result_t getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties) override;
     ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                    uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
     ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,
