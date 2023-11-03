@@ -507,7 +507,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSkippingInOrderBarrierAllo
 
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    return !(signalEvent && (signalEvent->isEventTimestampFlagSet() || !signalEvent->isCounterBased()));
+    return !(signalEvent && (signalEvent->isEventTimestampFlagSet() || !signalEvent->isInOrderExecEvent()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

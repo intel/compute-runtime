@@ -217,8 +217,8 @@ struct Event : _ze_event_handle_t {
         this->metricStreamer = metricStreamer;
     }
     void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
-    bool isCounterBased() const { return counterBased; }
-    void enableCounterBasedMode() { this->counterBased = true; }
+    bool isInOrderExecEvent() const { return inOrderExecEvent; }
+    void enableInOrderMode() { this->inOrderExecEvent = true; }
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
     uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
@@ -287,7 +287,7 @@ struct Event : _ze_event_handle_t {
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
-    bool counterBased = false;
+    bool inOrderExecEvent = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 
@@ -296,7 +296,10 @@ struct EventPool : _ze_event_pool_handle_t {
     static ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,
                                               DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
     EventPool(const ze_event_pool_desc_t *desc) : EventPool(desc->count) {
-        setupDescriptorFlags(desc);
+        eventPoolFlags = desc->flags;
+        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
+            eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+        }
     }
     virtual ~EventPool();
     MOCKABLE_VIRTUAL ze_result_t destroy();
@@ -353,12 +356,9 @@ struct EventPool : _ze_event_pool_handle_t {
         return isImplicitScalingCapable;
     }
 
-    bool isCounterBased() const { return counterBased; }
-
   protected:
     EventPool() = default;
     EventPool(size_t numEvents) : numEvents(numEvents) {}
-    void setupDescriptorFlags(const ze_event_pool_desc_t *desc);
 
     std::vector<Device *> devices;
 
@@ -381,7 +381,6 @@ struct EventPool : _ze_event_pool_handle_t {
     bool isImportedIpcPool = false;
     bool isShareableEventMemory = false;
     bool isImplicitScalingCapable = false;
-    bool counterBased = false;
 };
 
 } // namespace L0

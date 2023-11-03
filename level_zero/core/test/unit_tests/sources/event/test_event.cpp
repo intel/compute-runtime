@@ -172,21 +172,6 @@ TEST_F(EventPoolCreate, GivenEventPoolThenAllocationContainsAtLeast16Bytes) {
               minAllocationSize);
 }
 
-TEST_F(EventPoolCreate, givenInvalidPNextWhenCreatingPoolThenIgnore) {
-    ze_base_desc_t baseDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
-
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        &baseDesc,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        1};
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, eventPool);
-}
-
 HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -3276,7 +3261,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*syncAllocation, *neoDevice->getMemoryManager(), false);
 
-    event->counterBased = true;
+    event->inOrderExecEvent = true;
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -3288,7 +3273,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
 
-    event2->counterBased = true;
+    event2->inOrderExecEvent = true;
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;

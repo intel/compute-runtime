@@ -194,20 +194,6 @@ EventPool *EventPool::create(DriverHandle *driver, Context *context, uint32_t nu
     return eventPool.release();
 }
 
-void EventPool::setupDescriptorFlags(const ze_event_pool_desc_t *desc) {
-    eventPoolFlags = desc->flags;
-
-    if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
-        eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-    }
-
-    auto pNext = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
-
-    if (pNext && pNext->stype == ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC) {
-        counterBased = true;
-    }
-}
-
 bool EventPool::isEventPoolTimestampFlagSet() const {
     if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
         auto timestampOverride = !!NEO::DebugManager.flags.OverrideTimestampEvents.get();
