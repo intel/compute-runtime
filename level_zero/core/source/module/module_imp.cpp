@@ -8,6 +8,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
@@ -150,6 +151,8 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     }
     bool isDebuggerActive = neoDevice.getDebugger() != nullptr;
     NEO::CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
+
+    NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper);
     return internalOptions;
 }
 

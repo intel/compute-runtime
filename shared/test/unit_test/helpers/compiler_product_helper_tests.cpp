@@ -309,3 +309,8 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
     hwInfo.ipVersion.value = 0x5678;
     EXPECT_EQ(compilerProductHelper.getHwIpVersion(hwInfo), config);
 }
+
+HWTEST_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled());
+}
