@@ -9,7 +9,7 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 
-#include "level_zero/sysman/source/windows/sysman_kmd_sys.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys.h"
 #include "level_zero/ze_api.h"
 
 #include <vector>

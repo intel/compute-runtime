@@ -7,9 +7,9 @@
 
 #include "level_zero/sysman/source/api/firmware/windows/sysman_os_firmware_imp.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
-#include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

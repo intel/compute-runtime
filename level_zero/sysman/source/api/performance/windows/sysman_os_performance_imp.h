@@ -7,7 +7,7 @@
 
 #pragma once
 #include "level_zero/sysman/source/api/performance/sysman_os_performance.h"
-#include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

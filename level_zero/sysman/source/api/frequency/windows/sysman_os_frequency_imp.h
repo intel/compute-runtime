@@ -9,7 +9,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
-#include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 #define KMD_BIT_RANGE(endbit, startbit) ((endbit) - (startbit) + 1)
 

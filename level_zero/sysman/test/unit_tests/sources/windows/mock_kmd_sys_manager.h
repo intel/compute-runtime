@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/zes_api.h"
 
 namespace L0 {

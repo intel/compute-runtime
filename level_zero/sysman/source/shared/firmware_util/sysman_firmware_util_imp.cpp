@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util_imp.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"

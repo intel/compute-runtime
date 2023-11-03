@@ -8,7 +8,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util_imp.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
 
 namespace L0 {

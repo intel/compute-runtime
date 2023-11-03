@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 
 namespace L0 {
 namespace Sysman {

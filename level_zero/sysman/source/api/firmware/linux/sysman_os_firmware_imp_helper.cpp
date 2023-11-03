@@ -6,7 +6,7 @@
  */
 
 #include "level_zero/sysman/source/api/firmware/linux/sysman_os_firmware_imp.h"
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 
 namespace L0 {
 namespace Sysman {

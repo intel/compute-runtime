@@ -8,8 +8,8 @@
 #include "level_zero/sysman/source/api/frequency/windows/sysman_os_frequency_imp.h"
 
 #include "level_zero/sysman/source/api/frequency/sysman_frequency.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/sysman/source/sysman_const.h"
-#include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {

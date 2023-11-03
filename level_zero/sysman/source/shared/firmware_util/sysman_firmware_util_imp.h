@@ -10,7 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 
 #include <cinttypes>
 #include <mutex>

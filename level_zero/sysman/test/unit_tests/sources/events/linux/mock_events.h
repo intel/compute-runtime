@@ -15,9 +15,9 @@
 
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/linux/zes_os_sysman_driver_imp.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 #include "drm/intel_hwconfig_types.h"

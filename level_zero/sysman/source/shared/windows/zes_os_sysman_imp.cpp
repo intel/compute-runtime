@@ -5,14 +5,14 @@
  *
  */
 
-#include "level_zero/sysman/source/windows/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {

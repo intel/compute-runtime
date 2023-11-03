@@ -8,7 +8,7 @@
 #pragma once
 
 #include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
 namespace L0 {

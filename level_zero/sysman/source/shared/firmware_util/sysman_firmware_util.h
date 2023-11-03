@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_igsc_wrapper.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
 #include <level_zero/zes_api.h>
 
 #include <string>

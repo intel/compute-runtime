@@ -10,8 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/sysman/source/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>

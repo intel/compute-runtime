@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/windows/zes_os_sysman_driver_imp.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_driver_imp.h"
 
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"

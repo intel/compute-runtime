@@ -7,8 +7,8 @@
 
 #include "level_zero/sysman/source/api/engine/windows/sysman_os_engine_imp.h"
 
-#include "level_zero/sysman/source/windows/sysman_kmd_sys.h"
-#include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {

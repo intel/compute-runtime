@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "level_zero/sysman/source/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {
