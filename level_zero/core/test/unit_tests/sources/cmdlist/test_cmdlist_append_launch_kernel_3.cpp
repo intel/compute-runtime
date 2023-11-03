@@ -3288,8 +3288,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndRegularEventThenSignalSyncAllocation, IsAtLeastXeHpCore) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistAndRegularEventThenSignalSyncAllocation, IsAtLeastSkl) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -3314,10 +3315,24 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
                                                       ptrOffset(cmdStream->getCpuBase(), offset),
                                                       (cmdStream->getUsed() - offset)));
 
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), sdiItor);
+    auto cmd = cmdList.rbegin();
+    MI_STORE_DATA_IMM *sdiCmd = nullptr;
 
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    while (cmd != cmdList.rend()) {
+        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*cmd);
+        if (sdiCmd) {
+            break;
+        }
+
+        if (genCmdCast<MI_NOOP *>(*cmd) || genCmdCast<MI_BATCH_BUFFER_END *>(*cmd)) {
+            cmd++;
+            continue;
+        }
+
+        ASSERT_TRUE(false);
+    }
+
+    ASSERT_NE(nullptr, sdiCmd);
 
     EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());

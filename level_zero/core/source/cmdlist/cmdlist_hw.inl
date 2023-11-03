@@ -3113,29 +3113,30 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     appendEventForProfiling(signalEvent, true, false);
 
-    if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter();
-    } else if (isCopyOnly()) {
-        NEO::MiFlushArgs args{this->dummyBlitWa};
-        uint64_t gpuAddress = 0u;
-        TaskCountType value = 0u;
-        if (this->cmdListType == TYPE_IMMEDIATE) {
-            args.commandWithPostSync = true;
-            gpuAddress = this->csr->getBarrierCountGpuAddress();
-            value = this->csr->getNextBarrierCount() + 1;
-            commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
-        }
+    if (!this->isInOrderExecutionEnabled()) {
+        if (isCopyOnly()) {
+            NEO::MiFlushArgs args{this->dummyBlitWa};
+            uint64_t gpuAddress = 0u;
+            TaskCountType value = 0u;
+            if (this->cmdListType == TYPE_IMMEDIATE) {
+                args.commandWithPostSync = true;
+                gpuAddress = this->csr->getBarrierCountGpuAddress();
+                value = this->csr->getNextBarrierCount() + 1;
+                commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
+            }
 
-        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), gpuAddress, value, args);
-        makeResidentDummyAllocation();
-    } else {
-        appendComputeBarrierCommand();
+            NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), gpuAddress, value, args);
+            makeResidentDummyAllocation();
+        } else {
+            appendComputeBarrierCommand();
+        }
     }
 
     addToMappedEventList(signalEvent);
     appendSignalEventPostWalker(signalEvent, this->isInOrderExecutionEnabled());
 
     if (isInOrderExecutionEnabled()) {
+        appendSignalInOrderDependencyCounter();
         handleInOrderDependencyCounter(signalEvent, false);
     }
 
