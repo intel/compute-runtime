@@ -172,14 +172,15 @@ ze_result_t ContextImp::checkMemSizeLimit(Device *inDevice, size_t size, bool re
 
     auto &productHelper = inDevice->getProductHelper();
     auto physicalMemSize = productHelper.getDeviceMemoryPhysicalSizeInBytes(osInterface, 0) * enabledSubDeviceCount;
-    uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
 
-    uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
-    if ((!inDevice->isImplicitScalingCapable()) && (numSubDevices > 1)) {
-        globalMemSize = globalMemSize / numSubDevices;
-    }
     uint64_t memSizeLimit = physicalMemSize;
     if (physicalMemSize == 0) {
+        uint64_t globalMemSize = neoDevice->getDeviceInfo().globalMemSize;
+
+        uint32_t numSubDevices = neoDevice->getNumGenericSubDevices();
+        if ((!inDevice->isImplicitScalingCapable()) && (numSubDevices > 1)) {
+            globalMemSize = globalMemSize / numSubDevices;
+        }
         memSizeLimit = globalMemSize;
     }
     if (relaxedSizeAllowed && (size > memSizeLimit)) {
