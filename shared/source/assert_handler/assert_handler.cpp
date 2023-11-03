@@ -45,6 +45,7 @@ void AssertHandler::printMessage() const {
         nullptr};
     printfFormatter.setInitialOffset(offsetof(AssertBufferHeader, begin));
 
+    printToStderr("AssertHandler::printMessage\n");
     printfFormatter.printKernelOutput([](char *str) { printToStderr(str); });
 }
 

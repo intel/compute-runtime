@@ -83,5 +83,5 @@ TEST(AssertHandlerTests, GivenFlagSetWhenPrintAssertAndAbortCalledThenMessageIsP
     EXPECT_THROW(assertHandler.printAssertAndAbort(), std::exception);
 
     std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_STREQ("assert!", output.c_str());
+    EXPECT_STREQ("AssertHandler::printMessage\nassert!", output.c_str());
 }
