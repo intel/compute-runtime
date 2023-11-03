@@ -165,20 +165,20 @@ if(${GENERATE_EXECUTABLE})
 
   add_subdirectory(dll)
 
-  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_EXTRA_LIBS})
+  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_STATIC_LIB_NAME} ${NEO_SHARED_LIB} ${NEO_EXTRA_LIBS})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
                              ${CMAKE_CURRENT_BINARY_DIR}
   )
 
   if(WIN32)
-    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} dxgi)
+    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} PRIVATE dxgi)
     add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMM_TARGET_NAME})
     target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
     )
   else()
-    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${GMM_LINK_NAME})
+    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${GMM_LINK_NAME})
     target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
                                ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )
