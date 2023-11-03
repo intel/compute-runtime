@@ -7,6 +7,8 @@
 
 #include "aubstream/aubstream.h"
 
+#include <limits>
+
 namespace aub_stream_stubs {
 uint16_t tbxServerPort = 4321;
 std::string tbxServerIp = "127.0.0.1";
