@@ -535,6 +535,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
@@ -559,6 +561,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAndDimensionsWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
@@ -673,6 +677,146 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdju
         EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
         EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
     }
+}
+
+XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAlogrithmV2IsUsedThenProperThreadGroupDispatchSizeIsChoosen) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2u);
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    WALKER_TYPE walkerCmd{};
+    const auto &productHelper = pDevice->getProductHelper();
+    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
+    mutableHwInfo->gtSystemInfo.ThreadCount = 4096u;
+    auto hwInfo = pDevice->getHardwareInfo();
+
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
+
+    INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(1);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(256);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(64u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(64);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(512);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(512);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(8u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(512);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(510);
+    walkerCmd.setThreadGroupIdYDimension(512);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(509);
+    walkerCmd.setThreadGroupIdYDimension(512);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(508);
+    walkerCmd.setThreadGroupIdYDimension(512);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(508);
+    walkerCmd.setThreadGroupIdYDimension(512);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
+    numGrf = GrfConfig::LargeGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(508);
+    walkerCmd.setThreadGroupIdYDimension(512);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(1);
+    walkerCmd.setThreadGroupIdYDimension(510);
+    walkerCmd.setThreadGroupIdZDimension(512);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(1);
+    walkerCmd.setThreadGroupIdYDimension(509);
+    walkerCmd.setThreadGroupIdZDimension(512);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(1);
+    walkerCmd.setThreadGroupIdYDimension(508);
+    walkerCmd.setThreadGroupIdZDimension(512);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4, iddArg.getThreadGroupDispatchSize());
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
+    numGrf = GrfConfig::DefaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(1);
+    walkerCmd.setThreadGroupIdYDimension(508);
+    walkerCmd.setThreadGroupIdZDimension(512);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAndDebugFlagDisabledWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsDefault) {
