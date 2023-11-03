@@ -41,7 +41,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
         if (DebugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
             adjustTGDispatchSize = !!DebugManager.flags.AdjustThreadGroupDispatchSize.get();
         }
-        auto algorithmVersion = 1u;
+        auto algorithmVersion = 2u;
         if (DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get() != -1) {
             algorithmVersion = DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get();
         }
