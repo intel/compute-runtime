@@ -1483,10 +1483,34 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndNoDebugKeyThenFalseIsRet
     EXPECT_EQ(0u, drm.context.setPairQueryCalled);
 }
 
-TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndNoDebugKeyThenFalseIsReturned) {
+TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDefaultDebugVariableThenTrueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.context.chunkingQueryValue = 0;
+
+    drm.context.chunkingQueryValue = 1;
+    drm.context.chunkingQueryReturn = 0;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_TRUE(drm.isChunkingAvailable());
+    EXPECT_TRUE(drm.getChunkingAvailable());
+    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
+    EXPECT_EQ(2u, drm.getChunkingMode());
+}
+
+TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDisableDebugVariableThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOChunking.set(0);
+    DebugManager.flags.UseKmdMigration.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.context.chunkingQueryValue = 1;
     drm.context.chunkingQueryReturn = 0;
     EXPECT_FALSE(drm.chunkingAvailable);
 

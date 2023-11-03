@@ -35,6 +35,8 @@ enum EngineType : uint32_t;
 
 namespace NEO {
 constexpr uint32_t contextPrivateParamBoost = 0x80000000;
+constexpr uint32_t chunkingModeShared = 1;
+constexpr uint32_t chunkingModeDevice = 2;
 
 enum class AllocationType;
 enum class CachePolicy : uint32_t;
