@@ -36,8 +36,6 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${L0_CORE_ENABLERS}
                  ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_specific_config_l0.cpp
-                 ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.cpp
-                 ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.h
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                  ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp

@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -31,8 +30,6 @@ struct Context;
 struct Device;
 struct ContextImp;
 
-extern uint32_t driverCount;
-extern _ze_driver_handle_t *GlobalDriverHandle;
 namespace ult {
 class MockBuiltins;
 
@@ -54,8 +51,6 @@ struct DeviceFixture {
     const uint32_t rootDeviceIndex = 0u;
     template <typename HelperType>
     HelperType &getHelper() const;
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
 
 struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
@@ -116,9 +111,6 @@ struct MultiDeviceFixture {
     uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
-
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
 
 struct MultiDeviceFixtureHierarchy : public MultiDeviceFixture {

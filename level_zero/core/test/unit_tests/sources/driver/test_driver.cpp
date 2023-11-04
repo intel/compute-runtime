@@ -413,12 +413,7 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     L0::GlobalDriver = nullptr;
 }
 
-struct DriverImpTest : public ::testing::Test {
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
-};
-
-TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
+TEST(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -436,7 +431,7 @@ TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
+TEST(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -460,7 +455,7 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
     EXPECT_EQ(nullptr, L0::GlobalDriver);
 }
 
-TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
+TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -482,7 +477,7 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironme
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, whenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnabled) {
+TEST(DriverImpTest, whenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -505,7 +500,7 @@ TEST_F(DriverImpTest, whenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnab
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenFlatHierarchyIsEnabled) {
+TEST(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenFlatHierarchyIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -527,7 +522,7 @@ TEST_F(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentTh
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenCompositeDeviceHierarchyWhenCreatingExecutionEnvironmentThenCompositeHierarchyIsEnabled) {
+TEST(DriverImpTest, givenCompositeDeviceHierarchyWhenCreatingExecutionEnvironmentThenCompositeHierarchyIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -549,7 +544,7 @@ TEST_F(DriverImpTest, givenCompositeDeviceHierarchyWhenCreatingExecutionEnvironm
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironmentThenCombinedHierarchyIsEnabled) {
+TEST(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironmentThenCombinedHierarchyIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -571,7 +566,7 @@ TEST_F(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironme
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
+TEST(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -593,7 +588,7 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecution
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentThenFP64EmulationIsEnabled) {
+TEST(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentThenFP64EmulationIsEnabled) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -615,11 +610,8 @@ TEST_F(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentT
     L0::GlobalDriver = nullptr;
 }
 
-TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
+TEST(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
-
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -642,7 +634,7 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
     delete L0::GlobalDriver;
 }
 
-TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
+TEST(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -666,7 +658,7 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimenta
     delete L0::GlobalDriver;
 }
 
-TEST_F(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
+TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
@@ -905,7 +897,6 @@ struct DriverHandleTest : public ::testing::Test {
 
         driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
         L0::GlobalDriverHandle = driverHandle;
-        L0::driverCount = 1;
     }
     void TearDown() override {
         delete driverHandle;
@@ -913,16 +904,7 @@ struct DriverHandleTest : public ::testing::Test {
         L0::GlobalDriverHandle = nullptr;
     }
     L0::DriverHandle *driverHandle;
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
-
-TEST(DriverHandleNegativeTest, givenNotInitializedDriverWhenZeDriverGetIsCalledThenReturnZeroCount) {
-    uint32_t count = 0u;
-    auto result = zeDriverGet(&count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0U, count);
-}
 
 TEST_F(DriverHandleTest, givenInitializedDriverWhenZeDriverGetIsCalledThenDriverHandleCountIsObtained) {
     uint32_t count = 0;

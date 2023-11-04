@@ -5,11 +5,11 @@
  *
  */
 
+#include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/test/common/ult_config_listener_l0.h"
 
 using namespace NEO;
 void cleanTestHelpers() {}
@@ -52,5 +52,5 @@ std::string getBaseExecutionDir() {
 }
 
 void addUltListener(::testing::TestEventListeners &listeners) {
-    listeners.Append(new L0::UltConfigListenerL0);
+    listeners.Append(new BaseUltConfigListener);
 }
