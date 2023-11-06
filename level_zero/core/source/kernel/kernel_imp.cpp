@@ -580,7 +580,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
             isBindlessOffsetSet[argIndex] = true;
             this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
-
+            usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
             image->copyRedescribedSurfaceStateToSSH(ssPtr, 0u);
         }
@@ -781,6 +781,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             isBindlessOffsetSet[argIndex] = true;
             this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
+            usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
             image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
         }
