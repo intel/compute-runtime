@@ -150,7 +150,8 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requir
     if (requireMonitorFence) {
         return this->updateTagValueImpl();
     }
-    return 0ull;
+    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    return currentFence.currentFenceValue;
 }
 
 template <typename GfxFamily, typename Dispatcher>
