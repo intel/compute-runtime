@@ -82,7 +82,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         idd.setKernelStartPointerHigh(0u);
     }
 
-    if (args.dispatchInterface->getKernelDescriptor().kernelAttributes.flags.usesAssert && args.device->getL0Debugger() != nullptr) {
+    bool debugEnabled = args.device->getL0Debugger() != nullptr;
+    if (args.dispatchInterface->getKernelDescriptor().kernelAttributes.flags.usesAssert && debugEnabled) {
         idd.setSoftwareExceptionEnable(1);
     }
 
