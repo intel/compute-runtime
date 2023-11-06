@@ -11,6 +11,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -258,14 +259,21 @@ TEST(SoftwareTagsBXMLTests, givenDumpSWTagsBXMLWhenConstructingBXMLThenAFileIsDu
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.DumpSWTagsBXML.set(true);
 
-    const char *filename = "swtagsbxml_dump.xml";
-    SWTagBXML bxml;
+    uint32_t mockFopenCalledBefore = IoFunctions::mockFopenCalled;
+    uint32_t mockFwriteCalledBefore = IoFunctions::mockFwriteCalled;
+    uint32_t mockFcloseCalledBefore = IoFunctions::mockFcloseCalled;
+    {
+        SWTagBXML bxml1;
+    }
+    EXPECT_EQ(IoFunctions::mockFopenCalled, mockFopenCalledBefore + 1);
+    EXPECT_EQ(IoFunctions::mockFwriteCalled, mockFwriteCalledBefore + 1);
+    EXPECT_EQ(IoFunctions::mockFcloseCalled, mockFcloseCalledBefore + 1);
 
-    size_t retSize;
-    auto data = loadDataFromFile(filename, retSize);
-
-    EXPECT_EQ(retSize, bxml.str.size());
-    EXPECT_EQ(0, strcmp(data.get(), bxml.str.c_str()));
-
-    writeDataToFile(filename, "", 1);
+    VariableBackup<FILE *> backup(&IoFunctions::mockFopenReturned, nullptr);
+    {
+        SWTagBXML bxml2;
+    }
+    EXPECT_EQ(IoFunctions::mockFopenCalled, mockFopenCalledBefore + 2);
+    EXPECT_EQ(IoFunctions::mockFwriteCalled, mockFwriteCalledBefore + 1);
+    EXPECT_EQ(IoFunctions::mockFcloseCalled, mockFcloseCalledBefore + 1);
 }
