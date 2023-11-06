@@ -13,6 +13,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -435,8 +436,7 @@ bool MemObj::isTiledAllocation() const {
 bool MemObj::mappingOnCpuAllowed() const {
     auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
-           !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) &&
-           allowCpuAccess();
+           !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
 
 bool MemObj::allowCpuAccess() const {
