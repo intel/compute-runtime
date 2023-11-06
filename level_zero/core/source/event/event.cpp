@@ -348,6 +348,24 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
+void Event::enableCounterBasedMode(bool apiRequest) {
+    if (counterBasedMode == CounterBasedMode::InitiallyDisabled) {
+        counterBasedMode = apiRequest ? CounterBasedMode::ExplicitlyEnabled : CounterBasedMode::ImplicitlyEnabled;
+    }
+}
+
+void Event::disableImplicitCounterBasedMode() {
+    if (isCounterBasedExplicitlyEnabled()) {
+        return;
+    }
+
+    if (counterBasedMode == CounterBasedMode::ImplicitlyEnabled || counterBasedMode == CounterBasedMode::InitiallyDisabled) {
+        counterBasedMode = CounterBasedMode::ImplicitlyDisabled;
+        inOrderExecInfo.reset();
+        inOrderExecSignalValue = 0;
+    }
+}
+
 uint64_t Event::getGpuAddress(Device *device) const {
     return getAllocation(device).getGpuAddress() + this->eventPoolOffset;
 }

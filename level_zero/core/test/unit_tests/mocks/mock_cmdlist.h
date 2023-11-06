@@ -161,6 +161,8 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     : public L0::CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::appendBlitFill;
+    using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;

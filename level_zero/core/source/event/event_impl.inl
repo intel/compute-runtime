@@ -81,7 +81,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
 
     if (eventPool->isCounterBased() || NEO::DebugManager.flags.ForceInOrderEvents.get() == 1) {
-        event->enableCounterBasedMode();
+        event->enableCounterBasedMode(true);
     }
 
     return event;
@@ -281,7 +281,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         return ZE_RESULT_SUCCESS;
     }
 
-    if (this->counterBased) {
+    if (isCounterBased()) {
         return queryCounterBasedEventStatus();
     } else {
         return queryStatusEventPackets();
@@ -447,7 +447,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     do {
-        if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1 && this->counterBased) {
+        if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1 && isCounterBased()) {
             ret = waitForUserFence(timeout);
         } else {
             ret = queryStatus();
@@ -494,8 +494,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    if (this->isCounterBased()) {
+    if (this->counterBasedMode == CounterBasedMode::ExplicitlyEnabled) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (this->counterBasedMode == CounterBasedMode::ImplicitlyEnabled) {
+        inOrderExecInfo.reset();
+        inOrderExecSignalValue = 0;
     }
 
     if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() != -1) {

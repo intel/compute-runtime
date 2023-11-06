@@ -362,6 +362,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         }
     }
 
+    handleCounterBasedEventTransition(event);
+
     auto res = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), threadGroupDimensions,
                                             event, launchParams);
 
@@ -399,6 +401,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
         event->resetKernelCountAndPacketUsedCount();
     }
 
+    handleCounterBasedEventTransition(event);
+
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
 
@@ -433,6 +437,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         }
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
+
+    handleCounterBasedEventTransition(event);
 
     appendEventForProfiling(event, true, false);
     launchParams.isIndirect = true;
@@ -472,6 +478,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
+    handleCounterBasedEventTransition(event);
+
     appendEventForProfiling(event, true, false);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pNumLaunchArguments);
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
@@ -496,6 +504,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
+
+    event->disableImplicitCounterBasedMode();
 
     if (event->isCounterBased()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -565,6 +575,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
     }
+
+    handleCounterBasedEventTransition(signalEvent);
 
     appendEventForProfiling(signalEvent, true, false);
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
@@ -1224,6 +1236,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         return ret;
     }
 
+    handleCounterBasedEventTransition(signalEvent);
+
     appendEventForProfiling(signalEvent, true, false);
     auto &rootDeviceEnvironment = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()];
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, *rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
@@ -1409,6 +1423,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
+
+    handleCounterBasedEventTransition(signalEvent);
 
     launchParams.numKernelsInSplitLaunch = kernelCounter;
     launchParams.isKernelSplitOperation = kernelCounter > 1;
@@ -1825,6 +1841,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         return res;
     }
 
+    handleCounterBasedEventTransition(signalEvent);
+
     bool hostPointerNeedsFlush = false;
 
     NEO::SvmAllocationData *allocData = nullptr;
@@ -2071,6 +2089,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             return ret;
         }
 
+        handleCounterBasedEventTransition(signalEvent);
+
         auto neoDevice = device->getNEODevice();
         appendEventForProfiling(signalEvent, true, false);
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
@@ -2306,6 +2326,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     auto event = Event::fromHandle(hEvent);
     event->resetKernelCountAndPacketUsedCount();
+
+    handleCounterBasedEventTransition(event);
 
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     NEO::Device *neoDevice = device->getNEODevice();
@@ -2595,6 +2617,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
     }
+
+    handleCounterBasedEventTransition(signalEvent);
 
     appendEventForProfiling(signalEvent, true, false);
 
@@ -3113,6 +3137,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
+    handleCounterBasedEventTransition(signalEvent);
+
     appendEventForProfiling(signalEvent, true, false);
 
     if (!this->isInOrderExecutionEnabled()) {
@@ -3263,11 +3289,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     }
     UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
 
-    appendEventForProfiling(signalEvent, true, false);
-
     if (this->isInOrderExecutionEnabled()) {
         handleInOrderImplicitDependencies(false);
     }
+
+    handleCounterBasedEventTransition(signalEvent);
+
+    appendEventForProfiling(signalEvent, true, false);
 
     commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
     uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
@@ -3534,6 +3562,21 @@ void CommandListCoreFamily<gfxCoreFamily>::patchInOrderCmds() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
     return (inOrderExecInfo.get() && inOrderExecInfo->inOrderDependencyCounter > 0);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventTransition(Event *signalEvent) {
+    if (signalEvent && (NEO::DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() == 1)) {
+        if (signalEvent->isCounterBasedExplicitlyEnabled()) {
+            return;
+        }
+
+        if (isInOrderExecutionEnabled() && (this->cmdListType == TYPE_IMMEDIATE)) {
+            signalEvent->enableCounterBasedMode(false);
+        } else {
+            signalEvent->disableImplicitCounterBasedMode();
+        }
+    }
 }
 
 } // namespace L0

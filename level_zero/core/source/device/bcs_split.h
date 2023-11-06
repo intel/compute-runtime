@@ -88,6 +88,8 @@ struct BcsSplit {
 
         auto signalEvent = Event::fromHandle(hSignalEvent);
 
+        cmdList->handleCounterBasedEventTransition(signalEvent);
+
         auto totalSize = size;
         auto engineCount = cmdQsForSplit.size();
         for (size_t i = 0; i < cmdQsForSplit.size(); i++) {

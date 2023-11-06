@@ -19,7 +19,7 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
-    using BaseClass::counterBased;
+    using BaseClass::counterBasedMode;
     using BaseClass::csrs;
     using BaseClass::Event;
     using BaseClass::gpuHangCheckPeriod;

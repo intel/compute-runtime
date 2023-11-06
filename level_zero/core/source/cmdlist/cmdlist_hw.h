@@ -192,6 +192,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate);
     size_t getReserveSshSize();
     void patchInOrderCmds() override;
+    void handleCounterBasedEventTransition(Event *signalEvent);
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,

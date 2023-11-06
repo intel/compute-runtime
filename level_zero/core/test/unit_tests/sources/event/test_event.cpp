@@ -3277,7 +3277,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*syncAllocation, *neoDevice->getMemoryManager(), false);
 
-    event->counterBased = true;
+    event->enableCounterBasedMode(true);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -3289,7 +3289,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
 
-    event2->counterBased = true;
+    event2->enableCounterBasedMode(true);
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;

@@ -246,6 +246,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExitOnSubmissionNumber, -1, "Call exit(0) on X s
 DECLARE_DEBUG_VARIABLE(int32_t, ExitOnSubmissionMode, 0, "Exit on X submission mode. 0: Any context type, 1: Compute context only, 2: Copy context only ")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceInOrderImmediateCmdListExecution, -1, "-1: default, 0: disabled, 1: all Immediate Command Lists are switched to in-order execution")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceInOrderEvents, -1, "-1: default, 0: disabled, 1: Enable all Events as in-order, to rely on command list counter value")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitConvertionToCounterBasedEvents, -1, "-1: default, 0: Disable, 1: Enable. If enabled, try to convert Regular Events used on Immediate CL to CounterBased")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: default - user provided timeout value,  >0: timeout in nanoseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlush, -1, "-1: default,  0: Tlb flush disabled, 1: Tlb Flush enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default, >=0: delay time in minutes necessary for completion of Memory diagnostics")

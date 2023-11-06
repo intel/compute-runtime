@@ -82,6 +82,15 @@ struct Event : _ze_event_handle_t {
         STATE_INITIAL = STATE_CLEARED
     };
 
+    enum class CounterBasedMode : uint32_t {
+        // For default flow (API)
+        InitiallyDisabled,
+        ExplicitlyEnabled,
+        // For internal convertion (Immediate CL)
+        ImplicitlyEnabled,
+        ImplicitlyDisabled
+    };
+
     template <typename TagSizeT>
     static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
 
@@ -217,8 +226,10 @@ struct Event : _ze_event_handle_t {
         this->metricStreamer = metricStreamer;
     }
     void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
-    bool isCounterBased() const { return counterBased; }
-    void enableCounterBasedMode() { this->counterBased = true; }
+    bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::ExplicitlyEnabled) || (counterBasedMode == CounterBasedMode::ImplicitlyEnabled)); }
+    bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::ExplicitlyEnabled); }
+    void enableCounterBasedMode(bool apiRequest);
+    void disableImplicitCounterBasedMode();
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
     uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
@@ -275,6 +286,7 @@ struct Event : _ze_event_handle_t {
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
+    CounterBasedMode counterBasedMode = CounterBasedMode::InitiallyDisabled;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
@@ -287,7 +299,6 @@ struct Event : _ze_event_handle_t {
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
-    bool counterBased = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 
