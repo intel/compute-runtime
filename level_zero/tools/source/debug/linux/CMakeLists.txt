@@ -20,6 +20,14 @@ if(UNIX)
     )
   endif()
 
+  if(NEO_ENABLE_XE_DEBUGGER)
+    target_sources(${L0_STATIC_LIB_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/xe/debug_session.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/xe/debug_session.h
+    )
+  endif()
+
   add_subdirectories()
 
 endif()
