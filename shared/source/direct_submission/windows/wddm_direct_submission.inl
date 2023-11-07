@@ -124,20 +124,14 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
     if (this->disableMonitorFence) {
-        MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
-        currentFence.lastSubmittedFence = currentFence.currentFenceValue;
-        currentFence.currentFenceValue++;
+        updateTagValueImpl();
     }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
     if (this->disableMonitorFence) {
-        MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
-        currentFence.lastSubmittedFence = currentFence.currentFenceValue;
-        currentFence.currentFenceValue++;
-
-        this->ringBuffers[this->currentRingBuffer].completionFence = currentFence.lastSubmittedFence;
+        updateTagValueImpl();
     }
 }
 
