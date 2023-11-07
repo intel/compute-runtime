@@ -753,6 +753,7 @@ using BindlessSurfaceAddressPlatforms = IsAtLeastGen9;
 
 HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStatePropertyThenCommandDispatchedCorrectlyBindlessBaseAddress, BindlessSurfaceAddressPlatforms) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     constexpr uint64_t surfaceHeapBase = 0x10000;
     constexpr uint32_t surfaceHeapSize = 0x10;
@@ -785,7 +786,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     args.bindlessSurfaceStateBaseAddress = 0;
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
-    EXPECT_EQ(surfaceHeapSize, sbaCmd.getBindlessSurfaceStateSize());
+    EXPECT_EQ(surfaceHeapSize * MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE), sbaCmd.getBindlessSurfaceStateSize());
     EXPECT_EQ(surfaceHeapBase, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 }

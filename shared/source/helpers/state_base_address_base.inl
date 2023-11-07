@@ -33,6 +33,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     StateBaseAddressHelperArgs<GfxFamily> &args) {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
     *args.stateBaseAddressCmd = GfxFamily::cmdInitStateBaseAddress;
     const auto surfaceStateCount = getMaxBindlessSurfaceStates();
@@ -53,7 +54,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
-            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value));
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value * (MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE))));
         }
 
         if (args.sbaProperties->statelessMocs.value != StreamProperty::initValue) {
