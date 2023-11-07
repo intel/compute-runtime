@@ -870,8 +870,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     if (isSubdevice) {
         DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-        const auto &isReturnSubDevicesAsApiDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
-        if (isReturnSubDevicesAsApiDevices != 1 && driverHandleImp->deviceHierarchyMode != L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+        if (driverHandleImp->deviceHierarchyMode != L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
             pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
         }
     }

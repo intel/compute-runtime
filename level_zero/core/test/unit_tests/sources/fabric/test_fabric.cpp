@@ -216,27 +216,26 @@ TEST_F(FabricVertexFixture, GivenDevicesAreCreatedWhenFabricVertexIsNotSetToDevi
     EXPECT_EQ(hVertex, nullptr);
 }
 
-class FabricVertexSubdeviceAsDeviceTestFixture : public MultiDeviceFixture,
-                                                 public ::testing::Test {
+class FabricVertexFlatDeviceTestFixture : public MultiDeviceFixtureHierarchy,
+                                          public ::testing::Test {
     void SetUp() override {
         NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
-        NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
-        MultiDeviceFixture::setUp();
+        MultiDeviceFixtureHierarchy::setUp();
     }
 
     void TearDown() override {
-        MultiDeviceFixture::tearDown();
+        MultiDeviceFixtureHierarchy::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
 
-TEST_F(FabricVertexSubdeviceAsDeviceTestFixture, GivenReturnSubDevicesAsApiDevicesIsSetWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
+TEST_F(FabricVertexFlatDeviceTestFixture, GivenFlatHierarchyWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
     uint32_t count = 0;
     std::vector<ze_fabric_vertex_handle_t> phVertices;
     EXPECT_EQ(driverHandle->fabricVertexGetExp(&count, nullptr), ZE_RESULT_SUCCESS);
     // only 2 vertexes for mask "0,1.1,2":
     // 0 and 2
-    // 1.1 is ignored with ReturnSubDevicesAsApiDevices
+    // 1.1 is ignored in FlatHierarchy
     uint32_t expectedVertexes = 2u;
     EXPECT_EQ(count, expectedVertexes);
 
@@ -260,7 +259,6 @@ class FabricVertexTestFixture : public MultiDeviceFixture,
                                 public ::testing::Test {
     void SetUp() override {
         NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
-        NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(0);
         MultiDeviceFixture::setUp();
     }
 
@@ -270,10 +268,9 @@ class FabricVertexTestFixture : public MultiDeviceFixture,
     DebugManagerStateRestore restorer;
 };
 
-TEST_F(FabricVertexTestFixture, GivenReturnSubDevicesAsApiDevicesIsSetToFalseWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
+TEST_F(FabricVertexTestFixture, GivenCompositeHierarchyWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
     uint32_t count = 0;
     std::vector<ze_fabric_vertex_handle_t> phVertices;
-    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(0);
     EXPECT_EQ(driverHandle->fabricVertexGetExp(&count, nullptr), ZE_RESULT_SUCCESS);
     uint32_t expectedVertexes = 3u;
     EXPECT_EQ(count, expectedVertexes);
@@ -321,10 +318,10 @@ TEST_F(FabricVertexTestFixture, GivenReturnSubDevicesAsApiDevicesIsSetToFalseWhe
     EXPECT_EQ(countSubDevices, numSubDevices);
 }
 
-TEST_F(FabricVertexTestFixture, GivenReturnSubDevicesAsApiDevicesIsSetToTrueWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
+TEST_F(FabricVertexTestFixture, GivenFlatHierarchyWhenFabricVerticesGetExpIsCalledCorrectVerticesAreReturned) {
     uint32_t count = 0;
     std::vector<ze_fabric_vertex_handle_t> phVertices;
-    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+    this->driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
     EXPECT_EQ(driverHandle->fabricVertexGetExp(&count, nullptr), ZE_RESULT_SUCCESS);
     uint32_t expectedVertexes = 5u;
     EXPECT_EQ(count, expectedVertexes);

@@ -133,10 +133,9 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputWhenCreatingSubDevicesThenDeviceA
     EXPECT_EQ(2, device->getSubDevice(1)->getRefApiCount());
 }
 
-TEST_F(ClCreateSubDevicesTests, GivenValidInputAndReturnSubDevicesAsApiDevicesIsSetWhenCreatingSubDevicesThenDeviceApiReferenceCountIsNotIncreased) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+TEST_F(ClCreateSubDevicesTests, GivenValidInputAndFlatHierarchyWhenCreatingSubDevicesThenDeviceApiReferenceCountIsNotIncreased) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(true);
     setup(2);
 
     EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
@@ -155,6 +154,8 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputAndReturnSubDevicesAsApiDevicesIs
 
 struct ClCreateSubDevicesDeviceInfoTests : ClCreateSubDevicesTests {
     void setup(int numberOfDevices) {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
         ClCreateSubDevicesTests::setup(numberOfDevices);
         expectedSubDeviceParentDevice = device.get();
         expectedRootDevicePartitionMaxSubDevices = numberOfDevices;
@@ -189,7 +190,6 @@ struct ClCreateSubDevicesDeviceInfoTests : ClCreateSubDevicesTests {
 };
 
 TEST_F(ClCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoThenCorrectValuesAreSet) {
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(false);
     setup(4);
 
     auto &rootDeviceInfo = device->getDeviceInfo();
@@ -261,7 +261,6 @@ TEST_F(ClCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGe
 }
 
 TEST_F(ClCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(false);
     setup(4);
 
     size_t partitionPropertiesReturnValueSize = 0;

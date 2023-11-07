@@ -2539,9 +2539,8 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     EXPECT_EQ(0u, resultTimestamp.global.kernelEnd);
 }
 
-TEST_F(EventPoolCreateMultiDevice, givenReturnSubDevicesAsApiDevicesWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+TEST_F(EventPoolCreateMultiDevice, givenFlatHierarchyWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
+    this->driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
 
     uint32_t deviceCount = 0;
     ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, nullptr);

@@ -147,7 +147,9 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
     EXPECT_EQ(devices[numEntries], dummyDevice);
 }
 
-TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsApiDevicesWhenCallClGetDeviceIDsThenSubDevicesAreReturnedAsSeparateClDevices) {
+TEST(clGetDeviceIDsTest, givenFlatHierarchyWhenCallClGetDeviceIDsThenSubDevicesAreReturnedAsSeparateClDevices) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     platformsImpl->clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -155,7 +157,6 @@ TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsApiDevicesWhenCallClGetDeviceIDs
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numRootDevices);
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
     cl_uint maxNumDevices;
     auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
     EXPECT_EQ(retVal, CL_SUCCESS);

@@ -373,10 +373,6 @@ ze_result_t DriverHandleImp::parseAffinityMaskCombined(uint32_t *pCount, ze_devi
 ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
     bool exposeSubDevices = false;
 
-    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
-        exposeSubDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
-    }
-
     // If the user has requested FLAT device hierarchy model, then report all the sub devices as devices.
     if (this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT || this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED) {
         exposeSubDevices = true;
@@ -899,8 +895,8 @@ ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vert
     }
 
     bool exposeSubDevices = false;
-    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
-        exposeSubDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+    if (deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+        exposeSubDevices = true;
     }
 
     if (*pCount == 0) {

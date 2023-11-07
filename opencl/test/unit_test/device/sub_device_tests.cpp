@@ -170,9 +170,9 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreC
 TEST(SubDevicesTest, givenClDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(false);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->getExecutionEnvironment()->setExposeSubDevicesAsDevices(false);
     device->incRefInternal();
     auto &subDevice = device->subDevices[0];
 
