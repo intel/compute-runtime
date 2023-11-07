@@ -949,7 +949,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     if (!this->startRingBuffer()) {
         return false;
     }
-
+    lastSubmittedThrottle = batchBuffer.throttle;
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
     bool inputRequiredMonitorFence = false;
     if (this->inputMonitorFenceDispatchRequirement) {

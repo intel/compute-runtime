@@ -116,7 +116,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, si
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
-    wddm->waitOnPagingFenceFromCpu();
+    wddm->waitOnPagingFenceFromCpu(this->lastSubmittedThrottle == QueueThrottle::LOW);
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS residency wait exit\n");
     return true;
 }

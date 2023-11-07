@@ -936,3 +936,43 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     memoryManager->freeGraphicsMemory(clientCommandBuffer);
 }
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenBatchBufferWithThrottleLowWhenCallDispatchCommandBufferThenStoreLastSubmitedThrottle) {
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    BatchBuffer batchBuffer;
+    GraphicsAllocation *clientCommandBuffer = nullptr;
+    std::unique_ptr<LinearStream> clientStream;
+
+    auto memoryManager = executionEnvironment->memoryManager.get();
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+    clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+    ASSERT_NE(nullptr, clientCommandBuffer);
+
+    clientStream = std::make_unique<LinearStream>(clientCommandBuffer);
+    clientStream->getSpace(0x40);
+
+    memset(clientStream->getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(clientStream->getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = clientCommandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = clientCommandBuffer->getGpuAddress();
+    batchBuffer.stream = clientStream.get();
+    batchBuffer.throttle = QueueThrottle::LOW;
+
+    FlushStampTracker flushStamp(true);
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    wddmDirectSubmission.initialize(true, true);
+
+    bool ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(QueueThrottle::LOW, wddmDirectSubmission.lastSubmittedThrottle);
+
+    memoryManager->freeGraphicsMemory(clientCommandBuffer);
+}

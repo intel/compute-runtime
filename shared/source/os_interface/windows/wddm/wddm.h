@@ -170,7 +170,7 @@ class Wddm : public DriverModel {
     GmmMemory *getGmmMemory() const {
         return gmmMemory.get();
     }
-    MOCKABLE_VIRTUAL void waitOnPagingFenceFromCpu();
+    MOCKABLE_VIRTUAL void waitOnPagingFenceFromCpu(bool isKmdWaitNeeded);
     MOCKABLE_VIRTUAL void delayPagingFenceFromCpu(int64_t delayTime);
 
     void setGmmInputArgs(void *args) override;

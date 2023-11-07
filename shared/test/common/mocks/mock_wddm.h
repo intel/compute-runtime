@@ -98,7 +98,7 @@ class WddmMock : public Wddm {
     bool reserveValidAddressRange(size_t size, void *&reservedMem) override;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
     uint64_t *getPagingFenceAddress() override;
-    void waitOnPagingFenceFromCpu() override;
+    void waitOnPagingFenceFromCpu(bool isKmdWaitNeeded) override;
     void delayPagingFenceFromCpu(int64_t delayTime) override;
     void createPagingFenceLogger() override;
     bool verifyAdapterLuid(LUID adapterLuid) const override {

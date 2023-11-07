@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/utilities/stackvec.h"
@@ -227,6 +228,7 @@ class DirectSubmissionHw {
     DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::BeforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;
     uint32_t dispatchErrorCode = 0;
+    QueueThrottle lastSubmittedThrottle = QueueThrottle::MEDIUM;
 
     bool ringStart = false;
     bool disableCpuCacheFlush = true;

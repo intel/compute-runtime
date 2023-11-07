@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(c
         resourceHandles.push_back(handles[i]);
     }
     lock.unlock();
-    wddm->waitOnPagingFenceFromCpu();
+    wddm->waitOnPagingFenceFromCpu(false);
     return madeResident ? MemoryOperationsStatus::SUCCESS : MemoryOperationsStatus::FAILED;
 }
 

@@ -1518,7 +1518,7 @@ TEST_F(WddmResidencyLoggerTest, GivenResidencyLoggingEnabledWhenMakeResidentAndW
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
 
     logger->enterWait = true;
-    wddm->waitOnPagingFenceFromCpu();
+    wddm->waitOnPagingFenceFromCpu(false);
     EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
     EXPECT_FALSE(logger->enterWait);
@@ -1746,7 +1746,7 @@ TEST_F(WddmPagingFenceTest, givenPagingFenceDelayNonZeroWhenCurrentPagingFenceVa
     wddm->mockPagingFence = 0u;
     wddm->currentPagingFenceValue = 1u;
 
-    wddm->waitOnPagingFenceFromCpu();
+    wddm->waitOnPagingFenceFromCpu(true);
     EXPECT_EQ(0u, wddm->delayPagingFenceFromCpuResult.called);
 }
 
@@ -1755,7 +1755,7 @@ TEST_F(WddmPagingFenceTest, givenPagingFenceDelayNonZeroWhenCurrentPagingFenceVa
     wddm->mockPagingFence = 0u;
     wddm->currentPagingFenceValue = 2u;
 
-    wddm->waitOnPagingFenceFromCpu();
+    wddm->waitOnPagingFenceFromCpu(true);
     EXPECT_EQ(1u, wddm->delayPagingFenceFromCpuResult.called);
 }
 
@@ -1765,6 +1765,35 @@ TEST_F(WddmPagingFenceTest, givenPagingFenceDelayZeroWhenCurrentPagingFenceValue
     wddm->currentPagingFenceValue = 3u;
     wddm->pagingFenceDelayTime = 0;
 
-    wddm->waitOnPagingFenceFromCpu();
+    wddm->waitOnPagingFenceFromCpu(true);
     EXPECT_EQ(0u, wddm->delayPagingFenceFromCpuResult.called);
+}
+
+uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;
+uint64_t lastPassedPagingFence = 0u;
+NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOpMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
+    lastPassedPagingFence = *waitStruct->FenceValueArray;
+    waitForSynchronizationObjectFromCpuCounter++;
+    return STATUS_SUCCESS;
+}
+TEST_F(WddmPagingFenceTest, givenPagingFenceDelayZeroWhenCurrentPagingFenceValueGreaterAndNeededKmdWaitThenWaitForSynchronizationObjectFromCpuCalled) {
+    EXPECT_EQ(WddmPagingFenceTest::defaultTestDelay, wddm->pagingFenceDelayTime);
+    wddm->mockPagingFence = 0u;
+    wddm->currentPagingFenceValue = 3u;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+    waitForSynchronizationObjectFromCpuCounter = 0u;
+    wddm->waitOnPagingFenceFromCpu(true);
+    EXPECT_EQ(lastPassedPagingFence, wddm->currentPagingFenceValue);
+    EXPECT_EQ(1u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmPagingFenceTest, givenPagingFenceDelayZeroWhenCurrentPagingFenceValueGreaterAndNotNeededKmdWaitThenWaitForSynchronizationObjectFromCpuIsNotCalled) {
+    EXPECT_EQ(WddmPagingFenceTest::defaultTestDelay, wddm->pagingFenceDelayTime);
+    wddm->mockPagingFence = 0u;
+    wddm->currentPagingFenceValue = 3u;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+    waitForSynchronizationObjectFromCpuCounter = 0u;
+    wddm->waitOnPagingFenceFromCpu(false);
+
+    EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
 }

@@ -313,9 +313,9 @@ uint64_t *WddmMock::getPagingFenceAddress() {
     return &mockPagingFence;
 }
 
-void WddmMock::waitOnPagingFenceFromCpu() {
+void WddmMock::waitOnPagingFenceFromCpu(bool isKmdWaitNeeded) {
     waitOnPagingFenceFromCpuResult.called++;
-    Wddm::waitOnPagingFenceFromCpu();
+    Wddm::waitOnPagingFenceFromCpu(isKmdWaitNeeded);
 }
 
 void WddmMock::delayPagingFenceFromCpu(int64_t delayTime) {

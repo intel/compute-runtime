@@ -37,6 +37,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::inputMonitorFenceDispatchRequirement;
     using BaseClass::isCompleted;
     using BaseClass::isNewResourceHandleNeeded;
+    using BaseClass::lastSubmittedThrottle;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
     using BaseClass::ringBuffers;
