@@ -2538,6 +2538,10 @@ kernels:
       - type:            global
         usage:           private_space
         size:            128
+      - type:            scratch
+        usage:           single_space
+        size:            256
+        slot:            1
 ...
 )===";
 
@@ -2554,17 +2558,24 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(2U, buffers.size());
+    ASSERT_EQ(3U, buffers.size());
 
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeScratch, buffers[0].allocationType);
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::MemoryUsageSingleSpace, buffers[0].memoryUsage);
     EXPECT_FALSE(buffers[0].isSimtThread);
     EXPECT_EQ(64, buffers[0].size);
+    EXPECT_EQ(0, buffers[0].slot);
 
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeGlobal, buffers[1].allocationType);
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::MemoryUsagePrivateSpace, buffers[1].memoryUsage);
     EXPECT_EQ(128, buffers[1].size);
     EXPECT_FALSE(buffers[1].isSimtThread);
+
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeScratch, buffers[2].allocationType);
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::MemoryUsageSingleSpace, buffers[2].memoryUsage);
+    EXPECT_FALSE(buffers[2].isSimtThread);
+    EXPECT_EQ(256, buffers[2].size);
+    EXPECT_EQ(1, buffers[2].slot);
 }
 
 TEST(ReadZeInfoPerThreadMemoryBuffers, GivenPerSimtThreadPrivateMemoryThenSetsProperFlag) {
