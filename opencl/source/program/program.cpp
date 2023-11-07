@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/debugger/debugger_l0.h"
@@ -107,6 +108,7 @@ std::string Program::getInternalOptions() const {
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
     auto isDebuggerActive = pClDevice->getDevice().getDebugger() != nullptr;
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
+    CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper);
     return internalOptions;
 }
 

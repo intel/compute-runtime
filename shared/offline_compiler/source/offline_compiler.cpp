@@ -14,6 +14,7 @@
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/tokenized_string.h"
@@ -897,6 +898,7 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
+    CompilerOptions::applyExtraInternalOptions(internalOptions, *compilerProductHelper);
 }
 
 void OfflineCompiler::parseDebugSettings() {
