@@ -27,8 +27,8 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         ze_result_t returnValue;
-        commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-        commandListBcs.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+        commandListBcs.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
 
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -848,8 +848,8 @@ class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
         ze_result_t returnValue;
         ze_command_queue_desc_t queueDesc{};
         queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-        immCommandList.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
-        immCommandListBcs.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)));
+        immCommandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+        immCommandListBcs.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)));
 
         ze_event_pool_desc_t eventPoolDesc{};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

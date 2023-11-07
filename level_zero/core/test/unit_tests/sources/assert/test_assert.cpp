@@ -166,8 +166,8 @@ TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKer
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     ze_result_t returnValue;
 
-    std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList(ult::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,
-                                                                                                      &l0Device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    std::unique_ptr<ult::WhiteBox<L0::CommandListImp>> commandList(ult::CommandList::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,
+                                                                                                                      &l0Device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
     commandList->kernelWithAssertAppended = true;
     EXPECT_TRUE(commandList->hasKernelWithAssert());

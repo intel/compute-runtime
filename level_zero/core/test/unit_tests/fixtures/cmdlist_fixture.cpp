@@ -34,7 +34,7 @@ CommandListFixture ::~CommandListFixture() = default;
 void CommandListFixture::setUp() {
     DeviceFixture::setUp();
     ze_result_t returnValue;
-    commandList.reset(whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -72,10 +72,10 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
 
     if (!createImmediate) {
-        commandList.reset(whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue)));
     } else {
         const ze_command_queue_desc_t desc = {};
-        commandList.reset(whiteboxCast(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(device->getHwInfo().platform.eProductFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
     }
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -112,8 +112,8 @@ void ModuleMutableCommandListFixture::setUpImpl() {
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     engineGroupType = gfxCoreHelper.getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 
-    commandList.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
-    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
     commandListImmediate->isFlushTaskSubmissionEnabled = true;
 
     mockKernelImmData = std::make_unique<MockImmutableData>(0u);
@@ -161,7 +161,7 @@ void CmdListPipelineSelectStateFixture::setUp() {
     ModuleMutableCommandListFixture::setUp();
 
     auto result = ZE_RESULT_SUCCESS;
-    commandList2.reset(whiteboxCast(CommandList::create(productFamily, this->device, this->engineGroupType, 0u, result)));
+    commandList2.reset(CommandList::whiteboxCast(CommandList::create(productFamily, this->device, this->engineGroupType, 0u, result)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -225,7 +225,7 @@ void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
     DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
 
     ze_result_t returnValue;
-    commandListPrivateHeap.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+    commandListPrivateHeap.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
 
     DebugManager.flags.SelectCmdListHeapAddressModel.set(globalHeapMode);
 }
@@ -259,7 +259,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     queueDesc.index = 0u;
     queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
-    commandListImmediateCoexisting.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediateCoexisting.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
 
     if (this->dshRequired) {
         mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
@@ -449,7 +449,7 @@ void CommandListAppendLaunchRayTracingKernelFixture::setUp() {
     ASSERT_NE(nullptr, buffer2);
 
     ze_result_t returnValue;
-    commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ASSERT_NE(commandList->getCmdContainer().getCommandStream(), nullptr);
 
     dispatchKernelArguments.groupCountX = 1u;
@@ -482,8 +482,8 @@ void PrimaryBatchBufferPreamblelessCmdListFixture::setUp() {
     PrimaryBatchBufferCmdListFixture::setUp();
 
     ze_result_t returnValue;
-    commandList2.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
-    commandList3.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+    commandList2.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+    commandList3.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
 }
 
 void PrimaryBatchBufferPreamblelessCmdListFixture::tearDown() {

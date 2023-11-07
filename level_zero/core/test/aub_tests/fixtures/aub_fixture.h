@@ -38,7 +38,7 @@ struct WhiteBox;
 struct ContextImp;
 struct DriverHandleImp;
 struct CommandQueue;
-struct CommandList;
+struct CommandListImp;
 struct Device;
 
 class AUBFixtureL0 {
@@ -105,7 +105,7 @@ class AUBFixtureL0 {
     NEO::MockDevice *neoDevice = nullptr;
 
     std::unique_ptr<ult::Mock<DriverHandleImp>> driverHandle;
-    std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList;
+    std::unique_ptr<ult::WhiteBox<L0::CommandListImp>> commandList;
 
     Device *device = nullptr;
     ContextImp *context = nullptr;

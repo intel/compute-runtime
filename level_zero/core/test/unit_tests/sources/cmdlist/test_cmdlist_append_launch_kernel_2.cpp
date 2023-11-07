@@ -810,11 +810,11 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThr
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily,
-                                                                                         device,
-                                                                                         NEO::EngineGroupType::RenderCompute,
-                                                                                         0u,
-                                                                                         returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily,
+                                                                                                      device,
+                                                                                                      NEO::EngineGroupType::RenderCompute,
+                                                                                                      0u,
+                                                                                                      returnValue)));
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
@@ -842,11 +842,11 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenChosenThre
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily,
-                                                                                         device,
-                                                                                         NEO::EngineGroupType::RenderCompute,
-                                                                                         0u,
-                                                                                         returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily,
+                                                                                                      device,
+                                                                                                      NEO::EngineGroupType::RenderCompute,
+                                                                                                      0u,
+                                                                                                      returnValue)));
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
@@ -872,11 +872,11 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily,
-                                                                                         device,
-                                                                                         NEO::EngineGroupType::RenderCompute,
-                                                                                         0u,
-                                                                                         returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily,
+                                                                                                      device,
+                                                                                                      NEO::EngineGroupType::RenderCompute,
+                                                                                                      0u,
+                                                                                                      returnValue)));
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 

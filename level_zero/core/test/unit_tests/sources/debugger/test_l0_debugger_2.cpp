@@ -126,7 +126,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
     EXPECT_EQ(&csr, commandList->csr);
@@ -171,7 +171,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
     EXPECT_EQ(&csr, commandList->csr);
@@ -217,7 +217,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
     EXPECT_EQ(&csr, commandList->csr);
@@ -262,7 +262,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
 
-    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
     EXPECT_EQ(&csr, commandList->csr);
@@ -302,7 +302,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto commandList = whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue));
 
     // Internal command list must not have flush task enabled
     EXPECT_FALSE(commandList->isFlushTaskSubmissionEnabled);

@@ -21,7 +21,7 @@ struct MultiTileCommandListAppendLaunchKernelFixture : public MultiDeviceModuleF
     void tearDown();
 
     ContextImp *contextImp = nullptr;
-    WhiteBox<::L0::CommandList> *commandList = nullptr;
+    WhiteBox<::L0::CommandListImp> *commandList = nullptr;
     L0::Device *device = nullptr;
     VariableBackup<bool> backup;
 };

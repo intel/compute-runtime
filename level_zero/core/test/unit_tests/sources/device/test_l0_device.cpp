@@ -111,9 +111,9 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     auto deviceImp = static_cast<DeviceImp *>(device.get());
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
 
-    ASSERT_NE(nullptr, whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
-    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
+    ASSERT_NE(nullptr, CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
+    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
 }
 
 TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
@@ -133,10 +133,10 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCm
     auto deviceImp = static_cast<DeviceImp *>(device.get());
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
 
-    ASSERT_NE(nullptr, whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
-    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
-    EXPECT_EQ(whiteboxCast(deviceImp->pageFaultCommandList)->device, deviceImp->subDevices[0]);
+    ASSERT_NE(nullptr, CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
+    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCommandQueueMode());
+    EXPECT_EQ(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->device, deviceImp->subDevices[0]);
 }
 
 TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddDisabledNeoDevies) {

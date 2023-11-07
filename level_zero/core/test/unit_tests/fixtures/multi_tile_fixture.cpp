@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
 #include "gtest/gtest.h"
 
@@ -38,7 +39,7 @@ void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     ze_result_t returnValue;
-    commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 

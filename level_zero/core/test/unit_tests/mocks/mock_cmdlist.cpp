@@ -10,11 +10,11 @@
 namespace L0 {
 namespace ult {
 
-WhiteBox<::L0::CommandList>::WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
+WhiteBox<::L0::CommandListImp>::WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 
-WhiteBox<::L0::CommandList>::~WhiteBox() {}
+WhiteBox<::L0::CommandListImp>::~WhiteBox() {}
 
-MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandList>() {
+MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandListImp>() {
     this->device = device;
     size_t batchBufferSize = 65536u;
     batchBuffer = new uint8_t[batchBufferSize];

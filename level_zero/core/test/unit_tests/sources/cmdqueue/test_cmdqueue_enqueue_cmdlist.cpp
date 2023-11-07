@@ -127,8 +127,8 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncach
                                                           returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    auto commandList1 = whiteboxCast(CommandList::fromHandle(commandLists[0]));
-    auto commandList2 = whiteboxCast(CommandList::fromHandle(commandLists[1]));
+    auto commandList1 = CommandList::whiteboxCast(CommandList::fromHandle(commandLists[0]));
+    auto commandList2 = CommandList::whiteboxCast(CommandList::fromHandle(commandLists[1]));
     commandList1->requiresQueueUncachedMocs = true;
     commandList2->requiresQueueUncachedMocs = true;
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -630,10 +630,10 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
     preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandListDisabled = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
 
-    auto commandListThreadGroup = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
     ze_command_list_handle_t commandLists[] = {commandListDisabled->toHandle(),
@@ -1028,7 +1028,7 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
     using MI_NOOP = typename FamilyType::MI_NOOP;
     using PARSE = typename FamilyType::PARSE;
 
-    whiteboxCast(CommandList::fromHandle(commandLists[0]))->commandListPreemptionMode = PreemptionMode::Disabled;
+    CommandList::whiteboxCast(CommandList::fromHandle(commandLists[0]))->commandListPreemptionMode = PreemptionMode::Disabled;
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, false);
@@ -1151,7 +1151,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     size_t cmdBufferSizeWithoutMmioProgramming = usedSpaceAfter2ndExecute - usedSpaceBefore2ndExecute;
 
     for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = whiteboxCast(CommandList::fromHandle(commandLists[i]));
+        auto commandList = CommandList::whiteboxCast(CommandList::fromHandle(commandLists[i]));
         commandList->partitionCount = 2;
     }
 

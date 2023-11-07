@@ -1145,7 +1145,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandLis
     queueDesc.index = 0u;
 
     ze_result_t returnValue;
-    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_EQ(commandListImmediate->isFlushTaskSubmissionEnabled, commandListImmediate->immediateCmdListHeapSharing);

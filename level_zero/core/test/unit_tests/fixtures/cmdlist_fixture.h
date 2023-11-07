@@ -22,7 +22,7 @@ class CommandListFixture : public DeviceFixture {
     void setUp();
     void tearDown();
 
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandList;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<WhiteBox<L0::Event>> event;
 };
@@ -34,7 +34,7 @@ struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture 
         SingleRootMultiSubDeviceFixture::tearDown();
     }
 
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandList;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
@@ -73,8 +73,8 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     uint32_t getMocs(bool l3On);
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandList;
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandListImmediate;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandList;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandListImmediate;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
     WhiteBox<L0::CommandQueue> *commandQueue;
@@ -116,7 +116,7 @@ struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixtur
     template <typename FamilyType>
     void testBodySystolicAndScratchOnSecondCommandList();
 
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandList2;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandList2;
 };
 
 struct CmdListStateComputeModeStateFixture : public ModuleMutableCommandListFixture {
@@ -145,7 +145,7 @@ struct CommandListGlobalHeapsFixtureInit : public CommandListStateBaseAddressFix
     void setUp();
     void setUpParams(int32_t globalHeapMode);
     void tearDown();
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandListPrivateHeap;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandListPrivateHeap;
 };
 
 template <int32_t globalHeapMode>
@@ -159,7 +159,7 @@ struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixtu
     void setUp();
     void tearDown();
 
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandListImmediateCoexisting;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandListImmediateCoexisting;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
 };
@@ -179,7 +179,7 @@ struct ImmediateCmdListSharedHeapsFlushTaskFixtureInit : public ImmediateCmdList
     template <typename FamilyType>
     void testBody(NonKernelOperation operation);
 
-    void appendNonKernelOperation(WhiteBox<L0::CommandList> *currentCmdList, NonKernelOperation operation);
+    void appendNonKernelOperation(WhiteBox<L0::CommandListImp> *currentCmdList, NonKernelOperation operation);
 
     void validateDispatchFlags(bool nonKernel, NEO::ImmediateDispatchFlags &recordedImmediateFlushTaskFlags, const NEO::IndirectHeap *recordedSsh);
 
@@ -313,7 +313,7 @@ struct CommandListAppendLaunchRayTracingKernelFixture : ModuleFixture {
     void tearDown();
 
     ContextImp *contextImp = nullptr;
-    WhiteBox<::L0::CommandList> *commandList = nullptr;
+    WhiteBox<::L0::CommandListImp> *commandList = nullptr;
 
     ze_group_count_t dispatchKernelArguments;
 
@@ -330,8 +330,8 @@ struct PrimaryBatchBufferPreamblelessCmdListFixture : public PrimaryBatchBufferC
     void setUp();
     void tearDown();
 
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandList2;
-    std::unique_ptr<WhiteBox<L0::CommandList>> commandList3;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandList2;
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> commandList3;
 };
 
 struct ImmediateFlushTaskCmdListFixture : public ModuleMutableCommandListFixture {

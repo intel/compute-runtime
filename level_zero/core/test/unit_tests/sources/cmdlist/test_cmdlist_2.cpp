@@ -1376,7 +1376,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandListImmediate(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
@@ -1384,7 +1384,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
 
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
 
-    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
     EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
@@ -1409,7 +1409,7 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandListImmediate(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
@@ -1417,7 +1417,7 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
 
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
 
-    commandListImmediate.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
     EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
@@ -1624,7 +1624,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCopyCommandLi
     ultCsr->recordFlusheBatchBuffer = true;
 
     std::unique_ptr<L0::ult::CommandList> commandListCopy;
-    commandListCopy.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
+    commandListCopy.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto &cmdContainerCopy = commandListCopy->getCmdContainer();
