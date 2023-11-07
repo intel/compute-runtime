@@ -92,21 +92,21 @@ TEST_F(SysmanDeviceEngineFixture, GivenUnsupportedEngineHandleWhenGettingEngineA
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngineGroupIsReturned) {
     auto handles = getEngineHandles(MockEngineKmdSysManager::mockEngineHandleComponentCount);
 
-    for (auto handle : handles) {
+    for (auto &handle : handles) {
         zes_engine_properties_t properties = {};
 
         ze_result_t result = zesEngineGetProperties(handle, &properties);
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0);
+        EXPECT_EQ(properties.subdeviceId, 0u);
     }
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetAvtivityThenCorrectValuesAreReturned) {
     auto handles = getEngineHandles(MockEngineKmdSysManager::mockEngineHandleComponentCount);
     uint32_t engineGroupIndex = 0;
-    for (auto handle : handles) {
+    for (auto &handle : handles) {
         zes_engine_stats_t stats;
 
         ze_result_t result = zesEngineGetActivity(handle, &stats);
@@ -120,7 +120,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetAvtivityThenCorrectValuesAr
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleWhenGettingEngineActivityAndRequestSingleFailsThenFailureIsReturned) {
     auto handles = getEngineHandles(MockEngineKmdSysManager::mockEngineHandleComponentCount);
-    for (auto handle : handles) {
+    for (auto &handle : handles) {
         pKmdSysManager->mockRequestSingle = true;
         pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         zes_engine_stats_t stats;
@@ -130,7 +130,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenValidHandleWhenGettingEngineActivityAndRe
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleWhenCallingZesEngineGetActivityExtThenUnsupportedFeatureErrorIsReturned) {
     auto handles = getEngineHandles(MockEngineKmdSysManager::mockEngineHandleComponentCount);
-    for (auto handle : handles) {
+    for (auto &handle : handles) {
         zes_engine_stats_t stats;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, nullptr, &stats));
     }
@@ -140,7 +140,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenZeroResponseSizeFromKmdWhenEnumeratingEng
     pKmdSysManager->useZeroResponseSizeForEngineInstancesPerGroup = true;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0);
+    EXPECT_EQ(count, 0u);
 }
 
 } // namespace ult

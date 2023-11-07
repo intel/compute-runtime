@@ -207,7 +207,6 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
     }
 
     bool validateInputBuffer(KmdSysman::GfxSysmanMainHeaderIn *pHeaderIn) {
-        uint32_t sizeCheck = pHeaderIn->inTotalsize;
         uint8_t *pBufferPtr = pHeaderIn->inBuffer;
 
         for (uint32_t i = 0; i < pHeaderIn->inNumElements; i++) {
@@ -217,7 +216,6 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
                 pRequest->inCommand == KmdSysman::Command::RegisterEvent) {
                 if (pRequest->inComponent >= KmdSysman::Component::InterfaceProperties && pRequest->inComponent < KmdSysman::Component::MaxComponents) {
                     pBufferPtr += sizeof(KmdSysman::GfxSysmanReqHeaderIn);
-                    sizeCheck -= sizeof(KmdSysman::GfxSysmanReqHeaderIn);
 
                     if (pRequest->inCommand == KmdSysman::Command::Set ||
                         pRequest->inCommand == KmdSysman::Command::RegisterEvent) {
@@ -225,7 +223,6 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
                             return false;
                         }
                         pBufferPtr += pRequest->inDataSize;
-                        sizeCheck -= pRequest->inDataSize;
                     }
                 } else {
                     return false;

@@ -148,7 +148,7 @@ TEST_F(SysmanDeviceEngineFixture, GivenZeroResponseSizeFromKmdWhenEnumeratingEng
     pKmdSysManager->useZeroResponseSizeForEngineInstancesPerGroup = true;
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0);
+    EXPECT_EQ(count, 0u);
 }
 
 } // namespace ult
