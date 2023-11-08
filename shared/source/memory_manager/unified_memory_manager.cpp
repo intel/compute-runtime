@@ -417,16 +417,6 @@ void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *alloca
     allocation->setCoherent(svmProperties.coherent);
 }
 
-SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    return svmAllocs.get(ptr);
-}
-
-SvmAllocationData *SVMAllocsManager::getSVMDeferFreeAlloc(const void *ptr) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    return svmDeferFreeAllocs.get(ptr);
-}
-
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     svmAllocs.insert(svmAllocData);
@@ -493,7 +483,7 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
     } else if (policy == FreePolicyType::POLICY_DEFER) {
         if (svmData->cpuAllocation) {
             if (this->memoryManager->allocInUse(*svmData->cpuAllocation)) {
-                if (getSVMDeferFreeAlloc(svmData) == nullptr) {
+                if (getSVMDeferFreeAlloc(ptr) == nullptr) {
                     this->svmDeferFreeAllocs.insert(*svmData);
                 }
                 return;
@@ -502,7 +492,7 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
         for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
             if (gpuAllocation) {
                 if (this->memoryManager->allocInUse(*gpuAllocation)) {
-                    if (getSVMDeferFreeAlloc(svmData) == nullptr) {
+                    if (getSVMDeferFreeAlloc(ptr) == nullptr) {
                         this->svmDeferFreeAllocs.insert(*svmData);
                     }
                     return;

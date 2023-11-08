@@ -19,6 +19,7 @@
 #include <map>
 #include <mutex>
 #include <shared_mutex>
+#include <type_traits>
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -177,9 +178,23 @@ class SVMAllocsManager {
     void *createUnifiedKmdMigratedAllocation(size_t size,
                                              const SvmAllocationProperties &svmProperties,
                                              const UnifiedMemoryProperties &unifiedMemoryProperties);
+
     void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
-    SvmAllocationData *getSVMAlloc(const void *ptr);
-    SvmAllocationData *getSVMDeferFreeAlloc(const void *ptr);
+
+    template <typename T,
+              std::enable_if_t<std::is_same_v<T, void> || std::is_same_v<T, const void>, int> = 0>
+    SvmAllocationData *getSVMAlloc(T *ptr) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return svmAllocs.get(ptr);
+    }
+
+    template <typename T,
+              std::enable_if_t<std::is_same_v<T, void *>, int> = 0>
+    SvmAllocationData *getSVMDeferFreeAlloc(T ptr) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return svmDeferFreeAllocs.get(ptr);
+    }
+
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
     MOCKABLE_VIRTUAL bool freeSVMAllocDefer(void *ptr);
     MOCKABLE_VIRTUAL void freeSVMAllocDeferImpl();

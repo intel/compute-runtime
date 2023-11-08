@@ -90,7 +90,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
                                                      nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pThreadGroupDimensions);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<void *>(pThreadGroupDimensions));
     ASSERT_NE(nullptr, allocData->cpuAllocation);
     auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAllocation);
@@ -262,7 +262,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
                                                      nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pThreadGroupDimensions);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<void *>(pThreadGroupDimensions));
     ASSERT_NE(nullptr, allocData->cpuAllocation);
     auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAllocation);

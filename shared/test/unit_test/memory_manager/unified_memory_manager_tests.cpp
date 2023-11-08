@@ -62,6 +62,36 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSharedAllocWithOffsetPointerThenReso
     EXPECT_EQ(pageFaultMemoryData, mockPageFaultManager->memoryData.end());
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSvmAllocationDeferThenAllocationsCountIsProper) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096, unifiedMemoryProperties, &cmdQ);
+    EXPECT_NE(nullptr, ptr);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    memoryManager->deferAllocInUse = true;
+    EXPECT_EQ(svmManager->svmDeferFreeAllocs.allocations.size(), 0u);
+    svmManager->freeSVMAllocDefer(ptr);
+    EXPECT_EQ(svmManager->svmDeferFreeAllocs.allocations.size(), 1u);
+    svmManager->freeSVMAllocDefer(ptr);
+    EXPECT_EQ(svmManager->svmDeferFreeAllocs.allocations.size(), 1u);
+    memoryManager->deferAllocInUse = false;
+    svmManager->freeSVMAllocDefer(ptr);
+    EXPECT_EQ(svmManager->svmDeferFreeAllocs.allocations.size(), 0u);
+    ASSERT_EQ(svmManager->getSVMAlloc(ptr), nullptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSVMAllocIsDeferredThenFreedSubsequently) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(1);
