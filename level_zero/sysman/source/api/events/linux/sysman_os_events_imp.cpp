@@ -189,13 +189,21 @@ bool LinuxEventsUtil::isResetRequired(void *dev, zes_event_type_flags_t &pEvent)
         return false;
     }
 
-    std::vector<std::string> properties{"RESET_FAILED", "RESET_REQUIRED"};
+    std::vector<std::string> properties{"RESET_FAILED", "RESET_REQUIRED", "DEVICE_STATUS"};
     for (auto &property : properties) {
         const char *propVal = nullptr;
         propVal = pUdevLib->getEventPropertyValue(dev, property.c_str());
-        if (propVal && atoi(propVal) == 1) {
-            pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
-            return true;
+        if (propVal) {
+            std::string expectedStr = "NEEDS_RESET";
+            if (property != "DEVICE_STATUS") {
+                if (atoi(propVal) == 1) {
+                    pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
+                    return true;
+                }
+            } else if (propVal == expectedStr) {
+                pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
+                return true;
+            }
         }
     }
 
