@@ -31,7 +31,7 @@ namespace L0 {
 const std::string LinuxGlobalOperationsImp::deviceDir("device");
 const std::string LinuxGlobalOperationsImp::subsystemVendorFile("device/subsystem_vendor");
 const std::string LinuxGlobalOperationsImp::driverFile("device/driver");
-const std::string LinuxGlobalOperationsImp::functionLevelReset("device/reset");
+const std::string LinuxGlobalOperationsImp::functionLevelReset("/reset");
 const std::string LinuxGlobalOperationsImp::clientsDir("clients");
 const std::string LinuxGlobalOperationsImp::srcVersionFile("/sys/module/i915/srcversion");
 const std::string LinuxGlobalOperationsImp::agamaVersionFile("/sys/module/i915/agama_version");
@@ -223,7 +223,12 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     }
 
     std::string resetName;
-    pSysfsAccess->getRealPath(deviceDir, resetName);
+    result = pSysfsAccess->getRealPath(deviceDir, resetName);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get reset sysfs path and returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    std::string flrPath = resetName + functionLevelReset;
     resetName = pFsAccess->getBaseName(resetName);
 
     // Unbind the device from the kernel driver.
@@ -268,7 +273,6 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
         }
     }
 
-    std::string resetPath = {};
     switch (resetType) {
     case ZES_RESET_TYPE_WARM:
         result = pLinuxSysmanImp->osWarmReset();
@@ -277,8 +281,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
         result = pLinuxSysmanImp->osColdReset();
         break;
     case ZES_RESET_TYPE_FLR:
-        pSysfsAccess->getRealPath(functionLevelReset, resetPath);
-        result = pFsAccess->write(resetPath, "1");
+        result = pFsAccess->write(flrPath, "1");
         break;
     default:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

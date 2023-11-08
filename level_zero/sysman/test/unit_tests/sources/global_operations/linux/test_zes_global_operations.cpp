@@ -781,6 +781,16 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetExtWithInv
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenGettingSysfsPathFailsWhenCallingResetExtThenFailureIsReturned) {
+    init(true);
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.VfBarResourceAllocationWa.set(false);
+    pSysfsAccess->mockDeviceUnbound = true;
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_FORCE_UINT32};
+    ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.VfBarResourceAllocationWa.set(false);

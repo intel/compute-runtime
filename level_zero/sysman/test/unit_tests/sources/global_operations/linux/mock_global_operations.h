@@ -31,7 +31,6 @@ const std::string subsystemVendorFile("device/subsystem_vendor");
 const std::string driverFile("device/driver");
 const std::string agamaVersionFile("/sys/module/i915/agama_version");
 const std::string srcVersionFile("/sys/module/i915/srcversion");
-const std::string functionLevelReset("device/reset");
 const std::string clientsDir("clients");
 constexpr uint64_t pid1 = 1711u;
 constexpr uint64_t pid2 = 1722u;
@@ -58,8 +57,8 @@ const std::string engine6("6");
 const std::string driverVersion("5.0.0-37-generic SMP mod_unload");
 const std::string srcVersion("5.0.0-37");
 const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
-const std::string mockFunctionResetPath("/MOCK_FUNCTION_LEVEL_RESET_PATH");
 const std::string mockDeviceDir("devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0");
+const std::string mockFunctionResetPath(mockDeviceDir + "/reset");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
 const std::string mockSlotPath("/sys/bus/pci/slots/1");
 const std::string mockSlotPathAddress("/sys/bus/pci/slots/1/address");
@@ -105,16 +104,15 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysfsAccess {
     bool mockGetScannedDirPidEntriesForClientsStatus = false;
     bool mockReadStatus = false;
     bool mockGetValUnsignedLongStatus = false;
+    bool mockDeviceUnbound = false;
 
     ze_result_t getRealPath(const std::string file, std::string &val) override {
-        if (file.compare(functionLevelReset) == 0) {
-            val = mockFunctionResetPath;
-        } else if (file.compare(deviceDir) == 0) {
+        if (file.compare(deviceDir) == 0) {
             val = mockDeviceDir;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
-        return ZE_RESULT_SUCCESS;
+        return mockDeviceUnbound ? ZE_RESULT_ERROR_NOT_AVAILABLE : ZE_RESULT_SUCCESS;
     }
 
     enum class Index {
@@ -345,6 +343,8 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysfsAccess {
             return mockUnbindDeviceError;
         }
 
+        mockDeviceUnbound = true;
+
         return ZE_RESULT_SUCCESS;
     }
 
@@ -352,6 +352,8 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysfsAccess {
         if (mockBindDeviceError != ZE_RESULT_SUCCESS) {
             return mockBindDeviceError;
         }
+
+        mockDeviceUnbound = false;
 
         return ZE_RESULT_SUCCESS;
     }
