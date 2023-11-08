@@ -10,8 +10,8 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/api/scheduler/linux/sysman_os_scheduler_imp.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {

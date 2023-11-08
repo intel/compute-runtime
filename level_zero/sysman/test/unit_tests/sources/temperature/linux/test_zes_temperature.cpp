@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt_xml_offsets.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt_xml_offsets.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
 

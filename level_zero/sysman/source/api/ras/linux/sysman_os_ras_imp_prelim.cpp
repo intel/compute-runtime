@@ -11,7 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include "drm/intel_hwconfig_types.h"
 

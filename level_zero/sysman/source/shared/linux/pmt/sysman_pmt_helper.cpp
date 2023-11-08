@@ -5,8 +5,8 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt_xml_offsets.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt_xml_offsets.h"
 
 namespace L0 {
 namespace Sysman {

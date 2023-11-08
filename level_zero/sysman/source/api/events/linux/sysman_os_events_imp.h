@@ -7,8 +7,8 @@
 
 #pragma once
 #include "level_zero/sysman/source/api/events/sysman_os_events.h"
-#include "level_zero/sysman/source/linux/udev/udev_lib.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/udev/udev_lib.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 
 #include "shared/source/memory_manager/memory_manager.h"
 

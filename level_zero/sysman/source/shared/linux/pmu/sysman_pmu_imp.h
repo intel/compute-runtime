@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/linux/pmu/sysman_pmu.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <linux/perf_event.h>
 #include <string>

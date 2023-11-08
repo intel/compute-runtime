@@ -10,7 +10,7 @@
 
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 #include "igfxfmid.h"
 namespace L0 {

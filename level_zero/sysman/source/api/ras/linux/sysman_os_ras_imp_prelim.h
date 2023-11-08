@@ -10,8 +10,8 @@
 
 #include "level_zero/sysman/source/api/ras/sysman_os_ras.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
-#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <map>

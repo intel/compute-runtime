@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 #include <climits>
 

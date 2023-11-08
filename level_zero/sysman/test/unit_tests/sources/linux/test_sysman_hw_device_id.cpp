@@ -8,7 +8,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
-#include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
+#include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 
 #include "gtest/gtest.h"
 

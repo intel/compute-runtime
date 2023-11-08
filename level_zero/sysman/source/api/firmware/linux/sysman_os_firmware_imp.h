@@ -10,7 +10,7 @@
 
 #include "level_zero/sysman/source/api/firmware/sysman_firmware_imp.h"
 #include "level_zero/sysman/source/api/firmware/sysman_os_firmware.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

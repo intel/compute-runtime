@@ -7,7 +7,7 @@
 
 #include "level_zero/sysman/source/api/fabric_port/linux/sysman_fabric_device_access_stub.h"
 
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

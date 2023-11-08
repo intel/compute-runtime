@@ -13,7 +13,7 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_os_global_operations.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

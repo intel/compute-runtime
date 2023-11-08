@@ -10,7 +10,7 @@
 
 #include "level_zero/sysman/source/api/fabric_port/sysman_fabric_port_imp.h"
 #include "level_zero/sysman/source/api/fabric_port/sysman_os_fabric_port.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 namespace L0 {
 namespace Sysman {

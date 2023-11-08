@@ -15,9 +15,9 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include "drm/intel_hwconfig_types.h"

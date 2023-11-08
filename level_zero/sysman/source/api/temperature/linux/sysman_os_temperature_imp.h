@@ -9,8 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/temperature/sysman_os_temperature.h"
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 #include "igfxfmid.h"
 

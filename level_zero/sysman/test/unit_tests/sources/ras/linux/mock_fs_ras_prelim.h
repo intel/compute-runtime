@@ -13,9 +13,9 @@
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp_prelim.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
-#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 #include "drm/intel_hwconfig_types.h"

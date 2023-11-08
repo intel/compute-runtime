@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 
 #include <sstream>
 

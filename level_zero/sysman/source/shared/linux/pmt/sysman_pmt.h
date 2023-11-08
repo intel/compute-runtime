@@ -9,7 +9,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 #include "igfxfmid.h"
 

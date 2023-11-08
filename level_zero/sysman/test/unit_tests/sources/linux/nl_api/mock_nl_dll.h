@@ -9,7 +9,7 @@
 
 #include "shared/source/os_interface/os_library.h"
 
-#include "level_zero/sysman/source/linux/nl_api/sysman_nl_api.h"
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_nl_api.h"
 
 #include <map>
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/sysman_hw_device_id_linux.h"
+#include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 

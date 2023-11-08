@@ -12,7 +12,7 @@
 #include "level_zero/sysman/source/api/power/linux/sysman_os_power_imp.h"
 #include "level_zero/sysman/source/api/power/sysman_power_imp.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 

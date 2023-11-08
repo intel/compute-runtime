@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/udev/udev_lib_imp.h"
+#include "level_zero/sysman/source/shared/linux/udev/udev_lib_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/utilities/directory.h"

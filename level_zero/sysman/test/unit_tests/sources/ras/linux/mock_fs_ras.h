@@ -10,7 +10,7 @@
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 namespace L0 {
 namespace Sysman {

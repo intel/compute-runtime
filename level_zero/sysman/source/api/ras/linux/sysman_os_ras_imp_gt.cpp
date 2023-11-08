@@ -8,7 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp_prelim.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <cstring>
 

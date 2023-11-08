@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/sysman/source/linux/nl_api/sysman_nl_api.h"
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_nl_api.h"
 #include <level_zero/zes_api.h>
 
 #include "iaf/iaf_netlink.h"

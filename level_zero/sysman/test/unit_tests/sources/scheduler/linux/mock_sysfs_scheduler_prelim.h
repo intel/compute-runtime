@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "level_zero/sysman/source/api/scheduler/linux/sysman_os_scheduler_imp.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {

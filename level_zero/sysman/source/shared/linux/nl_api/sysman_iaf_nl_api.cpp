@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/linux/nl_api/sysman_iaf_nl_api.h"
+#include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"

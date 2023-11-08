@@ -10,9 +10,9 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {

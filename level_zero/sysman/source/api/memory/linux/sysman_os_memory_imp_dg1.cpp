@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {

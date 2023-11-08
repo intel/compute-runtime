@@ -13,8 +13,8 @@
 
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
-#include "level_zero/sysman/source/linux/sysman_fs_access.h"
-#include "level_zero/sysman/source/linux/zes_os_sysman_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {

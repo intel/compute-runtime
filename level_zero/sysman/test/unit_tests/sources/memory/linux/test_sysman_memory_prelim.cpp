@@ -10,7 +10,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp_prelim.h"
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt_xml_offsets.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt_xml_offsets.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"

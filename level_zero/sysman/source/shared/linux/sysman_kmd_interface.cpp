@@ -14,7 +14,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
-#include "level_zero/sysman/source/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "drm/xe_drm.h"

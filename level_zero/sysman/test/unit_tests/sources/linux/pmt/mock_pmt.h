@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 
 namespace L0 {
 namespace Sysman {
