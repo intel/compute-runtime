@@ -14,9 +14,10 @@
 #include <vector>
 
 namespace NEO {
-static EnableAIL<IGFX_METEORLAKE> enableAILMTL;
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::DISABLE_DIRECT_SUBMISSION}}};
+extern std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL;
+
+static EnableAIL<IGFX_METEORLAKE> enableAILMTL;
 
 template <>
 void AILConfigurationHw<IGFX_METEORLAKE>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {

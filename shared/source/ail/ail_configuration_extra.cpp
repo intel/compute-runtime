@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include <map>
-#include <string_view>
+#include <vector>
 
 namespace NEO {
 /*
@@ -23,6 +23,8 @@ namespace NEO {
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blender", {AILEnumeration::ENABLE_FP64}},
                                                                           // Modify reported platform name to ensure older versions of Adobe Premiere Pro are able to recognize the GPU device
                                                                           {"Adobe Premiere Pro", {AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME}}};
+
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::DISABLE_DIRECT_SUBMISSION}}};
 
 const std::set<std::string_view> applicationsContextSyncFlag = {};
 
