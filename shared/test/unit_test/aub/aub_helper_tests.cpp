@@ -51,26 +51,6 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
     EXPECT_EQ(devicesCount, 1u);
 }
 
-TEST(AubHelper, GivenReturnSubDevicesAsApiDevicesWhenGettingDeviceCountThenCorrectValueIsReturned) {
-    DebugManagerStateRestore stateRestore;
-    FeatureTable featureTable = {};
-    WorkaroundTable workaroundTable = {};
-    RuntimeCapabilityTable capTable = {};
-    GT_SYSTEM_INFO sysInfo = {};
-    PLATFORM platform = {};
-
-    sysInfo.MultiTileArchInfo.IsValid = true;
-    sysInfo.MultiTileArchInfo.TileCount = 2;
-    HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
-
-    uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
-    EXPECT_EQ(devicesCount, 2u);
-
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
-    devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
-    EXPECT_EQ(devicesCount, 1u);
-}
-
 TEST(AubHelper, WhenGetMemTraceIsCalledWithLocalMemoryPDEntryBitsThenTraceLocalIsReturned) {
     int hint = AubHelper::getMemTrace(BIT(PageTableEntry::localMemoryBit));
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, hint);

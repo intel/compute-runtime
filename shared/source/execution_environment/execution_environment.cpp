@@ -166,15 +166,8 @@ void ExecutionEnvironment::parseAffinityMask() {
         return;
     }
 
-    bool exposeSubDevicesAsApiDevices = false;
-    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
-        exposeSubDevicesAsApiDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
-    }
     // If the user has requested FLAT device hierarchy models, then report all the sub devices as devices.
-    if (this->subDevicesAsDevices) {
-        exposeSubDevicesAsApiDevices = true;
-    }
-
+    bool exposeSubDevicesAsApiDevices = isExposingSubDevicesAsDevices();
     uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
 
     RootDeviceIndicesMap mapOfIndices;
@@ -213,7 +206,7 @@ void ExecutionEnvironment::parseAffinityMask() {
                 continue;
             }
 
-            // ReturnSubDevicesAsApiDevices not supported with AllowSingleTileEngineInstancedSubDevices
+            // FlatHierarchy not supported with AllowSingleTileEngineInstancedSubDevices
             // so ignore X.Y
             if (subEntries.size() > 1) {
                 continue;
@@ -296,10 +289,6 @@ void ExecutionEnvironment::setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper
     }
     if (strcmp(hierarchyModel.c_str(), "COMBINED") == 0) {
         setCombinedDeviceHierarchy(true);
-    }
-
-    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
-        setExposeSubDevicesAsDevices(NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get());
     }
 }
 

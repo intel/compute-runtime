@@ -687,33 +687,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssAndZeAffinityMaskSe
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevicesModelThenThenProperNumberDevicesIsExposed) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManagerStateRestore restorer;
-
-    uint32_t numRootDevices = 4;
-    uint32_t numSubDevices = 4;
-
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-
-    uint32_t expectedRootDevices = 4;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0,3,4,1.1,9,15,25");
-
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
-
-    auto hwInfo = *defaultHwInfo;
-
-    MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
-    executionEnvironment.incRefInternal();
-
-    auto devices = DeviceFactory::createDevices(executionEnvironment);
-    EXPECT_EQ(devices.size(), expectedRootDevices);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevicesModelThenProperSubDeviceHierarchyMapisSet) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
@@ -728,7 +704,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     DebugManager.flags.ZE_AFFINITY_MASK.set("0,3,4,1.1,9,15,25");
 
     DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -766,7 +741,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     uint32_t expectedRootDevices = 4;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.2,1.2,2.3,3.3");
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0.2,1.2,2.3,3.3,15,25");
 
     DebugManager.flags.SetCommandStreamReceiver.set(1);
 
@@ -806,7 +781,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetWithoutTilesThen
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     uint32_t expectedRootDevices = 4;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3");
+    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,15,25");
 
     DebugManager.flags.SetCommandStreamReceiver.set(1);
 
@@ -821,32 +796,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetWithoutTilesThen
         std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;
         EXPECT_FALSE(executionEnvironment.getSubDeviceHierarchy(i, &subDeviceMap));
     }
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndRootDevicesAsDevicesModelThenThenProperNumberRootDevicesIsExposed) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManagerStateRestore restorer;
-
-    uint32_t numRootDevices = 4;
-    uint32_t numSubDevices = 4;
-
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-
-    uint32_t expectedRootDevices = 3;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0,3,1.1,15,25");
-
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(0);
-
-    auto hwInfo = *defaultHwInfo;
-
-    MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
-    executionEnvironment.incRefInternal();
-
-    auto devices = DeviceFactory::createDevices(executionEnvironment);
-    EXPECT_EQ(devices.size(), expectedRootDevices);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableIsLargerThanNumberOfAvailableCcsCountWhenDeviceIsCreatedThenCreateDevicesWithAvailableCcsCount) {

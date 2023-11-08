@@ -41,24 +41,6 @@ TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnv
     EXPECT_EQ(0, environment.getRefApiCount());
 }
 
-TEST(ExecutionEnvironment, givenDefaultConstructoWhenItIsCalledAndReturnSubDevicesAsApiDevicesIsSetTrueThenSubDevicesAsDevicesIsTrue) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
-    MockExecutionEnvironment environment;
-    environment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    environment.setDeviceHierarchy(environment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
-    EXPECT_TRUE(environment.isExposingSubDevicesAsDevices());
-}
-
-TEST(ExecutionEnvironment, givenDefaultConstructoWhenItIsCalledAndReturnSubDevicesAsApiDevicesIsSetFalseThenSubDevicesAsDevicesIsFalse) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(0);
-    MockExecutionEnvironment environment;
-    environment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    environment.setDeviceHierarchy(environment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
-    EXPECT_FALSE(environment.isExposingSubDevicesAsDevices());
-}
-
 TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
     auto executionEnvironment = new ExecutionEnvironment();
 
