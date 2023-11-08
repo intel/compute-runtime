@@ -1093,7 +1093,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
 
     if (signalEvent) {
         signalEvent->setGpuEndTimestamp();
-        signalEvent->hostSignal();
+
+        if (signalEvent->isCounterBased()) {
+            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, inOrderAllocationOffset);
+            signalEvent->setIsCompleted();
+        } else {
+            signalEvent->hostSignal();
+        }
     }
 
     return ZE_RESULT_SUCCESS;

@@ -89,6 +89,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isTimestampEventForMultiTile;
+    using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::pipeControlMultiKernelEventSync;
@@ -189,6 +190,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::latestFlushIsHostVisible;
+    using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;

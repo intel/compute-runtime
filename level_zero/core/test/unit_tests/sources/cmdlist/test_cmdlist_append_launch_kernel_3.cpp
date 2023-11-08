@@ -3513,6 +3513,55 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, 
     context->freeMem(deviceAlloc);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDoingCpuCopyThenPassInfoToEvent, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->copyThroughLockedPtrEnabled = true;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto eventHandle = events[0]->toHandle();
+
+    EXPECT_EQ(nullptr, events[0]->inOrderExecInfo.get());
+
+    uint32_t hostCopyData = 0;
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer());
+    *hostAddress = 3;
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, false, false);
+
+    EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
+    EXPECT_EQ(0u, events[0]->inOrderExecSignalValue);
+    EXPECT_TRUE(events[0]->isAlreadyCompleted());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    EXPECT_FALSE(events[0]->isAlreadyCompleted());
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, false, false);
+
+    EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    EXPECT_TRUE(events[0]->isAlreadyCompleted());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle, 0, nullptr, false, false);
+
+    EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
+    EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
+    EXPECT_TRUE(events[0]->isAlreadyCompleted());
+
+    context->freeMem(deviceAlloc);
+}
+
 HWTEST2_F(InOrderCmdListTests, wWhenUsingImmediateCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
     auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
@@ -4672,11 +4721,13 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     regularCmdList->inOrderAllocationOffset = 123;
     auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer());
     *hostAddr = 0x1234;
+    regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining = true;
 
     regularCmdList->reset();
     EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->inOrderDependencyCounter);
     EXPECT_EQ(0u, regularCmdList->inOrderAllocationOffset);
     EXPECT_EQ(0u, *hostAddr);
+    EXPECT_FALSE(regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenUpdateCounterAllocation, IsAtLeastXeHpCore) {

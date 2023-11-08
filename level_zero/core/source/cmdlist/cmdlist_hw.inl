@@ -148,6 +148,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         memset(inOrderDependencyCounterAllocation.getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation.getUnderlyingBufferSize());
     }
 
+    latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+
     return ZE_RESULT_SUCCESS;
 }
 
