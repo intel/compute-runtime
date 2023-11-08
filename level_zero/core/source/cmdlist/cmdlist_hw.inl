@@ -150,6 +150,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
 
+    this->inOrderPatchCmds.clear();
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2365,7 +2367,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::shared_ptr<InOrderExecInfo> &inOrderExecInfo, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    UNRECOVERABLE_IF(waitValue > std::numeric_limits<uint32_t>::max());
+    UNRECOVERABLE_IF(waitValue > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) && !isQwordInOrderCounter());
 
     auto &dependencyCounterAllocation = inOrderExecInfo->inOrderDependencyCounterAllocation;
 
@@ -2380,13 +2382,26 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
         } else {
             using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
+            bool indirectMode = false;
+
+            if (isQwordInOrderCounter()) {
+                indirectMode = true;
+
+                auto lri1 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0, getLowPart(waitValue), true);
+                auto lri2 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0 + 4, getHighPart(waitValue), true);
+
+                if (inOrderExecInfo->isRegularCmdList) {
+                    addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, InOrderPatchCommandHelpers::PatchCmdType::Lri64b);
+                }
+            }
+
             auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)));
 
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                    false, true, isQwordInOrderCounter(), false);
+                                                                    false, true, isQwordInOrderCounter(), indirectMode);
 
-            if (inOrderExecInfo->isRegularCmdList) {
-                addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, waitValue, InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
+            if (inOrderExecInfo->isRegularCmdList && !isQwordInOrderCounter()) {
+                addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, nullptr, waitValue, InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
             }
         }
 
@@ -2511,7 +2526,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
                                                            isQwordInOrderCounter(), (this->partitionCount > 1));
 
-    addCmdForPatching(nullptr, miStoreCmd, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+    addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
 
     if (NEO::EncodeUserInterruptHelper::isOperationAllowed(NEO::EncodeUserInterruptHelper::onSignalingFenceMask)) {
         NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
@@ -3541,9 +3556,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
+void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
     if ((NEO::DebugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && (this->cmdListType == TYPE_REGULAR)) {
-        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd, counterValue, patchCmdType);
+        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType);
     }
 }
 

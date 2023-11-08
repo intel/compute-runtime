@@ -46,6 +46,7 @@ inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
 
 enum class PatchCmdType {
     None,
+    Lri64b,
     Sdi,
     Semaphore,
     Walker
@@ -53,23 +54,26 @@ enum class PatchCmdType {
 
 template <typename GfxFamily>
 struct PatchCmd {
-    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd, uint64_t baseCounterValue, PatchCmdType patchCmdType)
-        : cmd(cmd), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType) {
+    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd1, void *cmd2, uint64_t baseCounterValue, PatchCmdType patchCmdType)
+        : cmd1(cmd1), cmd2(cmd2), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType) {
         if (inOrderExecInfo) {
             this->inOrderExecInfo = *inOrderExecInfo;
         }
     }
 
-    void patch(uint64_t appendCunterValue) {
+    void patch(uint64_t appendCounterValue) {
         switch (patchCmdType) {
         case PatchCmdType::Sdi:
-            patchSdi(appendCunterValue);
+            patchSdi(appendCounterValue);
             break;
         case PatchCmdType::Semaphore:
-            patchSemaphore(appendCunterValue);
+            patchSemaphore(appendCounterValue);
             break;
         case PatchCmdType::Walker:
-            patchComputeWalker(appendCunterValue);
+            patchComputeWalker(appendCounterValue);
+            break;
+        case PatchCmdType::Lri64b:
+            patchLri64b(appendCounterValue);
             break;
         default:
             UNRECOVERABLE_IF(true);
@@ -80,37 +84,55 @@ struct PatchCmd {
     bool isExternalDependency() const { return inOrderExecInfo.get(); }
 
     std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
-    void *cmd = nullptr;
+    void *cmd1 = nullptr;
+    void *cmd2 = nullptr;
     const uint64_t baseCounterValue = 0;
     const PatchCmdType patchCmdType = PatchCmdType::None;
 
   protected:
-    void patchSdi(uint64_t appendCunterValue) {
-        auto sdiCmd = reinterpret_cast<typename GfxFamily::MI_STORE_DATA_IMM *>(cmd);
-        sdiCmd->setDataDword0(getLowPart(baseCounterValue + appendCunterValue));
-        sdiCmd->setDataDword1(getHighPart(baseCounterValue + appendCunterValue));
+    void patchSdi(uint64_t appendCounterValue) {
+        auto sdiCmd = reinterpret_cast<typename GfxFamily::MI_STORE_DATA_IMM *>(cmd1);
+        sdiCmd->setDataDword0(getLowPart(baseCounterValue + appendCounterValue));
+        sdiCmd->setDataDword1(getHighPart(baseCounterValue + appendCounterValue));
     }
 
-    void patchSemaphore(uint64_t appendCunterValue) {
+    void patchSemaphore(uint64_t appendCounterValue) {
         if (isExternalDependency()) {
-            appendCunterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
-            if (appendCunterValue == 0) {
+            appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+            if (appendCounterValue == 0) {
                 return;
             }
         }
 
-        auto semaphoreCmd = reinterpret_cast<typename GfxFamily::MI_SEMAPHORE_WAIT *>(cmd);
-        semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCunterValue));
+        auto semaphoreCmd = reinterpret_cast<typename GfxFamily::MI_SEMAPHORE_WAIT *>(cmd1);
+        semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
     }
 
-    void patchComputeWalker(uint64_t appendCunterValue) {
+    void patchComputeWalker(uint64_t appendCounterValue) {
         if constexpr (GfxFamily::walkerPostSyncSupport) {
-            auto walkerCmd = reinterpret_cast<typename GfxFamily::COMPUTE_WALKER *>(cmd);
+            auto walkerCmd = reinterpret_cast<typename GfxFamily::COMPUTE_WALKER *>(cmd1);
             auto &postSync = walkerCmd->getPostSync();
-            postSync.setImmediateData(baseCounterValue + appendCunterValue);
+            postSync.setImmediateData(baseCounterValue + appendCounterValue);
         } else {
             UNRECOVERABLE_IF(true);
         }
+    }
+
+    void patchLri64b(uint64_t appendCounterValue) {
+        if (isExternalDependency()) {
+            appendCounterValue = InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+            if (appendCounterValue == 0) {
+                return;
+            }
+        }
+
+        const uint64_t counterValue = baseCounterValue + appendCounterValue;
+
+        auto lri1 = reinterpret_cast<typename GfxFamily::MI_LOAD_REGISTER_IMM *>(cmd1);
+        lri1->setDataDword(getLowPart(counterValue));
+
+        auto lri2 = reinterpret_cast<typename GfxFamily::MI_LOAD_REGISTER_IMM *>(cmd2);
+        lri2->setDataDword(getHighPart(counterValue));
     }
 
     PatchCmd() = delete;

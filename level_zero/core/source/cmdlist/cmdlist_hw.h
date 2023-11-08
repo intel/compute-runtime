@@ -339,7 +339,7 @@ struct CommandListCoreFamily : CommandListImp {
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;
 
-    void addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
+    void addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 
     InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 

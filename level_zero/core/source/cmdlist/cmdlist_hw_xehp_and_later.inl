@@ -335,7 +335,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
-            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandHelpers::PatchCmdType::Walker);
+            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandHelpers::PatchCmdType::Walker);
         }
     }
 

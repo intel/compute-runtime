@@ -808,6 +808,9 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         return ptr;
     }
 
+    template <typename GfxFamily>
+    bool verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter);
+
     DebugManagerStateRestore restorer;
     std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
@@ -818,6 +821,46 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
 };
+
+template <typename GfxFamily>
+bool InOrderCmdListTests::verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    if (qwordCounter) {
+        auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*cmd);
+        if (!lri) {
+            return false;
+        }
+        EXPECT_EQ(getLowPart(counter), lri->getDataDword());
+        EXPECT_EQ(CS_GPR_R0, lri->getRegisterOffset());
+
+        lri++;
+
+        EXPECT_EQ(getHighPart(counter), lri->getDataDword());
+        EXPECT_EQ(CS_GPR_R0 + 4, lri->getRegisterOffset());
+
+        std::advance(cmd, 2);
+    }
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmd);
+    if (!semaphoreCmd) {
+        return false;
+    }
+
+    EXPECT_EQ(syncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+    if (qwordCounter) {
+        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+    } else {
+        EXPECT_EQ(0u, getHighPart(counter));
+        EXPECT_EQ(getLowPart(counter), semaphoreCmd->getSemaphoreDataDword());
+    }
+
+    cmd++;
+    return true;
+}
 
 HWTEST2_F(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -1046,14 +1089,13 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
         cmdStream->getUsed() - offset));
 
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
     ASSERT_NE(cmdList.end(), itor);
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    if (immCmdList->isQwordInOrderCounter()) {
+        std::advance(itor, -2); // verify 2x LRI before semaphore
+    }
 
-    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset, semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset, immCmdList->isQwordInOrderCounter()));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingSemaphoreThenProgramUserInterrupt, IsAtLeastSkl) {
@@ -1360,16 +1402,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
 
     itor++; // skip implicit dependency
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    ASSERT_NE(nullptr, semaphoreCmd);
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList2->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset2, immCmdList->isQwordInOrderCounter()));
 
-    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList2->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset2, semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-
-    itor++;
-    semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(nullptr, semaphoreCmd);
+    itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
+    EXPECT_EQ(cmdList.end(), itor);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmediateCmdListThenConvertEventToCounterBased, IsAtLeastSkl) {
@@ -1832,15 +1868,15 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentC
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
     auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
     ASSERT_NE(cmdList.end(), itor);
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    if (immCmdList1->isQwordInOrderCounter()) {
+        std::advance(itor, -2); // verify 2x LRI before semaphore
+    }
 
-    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList1->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), immCmdList1->isQwordInOrderCounter()));
+
     EXPECT_NE(immCmdList1->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), immCmdList2->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress());
-    EXPECT_EQ(immCmdList1->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenClearEventCsrList, IsAtLeastSkl) {
@@ -2365,11 +2401,11 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonPostSyncWalkerMatcher) {
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
 
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }
@@ -2499,15 +2535,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventT
                                                       ptrOffset(cmdStream->getCpuBase(), offset),
                                                       (cmdStream->getUsed() - offset)));
 
-    {
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin());
-
-        ASSERT_NE(nullptr, semaphoreCmd);
-
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(inOrderSyncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-    }
+    auto itor = cmdList.begin();
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, inOrderSyncVa, immCmdList->isQwordInOrderCounter()));
 
     {
 
@@ -2549,16 +2578,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
 
     uint32_t inOrderCounter = 1;
 
-    auto verifySemaphore = [&inOrderSyncVa](const GenCmdList::iterator &iterator, uint64_t waitValue) {
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
-
-        ASSERT_NE(nullptr, semaphoreCmd);
-
-        EXPECT_EQ(getLowPart(waitValue), semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(inOrderSyncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-    };
-
     auto verifySdi = [&inOrderSyncVa, &immCmdList](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint64_t signalValue) {
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
         while (sdiCmd == nullptr) {
@@ -2586,7 +2605,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), inOrderCounter);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, immCmdList->isQwordInOrderCounter()));
+
         verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 
@@ -2602,7 +2623,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), inOrderCounter);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, immCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 
@@ -2616,7 +2638,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingNonKernelAppendThe
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), inOrderCounter);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, inOrderCounter, inOrderSyncVa, immCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), ++inOrderCounter);
     }
 }
@@ -2653,16 +2676,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    auto verifySemaphore = [&inOrderSyncVa](const GenCmdList::iterator &iterator, uint64_t waitValue) {
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
-
-        ASSERT_NE(nullptr, semaphoreCmd);
-
-        EXPECT_EQ(getLowPart(waitValue), semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(inOrderSyncVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-    };
-
     auto verifySdi = [&inOrderSyncVa, &regularCmdList](GenCmdList::reverse_iterator rIterator, GenCmdList::reverse_iterator rEnd, uint64_t signalValue) {
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*rIterator);
         while (sdiCmd == nullptr) {
@@ -2690,7 +2703,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), 1);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, inOrderSyncVa, regularCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), 2);
     }
 
@@ -2706,7 +2720,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), 2);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 2, inOrderSyncVa, regularCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), 3);
     }
 
@@ -2720,7 +2735,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), 3);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 3, inOrderSyncVa, regularCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), 4);
     }
 
@@ -2736,7 +2752,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), 4);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 4, inOrderSyncVa, regularCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), 5);
     }
 
@@ -2752,7 +2769,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        verifySemaphore(cmdList.begin(), 5);
+        auto itor = cmdList.begin();
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 5, inOrderSyncVa, regularCmdList->isQwordInOrderCounter()));
         verifySdi(cmdList.rbegin(), cmdList.rend(), 6);
     }
 }
@@ -2838,12 +2856,11 @@ HWTEST2_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFro
         if (semaphoreCmd->getSemaphoreGraphicsAddress() == immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress()) {
             // skip implicit dependency
             semaphoreItor++;
-            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-            ASSERT_NE(nullptr, semaphoreCmd);
+        } else if (immCmdList->isQwordInOrderCounter()) {
+            std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
         }
 
-        EXPECT_EQ(expectedValue, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(regularCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, expectedValue, regularCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), immCmdList->isQwordInOrderCounter()));
     };
 
     // 0 Execute calls
@@ -3199,11 +3216,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendWaitOnEvents
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), semaphoreItor);
 
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-    ASSERT_NE(nullptr, semaphoreCmd);
+    if (immCmdList->isQwordInOrderCounter()) {
+        std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
+    }
 
-    EXPECT_EQ(2u, semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, 2, immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), immCmdList->isQwordInOrderCounter()));
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
     ASSERT_NE(cmdList.end(), sdiItor);
@@ -3757,6 +3774,18 @@ HWTEST2_F(InOrderCmdListTests, wWhenUsingImmediateCmdListThenDontAddCmdsToPatch,
     EXPECT_EQ(0u, immCmdList->inOrderPatchCmds.size());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenRegularCmdListWhenResetCalledThenClearCmdsToPatch, IsAtLeastSkl) {
+    auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_NE(0u, cmdList->inOrderPatchCmds.size());
+
+    cmdList->reset();
+
+    EXPECT_EQ(0u, cmdList->inOrderPatchCmds.size());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathThenReportError, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;
@@ -3955,23 +3984,26 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin());
+        auto itor = cmdList.begin();
+        if (immCmdList->isQwordInOrderCounter()) {
+            std::advance(itor, 2);
+        }
+
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
 
         if (isCompactEvent) {
             ASSERT_EQ(nullptr, semaphoreCmd); // already waited on previous call
         } else {
             ASSERT_NE(nullptr, semaphoreCmd);
 
+            if (immCmdList->isQwordInOrderCounter()) {
+                std::advance(itor, -2);
+            }
+
             auto gpuAddress = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
 
-            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-            ASSERT_NE(nullptr, semaphoreCmd);
-
-            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress + sizeof(uint64_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress, immCmdList->isQwordInOrderCounter()));
+            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress + sizeof(uint64_t), immCmdList->isQwordInOrderCounter()));
         }
     }
 }
@@ -4165,9 +4197,9 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 
     ASSERT_EQ(4u, regularCmdList->inOrderPatchCmds.size()); // Walker + 2x Semaphore + Walker
 
-    auto walkerFromContainer1 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[0].cmd);
+    auto walkerFromContainer1 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[0].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer1);
-    auto walkerFromContainer2 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[3].cmd);
+    auto walkerFromContainer2 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[3].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer2);
     COMPUTE_WALKER *walkerFromParser1 = nullptr;
     COMPUTE_WALKER *walkerFromParser2 = nullptr;
@@ -4289,12 +4321,12 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             numExpectedSemaphores++;
             itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
             ASSERT_NE(cmdList.end(), itor);
-            auto implicitSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-            ASSERT_NE(nullptr, implicitSemaphore);
 
-            EXPECT_EQ(counterGpuAddress, implicitSemaphore->getSemaphoreGraphicsAddress());
-            EXPECT_EQ(submissionId, implicitSemaphore->getSemaphoreDataDword());
-            itor++;
+            if (immCmdList.isQwordInOrderCounter()) {
+                std::advance(itor, -2); // verify 2x LRI before semaphore
+            }
+
+            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, submissionId, counterGpuAddress, immCmdList.isQwordInOrderCounter()));
         }
 
         if (externalDependencyGpuVa > 0) {
@@ -4334,13 +4366,12 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
 
     if (submissionId > 0) {
-        auto implicitSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-        ASSERT_NE(nullptr, implicitSemaphore);
+        ASSERT_NE(cmdList.end(), semaphoreItor);
+        if (immCmdList.isQwordInOrderCounter()) {
+            std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
+        }
 
-        EXPECT_EQ(counterGpuAddress, implicitSemaphore->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(submissionId, implicitSemaphore->getSemaphoreDataDword());
-
-        ++semaphoreItor;
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, submissionId, counterGpuAddress, immCmdList.isQwordInOrderCounter()));
     }
 
     for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
@@ -4543,6 +4574,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEna
 HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_command_queue_desc_t desc = {};
 
@@ -4560,7 +4592,7 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
 
     EXPECT_EQ(1u, regularCmdList->inOrderPatchCmds.size()); // SDI
 
-    auto sdiFromContainer1 = genCmdCast<MI_STORE_DATA_IMM *>(regularCmdList->inOrderPatchCmds[0].cmd);
+    auto sdiFromContainer1 = genCmdCast<MI_STORE_DATA_IMM *>(regularCmdList->inOrderPatchCmds[0].cmd1);
     ASSERT_NE(nullptr, sdiFromContainer1);
     MI_STORE_DATA_IMM *sdiFromParser1 = nullptr;
 
@@ -4578,13 +4610,29 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
 
     offset = cmdStream->getUsed();
     regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
-    ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // SDI + Semaphore + SDI
+    ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // SDI + Semaphore/2xLRI + SDI
 
-    auto semaphoreFromContainer2 = genCmdCast<MI_SEMAPHORE_WAIT *>(regularCmdList->inOrderPatchCmds[1].cmd);
-    ASSERT_NE(nullptr, semaphoreFromContainer2);
     MI_SEMAPHORE_WAIT *semaphoreFromParser2 = nullptr;
+    MI_SEMAPHORE_WAIT *semaphoreFromContainer2 = nullptr;
 
-    auto sdiFromContainer2 = genCmdCast<MI_STORE_DATA_IMM *>(regularCmdList->inOrderPatchCmds[2].cmd);
+    MI_LOAD_REGISTER_IMM *firstLriFromContainer2 = nullptr;
+    MI_LOAD_REGISTER_IMM *secondLriFromContainer2 = nullptr;
+
+    MI_LOAD_REGISTER_IMM *firstLriFromParser2 = nullptr;
+    MI_LOAD_REGISTER_IMM *secondLriFromParser2 = nullptr;
+
+    if (regularCmdList->isQwordInOrderCounter()) {
+        firstLriFromContainer2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(regularCmdList->inOrderPatchCmds[1].cmd1);
+        ASSERT_NE(nullptr, firstLriFromContainer2);
+        secondLriFromContainer2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(regularCmdList->inOrderPatchCmds[1].cmd2);
+        ASSERT_NE(nullptr, secondLriFromContainer2);
+    } else {
+        semaphoreFromContainer2 = genCmdCast<MI_SEMAPHORE_WAIT *>(regularCmdList->inOrderPatchCmds[1].cmd1);
+        EXPECT_EQ(nullptr, regularCmdList->inOrderPatchCmds[1].cmd2);
+        ASSERT_NE(nullptr, semaphoreFromContainer2);
+    }
+
+    auto sdiFromContainer2 = genCmdCast<MI_STORE_DATA_IMM *>(regularCmdList->inOrderPatchCmds[2].cmd1);
     ASSERT_NE(nullptr, sdiFromContainer2);
     MI_STORE_DATA_IMM *sdiFromParser2 = nullptr;
 
@@ -4594,12 +4642,25 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), semaphoreItor);
+        auto itor = cmdList.begin();
 
-        semaphoreFromParser2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        if (regularCmdList->isQwordInOrderCounter()) {
+            itor = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+            ASSERT_NE(cmdList.end(), itor);
 
-        auto sdiItor = find<MI_STORE_DATA_IMM *>(semaphoreItor, cmdList.end());
+            firstLriFromParser2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+            ASSERT_NE(nullptr, firstLriFromParser2);
+            secondLriFromParser2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(*(++itor));
+            ASSERT_NE(nullptr, secondLriFromParser2);
+        } else {
+            auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+            ASSERT_NE(cmdList.end(), itor);
+
+            semaphoreFromParser2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+            ASSERT_NE(nullptr, semaphoreFromParser2);
+        }
+
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), sdiItor);
 
         sdiFromParser2 = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
@@ -4610,14 +4671,42 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
     auto verifyPatching = [&](uint64_t executionCounter) {
         auto appendValue = regularCmdList->inOrderExecInfo->inOrderDependencyCounter * executionCounter;
 
-        EXPECT_EQ(1u + appendValue, sdiFromContainer1->getDataDword0());
-        EXPECT_EQ(1u + appendValue, sdiFromParser1->getDataDword0());
+        EXPECT_EQ(getLowPart(1u + appendValue), sdiFromContainer1->getDataDword0());
+        EXPECT_EQ(getLowPart(1u + appendValue), sdiFromParser1->getDataDword0());
 
-        EXPECT_EQ(1u + appendValue, semaphoreFromContainer2->getSemaphoreDataDword());
-        EXPECT_EQ(1u + appendValue, semaphoreFromParser2->getSemaphoreDataDword());
+        if (regularCmdList->isQwordInOrderCounter()) {
+            EXPECT_EQ(getHighPart(1u + appendValue), sdiFromContainer1->getDataDword1());
+            EXPECT_EQ(getHighPart(1u + appendValue), sdiFromParser1->getDataDword1());
 
-        EXPECT_EQ(2u + appendValue, sdiFromContainer2->getDataDword0());
-        EXPECT_EQ(2u + appendValue, sdiFromParser2->getDataDword0());
+            EXPECT_TRUE(sdiFromContainer1->getStoreQword());
+            EXPECT_TRUE(sdiFromParser1->getStoreQword());
+
+            EXPECT_EQ(getLowPart(1u + appendValue), firstLriFromContainer2->getDataDword());
+            EXPECT_EQ(getLowPart(1u + appendValue), firstLriFromParser2->getDataDword());
+
+            EXPECT_EQ(getHighPart(1u + appendValue), secondLriFromContainer2->getDataDword());
+            EXPECT_EQ(getHighPart(1u + appendValue), secondLriFromParser2->getDataDword());
+        } else {
+            EXPECT_FALSE(sdiFromContainer1->getStoreQword());
+            EXPECT_FALSE(sdiFromParser1->getStoreQword());
+
+            EXPECT_EQ(1u + appendValue, semaphoreFromContainer2->getSemaphoreDataDword());
+            EXPECT_EQ(1u + appendValue, semaphoreFromParser2->getSemaphoreDataDword());
+        }
+
+        EXPECT_EQ(getLowPart(2u + appendValue), sdiFromContainer2->getDataDword0());
+        EXPECT_EQ(getLowPart(2u + appendValue), sdiFromParser2->getDataDword0());
+
+        if (regularCmdList->isQwordInOrderCounter()) {
+            EXPECT_EQ(getHighPart(2u + appendValue), sdiFromContainer2->getDataDword1());
+            EXPECT_EQ(getHighPart(2u + appendValue), sdiFromParser2->getDataDword1());
+
+            EXPECT_TRUE(sdiFromContainer2->getStoreQword());
+            EXPECT_TRUE(sdiFromParser2->getStoreQword());
+        } else {
+            EXPECT_FALSE(sdiFromContainer2->getStoreQword());
+            EXPECT_FALSE(sdiFromParser2->getStoreQword());
+        }
     };
 
     regularCmdList->close();
@@ -4632,6 +4721,13 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
 
     mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
     verifyPatching(2);
+
+    if (regularCmdList->isQwordInOrderCounter()) {
+        regularCmdList->inOrderExecInfo->regularCmdListSubmissionCounter = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 3;
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+
+        verifyPatching(regularCmdList->inOrderExecInfo->regularCmdListSubmissionCounter - 1);
+    }
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExecutingThenDontPatchWhenExecutedOnlyOnce, IsAtLeastSkl) {
@@ -4675,13 +4771,14 @@ HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenEx
         auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         ASSERT_EQ(2u, semaphoreCmds.size());
 
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[0]);
-        EXPECT_EQ(expectedImplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(implicitCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        if (regularCmdList1->isQwordInOrderCounter()) {
+            // verify 2x LRI before semaphore
+            std::advance(semaphoreCmds[0], -2);
+            std::advance(semaphoreCmds[1], -2);
+        }
 
-        semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[1]);
-        EXPECT_EQ(expectedExplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(externalCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreCmds[0], expectedImplicitDependencyValue, implicitCounterGpuVa, regularCmdList1->isQwordInOrderCounter()));
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreCmds[1], expectedExplicitDependencyValue, externalCounterGpuVa, regularCmdList1->isQwordInOrderCounter()));
     };
 
     auto cmdListHandle1 = regularCmdList1->toHandle();
@@ -4744,13 +4841,14 @@ HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenEx
         auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         ASSERT_EQ(2u, semaphoreCmds.size());
 
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[0]);
-        EXPECT_EQ(expectedImplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(implicitCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        if (regularCmdList1->isQwordInOrderCounter()) {
+            // verify 2x LRI before semaphore
+            std::advance(semaphoreCmds[0], -2);
+            std::advance(semaphoreCmds[1], -2);
+        }
 
-        semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCmds[1]);
-        EXPECT_EQ(expectedExplicitDependencyValue, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(externalCounterGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreCmds[0], expectedImplicitDependencyValue, implicitCounterGpuVa, regularCmdList1->isQwordInOrderCounter()));
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreCmds[1], expectedExplicitDependencyValue, externalCounterGpuVa, regularCmdList1->isQwordInOrderCounter()));
     };
 
     regularCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -4810,9 +4908,9 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
 
     ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // Walker + Semaphore + Walker
 
-    auto walkerFromContainer1 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[0].cmd);
+    auto walkerFromContainer1 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[0].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer1);
-    auto walkerFromContainer2 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[2].cmd);
+    auto walkerFromContainer2 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[2].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer2);
     COMPUTE_WALKER *walkerFromParser1 = nullptr;
     COMPUTE_WALKER *walkerFromParser2 = nullptr;
@@ -4906,9 +5004,10 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
-        EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*cmdList.begin()));
+        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), semaphoreItor);
 
-        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<COMPUTE_WALKER *>(semaphoreItor, cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
@@ -5040,6 +5139,9 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
+        if (regularCmdList->isQwordInOrderCounter()) {
+            std::advance(itor, 2); // 2x LRI before semaphore
+        }
         EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*itor));
 
         itor++;

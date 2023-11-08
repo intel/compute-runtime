@@ -16,13 +16,15 @@ inline bool GfxCoreHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareI
 }
 
 template <typename GfxFamily>
-void LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
+void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
     MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
     cmd.setRegisterOffset(address);
     cmd.setDataDword(value);
 
     auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
     *lri = cmd;
+
+    return lri;
 }
 
 template <typename GfxFamily>
