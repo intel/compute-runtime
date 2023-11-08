@@ -27,7 +27,7 @@ add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
 add_subdirectories()
 include(enable_cores.cmake)
 
-if(WIN32)
+if(MSVC)
   if("${IGDRCL_OPTION__BITS}" STREQUAL "32")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
   endif()

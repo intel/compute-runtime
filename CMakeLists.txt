@@ -81,6 +81,12 @@ endif()
 
 include(GNUInstallDirs)
 
+if(USE_SANITIZE_UB AND WIN32)
+  add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker /NODEFAULTLIB:clang_rt.ubsan_standalone_cxx-x86_64.lib")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker /NODEFAULTLIB:clang_rt.ubsan_standalone_cxx-x86_64.lib")
+endif()
+
 # define global property where we will collect component list to package
 define_property(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
 set(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST "")
@@ -271,13 +277,18 @@ endif()
 
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
-if(MSVC)
-  string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-  string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-  string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASEINTERNAL}")
-
-  string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  add_definitions(-D_HAS_STATIC_RTTI=0)
+if(WIN32)
+  if(MSVC)
+    string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASEINTERNAL}")
+    string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    add_definitions(-D_HAS_STATIC_RTTI=0)
+  else()
+    string(REPLACE "-D_DLL " "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "-D_DLL " "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "-D_DLL " "" CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASEINTERNAL}")
+  endif()
   add_definitions(-DPURGE_DEBUG_KEY_NAMES=1)
 else()
   add_definitions(-DPURGE_DEBUG_KEY_NAMES=0)
