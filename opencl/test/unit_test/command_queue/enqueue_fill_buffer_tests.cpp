@@ -10,6 +10,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocations_list.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -416,6 +417,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeAligned)
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillBufferIsCalledTwiceThenPatternAllocationIsReused) {
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+        csr.flushTagUpdate();
+        csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
+    }
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
@@ -429,6 +434,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillBufferIsCalledTwiceThenPatternAlloca
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteShouldGetPreparedForMiddleKernel) {
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+        csr.flushTagUpdate();
+        csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
+    }
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
@@ -462,6 +471,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteSho
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeTwoBytesShouldGetPreparedForMiddleKernel) {
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+        csr.flushTagUpdate();
+        csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
+    }
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 

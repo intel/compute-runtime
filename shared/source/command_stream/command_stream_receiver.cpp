@@ -266,8 +266,10 @@ void CommandStreamReceiver::preallocateCommandBuffer() {
     const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
                                                                  isMultiOsContextCapable(), false, deviceBitfield};
     auto allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-    getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    this->makeResident(*allocation);
+    if (allocation) {
+        getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+        this->makeResident(*allocation);
+    }
 }
 
 void CommandStreamReceiver::fillReusableAllocationsList() {

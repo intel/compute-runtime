@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocations_list.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -862,6 +863,10 @@ TEST_F(EnqueueSvmTest, GivenRepeatCallsWhenFillingMemoryThenSuccessIsReturnedFor
 
 TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    if (pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0) {
+        csr.flushTagUpdate();
+        csr.getInternalAllocationStorage()->cleanAllocationList(-1, AllocationUsage::REUSABLE_ALLOCATION);
+    }
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
     const float pattern[1] = {1.2345f};

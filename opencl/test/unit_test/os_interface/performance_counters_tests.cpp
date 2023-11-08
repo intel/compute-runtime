@@ -225,6 +225,7 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
 
     void TearDown() override {
         PerformanceCountersMetricsLibraryFixture::tearDown();
+        queue->getGpgpuCommandStreamReceiver().setupContext(*device->getDefaultEngine().osContext);
     }
     std::unique_ptr<OsContext> osContext;
 };

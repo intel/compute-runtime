@@ -173,17 +173,30 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagDisabledWhenCallFillReusableAllocat
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestPreallocationCalledThenDoNotAllocateCommandBuffer) {
+HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestPreallocationCalledThenPreallocateCommandBufferCorrectly) {
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    auto &productHelper = getHelper<ProductHelper>();
+    const auto expectedPreallocations = productHelper.getCommandBuffersPreallocatedPerCommandQueue();
 
     commandStreamReceiver->requestPreallocation();
-    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+    if (expectedPreallocations > 0) {
+        EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+        EXPECT_EQ(expectedPreallocations, commandStreamReceiver->getResidencyAllocations().size());
+    } else {
+        EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+        EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+    }
 
     commandStreamReceiver->releasePreallocationRequest();
-    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+    if (expectedPreallocations > 0) {
+        EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+        EXPECT_EQ(expectedPreallocations, commandStreamReceiver->getResidencyAllocations().size());
+    } else {
+        EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+        EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+    }
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueEqualZeroWhenRequestPreallocationCalledThenDoNotAllocateCommandBuffer) {
@@ -218,6 +231,28 @@ HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreall
     commandStreamReceiver->requestPreallocation();
     EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(2u, commandStreamReceiver->getResidencyAllocations().size());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreallocationCalledButAllocationFailedThenRequestIsIgnored) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    // make allocation fail
+    ExecutionEnvironment &executionEnvironment = *pDevice->getExecutionEnvironment();
+    auto memoryManagerBackup = executionEnvironment.memoryManager.release();
+    executionEnvironment.memoryManager.reset(new FailMemoryManager(executionEnvironment));
+
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    // make allocation succeed
+    executionEnvironment.memoryManager.reset(memoryManagerBackup);
+    commandStreamReceiver->requestPreallocation();
+    EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenRegisterClientThenIncrementClientNum) {

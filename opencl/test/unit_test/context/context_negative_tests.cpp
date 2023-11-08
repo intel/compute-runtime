@@ -29,7 +29,8 @@ typedef Test<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); // failing to allocate pool buffer is non-critical
+    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);      // failing to allocate pool buffer is non-critical
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0); // same for preallocations
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
 

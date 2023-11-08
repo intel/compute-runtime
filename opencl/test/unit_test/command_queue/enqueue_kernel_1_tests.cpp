@@ -793,9 +793,10 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     size_t timestampPacketSurfacesCount = mockCsr->peekTimestampPacketWriteEnabled() ? 1 : 0;
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
+    size_t commandBufferCount = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
-    EXPECT_EQ(5u + csrSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize, cmdBuffer->surfaces.size());
+    EXPECT_EQ(4u + csrSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize + commandBufferCount, cmdBuffer->surfaces.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtrWithL3FlushRequiredWhenEnqueueKernelIsCalledThenFlushIsCalledForReducedAddressSpacePlatforms) {
@@ -939,6 +940,8 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
     mockCsrmockCsr.useGpuIdleImplicitFlush = false;
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsrmockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
+
+    pDevice->getGpgpuCommandStreamReceiver().flushTagUpdate(); // to clear residency allocations after preallocations
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     size_t gws[3] = {1, 0, 0};

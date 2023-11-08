@@ -333,7 +333,8 @@ HWTEST_F(EnqueueHandlerTest, WhenEnqueuingHandlerCallOnEnqueueMarkerThenCallProc
         nullptr);
 
     EXPECT_FALSE(csr->processEvictionCalled);
-    EXPECT_EQ(0u, csr->madeResidentGfxAllocations.size());
+    const auto expectedMadeResidentGfxAllocations = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
+    EXPECT_EQ(expectedMadeResidentGfxAllocations, csr->madeResidentGfxAllocations.size());
     EXPECT_EQ(0u, csr->madeNonResidentGfxAllocations.size());
 }
 
@@ -732,24 +733,23 @@ struct EnqueueHandlerTestBasic : public ::testing::Test {
         device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get());
 
-        auto mockCmdQ = std::make_unique<MockCmdQueueType>(context.get(), device.get(), nullptr);
-
-        auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
-        ultCsr.taskCount = initialTaskCount;
-
+        auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(device->getGpgpuCommandStreamReceiver());
         mockInternalAllocationStorage = new MockInternalAllocationStorage(ultCsr);
         ultCsr.internalAllocationStorage.reset(mockInternalAllocationStorage);
 
+        auto mockCmdQ = std::make_unique<MockCmdQueueType>(context.get(), device.get(), nullptr);
+
+        ultCsr.taskCount = initialTaskCount;
+
         return mockCmdQ;
     }
-
     MockInternalAllocationStorage *mockInternalAllocationStorage = nullptr;
     const uint32_t initialTaskCount = 100;
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
 };
 
-HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
+HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlockingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
     auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<MockCommandQueueHw<FamilyType>, FamilyType>();
     MockKernelWithInternals kernelInternals(*device, context.get());
     Kernel *kernel = kernelInternals.mockKernel;

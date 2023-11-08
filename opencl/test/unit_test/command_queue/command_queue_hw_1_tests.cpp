@@ -1142,6 +1142,8 @@ HWTEST_F(CommandQueueHwTest, givenCsrClientWhenCallingSyncPointsThenUnregister) 
 }
 
 HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnqueueSurfacesMakeResidentIsCalledOnce) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     UserEvent userEvent(context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;

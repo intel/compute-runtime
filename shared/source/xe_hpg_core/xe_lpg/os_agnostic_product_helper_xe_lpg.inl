@@ -91,4 +91,9 @@ bool ProductHelperHw<gfxProduct>::isPlatformDp4aSupported() const {
     return true;
 }
 
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQueue() const {
+    return 2u;
+}
+
 } // namespace NEO

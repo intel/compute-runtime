@@ -499,6 +499,8 @@ TEST_F(CommandQueueCommandStreamTest, WhenGettingCommandStreamWithNewSizeThenMax
 }
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForCommandStreamThenReturnsAllocationFromReusablePool) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -518,7 +520,9 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
     EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 }
 
-TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusabeList) {
+TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusableList) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     const auto &commandStream = cmdQ->getCS(100);
     auto graphicsAllocation = commandStream.getGraphicsAllocation();
@@ -531,6 +535,8 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenComm
 }
 
 TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsStoredForReuse) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -654,6 +660,8 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToC
 }
 
 HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -739,12 +747,14 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenA
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveWhenQueueISDestroyedThenIndirectHeapIsNotOnReuseList) {
+TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveWhenQueueIsDestroyedThenIndirectHeapIsNotOnReuseList) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     cmdQ->getIndirectHeap(this->GetParam(), 100);
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
-    // now destroy command queue, heap should go to reusable list
+    // now destroy command queue, heap should NOT go to reusable list
     delete cmdQ;
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 }
@@ -783,6 +793,8 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIn
 }
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocationIsNullThenNothingOnReuseList) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
