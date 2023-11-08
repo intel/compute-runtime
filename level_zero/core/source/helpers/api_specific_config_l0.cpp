@@ -72,6 +72,6 @@ const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
 
 bool ApiSpecificConfig::isSharedAllocPrefetchEnabled() {
     return (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
-            (NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() && ((NEO::DebugManager.flags.EnableBOChunking.get()) & 0x1)));
+            (NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() && ((NEO::DebugManager.flags.EnableBOChunking.get()) != -1) && ((NEO::DebugManager.flags.EnableBOChunking.get()) & 0x1)));
 }
 } // namespace NEO

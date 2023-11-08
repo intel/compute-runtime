@@ -53,6 +53,38 @@ TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAll
     EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 }
 
+TEST(ApiSpecificConfigL0Tests, GivenDebugFlagCombinationsGetCorrectSharedAllocPrefetchEnabled) {
+    DebugManagerStateRestore restore;
+
+    EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+
+    EXPECT_TRUE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+
+    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+
+    EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+
+    DebugManager.flags.EnableBOChunking.set(1);
+
+    EXPECT_TRUE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+
+    DebugManager.flags.EnableBOChunking.set(2);
+
+    EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+
+    DebugManager.flags.EnableBOChunking.set(3);
+
+    EXPECT_TRUE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+
+    DebugManager.flags.EnableBOChunking.set(0);
+
+    EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
+}
+
 TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
     EXPECT_TRUE(ImplicitScaling::apiSupport);
 }
