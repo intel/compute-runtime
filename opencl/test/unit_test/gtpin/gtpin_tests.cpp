@@ -2018,7 +2018,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelDoesNotHaveDebugDataT
     static size_t debugDataSize = 0;
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) -> void {
         paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
         paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
         paramsOut->kernel_id = paramsIn->igc_hash_id;
@@ -2045,7 +2045,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelHasDebugDataThenCorre
     size_t dummyDebugDataSize = 0x2245;
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) -> void {
         paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
         paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
         paramsOut->kernel_id = paramsIn->igc_hash_id;
@@ -2072,7 +2072,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenInstrumentedBinaryIsZebinTh
     static size_t debugDataSize = 0;
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) -> void {
         debugDataPtr = const_cast<void *>(paramsIn->debug_data);
         debugDataSize = paramsIn->debug_data_size;
     };
@@ -2106,7 +2106,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenInstrumentedBinaryIsZebinTh
 HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushedTaskCountIsNotified) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pContext, pDevice, nullptr);
 
-    auto onKernelSubmitFnc = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) { return; };
+    auto onKernelSubmitFnc = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) -> void {};
 
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
@@ -2420,7 +2420,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
-    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) -> void {
         auto allocData = std::make_unique<SvmAllocationData>(0);
         auto mockGA = std::make_unique<MockGraphicsAllocation>();
         allocData->gpuAllocations.addAllocation(mockGA.get());

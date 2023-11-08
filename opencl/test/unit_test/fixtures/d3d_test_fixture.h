@@ -198,12 +198,12 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     }
 
     MockD3DSharingFunctions<T> *mockSharingFcns;
-    MockContext *context;
-    MockCommandQueue *cmdQ;
-    char dummyD3DBuffer;
-    char dummyD3DBufferStaging;
-    char dummyD3DTexture;
-    char dummyD3DTextureStaging;
+    MockContext *context = nullptr;
+    MockCommandQueue *cmdQ = nullptr;
+    uint64_t dummyD3DBuffer{};
+    uint64_t dummyD3DBufferStaging{};
+    uint64_t dummyD3DTexture{};
+    uint64_t dummyD3DTextureStaging{};
     Gmm *gmm = nullptr;
     MockGmmResourceInfo *mockGmmResInfo = nullptr;
 

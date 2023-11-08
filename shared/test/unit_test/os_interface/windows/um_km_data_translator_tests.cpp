@@ -252,7 +252,7 @@ TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslC
     auto gmmHandleAllocator = translator->createGmmHandleAllocator();
     ASSERT_NE(nullptr, gmmHandleAllocator);
     gmmHandleAllocator->getHandleSize();
-    UmKmDataTempStorage<GMM_RESOURCE_INFO> gmmResInfo;
+    UmKmDataTempStorage<GMM_RESOURCE_INFO> gmmResInfo{};
     EXPECT_EQ(sizeof(GmmResourceInfoWinStruct), gmmHandleAllocator->getHandleSize());
     auto gmmResourceInfoHandle = gmmHandleAllocator->createHandle(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfo.data()));
     ASSERT_NE(nullptr, gmmResourceInfoHandle);

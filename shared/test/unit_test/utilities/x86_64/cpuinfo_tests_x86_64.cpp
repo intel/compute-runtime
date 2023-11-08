@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,28 +11,28 @@
 
 using namespace NEO;
 
-void mockCpuidEnableAll(int cpuInfo[4], int functionId) {
+void mockCpuidEnableAll(int *cpuInfo, int functionId) {
     cpuInfo[0] = -1;
     cpuInfo[1] = -1;
     cpuInfo[2] = -1;
     cpuInfo[3] = -1;
 }
 
-void mockCpuidFunctionAvailableDisableAll(int cpuInfo[4], int functionId) {
+void mockCpuidFunctionAvailableDisableAll(int *cpuInfo, int functionId) {
     cpuInfo[0] = -1;
     cpuInfo[1] = 0;
     cpuInfo[2] = 0;
     cpuInfo[3] = 0;
 }
 
-void mockCpuidFunctionNotAvailableDisableAll(int cpuInfo[4], int functionId) {
+void mockCpuidFunctionNotAvailableDisableAll(int *cpuInfo, int functionId) {
     cpuInfo[0] = 0;
     cpuInfo[1] = 0;
     cpuInfo[2] = 0;
     cpuInfo[3] = 0;
 }
 
-void mockCpuidReport36BitVirtualAddressSize(int cpuInfo[4], int functionId) {
+void mockCpuidReport36BitVirtualAddressSize(int *cpuInfo, int functionId) {
     if (static_cast<uint32_t>(functionId) == 0x80000008) {
         cpuInfo[0] = 36 << 8;
         cpuInfo[1] = 0;
@@ -44,7 +44,7 @@ void mockCpuidReport36BitVirtualAddressSize(int cpuInfo[4], int functionId) {
 }
 
 TEST(CpuInfoTest, giveFunctionIsNotAvailableWhenFeatureIsNotSupportedThenMaskBitIsOff) {
-    void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
+    void (*defaultCpuidFunc)(int *, int) = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidFunctionNotAvailableDisableAll;
 
     CpuInfo testCpuInfo;
@@ -56,7 +56,7 @@ TEST(CpuInfoTest, giveFunctionIsNotAvailableWhenFeatureIsNotSupportedThenMaskBit
 }
 
 TEST(CpuInfoTest, giveFunctionIsAvailableWhenFeatureIsNotSupportedThenMaskBitIsOff) {
-    void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
+    void (*defaultCpuidFunc)(int *, int) = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidFunctionAvailableDisableAll;
 
     CpuInfo testCpuInfo;
@@ -68,7 +68,7 @@ TEST(CpuInfoTest, giveFunctionIsAvailableWhenFeatureIsNotSupportedThenMaskBitIsO
 }
 
 TEST(CpuInfoTest, whenFeatureIsSupportedThenMaskBitIsOn) {
-    void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
+    void (*defaultCpuidFunc)(int *, int) = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidEnableAll;
 
     CpuInfo testCpuInfo;
@@ -80,7 +80,7 @@ TEST(CpuInfoTest, whenFeatureIsSupportedThenMaskBitIsOn) {
 }
 
 TEST(CpuInfoTest, WhenGettingVirtualAddressSizeThenCorrectResultIsReturned) {
-    void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
+    void (*defaultCpuidFunc)(int *, int) = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidReport36BitVirtualAddressSize;
 
     CpuInfo testCpuInfo;

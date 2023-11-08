@@ -675,7 +675,7 @@ TEST(glSharingBasicTest, givenWhenCheckGLSharingSupportedThenReturnTrue) {
 }
 
 TEST(glSharingBasicTest, givenVendorisNullWhenCheckGLSharingSupportedThenReturnFalse) {
-    auto invalidGetStringFcn = [](GLenum name) {
+    auto invalidGetStringFcn = [](GLenum name) -> const GLubyte * {
         return (const GLubyte *)"";
     };
 

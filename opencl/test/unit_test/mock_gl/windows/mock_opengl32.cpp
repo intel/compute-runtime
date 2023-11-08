@@ -215,11 +215,11 @@ BOOL WINAPI wglMakeCurrent(HDC arg1, HGLRC arg2) {
     }
     return (GLboolean)1;
 };
-void *WINAPI mockLoader(const char *name) {
+PROC mockLoader(const char *name) {
     if (strcmp(name, "realFunction") == 0) {
-        return reinterpret_cast<void *>(*realFunction);
+        return reinterpret_cast<PROC>(*realFunction);
     }
-    return nullptr;
+    return 0u;
 };
 void resetParam(const char *name) {
     if (strcmp(name, "glAcquireSharedBufferCalled") == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ struct CpuInfo {
     }
 
     static void (*cpuidexFunc)(int *, int, int);
-    static void (*cpuidFunc)(int[4], int);
+    static void (*cpuidFunc)(int *, int);
     static void (*getCpuFlagsFunc)(std::string &);
 
   protected:

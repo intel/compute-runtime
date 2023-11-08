@@ -383,7 +383,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreateBufferThenStagingBufferE
         this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
 
         this->mockSharingFcns->createQuerySetParams = true;
-        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<typename TestFixture::D3DQuery *>(1);
+        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<typename TestFixture::D3DQuery *>(0x8);
 
         auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
         ASSERT_NE(nullptr, buffer.get());
@@ -420,7 +420,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreateBufferThenCreateNewSt
         this->mockSharingFcns->createBufferParamsSet.buffer = reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBufferStaging);
 
         this->mockSharingFcns->createQuerySetParams = true;
-        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<typename TestFixture::D3DQuery *>(1);
+        this->mockSharingFcns->createQueryParamsSet.query = reinterpret_cast<typename TestFixture::D3DQuery *>(0x8);
 
         auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, reinterpret_cast<typename TestFixture::D3DBufferObj *>(&this->dummyD3DBuffer), CL_MEM_READ_WRITE, nullptr));
         ASSERT_NE(nullptr, buffer.get());

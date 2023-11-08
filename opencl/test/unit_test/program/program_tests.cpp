@@ -2527,7 +2527,7 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     debugVars.receivedInput = &receivedInput;
     debugVars.forceBuildFailure = true;
     gEnvironment->igcPushDebugVars(debugVars);
-    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) { gEnvironment->igcPopDebugVars(); }};
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
 
     auto program = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
@@ -2625,7 +2625,7 @@ TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     debugVars.binaryToReturn = binaryToReturn;
     debugVars.binaryToReturnSize = sizeof(binaryToReturn);
     gEnvironment->igcPushDebugVars(debugVars);
-    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) { gEnvironment->igcPopDebugVars(); }};
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
 
     auto program = clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)));
     uint32_t ir[16] = {0x03022307, 0x23471113, 0x17192329};

@@ -123,8 +123,8 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     MockContext *context;
     MockCommandQueue *cmdQ;
     DebugManagerStateRestore dbgRestore;
-    char dummyD3DSurface;
-    char dummyD3DSurfaceStaging;
+    uint64_t dummyD3DSurface{};
+    uint64_t dummyD3DSurfaceStaging{};
     cl_dx9_surface_info_khr surfaceInfo = {};
 
     Gmm *gmm = nullptr;
@@ -457,7 +457,7 @@ TEST_F(D3D9Tests, givenNonDefaultPoolWhenSurfaceIsCreatedThenReturnError) {
 
 TEST_F(D3D9Tests, givenAlreadyUsedSurfaceWhenSurfaceIsCreatedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
-    surfaceInfo.resource = reinterpret_cast<IDirect3DSurface9 *>(1);
+    surfaceInfo.resource = reinterpret_cast<IDirect3DSurface9 *>(0x8);
 
     mockSharingFcns->getTexture2dDescSetParams = true;
     mockSharingFcns->getTexture2dDescParamsSet.textureDesc = mockSharingFcns->mockTexture2dDesc;
@@ -1270,7 +1270,7 @@ static const std::tuple<uint32_t /*d3dFormat*/, uint32_t /*plane*/, uint32_t /*c
     std::make_tuple(D3DFMT_UYVY, 0, CL_UYVY_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
     std::make_tuple(MAKEFOURCC('Y', 'V', 'Y', 'U'), 0, CL_YVYU_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
     std::make_tuple(MAKEFOURCC('V', 'Y', 'U', 'Y'), 0, CL_VYUY_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(CL_INVALID_VALUE, 0, 0, 0, ImagePlane::NO_PLANE)};
+    std::make_tuple(D3DFMT_UNKNOWN, 0, 0, 0, ImagePlane::NO_PLANE)};
 }
 
 struct D3D9ImageFormatTests

@@ -332,7 +332,7 @@ StatusCode MockMetricsLibraryValidInterface::getData(GetReportData_1_0 *data) {
 //////////////////////////////////////////////////////
 void PerformanceCountersDeviceFixture::setUp() {
     createFunc = Device::createPerformanceCountersFunc;
-    Device::createPerformanceCountersFunc = [](Device *) { return MockPerformanceCounters::create(); };
+    Device::createPerformanceCountersFunc = [](Device *) -> std::unique_ptr<PerformanceCounters> { return MockPerformanceCounters::create(); };
 }
 
 //////////////////////////////////////////////////////

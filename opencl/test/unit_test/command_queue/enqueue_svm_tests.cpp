@@ -234,7 +234,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackThenSuccessIsRe
         ClbHelper(bool &callbackWasCalled)
             : callbackWasCalled(callbackWasCalled) {}
 
-        static void CL_CALLBACK clb(cl_command_queue queue, cl_uint numSvmPointers, void *svmPointers[], void *usrData) {
+        static void CL_CALLBACK clb(cl_command_queue queue, cl_uint numSvmPointers, void **svmPointers, void *usrData) {
             ClbHelper *data = (ClbHelper *)usrData;
             data->callbackWasCalled = true;
         }
@@ -264,7 +264,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackAndEventThenSuc
         ClbHelper(bool &callbackWasCalled)
             : callbackWasCalled(callbackWasCalled) {}
 
-        static void CL_CALLBACK clb(cl_command_queue queue, cl_uint numSvmPointers, void *svmPointers[], void *usrData) {
+        static void CL_CALLBACK clb(cl_command_queue queue, cl_uint numSvmPointers, void **svmPointers, void *usrData) {
             ClbHelper *data = (ClbHelper *)usrData;
             data->callbackWasCalled = true;
         }

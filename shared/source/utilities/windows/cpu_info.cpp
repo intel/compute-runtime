@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-void cpuidWindowsWrapper(int cpuInfo[4], int functionId) {
+void cpuidWindowsWrapper(int *cpuInfo, int functionId) {
     __cpuid(cpuInfo, functionId);
 }
 
@@ -22,7 +22,7 @@ void cpuidexWindowsWrapper(int *cpuInfo, int functionId, int subfunctionId) {
 void getCpuFlagsWindows(std::string &cpuFlags) {}
 
 void (*CpuInfo::cpuidexFunc)(int *, int, int) = cpuidexWindowsWrapper;
-void (*CpuInfo::cpuidFunc)(int[4], int) = cpuidWindowsWrapper;
+void (*CpuInfo::cpuidFunc)(int *, int) = cpuidWindowsWrapper;
 void (*CpuInfo::getCpuFlagsFunc)(std::string &) = getCpuFlagsWindows;
 
 const CpuInfo CpuInfo::instance;
