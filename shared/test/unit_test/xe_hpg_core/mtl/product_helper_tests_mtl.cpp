@@ -16,5 +16,5 @@ using namespace NEO;
 using MtlProductHelper = ProductHelperTest;
 
 MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(*defaultHwInfo));
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
