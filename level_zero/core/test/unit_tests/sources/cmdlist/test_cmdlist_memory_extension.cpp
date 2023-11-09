@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -69,7 +70,7 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
     void *ptr = nullptr;
-    uint32_t waitMemData = 1u;
+    uint64_t waitMemData = 1u;
     bool signalAllPackets = false;
 };
 
@@ -221,29 +222,109 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
 
 using CommandListAppendWaitOnMem = Test<CommandListWaitOnMemFixture>;
 
+template <typename FamilyType>
+bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64_t compareAddr, typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION compareMode, bool useQwordData) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto itor = cmdList.begin();
+
+    if (useQwordData) {
+        auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+        if (!lri) {
+            return false;
+        }
+
+        EXPECT_EQ(getLowPart(compareData), lri->getDataDword());
+        EXPECT_EQ(CS_GPR_R0, lri->getRegisterOffset());
+
+        lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*(++itor));
+        if (!lri) {
+            return false;
+        }
+
+        EXPECT_EQ(getHighPart(compareData), lri->getDataDword());
+        EXPECT_EQ(CS_GPR_R0 + 4, lri->getRegisterOffset());
+
+        itor++;
+    }
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    if (!semaphoreCmd) {
+        return false;
+    }
+
+    EXPECT_EQ(compareAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(semaphoreCmd->getCompareOperation(), compareMode);
+    EXPECT_EQ(semaphoreCmd->getWaitMode(), MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+
+    if (useQwordData) {
+        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+    } else {
+        EXPECT_EQ(getLowPart(compareData), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(0u, getHighPart(compareData));
+    }
+
+    return true;
+}
+
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndNotEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+
+    auto offset = cmdStream->getUsed();
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false));
+}
 
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemCalledThenReturnErrorIfNotSupported, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, true);
+
+    if (FamilyType::isQwordInOrderCounter) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    } else {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    }
+}
+
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemCalledThenProgramLri, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    if (!FamilyType::isQwordInOrderCounter) {
+        GTEST_SKIP();
+    }
+
+    waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, true);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, true));
 }
 
 HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, IsAtLeastSkl) {
@@ -255,133 +336,93 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNull
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
     void *badPtr = nullptr;
-    result = cmdList.appendWaitOnMemory(reinterpret_cast<void *>(&desc), badPtr, waitMemData, nullptr);
+    result = cmdList.appendWaitOnMemory(reinterpret_cast<void *>(&desc), badPtr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false));
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataGreaterOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, false));
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataGreaterThanEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false));
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataLessThanOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_SDD, false));
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataLessThanEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD, false));
 }
 
 HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndInvalidOpThenReturnsInvalid) {
@@ -390,7 +431,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndInva
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_BIT(6);
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -420,7 +461,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndHostS
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -492,7 +533,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndNoSco
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -562,7 +603,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSignalEventAnd
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = commandListBcs->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    result = commandListBcs->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -607,23 +648,25 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMe
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = commandList->commandContainer;
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), cmdListHostBuffer, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), cmdListHostBuffer, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(cmdListHostBuffer), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD, false));
 
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
+
     EXPECT_EQ(expectedGpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
 
     commandList->removeHostPtrAllocations();
@@ -647,7 +690,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithHostMemAndNoScopeT
     result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), dstBuffer, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), dstBuffer, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -673,7 +716,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithDeviceMemAndNoScop
     hwInfo->platform.usRevId = 0x03;
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -899,151 +942,103 @@ using ImmediateCommandListAppendWaitOnMem = Test<ImmediateCommandListWaitOnMemFi
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndNotEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = immCommandList->commandContainer;
+    auto cmdStream = immCommandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false));
 }
 
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataAndEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = immCommandList->commandContainer;
+    auto cmdStream = immCommandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false));
 }
 
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataGreaterOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = immCommandList->commandContainer;
+    auto cmdStream = immCommandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_SDD, false));
 }
 
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataGreaterThanEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = immCommandList->commandContainer;
+    auto cmdStream = immCommandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_GREATER_THAN_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false));
 }
 
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataLessThanOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = immCommandList->commandContainer;
+    auto cmdStream = immCommandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_SDD, false));
 }
 
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndDataLessThanEqualOpThenSemaphoreWaitProgrammedCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto &commandContainer = immCommandList->commandContainer;
+    auto cmdStream = immCommandList->commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
-    EXPECT_EQ(cmd->getCompareOperation(),
-              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD);
-    EXPECT_EQ(static_cast<uint32_t>(waitMemData), cmd->getSemaphoreDataDword());
-
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD, false));
 }
 
 HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndInvalidOpThenReturnsInvalid) {
@@ -1052,7 +1047,7 @@ HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddre
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_BIT(6);
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1082,7 +1077,7 @@ HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEven
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1154,7 +1149,7 @@ HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEven
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1224,7 +1219,7 @@ HWTEST_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSigna
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = immCommandListBcs->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle());
+    result = immCommandListBcs->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, signalEvent->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1266,7 +1261,7 @@ HWTEST2_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithHostMemAn
     result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), dstBuffer, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), dstBuffer, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1292,7 +1287,7 @@ HWTEST2_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithDeviceMem
     hwInfo->platform.usRevId = 0x03;
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_LESSER_THAN_EQUAL;
-    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr);
+    result = immCommandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;

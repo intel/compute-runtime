@@ -3262,10 +3262,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
-                                                                     void *ptr,
-                                                                     uint32_t data,
-                                                                     ze_event_handle_t signalEventHandle) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     auto descriptor = reinterpret_cast<zex_wait_on_mem_desc_t *>(desc);
@@ -3314,7 +3311,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
 
     commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
     uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
-    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, false, false);
+
+    bool indirectMode = false;
+
+    if (useQwordData) {
+        if (isQwordInOrderCounter()) {
+            indirectMode = true;
+
+            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0, getLowPart(data), true);
+            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0 + 4, getHighPart(data), true);
+
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    } else {
+        UNRECOVERABLE_IF(getHighPart(data) != 0);
+    }
+
+    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, useQwordData, indirectMode);
 
     const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto allocType = srcAllocationStruct.alloc->getAllocationType();

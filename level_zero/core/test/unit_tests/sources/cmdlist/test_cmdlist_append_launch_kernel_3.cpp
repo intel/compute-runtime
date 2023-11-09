@@ -1654,7 +1654,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
     events[0]->makeCounterBasedInitiallyDisabled();
-    immCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), copyData, 1, eventHandle);
+    immCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), copyData, 1, eventHandle, false);
     EXPECT_EQ(Event::CounterBasedMode::ImplicitlyEnabled, events[0]->counterBasedMode);
 
     auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer());
@@ -2745,7 +2745,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
 
         zex_wait_on_mem_desc_t desc;
         desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
-        regularCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, 1, nullptr);
+        regularCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, 1, nullptr, false);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,

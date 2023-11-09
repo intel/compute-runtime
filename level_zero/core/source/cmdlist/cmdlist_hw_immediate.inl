@@ -877,9 +877,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchCooperati
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnMemory(void *desc, void *ptr, uint32_t data, ze_event_handle_t signalEventHandle) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) {
     checkAvailableSpace(0, false, commonImmediateCommandSize);
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(desc, ptr, data, signalEventHandle);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(desc, ptr, data, signalEventHandle, useQwordData);
     return flushImmediate(ret, true, false, false, false, signalEventHandle);
 }
 
