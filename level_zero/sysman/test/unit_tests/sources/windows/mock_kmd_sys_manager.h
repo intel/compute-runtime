@@ -256,8 +256,7 @@ struct MockKmdSysManager : public L0::Sysman::KmdSysManager {
             for (uint32_t i = 0; i < mockKmdMaxHandlesPerEvent; i++) {
                 if (!handles[pRequest->inRequestId][i].inited) {
                     handles[pRequest->inRequestId][i].inited = true;
-                    unsigned long long eventID = *(unsigned long long *)pBuffer;
-                    handles[pRequest->inRequestId][i].eventHandle = reinterpret_cast<HANDLE>(eventID);
+                    memcpy_s(&handles[pRequest->inRequestId][i].eventHandle, sizeof(HANDLE), pBuffer, sizeof(HANDLE));
                     found = true;
                     break;
                 }

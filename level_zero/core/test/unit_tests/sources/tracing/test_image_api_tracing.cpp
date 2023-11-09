@@ -13,7 +13,7 @@ namespace ult {
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Image.pfnGetProperties =
-        [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) { return ZE_RESULT_SUCCESS; };
+        [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     const ze_image_desc_t desc = {};
     ze_image_properties_t pImageProperties = {};
 
@@ -30,7 +30,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWith
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Image.pfnCreate =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     const ze_image_desc_t desc = {};
     ze_image_handle_t phImage = {};
 
@@ -47,7 +47,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetO
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Image.pfnDestroy =
-        [](ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
+        [](ze_image_handle_t hImage) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.Image.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.Image.pfnDestroyCb = genericEpilogCallbackPtr;
 
@@ -85,122 +85,122 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     ImageGetProperties_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Image.pfnGetProperties =
-        [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) {
-            EXPECT_EQ(ImageGetProperties_args.hDevice1, hDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc1, desc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, pImageProperties);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) -> ze_result_t {
+        EXPECT_EQ(ImageGetProperties_args.hDevice1, hDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc1, desc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, pImageProperties);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Image.pfnGetPropertiesCb =
-        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageGetProperties_args.hDevice0, *params->phDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc0, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties0, *params->ppImageProperties);
-            *params->phDevice = ImageGetProperties_args.hDevice1;
-            *params->pdesc = &ImageGetProperties_args.desc1;
-            *params->ppImageProperties = &ImageGetProperties_args.imageProperties1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = ImageGetProperties_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageGetProperties_args.hDevice0, *params->phDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc0, *params->pdesc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties0, *params->ppImageProperties);
+        *params->phDevice = ImageGetProperties_args.hDevice1;
+        *params->pdesc = &ImageGetProperties_args.desc1;
+        *params->ppImageProperties = &ImageGetProperties_args.imageProperties1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = ImageGetProperties_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Image.pfnGetPropertiesCb =
-        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Image.pfnGetPropertiesCb =
-        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Image.pfnGetPropertiesCb =
-        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Image.pfnGetPropertiesCb =
-        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = ImageGetProperties_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = ImageGetProperties_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Image.pfnGetPropertiesCb =
-        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-            EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
+        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -241,227 +241,227 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     ImageCreate_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Image.pfnCreate =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
-            EXPECT_EQ(ImageCreate_args.hContext1, hContext);
-            EXPECT_EQ(ImageCreate_args.hDevice1, hDevice);
-            EXPECT_EQ(&ImageCreate_args.desc1, desc);
-            EXPECT_EQ(&ImageCreate_args.hImage1, phImage);
-            EXPECT_EQ(ImageCreate_args.hImage1, *phImage);
-            ImageCreate_args.hImageAPI = generateRandomHandle<ze_image_handle_t>();
-            *phImage = ImageCreate_args.hImageAPI;
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) -> ze_result_t {
+        EXPECT_EQ(ImageCreate_args.hContext1, hContext);
+        EXPECT_EQ(ImageCreate_args.hDevice1, hDevice);
+        EXPECT_EQ(&ImageCreate_args.desc1, desc);
+        EXPECT_EQ(&ImageCreate_args.hImage1, phImage);
+        EXPECT_EQ(ImageCreate_args.hImage1, *phImage);
+        ImageCreate_args.hImageAPI = generateRandomHandle<ze_image_handle_t>();
+        *phImage = ImageCreate_args.hImageAPI;
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Image.pfnCreateCb =
-        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            ASSERT_NE(nullptr, params);
-            ASSERT_NE(nullptr, params->phContext);
-            ASSERT_NE(nullptr, params->phDevice);
-            ASSERT_NE(nullptr, *params->phContext);
-            ASSERT_NE(nullptr, *params->phDevice);
-            EXPECT_EQ(ImageCreate_args.hContext0, *params->phContext);
-            EXPECT_EQ(ImageCreate_args.hDevice0, *params->phDevice);
-            EXPECT_EQ(&ImageCreate_args.desc0, *params->pdesc);
+        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        ASSERT_NE(nullptr, params);
+        ASSERT_NE(nullptr, params->phContext);
+        ASSERT_NE(nullptr, params->phDevice);
+        ASSERT_NE(nullptr, *params->phContext);
+        ASSERT_NE(nullptr, *params->phDevice);
+        EXPECT_EQ(ImageCreate_args.hContext0, *params->phContext);
+        EXPECT_EQ(ImageCreate_args.hDevice0, *params->phDevice);
+        EXPECT_EQ(&ImageCreate_args.desc0, *params->pdesc);
 
-            ze_image_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphImage;
+        ze_image_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphImage;
 
-            ze_image_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
-            EXPECT_EQ(&ImageCreate_args.hImage0, pHandle);
+        ze_image_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
+        EXPECT_EQ(&ImageCreate_args.hImage0, pHandle);
 
-            ze_image_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
-            EXPECT_EQ(ImageCreate_args.hImage0, handle);
+        ze_image_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
+        EXPECT_EQ(ImageCreate_args.hImage0, handle);
 
-            *params->phContext = ImageCreate_args.hContext1;
-            *params->phDevice = ImageCreate_args.hDevice1;
-            *params->pdesc = &ImageCreate_args.desc1;
-            *params->pphImage = &ImageCreate_args.hImage1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = ImageCreate_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        *params->phContext = ImageCreate_args.hContext1;
+        *params->phDevice = ImageCreate_args.hDevice1;
+        *params->pdesc = &ImageCreate_args.desc1;
+        *params->pphImage = &ImageCreate_args.hImage1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = ImageCreate_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Image.pfnCreateCb =
-        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            ASSERT_NE(nullptr, params);
-            ASSERT_NE(nullptr, params->phContext);
-            ASSERT_NE(nullptr, params->phDevice);
-            ASSERT_NE(nullptr, *params->phContext);
-            ASSERT_NE(nullptr, *params->phDevice);
-            EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-            EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        ASSERT_NE(nullptr, params);
+        ASSERT_NE(nullptr, params->phContext);
+        ASSERT_NE(nullptr, params->phDevice);
+        ASSERT_NE(nullptr, *params->phContext);
+        ASSERT_NE(nullptr, *params->phDevice);
+        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
+        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
 
-            ze_image_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphImage;
+        ze_image_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphImage;
 
-            ze_image_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
-            EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        ze_image_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
+        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
 
-            ze_image_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
-            EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        ze_image_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
+        EXPECT_EQ(ImageCreate_args.hImage1, handle);
 
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData0);
-            delete instanceData;
-        };
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Image.pfnCreateCb =
-        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-            EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
+        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
 
-            ze_image_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphImage;
+        ze_image_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphImage;
 
-            ze_image_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
-            EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        ze_image_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
+        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
 
-            ze_image_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
-            EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        ze_image_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
+        EXPECT_EQ(ImageCreate_args.hImage1, handle);
 
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Image.pfnCreateCb =
-        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-            EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
+        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
 
-            ze_image_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphImage;
+        ze_image_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphImage;
 
-            ze_image_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
-            EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        ze_image_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
+        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
 
-            ze_image_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
-            EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        ze_image_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
+        EXPECT_EQ(ImageCreate_args.hImage1, handle);
 
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Image.pfnCreateCb =
-        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-            EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
+        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
 
-            ze_image_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphImage;
+        ze_image_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphImage;
 
-            ze_image_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
-            EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        ze_image_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
+        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
 
-            ze_image_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
-            EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        ze_image_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
+        EXPECT_EQ(ImageCreate_args.hImage1, handle);
 
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = ImageCreate_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = ImageCreate_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Image.pfnCreateCb =
-        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-            EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
+        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
 
-            ze_image_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphImage;
+        ze_image_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphImage;
 
-            ze_image_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
-            EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        ze_image_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
+        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
 
-            ze_image_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
-            EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        ze_image_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
+        EXPECT_EQ(ImageCreate_args.hImage1, handle);
 
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData3);
-            delete instanceData;
-        };
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -491,106 +491,106 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     ImageDestroy_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Image.pfnDestroy =
-        [](ze_image_handle_t hImage) {
-            EXPECT_EQ(ImageDestroy_args.hImage1, hImage);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_image_handle_t hImage) -> ze_result_t {
+        EXPECT_EQ(ImageDestroy_args.hImage1, hImage);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Image.pfnDestroyCb =
-        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageDestroy_args.hImage0, *params->phImage);
-            *params->phImage = ImageDestroy_args.hImage1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = ImageDestroy_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageDestroy_args.hImage0, *params->phImage);
+        *params->phImage = ImageDestroy_args.hImage1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = ImageDestroy_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Image.pfnDestroyCb =
-        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Image.pfnDestroyCb =
-        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Image.pfnDestroyCb =
-        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Image.pfnDestroyCb =
-        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = ImageDestroy_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = ImageDestroy_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Image.pfnDestroyCb =
-        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 

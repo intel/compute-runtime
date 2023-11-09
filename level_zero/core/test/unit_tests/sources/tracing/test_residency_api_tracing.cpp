@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnCreate = [](ze_driver_handle_t hContext, const ze_context_desc_t *desc, ze_context_handle_t *phContext) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnCreate = [](ze_driver_handle_t hContext, const ze_context_desc_t *desc, ze_context_handle_t *phContext) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnCreateCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnCreateCb = genericEpilogCallbackPtr;
@@ -26,7 +26,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSe
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnDestroy = [](ze_context_handle_t hContext) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnDestroy = [](ze_context_handle_t hContext) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -40,7 +40,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneS
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnGetStatus = [](ze_context_handle_t hContext) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnGetStatus = [](ze_context_handle_t hContext) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnGetStatusCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnGetStatusCb = genericEpilogCallbackPtr;
@@ -54,7 +54,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOn
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnSystemBarrier = [](ze_context_handle_t hContext, ze_device_handle_t hDevice) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnSystemBarrier = [](ze_context_handle_t hContext, ze_device_handle_t hDevice) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnSystemBarrierCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnSystemBarrierCb = genericEpilogCallbackPtr;
@@ -68,7 +68,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWi
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnMakeMemoryResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnMakeMemoryResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnMakeMemoryResidentCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnMakeMemoryResidentCb = genericEpilogCallbackPtr;
@@ -82,7 +82,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrap
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnEvictMemory = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnEvictMemory = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnEvictMemoryCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnEvictMemoryCb = genericEpilogCallbackPtr;
@@ -96,7 +96,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWith
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnMakeImageResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnMakeImageResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnMakeImageResidentCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnMakeImageResidentCb = genericEpilogCallbackPtr;
@@ -110,7 +110,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapp
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictImageTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Context.pfnEvictImage = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Context.pfnEvictImage = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Context.pfnEvictImageCb = genericPrologCallbackPtr;
     epilogCbs.Context.pfnEvictImageCb = genericEpilogCallbackPtr;
@@ -157,130 +157,130 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
 
     // arguments are expeted to be passed in from first prolog callback
     driverDdiTable.coreDdiTable.Context.pfnMakeMemoryResident =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) {
-            EXPECT_EQ(hContext, MakeMemoryResident_args.hContext1);
-            EXPECT_EQ(hDevice, MakeMemoryResident_args.hDevice1);
-            EXPECT_EQ(ptr, MakeMemoryResident_args.ptr1);
-            EXPECT_EQ(size, MakeMemoryResident_args.size1);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) -> ze_result_t {
+        EXPECT_EQ(hContext, MakeMemoryResident_args.hContext1);
+        EXPECT_EQ(hDevice, MakeMemoryResident_args.hDevice1);
+        EXPECT_EQ(ptr, MakeMemoryResident_args.ptr1);
+        EXPECT_EQ(size, MakeMemoryResident_args.size1);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnMakeMemoryResidentCb =
-        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext0);
-            EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice0);
-            EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr0);
-            EXPECT_EQ(*params->psize, MakeMemoryResident_args.size0);
-            *params->phContext = MakeMemoryResident_args.hContext1;
-            *params->phDevice = MakeMemoryResident_args.hDevice1;
-            *params->pptr = MakeMemoryResident_args.ptr1;
-            *params->psize = MakeMemoryResident_args.size1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = MakeMemoryResident_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext0);
+        EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice0);
+        EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr0);
+        EXPECT_EQ(*params->psize, MakeMemoryResident_args.size0);
+        *params->phContext = MakeMemoryResident_args.hContext1;
+        *params->phDevice = MakeMemoryResident_args.hDevice1;
+        *params->pptr = MakeMemoryResident_args.ptr1;
+        *params->psize = MakeMemoryResident_args.size1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = MakeMemoryResident_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Context.pfnMakeMemoryResidentCb =
-        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
-            EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
-            EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, MakeMemoryResident_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
+        EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
+        EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, MakeMemoryResident_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Context.pfnMakeMemoryResidentCb =
-        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
-            EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
-            EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
+        EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
+        EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Context.pfnMakeMemoryResidentCb =
-        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
-            EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
-            EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
+        EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
+        EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Allocate instance data and pass to corresponding epilog
     //
     prologCbs3.Context.pfnMakeMemoryResidentCb =
-        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
-            EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
-            EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = MakeMemoryResident_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
+        EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
+        EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = MakeMemoryResident_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     epilogCbs3.Context.pfnMakeMemoryResidentCb =
-        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
-            EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
-            EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, MakeMemoryResident_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_context_make_memory_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, MakeMemoryResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeMemoryResident_args.hDevice1);
+        EXPECT_EQ(*params->pptr, MakeMemoryResident_args.ptr1);
+        EXPECT_EQ(*params->psize, MakeMemoryResident_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, MakeMemoryResident_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -322,128 +322,128 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
     EvictMemory_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Context.pfnEvictMemory =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) {
-            EXPECT_EQ(hContext, EvictMemory_args.hContext1);
-            EXPECT_EQ(hDevice, EvictMemory_args.hDevice1);
-            EXPECT_EQ(ptr, EvictMemory_args.ptr1);
-            EXPECT_EQ(size, EvictMemory_args.size1);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) -> ze_result_t {
+        EXPECT_EQ(hContext, EvictMemory_args.hContext1);
+        EXPECT_EQ(hDevice, EvictMemory_args.hDevice1);
+        EXPECT_EQ(ptr, EvictMemory_args.ptr1);
+        EXPECT_EQ(size, EvictMemory_args.size1);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnEvictMemoryCb =
-        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(EvictMemory_args.hContext0, *params->phContext);
-            EXPECT_EQ(EvictMemory_args.hDevice0, *params->phDevice);
-            EXPECT_EQ(EvictMemory_args.ptr0, *params->pptr);
-            EXPECT_EQ(EvictMemory_args.size0, *params->psize);
+        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(EvictMemory_args.hContext0, *params->phContext);
+        EXPECT_EQ(EvictMemory_args.hDevice0, *params->phDevice);
+        EXPECT_EQ(EvictMemory_args.ptr0, *params->pptr);
+        EXPECT_EQ(EvictMemory_args.size0, *params->psize);
 
-            *params->phContext = EvictMemory_args.hContext1;
-            *params->phDevice = EvictMemory_args.hDevice1;
-            *params->pptr = EvictMemory_args.ptr1;
-            *params->psize = EvictMemory_args.size1;
+        *params->phContext = EvictMemory_args.hContext1;
+        *params->phDevice = EvictMemory_args.hDevice1;
+        *params->pptr = EvictMemory_args.ptr1;
+        *params->psize = EvictMemory_args.size1;
 
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = EvictMemory_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = EvictMemory_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Context.pfnEvictMemoryCb =
-        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
-            EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
-            EXPECT_EQ(*params->psize, EvictMemory_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, EvictMemory_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
+        EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
+        EXPECT_EQ(*params->psize, EvictMemory_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, EvictMemory_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Context.pfnEvictMemoryCb =
-        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
-            EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
-            EXPECT_EQ(*params->psize, EvictMemory_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
+        EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
+        EXPECT_EQ(*params->psize, EvictMemory_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Context.pfnEvictMemoryCb =
-        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
-            EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
-            EXPECT_EQ(*params->psize, EvictMemory_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
+        EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
+        EXPECT_EQ(*params->psize, EvictMemory_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Allocate instance data and pass to corresponding epilog
     //
     prologCbs3.Context.pfnEvictMemoryCb =
-        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
-            EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
-            EXPECT_EQ(*params->psize, EvictMemory_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = EvictMemory_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
+        EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
+        EXPECT_EQ(*params->psize, EvictMemory_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = EvictMemory_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     epilogCbs3.Context.pfnEvictMemoryCb =
-        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
-            EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
-            EXPECT_EQ(*params->psize, EvictMemory_args.size1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, EvictMemory_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_context_evict_memory_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, EvictMemory_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictMemory_args.hDevice1);
+        EXPECT_EQ(*params->pptr, EvictMemory_args.ptr1);
+        EXPECT_EQ(*params->psize, EvictMemory_args.size1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, EvictMemory_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -483,122 +483,122 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
 
     // arguments are expeted to be passed in from first prolog callback
     driverDdiTable.coreDdiTable.Context.pfnMakeImageResident =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) {
-            EXPECT_EQ(hContext, MakeImageResident_args.hContext1);
-            EXPECT_EQ(hDevice, MakeImageResident_args.hDevice1);
-            EXPECT_EQ(hImage, MakeImageResident_args.hImage1);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) -> ze_result_t {
+        EXPECT_EQ(hContext, MakeImageResident_args.hContext1);
+        EXPECT_EQ(hDevice, MakeImageResident_args.hDevice1);
+        EXPECT_EQ(hImage, MakeImageResident_args.hImage1);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext0);
-            EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice0);
-            EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage0);
-            *params->phContext = MakeImageResident_args.hContext1;
-            *params->phDevice = MakeImageResident_args.hDevice1;
-            *params->phImage = MakeImageResident_args.hImage1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = MakeImageResident_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext0);
+        EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice0);
+        EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage0);
+        *params->phContext = MakeImageResident_args.hContext1;
+        *params->phDevice = MakeImageResident_args.hDevice1;
+        *params->phImage = MakeImageResident_args.hImage1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = MakeImageResident_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
-            EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, MakeImageResident_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
+        EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, MakeImageResident_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
-            EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
+        EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
-            EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
+        EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Allocate instance data and pass to corresponding epilog
     //
     prologCbs3.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
-            EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
-            EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = MakeImageResident_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
+        EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
+        EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = MakeImageResident_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     epilogCbs3.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
-            EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
-            EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, MakeImageResident_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phDevice, MakeImageResident_args.hDevice1);
+        EXPECT_EQ(*params->phContext, MakeImageResident_args.hContext1);
+        EXPECT_EQ(*params->phImage, MakeImageResident_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, MakeImageResident_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -638,122 +638,122 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
 
     // arguments are expeted to be passed in from first prolog callback
     driverDdiTable.coreDdiTable.Context.pfnMakeImageResident =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) {
-            EXPECT_EQ(hContext, EvictImage_args.hContext1);
-            EXPECT_EQ(hDevice, EvictImage_args.hDevice1);
-            EXPECT_EQ(hImage, EvictImage_args.hImage1);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) -> ze_result_t {
+        EXPECT_EQ(hContext, EvictImage_args.hContext1);
+        EXPECT_EQ(hDevice, EvictImage_args.hDevice1);
+        EXPECT_EQ(hImage, EvictImage_args.hImage1);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, EvictImage_args.hContext0);
-            EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice0);
-            EXPECT_EQ(*params->phImage, EvictImage_args.hImage0);
-            *params->phContext = EvictImage_args.hContext1;
-            *params->phDevice = EvictImage_args.hDevice1;
-            *params->phImage = EvictImage_args.hImage1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = EvictImage_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, EvictImage_args.hContext0);
+        EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice0);
+        EXPECT_EQ(*params->phImage, EvictImage_args.hImage0);
+        *params->phContext = EvictImage_args.hContext1;
+        *params->phDevice = EvictImage_args.hDevice1;
+        *params->phImage = EvictImage_args.hImage1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = EvictImage_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
-            EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, EvictImage_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
+        EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, EvictImage_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
-            EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
+        EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
-            EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
+        EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Allocate instance data and pass to corresponding epilog
     //
     prologCbs3.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
-            EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = EvictImage_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
+        EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = EvictImage_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     epilogCbs3.Context.pfnMakeImageResidentCb =
-        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
-            EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
-            EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, EvictImage_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_context_make_image_resident_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(*params->phContext, EvictImage_args.hContext1);
+        EXPECT_EQ(*params->phDevice, EvictImage_args.hDevice1);
+        EXPECT_EQ(*params->phImage, EvictImage_args.hImage1);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, EvictImage_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 

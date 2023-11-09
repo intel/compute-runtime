@@ -144,8 +144,8 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         case KmdSysman::Requests::Power::CurrentEnergyCounter64Bit: {
             uint64_t *pValueCounter = reinterpret_cast<uint64_t *>(pBuffer);
             uint64_t *pValueTS = reinterpret_cast<uint64_t *>(pBuffer + sizeof(uint64_t));
-            *pValueCounter = mockEnergyCounter64Bit;
-            *pValueTS = mockTimeStamp;
+            memcpy_s(pValueCounter, sizeof(uint64_t), &mockEnergyCounter64Bit, sizeof(mockEnergyCounter64Bit));
+            memcpy_s(pValueTS, sizeof(uint64_t), &mockTimeStamp, sizeof(mockEnergyCounter64Bit));
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint64_t) + sizeof(uint64_t);
         } break;

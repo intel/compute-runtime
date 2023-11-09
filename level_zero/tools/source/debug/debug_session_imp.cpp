@@ -1115,7 +1115,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
 
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
-    NEO::SbaTrackedAddresses sbaBuffer;
+    alignas(64) NEO::SbaTrackedAddresses sbaBuffer{};
     ret = readSbaBuffer(threadId, sbaBuffer);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;

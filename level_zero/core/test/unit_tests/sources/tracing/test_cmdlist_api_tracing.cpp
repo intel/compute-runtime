@@ -16,7 +16,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateTracingWrapperWithO
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
            const ze_command_list_desc_t *desc,
-           ze_command_list_handle_t *phCommandList) { return ZE_RESULT_SUCCESS; };
+           ze_command_list_handle_t *phCommandList) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_command_list_desc_t desc = {};
     ze_command_list_handle_t commandList = {};
 
@@ -36,7 +36,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWra
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
            const ze_command_queue_desc_t *desc,
-           ze_command_list_handle_t *phCommandList) { return ZE_RESULT_SUCCESS; };
+           ze_command_list_handle_t *phCommandList) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_command_queue_desc_t desc = {};
     ze_command_list_handle_t commandList = {};
 
@@ -53,7 +53,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWra
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandList.pfnDestroy =
-        [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_list_handle_t hCommandList) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnDestroyCb = genericEpilogCallbackPtr;
 
@@ -67,7 +67,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWith
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandList.pfnReset =
-        [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_list_handle_t hCommandList) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnResetCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnResetCb = genericEpilogCallbackPtr;
 
@@ -81,7 +81,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOn
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryPrefetch =
-        [](ze_command_list_handle_t hCommandList, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_list_handle_t hCommandList, const void *ptr, size_t size) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnAppendMemoryPrefetchCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnAppendMemoryPrefetchCb = genericEpilogCallbackPtr;
 
@@ -95,7 +95,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTraci
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCloseTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandList.pfnClose =
-        [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_list_handle_t hCommandList) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnCloseCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnCloseCb = genericEpilogCallbackPtr;
 
@@ -117,7 +117,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendQueryKernelTimestam
            const size_t *pOffsets,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.CommandList.pfnAppendQueryKernelTimestampsCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnAppendQueryKernelTimestampsCb = genericEpilogCallbackPtr;
@@ -136,7 +136,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendWriteGlobalTimestam
            uint64_t *dstptr,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.CommandList.pfnAppendWriteGlobalTimestampCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnAppendWriteGlobalTimestampCb = genericEpilogCallbackPtr;

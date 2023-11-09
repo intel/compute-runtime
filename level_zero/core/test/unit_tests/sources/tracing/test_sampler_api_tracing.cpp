@@ -12,7 +12,7 @@ namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Sampler.pfnCreate = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Sampler.pfnCreate = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Sampler.pfnCreateCb = genericPrologCallbackPtr;
     epilogCbs.Sampler.pfnCreateCb = genericEpilogCallbackPtr;
@@ -26,7 +26,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSe
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    driverDdiTable.coreDdiTable.Sampler.pfnDestroy = [](ze_sampler_handle_t hSampler) { return ZE_RESULT_SUCCESS; };
+    driverDdiTable.coreDdiTable.Sampler.pfnDestroy = [](ze_sampler_handle_t hSampler) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Sampler.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.Sampler.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -72,217 +72,217 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
 
     // Arguments are expected to be passed in by the first prolog callback
     driverDdiTable.coreDdiTable.Sampler.pfnCreate =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) {
-            EXPECT_EQ(sampler_create_args.hContext1, hContext);
-            EXPECT_EQ(sampler_create_args.hDevice1, hDevice);
-            EXPECT_EQ(&sampler_create_args.desc1, pDesc);
-            EXPECT_EQ(&sampler_create_args.hSampler1, phSampler);
-            EXPECT_EQ(sampler_create_args.hSampler1, *phSampler);
-            sampler_create_args.hSamplerAPI = generateRandomHandle<ze_sampler_handle_t>();
-            *phSampler = sampler_create_args.hSamplerAPI;
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) -> ze_result_t {
+        EXPECT_EQ(sampler_create_args.hContext1, hContext);
+        EXPECT_EQ(sampler_create_args.hDevice1, hDevice);
+        EXPECT_EQ(&sampler_create_args.desc1, pDesc);
+        EXPECT_EQ(&sampler_create_args.hSampler1, phSampler);
+        EXPECT_EQ(sampler_create_args.hSampler1, *phSampler);
+        sampler_create_args.hSamplerAPI = generateRandomHandle<ze_sampler_handle_t>();
+        *phSampler = sampler_create_args.hSamplerAPI;
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Sampler.pfnCreateCb =
-        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(sampler_create_args.hContext0, *params->phContext);
-            EXPECT_EQ(sampler_create_args.hDevice0, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.desc0, *params->pdesc);
-            EXPECT_EQ(&sampler_create_args.hSampler0, *params->pphSampler);
+        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(sampler_create_args.hContext0, *params->phContext);
+        EXPECT_EQ(sampler_create_args.hDevice0, *params->phDevice);
+        EXPECT_EQ(&sampler_create_args.desc0, *params->pdesc);
+        EXPECT_EQ(&sampler_create_args.hSampler0, *params->pphSampler);
 
-            ze_sampler_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphSampler;
+        ze_sampler_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphSampler;
 
-            ze_sampler_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_sampler_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_sampler_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_sampler_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(sampler_create_args.hSampler0, handle);
-            *params->phContext = sampler_create_args.hContext1;
-            *params->phDevice = sampler_create_args.hDevice1;
-            *params->pdesc = &sampler_create_args.desc1;
-            *params->pphSampler = &sampler_create_args.hSampler1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = sampler_create_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        EXPECT_EQ(sampler_create_args.hSampler0, handle);
+        *params->phContext = sampler_create_args.hContext1;
+        *params->phDevice = sampler_create_args.hDevice1;
+        *params->pdesc = &sampler_create_args.desc1;
+        *params->pphSampler = &sampler_create_args.hSampler1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = sampler_create_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Sampler.pfnCreateCb =
-        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
-            EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
+        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
+        EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
-            ze_sampler_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphSampler;
+        ze_sampler_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphSampler;
 
-            ze_sampler_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_sampler_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_sampler_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_sampler_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(sampler_create_args.hSampler1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, sampler_create_args.instanceData0);
-            delete instanceData;
-        };
+        EXPECT_EQ(sampler_create_args.hSampler1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, sampler_create_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Sampler.pfnCreateCb =
-        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
-            EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
+        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
+        EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
-            ze_sampler_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphSampler;
+        ze_sampler_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphSampler;
 
-            ze_sampler_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_sampler_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_sampler_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_sampler_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(sampler_create_args.hSampler1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        EXPECT_EQ(sampler_create_args.hSampler1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Sampler.pfnCreateCb =
-        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
-            EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
+        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
+        EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
-            ze_sampler_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphSampler;
+        ze_sampler_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphSampler;
 
-            ze_sampler_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_sampler_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_sampler_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_sampler_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(sampler_create_args.hSampler1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        EXPECT_EQ(sampler_create_args.hSampler1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Sampler.pfnCreateCb =
-        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
-            EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
+        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
+        EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
-            ze_sampler_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphSampler;
+        ze_sampler_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphSampler;
 
-            ze_sampler_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_sampler_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_sampler_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_sampler_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(sampler_create_args.hSampler1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = sampler_create_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        EXPECT_EQ(sampler_create_args.hSampler1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = sampler_create_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Sampler.pfnCreateCb =
-        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
-            EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
-            EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
+        [](ze_sampler_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(sampler_create_args.hContext1, *params->phContext);
+        EXPECT_EQ(sampler_create_args.hDevice1, *params->phDevice);
+        EXPECT_EQ(&sampler_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&sampler_create_args.hSampler1, *params->pphSampler);
 
-            ze_sampler_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphSampler;
+        ze_sampler_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphSampler;
 
-            ze_sampler_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_sampler_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_sampler_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_sampler_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(sampler_create_args.hSampler1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, sampler_create_args.instanceData3);
-            delete instanceData;
-        };
+        EXPECT_EQ(sampler_create_args.hSampler1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, sampler_create_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -315,106 +315,106 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
 
     // Arguments are expected to be passed in by the first prolog callback
     driverDdiTable.coreDdiTable.Sampler.pfnDestroy =
-        [](ze_sampler_handle_t hSampler) {
-            EXPECT_EQ(sampler_destroy_args.hSampler1, hSampler);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_sampler_handle_t hSampler) -> ze_result_t {
+        EXPECT_EQ(sampler_destroy_args.hSampler1, hSampler);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Allocate instance data, pass it to corresponding epilog.
     //
     prologCbs0.Sampler.pfnDestroyCb =
-        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(sampler_destroy_args.hSampler0, *params->phSampler);
-            *params->phSampler = sampler_destroy_args.hSampler1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = sampler_destroy_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(sampler_destroy_args.hSampler0, *params->phSampler);
+        *params->phSampler = sampler_destroy_args.hSampler1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = sampler_destroy_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Sampler.pfnDestroyCb =
-        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, sampler_destroy_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, sampler_destroy_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Sampler.pfnDestroyCb =
-        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Sampler.pfnDestroyCb =
-        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Allocate instance data and pass to corresponding epilog
     //
     prologCbs3.Sampler.pfnDestroyCb =
-        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = sampler_destroy_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = sampler_destroy_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Sampler.pfnDestroyCb =
-        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, sampler_destroy_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_sampler_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(sampler_destroy_args.hSampler1, *params->phSampler);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, sampler_destroy_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 

@@ -20,7 +20,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyTracingWr
            size_t size,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitevents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     size_t bufferSize = 4096u;
     void *dst = malloc(bufferSize);
@@ -49,7 +49,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryFillTracingWr
            size_t size,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     size_t bufferSize = 4096u;
     void *dst = malloc(bufferSize);
@@ -81,7 +81,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyRegionTra
            uint32_t srcSlicePitch,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     size_t bufferSize = 4096u;
     void *dst = malloc(bufferSize);
@@ -122,7 +122,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyTracingWra
            ze_image_handle_t hSrcImage,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     ze_image_handle_t hDstImage = static_cast<ze_image_handle_t>(malloc(1));
     ze_image_handle_t hSrcImage = static_cast<ze_image_handle_t>(malloc(1));
@@ -150,7 +150,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyRegionTrac
            const ze_image_region_t *pSrcRegion,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     ze_image_handle_t hDstImage = static_cast<ze_image_handle_t>(malloc(1));
     ze_image_handle_t hSrcImage = static_cast<ze_image_handle_t>(malloc(1));
@@ -177,7 +177,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyToMemoryTr
            const ze_image_region_t *pSrcRegion,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     ze_image_handle_t hSrcImage = static_cast<ze_image_handle_t>(malloc(1));
     void *dstptr = malloc(1);
@@ -204,7 +204,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyFromMemory
            const ze_image_region_t *pDstRegion,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     ze_image_handle_t hDstImage = static_cast<ze_image_handle_t>(malloc(1));
     void *srcptr = malloc(1);
@@ -229,7 +229,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemAdviseTracingWra
            ze_device_handle_t hDevice,
            const void *ptr,
            size_t size,
-           ze_memory_advice_t advice) { return ZE_RESULT_SUCCESS; };
+           ze_memory_advice_t advice) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     size_t bufferSize = 4096u;
     void *ptr = malloc(bufferSize);
 
@@ -257,7 +257,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyFromConte
            size_t size,
            ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents,
-           ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.CommandList.pfnAppendMemoryCopyFromContextCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnAppendMemoryCopyFromContextCb = genericEpilogCallbackPtr;

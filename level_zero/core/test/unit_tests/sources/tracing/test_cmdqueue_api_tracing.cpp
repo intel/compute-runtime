@@ -16,7 +16,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueCreateTracingWrapperWith
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
            const ze_command_queue_desc_t *desc,
-           ze_command_queue_handle_t *phCommandQueue) { return ZE_RESULT_SUCCESS; };
+           ze_command_queue_handle_t *phCommandQueue) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_command_queue_desc_t desc = {};
     ze_command_queue_handle_t commandQueue = {};
 
@@ -33,7 +33,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueCreateTracingWrapperWith
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandQueue.pfnDestroy =
-        [](ze_command_queue_handle_t hCommandQueue) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_queue_handle_t hCommandQueue) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandQueue.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.CommandQueue.pfnDestroyCb = genericEpilogCallbackPtr;
 
@@ -53,7 +53,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueExecuteCommandListsTraci
 
     driverDdiTable.coreDdiTable.CommandQueue.pfnExecuteCommandLists =
         [](ze_command_queue_handle_t hCommandQueue, uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-           ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
+           ze_fence_handle_t hFence) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.CommandQueue.pfnExecuteCommandListsCb = genericPrologCallbackPtr;
     epilogCbs.CommandQueue.pfnExecuteCommandListsCb = genericEpilogCallbackPtr;
@@ -68,7 +68,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueExecuteCommandListsTraci
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandQueue.pfnSynchronize =
-        [](ze_command_queue_handle_t hCommandQueue, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_queue_handle_t hCommandQueue, uint64_t timeout) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     uint64_t timeout = 100;
 
     prologCbs.CommandQueue.pfnSynchronizeCb = genericPrologCallbackPtr;

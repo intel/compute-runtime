@@ -13,7 +13,7 @@ namespace ult {
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Fence.pfnCreate =
-        [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) { return ZE_RESULT_SUCCESS; };
+        [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_fence_handle_t fence = {};
     ze_fence_desc_t desc = {};
 
@@ -30,7 +30,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetO
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Fence.pfnDestroy =
-        [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
+        [](ze_fence_handle_t hFence) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Fence.pfnDestroyCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnDestroyCb = genericEpilogCallbackPtr;
@@ -45,7 +45,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSet
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Fence.pfnHostSynchronize =
-        [](ze_fence_handle_t hFence, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
+        [](ze_fence_handle_t hFence, uint64_t timeout) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnHostSynchronizeCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnHostSynchronizeCb = genericEpilogCallbackPtr;
 
@@ -59,7 +59,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWi
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Fence.pfnQueryStatus =
-        [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
+        [](ze_fence_handle_t hFence) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnQueryStatusCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnQueryStatusCb = genericEpilogCallbackPtr;
 
@@ -73,7 +73,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOn
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Fence.pfnReset =
-        [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
+        [](ze_fence_handle_t hFence) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.Fence.pfnResetCb = genericPrologCallbackPtr;
     epilogCbs.Fence.pfnResetCb = genericEpilogCallbackPtr;
 
@@ -112,210 +112,210 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     fence_create_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnCreate =
-        [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) {
-            EXPECT_EQ(fence_create_args.hCommandQueue1, hCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc1, desc);
-            EXPECT_EQ(&fence_create_args.hFence1, phFence);
-            EXPECT_EQ(fence_create_args.hFence1, *phFence);
-            fence_create_args.hFenceAPI = generateRandomHandle<ze_fence_handle_t>();
-            *phFence = fence_create_args.hFenceAPI;
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) -> ze_result_t {
+        EXPECT_EQ(fence_create_args.hCommandQueue1, hCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc1, desc);
+        EXPECT_EQ(&fence_create_args.hFence1, phFence);
+        EXPECT_EQ(fence_create_args.hFence1, *phFence);
+        fence_create_args.hFenceAPI = generateRandomHandle<ze_fence_handle_t>();
+        *phFence = fence_create_args.hFenceAPI;
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnCreateCb =
-        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_create_args.hCommandQueue0, *params->phCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc0, *params->pdesc);
-            EXPECT_EQ(&fence_create_args.hFence0, *params->pphFence);
+        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_create_args.hCommandQueue0, *params->phCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc0, *params->pdesc);
+        EXPECT_EQ(&fence_create_args.hFence0, *params->pphFence);
 
-            ze_fence_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphFence;
+        ze_fence_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphFence;
 
-            ze_fence_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_fence_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_fence_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_fence_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(fence_create_args.hFence0, handle);
-            *params->phCommandQueue = fence_create_args.hCommandQueue1;
-            *params->pdesc = &fence_create_args.desc1;
-            *params->pphFence = &fence_create_args.hFence1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_create_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        EXPECT_EQ(fence_create_args.hFence0, handle);
+        *params->phCommandQueue = fence_create_args.hCommandQueue1;
+        *params->pdesc = &fence_create_args.desc1;
+        *params->pphFence = &fence_create_args.hFence1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_create_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Fence.pfnCreateCb =
-        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
 
-            ze_fence_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphFence;
+        ze_fence_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphFence;
 
-            ze_fence_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_fence_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_fence_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_fence_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(fence_create_args.hFence1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_create_args.instanceData0);
-            delete instanceData;
-        };
+        EXPECT_EQ(fence_create_args.hFence1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_create_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Fence.pfnCreateCb =
-        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
 
-            ze_fence_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphFence;
+        ze_fence_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphFence;
 
-            ze_fence_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_fence_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_fence_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_fence_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(fence_create_args.hFence1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        EXPECT_EQ(fence_create_args.hFence1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Fence.pfnCreateCb =
-        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
 
-            ze_fence_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphFence;
+        ze_fence_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphFence;
 
-            ze_fence_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_fence_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_fence_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_fence_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(fence_create_args.hFence1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        EXPECT_EQ(fence_create_args.hFence1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Fence.pfnCreateCb =
-        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
 
-            ze_fence_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphFence;
+        ze_fence_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphFence;
 
-            ze_fence_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_fence_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_fence_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_fence_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            EXPECT_EQ(fence_create_args.hFence1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_create_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        EXPECT_EQ(fence_create_args.hFence1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_create_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Fence.pfnCreateCb =
-        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-            EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-            EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
+        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
 
-            ze_fence_handle_t **ppHandle;
-            ASSERT_NE(nullptr, params);
-            ppHandle = params->pphFence;
+        ze_fence_handle_t **ppHandle;
+        ASSERT_NE(nullptr, params);
+        ppHandle = params->pphFence;
 
-            ze_fence_handle_t *pHandle;
-            ASSERT_NE(nullptr, ppHandle);
-            pHandle = *ppHandle;
+        ze_fence_handle_t *pHandle;
+        ASSERT_NE(nullptr, ppHandle);
+        pHandle = *ppHandle;
 
-            ze_fence_handle_t handle;
-            ASSERT_NE(nullptr, pHandle);
-            handle = *pHandle;
+        ze_fence_handle_t handle;
+        ASSERT_NE(nullptr, pHandle);
+        handle = *pHandle;
 
-            ASSERT_NE(nullptr, handle);
-            EXPECT_EQ(fence_create_args.hFence1, handle);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_create_args.instanceData3);
-            delete instanceData;
-        };
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(fence_create_args.hFence1, handle);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_create_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -346,106 +346,106 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     fence_destroy_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnDestroy =
-        [](ze_fence_handle_t hFence) {
-            EXPECT_EQ(fence_destroy_args.hFence1, hFence);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_fence_handle_t hFence) -> ze_result_t {
+        EXPECT_EQ(fence_destroy_args.hFence1, hFence);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnDestroyCb =
-        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_destroy_args.hFence0, *params->phFence);
-            *params->phFence = fence_destroy_args.hFence1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_destroy_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_destroy_args.hFence0, *params->phFence);
+        *params->phFence = fence_destroy_args.hFence1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_destroy_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Fence.pfnDestroyCb =
-        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_destroy_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_destroy_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Fence.pfnDestroyCb =
-        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Fence.pfnDestroyCb =
-        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Fence.pfnDestroyCb =
-        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_destroy_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_destroy_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Fence.pfnDestroyCb =
-        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_destroy_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_destroy_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -479,114 +479,114 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     fence_host_synchronize_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnHostSynchronize =
-        [](ze_fence_handle_t hFence, uint64_t timeout) {
-            EXPECT_EQ(fence_host_synchronize_args.hFence1, hFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout1, timeout);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_fence_handle_t hFence, uint64_t timeout) -> ze_result_t {
+        EXPECT_EQ(fence_host_synchronize_args.hFence1, hFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout1, timeout);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnHostSynchronizeCb =
-        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_host_synchronize_args.hFence0, *params->phFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout0, *params->ptimeout);
-            *params->phFence = fence_host_synchronize_args.hFence1;
-            *params->ptimeout = fence_host_synchronize_args.timeout1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_host_synchronize_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_host_synchronize_args.hFence0, *params->phFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout0, *params->ptimeout);
+        *params->phFence = fence_host_synchronize_args.hFence1;
+        *params->ptimeout = fence_host_synchronize_args.timeout1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_host_synchronize_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Fence.pfnHostSynchronizeCb =
-        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_host_synchronize_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_host_synchronize_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Fence.pfnHostSynchronizeCb =
-        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Fence.pfnHostSynchronizeCb =
-        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Fence.pfnHostSynchronizeCb =
-        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_host_synchronize_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_host_synchronize_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Fence.pfnHostSynchronizeCb =
-        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-            EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_host_synchronize_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
+        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_host_synchronize_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -616,106 +616,106 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     fence_query_status_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnQueryStatus =
-        [](ze_fence_handle_t hFence) {
-            EXPECT_EQ(fence_query_status_args.hFence1, hFence);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_fence_handle_t hFence) -> ze_result_t {
+        EXPECT_EQ(fence_query_status_args.hFence1, hFence);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnQueryStatusCb =
-        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_query_status_args.hFence0, *params->phFence);
-            *params->phFence = fence_query_status_args.hFence1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_query_status_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_query_status_args.hFence0, *params->phFence);
+        *params->phFence = fence_query_status_args.hFence1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_query_status_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Fence.pfnQueryStatusCb =
-        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_query_status_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_query_status_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Fence.pfnQueryStatusCb =
-        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Fence.pfnQueryStatusCb =
-        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Fence.pfnQueryStatusCb =
-        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_query_status_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_query_status_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Fence.pfnQueryStatusCb =
-        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_query_status_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_query_status_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 
@@ -745,106 +745,106 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     fence_reset_args.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnReset =
-        [](ze_fence_handle_t hFence) {
-            EXPECT_EQ(fence_reset_args.hFence1, hFence);
-            return ZE_RESULT_SUCCESS;
-        };
+        [](ze_fence_handle_t hFence) -> ze_result_t {
+        EXPECT_EQ(fence_reset_args.hFence1, hFence);
+        return ZE_RESULT_SUCCESS;
+    };
 
     //
     // The 0th prolog replaces the orignal API arguments with a new set
     // Create instance data, pass it to corresponding epilog.
     //
     prologCbs0.Fence.pfnResetCb =
-        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_reset_args.hFence0, *params->phFence);
-            *params->phFence = fence_reset_args.hFence1;
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 1);
-            *val += 1;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_reset_args.instanceData0;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_reset_args.hFence0, *params->phFence);
+        *params->phFence = fence_reset_args.hFence1;
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 1);
+        *val += 1;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_reset_args.instanceData0;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 0th epilog expects to see the API argument replacements
     // Expect to receive instance data from corresponding prolog
     //
     epilogCbs0.Fence.pfnResetCb =
-        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 2);
-            *val += 1;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_reset_args.instanceData0);
-            delete instanceData;
-        };
+        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 2);
+        *val += 1;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_reset_args.instanceData0);
+        delete instanceData;
+    };
 
     //
     // The 1st prolog sees the arguments as replaced by the 0th prolog.
     // There is no epilog for this prolog, so don't allocate instance data
     //
     prologCbs1.Fence.pfnResetCb =
-        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 11);
-            *val += 11;
-        };
+        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 11);
+        *val += 11;
+    };
 
     //
     // The 2nd epilog expects to see the API argument replacements
     // There is no corresponding prolog, so there is no instance data
     //
     epilogCbs2.Fence.pfnResetCb =
-        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 21);
-            *val += 21;
-        };
+        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 21);
+        *val += 21;
+    };
 
     //
     // The 3rd prolog expects to see the API argument replacements and doesn't modify them
     // Create instance data and pass to corresponding epilog
     //
     prologCbs3.Fence.pfnResetCb =
-        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 31);
-            *val += 31;
-            struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-            instanceData->instanceDataValue = fence_reset_args.instanceData3;
-            *ppTracerInstanceUserData = instanceData;
-        };
+        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 31);
+        *val += 31;
+        struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
+        instanceData->instanceDataValue = fence_reset_args.instanceData3;
+        *ppTracerInstanceUserData = instanceData;
+    };
 
     //
     // The 3rd epilog expects to see the API argument replacements
     // Expect to see instance data from corresponding prolog
     //
     epilogCbs3.Fence.pfnResetCb =
-        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
-            struct InstanceDataStruct *instanceData;
-            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-            EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
-            ASSERT_NE(nullptr, pTracerUserData);
-            int *val = static_cast<int *>(pTracerUserData);
-            EXPECT_EQ(*val, 62);
-            *val += 31;
-            instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-            EXPECT_EQ(instanceData->instanceDataValue, fence_reset_args.instanceData3);
-            delete instanceData;
-        };
+        [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
+        struct InstanceDataStruct *instanceData;
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        ASSERT_NE(nullptr, pTracerUserData);
+        int *val = static_cast<int *>(pTracerUserData);
+        EXPECT_EQ(*val, 62);
+        *val += 31;
+        instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
+        EXPECT_EQ(instanceData->instanceDataValue, fence_reset_args.instanceData3);
+        delete instanceData;
+    };
 
     setTracerCallbacksAndEnableTracer();
 

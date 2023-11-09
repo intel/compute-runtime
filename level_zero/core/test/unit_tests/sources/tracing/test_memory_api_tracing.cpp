@@ -13,7 +13,7 @@ namespace ult {
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Mem.pfnAllocShared =
-        [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc;
@@ -34,7 +34,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneS
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocDeviceTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Mem.pfnAllocDevice =
-        [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     size_t size = 1024;
     size_t alignment = 4096;
@@ -53,7 +53,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocDeviceTracingWrapperWithOneS
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocHostTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnAllocHost =
-        [](ze_context_handle_t hContext, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, void **pptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, void **pptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
     size_t size = 1024;
     size_t alignment = 4096;
@@ -72,7 +72,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocHostTracingWrapperWithOneSet
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemFreeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnFree =
-        [](ze_context_handle_t hContext, void *ptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, void *ptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.Mem.pfnFreeCb = genericPrologCallbackPtr;
@@ -87,7 +87,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemFreeTracingWrapperWithOneSetOfPro
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetAllocPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnGetAllocProperties =
-        [](ze_context_handle_t hContext, const void *ptr, ze_memory_allocation_properties_t *pMemAllocProperties, ze_device_handle_t *phDevice) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, ze_memory_allocation_properties_t *pMemAllocProperties, ze_device_handle_t *phDevice) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.Mem.pfnGetAllocPropertiesCb = genericPrologCallbackPtr;
@@ -102,7 +102,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetAllocPropertiesTracingWrapperW
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetAddressRangeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnGetAddressRange =
-        [](ze_context_handle_t hContext, const void *ptr, void **pBase, size_t *pSize) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, void **pBase, size_t *pSize) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.Mem.pfnGetAddressRangeCb = genericPrologCallbackPtr;
@@ -117,7 +117,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetAddressRangeTracingWrapperWith
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnGetIpcHandle =
-        [](ze_context_handle_t hContext, const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.Mem.pfnGetIpcHandleCb = genericPrologCallbackPtr;
@@ -132,7 +132,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetIpcHandleTracingWrapperWithOne
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnOpenIpcHandle =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle, ze_ipc_memory_flags_t flags, void **pptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle, ze_ipc_memory_flags_t flags, void **pptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     ze_ipc_mem_handle_t ipchandle = {};
@@ -149,7 +149,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOn
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemCloseIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.Mem.pfnCloseIpcHandle =
-        [](ze_context_handle_t hContext, const void *ptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.Mem.pfnCloseIpcHandleCb = genericPrologCallbackPtr;
@@ -164,7 +164,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemCloseIpcHandleTracingWrapperWithO
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingPhysicalMemCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.PhysicalMem.pfnCreate =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.PhysicalMem.pfnCreateCb = genericPrologCallbackPtr;
@@ -180,7 +180,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingPhysicalMemCreateTracingWrapperWithO
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingPhysicalMemDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.PhysicalMem.pfnDestroy =
-        [](ze_context_handle_t hContext, ze_physical_mem_handle_t hPhysicalMemory) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, ze_physical_mem_handle_t hPhysicalMemory) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.PhysicalMem.pfnDestroyCb = genericPrologCallbackPtr;
@@ -196,7 +196,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingPhysicalMemDestroyTracingWrapperWith
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemFreeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnFree =
-        [](ze_context_handle_t hContext, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, size_t size) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnFreeCb = genericPrologCallbackPtr;
@@ -212,7 +212,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemFreeTracingWrapperWithOneS
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemGetAccessAttributeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnGetAccessAttribute =
-        [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_memory_access_attribute_t *access, size_t *outSize) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_memory_access_attribute_t *access, size_t *outSize) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnGetAccessAttributeCb = genericPrologCallbackPtr;
@@ -228,7 +228,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemGetAccessAttributeTracingW
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemMapTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnMap =
-        [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_physical_mem_handle_t hPhysicalMemory, size_t offset, ze_memory_access_attribute_t access) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_physical_mem_handle_t hPhysicalMemory, size_t offset, ze_memory_access_attribute_t access) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnMapCb = genericPrologCallbackPtr;
@@ -244,7 +244,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemMapTracingWrapperWithOneSe
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemQueryPageSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnQueryPageSize =
-        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, size_t size, size_t *pagesize) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, ze_device_handle_t hDevice, size_t size, size_t *pagesize) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnQueryPageSizeCb = genericPrologCallbackPtr;
@@ -260,7 +260,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemQueryPageSizeTracingWrappe
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemReserveTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnReserve =
-        [](ze_context_handle_t hContext, const void *pStart, size_t size, void **pptr) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *pStart, size_t size, void **pptr) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnReserveCb = genericPrologCallbackPtr;
@@ -276,7 +276,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemReserveTracingWrapperWithO
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemSetAccessAttributeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnSetAccessAttribute =
-        [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_memory_access_attribute_t access) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_memory_access_attribute_t access) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnSetAccessAttributeCb = genericPrologCallbackPtr;
@@ -292,7 +292,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemSetAccessAttributeTracingW
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemUnmapTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driverDdiTable.coreDdiTable.VirtualMem.pfnUnmap =
-        [](ze_context_handle_t hContext, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
+        [](ze_context_handle_t hContext, const void *ptr, size_t size) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     prologCbs.VirtualMem.pfnUnmapCb = genericPrologCallbackPtr;

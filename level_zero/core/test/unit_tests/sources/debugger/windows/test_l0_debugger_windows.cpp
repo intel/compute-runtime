@@ -142,7 +142,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndCreateDe
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
     debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
     EXPECT_EQ(1u, wddm->createDebugDataCalled);
-    EXPECT_EQ(0xDEADDEADu, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ_VAL(0xDEADDEADu, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(0u, wddm->moduleCreateNotifyCalled);
 }
 
@@ -151,7 +151,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndModuleCr
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
     debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
     EXPECT_EQ(1u, wddm->createDebugDataCalled);
-    EXPECT_EQ(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ_VAL(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
     EXPECT_EQ(0xDEADDEADu, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
 }
@@ -162,12 +162,12 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledThenCreateD
     EXPECT_EQ(1u, wddm->createDebugDataCalled);
     EXPECT_EQ(ELF_BINARY, wddm->createDebugDataPassedParam.param.DebugDataType);
     EXPECT_EQ(0x1000u, wddm->createDebugDataPassedParam.param.DataSize);
-    EXPECT_EQ(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ_VAL(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
 
     EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
     EXPECT_TRUE(wddm->moduleCreateNotificationPassedParam.param.IsCreate);
     EXPECT_EQ(0x1000u, wddm->moduleCreateNotificationPassedParam.param.Modulesize);
-    EXPECT_EQ(0x12345678u, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ_VAL(0x12345678u, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(0x80000000, wddm->moduleCreateNotificationPassedParam.param.LoadAddress);
 }
 
@@ -178,7 +178,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledThenModule
     EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
     EXPECT_FALSE(wddm->moduleCreateNotificationPassedParam.param.IsCreate);
     EXPECT_EQ(0u, wddm->moduleCreateNotificationPassedParam.param.Modulesize);
-    EXPECT_EQ(0ull, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
+    EXPECT_EQ_VAL(0ull, wddm->moduleCreateNotificationPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(0x80000000u, wddm->moduleCreateNotificationPassedParam.param.LoadAddress);
 }
 

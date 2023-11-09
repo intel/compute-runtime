@@ -13,7 +13,7 @@ namespace ult {
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Driver.pfnGet =
-        [](uint32_t *pCount, ze_driver_handle_t *phDrivers) { return ZE_RESULT_SUCCESS; };
+        [](uint32_t *pCount, ze_driver_handle_t *phDrivers) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Driver.pfnGetCb = genericPrologCallbackPtr;
     epilogCbs.Driver.pfnGetCb = genericEpilogCallbackPtr;
@@ -28,7 +28,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetTracingWrapperWithOneSetO
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Driver.pfnGetProperties =
-        [](ze_driver_handle_t hDriver, ze_driver_properties_t *properties) { return ZE_RESULT_SUCCESS; };
+        [](ze_driver_handle_t hDriver, ze_driver_properties_t *properties) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Device.pfnGetSubDevicesCb = genericPrologCallbackPtr;
     epilogCbs.Device.pfnGetSubDevicesCb = genericEpilogCallbackPtr;
@@ -42,7 +42,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetPropertiesTracingWrapperW
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetApiVersionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Driver.pfnGetApiVersion =
-        [](ze_driver_handle_t hDrivers, ze_api_version_t *version) { return ZE_RESULT_SUCCESS; };
+        [](ze_driver_handle_t hDrivers, ze_api_version_t *version) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Driver.pfnGetApiVersionCb = genericPrologCallbackPtr;
     epilogCbs.Driver.pfnGetApiVersionCb = genericEpilogCallbackPtr;
@@ -58,7 +58,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetIpcPropertiesTracingWrapp
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.Driver.pfnGetIpcProperties =
         [](ze_driver_handle_t hDrivers,
-           ze_driver_ipc_properties_t *pIpcProperties) { return ZE_RESULT_SUCCESS; };
+           ze_driver_ipc_properties_t *pIpcProperties) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Driver.pfnGetIpcPropertiesCb = genericPrologCallbackPtr;
     epilogCbs.Driver.pfnGetIpcPropertiesCb = genericEpilogCallbackPtr;
@@ -75,7 +75,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetExtensionPropertiesTracin
     driverDdiTable.coreDdiTable.Driver.pfnGetExtensionProperties =
         [](ze_driver_handle_t hDrivers,
            uint32_t *pCount,
-           ze_driver_extension_properties_t *pExtensionProperties) { return ZE_RESULT_SUCCESS; };
+           ze_driver_extension_properties_t *pExtensionProperties) -> ze_result_t { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Driver.pfnGetExtensionPropertiesCb = genericPrologCallbackPtr;
     epilogCbs.Driver.pfnGetExtensionPropertiesCb = genericEpilogCallbackPtr;

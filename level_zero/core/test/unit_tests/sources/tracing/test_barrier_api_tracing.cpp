@@ -14,7 +14,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapp
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandList.pfnAppendBarrier =
         [](ze_command_list_handle_t hCommandList, ze_event_handle_t hSignalEvent,
-           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     ze_event_handle_t hSignalEvent = nullptr;
     uint32_t numWaitEvents = 0;
 
@@ -32,13 +32,13 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryRangesBarrier
     ze_result_t result = ZE_RESULT_SUCCESS;
     driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryRangesBarrier =
         [](ze_command_list_handle_t hCommandList, uint32_t numRanges, const size_t *pRangeSizes, const void **pRanges,
-           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     uint32_t numRanges = 1;
     const size_t pRangeSizes[] = {1};
     const void **pRanges = new const void *[1];
     driverDdiTable.coreDdiTable.CommandList.pfnAppendMemoryRangesBarrier =
         [](ze_command_list_handle_t hCommandList, uint32_t numRanges, const size_t *pRangeSizes, const void **pRanges,
-           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
+           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) -> ze_result_t { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnAppendMemoryRangesBarrierCb = genericPrologCallbackPtr;
     epilogCbs.CommandList.pfnAppendMemoryRangesBarrierCb = genericEpilogCallbackPtr;
 
