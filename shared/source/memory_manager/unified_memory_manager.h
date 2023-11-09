@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <type_traits>
@@ -83,6 +84,19 @@ struct SvmMapOperation {
 
 class SVMAllocsManager {
   public:
+    class SortedVectorBasedAllocationTracker {
+        friend class SVMAllocsManager;
+
+      public:
+        using SvmAllocationContainer = std::vector<std::pair<const void *, std::unique_ptr<SvmAllocationData>>>;
+        void insert(const SvmAllocationData &);
+        void remove(const SvmAllocationData &);
+        SvmAllocationData *get(const void *);
+        size_t getNumAllocs() const { return allocations.size(); };
+
+        SvmAllocationContainer allocations;
+    };
+
     class MapBasedAllocationTracker {
         friend class SVMAllocsManager;
 
@@ -205,7 +219,7 @@ class SVMAllocsManager {
     void removeSVMAlloc(const SvmAllocationData &svmData);
     size_t getNumAllocs() const { return svmAllocs.getNumAllocs(); }
     MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return svmDeferFreeAllocs.getNumAllocs(); }
-    MapBasedAllocationTracker *getSVMAllocs() { return &svmAllocs; }
+    SortedVectorBasedAllocationTracker *getSVMAllocs() { return &svmAllocs; }
 
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
@@ -240,7 +254,7 @@ class SVMAllocsManager {
     void initUsmDeviceAllocationsCache();
     void freeSVMData(SvmAllocationData *svmData);
 
-    MapBasedAllocationTracker svmAllocs;
+    SortedVectorBasedAllocationTracker svmAllocs;
     MapOperationsTracker svmMapOperations;
     MapBasedAllocationTracker svmDeferFreeAllocs;
     MemoryManager *memoryManager;

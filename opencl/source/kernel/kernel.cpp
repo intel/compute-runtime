@@ -1968,7 +1968,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
         }
         if (getContext().getSVMAllocsManager()) {
             for (auto &allocation : getContext().getSVMAllocsManager()->getSVMAllocs()->allocations) {
-                auto gfxAllocation = allocation.second.gpuAllocations.getDefaultGraphicsAllocation();
+                auto gfxAllocation = allocation.second->gpuAllocations.getDefaultGraphicsAllocation();
                 if (gfxAllocation->isCompressionEnabled()) {
                     kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
                     auto &context = this->program->getContext();
