@@ -72,8 +72,8 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
         case KmdSysman::Requests::Activity::CurrentActivityCounter: {
             uint64_t *pValueCounter = reinterpret_cast<uint64_t *>(pBuffer);
             uint64_t *pValueTimeStamp = reinterpret_cast<uint64_t *>(pBuffer + sizeof(uint64_t));
-            *pValueCounter = mockActivityCounters[domain];
-            *pValueTimeStamp = mockActivityTimeStamps[domain];
+            memcpy_s(pValueCounter, sizeof(uint64_t), &mockActivityCounters[domain], sizeof(uint64_t));
+            memcpy_s(pValueTimeStamp, sizeof(uint64_t), &mockActivityTimeStamps[domain], sizeof(uint64_t));
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = 2 * sizeof(uint64_t);
         } break;
@@ -92,8 +92,8 @@ struct Mock<EngineKmdSysManager> : public EngineKmdSysManager {
         case KmdSysman::Requests::Activity::CurrentCounterV2: {
             uint64_t *pValueCounter = reinterpret_cast<uint64_t *>(pBuffer);
             uint64_t *pValueTimeStamp = reinterpret_cast<uint64_t *>(pBuffer + sizeof(uint64_t));
-            *pValueCounter = mockActivityCounters[domain];
-            *pValueTimeStamp = mockActivityTimeStamps[domain];
+            memcpy_s(pValueCounter, sizeof(uint64_t), &mockActivityCounters[domain], sizeof(uint64_t));
+            memcpy_s(pValueTimeStamp, sizeof(uint64_t), &mockActivityTimeStamps[domain], sizeof(uint64_t));
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = 2 * sizeof(uint64_t);
         } break;
