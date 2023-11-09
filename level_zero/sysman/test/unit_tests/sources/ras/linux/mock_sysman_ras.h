@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp_prelim.h"
+#include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
