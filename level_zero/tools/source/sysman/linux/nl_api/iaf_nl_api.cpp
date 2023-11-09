@@ -7,6 +7,7 @@
 
 #include "iaf_nl_api.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
@@ -99,6 +100,7 @@ ze_result_t IafNlApi::allocMsg(const uint16_t cmdOp, struct nl_msg *&msg) {
 }
 
 ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, const uint32_t fabricId, const uint32_t attachId, const uint8_t portNumber, void *pOutput) {
+    std::unique_lock<std::mutex> lock(iafMutex);
     ze_result_t result = init();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
@@ -126,6 +128,7 @@ void IafNlApi::addNestedFabricPortList(struct nl_msg *msg, std::vector<IafPortId
 }
 
 ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, std::vector<IafPortId> &iafPortIdList, void *pOutput) {
+    std::unique_lock<std::mutex> lock(iafMutex);
     ze_result_t result = init();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
@@ -142,6 +145,7 @@ ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, std::vector<IafPortId> 
 }
 
 ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, const uint32_t fabricId, const uint32_t attachId, void *pOutput) {
+    std::unique_lock<std::mutex> lock(iafMutex);
     ze_result_t result = init();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
@@ -158,6 +162,7 @@ ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, const uint32_t fabricId
 }
 
 ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, const uint32_t fabricId, void *pOutput) {
+    std::unique_lock<std::mutex> lock(iafMutex);
     ze_result_t result = init();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
@@ -173,6 +178,7 @@ ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, const uint32_t fabricId
 }
 
 ze_result_t IafNlApi::issueRequest(const uint16_t cmdOp, void *pOutput) {
+    std::unique_lock<std::mutex> lock(iafMutex);
     ze_result_t result = init();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
@@ -726,8 +732,8 @@ ze_result_t IafNlApi::init() {
 
     int retval = pNlApi->genlRegisterFamily(&ops);
     if (-NLE_EXIST == retval) {
-        // Temporary error
-        return ZE_RESULT_NOT_READY;
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to register netlink family and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if (!retval) {
         nlSock = pNlApi->nlSocketAlloc();
         if (nullptr != nlSock) {

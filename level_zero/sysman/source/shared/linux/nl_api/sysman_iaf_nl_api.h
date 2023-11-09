@@ -13,6 +13,7 @@
 
 #include <linux/types.h>
 #include <list>
+#include <mutex>
 #include <netlink/genl/genl.h>
 #include <netlink/genl/mngt.h>
 #include <vector>
@@ -146,6 +147,7 @@ class IafNlApi {
     struct nla_policy policy[_IAF_ATTR_COUNT] = {};
     struct genl_cmd cmds[_IAF_CMD_OP_COUNT] = {};
     struct genl_ops ops = {};
+    std::mutex iafMutex{};
 };
 
 } // namespace Sysman

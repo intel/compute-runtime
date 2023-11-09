@@ -130,7 +130,7 @@ TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGenlRegisterFamilyFailesWithExist
     pMockNlApi->mockLoadEntryPointsReturnValue.push_back(true);
     pMockNlApi->mockGenlRegisterFamilyReturnValue.push_back(-NLE_EXIST);
     pMockNlApi->isMockGenlRegisterFamilyRepeatedCall.push_back(false);
-    EXPECT_EQ(ZE_RESULT_NOT_READY, testIafNlApi.init());
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, testIafNlApi.init());
 }
 
 TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGenlRegisterFamilyFailesWithAnyOtherErrorInitReturnsErrorUnknown) {

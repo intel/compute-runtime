@@ -121,15 +121,15 @@ TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenLoadEntryPointsFailsThenInitRepea
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, testIafNlApi.init());
 }
 
-TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGenlRegisterFamilyFailesWithExistThenInitReturnsNotReady) {
+TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGenlRegisterFamilyFailsWithExistThenInitReturnsNotReady) {
     MockNlApi *pMockNlApi = static_cast<MockNlApi *>(testIafNlApi.pNlApi.get());
     pMockNlApi->mockLoadEntryPointsReturnValue.push_back(true);
     pMockNlApi->mockGenlRegisterFamilyReturnValue.push_back(-NLE_EXIST);
     pMockNlApi->isMockGenlRegisterFamilyRepeatedCall.push_back(false);
-    EXPECT_EQ(ZE_RESULT_NOT_READY, testIafNlApi.init());
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, testIafNlApi.init());
 }
 
-TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGenlRegisterFamilyFailesWithAnyOtherErrorInitReturnsErrorUnknown) {
+TEST_F(SysmanIafNlApiFixture, GivenIafNlApiWhenGenlRegisterFamilyFailsWithAnyOtherErrorInitReturnsErrorUnknown) {
     MockNlApi *pMockNlApi = static_cast<MockNlApi *>(testIafNlApi.pNlApi.get());
     pMockNlApi->mockLoadEntryPointsReturnValue.push_back(true);
     pMockNlApi->mockGenlRegisterFamilyReturnValue.push_back(-NLE_FAILURE);

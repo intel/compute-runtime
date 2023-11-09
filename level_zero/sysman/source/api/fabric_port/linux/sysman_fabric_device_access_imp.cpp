@@ -73,7 +73,7 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
 
     result = pIafNlApi->fportProperties(iafPortId, guid, portNumber, maxRxSpeed, maxTxSpeed, rxSpeed, txSpeed);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Error@ %s(): Iaf port properties query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf port properties query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
         return result;
     }
     readIafPortSpeed(state.rxSpeed, rxSpeed);
