@@ -178,6 +178,51 @@ TEST_F(WddmMemoryManagerTests, GivenCompressedAndNotLockableAllocationTypeWhenAl
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(WddmMemoryManagerTests, givenPageSize64kAlignmentWhenAllocateUsingKmdAndMapToCpuVaWithLargePagesThenAllocationIsAlignedTo64Kb) {
+    AllocationData allocationData;
+    allocationData.size = 5;
+    allocationData.type = AllocationType::FILL_PATTERN;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+
+    const size_t expectedAllignedAllocSize = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, true);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(expectedAllignedAllocSize, allocation->getUnderlyingBufferSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerTests, givenPageSize64kAlignmentWhenAllocateUsingKmdAndMapToCpuVaWithoutLargePagesThenAllocationIsAlignedTo4Kb) {
+    AllocationData allocationData;
+    allocationData.size = 5;
+    allocationData.type = AllocationType::FILL_PATTERN;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+
+    const size_t expectedAllignedAllocSize = alignUp(allocationData.size, MemoryConstants::pageSize);
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, false);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(expectedAllignedAllocSize, allocation->getUnderlyingBufferSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerTests, givenPageSizeAlignmentWhenAllocateUsingKmdAndMapToCpuVaWithLargePagesThenAllocationIsAlignedTo4Kb) {
+    AllocationData allocationData;
+    allocationData.size = 5;
+    allocationData.type = AllocationType::FILL_PATTERN;
+    allocationData.alignment = MemoryConstants::pageSize;
+
+    const size_t expectedAllignedAllocSize = alignUp(allocationData.size, MemoryConstants::pageSize);
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, true);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(expectedAllignedAllocSize, allocation->getUnderlyingBufferSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerTests, givenWddmMemoryManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
     MockWddmMemoryManager memoryManager(true, false, *executionEnvironment);
     uint32_t rootDeviceIndex = 0u;

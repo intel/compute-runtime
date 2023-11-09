@@ -1948,10 +1948,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
         auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::FILL_PATTERN);
         if (patternGfxAlloc == nullptr) {
-            patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
-                                                                                                                   patternAllocationSize,
-                                                                                                                   NEO::AllocationType::FILL_PATTERN,
-                                                                                                                   device->getNEODevice()->getDeviceBitfield()});
+            NEO::AllocationProperties allocationProperties{device->getNEODevice()->getRootDeviceIndex(),
+                                                           patternAllocationSize,
+                                                           NEO::AllocationType::FILL_PATTERN,
+                                                           device->getNEODevice()->getDeviceBitfield()};
+            allocationProperties.alignment = MemoryConstants::pageSize;
+            patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
         }
         void *patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
         patternAllocations.push_back(patternGfxAlloc);

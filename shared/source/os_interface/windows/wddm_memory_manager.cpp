@@ -180,10 +180,16 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
-    return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, true);
+    AllocationData allocationData64KbAlignment = allocationData;
+    allocationData64KbAlignment.alignment = MemoryConstants::pageSize64k;
+    return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData64KbAlignment, true);
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages) {
+    if (allocationData.alignment != MemoryConstants::pageSize64k) {
+        allowLargePages = false;
+    }
+
     size_t sizeAligned = alignUp(allocationData.size, allowLargePages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize);
     if (sizeAligned > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd)) {
         const bool isBufferHostMemory = allocationData.type == NEO::AllocationType::BUFFER_HOST_MEMORY;
