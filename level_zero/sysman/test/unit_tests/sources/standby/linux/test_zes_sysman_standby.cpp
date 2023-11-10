@@ -131,6 +131,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetPropert
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetProperties(hSysmanStandby, &properties));
         EXPECT_EQ(nullptr, properties.pNext);
         EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
@@ -143,6 +144,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThe
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
         EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
     }
@@ -154,6 +156,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThe
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
         EXPECT_EQ(ZES_STANDBY_PROMO_MODE_NEVER, mode);
     }
@@ -166,6 +169,7 @@ TEST_F(ZesStandbyFixture, GivenInvalidStandbyFileWhenReadisCalledThenExpectFailu
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_NE(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
     }
 }
@@ -176,6 +180,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThe
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesStandbyGetMode(hSysmanStandby, &mode));
     }
 }
@@ -188,6 +193,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeOnU
     ptestSysfsAccess->isStandbyModeFileAvailable = false;
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesStandbyGetMode(hSysmanStandby, &mode));
     }
 }
@@ -200,6 +206,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeWit
     ptestSysfsAccess->mockStandbyFileMode &= ~S_IRUSR;
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesStandbyGetMode(hSysmanStandby, &mode));
     }
 }
@@ -209,6 +216,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeThe
     ptestSysfsAccess->mockStandbyFileMode &= ~S_IWUSR;
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
     }
 }
@@ -218,6 +226,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeOnU
 
     ptestSysfsAccess->isStandbyModeFileAvailable = false;
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER));
     }
 }
@@ -226,6 +235,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNev
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         zes_standby_promo_mode_t mode;
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
@@ -240,6 +250,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeDef
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         zes_standby_promo_mode_t mode;
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeNever);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
@@ -269,6 +280,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeDef
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         zes_standby_promo_mode_t mode;
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeNever);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));
@@ -287,6 +299,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNev
     auto handles = getStandbyHandles(mockHandleCount);
 
     for (auto hSysmanStandby : handles) {
+        ASSERT_NE(nullptr, hSysmanStandby);
         zes_standby_promo_mode_t mode;
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetMode(hSysmanStandby, &mode));

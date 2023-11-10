@@ -1712,6 +1712,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -1736,6 +1737,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -1765,6 +1767,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
@@ -1789,6 +1792,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -1814,6 +1818,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
@@ -1839,6 +1844,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -1872,6 +1878,7 @@ TEST_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRasUnc
     pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -1896,6 +1903,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
@@ -1927,6 +1935,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
@@ -1950,6 +1959,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
@@ -1973,6 +1983,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         if (properties.type == ZES_RAS_ERROR_TYPE_CORRECTABLE) {

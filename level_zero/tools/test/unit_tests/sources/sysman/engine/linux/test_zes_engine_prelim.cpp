@@ -107,57 +107,60 @@ TEST_F(ZesEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGr
 }
 TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
-    auto handle = getEngineHandles(handleComponentCount);
+    auto handles = getEngineHandles(handleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+    }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[0], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[0], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[1], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_COMPUTE_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[2], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[3], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_COPY_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[4], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_COMPUTE_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[5], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[5], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[6], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[6], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[7], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[7], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[8], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[8], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[9], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[9], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[10], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[10], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[11], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[11], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[12], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[12], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 }
@@ -168,6 +171,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZes
     EXPECT_EQ(handleComponentCount, handles.size());
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, nullptr, &stats));
     }
 }
@@ -178,6 +182,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZes
     EXPECT_EQ(handleComponentCount, handles.size());
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
         EXPECT_EQ(mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
         EXPECT_EQ(mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
@@ -193,6 +198,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEn
     EXPECT_EQ(handleComponentCount, handles.size());
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
         EXPECT_EQ(mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
         EXPECT_EQ(mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
@@ -241,6 +247,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
     EXPECT_EQ(handleComponentCount, handles.size());
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivity(handle, &stats));
     }
 }
@@ -391,38 +398,41 @@ TEST_F(ZesEngineMultiFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEng
 
 TEST_F(ZesEngineMultiFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
-    auto handle = getEngineHandles(handleCountForMultiDeviceFixture);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[0], &properties));
+    auto handles = getEngineHandles(handleCountForMultiDeviceFixture);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[0], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 0u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[1], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[2], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[3], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 0u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[4], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[5], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[5], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[6], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[6], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 0u);
@@ -461,24 +471,27 @@ class ZesEngineAffinityMaskFixture : public ZesEngineMultiFixture {
 TEST_F(ZesEngineAffinityMaskFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesWhenAffinityMaskIsSetThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
     uint32_t handleCountForEngineAffinityMaskFixture = 4u;
-    auto handle = getEngineHandles(handleCountForEngineAffinityMaskFixture);
+    auto handles = getEngineHandles(handleCountForEngineAffinityMaskFixture);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+    }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[0], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[0], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[1], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[2], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[3], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(properties.subdeviceId, 1u);

@@ -97,6 +97,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessI
     bool correctable = true;
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
         EXPECT_EQ(properties.pNext, nullptr);
@@ -195,6 +196,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSu
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
         if (correctable == true) {
@@ -226,6 +228,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateForGtAfterClea
     bool correctable = true;
     ze_bool_t clear = 0;
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
         if (correctable == true) {
@@ -281,6 +284,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmThenS
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
         if (correctable == true) {
@@ -301,6 +305,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmWithC
     bool correctable = true;
     ze_bool_t clear = 0;
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, clear, &state));
         if (correctable == true) {
@@ -332,6 +337,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateWithClearOpt
     auto handles = getRasHandles(mockHandleCount);
     ze_bool_t clear = 1;
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesRasGetState(handle, clear, &state));
     }
@@ -343,6 +349,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -354,6 +361,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -365,6 +373,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -376,6 +385,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 1, &state));
     }
@@ -387,6 +397,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -399,6 +410,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmware
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -407,6 +419,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmware
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRasSetConfigThenSuccessIsReturned) {
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_config_t setConfig = {};
         zes_ras_config_t getConfig = {};
         setConfig.totalThreshold = 50;
@@ -427,6 +440,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPer
     auto handles = getRasHandles(mockHandleCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_config_t setConfig = {};
         setConfig.totalThreshold = 50;
         memset(setConfig.detailedThresholds.category, 1, maxRasErrorCategoryCount * sizeof(uint64_t));
@@ -440,6 +454,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -451,6 +466,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -462,6 +478,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
 
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
     }
@@ -585,6 +602,7 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetState
     auto handles = getRasHandles(mockHandleCountForSubDevice);
     uint32_t handleIndex = 0u;
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
         if (handleIndex == 0u) {
@@ -633,6 +651,7 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetState
     uint32_t handleIndex = 0u;
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetState(handle, 0, &state));
         if (handleIndex == 0u) {

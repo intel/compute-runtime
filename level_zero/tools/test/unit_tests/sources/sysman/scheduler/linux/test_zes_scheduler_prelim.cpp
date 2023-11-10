@@ -164,6 +164,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenComponentCountZeroWhenCallingzesDevice
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetCurrentModeThenVerifyzesSchedulerGetCurrentModeCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         auto mode = fixtureGetCurrentMode(handle);
         EXPECT_EQ(mode, ZES_SCHED_MODE_TIMESLICE);
     }
@@ -172,6 +173,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimeoutModePropertiesThenVerifyzesSchedulerGetTimeoutModePropertiesCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         auto config = fixtureGetTimeoutModeProperties(handle, false);
         EXPECT_EQ(config.watchdogTimeout, expectedHeartbeatTimeoutMicroSecs);
     }
@@ -179,6 +181,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenSomeInvalidSchedulerModeWhenCheckingForCurrentModeThenAPIReportUnknownMode) {
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(handles[0]));
     auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
     uint64_t timeslice = 0, timeout = 0, heartbeat = 3000;
@@ -196,6 +199,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     pSysfsAccess->write(engineDir + "/" + "vcs1" + "/" + heartbeatIntervalMilliSecs, (heartbeatMilliSecs + 5));
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_properties_t properties = {};
         zes_sched_timeout_properties_t config;
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -210,6 +214,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimeoutModePropertiesWithDefaultsThenVerifyzesSchedulerGetTimeoutModePropertiesCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         auto config = fixtureGetTimeoutModeProperties(handle, true);
         EXPECT_EQ(config.watchdogTimeout, expectedDefaultHeartbeatTimeoutMicroSecs);
     }
@@ -218,6 +223,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimesliceModePropertiesThenVerifyzesSchedulerGetTimesliceModePropertiesCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         auto config = fixtureGetTimesliceModeProperties(handle, false);
         EXPECT_EQ(config.interval, expectedTimesliceMicroSecs);
         EXPECT_EQ(config.yieldTimeout, expectedTimeoutMicroSecs);
@@ -230,6 +236,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     pSysfsAccess->write(engineDir + "/" + "vcs1" + "/" + preemptTimeoutMilliSecs, (timeoutMilliSecs + 5));
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_properties_t properties = {};
         zes_sched_timeslice_properties_t config;
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -247,6 +254,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     pSysfsAccess->write(engineDir + "/" + "vcs1" + "/" + timesliceDurationMilliSecs, (timesliceMilliSecs + 5));
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_properties_t properties = {};
         zes_sched_timeslice_properties_t config;
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -262,6 +270,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     auto handles = getSchedHandles(handleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_properties_t properties = {};
         zes_sched_timeout_properties_t config;
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -280,6 +289,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     auto handles = getSchedHandles(handleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_properties_t properties = {};
         zes_sched_timeout_properties_t config;
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -298,6 +308,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_timeslice_properties_t config;
         zes_sched_properties_t properties = {};
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -320,6 +331,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimescliceModePropertiesThenVerifyzesSchedulerGetTimescliceModePropertiesForReadFileFailureDueToInsufficientPermissions) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_timeslice_properties_t config;
         zes_sched_properties_t properties = {};
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
@@ -337,6 +349,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimesliceModePropertiesWithDefaultsThenVerifyzesSchedulerGetTimesliceModePropertiesCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         auto config = fixtureGetTimesliceModeProperties(handle, true);
         EXPECT_EQ(config.interval, expectedDefaultTimesliceMicroSecs);
         EXPECT_EQ(config.yieldTimeout, expectedDefaultTimeoutMicroSecs);
@@ -346,6 +359,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeThenVerifyzesSchedulerSetTimeoutModeCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setConfig;
         setConfig.watchdogTimeout = 10000u;
@@ -366,6 +380,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     setComputeUnitDebugModeMock(handles[0]);
 
     // Change mode to ZES_SCHED_MODE_EXCLUSIVE and validate
@@ -390,6 +405,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimeo
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     setComputeUnitDebugModeMock(handles[0]);
 
     // Change mode to ZES_SCHED_MODE_EXCLUSIVE and validate
@@ -406,6 +422,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimeo
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenTimeoutLessThanMinimumThenVerifyzesSchedulerSetTimeoutModeCallFails) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setConfig;
         setConfig.watchdogTimeout = minTimeoutModeHeartbeat - 1;
@@ -417,6 +434,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenCurrentModeIsTimeoutModeThenVerifyzesSchedulerSetTimeoutModeCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setTimeOutConfig;
         setTimeOutConfig.watchdogTimeout = 10000u;
@@ -435,6 +453,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setTimeOutConfig;
         setTimeOutConfig.watchdogTimeout = 10000u;
@@ -449,6 +468,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setConfig;
         setConfig.watchdogTimeout = minTimeoutModeHeartbeat;
@@ -464,6 +484,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setConfig;
         setConfig.watchdogTimeout = minTimeoutModeHeartbeat;
@@ -479,6 +500,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setConfig;
         setConfig.watchdogTimeout = minTimeoutModeHeartbeat;
@@ -490,6 +512,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeThenVerifyzesSchedulerSetTimesliceModeCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = 1000u;
@@ -512,6 +535,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     setComputeUnitDebugModeMock(handles[0]);
 
     // Change mode to ZES_SCHED_MODE_EXCLUSIVE and validate
@@ -538,6 +562,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimes
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     setComputeUnitDebugModeMock(handles[0]);
 
     // Change mode to ZES_SCHED_MODE_EXCLUSIVE and validate
@@ -559,6 +584,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenGetCurrentModeFailsWhenCallingzesSched
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = 1000u;
@@ -571,6 +597,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenGetCurrentModeFailsWhenCallingzesSched
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeWhenIntervalIsLessThanMinimumThenVerifyzesSchedulerSetTimesliceModeCallFails) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = minTimeoutInMicroSeconds - 1;
@@ -587,6 +614,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = minTimeoutInMicroSeconds;
@@ -603,6 +631,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenNoAccessToHeartBeatIntervalWhenSetting
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = minTimeoutInMicroSeconds;
@@ -619,6 +648,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenHeartBeatIntervalFileNotPresentWhenSet
              });
 
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(handles[0]));
     auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsScheduler->setHeartbeatInterval(2000));
@@ -627,6 +657,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenHeartBeatIntervalFileNotPresentWhenSet
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeThenVerifyCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         ze_result_t result = zesSchedulerSetExclusiveMode(handle, &needReboot);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -643,6 +674,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     ze_bool_t needReload;
     setComputeUnitDebugModeMock(handles[0]);
 
@@ -662,6 +694,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingExclu
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     ze_bool_t needReload;
     setComputeUnitDebugModeMock(handles[0]);
 
@@ -680,6 +713,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         ze_result_t result = zesSchedulerSetExclusiveMode(handle, &needReboot);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -693,6 +727,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         ze_result_t result = zesSchedulerSetExclusiveMode(handle, &needReboot);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -706,6 +741,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         ze_result_t result = zesSchedulerSetExclusiveMode(handle, &needReboot);
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
@@ -719,6 +755,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_mode_t mode;
         ze_result_t result = zesSchedulerGetCurrentMode(handle, &mode);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -732,6 +769,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_mode_t mode;
         ze_result_t result = zesSchedulerGetCurrentMode(handle, &mode);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -745,6 +783,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_mode_t mode;
         ze_result_t result = zesSchedulerGetCurrentMode(handle, &mode);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -758,6 +797,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_mode_t mode;
         ze_result_t result = zesSchedulerGetCurrentMode(handle, &mode);
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
@@ -770,6 +810,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     uint64_t val = 0;
     pSysfsAccess->read(enableEuDebug, val);
     EXPECT_EQ(val, 0u);
@@ -791,6 +832,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenGpuProcessCleanupFailedWhenCallingzesS
     pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
 
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     uint64_t val = 0;
     pSysfsAccess->read(enableEuDebug, val);
     EXPECT_EQ(val, 0u);
@@ -811,6 +853,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSch
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     uint64_t val = 0;
     pSysfsAccess->read(enableEuDebug, val);
     EXPECT_EQ(val, 0u);
@@ -833,6 +876,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSch
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenNodeRequiredToEnableEuDebugNotPresentWhenCheckingForDebugModeThenCallReturnsFalse) {
     auto handles = getSchedHandles(handleComponentCount);
+    ASSERT_NE(nullptr, handles[0]);
     auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(handles[0]));
     auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
     std::string dummy;
@@ -845,6 +889,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenPrelimEnableEuDebugNodeNotAvailableWhe
     pSysfsAccess->setFileProperties(dummy, enableEuDebug, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReload;
         ze_result_t result = zesSchedulerSetComputeUnitDebugMode(handle, &needReload);
         EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
@@ -859,6 +904,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenExclusiveModeSetFailWhenCallingzesSche
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReload;
         ze_result_t result = zesSchedulerSetComputeUnitDebugMode(handle, &needReload);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -873,6 +919,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenExclusiveModeSetFailWhenCallingzesSche
              });
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReload;
         ze_result_t result = zesSchedulerSetComputeUnitDebugMode(handle, &needReload);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -885,6 +932,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_timeout_properties_t config;
         ze_result_t result = zesSchedulerGetTimeoutModeProperties(handle, true, &config);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -897,6 +945,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_timeslice_properties_t config;
         ze_result_t result = zesSchedulerGetTimesliceModeProperties(handle, true, &config);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
@@ -909,6 +958,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = 1000u;
@@ -924,6 +974,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = 1000u;
@@ -941,6 +992,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetPropertiesThenVerifyzesSchedulerGetPropertiesCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_sched_properties_t properties = {};
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

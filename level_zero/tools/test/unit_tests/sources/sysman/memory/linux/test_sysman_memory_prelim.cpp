@@ -237,6 +237,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -260,6 +261,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -282,6 +284,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -304,6 +307,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -326,6 +330,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -348,6 +353,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -370,6 +376,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties;
 
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
@@ -391,6 +398,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_state_t state;
 
         ze_result_t result = zesMemoryGetState(handle, &state);
@@ -409,6 +417,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     ioctlHelper->returnEmptyMemoryInfo = true;
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_state_t state;
 
         ze_result_t result = zesMemoryGetState(handle, &state);
@@ -427,6 +436,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     ioctlHelper->mockErrorNumber = ENODEV;
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_state_t state;
 
         ze_result_t result = zesMemoryGetState(handle, &state);
@@ -461,6 +471,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitialize
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_state_t state;
 
         ze_result_t result = zesMemoryGetState(handle, &state);
@@ -486,6 +497,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_bandwidth_t bandwidth;
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
@@ -496,6 +508,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
         uint64_t expectedBandwidth = 0;
@@ -530,6 +543,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_bandwidth_t bandwidth{};
         uint64_t expectedReadCounters = 0, expectedWriteCounters = 0;
         uint64_t expectedBandwidth = 0;
@@ -564,6 +578,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -586,6 +601,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -604,6 +620,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -624,6 +641,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -648,6 +666,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -674,6 +693,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -702,6 +722,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzes
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_bandwidth_t bandwidth{};
         zes_mem_properties_t properties = {ZES_STRUCTURE_TYPE_MEM_PROPERTIES};
         zesMemoryGetProperties(handle, &properties);
@@ -729,6 +750,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -756,6 +778,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_bandwidth_t bandwidth;
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
@@ -769,6 +792,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -788,6 +812,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -807,6 +832,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -826,6 +852,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -889,6 +916,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -911,6 +939,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenBothVfid0AndVfid1Are
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
         zesMemoryGetProperties(handle, &properties);
 
@@ -946,6 +975,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesSysmanMemo
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_mem_state_t state;
         ze_result_t result = zesMemoryGetState(handle, &state);
 
@@ -1108,6 +1138,10 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysma
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(subDeviceCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+    }
     zes_mem_state_t state1;
     ze_result_t result = zesMemoryGetState(handles[0], &state1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

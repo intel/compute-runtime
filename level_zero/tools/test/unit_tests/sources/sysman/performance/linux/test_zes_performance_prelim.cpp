@@ -149,6 +149,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenGettingPerformanceProperti
     Device::fromHandle(deviceHandles[0])->getProperties(&deviceProperties);
 
     auto handle = getPerfHandles(1u);
+    ASSERT_NE(nullptr, handle[0]);
     zes_perf_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetProperties(handle[0], &properties));
     EXPECT_TRUE(properties.onSubdevice);
@@ -159,6 +160,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenGettingPerformanceProperti
 TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenGettingConfigThenSuccessIsReturned) {
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         double factor = 0;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetConfig(handle, &factor));
         EXPECT_EQ(factor, 100);
@@ -172,6 +174,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesWhenInvalidMultiplierValuesAr
     pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles, device);
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         double factor = 0;
         EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesPerformanceFactorGetConfig(handle, &factor));
     }
@@ -184,6 +187,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesWhenBaseAndMediaFreqFactorNod
     pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles, device);
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         double factor = 0;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPerformanceFactorGetConfig(handle, &factor));
     }
@@ -192,6 +196,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesWhenBaseAndMediaFreqFactorNod
 TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenSettingConfigThenSuccessIsReturned) {
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         double setFactor = 0;
         double getFactor;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorSetConfig(handle, setFactor));
@@ -208,6 +213,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenSettingConfigThenSuccessIs
 HWTEST2_F(ZesPerformanceFixture, GivenValidPerfHandleWhenSettingMediaConfigAndGettingMediaConfigForProductOtherThanPVCThenValidConfigIsReturned, IsNotPVC) {
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_perf_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetProperties(handle, &properties));
         if (properties.engines == ZES_ENGINE_TYPE_FLAG_MEDIA) {
@@ -244,6 +250,7 @@ HWTEST2_F(ZesPerformanceFixture, GivenValidPerfHandleWhenSettingMediaConfigAndGe
 HWTEST2_F(ZesPerformanceFixture, GivenValidPerfHandleWhenSettingMediaConfigAndGettingMediaConfigWhenProductFamilyIsPVCThenValidConfigIsReturned, IsPVC) {
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         zes_perf_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPerformanceFactorGetProperties(handle, &properties));
         if (properties.engines == ZES_ENGINE_TYPE_FLAG_MEDIA) {
@@ -301,6 +308,7 @@ TEST_F(ZesPerformanceFixture, GivenValidPerfHandleWhenGettingPerfConfigForOtherD
 TEST_F(ZesPerformanceFixture, GivenValidPerfHandlesButSysfsReadsFailAtDifferentBrancesWhenSettingPerfConfigThenPerfSetConfigFails) {
     auto handles = getPerfHandles(mockHandleCount);
     for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
         double setFactor = 110;
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesPerformanceFactorSetConfig(handle, setFactor));
 
