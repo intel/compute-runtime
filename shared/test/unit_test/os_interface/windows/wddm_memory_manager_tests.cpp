@@ -370,36 +370,6 @@ TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuV
     EXPECT_GT(reinterpret_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext())->freeGpuVirtualAddressCalled, 0u);
 }
 
-TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhenCreatingSVMAllocationThenAllocationIsAligned) {
-    if constexpr (is32bit) {
-        GTEST_SKIP();
-    }
-    NEO::AllocationData allocData{};
-    allocData.flags.allocateMemory = 1;
-    allocData.flags.useSystemMemory = 1;
-    allocData.type = NEO::AllocationType::SVM_CPU;
-    allocData.usmInitialPlacement = NEO::GraphicsAllocation::DEFAULT;
-    allocData.allocationMethod = NEO::GfxMemoryAllocationMethod::AllocateByKmd;
-    allocData.size = 1;
-    allocData.forceKMDAllocation = true;
-    allocData.makeGPUVaDifferentThanCPUPtr = true;
-    allocData.useMmapObject = true;
-    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
-
-    size_t alignment = 8 * MemoryConstants::megaByte;
-    do {
-        alignment >>= 1;
-        allocData.alignment = alignment;
-        auto allocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
-        const auto cpuPtr = allocation->getUnderlyingBuffer();
-        EXPECT_NE(nullptr, cpuPtr);
-        if (alignment != 0) {
-            EXPECT_EQ(reinterpret_cast<uintptr_t>(cpuPtr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(cpuPtr));
-        }
-        memoryManager->freeGraphicsMemory(allocation);
-    } while (alignment != 0);
-}
-
 TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWhen32bitThenProperAddressSet) {
     if constexpr (is64bit) {
         GTEST_SKIP();
@@ -1678,37 +1648,6 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenA
         EXPECT_EQ(1, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
         EXPECT_EQ(0, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
     }
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenAlignmentWhenAllocatingGraphicsMemoryInDevicePoolThenTheAllocationIsAligned) {
-    const bool enable64kbPages = false;
-    const bool localMemoryEnabled = true;
-    memoryManager = std::make_unique<MockWddmMemoryManager>(enable64kbPages, localMemoryEnabled, executionEnvironment);
-
-    AllocationData allocData{};
-    allocData.flags.allocateMemory = 1;
-    allocData.flags.allow64kbPages = 1;
-    allocData.flags.allow32Bit = 1;
-    allocData.flags.shareable = 1;
-    allocData.flags.isUSMDeviceMemory = 1;
-    allocData.type = NEO::AllocationType::BUFFER;
-    allocData.usmInitialPlacement = NEO::GraphicsAllocation::DEFAULT;
-    allocData.allocationMethod = NEO::GfxMemoryAllocationMethod::AllocateByKmd;
-    allocData.size = 1;
-    allocData.useMmapObject = true;
-
-    size_t alignment = 8 * MemoryConstants::megaByte;
-    do {
-        alignment >>= 1;
-        allocData.alignment = alignment;
-        auto status = MemoryManager::AllocationStatus::Error;
-        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
-        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-        EXPECT_NE(nullptr, allocation);
-        EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-        EXPECT_LE(alignment, allocation->getUnderlyingBufferSize());
-        memoryManager->freeGraphicsMemory(allocation);
-    } while (alignment != 0);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInDevicePoolIsCalledThenNullptrIsReturned) {

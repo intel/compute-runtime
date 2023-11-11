@@ -236,7 +236,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
         if (alignGpuAddressTo64KB) {
             void *tempCPUPtr = cpuPtr;
-            cpuPtr = alignUp(cpuPtr, std::max(alignUp(allocationData.alignment, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k));
+            cpuPtr = alignUp(cpuPtr, MemoryConstants::pageSize64k);
             wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
         }
     }
@@ -1328,7 +1328,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         alignment = MemoryConstants::pageSize64k;
         sizeAligned = allocationData.imgInfo->size;
     } else {
-        alignment = std::max(allocationData.alignment, alignmentSelector.selectAlignment(allocationData.size).alignment);
+        alignment = alignmentSelector.selectAlignment(allocationData.size).alignment;
         sizeAligned = alignUp(allocationData.size, alignment);
 
         if (singleBankAllocation) {
