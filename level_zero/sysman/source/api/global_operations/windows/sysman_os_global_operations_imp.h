@@ -36,14 +36,8 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMov
     WddmGlobalOperationsImp() = default;
     ~WddmGlobalOperationsImp() override = default;
 
-    struct {
-        bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
-    } uuid;
-
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
-    WddmSysmanImp *pWddmSysmanImp = nullptr;
 };
 
 } // namespace Sysman
