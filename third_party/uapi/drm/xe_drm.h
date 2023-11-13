@@ -103,28 +103,26 @@ struct xe_user_extension {
 #define DRM_XE_VM_CREATE		0x03
 #define DRM_XE_VM_DESTROY		0x04
 #define DRM_XE_VM_BIND			0x05
-#define DRM_XE_EXEC_QUEUE_CREATE		0x06
-#define DRM_XE_EXEC_QUEUE_DESTROY		0x07
-#define DRM_XE_EXEC			0x08
+#define DRM_XE_EXEC			0x06
+#define DRM_XE_EXEC_QUEUE_CREATE	0x07
+#define DRM_XE_EXEC_QUEUE_DESTROY	0x08
 #define DRM_XE_EXEC_QUEUE_SET_PROPERTY	0x09
-#define DRM_XE_WAIT_USER_FENCE		0x0a
-#define DRM_XE_VM_MADVISE		0x0b
-#define DRM_XE_EXEC_QUEUE_GET_PROPERTY	0x0c
-
+#define DRM_XE_EXEC_QUEUE_GET_PROPERTY	0x0a
+#define DRM_XE_WAIT_USER_FENCE		0x0b
 /* Must be kept compact -- no holes */
+
 #define DRM_IOCTL_XE_DEVICE_QUERY		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_DEVICE_QUERY, struct drm_xe_device_query)
 #define DRM_IOCTL_XE_GEM_CREATE			DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_GEM_CREATE, struct drm_xe_gem_create)
 #define DRM_IOCTL_XE_GEM_MMAP_OFFSET		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_GEM_MMAP_OFFSET, struct drm_xe_gem_mmap_offset)
 #define DRM_IOCTL_XE_VM_CREATE			DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_VM_CREATE, struct drm_xe_vm_create)
-#define DRM_IOCTL_XE_VM_DESTROY			 DRM_IOW(DRM_COMMAND_BASE + DRM_XE_VM_DESTROY, struct drm_xe_vm_destroy)
-#define DRM_IOCTL_XE_VM_BIND			 DRM_IOW(DRM_COMMAND_BASE + DRM_XE_VM_BIND, struct drm_xe_vm_bind)
+#define DRM_IOCTL_XE_VM_DESTROY			DRM_IOW(DRM_COMMAND_BASE + DRM_XE_VM_DESTROY, struct drm_xe_vm_destroy)
+#define DRM_IOCTL_XE_VM_BIND			DRM_IOW(DRM_COMMAND_BASE + DRM_XE_VM_BIND, struct drm_xe_vm_bind)
+#define DRM_IOCTL_XE_EXEC			DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC, struct drm_xe_exec)
 #define DRM_IOCTL_XE_EXEC_QUEUE_CREATE		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_CREATE, struct drm_xe_exec_queue_create)
+#define DRM_IOCTL_XE_EXEC_QUEUE_DESTROY		DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_DESTROY, struct drm_xe_exec_queue_destroy)
+#define DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY	DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_SET_PROPERTY, struct drm_xe_exec_queue_set_property)
 #define DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY	DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_GET_PROPERTY, struct drm_xe_exec_queue_get_property)
-#define DRM_IOCTL_XE_EXEC_QUEUE_DESTROY		 DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_DESTROY, struct drm_xe_exec_queue_destroy)
-#define DRM_IOCTL_XE_EXEC			 DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC, struct drm_xe_exec)
-#define DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY	 DRM_IOW(DRM_COMMAND_BASE + DRM_XE_EXEC_QUEUE_SET_PROPERTY, struct drm_xe_exec_queue_set_property)
 #define DRM_IOCTL_XE_WAIT_USER_FENCE		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_WAIT_USER_FENCE, struct drm_xe_wait_user_fence)
-#define DRM_IOCTL_XE_VM_MADVISE			 DRM_IOW(DRM_COMMAND_BASE + DRM_XE_VM_MADVISE, struct drm_xe_vm_madvise)
 
 /** struct drm_xe_engine_class_instance - instance of an engine class */
 struct drm_xe_engine_class_instance {
@@ -313,6 +311,7 @@ struct drm_xe_query_mem_usage {
  * If a query is made with a struct drm_xe_device_query where .query
  * is equal to DRM_XE_DEVICE_QUERY_CONFIG, then the reply uses
  * struct drm_xe_query_config in .data.
+ *
  */
 struct drm_xe_query_config {
 	/** @num_params: number of parameters returned in info */
@@ -326,10 +325,7 @@ struct drm_xe_query_config {
 	#define XE_QUERY_CONFIG_FLAGS_HAS_VRAM		(0x1 << 0)
 #define XE_QUERY_CONFIG_MIN_ALIGNMENT		2
 #define XE_QUERY_CONFIG_VA_BITS			3
-#define XE_QUERY_CONFIG_GT_COUNT		4
-#define XE_QUERY_CONFIG_MEM_REGION_COUNT	5
-#define XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY	6
-#define XE_QUERY_CONFIG_NUM_PARAM		(XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY + 1)
+#define XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY	4
 	/** @info: array of elements containing the config info */
 	__u64 info[];
 };
@@ -344,9 +340,8 @@ struct drm_xe_query_config {
  */
 struct drm_xe_query_gt {
 #define XE_QUERY_GT_TYPE_MAIN		0
-#define XE_QUERY_GT_TYPE_REMOTE		1
-#define XE_QUERY_GT_TYPE_MEDIA		2
-	/** @type: GT type: Main, Remote, or Media */
+#define XE_QUERY_GT_TYPE_MEDIA		1
+	/** @type: GT type: Main or Media */
 	__u16 type;
 	/** @gt_id: Unique ID of this GT within the PCI Device */
 	__u16 gt_id;
@@ -364,11 +359,6 @@ struct drm_xe_query_gt {
 	 * they live on a different GPU/Tile.
 	 */
 	__u64 slow_mem_regions;
-	/**
-	 * @inaccessible_mem_regions: Bit mask of instances from
-	 * drm_xe_query_mem_usage that is not accessible by this GT at all.
-	 */
-	__u64 inaccessible_mem_regions;
 	/** @reserved: Reserved */
 	__u64 reserved[8];
 };
@@ -731,6 +721,20 @@ struct drm_xe_vm_bind {
 	__u64 reserved[2];
 };
 
+/* For use with XE_EXEC_QUEUE_SET_PROPERTY_ACC_GRANULARITY */
+
+/* Monitor 128KB contiguous region with 4K sub-granularity */
+#define XE_ACC_GRANULARITY_128K 0
+
+/* Monitor 2MB contiguous region with 64KB sub-granularity */
+#define XE_ACC_GRANULARITY_2M 1
+
+/* Monitor 16MB contiguous region with 512KB sub-granularity */
+#define XE_ACC_GRANULARITY_16M 2
+
+/* Monitor 64MB contiguous region with 2M sub-granularity */
+#define XE_ACC_GRANULARITY_64M 3
+
 /**
  * struct drm_xe_exec_queue_set_property - exec queue set property
  *
@@ -966,74 +970,6 @@ struct drm_xe_wait_user_fence {
 	__u64 reserved[2];
 };
 
-struct drm_xe_vm_madvise {
-	/** @extensions: Pointer to the first extension struct, if any */
-	__u64 extensions;
-
-	/** @vm_id: The ID VM in which the VMA exists */
-	__u32 vm_id;
-
-	/** @pad: MBZ */
-	__u32 pad;
-
-	/** @range: Number of bytes in the VMA */
-	__u64 range;
-
-	/** @addr: Address of the VMA to operation on */
-	__u64 addr;
-
-	/*
-	 * Setting the preferred location will trigger a migrate of the VMA
-	 * backing store to new location if the backing store is already
-	 * allocated.
-	 *
-	 * For DRM_XE_VM_MADVISE_PREFERRED_MEM_CLASS usage, see enum
-	 * drm_xe_memory_class.
-	 */
-#define DRM_XE_VM_MADVISE_PREFERRED_MEM_CLASS	0
-#define DRM_XE_VM_MADVISE_PREFERRED_GT		1
-	/*
-	 * In this case lower 32 bits are mem class, upper 32 are GT.
-	 * Combination provides a single IOCTL plus migrate VMA to preferred
-	 * location.
-	 */
-#define DRM_XE_VM_MADVISE_PREFERRED_MEM_CLASS_GT	2
-	/*
-	 * The CPU will do atomic memory operations to this VMA. Must be set on
-	 * some devices for atomics to behave correctly.
-	 */
-#define DRM_XE_VM_MADVISE_CPU_ATOMIC		3
-	/*
-	 * The device will do atomic memory operations to this VMA. Must be set
-	 * on some devices for atomics to behave correctly.
-	 */
-#define DRM_XE_VM_MADVISE_DEVICE_ATOMIC		4
-	/*
-	 * Priority WRT to eviction (moving from preferred memory location due
-	 * to memory pressure). The lower the priority, the more likely to be
-	 * evicted.
-	 */
-#define DRM_XE_VM_MADVISE_PRIORITY		5
-#define		DRM_XE_VMA_PRIORITY_LOW		0
-		/* Default */
-#define		DRM_XE_VMA_PRIORITY_NORMAL	1
-		/* Must be user with elevated privileges */
-#define		DRM_XE_VMA_PRIORITY_HIGH	2
-	/* Pin the VMA in memory, must be user with elevated privileges */
-#define DRM_XE_VM_MADVISE_PIN			6
-	/** @property: property to set */
-	__u32 property;
-
-	/** @pad2: MBZ */
-	__u32 pad2;
-
-	/** @value: property value */
-	__u64 value;
-
-	/** @reserved: Reserved */
-	__u64 reserved[2];
-};
-
 /**
  * DOC: XE PMU event config IDs
  *
@@ -1041,7 +977,7 @@ struct drm_xe_vm_madvise {
  * in 'struct perf_event_attr' as part of perf_event_open syscall to read a
  * particular event.
  *
- * For example to open the XE_PMU_INTERRUPTS(0):
+ * For example to open the XE_PMU_RENDER_GROUP_BUSY(0):
  *
  * .. code-block:: C
  *
@@ -1055,7 +991,7 @@ struct drm_xe_vm_madvise {
  *	attr.read_format = PERF_FORMAT_TOTAL_TIME_ENABLED;
  *	attr.use_clockid = 1;
  *	attr.clockid = CLOCK_MONOTONIC;
- *	attr.config = XE_PMU_INTERRUPTS(0);
+ *	attr.config = XE_PMU_RENDER_GROUP_BUSY(0);
  *
  *	fd = syscall(__NR_perf_event_open, &attr, -1, cpu, -1, 0);
  */
@@ -1068,11 +1004,10 @@ struct drm_xe_vm_madvise {
 #define ___XE_PMU_OTHER(gt, x) \
 	(((__u64)(x)) | ((__u64)(gt) << __XE_PMU_GT_SHIFT))
 
-#define XE_PMU_INTERRUPTS(gt)			___XE_PMU_OTHER(gt, 0)
-#define XE_PMU_RENDER_GROUP_BUSY(gt)		___XE_PMU_OTHER(gt, 1)
-#define XE_PMU_COPY_GROUP_BUSY(gt)		___XE_PMU_OTHER(gt, 2)
-#define XE_PMU_MEDIA_GROUP_BUSY(gt)		___XE_PMU_OTHER(gt, 3)
-#define XE_PMU_ANY_ENGINE_GROUP_BUSY(gt)	___XE_PMU_OTHER(gt, 4)
+#define XE_PMU_RENDER_GROUP_BUSY(gt)		___XE_PMU_OTHER(gt, 0)
+#define XE_PMU_COPY_GROUP_BUSY(gt)		___XE_PMU_OTHER(gt, 1)
+#define XE_PMU_MEDIA_GROUP_BUSY(gt)		___XE_PMU_OTHER(gt, 2)
+#define XE_PMU_ANY_ENGINE_GROUP_BUSY(gt)	___XE_PMU_OTHER(gt, 3)
 
 #if defined(__cplusplus)
 }

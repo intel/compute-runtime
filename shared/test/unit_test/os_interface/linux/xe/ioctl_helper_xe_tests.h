@@ -82,7 +82,6 @@ class DrmMockXe : public DrmMockCustom {
             12500000,              // clock_freq
             0b100,                 // native mem regions
             0x011,                 // slow mem regions
-            0                      // inaccessible mem regions
         };
         xeQueryGtList->gt_list[1] = {
             XE_QUERY_GT_TYPE_MEDIA, // type
@@ -90,7 +89,6 @@ class DrmMockXe : public DrmMockCustom {
             12500000,               // clock freq
             0b001,                  // native mem regions
             0x110,                  // slow mem regions
-            0                       // inaccessible mem regions
         };
         xeQueryGtList->gt_list[2] = {
             XE_QUERY_GT_TYPE_MAIN, // type
@@ -98,7 +96,6 @@ class DrmMockXe : public DrmMockCustom {
             12500000,              // clock freq
             0b010,                 // native mem regions
             0x101,                 // slow mem regions
-            0                      // inaccessible mem regions
         };
     }
 
@@ -262,8 +259,8 @@ class DrmMockXe : public DrmMockCustom {
 
     static_assert(sizeof(drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
-    static_assert(sizeof(drm_xe_query_gt) == 12 * sizeof(uint64_t), "");
-    StackVec<uint64_t, 37> queryGtList{}; // 1 qword for num gts and 12 qwords per gt
+    static_assert(sizeof(drm_xe_query_gt) == 11 * sizeof(uint64_t), "");
+    StackVec<uint64_t, 34> queryGtList{}; // 1 qword for num gts and 11 qwords per gt
     alignas(64) std::vector<uint8_t> queryTopology;
     static_assert(sizeof(drm_xe_query_engine_cycles) == 6 * sizeof(uint64_t), "");
     uint64_t queryEngineCycles[6]{}; // 1 qword for eci and 5 qwords

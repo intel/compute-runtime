@@ -789,7 +789,6 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
         12500000,               // clock freq
         0b100,                  // native mem regions
         0x011,                  // slow mem regions
-        0                       // inaccessible mem regions
     };
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -835,7 +834,6 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
         12500000,              // clock freq
         0b100,                 // native mem regions
         0x011,                 // slow mem regions
-        0                      // inaccessible mem regions
     };
     xeQueryGtList->gt_list[1] = {
         XE_QUERY_GT_TYPE_MEDIA, // type
@@ -843,7 +841,6 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
         12500000,               // clock freq
         0b100,                  // native mem regions
         0x011,                  // slow mem regions
-        0                       // inaccessible mem regions
     };
     xeQueryGtList->gt_list[2] = {
         XE_QUERY_GT_TYPE_MAIN, // type
@@ -851,7 +848,6 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
         12500000,              // clock freq
         0b010,                 // native mem regions
         0x101,                 // slow mem regions
-        0                      // inaccessible mem regions
     };
     xeQueryGtList->gt_list[3] = {
         XE_QUERY_GT_TYPE_MEDIA, // type
@@ -859,7 +855,6 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
         12500000,               // clock freq
         0b001,                  // native mem regions
         0x100,                  // slow mem regions
-        0                       // inaccessible mem regions
     };
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -930,7 +925,6 @@ struct DrmMockXe2T : public DrmMockXe {
             12500000,              // clock freq
             0b100,                 // native mem regions
             0x011,                 // slow mem regions
-            0                      // inaccessible mem regions
         };
         xeQueryGtList->gt_list[1] = {
             XE_QUERY_GT_TYPE_MAIN, // type
@@ -938,7 +932,6 @@ struct DrmMockXe2T : public DrmMockXe {
             12500000,              // clock freq
             0b010,                 // native mem regions
             0x101,                 // slow mem regions
-            0                      // inaccessible mem regions
         };
     }
 };

@@ -166,10 +166,6 @@ bool IoctlHelperXe::initialize() {
           config->info[XE_QUERY_CONFIG_MIN_ALIGNMENT]);
     xeLog("XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
           config->info[XE_QUERY_CONFIG_VA_BITS]);
-    xeLog("XE_QUERY_CONFIG_GT_COUNT\t\t%llu\n",
-          config->info[XE_QUERY_CONFIG_GT_COUNT]);
-    xeLog("XE_QUERY_CONFIG_MEM_REGION_COUNT\t%llu\n",
-          config->info[XE_QUERY_CONFIG_MEM_REGION_COUNT]);
 
     chipsetId = config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
     revId = static_cast<int>((config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
