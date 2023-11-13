@@ -16,6 +16,7 @@ NAMEDDEVICE(0x0BD9, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
 NAMEDDEVICE(0x0BDA, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
 NAMEDDEVICE(0x0BDB, PvcHwConfig, "Intel(R) Data Center GPU Max 1100")
 NAMEDDEVICE(0x0B69, PvcHwConfig, "Intel(R) Data Center GPU Max 1450")
+NAMEDDEVICE(0x0B6E, PvcHwConfig, "Intel(R) Data Center GPU Max 1100C")
 #endif
 #endif
 
