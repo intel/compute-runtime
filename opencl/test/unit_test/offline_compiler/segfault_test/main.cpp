@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ void captureAndCheckStdOut() {
 
     EXPECT_TRUE(hasSubstr(callstack, std::string("Callstack")));
     EXPECT_TRUE(hasSubstr(callstack, std::string("cloc_segfault_test")));
-    EXPECT_TRUE(hasSubstr(callstack, std::string("generateSegfaultWithSafetyGuard")));
+    EXPECT_TRUE(hasSubstr(callstack, std::string("generateSegfaultWithSafetyGuard"))) << callstack;
 }
 
 TEST(SegFault, givenCallWithSafetyGuardWhenSegfaultHappensThenCallstackIsPrintedToStdOut) {
@@ -51,5 +51,7 @@ TEST(SegFault, givenCallWithSafetyGuardWhenSegfaultHappensThenCallstackIsPrinted
 
     auto retVal = generateSegfaultWithSafetyGuard(&segfault);
     EXPECT_EQ(-60, retVal);
+#else
+    GTEST_SKIP();
 #endif
 }

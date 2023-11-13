@@ -31,7 +31,7 @@ components:
     branch: master
     dest_dir: infra
     fetch_tags: true
-    revision: v5514
+    revision: v5515
     type: git
   internal:
     branch: master
