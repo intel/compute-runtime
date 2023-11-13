@@ -57,6 +57,7 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
     DWORD machine = 0;
     HANDLE hProcess = GetCurrentProcess();
     HANDLE hThread = GetCurrentThread();
+    auto contextRecord = *ep->ContextRecord;
 
     SYSTEM_INFO systemInfo;
     GetSystemInfo(&systemInfo);
@@ -110,7 +111,6 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
 
 #endif
 
-    auto contextRecord = *ep->ContextRecord;
     while (callstackCounter < maxCallstackDepth) {
         symbol->Name[255] = '\0';
 
