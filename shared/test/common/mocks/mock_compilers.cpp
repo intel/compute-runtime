@@ -213,6 +213,9 @@ IgcFeaturesAndWorkarounds<0>::~IgcFeaturesAndWorkarounds() {}
 template <typename... ArgsT>
 IgcFeaturesAndWorkarounds<0>::IgcFeaturesAndWorkarounds(ArgsT &&...args) {}
 
+template <>
+IgcFeaturesAndWorkarounds<0>::IgcFeaturesAndWorkarounds() {}
+
 #define DEFINE_GET_SET(INTERFACE, VERSION, NAME, TYPE)                                      \
     TYPE CIF_GET_INTERFACE_CLASS(INTERFACE, VERSION)::Get##NAME() const { return (TYPE)0; } \
     void CIF_GET_INTERFACE_CLASS(INTERFACE, VERSION)::Set##NAME(TYPE v) {}

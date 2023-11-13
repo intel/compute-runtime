@@ -91,7 +91,9 @@ class ConstStringRef {
                 break;
             }
             newLen--;
-            end--;
+            if (newLen > 0) {
+                end--;
+            }
         }
         return ConstStringRef(this->ptr, newLen);
     }

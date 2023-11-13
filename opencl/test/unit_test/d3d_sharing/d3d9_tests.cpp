@@ -1109,6 +1109,8 @@ TEST_F(D3D9Tests, givenTheSameResourceAndPlaneWhenSurfaceIsCreatedThenReturnErro
 TEST_F(D3D9Tests, WhenFillingBufferDescThenBufferContentsAreCorrect) {
     D3D9::D3DBufferDesc requestedDesc = {};
     D3D9::D3DBufferDesc expectedDesc = {};
+    memset(&requestedDesc, 0, sizeof(requestedDesc));
+    memset(&expectedDesc, 0, sizeof(expectedDesc));
 
     mockSharingFcns->fillCreateBufferDesc(requestedDesc, 10);
     EXPECT_TRUE(memcmp(&requestedDesc, &expectedDesc, sizeof(D3D9::D3DBufferDesc)) == 0);
@@ -1119,6 +1121,8 @@ TEST_F(D3D9Tests, WhenFillingTexture2dDescThenTextureContentsAreCorrect) {
     D3D9::D3DTexture2dDesc expectedDesc = {};
     D3D9::D3DTexture2dDesc srcDesc = {};
     cl_uint subresource = 4;
+    memset(&requestedDesc, 0, sizeof(requestedDesc));
+    memset(&expectedDesc, 0, sizeof(expectedDesc));
     mockSharingFcns->fillCreateTexture2dDesc(requestedDesc, &srcDesc, subresource);
     EXPECT_TRUE(memcmp(&requestedDesc, &expectedDesc, sizeof(D3D9::D3DTexture2dDesc)) == 0);
 }
@@ -1128,6 +1132,8 @@ TEST_F(D3D9Tests, WhenFillingTexture3dDescThenTextureContentsAreCorrect) {
     D3D9::D3DTexture3dDesc expectedDesc = {};
     D3D9::D3DTexture3dDesc srcDesc = {};
     cl_uint subresource = 4;
+    memset(&requestedDesc, 0, sizeof(requestedDesc));
+    memset(&expectedDesc, 0, sizeof(expectedDesc));
     mockSharingFcns->fillCreateTexture3dDesc(requestedDesc, &srcDesc, subresource);
     EXPECT_TRUE(memcmp(&requestedDesc, &expectedDesc, sizeof(D3D9::D3DTexture3dDesc)) == 0);
 }

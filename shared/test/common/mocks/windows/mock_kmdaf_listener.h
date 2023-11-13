@@ -25,7 +25,9 @@ struct KmDafListenerMock : public KmDafListener {
         notifyUnlockParametrization.ftrKmdDaf = ftrKmdDaf;
         notifyUnlockParametrization.hAdapter = hAdapter;
         notifyUnlockParametrization.hDevice = hDevice;
-        notifyUnlockParametrization.phAllocation = phAllocation;
+        if (phAllocation) {
+            notifyUnlockParametrization.hAllocation = *phAllocation;
+        }
         notifyUnlockParametrization.allocations = allocations;
         notifyUnlockParametrization.pfnEscape = pfnEscape;
     }
@@ -86,7 +88,7 @@ struct KmDafListenerMock : public KmDafListener {
         bool ftrKmdDaf = 0;
         D3DKMT_HANDLE hAdapter = 0;
         D3DKMT_HANDLE hDevice = 0;
-        const D3DKMT_HANDLE *phAllocation = nullptr;
+        std::optional<D3DKMT_HANDLE> hAllocation{};
         ULONG allocations = 0;
         PFND3DKMT_ESCAPE pfnEscape = nullptr;
     } notifyUnlockParametrization;

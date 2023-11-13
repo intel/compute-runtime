@@ -31,6 +31,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     }
 
     SteadyClock::time_point cpuTimestamp{};
-    bool sleepCalled = false;
+    std::atomic<bool> sleepCalled{false};
 };
 } // namespace NEO
