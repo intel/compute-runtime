@@ -282,10 +282,12 @@ std::unique_ptr<UmKmDataTranslator> createUmKmDataTranslator(const Gdi &gdi, D3D
             path.append(Os::fileSeparator);
             path.append(wslComputeHelperLibNameToLoad);
         }
-        return std::make_unique<WslComputeHelperUmKmDataTranslator>(std::unique_ptr<OsLibrary>(OsLibrary::load(path)));
-    } else {
-        return std::make_unique<UmKmDataTranslator>();
+        std::unique_ptr<OsLibrary> lib{OsLibrary::load(path)};
+        if ((nullptr != lib) && (lib->isLoaded())) {
+            return std::make_unique<WslComputeHelperUmKmDataTranslator>(std::move(lib));
+        }
     }
+    return std::make_unique<UmKmDataTranslator>();
 }
 
 } // namespace NEO

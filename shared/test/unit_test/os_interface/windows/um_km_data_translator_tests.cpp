@@ -216,6 +216,19 @@ TEST(UmKmDataTranslator, givenToggledDebugKeyWhenCreatingDefaultTranslatorThenTr
     EXPECT_TRUE(translator->enabled());
 }
 
+TEST(UmKmDataTranslator, givenToggledDebugKeyAndNotExistingLibWhenCreatingDefaultTranslatorThenTranslationIsDisabled) {
+    DebugManagerStateRestore debugSettingsRestore;
+
+    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::wslComputeHelperLibNameToLoad = "dummyLib";
+    NEO::Gdi gdi;
+    auto handle = validHandle;
+    gdi.queryAdapterInfo.mFunc = QueryAdapterInfoMock::queryadapterinfo;
+
+    auto translator = NEO::createUmKmDataTranslator(gdi, handle);
+    EXPECT_FALSE(translator->enabled());
+}
+
 TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslComputeHelper) {
     DebugManagerStateRestore debugSettingsRestore;
 
