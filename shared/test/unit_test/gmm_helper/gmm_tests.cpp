@@ -21,11 +21,14 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCpuCacheForResources.set(1);
     StorageInfo storageInfo{};
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = false;
+    gmmRequirements.preferCompressed = false;
     for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                    GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
-        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, false, storageInfo, false);
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
         EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
         EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
     }
@@ -36,11 +39,14 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
     DebugManager.flags.EnableCpuCacheForResources.set(0);
     StorageInfo storageInfo{};
     auto releaseHelper = getGmmHelper()->getRootDeviceEnvironment().getReleaseHelper();
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = false;
+    gmmRequirements.preferCompressed = false;
     for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                    GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
-        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, false, storageInfo, false);
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
         bool noCpuAccessPreference = releaseHelper ? !releaseHelper->isCachingOnCpuAvailable() : false;
         EXPECT_EQ(noCpuAccessPreference, CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
         EXPECT_EQ(noCpuAccessPreference, gmm->getPreferNoCpuAccess());
@@ -49,10 +55,13 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
 
 TEST_F(GmmTests, givenResourceUsageTypesUnCachedWhenGreateGmmThenFlagCachcableIsFalse) {
     StorageInfo storageInfo{};
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = false;
+    gmmRequirements.preferCompressed = false;
     for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC,
                                    GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED}) {
-        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, false, storageInfo, false);
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
         EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
     }
 }
@@ -65,12 +74,15 @@ HWTEST_F(GmmTests, givenIsResourceCacheableOnCpuWhenWslFlagThenReturnProperValue
     rootDeviceEnvironment->isWddmOnLinuxEnable = true;
 
     GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, false, storageInfo, false);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = false;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
     EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
     EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
 
     gmmResourceUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
-    gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, false, storageInfo, false);
+    gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
     EXPECT_FALSE(CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsageType, *rootDeviceEnvironment));
     EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
 }
@@ -80,12 +92,15 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
     DebugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
     auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = false;
+    gmmRequirements.preferCompressed = false;
 
     for (auto regularResourceUsageType : {GMM_RESOURCE_USAGE_OCL_IMAGE,
                                           GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
                                           GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                           GMM_RESOURCE_USAGE_OCL_BUFFER}) {
-        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, regularResourceUsageType, false, storageInfo, false);
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, regularResourceUsageType, storageInfo, gmmRequirements);
         if (!releaseHelper) {
             EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
         } else {
@@ -94,14 +109,14 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
     }
 
     for (auto cpuAccessibleResourceUsageType : {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER}) {
-        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, cpuAccessibleResourceUsageType, false, storageInfo, false);
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, cpuAccessibleResourceUsageType, storageInfo, gmmRequirements);
         EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
     }
 
     for (auto uncacheableResourceUsageType : {GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC,
                                               GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
                                               GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED}) {
-        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, uncacheableResourceUsageType, false, storageInfo, false);
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, uncacheableResourceUsageType, storageInfo, gmmRequirements);
         EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
     }
 }

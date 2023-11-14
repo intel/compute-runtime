@@ -92,8 +92,10 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferTh
     imageDesc.image_width = 256;
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, 128 * 256 * 4, nullptr, &retVal);
-
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     gmm->isCompressionEnabled = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -133,8 +135,10 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThe
     imageDesc.image_width = 256;
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, 128 * 256 * 4, nullptr, &retVal);
-
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     gmm->isCompressionEnabled = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -180,7 +184,10 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
     imageHw->setMcsSurfaceInfo(msi);
     imageHw->setMcsAllocation(mcsAlloc);

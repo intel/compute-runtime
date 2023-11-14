@@ -23,14 +23,14 @@
 
 namespace NEO {
 Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage,
-         bool preferCompressed, const StorageInfo &storageInfo, bool allowLargePages) : gmmHelper(gmmHelper) {
+         const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements) : gmmHelper(gmmHelper) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
     resourceParams.BaseHeight = 1;
     resourceParams.Depth = 1;
     resourceParams.BaseAlignment = static_cast<uint32_t>(alignment);
-    if ((nullptr == alignedPtr) && (false == allowLargePages)) {
+    if ((nullptr == alignedPtr) && (false == gmmRequirements.allowLargePages)) {
         resourceParams.Flags.Info.NoOptimizationPadding = true;
         if ((resourceParams.BaseWidth64 & MemoryConstants::page64kMask) == 0) {
             resourceParams.BaseWidth64 += MemoryConstants::pageSize;
@@ -55,9 +55,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
         resourceParams.Flags.Gpu.NoRestriction = 1;
     }
 
-    preferCompressed &= !storageInfo.isLockable;
-
-    applyAuxFlagsForBuffer(preferCompressed);
+    applyAuxFlagsForBuffer(gmmRequirements.preferCompressed && !storageInfo.isLockable);
     applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();

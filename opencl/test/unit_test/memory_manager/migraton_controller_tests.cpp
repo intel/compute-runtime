@@ -104,8 +104,11 @@ HWTEST2_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedL
     auto srcAllocation = pBuffer->getMultiGraphicsAllocation().getGraphicsAllocation(0);
     auto dstAllocation = pBuffer->getMultiGraphicsAllocation().getGraphicsAllocation(1);
 
-    auto gmm0 = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
-    auto gmm1 = new Gmm(context.getDevice(1)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm0 = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto gmm1 = new Gmm(context.getDevice(1)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     srcAllocation->setDefaultGmm(gmm0);
     dstAllocation->setDefaultGmm(gmm1);
 

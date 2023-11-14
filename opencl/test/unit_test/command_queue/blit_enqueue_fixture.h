@@ -168,8 +168,10 @@ struct BlitEnqueueTests : public ::testing::Test {
 
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
             auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();
-
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+            GmmRequirements gmmRequirements{};
+            gmmRequirements.allowLargePages = true;
+            gmmRequirements.preferCompressed = false;
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

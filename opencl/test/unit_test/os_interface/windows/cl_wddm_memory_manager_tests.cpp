@@ -319,7 +319,10 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -357,7 +360,10 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};

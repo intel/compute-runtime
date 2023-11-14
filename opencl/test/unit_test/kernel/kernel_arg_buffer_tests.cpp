@@ -561,8 +561,10 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
                                                                       {AllocationType::BUFFER, true},
                                                                       {AllocationType::BUFFER_HOST_MEMORY, false},
                                                                       {AllocationType::SVM_GPU, true}}};
-
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());
 
@@ -601,8 +603,10 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
                                                                       {AllocationType::BUFFER, true},
                                                                       {AllocationType::BUFFER_HOST_MEMORY, false},
                                                                       {AllocationType::SVM_GPU, true}}};
-
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
 
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());

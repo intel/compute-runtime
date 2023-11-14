@@ -284,7 +284,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     mockGmm.resourceParams.Flags.Info.NotLockable = true;
     allocation.setDefaultGmm(&mockGmm);
 
@@ -319,7 +322,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     mockGmm.resourceParams.Flags.Info.NotLockable = false;
     allocation.setDefaultGmm(&mockGmm);
 
@@ -812,8 +818,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     aubCsr->setAubWritable(true, *gfxAllocation);
-
-    auto gmm = new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     gfxAllocation->setDefaultGmm(gmm);
 
     for (bool compressed : {false, true}) {

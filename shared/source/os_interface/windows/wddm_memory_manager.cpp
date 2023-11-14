@@ -115,8 +115,11 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     systemMemoryStorageInfo.isLockable = allocationData.storageInfo.isLockable;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr, allocationData.size, 0u,
-                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
+                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), systemMemoryStorageInfo, gmmRequirements);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
@@ -139,8 +142,11 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     systemMemoryStorageInfo.isLockable = allocationData.storageInfo.isLockable;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, 0u,
-                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
+                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), systemMemoryStorageInfo, gmmRequirements);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
@@ -206,12 +212,15 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         storageInfo.isLockable = true;
     }
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = allowLargePages;
+    gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
+
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
                        sizeAligned, 0u,
                        CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
-                       allocationData.flags.preferCompressed,
                        storageInfo,
-                       allowLargePages);
+                       gmmRequirements);
     wddmAllocation->setDefaultGmm(gmm);
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->storageInfo = storageInfo;
@@ -290,9 +299,12 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
     auto sizeRemaining = alignedSize;
     for (auto gmmId = 0u; gmmId < numGmms; ++gmmId) {
         auto size = sizeRemaining > chunkSize ? chunkSize : sizeRemaining;
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = false;
         auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                            static_cast<char *>(alignedPtr) + gmmId * chunkSize, size, 0u,
-                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!uncacheable, productHelper), false, {}, true);
+                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!uncacheable, productHelper), {}, gmmRequirements);
         wddmAllocation->setGmm(gmm, gmmId);
         sizeRemaining -= size;
     }
@@ -369,9 +381,13 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
+
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), pSysMem, sizeAligned, 0u,
                   CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
-                  allocationData.flags.preferCompressed, allocationData.storageInfo, true);
+                  allocationData.storageInfo, gmmRequirements);
 
     wddmAllocation->setDefaultGmm(gmm);
     void *mapPtr = wddmAllocation->getAlignedCpuPtr();
@@ -418,8 +434,12 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     wddmAllocation->setAllocationOffset(offsetInPage);
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), alignedPtr, alignedSize, 0u,
-                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, {}, true);
+                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), {}, gmmRequirements);
 
     wddmAllocation->setDefaultGmm(gmm);
 
@@ -461,8 +481,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const A
         allocation->setAllocationOffset(offset);
 
         auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = false;
+
         Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), ptrAligned, sizeAligned, 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, {}, true);
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), {}, gmmRequirements);
         allocation->setDefaultGmm(gmm);
         if (createWddmAllocation(allocation, reserve)) {
             return allocation;
@@ -515,8 +540,12 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     StorageInfo storageInfo{};
     storageInfo.isLockable = allocationData.allocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr;
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), ptrAligned, sizeAligned, 0u,
-                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, storageInfo, true);
+                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), storageInfo, gmmRequirements);
     wddmAllocation->setDefaultGmm(gmm);
 
     if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
@@ -796,9 +825,13 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
             handleStorage.fragmentStorageData[i].osHandleStorage = osHandle;
             handleStorage.fragmentStorageData[i].residency = new ResidencyData(maxOsContextCount);
 
+            GmmRequirements gmmRequirements{};
+            gmmRequirements.allowLargePages = true;
+            gmmRequirements.preferCompressed = false;
+
             osHandle->gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(), handleStorage.fragmentStorageData[i].cpuPtr,
                                     handleStorage.fragmentStorageData[i].fragmentSize, 0u,
-                                    CacheSettingsHelper::getGmmUsageType(AllocationType::EXTERNAL_HOST_PTR, false, productHelper), false, {}, true);
+                                    CacheSettingsHelper::getGmmUsageType(AllocationType::EXTERNAL_HOST_PTR, false, productHelper), {}, gmmRequirements);
             allocatedFragmentIndexes[allocatedFragmentsCounter] = i;
             allocatedFragmentsCounter++;
         }
@@ -1184,6 +1217,10 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
     It was tested and doesn't require any debug*/
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = compression;
+
     for (auto handleId = 0u; handleId < handles; handleId++) {
         auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
         remainingSize -= currentSize;
@@ -1194,8 +1231,7 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
                            currentSize,
                            0u,
                            CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper),
-                           compression,
-                           limitedStorageInfo, true);
+                           limitedStorageInfo, gmmRequirements);
         allocation.setGmm(gmm, handleId);
     }
 }
@@ -1203,12 +1239,16 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
 void fillGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *allocation, const StorageInfo &storageInfo) {
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+
     for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= static_cast<uint32_t>(1u << handleId);
         limitedStorageInfo.pageTablesVisibility &= static_cast<uint32_t>(1u << handleId);
         auto gmm = new Gmm(gmmHelper, nullptr, allocation->getAlignedSize(), 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper), false, limitedStorageInfo, true);
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper), limitedStorageInfo, gmmRequirements);
         allocation->setGmm(gmm, handleId);
     }
 }
@@ -1217,10 +1257,14 @@ void splitGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *wddmAllocation,
     auto sizeRemaining = wddmAllocation->getAlignedSize();
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+
     for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
         auto size = sizeRemaining > chunkSize ? chunkSize : sizeRemaining;
         auto gmm = new Gmm(gmmHelper, nullptr, size, alignment,
-                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), false, productHelper), false, storageInfo, true);
+                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), false, productHelper), storageInfo, gmmRequirements);
         wddmAllocation->setGmm(gmm, gmmId);
         sizeRemaining -= size;
     }
@@ -1252,14 +1296,17 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     if (singleBankAllocation) {
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
+
         gmm = std::make_unique<Gmm>(gmmHelper,
                                     nullptr,
                                     sizeAligned,
                                     alignment,
                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
-                                    allocationData.flags.preferCompressed,
                                     allocationData.storageInfo,
-                                    true);
+                                    gmmRequirements);
     }
 
     const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), alignment);
@@ -1334,14 +1381,17 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         if (singleBankAllocation) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
+            GmmRequirements gmmRequirements{};
+            gmmRequirements.allowLargePages = true;
+            gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
+
             gmm = std::make_unique<Gmm>(gmmHelper,
                                         nullptr,
                                         sizeAligned,
                                         alignment,
                                         CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
-                                        allocationData.flags.preferCompressed,
                                         allocationData.storageInfo,
-                                        true);
+                                        gmmRequirements);
         }
     }
 

@@ -25,8 +25,11 @@ void MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(ExecutionEnvironment
     gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
     auto osEnvironment = new OsEnvironmentWin();
     osEnvironment->gdi.reset(gdi);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
     for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
-        gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+        gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
         auto wddm = static_cast<WddmMock *>(rootDeviceEnvironment->osInterface->getDriverModel()->as<Wddm>());
         wddm->hwDeviceId = std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, 1u, osEnvironment, std::make_unique<UmKmDataTranslator>());
         wddm->callBaseMapGpuVa = false;

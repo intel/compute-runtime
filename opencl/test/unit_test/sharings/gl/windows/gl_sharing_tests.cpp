@@ -254,7 +254,10 @@ TEST_F(GlSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
 TEST_F(GlSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUsedInGraphicsAllocation) {
     void *ptr = (void *)0x1000;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
-    auto gmm = std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), ptr, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), ptr, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
 
     mockGlSharing->bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     mockGlSharing->uploadDataToBufferInfo();

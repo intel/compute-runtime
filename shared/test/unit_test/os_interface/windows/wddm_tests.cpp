@@ -27,7 +27,10 @@ TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
     init();
 
     D3DKMT_HANDLE handle;
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, {}, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = true;
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
     EXPECT_TRUE(wddm->createAllocation(&gmm, handle));
     auto gdiParam = getMockAllocationFcn();

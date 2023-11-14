@@ -769,7 +769,10 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = true;
+    auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
     gmm->isCompressionEnabled = true;
 
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -839,7 +842,10 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = true;
+    auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
     gmm->isCompressionEnabled = false;
 
     mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);

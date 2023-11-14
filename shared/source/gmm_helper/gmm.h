@@ -19,13 +19,18 @@ struct StorageInfo;
 class GmmResourceInfo;
 class GmmHelper;
 
+struct GmmRequirements {
+    bool preferCompressed;
+    bool allowLargePages;
+};
+
 class Gmm {
   public:
     virtual ~Gmm();
     Gmm() = delete;
     Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, const StorageInfo &storageInfo, bool preferCompressed);
     Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment,
-        GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, bool preferCompressed, const StorageInfo &storageInfo, bool allowLargePages);
+        GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements);
     Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm);
     Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm, bool openingHandle);
 

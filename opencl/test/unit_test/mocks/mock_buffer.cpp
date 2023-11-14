@@ -36,7 +36,10 @@ void MockBuffer::setAllocationType(uint32_t rootDeviceIndex, bool compressed) {
 
 void MockBuffer::setAllocationType(GraphicsAllocation *graphicsAllocation, GmmHelper *gmmHelper, bool compressed) {
     if (compressed && !graphicsAllocation->getDefaultGmm()) {
-        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, compressed, {}, true));
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = compressed;
+        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
     }
 
     if (graphicsAllocation->getDefaultGmm()) {
