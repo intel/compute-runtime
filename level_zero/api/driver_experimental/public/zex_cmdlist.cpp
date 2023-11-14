@@ -33,6 +33,21 @@ zexCommandListAppendWaitOnMemory(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWaitOnMemory64(
+    zex_command_list_handle_t hCommandList,
+    zex_wait_on_mem_desc_t *desc,
+    void *ptr,
+    uint64_t data,
+    zex_event_handle_t hSignalEvent) {
+
+    if (!hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    return L0::CommandList::fromHandle(hCommandList)->appendWaitOnMemory(reinterpret_cast<void *>(desc), ptr, data, static_cast<ze_event_handle_t>(hSignalEvent), true);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCommandListAppendWriteToMemory(
     zex_command_list_handle_t hCommandList,
     zex_write_to_mem_desc_t *desc,

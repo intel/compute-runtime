@@ -286,15 +286,15 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndData
     ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false));
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemCalledThenReturnErrorIfNotSupported, IsAtLeastSkl) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenReturnErrorIfNotSupported, IsAtLeastSkl) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
 
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
-    result = commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, true);
+
+    result = zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, nullptr);
 
     if (FamilyType::isQwordInOrderCounter) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -303,7 +303,20 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemCalledThenReturn
     }
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemCalledThenProgramLri, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, givenInvalidCmdListWhenWaitOnMemory64CalledThenReturnError, IsAtLeastSkl) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+
+    result = zexCommandListAppendWaitOnMemory64(nullptr, &desc, ptr, waitMemData, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenProgramLri, IsAtLeastSkl) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -319,12 +332,61 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemCalledThenProgra
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
 
-    commandList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), ptr, waitMemData, nullptr, true);
+    zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
     ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, true));
+}
+
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64CalledThenHandleEvent, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (!FamilyType::isQwordInOrderCounter) {
+        GTEST_SKIP();
+    }
+
+    waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
+
+    zex_wait_on_mem_desc_t desc;
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<EventPool> signalEventPool;
+    std::unique_ptr<Event> signalEvent;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    signalEventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    signalEvent = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, signalEvent.get());
+
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    zexCommandListAppendWaitOnMemory64(commandList->toHandle(), &desc, ptr, waitMemData, event.get());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, true));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    itor++;
+    auto itorPC = findAll<PIPE_CONTROL *>(itor, cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
 }
 
 HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, IsAtLeastSkl) {

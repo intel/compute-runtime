@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,15 @@ zexCommandListAppendWaitOnMemory(
     void *ptr,
     uint32_t data,
     zex_event_handle_t hSignalEvent);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCommandListAppendWaitOnMemory64(
+    zex_command_list_handle_t hCommandList,
+    zex_wait_on_mem_desc_t *desc,
+    void *ptr,
+    uint64_t data,
+    zex_event_handle_t hSignalEvent);
+
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCommandListAppendWriteToMemory(
     zex_command_list_handle_t hCommandList,
