@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
-#include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
+#include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 
