@@ -361,9 +361,6 @@ cl_int Kernel::patchPrivateSurface() {
             privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch);
             DEBUG_BREAK_IF(privateSurfaceSize == 0);
 
-            if (privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
-                return CL_OUT_OF_RESOURCES;
-            }
             privateSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
                 {rootDeviceIndex,
                  static_cast<size_t>(privateSurfaceSize),

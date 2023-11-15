@@ -789,22 +789,6 @@ TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamWhenGettingConst
     EXPECT_EQ(64u, pKernelInfo->getConstantBufferSize());
 }
 
-TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4ThenReturnOutOfResources) {
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-    pKernelInfo->setPrivateMemory(std::numeric_limits<uint32_t>::max(), false, 0, 0, 0);
-
-    MockContext context;
-    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    pKernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
-    pDevice->getMemoryManager()->setForce32BitAllocations(false);
-    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
-        pDevice->deviceInfo.computeUnitsUsedForScratch = 120;
-    kernel->initialize();
-    EXPECT_EQ(CL_OUT_OF_RESOURCES, kernel->patchPrivateSurface());
-}
-
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScratchSizeThenReturnInvalidKernel) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
