@@ -49,6 +49,25 @@ struct EngineGroupT {
 };
 using EngineGroupsT = std::vector<EngineGroupT>;
 
+struct SecondaryContexts {
+    SecondaryContexts() = default;
+    SecondaryContexts(SecondaryContexts &&in) {
+        this->engines = std::move(in.engines);
+        this->regularCounter = in.regularCounter.load();
+        this->highPriorityCounter = in.highPriorityCounter.load();
+        this->regularEnginesTotal = in.regularEnginesTotal;
+        this->highPriorityEnginesTotal = in.highPriorityEnginesTotal;
+    }
+    SecondaryContexts(const SecondaryContexts &in) = delete;
+    SecondaryContexts &operator=(const SecondaryContexts &) = delete;
+
+    EnginesT engines;                             // vector of secondary EngineControls
+    std::atomic<uint8_t> regularCounter = 0;      // Counter used to assign next regular EngineControl
+    std::atomic<uint8_t> highPriorityCounter = 0; // Counter used to assign next highPriority EngineControl
+    uint32_t regularEnginesTotal;
+    uint32_t highPriorityEnginesTotal;
+};
+
 struct RTDispatchGlobalsInfo {
     GraphicsAllocation *rtDispatchGlobalsArray = nullptr;
     std::vector<GraphicsAllocation *> rtStacks; // per tile
@@ -169,6 +188,11 @@ class Device : public ReferenceTrackedObject<Device> {
         return getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr;
     }
 
+    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(uint32_t engineIndex, EngineTypeUsage engineTypeUsage);
+    bool isSecondaryContextEngineType(aub_stream::EngineType type) {
+        return EngineHelpers::isCcs(type);
+    }
+
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
   protected:
@@ -191,6 +215,8 @@ class Device : public ReferenceTrackedObject<Device> {
 
     void addEngineToEngineGroup(EngineControl &engine);
     MOCKABLE_VIRTUAL bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL bool createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t index, EngineTypeUsage engineTypeUsage);
+
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
     MOCKABLE_VIRTUAL SubDevice *createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType);
@@ -210,6 +236,9 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     EnginesT allEngines;
+
+    std::vector<SecondaryContexts> secondaryEngines;
+
     EngineGroupsT regularEngineGroups;
     std::vector<SubDevice *> subdevices;
 

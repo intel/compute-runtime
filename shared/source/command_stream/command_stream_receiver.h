@@ -443,6 +443,10 @@ class CommandStreamReceiver {
     void preallocateCommandBuffer();
     void preallocateInternalHeap();
 
+    bool isInitialized() const {
+        return this->resourcesInitialized;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

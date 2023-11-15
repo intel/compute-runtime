@@ -329,6 +329,10 @@ struct CommandList : _ze_command_list_handle_t {
         this->csr = newCsr;
     }
 
+    NEO::CommandStreamReceiver *getCsr() const {
+        return this->csr;
+    }
+
     bool hasKernelWithAssert() {
         return kernelWithAssertAppended;
     }

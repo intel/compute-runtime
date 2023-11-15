@@ -2603,7 +2603,8 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
     fillProperties(properties, 0, 0);
     EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular);
     MockCommandQueue queueRcs(&context, context.getDevice(0), properties, false);
-    EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
+    EXPECT_EQ(engineCcs.osContext, queueRcs.getGpgpuEngine().osContext);
+    EXPECT_EQ(engineCcs.commandStreamReceiver, queueRcs.getGpgpuEngine().commandStreamReceiver);
     EXPECT_FALSE(queueRcs.isCopyOnly);
     EXPECT_TRUE(queueRcs.isQueueFamilySelected());
     EXPECT_EQ(properties[1], queueRcs.getQueueFamilyIndex());
@@ -2653,7 +2654,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
     fillProperties(properties, 0, 0);
     EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular);
     MockCommandQueue queueRcs(&context, context.getDevice(0), properties, false);
-    EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
+    EXPECT_EQ(engineCcs.osContext, queueRcs.getGpgpuEngine().osContext);
     EXPECT_FALSE(queueRcs.isCopyOnly);
     EXPECT_TRUE(queueRcs.isQueueFamilySelected());
     EXPECT_EQ(properties[1], queueRcs.getQueueFamilyIndex());
@@ -2734,8 +2735,12 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute));
     fillProperties(properties, rcsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
-    ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
-    EXPECT_TRUE(osContext.isInitialized());
+
+    if (queue.gpgpuEngine->osContext->getPrimaryContext() == nullptr) {
+        ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
+    }
+
+    EXPECT_TRUE(queue.gpgpuEngine->osContext->isInitialized());
 }
 
 struct CommandQueueCreateWithMultipleRegularContextsTests : public CommandQueueOnSpecificEngineTests {

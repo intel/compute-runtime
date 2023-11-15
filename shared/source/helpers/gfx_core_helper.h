@@ -172,6 +172,10 @@ class GfxCoreHelper {
     virtual uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const = 0;
     virtual char const *getDefaultDeviceHierarchy() const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
+
+    virtual bool areSecondaryContextsSupported() const = 0;
+    virtual uint32_t getContextGroupContextsCount() const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -382,6 +386,10 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfSize, bool isHwLocalIdGeneration) const override;
     uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const override;
     char const *getDefaultDeviceHierarchy() const override;
+
+    bool areSecondaryContextsSupported() const override;
+    uint32_t getContextGroupContextsCount() const override;
+
     ~GfxCoreHelperHw() override = default;
 
   protected:

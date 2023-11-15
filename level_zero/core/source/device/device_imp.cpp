@@ -1618,8 +1618,19 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
         auto &osContext = (*csr)->getOsContext();
 
+        const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+        bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
+
         if (neoDevice->isMultiRegularContextSelectionAllowed(osContext.getEngineType(), osContext.getEngineUsage())) {
             *csr = neoDevice->getNextEngineForMultiRegularContextMode(osContext.getEngineType()).commandStreamReceiver;
+        } else if (secondaryContextsEnabled && neoDevice->isSecondaryContextEngineType(osContext.getEngineType())) {
+            NEO::EngineTypeUsage engineTypeUsage;
+            engineTypeUsage.first = osContext.getEngineType();
+            engineTypeUsage.second = NEO::EngineUsage::regular;
+            auto engine = neoDevice->getSecondaryEngineCsr(index, engineTypeUsage);
+            if (engine) {
+                *csr = engine->commandStreamReceiver;
+            }
         }
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;
@@ -1648,6 +1659,7 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
                 return ZE_RESULT_SUCCESS;
             }
         }
+
         // if the code falls through, we have no low priority context created by neoDevice.
     }
     UNRECOVERABLE_IF(true);

@@ -71,6 +71,20 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
         return (tlbFlushCounter.load() > lastFlushedTlbFlushCounter.load());
     };
 
+    void setPrimaryContext(const OsContext *primary) {
+        primaryContext = primary;
+        isContextGroup = true;
+    }
+    const OsContext *getPrimaryContext() const {
+        return primaryContext;
+    }
+    void setContextGroup(bool value) {
+        isContextGroup = value;
+    }
+    bool isPartOfContextGroup() {
+        return isContextGroup;
+    }
+
   protected:
     virtual bool initializeContext() { return true; }
 
@@ -92,5 +106,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool debuggableContext = false;
     bool engineInstancedDevice = false;
     uint8_t powerHintValue = 0;
+
+    bool isContextGroup = false;
+    const OsContext *primaryContext = nullptr;
 };
 } // namespace NEO

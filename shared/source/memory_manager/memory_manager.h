@@ -214,6 +214,9 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                                            const EngineDescriptor &engineDescriptor);
+    MOCKABLE_VIRTUAL OsContext *createAndRegisterSecondaryOsContext(const OsContext *primaryContext, CommandStreamReceiver *commandStreamReceiver,
+                                                                    const EngineDescriptor &engineDescriptor);
+
     const EngineControlContainer &getRegisteredEngines(uint32_t rootDeviceIndex) const { return allRegisteredEngines[rootDeviceIndex]; }
     const MultiDeviceEngineControlContainer &getRegisteredEngines() const { return allRegisteredEngines; }
     const EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
@@ -334,6 +337,7 @@ class MemoryManager {
     bool supportsMultiStorageResources = true;
     ExecutionEnvironment &executionEnvironment;
     MultiDeviceEngineControlContainer allRegisteredEngines;
+    MultiDeviceEngineControlContainer secondaryEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     std::map<uint32_t, uint32_t> rootDeviceIndexToContextId; // This map will contain initial value of latestContextId for each rootDeviceIndex

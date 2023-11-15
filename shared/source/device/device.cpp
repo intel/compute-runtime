@@ -307,6 +307,48 @@ bool Device::createEngines() {
             return false;
         }
     }
+
+    if (gfxCoreHelper.areSecondaryContextsSupported()) {
+
+        auto &hardwareInfo = this->getHardwareInfo();
+        auto engineType = aub_stream::EngineType::ENGINE_CCS;
+
+        if (tryGetEngine(engineType, EngineUsage::regular)) {
+            auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
+            auto highPriorityContextCount = std::min(contextCount / 2, 4u);
+
+            const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engineType, EngineUsage::regular, hardwareInfo);
+            const auto engineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
+            auto &engineGroup = this->getRegularEngineGroups()[engineGroupIndex];
+
+            secondaryEngines.resize(engineGroup.engines.size());
+
+            for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup.engines.size()); engineIndex++) {
+                auto primaryEngine = engineGroup.engines[engineIndex];
+
+                secondaryEngines[engineIndex].regularEnginesTotal = contextCount - highPriorityContextCount;
+                secondaryEngines[engineIndex].highPriorityEnginesTotal = highPriorityContextCount;
+                secondaryEngines[engineIndex].regularCounter = 0;
+                secondaryEngines[engineIndex].highPriorityCounter = 0;
+
+                NEO::EngineTypeUsage engineTypeUsage;
+                engineTypeUsage.first = primaryEngine.getEngineType();
+
+                secondaryEngines[engineIndex].engines.push_back(primaryEngine);
+
+                for (uint32_t i = 1; i < contextCount; i++) {
+                    engineTypeUsage.second = EngineUsage::regular;
+
+                    if (i >= contextCount - highPriorityContextCount) {
+                        engineTypeUsage.second = EngineUsage::highPriority;
+                    }
+                    createSecondaryEngine(primaryEngine.commandStreamReceiver, engineIndex, engineTypeUsage);
+                }
+
+                primaryEngine.osContext->setContextGroup(true);
+            }
+        }
+    }
     return true;
 }
 
@@ -345,11 +387,13 @@ std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() con
 
 bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {
     const auto &hwInfo = getHardwareInfo();
+    auto &gfxCoreHelper = getGfxCoreHelper();
     const auto engineType = engineTypeUsage.first;
     const auto engineUsage = engineTypeUsage.second;
     const auto defaultEngineType = engineInstanced ? this->engineInstancedType : getChosenEngineType(hwInfo);
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::regular;
     const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
+    const bool isPrimaryEngine = gfxCoreHelper.areSecondaryContextsSupported() && EngineHelpers::isCcs(engineType) && engineUsage == EngineUsage::regular;
 
     UNRECOVERABLE_IF(EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported);
 
@@ -370,7 +414,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
+    osContext->setContextGroup(isPrimaryEngine);
+
     commandStreamReceiver->setupContext(*osContext);
+
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
         if (!commandStreamReceiver->initializeResources()) {
             return false;
@@ -389,6 +436,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         return false;
     }
 
+    bool firstSubmissionDone = false;
     if (isDefaultEngine) {
         bool defaultEngineAlreadySet = (allEngines.size() > defaultEngineIndex) && (allEngines[defaultEngineIndex].getEngineType() == engineType);
 
@@ -400,8 +448,13 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
                 if (SubmissionStatus::success != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
                     return false;
                 }
+                firstSubmissionDone = true;
             }
         }
+    }
+
+    if (isPrimaryEngine && !firstSubmissionDone) {
+        commandStreamReceiver->initializeDeviceWithFirstSubmission();
     }
 
     if (EngineHelpers::isBcs(engineType) && (defaultBcsEngineIndex == std::numeric_limits<uint32_t>::max()) && (engineUsage == EngineUsage::regular)) {
@@ -417,6 +470,80 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;
+}
+
+bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t index, EngineTypeUsage engineTypeUsage) {
+    auto engineUsage = engineTypeUsage.second;
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver = createCommandStreamReceiver();
+    if (!commandStreamReceiver) {
+        return false;
+    }
+
+    bool internalUsage = (engineUsage == EngineUsage::internal);
+    if (internalUsage) {
+        commandStreamReceiver->initializeDefaultsForInternalEngine();
+    }
+
+    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, false);
+
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterSecondaryOsContext(&primaryCsr->getOsContext(), commandStreamReceiver.get(), engineDescriptor);
+    commandStreamReceiver->setupContext(*osContext);
+
+    EngineControl engine{commandStreamReceiver.get(), osContext};
+    secondaryEngines[index].engines.push_back(engine);
+
+    commandStreamReceivers.push_back(std::move(commandStreamReceiver));
+
+    return true;
+}
+
+EngineControl *Device::getSecondaryEngineCsr(uint32_t engineIndex, EngineTypeUsage engineTypeUsage) {
+
+    if (secondaryEngines.size() == 0 || !EngineHelpers::isCcs(engineTypeUsage.first) || engineIndex >= secondaryEngines.size()) {
+        return nullptr;
+    }
+
+    auto secondaryEngineIndex = 0;
+    if (engineTypeUsage.second == EngineUsage::highPriority) {
+        secondaryEngineIndex = (secondaryEngines[engineIndex].highPriorityCounter.fetch_add(1)) % (secondaryEngines[engineIndex].highPriorityEnginesTotal);
+        secondaryEngineIndex += secondaryEngines[engineIndex].regularEnginesTotal;
+    } else if (engineTypeUsage.second == EngineUsage::regular) {
+        secondaryEngineIndex = (secondaryEngines[engineIndex].regularCounter.fetch_add(1)) % (secondaryEngines[engineIndex].regularEnginesTotal);
+    } else {
+        DEBUG_BREAK_IF(true);
+    }
+
+    if (secondaryEngineIndex > 0) {
+        auto commandStreamReceiver = secondaryEngines[engineIndex].engines[secondaryEngineIndex].commandStreamReceiver;
+
+        auto lock = commandStreamReceiver->obtainUniqueOwnership();
+
+        if (!commandStreamReceiver->isInitialized()) {
+
+            if (commandStreamReceiver->needsPageTableManager()) {
+                commandStreamReceiver->createPageTableManager();
+            }
+
+            EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, false);
+
+            if (!commandStreamReceiver->initializeResources()) {
+                return nullptr;
+            }
+
+            if (!commandStreamReceiver->initializeTagAllocation()) {
+                return nullptr;
+            }
+
+            if (!commandStreamReceiver->createGlobalFenceAllocation()) {
+                return nullptr;
+            }
+
+            if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
+                return nullptr;
+            }
+        }
+    }
+    return &secondaryEngines[engineIndex].engines[secondaryEngineIndex];
 }
 
 const HardwareInfo &Device::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }

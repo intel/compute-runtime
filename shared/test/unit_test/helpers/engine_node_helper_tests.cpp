@@ -70,6 +70,13 @@ TEST(EngineNodeHelperTest, givenCcsEngineWhenHelperIsUsedThenReturnTrue) {
     EXPECT_FALSE(EngineHelpers::isCcs(aub_stream::EngineType::NUM_ENGINES));
 }
 
+TEST(EngineNodeHelperTest, givenCcsWhenGettingCcsIndexThenReturnCorrectIndex) {
+    EXPECT_EQ(0u, EngineHelpers::getCcsIndex(aub_stream::ENGINE_CCS));
+    EXPECT_EQ(1u, EngineHelpers::getCcsIndex(aub_stream::ENGINE_CCS1));
+    EXPECT_EQ(2u, EngineHelpers::getCcsIndex(aub_stream::ENGINE_CCS2));
+    EXPECT_EQ(3u, EngineHelpers::getCcsIndex(aub_stream::ENGINE_CCS3));
+}
+
 TEST(EngineNodeHelperTest, givenInvalidEngineTypeWhenGettingStringRepresentationThenItIsCorrect) {
     EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineTypeToString(aub_stream::EngineType::NUM_ENGINES));
     EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineTypeToString(static_cast<aub_stream::EngineType>(0xcc)));

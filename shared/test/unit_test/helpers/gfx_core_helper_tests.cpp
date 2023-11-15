@@ -1588,3 +1588,25 @@ HWTEST2_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnFlatHierarch
     auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
     EXPECT_STREQ("COMPOSITE", defaultDeviceHierarchy);
 }
+
+HWTEST_F(GfxCoreHelperTest, givenContextGroupDisabledWhenContextGroupContextsCountAndSecondaryContextsSupportQueriedThenZeroCountAndFalseIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(0u, gfxCoreHelper.getContextGroupContextsCount());
+    EXPECT_FALSE(gfxCoreHelper.areSecondaryContextsSupported());
+}
+
+TEST_F(GfxCoreHelperTest, givenContextGroupEnabledWithDebugKeyWhenContextGroupContextsCountAndSecondaryContextsSupportQueriedThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(8u, gfxCoreHelper.getContextGroupContextsCount());
+    EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
+
+    debugManager.flags.ContextGroupSize.set(1);
+    EXPECT_EQ(1u, gfxCoreHelper.getContextGroupContextsCount());
+    EXPECT_FALSE(gfxCoreHelper.areSecondaryContextsSupported());
+
+    debugManager.flags.ContextGroupSize.set(2);
+    EXPECT_EQ(2u, gfxCoreHelper.getContextGroupContextsCount());
+    EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
+}

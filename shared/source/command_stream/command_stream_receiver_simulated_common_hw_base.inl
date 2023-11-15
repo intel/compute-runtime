@@ -22,6 +22,7 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include "aubstream/aub_manager.h"
+#include "aubstream/aubstream.h"
 
 namespace NEO {
 
@@ -42,6 +43,11 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     auto engineType = osContext.getEngineType();
     uint32_t flags = 0;
     getCsTraits(engineType).setContextSaveRestoreFlags(flags);
+
+    if (osContext.isPartOfContextGroup()) {
+        constexpr uint32_t contextGroupBit = aub_stream::hardwareContextFlags::contextGroup;
+        flags |= contextGroupBit;
+    }
 
     if (debugManager.flags.AppendAubStreamContextFlags.get() != -1) {
         flags |= static_cast<uint32_t>(debugManager.flags.AppendAubStreamContextFlags.get());

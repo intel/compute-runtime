@@ -1322,5 +1322,46 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
     commandQueue2->destroy();
 }
 
+TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesThenEachCmdQHasDifferentCsr) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    ze_command_queue_handle_t commandQueueHandle1, commandQueueHandle2;
+
+    auto result = device->createCommandQueue(&desc, &commandQueueHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandQueue(&desc, &commandQueueHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandQueue1 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle1));
+    auto commandQueue2 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle2));
+
+    EXPECT_NE(commandQueue1->getCsr(), commandQueue2->getCsr());
+
+    commandQueue1->destroy();
+    commandQueue2->destroy();
+}
+
 } // namespace ult
 } // namespace L0

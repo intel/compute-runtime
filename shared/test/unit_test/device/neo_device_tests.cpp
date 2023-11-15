@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -877,7 +878,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
 
     auto device = deviceFactory.rootDevices[0];
     auto csr = device->allEngines[device->defaultEngineIndex].commandStreamReceiver;
-    EXPECT_EQ(device->isInitDeviceWithFirstSubmissionSupported(csr->getType()), csr->peekLatestSentTaskCount());
+
+    if (device->isInitDeviceWithFirstSubmissionSupported(csr->getType())) {
+        EXPECT_EQ(1u, csr->peekLatestSentTaskCount());
+    }
 }
 
 TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
@@ -1002,4 +1006,177 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenRequestedV
 
 TEST_F(DeviceTests, whenCheckingPreferredPlatformNameThenNullIsReturned) {
     EXPECT_EQ(nullptr, defaultHwInfo->capabilityTable.preferredPlatformName);
+}
+
+TEST(Device, givenDifferentEngineTypesWhenIsSecondaryContextEngineTypeCalledThenTrueReturnedForCCS) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS));
+    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS1));
+    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS2));
+    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS3));
+
+    EXPECT_FALSE(device->isSecondaryContextEngineType(aub_stream::ENGINE_RCS));
+    EXPECT_FALSE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCCS));
+    EXPECT_FALSE(device->isSecondaryContextEngineType(aub_stream::ENGINE_BCS));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenCCSEngineAndContextGroupSizeEnabledWhenCreatingEngineThenItsContextHasContextGroupFlagSet) {
+    DebugManagerStateRestore dbgRestorer;
+    const uint32_t contextGroupSize = 8;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+
+    deviceFactory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular});
+
+    auto defaultEngine = deviceFactory.rootDevices[0]->getDefaultEngine();
+    EXPECT_NE(nullptr, &defaultEngine);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_CCS, defaultEngine.getEngineType());
+    EXPECT_EQ(EngineUsage::regular, defaultEngine.getEngineUsage());
+
+    EXPECT_TRUE(defaultEngine.osContext->isPartOfContextGroup());
+}
+
+HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreatedThenSecondaryEnginesAreCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    const uint32_t contextGroupSize = 8;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &engineGroups = device->getRegularEngineGroups();
+
+    auto engineGroupType = EngineGroupType::compute;
+    size_t computeEnginesCount = 0;
+    for (const auto &engine : engineGroups) {
+        if (engine.engineGroupType == engineGroupType) {
+            computeEnginesCount = engine.engines.size();
+        }
+    }
+
+    if (computeEnginesCount == 0) {
+        GTEST_SKIP();
+    }
+
+    ASSERT_EQ(computeEnginesCount, device->secondaryEngines.size());
+    ASSERT_EQ(contextGroupSize, device->secondaryEngines[0].engines.size());
+
+    auto defaultEngine = device->getDefaultEngine();
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, device->secondaryEngines[0].engines[0].commandStreamReceiver);
+
+    const uint32_t regularContextCount = std::min(contextGroupSize / 2, 4u);
+
+    for (uint32_t ccsIndex = 0; ccsIndex < computeEnginesCount; ccsIndex++) {
+        EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[0].osContext->isPartOfContextGroup());
+        EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[0].osContext->getPrimaryContext());
+
+        for (size_t i = 1; i < device->secondaryEngines[0].engines.size(); i++) {
+            EXPECT_EQ(device->secondaryEngines[ccsIndex].engines[0].osContext, device->secondaryEngines[ccsIndex].engines[i].osContext->getPrimaryContext());
+            EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[i].osContext->isPartOfContextGroup());
+        }
+
+        EXPECT_EQ(0u, device->secondaryEngines[ccsIndex].regularCounter.load());
+        EXPECT_EQ(0u, device->secondaryEngines[ccsIndex].highPriorityCounter.load());
+
+        EXPECT_EQ(regularContextCount, device->secondaryEngines[ccsIndex].regularEnginesTotal);
+        EXPECT_EQ(contextGroupSize - regularContextCount, device->secondaryEngines[ccsIndex].highPriorityEnginesTotal);
+
+        for (size_t contextId = 0; contextId < regularContextCount + 1; contextId++) {
+            auto engine = device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+            ASSERT_NE(nullptr, engine);
+
+            EXPECT_EQ(contextId + 1, device->secondaryEngines[ccsIndex].regularCounter.load());
+            if (contextId == regularContextCount) {
+                EXPECT_EQ(&device->secondaryEngines[ccsIndex].engines[0], engine);
+            }
+        }
+
+        for (size_t contextId = 0; contextId < contextGroupSize - regularContextCount + 1; contextId++) {
+            auto engine = device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+            ASSERT_NE(nullptr, engine);
+
+            EXPECT_EQ(contextId + 1, device->secondaryEngines[ccsIndex].highPriorityCounter.load());
+            if (contextId == contextGroupSize - regularContextCount) {
+                EXPECT_EQ(&device->secondaryEngines[ccsIndex].engines[regularContextCount], engine);
+            }
+        }
+    }
+
+    auto internalEngine = device->getInternalEngine();
+    EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr(0, {aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal})->commandStreamReceiver);
+}
+
+HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenResourcesAndContextAreInitialized) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+
+    const auto ccsIndex = 0;
+    auto secondaryEnginesCount = device->secondaryEngines[ccsIndex].engines.size();
+    ASSERT_EQ(5u, secondaryEnginesCount);
+
+    EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->isInitialized());
+    EXPECT_EQ(1u, device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->peekLatestSentTaskCount());
+
+    for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
+
+        EXPECT_FALSE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].osContext->isInitialized());
+        EXPECT_FALSE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->isInitialized());
+
+        EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
+        EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+        if (device->getPreemptionMode() == PreemptionMode::MidThread) {
+            EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+        }
+
+        device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+    }
+
+    for (uint32_t i = 0; i < device->secondaryEngines[ccsIndex].highPriorityEnginesTotal; i++) {
+        device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+    }
+
+    for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
+
+        EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].osContext->isInitialized());
+        EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->isInitialized());
+
+        EXPECT_NE(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
+
+        if (gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
+            EXPECT_NE(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+        }
+        if (device->getPreemptionMode() == PreemptionMode::MidThread) {
+            EXPECT_NE(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+        }
+    }
 }

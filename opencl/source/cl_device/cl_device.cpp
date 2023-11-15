@@ -137,7 +137,9 @@ ClDevice *ClDevice::getNearestGenericSubDevice(uint32_t deviceId) {
 bool ClDevice::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const { return device.getDeviceAndHostTimer(deviceTimestamp, hostTimestamp); }
 bool ClDevice::getHostTimer(uint64_t *hostTimestamp) const { return device.getHostTimer(hostTimestamp); }
 const HardwareInfo &ClDevice::getHardwareInfo() const { return device.getHardwareInfo(); }
-EngineControl &ClDevice::getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) { return device.getEngine(engineType, engineUsage); }
+EngineControl &ClDevice::getEngine(aub_stream::EngineType engineType, EngineUsage engineUsage) {
+    return device.getEngine(engineType, engineUsage);
+}
 EngineControl &ClDevice::getDefaultEngine() { return device.getDefaultEngine(); }
 EngineControl &ClDevice::getInternalEngine() { return device.getInternalEngine(); }
 SelectorCopyEngine &ClDevice::getSelectorCopyEngine() { return device.getSelectorCopyEngine(); }

@@ -52,6 +52,7 @@ bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType);
 aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage);
 void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine, const RootDeviceEnvironment &rootDeviceEnvironment);
 aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const RootDeviceEnvironment &rootDeviceEnvironment);
+uint32_t getCcsIndex(aub_stream::EngineType engineType);
 uint32_t getBcsIndex(aub_stream::EngineType engineType);
 aub_stream::EngineType getBcsEngineAtIdx(uint32_t idx);
 aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainCopyEngine);

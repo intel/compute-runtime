@@ -154,6 +154,15 @@ aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputT
     return inputType;
 }
 
+uint32_t getCcsIndex(aub_stream::EngineType engineType) {
+    UNRECOVERABLE_IF(!isCcs(engineType));
+    if (engineType == aub_stream::ENGINE_CCS) {
+        return 0;
+    } else {
+        return engineType - aub_stream::ENGINE_CCS;
+    }
+}
+
 uint32_t getBcsIndex(aub_stream::EngineType engineType) {
     UNRECOVERABLE_IF(!isBcs(engineType));
     if (engineType == aub_stream::ENGINE_BCS) {

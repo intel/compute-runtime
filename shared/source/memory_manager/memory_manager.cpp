@@ -55,6 +55,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     checkIsaPlacementOnceFlags = std::make_unique<std::once_flag[]>(rootEnvCount);
     isaInLocalMemory.resize(rootEnvCount);
     allRegisteredEngines.resize(rootEnvCount + 1);
+    secondaryEngines.resize(rootEnvCount + 1);
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
@@ -85,6 +86,14 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 }
 
 MemoryManager::~MemoryManager() {
+    for (auto &engineContainer : secondaryEngines) {
+        for (auto &engine : engineContainer) {
+            engine.osContext->decRefInternal();
+        }
+        engineContainer.clear();
+    }
+    secondaryEngines.clear();
+
     for (auto &engineContainer : allRegisteredEngines) {
         for (auto &engine : engineContainer) {
             engine.osContext->decRefInternal();
@@ -345,6 +354,25 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
     allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
+
+    return osContext;
+}
+
+OsContext *MemoryManager::createAndRegisterSecondaryOsContext(const OsContext *primaryContext, CommandStreamReceiver *commandStreamReceiver,
+                                                              const EngineDescriptor &engineDescriptor) {
+    auto rootDeviceIndex = commandStreamReceiver->getRootDeviceIndex();
+
+    updateLatestContextIdForRootDevice(rootDeviceIndex);
+
+    auto contextId = primaryContext->getContextId();
+    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), rootDeviceIndex, contextId, engineDescriptor);
+    osContext->incRefInternal();
+
+    osContext->setPrimaryContext(primaryContext);
+
+    UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
+
+    secondaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 
     return osContext;
 }

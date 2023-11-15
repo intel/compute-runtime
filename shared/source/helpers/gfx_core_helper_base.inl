@@ -717,4 +717,17 @@ uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, dou
     return static_cast<uint64_t>(static_cast<uint64_t>(timeStamp & timestampMask) * resolution);
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::areSecondaryContextsSupported() const {
+    return getContextGroupContextsCount() > 1;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupContextsCount() const {
+    if (debugManager.flags.ContextGroupSize.get() != -1) {
+        return debugManager.flags.ContextGroupSize.get();
+    }
+    return 0;
+}
+
 } // namespace NEO

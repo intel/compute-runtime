@@ -191,12 +191,22 @@ void CommandQueue::initializeGpgpu() const {
 
             auto defaultEngineType = device->getDefaultEngine().getEngineType();
 
+            const GfxCoreHelper &gfxCoreHelper = getDevice().getGfxCoreHelper();
+            bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
+
             if (device->getDevice().isMultiRegularContextSelectionAllowed(defaultEngineType, EngineUsage::regular)) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(defaultEngineType);
             } else if (assignEngineRoundRobin) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
             } else {
-                this->gpgpuEngine = &device->getDefaultEngine();
+
+                if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
+                    gpgpuEngine = device->getDevice().getSecondaryEngineCsr(0, {defaultEngineType, EngineUsage::regular});
+                }
+
+                if (gpgpuEngine == nullptr) {
+                    this->gpgpuEngine = &device->getDefaultEngine();
+                }
             }
 
             this->initializeGpgpuInternals();
@@ -1188,6 +1198,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     const bool isEngineCopyOnly = EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
     bool multiRegularContextAllowed = device->getDevice().isMultiRegularContextSelectionAllowed(engineType, engineUsage);
+    bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
     if (isEngineCopyOnly) {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
@@ -1208,6 +1219,9 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     } else {
         if (multiRegularContextAllowed) {
             gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
+        } else if (secondaryContextsEnabled && EngineHelpers::isCcs(engineType)) {
+            auto index = EngineHelpers::getCcsIndex(engineType);
+            gpgpuEngine = device->getDevice().getSecondaryEngineCsr(index, {engineType, engineUsage});
         } else {
             gpgpuEngine = &device->getEngine(engineType, engineUsage);
         }
