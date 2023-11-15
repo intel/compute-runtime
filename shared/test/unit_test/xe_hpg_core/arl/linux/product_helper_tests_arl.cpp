@@ -56,18 +56,20 @@ ARLTEST_F(ArlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
 }
 
 using ArlHwInfoLinux = ::testing::Test;
-TEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
+ARLTEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
+    auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo;
+
+    gtSystemInfo = {};
+
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     DeviceDescriptor device = {0, &ArlHwConfig::hwInfo, &ArlHwConfig::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
-
-    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
@@ -78,6 +80,8 @@ TEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
-    EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+    EXPECT_GT(gtSystemInfo.MaxSlicesSupported, 0u);
+    EXPECT_GT(gtSystemInfo.MaxSubSlicesSupported, 0u);
+    EXPECT_GT(gtSystemInfo.MaxEuPerSubSlice, 0u);
 }

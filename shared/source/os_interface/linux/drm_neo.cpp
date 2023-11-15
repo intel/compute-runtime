@@ -474,6 +474,13 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSubSliceCount);
     }
 
+    if (hwInfo->gtSystemInfo.MaxSlicesSupported == 0) {
+        hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;
+    }
+    if (hwInfo->gtSystemInfo.MaxEuPerSubSlice == 0 && hwInfo->gtSystemInfo.SubSliceCount != 0) {
+        hwInfo->gtSystemInfo.MaxEuPerSubSlice = hwInfo->gtSystemInfo.EUCount / hwInfo->gtSystemInfo.SubSliceCount;
+    }
+
     status = querySystemInfo();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);

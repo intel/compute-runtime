@@ -151,8 +151,12 @@ void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     gtSysInfo->TotalHsThreads = 0;
     gtSysInfo->TotalDsThreads = 0;
     gtSysInfo->TotalGsThreads = 0;
-    gtSysInfo->MaxSubSlicesSupported = 1;
-    gtSysInfo->MaxDualSubSlicesSupported = 2;
+    if (gtSysInfo->MaxSubSlicesSupported < 1) {
+        gtSysInfo->MaxSubSlicesSupported = 1;
+    }
+    if (gtSysInfo->MaxDualSubSlicesSupported < 2) {
+        gtSysInfo->MaxDualSubSlicesSupported = 2;
+    }
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;

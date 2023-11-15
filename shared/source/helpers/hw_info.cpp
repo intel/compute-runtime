@@ -68,6 +68,19 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
     for (uint32_t slice = 0; slice < hwInfoIn.gtSystemInfo.SliceCount; slice++) {
         hwInfoIn.gtSystemInfo.SliceInfo[slice].Enabled = true;
     }
+
+    if (hwInfoIn.gtSystemInfo.MaxSlicesSupported == 0) {
+        hwInfoIn.gtSystemInfo.MaxSlicesSupported = sliceCount;
+    }
+    if (hwInfoIn.gtSystemInfo.MaxSubSlicesSupported == 0) {
+        hwInfoIn.gtSystemInfo.MaxSubSlicesSupported = hwInfoIn.gtSystemInfo.SubSliceCount;
+    }
+    if (hwInfoIn.gtSystemInfo.MaxDualSubSlicesSupported == 0) {
+        hwInfoIn.gtSystemInfo.MaxDualSubSlicesSupported = hwInfoIn.gtSystemInfo.SubSliceCount;
+    }
+    if (hwInfoIn.gtSystemInfo.MaxEuPerSubSlice == 0) {
+        hwInfoIn.gtSystemInfo.MaxEuPerSubSlice = euPerSubSliceCount;
+    }
 }
 
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig) {
