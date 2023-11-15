@@ -22,6 +22,29 @@ const std::string LinuxPowerImp::sustainedPowerLimitInterval("power1_max_interva
 const std::string LinuxPowerImp::energyCounterNode("energy1_input");
 const std::string LinuxPowerImp::defaultPowerLimit("power1_rated_max");
 
+class LinuxPowerImp::PowerLimitRestorer : NEO::NonCopyableOrMovableClass {
+  public:
+    PowerLimitRestorer(SysfsAccess *pSysfsAccess, std::string powerLimit) : pSysfsAccess(pSysfsAccess), powerLimit(powerLimit) {
+        result = pSysfsAccess->read(powerLimit, powerLimitValue);
+    }
+
+    ~PowerLimitRestorer() {
+        if (result == ZE_RESULT_SUCCESS) {
+            result = pSysfsAccess->write(powerLimit, powerLimitValue);
+            DEBUG_BREAK_IF(result != ZE_RESULT_SUCCESS);
+        }
+    }
+    operator ze_result_t() const {
+        return result;
+    }
+
+  protected:
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    SysfsAccess *pSysfsAccess = nullptr;
+    std::string powerLimit = {};
+    uint64_t powerLimitValue = 0;
+};
+
 ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subdeviceId;
@@ -30,7 +53,84 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->defaultLimit = -1;
     pProperties->minLimit = -1;
     pProperties->maxLimit = -1;
-    return ZE_RESULT_SUCCESS;
+
+    if (isSubdevice) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto result = getDefaultLimit(pProperties->defaultLimit);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    std::string sustainedLimit = i915HwmonDir + "/" + sustainedPowerLimit;
+    auto powerLimitRestorer = L0::LinuxPowerImp::PowerLimitRestorer(pSysfsAccess, sustainedLimit);
+    if (powerLimitRestorer != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimit.c_str(), getErrorCode(powerLimitRestorer));
+        return getErrorCode(powerLimitRestorer);
+    }
+
+    result = getMinLimit(pProperties->minLimit);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    return getMaxLimit(pProperties->maxLimit);
+}
+
+ze_result_t LinuxPowerImp::getMinLimit(int32_t &minLimit) {
+    // Fw clamps to minimum value if power limit requested to set is less than min limit, Set to 100 micro watt to get min limit
+    uint64_t powerLimit = 100;
+    std::string sustainedLimit = i915HwmonDir + "/" + sustainedPowerLimit;
+    auto result = pSysfsAccess->write(sustainedLimit, powerLimit);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimit.c_str(), getErrorCode(result));
+        return getErrorCode(result);
+    }
+
+    result = pSysfsAccess->read(sustainedLimit, powerLimit);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimit.c_str(), getErrorCode(result));
+        return getErrorCode(result);
+    }
+
+    // Values are retrieved from KMD in micro watts, Conversion to milli is required.
+    minLimit = static_cast<int32_t>(powerLimit / milliFactor);
+    return result;
+}
+
+ze_result_t LinuxPowerImp::getMaxLimit(int32_t &maxLimit) {
+    // Fw clamps to maximum value if power limit requested to set is greater than max limit, Set to max value to get max limit
+    uint64_t powerLimit = std::numeric_limits<int32_t>::max();
+    std::string sustainedLimit = i915HwmonDir + "/" + sustainedPowerLimit;
+    auto result = pSysfsAccess->write(sustainedLimit, powerLimit);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimit.c_str(), getErrorCode(result));
+        return getErrorCode(result);
+    }
+
+    result = pSysfsAccess->read(sustainedLimit, powerLimit);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimit.c_str(), getErrorCode(result));
+        return getErrorCode(result);
+    }
+
+    // Values are retrieved from KMD in micro watts, Conversion to milli is required.
+    maxLimit = static_cast<int32_t>(powerLimit / milliFactor);
+    return result;
+}
+
+ze_result_t LinuxPowerImp::getDefaultLimit(int32_t &defaultLimit) {
+    uint64_t powerLimit = 0;
+    auto result = pSysfsAccess->read(i915HwmonDir + "/" + defaultPowerLimit, powerLimit);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, i915HwmonDir.c_str(), defaultPowerLimit.c_str(), getErrorCode(result));
+        return getErrorCode(result);
+    }
+
+    // Values are retrieved from KMD in micro watts, Conversion to milli is required.
+    defaultLimit = static_cast<int32_t>(powerLimit / milliFactor);
+    return result;
 }
 
 ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {

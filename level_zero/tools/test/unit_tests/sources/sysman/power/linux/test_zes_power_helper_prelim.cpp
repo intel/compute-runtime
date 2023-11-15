@@ -65,14 +65,15 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
         if (properties.onSubdevice) {
             EXPECT_FALSE(properties.canControl);
             EXPECT_EQ(properties.defaultLimit, -1);
-
+            EXPECT_EQ(properties.maxLimit, -1);
+            EXPECT_EQ(properties.minLimit, -1);
         } else {
             EXPECT_EQ(properties.canControl, true);
-            EXPECT_EQ(properties.defaultLimit, -1);
+            EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
     }
 }
 
@@ -88,7 +89,6 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
         extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
         properties.pNext = &extProperties;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-        EXPECT_EQ(properties.defaultLimit, -1);
         EXPECT_TRUE(defaultLimit.limitValueLocked);
         EXPECT_TRUE(defaultLimit.enabledStateLocked);
         EXPECT_TRUE(defaultLimit.intervalValueLocked);
@@ -103,10 +103,11 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
             EXPECT_TRUE(properties.canControl);
             EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
             EXPECT_EQ(defaultLimit.limit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
     }
 }
 
@@ -120,17 +121,20 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPro
         properties.pNext = &extProperties;
         extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-        EXPECT_EQ(properties.defaultLimit, -1);
         if (properties.onSubdevice) {
             EXPECT_FALSE(properties.canControl);
             EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
+            EXPECT_EQ(properties.maxLimit, -1);
+            EXPECT_EQ(properties.minLimit, -1);
+            EXPECT_EQ(properties.defaultLimit, -1);
         } else {
             EXPECT_TRUE(properties.canControl);
             EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
+            EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
     }
 }
 
@@ -164,7 +168,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenReadingToSysNodesFailsWhe
             pmtMapElement.second = nullptr;
         }
     }
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
 
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
@@ -241,7 +246,7 @@ HWTEST2_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandlesWhenC
         ASSERT_NE(nullptr, handle);
 
         uint32_t limitCount = 0;
-        const int32_t testLimit = 3000000;
+        const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
         zes_power_properties_t properties = {};
@@ -312,7 +317,7 @@ HWTEST2_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandlesWhenC
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         uint32_t limitCount = 0;
-        const int32_t testLimit = 3000000;
+        const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
         zes_power_properties_t properties = {};

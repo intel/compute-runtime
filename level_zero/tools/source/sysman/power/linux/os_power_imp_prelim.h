@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
 #include "igfxfmid.h"
@@ -56,6 +57,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     uint32_t subdeviceId = 0;
     uint32_t powerLimitCount = 0;
     PRODUCT_FAMILY productFamily{};
+    class PowerLimitRestorer;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -63,5 +65,9 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
         }
         return result;
     }
+    ze_result_t getMinLimit(int32_t &minLimit);
+    ze_result_t getMaxLimit(int32_t &maxLimit);
+    ze_result_t getDefaultLimit(int32_t &defaultLimit);
 };
+
 } // namespace L0

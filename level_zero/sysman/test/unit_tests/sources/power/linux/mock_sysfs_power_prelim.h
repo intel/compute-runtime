@@ -41,6 +41,8 @@ constexpr uint64_t expectedEnergyCounter = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile0 = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile1 = 128955785u;
 constexpr uint32_t mockDefaultPowerLimitVal = 300000000;
+constexpr uint64_t mockMinPowerLimitVal = 300000000;
+constexpr uint64_t mockMaxPowerLimitVal = 600000000;
 const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
     {"PACKAGE_ENERGY", 0x400},
     {"COMPUTE_TEMPERATURES", 0x68},
@@ -49,13 +51,13 @@ const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
 
 struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
-    ze_result_t mockReadValUnsignedLongResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadPeakResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteResult = ZE_RESULT_SUCCESS;
-    ze_result_t mockWriteUnsignedResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadIntResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWritePeakLimitResult = ZE_RESULT_SUCCESS;
     ze_result_t mockscanDirEntriesResult = ZE_RESULT_SUCCESS;
+    std::vector<ze_result_t> mockReadValUnsignedLongResult{};
+    std::vector<ze_result_t> mockWriteUnsignedResult{};
 
     ze_result_t getValString(const std::string file, std::string &val) {
         ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
@@ -97,6 +99,8 @@ struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
             val = expectedEnergyCounterTile1;
         } else if (file.compare(i915HwmonDir + "/" + energyCounterNode) == 0) {
             val = expectedEnergyCounter;
+        } else if (file.compare(i915HwmonDir + "/" + defaultPowerLimit) == 0) {
+            val = mockDefaultPowerLimitVal;
         } else {
             result = ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -141,8 +145,13 @@ struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
     }
 
     ze_result_t read(const std::string file, uint64_t &val) override {
-        if (mockReadValUnsignedLongResult != ZE_RESULT_SUCCESS) {
-            return mockReadValUnsignedLongResult;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        if (!mockReadValUnsignedLongResult.empty()) {
+            result = mockReadValUnsignedLongResult.front();
+            mockReadValUnsignedLongResult.erase(mockReadValUnsignedLongResult.begin());
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
         }
 
         return getValUnsignedLong(file, val);
@@ -186,12 +195,22 @@ struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
 
     ze_result_t write(const std::string file, const uint64_t val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
-        if (mockWriteUnsignedResult != ZE_RESULT_SUCCESS) {
-            return mockWriteUnsignedResult;
+        if (!mockWriteUnsignedResult.empty()) {
+            result = mockWriteUnsignedResult.front();
+            mockWriteUnsignedResult.erase(mockWriteUnsignedResult.begin());
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
         }
 
         if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
-            sustainedPowerLimitVal = val;
+            if (val < mockMinPowerLimitVal) {
+                sustainedPowerLimitVal = mockMinPowerLimitVal;
+            } else if (val > mockMaxPowerLimitVal) {
+                sustainedPowerLimitVal = mockMaxPowerLimitVal;
+            } else {
+                sustainedPowerLimitVal = val;
+            }
         } else if ((file.compare(i915HwmonDir + "/" + criticalPowerLimit1) == 0) || (file.compare(i915HwmonDir + "/" + criticalPowerLimit2) == 0)) {
             if (mockWritePeakLimitResult != ZE_RESULT_SUCCESS) {
                 return mockWritePeakLimitResult;
@@ -275,6 +294,7 @@ class PublicLinuxPowerImp : public L0::Sysman::LinuxPowerImp {
   public:
     PublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId) {}
     using L0::Sysman::LinuxPowerImp::pPmt;
+    using L0::Sysman::LinuxPowerImp::pSysfsAccess;
 };
 
 class SysmanDevicePowerFixture : public SysmanDeviceFixture {

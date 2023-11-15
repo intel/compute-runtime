@@ -115,9 +115,9 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.canControl, true);
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.defaultLimit, -1);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
+        EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
     }
 }
 
@@ -138,9 +138,9 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.canControl, true);
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.defaultLimit, -1);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
+        EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
         EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
         EXPECT_TRUE(defaultLimit.limitValueLocked);
         EXPECT_TRUE(defaultLimit.enabledStateLocked);
@@ -167,23 +167,116 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWithNoStypeForExtPropertie
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.canControl, true);
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-        EXPECT_EQ(properties.defaultLimit, -1);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
+        EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenUnknownLimitsAreReturned) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsReadFailsThenFailureIsReturned) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
+    EXPECT_EQ(properties.defaultLimit, -1);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndSustainedLimitReadFailsThenFailureIsReturned) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
+    EXPECT_EQ(properties.minLimit, -1);
+    EXPECT_EQ(properties.maxLimit, -1);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndMinLimitReadFailsThenFailureIsReturned) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
+    EXPECT_EQ(properties.minLimit, -1);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndMaxLimitReadFailsThenFailureIsReturned) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
+    EXPECT_EQ(properties.maxLimit, -1);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsWriteForMinLimitFailsThenFailureIsReturned) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
+    EXPECT_EQ(properties.minLimit, -1);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsWriteForMaxLimitFailsThenFailureIsReturned) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
+    EXPECT_EQ(properties.maxLimit, -1);
+}
+
+HWTEST2_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsWriteToOriginalLimitFailsThenVerifySustainedLimitIsMaximum, IsPVC) {
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pLinuxPowerImp->isPowerModuleSupported();
+
+    pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    zes_power_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
+    std::vector<zes_power_limit_ext_desc_t> allLimits(mockLimitCount);
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
-        zes_power_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-        EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_EQ(properties.defaultLimit, -1);
-        EXPECT_EQ(properties.maxLimit, -1);
-        EXPECT_EQ(properties.minLimit, -1);
+        uint32_t limitCount = mockLimitCount;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+        for (uint32_t i = 0; i < limitCount; i++) {
+            if (allLimits[i].level == ZES_POWER_LEVEL_SUSTAINED) {
+                EXPECT_EQ(ZES_POWER_SOURCE_ANY, allLimits[i].source);
+                EXPECT_EQ(ZES_LIMIT_UNIT_POWER, allLimits[i].limitUnit);
+                EXPECT_EQ(allLimits[i].limit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
+            }
+        }
     }
 }
 
@@ -197,7 +290,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
         pPmt->preadFunction = preadMockPower;
     }
 
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_power_energy_counter_t energyCounter = {};
@@ -258,7 +351,7 @@ HWTEST2_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPo
         ASSERT_NE(nullptr, handle);
 
         uint32_t limitCount = 0;
-        const int32_t testLimit = 3000000;
+        const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
@@ -307,7 +400,7 @@ HWTEST2_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPo
         ASSERT_NE(nullptr, handle);
 
         uint32_t limitCount = 0;
-        const int32_t testLimit = 3000000;
+        const int32_t testLimit = 300000;
         const int32_t testInterval = 10;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
@@ -354,7 +447,7 @@ TEST_F(SysmanDevicePowerFixture, GivenReadingSustainedPowerLimitNodeReturnErrorW
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     pSysfsAccess->mockWriteResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -368,18 +461,25 @@ TEST_F(SysmanDevicePowerFixture, GivenReadingSustainedPowerLimitNodeReturnErrorW
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleAndWritingToSustainedLimitSysNodesFailsWhenCallingSetPowerLimitsExtThenProperErrorCodesReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
-
-    pSysfsAccess->mockWriteResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         uint32_t count = mockLimitCount;
         std::vector<zes_power_limit_ext_desc_t> allLimits(mockLimitCount);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
 
-        pSysfsAccess->mockWriteUnsignedResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &count, allLimits.data()));
-        pSysfsAccess->mockWriteUnsignedResult = ZE_RESULT_SUCCESS;
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleAndWritingToSustainedLimitIntervalSysNodeFailsWhenCallingSetPowerLimitsExtThenProperErrorCodesReturned) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    pSysfsAccess->mockWriteResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        uint32_t count = mockLimitCount;
+        std::vector<zes_power_limit_ext_desc_t> allLimits(mockLimitCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &count, allLimits.data()));
     }
 }
@@ -391,9 +491,9 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleAndReadingToSustainedLimit
         ASSERT_NE(nullptr, handle);
         uint32_t count = mockLimitCount;
         std::vector<zes_power_limit_ext_desc_t> allLimits(mockLimitCount);
-        pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
-        pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_SUCCESS;
+        pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_SUCCESS);
         count = mockLimitCount;
         pSysfsAccess->mockReadIntResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
@@ -404,8 +504,9 @@ TEST_F(SysmanDevicePowerFixture, GivenReadingToSysNodesFailsWhenCallingGetPowerL
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
 
     auto handles = getPowerHandles(powerHandleComponentCount);
@@ -515,7 +616,7 @@ TEST_F(SysmanDevicePowerFixture, GivenReadingPeakPowerLimitNodeReturnErrorWhenSe
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     pSysfsAccess->mockWriteResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -530,7 +631,7 @@ TEST_F(SysmanDevicePowerFixture, GivenReadingPeakPowerLimitNodeReturnErrorWhenSe
 TEST_F(SysmanDevicePowerFixture, GivenReadingSustainedPowerNodeReturnErrorWhenGetPowerLimitsForSustainedPowerWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_power_sustained_limit_t sustainedGet = {};
@@ -540,7 +641,7 @@ TEST_F(SysmanDevicePowerFixture, GivenReadingSustainedPowerNodeReturnErrorWhenGe
 
 TEST_F(SysmanDevicePowerFixture, GivenReadingpeakPowerNodeReturnErrorWhenGetPowerLimitsForpeakPowerWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -597,7 +698,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleAndPermissionsThenFirstDis
     EXPECT_EQ(sustainedGet.power, sustainedSet.power);
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenScanDiectoriesFailAndPmtIsNotNullPointerThenPowerModuleIsSupported) {
+TEST_F(SysmanDevicePowerFixture, GivenScanDirectoriesFailAndPmtIsNotNullPointerThenPowerModuleIsSupported) {
 
     pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
@@ -703,7 +804,6 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFileReturnsErrorAndPmtFailsThenFailureIsReturned) {
-    pSysfsAccess->mockReadValUnsignedLongResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
@@ -721,6 +821,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
+        pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
         ASSERT_NE(nullptr, handle);
         zes_power_energy_counter_t energyCounter = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetEnergyCounter(handle, &energyCounter));
