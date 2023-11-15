@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1391,9 +1391,12 @@ void DebugSessionLinuxi915::handlePageFaultEvent(prelim_drm_i915_debug_event_pag
             lock = std::unique_lock<std::mutex>(threadStateMutex);
         }
         for (auto &threadId : threadsWithPF) {
-
             PRINT_DEBUGGER_INFO_LOG("PageFault event for thread %s", EuThread::toString(threadId).c_str());
-            allThreads[threadId]->setPageFault(true);
+            if (tileSessionsEnabled) {
+                static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->allThreads[threadId]->setPageFault(true);
+            } else {
+                allThreads[threadId]->setPageFault(true);
+            }
         }
         for (auto &threadId : stoppedThreads) {
             if (tileSessionsEnabled) {
