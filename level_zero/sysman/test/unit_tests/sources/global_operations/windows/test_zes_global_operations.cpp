@@ -200,6 +200,54 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenInvalidPciBusInfoWhenRetrievingUu
     EXPECT_EQ(false, result);
 }
 
+using SysmanDevicePropertiesFixture = SysmanGlobalOperationsUuidFixture;
+
+TEST_F(SysmanDevicePropertiesFixture,
+       GivenValidDeviceHandleWhenCallingGetPropertiesThenDeviceTypeIsGpuInCoreProperties) {
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_DEVICE_TYPE_GPU, properties.core.type);
+}
+
+HWTEST2_F(SysmanDevicePropertiesFixture,
+          GivenValidDeviceHandleWhenCallingGetPropertiesAndOnDemandPageFaultSupportedThenFlagIsSetCorrectlyInCoreProperties, IsAtMostGen11) {
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.capabilityTable.supportsOnDemandPageFaults = true;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+    EXPECT_TRUE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
+TEST_F(SysmanDevicePropertiesFixture,
+       GivenValidDeviceHandleWhenCallingGetPropertiesAndOnDemandPageFaultNotSupportedThenFlagIsNotSetInCoreProperties) {
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.capabilityTable.supportsOnDemandPageFaults = false;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
+}
+
+HWTEST2_F(SysmanDevicePropertiesFixture,
+          GivenValidDeviceHandleWhenCallingGetPropertiesnAndIsNotIntegratedDeviceThenFlagIsNotSetInCoreProperties, IsXeHpgCore) {
+    auto mockHardwareInfo = device->getHardwareInfo();
+    mockHardwareInfo.capabilityTable.isIntegratedDevice = false;
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

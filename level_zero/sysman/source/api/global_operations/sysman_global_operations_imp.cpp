@@ -52,6 +52,15 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
         std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pProperties->core.uuid.id));
     }
 
+    auto &hardwareInfo = pOsSysman->getHardwareInfo();
+    pProperties->core.type = ZE_DEVICE_TYPE_GPU;
+    if (hardwareInfo.capabilityTable.isIntegratedDevice) {
+        pProperties->core.flags |= ZE_DEVICE_PROPERTY_FLAG_INTEGRATED;
+    }
+    if (hardwareInfo.capabilityTable.supportsOnDemandPageFaults) {
+        pProperties->core.flags |= ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING;
+    }
+
     zes_base_properties_t *pNext = static_cast<zes_base_properties_t *>(pProperties->pNext);
     while (pNext) {
 
@@ -60,7 +69,6 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
 
             extendedProperties->type = ZES_DEVICE_TYPE_GPU;
 
-            auto &hardwareInfo = pOsSysman->getHardwareInfo();
             if (hardwareInfo.capabilityTable.isIntegratedDevice) {
                 extendedProperties->flags |= ZES_DEVICE_PROPERTY_FLAG_INTEGRATED;
             }
