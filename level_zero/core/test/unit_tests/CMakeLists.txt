@@ -31,6 +31,8 @@ target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/test_modules/gen_kernel.cmake
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_specific_config_l0.cpp
+               ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.cpp
+               ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.h
 )
 
 target_sources(${TARGET_NAME} PRIVATE
