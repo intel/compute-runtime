@@ -16,4 +16,5 @@ if(UNIX)
                  ${L0_SYSMAN_SHARED_TESTS}
   )
 endif()
+add_subdirectories()
 

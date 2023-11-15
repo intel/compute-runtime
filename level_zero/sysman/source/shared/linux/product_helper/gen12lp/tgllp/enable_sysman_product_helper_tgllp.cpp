@@ -5,14 +5,13 @@
  *
  */
 
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<IGFX_DG2> enableDG2;
+static EnableSysmanProductHelper<IGFX_TIGERLAKE_LP> enableTGL_LP;
 
 } // namespace Sysman
 } // namespace L0
