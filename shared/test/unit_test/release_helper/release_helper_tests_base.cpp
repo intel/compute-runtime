@@ -68,7 +68,7 @@ void ReleaseHelperTestsBase::whenGettingMediaFrequencyTileIndexThenOneIsReturned
     }
 }
 
-void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer() {
+void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
@@ -79,28 +79,6 @@ void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmd
             if (allocationType == AllocationType::TAG_BUFFER ||
                 allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
                 EXPECT_FALSE(preferredAllocationMethod.has_value());
-            } else {
-                EXPECT_TRUE(preferredAllocationMethod.has_value());
-                EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
-            }
-        }
-    }
-}
-
-void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBufferAndCommandBuffer() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
-            auto allocationType = static_cast<AllocationType>(i);
-            auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
-            if (allocationType == AllocationType::TAG_BUFFER ||
-                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
-                EXPECT_FALSE(preferredAllocationMethod.has_value());
-            } else if (allocationType == AllocationType::COMMAND_BUFFER) {
-                EXPECT_TRUE(preferredAllocationMethod.has_value());
-                EXPECT_EQ(GfxMemoryAllocationMethod::UseUmdSystemPtr, preferredAllocationMethod.value());
             } else {
                 EXPECT_TRUE(preferredAllocationMethod.has_value());
                 EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());

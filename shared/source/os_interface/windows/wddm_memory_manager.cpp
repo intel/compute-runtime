@@ -111,7 +111,6 @@ bool WddmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalA
 }
 
 GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     systemMemoryStorageInfo.isLockable = allocationData.storageInfo.isLockable;
@@ -215,6 +214,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = allowLargePages;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
+    if (productHelper.overrideAllocationCacheable(allocationData)) {
+        gmmRequirements.overriderCacheable.enableOverride = true;
+        gmmRequirements.overriderCacheable.value = true;
+    }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
                        sizeAligned, 0u,

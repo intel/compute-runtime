@@ -19,9 +19,22 @@ struct StorageInfo;
 class GmmResourceInfo;
 class GmmHelper;
 
+template <typename OverriddenType>
+struct Overrider {
+    bool enableOverride{false};
+    OverriddenType value;
+
+    void doOverride(OverriddenType &variable) const {
+        if (enableOverride) {
+            variable = value;
+        }
+    }
+};
+
 struct GmmRequirements {
     bool preferCompressed;
     bool allowLargePages;
+    Overrider<bool> overriderCacheable;
 };
 
 class Gmm {

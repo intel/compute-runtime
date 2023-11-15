@@ -119,6 +119,12 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, uncacheableResourceUsageType, storageInfo, gmmRequirements);
         EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
     }
+    {
+        gmmRequirements.overriderCacheable.enableOverride = true;
+        gmmRequirements.overriderCacheable.value = true;
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+        EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
+    }
 }
 
 } // namespace NEO

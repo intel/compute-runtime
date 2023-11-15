@@ -39,8 +39,12 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
 
     resourceParams.Usage = gmmResourceUsage;
     resourceParams.Flags.Info.Linear = 1;
+
     this->preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
-    resourceParams.Flags.Info.Cacheable = !this->preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
+    bool cacheable = !this->preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
+    gmmRequirements.overriderCacheable.doOverride(cacheable);
+    resourceParams.Flags.Info.Cacheable = cacheable;
+
     resourceParams.Flags.Gpu.Texture = 1;
 
     if (alignedPtr) {

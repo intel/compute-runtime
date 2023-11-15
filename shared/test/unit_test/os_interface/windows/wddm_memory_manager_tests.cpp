@@ -28,6 +28,7 @@
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
@@ -137,6 +138,23 @@ TEST_F(WddmMemoryManagerTests, GivenNotCompressedAndNotLockableAllocationTypeWhe
     EXPECT_NE(nullptr, graphicsAllocation);
 
     EXPECT_TRUE(graphicsAllocation->isAllocationLockable());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(WddmMemoryManagerTests, GivenOverrideAllocationCacheableWhenAllocateUsingKmdAndMapToCpuVaThenOverrideAllocationCacheable) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::COMMAND_BUFFER;
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->overrideAllocationCacheableResult = true;
+    executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper.release());
+
+    memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper.inl"
@@ -89,6 +90,11 @@ bool ProductHelperHw<gfxProduct>::isPlatformDpasSupported() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isPlatformDp4aSupported() const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
+    return allocationData.type == AllocationType::COMMAND_BUFFER;
 }
 
 template <>

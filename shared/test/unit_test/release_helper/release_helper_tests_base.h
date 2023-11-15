@@ -25,8 +25,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned();
     void whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
     void whenGettingMediaFrequencyTileIndexThenOneIsReturned();
-    void whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestapPacketTagBuffer();
-    void whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBufferAndCommandBuffer();
+    void whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer();
     void whenShouldAdjustCalledThenTrueReturned();
     void whenShouldAdjustCalledThenFalseReturned();
     void whenGettingSupportedNumGrfsThenValues128And256Returned();

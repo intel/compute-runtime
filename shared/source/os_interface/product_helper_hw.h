@@ -122,6 +122,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
     bool isPlatformDpasSupported() const override;
     bool isPlatformDp4aSupported() const override;
+    bool overrideAllocationCacheable(const AllocationData &allocationData) const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
