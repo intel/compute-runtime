@@ -89,7 +89,7 @@ class Command : public IFNode<Command> {
     Command(CommandQueue &commandQueue);
     Command(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation);
 
-    virtual ~Command();
+    ~Command() override;
     virtual LinearStream *getCommandStream() {
         return nullptr;
     }

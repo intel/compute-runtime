@@ -212,7 +212,7 @@ size_t APITracerContextImp::updateTracerArrays() {
     // from this thread to the tracing threads.
     //
     activeTracerArray.store(newTracerArray, std::memory_order_release);
-    return testAndFreeRetiredTracers();
+    return testAndFreeRetiredTracers(); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 ze_result_t APITracerContextImp::enableTracingImp(struct APITracerImp *tracerImp, ze_bool_t enable) {

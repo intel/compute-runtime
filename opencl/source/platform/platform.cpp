@@ -268,7 +268,7 @@ std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
         outDevices[platformId].push_back(std::move(device));
     }
     std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
-        return lhs[0]->getHardwareInfo().platform.eProductFamily > rhs[0]->getHardwareInfo().platform.eProductFamily;
+        return lhs[0]->getHardwareInfo().platform.eProductFamily > rhs[0]->getHardwareInfo().platform.eProductFamily; // NOLINT(clang-analyzer-cplusplus.Move)
     });
     return outDevices;
 }

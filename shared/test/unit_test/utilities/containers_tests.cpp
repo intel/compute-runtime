@@ -26,7 +26,7 @@ struct DummyFNode : IFNode<DummyFNode> {
     DummyFNode(uint32_t *destructorsCounter = nullptr)
         : destructorsCounter(destructorsCounter) {
     }
-    ~DummyFNode() {
+    ~DummyFNode() override {
         if (destructorsCounter != nullptr) {
             ++(*destructorsCounter);
         }
@@ -35,7 +35,7 @@ struct DummyFNode : IFNode<DummyFNode> {
     void setPrev(DummyFNode *) {
     }
 
-    uint32_t *destructorsCounter;
+    uint32_t *destructorsCounter = nullptr;
 };
 
 struct DummyDNode : IDNode<DummyDNode> {
@@ -284,27 +284,33 @@ TEST(IFList, WhenExchangingHeadThenResultIsCorrect) {
 
 template <bool ThreadSafe>
 void iFRefListTestPushFrontOne() {
-    auto list = std::unique_ptr<IFRefList<DummyFNode, ThreadSafe, true>>(new IFRefList<DummyFNode, ThreadSafe, true>());
-    ASSERT_TRUE(list->peekIsEmpty());
+    uint32_t destructorCounter = 0;
+    {
+        auto list = std::unique_ptr<IFRefList<DummyFNode, ThreadSafe, true>>(new IFRefList<DummyFNode, ThreadSafe, true>());
+        ASSERT_TRUE(list->peekIsEmpty());
 
-    DummyFNode node1;
-    node1.next = nullptr; // garbage
-    list->pushRefFrontOne(node1);
-    ASSERT_FALSE(list->peekIsEmpty());
-    ASSERT_EQ(&node1, list->peekHead()->ref);
-    ASSERT_EQ(nullptr, node1.next);
+        DummyFNode node1(&destructorCounter);
+        node1.next = nullptr; // garbage
+        list->pushRefFrontOne(node1);
+        ASSERT_FALSE(list->peekIsEmpty());
+        ASSERT_EQ(&node1, list->peekHead()->ref);
+        ASSERT_EQ(nullptr, node1.next);
 
-    DummyFNode node2;
-    node2.next = nullptr; // garbage
-    list->pushRefFrontOne(node2);
-    ASSERT_FALSE(list->peekIsEmpty());
-    ASSERT_EQ(&node2, list->peekHead()->ref);
-    ASSERT_EQ(nullptr, node2.next);
+        DummyFNode node2(&destructorCounter);
+        node2.next = nullptr; // garbage
+        list->pushRefFrontOne(node2);
+        ASSERT_FALSE(list->peekIsEmpty());
+        ASSERT_EQ(&node2, list->peekHead()->ref);
+        ASSERT_EQ(nullptr, node2.next);
 
-    ASSERT_EQ(&node2, list->peekHead()->ref);
-    ASSERT_EQ(&node1, list->peekHead()->next->ref);
+        ASSERT_EQ(&node2, list->peekHead()->ref);
+        ASSERT_EQ(&node1, list->peekHead()->next->ref);
 
-    list.reset();
+        EXPECT_EQ(0u, destructorCounter);
+        list.reset();
+        EXPECT_EQ(0u, destructorCounter);
+    }
+    EXPECT_EQ(2u, destructorCounter);
 }
 
 TEST(IFRefList, GivenThreadSafeWhenPushingFrontOneThenResultIsCorrect) {

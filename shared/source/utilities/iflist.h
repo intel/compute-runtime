@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ struct IFNode {
         : next(nullptr) {
     }
 
+    virtual ~IFNode() = default;
     void insertOneNext(NodeObjectType &nd) {
         nd.next = next;
         next = &nd;
@@ -191,6 +192,6 @@ class IFRefList : public IFList<IFNodeRef<NodeObjectType>, ThreadSafe, OwnsNodes
         auto up = std::unique_ptr<IFNodeRef<NodeObjectType>>(new IFNodeRef<NodeObjectType>(&node));
         this->pushFrontOne(*up);
         up.release();
-    }
+    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 };
 } // namespace NEO
