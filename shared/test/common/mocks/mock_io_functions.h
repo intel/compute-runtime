@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
@@ -29,6 +30,7 @@ extern uint32_t mockFreadCalled;
 extern size_t mockFreadReturn;
 extern uint32_t mockFwriteCalled;
 extern size_t mockFwriteReturn;
+extern char *mockFwriteBuffer;
 extern bool mockVfptrinfUseStdioFunction;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
@@ -87,6 +89,11 @@ inline size_t mockFread(void *ptr, size_t size, size_t count, FILE *stream) {
 
 inline size_t mockFwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
     mockFwriteCalled++;
+
+    if (mockFwriteBuffer) {
+        memcpy_s(mockFwriteBuffer, mockFwriteReturn, ptr, size * nmemb);
+    }
+
     return mockFwriteReturn;
 }
 

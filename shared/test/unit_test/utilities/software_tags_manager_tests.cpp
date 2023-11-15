@@ -262,17 +262,22 @@ TEST(SoftwareTagsBXMLTests, givenDumpSWTagsBXMLWhenConstructingBXMLThenAFileIsDu
     uint32_t mockFopenCalledBefore = IoFunctions::mockFopenCalled;
     uint32_t mockFwriteCalledBefore = IoFunctions::mockFwriteCalled;
     uint32_t mockFcloseCalledBefore = IoFunctions::mockFcloseCalled;
-    {
-        SWTagBXML bxml1;
-    }
+
+    VariableBackup<size_t> mockFwriteReturnBackup(&IoFunctions::mockFwriteReturn, 10'000);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    VariableBackup<char *> mockFwriteBufferBackup(&IoFunctions::mockFwriteBuffer, buffer.get());
+    SWTagBXML bxml1;
+
     EXPECT_EQ(IoFunctions::mockFopenCalled, mockFopenCalledBefore + 1);
     EXPECT_EQ(IoFunctions::mockFwriteCalled, mockFwriteCalledBefore + 1);
     EXPECT_EQ(IoFunctions::mockFcloseCalled, mockFcloseCalledBefore + 1);
+    EXPECT_GE(IoFunctions::mockFwriteReturn, bxml1.str.size());
+    EXPECT_STREQ(buffer.get(), bxml1.str.c_str());
 
     VariableBackup<FILE *> backup(&IoFunctions::mockFopenReturned, nullptr);
-    {
-        SWTagBXML bxml2;
-    }
+
+    SWTagBXML bxml2;
+
     EXPECT_EQ(IoFunctions::mockFopenCalled, mockFopenCalledBefore + 2);
     EXPECT_EQ(IoFunctions::mockFwriteCalled, mockFwriteCalledBefore + 1);
     EXPECT_EQ(IoFunctions::mockFcloseCalled, mockFcloseCalledBefore + 1);

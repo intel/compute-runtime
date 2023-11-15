@@ -34,6 +34,7 @@ uint32_t mockFreadCalled = 0;
 size_t mockFreadReturn = 0;
 uint32_t mockFwriteCalled = 0;
 size_t mockFwriteReturn = 0;
+char *mockFwriteBuffer = nullptr;
 bool mockVfptrinfUseStdioFunction = false;
 
 const char *openCLDriverName = "igdrcl.dll";
