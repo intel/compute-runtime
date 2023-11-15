@@ -856,8 +856,8 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedT
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmaskBefore, bitmaskSize);
-    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmaskAfter, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({}, hwInfo, bitmaskBefore, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({}, hwInfo, bitmaskAfter, bitmaskSize);
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmaskResolved, bitmaskSize);
 
     prelim_drm_i915_debug_event_page_fault pf = {};
@@ -879,10 +879,10 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedT
     memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask) + (2 * bitmaskSize)), bitmaskResolved.get(), bitmaskSize);
 
     rootSession->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
-
     auto expectedThreadsToCheck = hwInfo.capabilityTable.fusedEuEnabled ? 2u : 1u;
     EXPECT_EQ(expectedThreadsToCheck, tileSessions[1]->newlyStoppedThreads.size());
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
+    EXPECT_TRUE(tileSessions[1]->allThreads[thread]->getPageFault());
 }
 
 TEST_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
