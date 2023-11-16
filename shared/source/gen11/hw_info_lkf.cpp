@@ -8,7 +8,6 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen11/hw_cmds_lkf.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -112,9 +111,9 @@ void LKF::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void LKF::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+void LKF::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 7u;
     gtSysInfo->TotalVsThreads = 448;
     gtSysInfo->TotalHsThreads = 448;
     gtSysInfo->TotalDsThreads = 448;
@@ -140,8 +139,8 @@ const HardwareInfo LkfHw1x8x8::hwInfo = {
     LKF::capabilityTable};
 
 GT_SYSTEM_INFO LkfHw1x8x8::gtSystemInfo = {0};
-void LkfHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
-    LKF::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+void LkfHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+    LKF::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
     gtSysInfo->L3CacheSizeInKb = 2560;
@@ -151,16 +150,16 @@ void LkfHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 
 const HardwareInfo LKF::hwInfo = LkfHw1x8x8::hwInfo;
 
-void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
     if (hwInfoConfig == 0x100080008) {
-        LkfHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        LkfHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        LkfHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        LkfHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*LKF::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupLKFHardwareInfoImpl;
+void (*LKF::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupLKFHardwareInfoImpl;
 } // namespace NEO

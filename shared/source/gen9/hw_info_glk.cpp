@@ -8,7 +8,6 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen9/hw_cmds_glk.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -111,9 +110,9 @@ void GLK::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
-void GLK::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+void GLK::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 6u;
     gtSysInfo->TotalVsThreads = 112;
     gtSysInfo->TotalHsThreads = 112;
     gtSysInfo->TotalDsThreads = 112;
@@ -139,8 +138,8 @@ const HardwareInfo GlkHw1x3x6::hwInfo = {
     GLK::capabilityTable};
 
 GT_SYSTEM_INFO GlkHw1x3x6::gtSystemInfo = {0};
-void GlkHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
-    GLK::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+void GlkHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+    GLK::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -157,8 +156,8 @@ const HardwareInfo GlkHw1x2x6::hwInfo = {
     GLK::capabilityTable};
 
 GT_SYSTEM_INFO GlkHw1x2x6::gtSystemInfo = {0};
-void GlkHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
-    GLK::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+void GlkHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+    GLK::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -169,18 +168,18 @@ void GlkHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 
 const HardwareInfo GLK::hwInfo = GlkHw1x3x6::hwInfo;
 
-void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
     if (hwInfoConfig == 0x100020006) {
-        GlkHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        GlkHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else if (hwInfoConfig == 0x100030006) {
-        GlkHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        GlkHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        GlkHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        GlkHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*GLK::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupGLKHardwareInfoImpl;
+void (*GLK::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupGLKHardwareInfoImpl;
 } // namespace NEO

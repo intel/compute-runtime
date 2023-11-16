@@ -24,11 +24,6 @@ uint64_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getHwInfoConfig(const Hardwar
 }
 
 template <>
-uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getNumThreadsPerEu() const {
-    return 6;
-}
-
-template <>
 uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getDefaultHwIpVersion() const {
     return AOT::GLK;
 }

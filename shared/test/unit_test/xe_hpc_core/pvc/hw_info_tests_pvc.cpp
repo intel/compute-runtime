@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
@@ -62,8 +63,9 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigs
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    PVC::setupHardwareInfoBase(&hwInfo, false, *compilerProductHelper);
+    PVC::setupHardwareInfoBase(&hwInfo, false, releaseHelper.get());
 
     EXPECT_EQ(128u, gtSystemInfo.MaxFillRate);
     EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
@@ -96,8 +98,9 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupMultiTileInfoBaseThenGtSy
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcHwConfigWhenSetupHardwareInfoThenSharedSystemMemCapabilitiesIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     auto &capabilityTable = hwInfo.capabilityTable;
-    PvcHwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
+    PvcHwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper.get());
     uint64_t expectedSharedSystemMemCapabilities = (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS);
     EXPECT_EQ(expectedSharedSystemMemCapabilities, capabilityTable.sharedSystemMemCapabilities);
 }

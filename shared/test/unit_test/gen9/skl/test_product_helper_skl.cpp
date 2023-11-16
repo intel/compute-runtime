@@ -23,12 +23,11 @@ using SklProductHelper = ProductHelperTest;
 
 SKLTEST_F(SklProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
     uint64_t config = 0xdeadbeef;
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, nullptr));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -50,7 +49,6 @@ SKLTEST_F(SklProductHelper, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTabl
         true, false};
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -63,7 +61,7 @@ SKLTEST_F(SklProductHelper, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTabl
             featureTable = {};
             workaroundTable = {};
             pPlatform.usRevId = 9;
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerProductHelper);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, nullptr);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
@@ -96,7 +94,7 @@ SKLTEST_F(SklProductHelper, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTabl
             workaroundTable = {};
             featureTable = {};
 
-            hardwareInfoSetup[productFamily](&hwInfo, true, config, compilerProductHelper);
+            hardwareInfoSetup[productFamily](&hwInfo, true, config, nullptr);
 
             EXPECT_EQ(true, workaroundTable.flags.waCompressedResourceRequiresConstVA21);
             EXPECT_EQ(true, workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl);

@@ -25,11 +25,6 @@ uint64_t CompilerProductHelperHw<IGFX_BROXTON>::getHwInfoConfig(const HardwareIn
 }
 
 template <>
-uint32_t CompilerProductHelperHw<IGFX_BROXTON>::getNumThreadsPerEu() const {
-    return 6;
-}
-
-template <>
 uint32_t CompilerProductHelperHw<IGFX_BROXTON>::getDefaultHwIpVersion() const {
     return AOT::APL;
 }

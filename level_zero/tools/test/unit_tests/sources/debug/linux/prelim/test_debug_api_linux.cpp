@@ -14,10 +14,10 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -5627,8 +5627,8 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     config.pid = 0x1234;
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    auto &compilerProductHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
-    auto numBytesPerThread = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
+    auto releaseHelper = neoDevice->getRootDeviceEnvironment().getReleaseHelper();
+    auto numBytesPerThread = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};

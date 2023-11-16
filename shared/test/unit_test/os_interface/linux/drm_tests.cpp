@@ -994,7 +994,7 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     drm.storedSSVal = 6;
     hwInfo->gtSystemInfo.SliceCount = 2;
 
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const CompilerProductHelper &) {};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.ioctlHelper.reset();

@@ -8,7 +8,6 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen9/hw_cmds_bxt.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -110,9 +109,9 @@ void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
-void BXT::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+void BXT::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 6u;
     gtSysInfo->TotalVsThreads = 112;
     gtSysInfo->TotalHsThreads = 112;
     gtSysInfo->TotalDsThreads = 112;
@@ -137,8 +136,8 @@ const HardwareInfo BxtHw1x2x6::hwInfo = {
     &BxtHw1x2x6::gtSystemInfo,
     BXT::capabilityTable};
 GT_SYSTEM_INFO BxtHw1x2x6::gtSystemInfo = {0};
-void BxtHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
-    BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+void BxtHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+    BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -154,8 +153,8 @@ const HardwareInfo BxtHw1x3x6::hwInfo = {
     &BxtHw1x3x6::gtSystemInfo,
     BXT::capabilityTable};
 GT_SYSTEM_INFO BxtHw1x3x6::gtSystemInfo = {0};
-void BxtHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
-    BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+void BxtHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
+    BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -166,18 +165,18 @@ void BxtHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 
 const HardwareInfo BXT::hwInfo = BxtHw1x3x6::hwInfo;
 
-void setupBXTHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+void setupBXTHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
     if (hwInfoConfig == 0x100020006) {
-        BxtHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        BxtHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else if (hwInfoConfig == 0x100030006) {
-        BxtHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        BxtHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        BxtHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+        BxtHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*BXT::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupBXTHardwareInfoImpl;
+void (*BXT::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupBXTHardwareInfoImpl;
 } // namespace NEO

@@ -97,4 +97,9 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
     return true;
 }
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::getNumThreadsPerEu() const {
+    return 8u;
+}
 } // namespace NEO

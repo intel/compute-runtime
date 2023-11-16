@@ -5,9 +5,9 @@
  *
  */
 
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/program/sync_buffer_handler.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -34,8 +34,8 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
     void SetUp() override {
         hardwareInfo = *defaultHwInfo;
         hardwareInfo.capabilityTable.blitterOperationsSupported = true;
-        auto compilerProductHelper = CompilerProductHelper::create(hardwareInfo.platform.eProductFamily);
-        hardwareInfoSetup[productFamily](&hardwareInfo, true, 0, *compilerProductHelper);
+        auto releaseHelper = ReleaseHelper::create(hardwareInfo.ipVersion);
+        hardwareInfoSetup[productFamily](&hardwareInfo, true, 0, releaseHelper.get());
         setUpImpl(&hardwareInfo);
     }
 

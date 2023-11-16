@@ -23,7 +23,7 @@ class OclocArgHelper;
 namespace NEO {
 
 class CompilerCache;
-class ReleaseHelper;
+class CompilerProductHelper;
 class OclocFclFacade;
 class OclocIgcFacade;
 

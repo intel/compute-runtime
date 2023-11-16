@@ -47,6 +47,7 @@ class ReleaseHelper {
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
+    virtual uint32_t getNumThreadsPerEu() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -78,6 +79,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
     bool isBindlessAddressingDisabled() const override;
+    uint32_t getNumThreadsPerEu() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

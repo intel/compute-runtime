@@ -482,8 +482,8 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     status = querySystemInfo();
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     rootDeviceEnvironment.setRcsExposure();
 
     if (status) {

@@ -28,12 +28,11 @@ using TgllpHwInfo = ::testing::Test;
 
 TGLLPTEST_F(TgllpHwInfo, givenHwInfoErrorneousConfigStringThenThrow) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config, *compilerProductHelper));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -42,20 +41,19 @@ TGLLPTEST_F(TgllpHwInfo, givenHwInfoErrorneousConfigStringThenThrow) {
 
 TGLLPTEST_F(TgllpHwInfo, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0x100060010;
 
     gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, *compilerProductHelper);
+    hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr);
     EXPECT_EQ(1u, gtSystemInfo.SliceCount);
     EXPECT_EQ(6u, gtSystemInfo.DualSubSliceCount);
 
     config = 0x100020010;
 
     gtSystemInfo = {0};
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, *compilerProductHelper);
+    hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr);
     EXPECT_EQ(1u, gtSystemInfo.SliceCount);
     EXPECT_EQ(2u, gtSystemInfo.DualSubSliceCount);
 }
@@ -64,7 +62,6 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
     static bool boolValue[]{
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -79,7 +76,7 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, *compilerProductHelper);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, nullptr);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
@@ -120,10 +117,9 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 
 TGLLPTEST_F(TgllpHwInfo, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
 
     uint64_t config = 0x100060010;
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, *compilerProductHelper);
+    hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);

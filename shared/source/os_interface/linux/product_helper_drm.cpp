@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/cpu_info.h"
 
 #include <cstring>
@@ -101,13 +102,15 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
         topologyData.maxSubSliceCount = topologyData.sliceCount > 0 ? topologyData.subSliceCount / topologyData.sliceCount : 0;
     }
 
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+
+    auto numThreadsPerEu = releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u;
 
     gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     gtSystemInfo->SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     gtSystemInfo->DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
-    gtSystemInfo->ThreadCount = compilerProductHelper.getNumThreadsPerEu() * gtSystemInfo->EUCount;
+    gtSystemInfo->ThreadCount = numThreadsPerEu * gtSystemInfo->EUCount;
 
     gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEuPerSubSlice;
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
@@ -153,6 +156,8 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
+
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
                                                   compilerProductHelper.isMidThreadPreemptionSupported(*outHwInfo) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && preemption,

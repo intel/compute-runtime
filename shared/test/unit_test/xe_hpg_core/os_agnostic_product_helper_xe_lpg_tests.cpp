@@ -39,8 +39,9 @@ using XeLpgHwInfoTests = ::testing::Test;
 HWTEST2_F(XeLpgHwInfoTests, whenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, compilerProductHelper->getHwInfoConfig(hwInfo), false, *compilerProductHelper);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, compilerProductHelper->getHwInfoConfig(hwInfo), false, releaseHelper.get());
 
     EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
     EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
@@ -80,9 +81,10 @@ HWTEST2_F(XeLpgHwInfoTests, whenCheckDirectSubmissionEnginesThenProperValuesAreS
 HWTEST2_F(XeLpgHwInfoTests, WhenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTileInfoAreSet, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, compilerProductHelper->getHwInfoConfig(hwInfo), false, *compilerProductHelper);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, compilerProductHelper->getHwInfoConfig(hwInfo), false, releaseHelper.get());
 
     EXPECT_FALSE(gtSystemInfo.MultiTileArchInfo.IsValid);
 
@@ -94,6 +96,7 @@ HWTEST2_F(XeLpgHwInfoTests, WhenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiT
 HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -103,7 +106,7 @@ HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAn
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, compilerProductHelper->getHwInfoConfig(hwInfo), *compilerProductHelper);
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, compilerProductHelper->getHwInfoConfig(hwInfo), releaseHelper.get());
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
@@ -135,13 +138,13 @@ HWTEST2_F(XeLpgHwInfoTests, givenBoolWhenCallHardwareInfoSetupThenFeatureTableAn
 
 HWTEST2_F(XeLpgHwInfoTests, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturned, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     uint64_t config = 0x200040010;
     gtSystemInfo = {0};
     setHwInfoValuesFromConfig(config, hwInfo);
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, *compilerProductHelper);
+    hardwareInfoSetup[productFamily](&hwInfo, false, config, releaseHelper.get());
     EXPECT_EQ(2u, gtSystemInfo.SliceCount);
     EXPECT_EQ(8u, gtSystemInfo.DualSubSliceCount);
 }
@@ -149,10 +152,11 @@ HWTEST2_F(XeLpgHwInfoTests, whenUsingCorrectConfigValueThenCorrectHwInfoIsReturn
 HWTEST2_F(XeLpgHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsCalledThenNonZeroValuesAreSet, IsXeLpg) {
     HardwareInfo hwInfoToSet = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfoToSet.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(hwInfoToSet.ipVersion);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoToSet.gtSystemInfo;
     gtSystemInfo = {};
 
-    hardwareInfoSetup[productFamily](&hwInfoToSet, false, compilerProductHelper->getHwInfoConfig(hwInfoToSet), *compilerProductHelper);
+    hardwareInfoSetup[productFamily](&hwInfoToSet, false, compilerProductHelper->getHwInfoConfig(hwInfoToSet), releaseHelper.get());
 
     EXPECT_GT_VAL(gtSystemInfo.SliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.SubSliceCount, 0u);

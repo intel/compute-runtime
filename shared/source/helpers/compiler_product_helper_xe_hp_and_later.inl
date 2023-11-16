@@ -10,11 +10,6 @@
 
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t CompilerProductHelperHw<gfxProduct>::getNumThreadsPerEu() const {
-    return 8u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isDotAccumulateSupported() const {
     return true;
 }

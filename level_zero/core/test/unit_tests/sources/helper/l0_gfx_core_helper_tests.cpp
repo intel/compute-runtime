@@ -7,9 +7,9 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -129,8 +129,8 @@ HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmask
 
     const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
-    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
-    auto bytesPerEu = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
+    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+    auto bytesPerEu = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
 
     const auto maxEUsInAtt = hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8 ? 8 : hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const auto threadsSizePerSubSlice = maxEUsInAtt * bytesPerEu;
@@ -221,8 +221,8 @@ HWTEST_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBit
 
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
 
-    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
-    auto numBytesPerThread = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
+    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+    auto numBytesPerThread = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
 
     auto data = bitmask.get();
     EXPECT_EQ(1u << 3, data[0]);
@@ -337,8 +337,8 @@ HWTEST_F(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThe
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
-    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
-    auto numBytesPerEu = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
+    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+    auto numBytesPerEu = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
 
     uint8_t data[4]{};
     data[0] = 0x0f;

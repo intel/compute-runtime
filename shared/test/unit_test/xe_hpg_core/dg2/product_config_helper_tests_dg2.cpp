@@ -154,9 +154,8 @@ DG2TEST_F(ProductHelperTestDg2, whenGettingAubstreamProductFamilyThenProperEnumV
 
 DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    Dg2HwConfig::setupHardwareInfoBase(&hwInfo, false, *compilerProductHelper);
+    Dg2HwConfig::setupHardwareInfoBase(&hwInfo, false, releaseHelper);
 
     EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
     EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
@@ -170,10 +169,9 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSys
 
 DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    Dg2HwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
+    Dg2HwConfig::setupHardwareInfo(&hwInfo, false, releaseHelper);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
 }

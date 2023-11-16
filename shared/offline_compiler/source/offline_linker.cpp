@@ -15,6 +15,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"
@@ -204,9 +205,11 @@ int OfflineLinker::initHardwareInfo() {
             hwInfo = *hwInfoTable[productId];
 
             auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            hwInfo.ipVersion = compilerProductHelper->getHwIpVersion(hwInfo);
+            auto releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
             const auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
-            hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig, *compilerProductHelper);
+            hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig, releaseHelper.get());
 
             return OCLOC_SUCCESS;
         }

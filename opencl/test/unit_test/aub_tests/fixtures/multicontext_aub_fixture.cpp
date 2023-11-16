@@ -9,9 +9,9 @@
 
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -174,7 +174,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     bool setupCalled = false;
 
-    auto compilerProductHelper = CompilerProductHelper::create(localHwInfo.platform.eProductFamily);
+    auto releaseHelper = ReleaseHelper::create(localHwInfo.ipVersion);
 
     if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPG_CORE) {
 #ifdef SUPPORT_DG2
@@ -182,7 +182,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
             ASSERT_TRUE(numberOfEnabledTiles == 1);
             setupCalled = true;
 
-            Dg2HwConfig::setupHardwareInfo(&localHwInfo, true, *compilerProductHelper);
+            Dg2HwConfig::setupHardwareInfo(&localHwInfo, true, releaseHelper.get());
 
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;
@@ -201,7 +201,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
         if (localHwInfo.platform.eProductFamily == IGFX_PVC) {
             setupCalled = true;
 
-            PvcHwConfig::setupHardwareInfo(&localHwInfo, true, *compilerProductHelper);
+            PvcHwConfig::setupHardwareInfo(&localHwInfo, true, releaseHelper.get());
 
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;

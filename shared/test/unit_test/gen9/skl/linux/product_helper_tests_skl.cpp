@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
@@ -194,11 +193,10 @@ TYPED_TEST(SklHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
 
 TYPED_TEST(SklHwInfoTests, givenGTSystemInfoTypeWhenConfigureHardwareCustomThenSliceCountDontChange) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     auto osInterface = std::unique_ptr<OSInterface>(new OSInterface());
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    TypeParam::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
+    TypeParam::setupHardwareInfo(&hwInfo, false, nullptr);
     auto sliceCount = gtSystemInfo.SliceCount;
 
     auto productHelper = ProductHelper::create(PRODUCT_FAMILY::IGFX_SKYLAKE);

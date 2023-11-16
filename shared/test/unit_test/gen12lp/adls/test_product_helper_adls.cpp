@@ -29,7 +29,6 @@ ADLSTEST_F(AdlsHwInfo, givenBoolWhenCallAdlsHardwareInfoSetupThenFeatureTableAnd
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
 
     uint64_t config = 0x100020016;
     for (auto setParamBool : boolValue) {
@@ -37,7 +36,7 @@ ADLSTEST_F(AdlsHwInfo, givenBoolWhenCallAdlsHardwareInfoSetupThenFeatureTableAnd
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, *compilerProductHelper);
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, nullptr);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

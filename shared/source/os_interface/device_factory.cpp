@@ -81,22 +81,21 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             return false;
         }
 
-        setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
-        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, compilerProductHelper);
-
-        auto &productHelper = rootDeviceEnvironment.getProductHelper();
-        productHelper.configureHardwareCustom(hardwareInfo, nullptr);
-
         if (productConfigFound) {
             compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
             if (DebugManager.flags.ForceDeviceId.get() == "unk") {
                 hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
             }
         }
-
         hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
-
         rootDeviceEnvironment.initReleaseHelper();
+
+        setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
+        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, rootDeviceEnvironment.getReleaseHelper());
+
+        auto &productHelper = rootDeviceEnvironment.getProductHelper();
+        productHelper.configureHardwareCustom(hardwareInfo, nullptr);
+
         rootDeviceEnvironment.setRcsExposure();
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {

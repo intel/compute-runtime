@@ -54,9 +54,8 @@ ADLPTEST_F(AdlpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThen
 
 ADLPTEST_F(AdlpProductHelperLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    ADLP::setupHardwareInfoBase(&hwInfo, false, *compilerProductHelper);
+    ADLP::setupHardwareInfoBase(&hwInfo, false, nullptr);
 
     EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
@@ -71,10 +70,9 @@ TYPED_TEST_CASE(AdlpHwInfoLinux, adlpConfigTestTypes);
 
 TYPED_TEST(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     hwInfo.gtSystemInfo = {0};
 
-    TypeParam::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
+    TypeParam::setupHardwareInfo(&hwInfo, false, nullptr);
 
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SliceCount);
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SubSliceCount);

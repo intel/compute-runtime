@@ -22,8 +22,7 @@ using namespace NEO;
 using EhlProductHelper = ProductHelperTest;
 
 EHLTEST_F(EhlProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    hardwareInfoSetup[productFamily](&pInHwInfo, false, 0x100040008, compilerProductHelper);
+    hardwareInfoSetup[productFamily](&pInHwInfo, false, 0x100040008, nullptr);
     EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(pInHwInfo.capabilityTable.supportsVme);
@@ -33,7 +32,6 @@ EHLTEST_F(EhlProductHelper, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTabl
     bool boolValue[]{
         true, false};
 
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     FeatureTable &featureTable = pInHwInfo.featureTable;
     WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
@@ -43,7 +41,7 @@ EHLTEST_F(EhlProductHelper, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTabl
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, 0x100040008, compilerProductHelper);
+        hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, 0x100040008, nullptr);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

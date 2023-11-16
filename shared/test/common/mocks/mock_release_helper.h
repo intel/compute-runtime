@@ -31,5 +31,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getPreferredAllocationMethod, std::optional<GfxMemoryAllocationMethod>, std::nullopt, (AllocationType allocationType));
     ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, std::vector<uint32_t>, {128}, ());
     ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getNumThreadsPerEu, uint32_t, 8u, ());
 };
 } // namespace NEO

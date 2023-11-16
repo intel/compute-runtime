@@ -24,12 +24,11 @@ using BxtProductHelper = ProductHelperTest;
 
 BXTTEST_F(BxtProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, nullptr));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -46,7 +45,6 @@ BXTTEST_F(BxtProductHelper, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTabl
         0x100030006};
     bool boolValue[]{
         true, false};
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
@@ -60,7 +58,7 @@ BXTTEST_F(BxtProductHelper, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTabl
             featureTable = {};
             workaroundTable = {};
             platform.usRevId = 9;
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerProductHelper);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, nullptr);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);

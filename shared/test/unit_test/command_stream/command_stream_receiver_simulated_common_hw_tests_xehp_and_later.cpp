@@ -7,8 +7,8 @@
 
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -195,8 +195,8 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto compilerProductHelper = CompilerProductHelper::create(hardwareInfo.platform.eProductFamily);
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, *compilerProductHelper);
+        auto releaseHelper = ReleaseHelper::create(hardwareInfo.ipVersion);
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, releaseHelper.get());
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
         DeviceFixture::setUpImpl(&hardwareInfo);
     }

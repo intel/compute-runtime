@@ -53,7 +53,6 @@ class CompilerProductHelper {
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
     virtual uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getDefaultHwIpVersion() const = 0;
-    virtual uint32_t getNumThreadsPerEu() const = 0;
     virtual uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const = 0;
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
@@ -94,7 +93,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
     uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const override;
     uint32_t getDefaultHwIpVersion() const override;
-    uint32_t getNumThreadsPerEu() const override;
     uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const override;
     std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;

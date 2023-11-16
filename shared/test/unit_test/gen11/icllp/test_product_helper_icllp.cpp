@@ -24,12 +24,11 @@ using IcllpProductHelper = ProductHelperTest;
 
 ICLLPTEST_F(IcllpProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, nullptr));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -63,7 +62,6 @@ ICLLPTEST_F(IcllpProductHelper, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatu
     bool boolValue[]{
         true, false};
 
-    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     FeatureTable &featureTable = pInHwInfo.featureTable;
     WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
@@ -74,7 +72,7 @@ ICLLPTEST_F(IcllpProductHelper, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatu
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config, compilerProductHelper);
+            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config, nullptr);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

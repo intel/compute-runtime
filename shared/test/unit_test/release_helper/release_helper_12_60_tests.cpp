@@ -34,5 +34,6 @@ TEST_F(ReleaseHelper1260Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isCachingOnCpuAvailable());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
         EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
+        EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
     }
 }
