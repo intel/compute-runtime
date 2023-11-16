@@ -101,8 +101,8 @@ void LinuxStandbyImp::init() {
 
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     init();
 }
 

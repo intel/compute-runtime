@@ -19,7 +19,7 @@ const std::string standbyModeFile("gt/gt0/rc6_enable");
 const std::string standbyModeFile1("gt/gt1/rc6_enable");
 const std::string standbyModeFileLegacy("power/rc6_enable");
 
-struct MockStandbySysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockStandbySysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     int mockStandbyMode = -1;
     bool isStandbyModeFileAvailable = true;
@@ -88,8 +88,8 @@ struct MockStandbySysfsAccess : public L0::Sysman::SysfsAccess {
         mockError = error;
     }
 
-    MockStandbySysfsAccess() = default;
-    ~MockStandbySysfsAccess() override = default;
+    MockStandbySysfsAccessInterface() = default;
+    ~MockStandbySysfsAccessInterface() override = default;
 
   private:
     bool isFileAccessible(const std::string file) {
@@ -105,6 +105,13 @@ class PublicLinuxStandbyImp : public L0::Sysman::LinuxStandbyImp {
     PublicLinuxStandbyImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::LinuxStandbyImp(pOsSysman, onSubdevice, subdeviceId) {}
     using L0::Sysman::LinuxStandbyImp::pSysfsAccess;
     using L0::Sysman::LinuxStandbyImp::pSysmanKmdInterface;
+};
+
+class PublicSysmanKmdInterfaceI915 : public L0::Sysman::SysmanKmdInterfaceI915 {
+  public:
+    PublicSysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) : L0::Sysman::SysmanKmdInterfaceI915(productFamily) {}
+    ~PublicSysmanKmdInterfaceI915() override = default;
+    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
 };
 
 } // namespace ult

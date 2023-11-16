@@ -10,13 +10,14 @@
 
 #include "level_zero/sysman/source/api/standby/sysman_os_standby.h"
 #include "level_zero/sysman/source/api/standby/sysman_standby_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {
 
 class SysmanKmdInterface;
+class SysFsAccessInterface;
 
 class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
   public:
@@ -32,7 +33,7 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
 
   protected:
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
 
   private:
     std::string standbyModeFile;
