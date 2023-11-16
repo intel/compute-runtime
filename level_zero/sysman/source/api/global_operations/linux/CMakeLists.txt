@@ -10,6 +10,18 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_global_operations_imp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_global_operations_imp.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_global_operations_helper.cpp
   )
+
+  if(NEO_ENABLE_i915_PRELIM_DETECTION)
+    target_sources(${L0_STATIC_LIB_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_global_operations_helper_prelim.cpp
+    )
+  else()
+    target_sources(${L0_STATIC_LIB_NAME}
+                   PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_global_operations_helper.cpp
+    )
+  endif()
+
 endif()

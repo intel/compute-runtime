@@ -170,6 +170,7 @@ struct MockSchedulerSysfsAccess : public SysfsAccess {
     }
 
     ze_result_t write(const std::string file, const uint64_t val) override {
+
         if (mockWriteFileStatus != ZE_RESULT_SUCCESS) {
             return mockWriteFileStatus;
         }
@@ -279,7 +280,6 @@ struct MockSchedulerSysfsAccess : public SysfsAccess {
         engineDirectoryPermissions = permission;
     }
 
-    ADDMETHOD_NOBASE(write, ze_result_t, ZE_RESULT_SUCCESS, (const std::string file, const int val));
     MockSchedulerSysfsAccess() = default;
 
   private:

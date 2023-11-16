@@ -33,7 +33,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         device->getDriverHandle()->setMemoryManager(pMemoryManager);
 
         pDrm = new MockMemoryNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
-        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperUpstream>(*pDrm));
 
         pSysmanDevice = device->getSysmanHandle();
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
@@ -195,6 +194,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingStateThenCall
 
     for (auto handle : handles) {
         zes_mem_state_t state;
+
         ze_result_t result = zesMemoryGetState(handle, &state);
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);

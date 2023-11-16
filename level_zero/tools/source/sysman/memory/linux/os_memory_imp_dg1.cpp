@@ -59,6 +59,7 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     pState->free = deviceRegions[subdeviceId].unallocatedSize;
     pState->size = deviceRegions[subdeviceId].probedSize;
     pState->health = ZES_MEM_HEALTH_OK;
+
     return ZE_RESULT_SUCCESS;
 }
 

@@ -560,7 +560,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetComputeUnitDebugModeThenUnsupportedFeatureIsReturned) {
-    pSysfsAccess->writeResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    pSysfsAccess->mockWriteFileStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReload;
