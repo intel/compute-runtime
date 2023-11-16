@@ -3386,17 +3386,17 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 
     uint32_t expectedCallCount = std::min(static_cast<uint32_t>(eventPool->getEventSize() / sizeof(uint64_t)), uint32_t(16));
 
-    EXPECT_EQ(expectedCallCount, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(1u, ultCsr.writeMemoryParams.callCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
-    EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
-    EXPECT_EQ((expectedCallCount - 1) * sizeof(uint64_t), ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(sizeof(uint64_t) * expectedCallCount, ultCsr.writeMemoryParams.latestChunkSize);
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
     EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
 
     auto status = event->hostSignal();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
 
-    EXPECT_EQ(expectedCallCount + 1, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(2u, ultCsr.writeMemoryParams.callCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
@@ -3415,7 +3415,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     event->reset();
     EXPECT_EQ(0, mockMemIface->makeResidentCalledCount);
 
-    EXPECT_EQ(expectedCallCount + 2, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(3u, ultCsr.writeMemoryParams.callCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
@@ -3619,7 +3619,7 @@ HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
         event->hostSignal();
 
         if (sizeof(TimestampPacketType) == sizeof(uint32_t)) {
-            uint64_t expectedValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32);
+            uint64_t expectedValue = static_cast<uint64_t>(Event::STATE_SIGNALED);
 
             EXPECT_EQ(expectedValue, *completionAddress);
             EXPECT_EQ(static_cast<uint32_t>(Event::STATE_SIGNALED), *static_cast<uint32_t *>(event->getCompletionFieldHostAddress()));

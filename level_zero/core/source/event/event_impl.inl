@@ -360,20 +360,23 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
         return hostEventSetValueTimestamps(eventVal);
     }
 
-    auto packetHostAddr = getCompletionFieldHostAddress();
-    auto packetGpuAddr = getCompletionFieldGpuAddress(device);
+    auto basePacketHostAddr = getCompletionFieldHostAddress();
+    auto basePacketGpuAddr = getCompletionFieldGpuAddress(device);
 
     UNRECOVERABLE_IF(sizeof(TagSizeT) > sizeof(uint64_t));
 
-    size_t copySize = sizeof(TagSizeT);
-    const uint64_t copyData = eventVal;
-
-    if (this->singlePacketSize == sizeof(uint64_t)) {
-        // Non-TS Events with dynamic layout size using qword chunks
-        copySize = sizeof(uint64_t);
-    }
-
     uint32_t packets = 0;
+
+    std::array<uint64_t, 16 * 3> tempCopyData = {}; // 16 packets, 3 kernels
+    UNRECOVERABLE_IF(tempCopyData.size() * sizeof(uint64_t) < totalEventSize);
+
+    const auto numElements = getMaxPacketsCount() * kernelCount;
+    std::fill_n(tempCopyData.begin(), numElements, static_cast<uint64_t>(eventVal));
+
+    auto packetHostAddr = basePacketHostAddr;
+    auto packetGpuAddr = basePacketGpuAddr;
+
+    size_t totalSizeToCopy = 0;
 
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
@@ -381,12 +384,16 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
             if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(this->hostAddress, totalEventSize))) {
                 break;
             }
-            copyDataToEventAlloc(packetHostAddr, packetGpuAddr, copySize, copyData);
 
             packetHostAddr = ptrOffset(packetHostAddr, this->singlePacketSize);
             packetGpuAddr = ptrOffset(packetGpuAddr, this->singlePacketSize);
+
+            totalSizeToCopy += this->singlePacketSize;
         }
     }
+
+    copyDataToEventAlloc(basePacketHostAddr, basePacketGpuAddr, totalSizeToCopy, tempCopyData[0]);
+
     if (this->signalAllEventPackets) {
         setRemainingPackets(eventVal, packetGpuAddr, packetHostAddr, packets);
     }
