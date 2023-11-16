@@ -442,18 +442,12 @@ void ClDevice::initializeExtensionsWithVersion() {
 }
 
 void ClDevice::initializeOpenclCAllVersions() {
+    auto deviceOpenCLCVersions = this->getCompilerProductHelper().getDeviceOpenCLCVersions(this->getHardwareInfo(), {static_cast<unsigned short>(enabledClVersion / 10), static_cast<unsigned short>(enabledClVersion % 10)});
     cl_name_version openClCVersion;
     strcpy_s(openClCVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, "OpenCL C");
 
-    openClCVersion.version = CL_MAKE_VERSION(1, 0, 0);
-    deviceInfo.openclCAllVersions.push_back(openClCVersion);
-    openClCVersion.version = CL_MAKE_VERSION(1, 1, 0);
-    deviceInfo.openclCAllVersions.push_back(openClCVersion);
-    openClCVersion.version = CL_MAKE_VERSION(1, 2, 0);
-    deviceInfo.openclCAllVersions.push_back(openClCVersion);
-
-    if (enabledClVersion == 30) {
-        openClCVersion.version = CL_MAKE_VERSION(3, 0, 0);
+    for (auto &ver : deviceOpenCLCVersions) {
+        openClCVersion.version = CL_MAKE_VERSION(ver.major, ver.minor, 0);
         deviceInfo.openclCAllVersions.push_back(openClCVersion);
     }
 }

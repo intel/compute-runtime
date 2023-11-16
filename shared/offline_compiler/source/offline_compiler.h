@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
@@ -32,8 +33,16 @@ std::string convertToPascalCase(const std::string &inString);
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
 std::string getSupportedDevices(OclocArgHelper *helper);
 
+struct NameVersionPair : ocloc_name_version {
+    NameVersionPair(ConstStringRef name, unsigned int version);
+};
+static_assert(sizeof(NameVersionPair) == sizeof(ocloc_name_version));
+
 class OfflineCompiler {
   public:
+    static std::vector<NameVersionPair> getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper);
+    static std::vector<NameVersionPair> getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper);
+    static std::vector<NameVersionPair> getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper);
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
@@ -44,24 +53,38 @@ class OfflineCompiler {
     void printUsage();
 
     static constexpr ConstStringRef queryHelp =
-        "Depending on <query_option> will generate file\n"
-        "(with a name adequate to <query_option>)\n"
-        "containing either driver version or NEO revision hash.\n\n"
-        "Usage: ocloc query <query_option>\n\n"
-        "Supported query options:\n"
-        "  OCL_DRIVER_VERSION  ; returns driver version\n"
-        "  NEO_REVISION        ; returns NEO revision hash\n"
-        "  IGC_REVISION        ; returns IGC revision hash\n\n"
-        "Examples:\n"
-        "  Extract driver version\n"
-        "    ocloc query OCL_DRIVER_VERSION\n";
+        R"OCLOC_HELP(Depending on <query_option> will generate file
+(with a name identical to query_option) containing requested information.
 
-    static constexpr ConstStringRef idsHelp = R"===(
+Usage: ocloc query <query_option> [-device device_filter]
+
+-device device_filter defines optional filter for which devices the query is being made (where applicable)."
+                      For allowed combinations of devices see "ocloc compile --help".
+                      When filter matches multiple devices, then query will return common traits
+                      supported by all matched devices.
+
+Supported query options:
+  OCL_DRIVER_VERSION                ; driver version
+  NEO_REVISION                      ; NEO revision hash
+  IGC_REVISION                      ; IGC revision hash
+  CL_DEVICE_EXTENSIONS              ; list of extensions supported by device_filter
+  CL_DEVICE_EXTENSIONS_WITH_VERSION ; list of extensions and their versions supported by device_filter
+  CL_DEVICE_PROFILE                 ; OpenCL device profile supported by device_filter
+  CL_DEVICE_OPENCL_C_ALL_VERSIONS   ; OpenCL C versions supported by device_filter
+  CL_DEVICE_OPENCL_C_FEATURES       ; OpenCL C features supported by device_filter
+
+Examples:
+  ocloc query OCL_DRIVER_VERSION
+  ocloc query CL_DEVICE_EXTENSIONS -device tgllp
+  ocloc query CL_DEVICE_OPENCL_C_ALL_VERSIONS -device "*"
+)OCLOC_HELP";
+
+    static constexpr ConstStringRef idsHelp = R"OCLOC_HELP(
 Depending on <acronym> will return all
 matched versions (<major>.<minor>.<revision>)
 that correspond to the given name.
 All supported acronyms: %s.
-)===";
+)OCLOC_HELP";
 
     OfflineCompiler &operator=(const OfflineCompiler &) = delete;
     OfflineCompiler(const OfflineCompiler &) = delete;

@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
@@ -1624,4 +1625,24 @@ TEST(TranslationOutput, givenZeroSizeWhenMakingCopyThenClearOutOutput) {
     TranslationOutput::makeCopy(dstBuffer, &emptySrc);
     EXPECT_EQ(0U, dstBuffer.size);
     EXPECT_EQ(nullptr, dstBuffer.mem);
+}
+
+TEST(getOclCExtensionVersion, whenQueryingVersionOfIntegerDotProductExtensionThenReturns200) {
+    cl_version defaultVer = CL_MAKE_VERSION(7, 2, 5);
+    cl_version ver = NEO::getOclCExtensionVersion("cl_khr_integer_dot_product", defaultVer);
+    cl_version expectedVer = CL_MAKE_VERSION(2, 0, 0);
+    EXPECT_EQ(expectedVer, ver);
+}
+
+TEST(getOclCExtensionVersion, whenCheckingVersionOfExternalMemoryExtensionThenReturns091) {
+    cl_version defaultVer = CL_MAKE_VERSION(7, 2, 5);
+    cl_version ver = NEO::getOclCExtensionVersion("cl_khr_external_memory", defaultVer);
+    cl_version expectedVer = CL_MAKE_VERSION(0, 9, 1);
+    EXPECT_EQ(expectedVer, ver);
+}
+
+TEST(getOclCExtensionVersion, whenCheckingVersionOfUntrackedExtensionThenReturnsDefaultValue) {
+    cl_version defaultVer = CL_MAKE_VERSION(7, 2, 5);
+    cl_version ver = NEO::getOclCExtensionVersion("other", defaultVer);
+    EXPECT_EQ(defaultVer, ver);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,4 +266,24 @@ TEST(ConstStringRefTrimEnd, givenTrimEndFunctionWithPredicateThatReturnsTrueForA
     ConstStringRef str = "some text";
     auto trimmed = str.trimEnd(predicate);
     EXPECT_EQ(0u, trimmed.length());
+}
+
+TEST(ConstStringJoin, givenEmptyListOfStringsToJoinThenReturnEmptyString) {
+    std::string joined = NEO::ConstStringRef(" ").join(std::vector<std::string>{});
+    EXPECT_TRUE(joined.empty());
+}
+
+TEST(ConstStringJoin, givenOneStringOnListThenReturnThatString) {
+    std::string a = "aa";
+    std::string joined = NEO::ConstStringRef(" ").join(std::vector<std::string>{a});
+    ASSERT_FALSE(joined.empty());
+    EXPECT_EQ(a, joined);
+}
+
+TEST(ConstStringJoin, givenTwoStringOnListThenReturnThoseStringsJoinedWithConstring) {
+    std::string a = "aa";
+    std::string b = "bb";
+    std::string joined = NEO::ConstStringRef(" ").join(std::vector<std::string>{a, b});
+    ASSERT_FALSE(joined.empty());
+    EXPECT_EQ(std::string("aa bb"), joined);
 }

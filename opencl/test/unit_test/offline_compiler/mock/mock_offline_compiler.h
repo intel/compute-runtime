@@ -49,6 +49,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::igcFacade;
     using OfflineCompiler::initHardwareInfo;
     using OfflineCompiler::initHardwareInfoForProductConfig;
+    using OfflineCompiler::initialize;
     using OfflineCompiler::inputFile;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;

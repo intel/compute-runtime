@@ -35,6 +35,12 @@ typedef enum _ocloc_error_t {
     OCLOC_COMPILATION_CRASH = -5152,
 } ocloc_error_t;
 
+#define OCLOC_NAME_VERSION_MAX_NAME_SIZE 64
+typedef struct _ocloc_name_version {
+    unsigned int version;
+    char name[OCLOC_NAME_VERSION_MAX_NAME_SIZE];
+} ocloc_name_version;
+
 #ifdef _WIN32
 #define SIGNATURE __declspec(dllexport) int __cdecl
 #else

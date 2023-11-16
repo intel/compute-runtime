@@ -28,4 +28,6 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *device
                                                               OpenClCFeaturesContainer &openclCFeatures);
 std::string getOclVersionCompilerInternalOption(unsigned int oclVersion);
 
+cl_version getOclCExtensionVersion(std::string name, cl_version defaultVer);
+
 } // namespace NEO

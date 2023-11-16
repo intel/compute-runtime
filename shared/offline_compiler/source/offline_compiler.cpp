@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/offline_compiler/source/queries.h"
@@ -17,6 +18,7 @@
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -34,6 +36,7 @@
 #include <iomanip>
 #include <iterator>
 #include <list>
+#include <map>
 #include <set>
 
 #ifdef _WIN32
@@ -110,37 +113,268 @@ void printQueryHelp(OclocArgHelper *helper) {
     helper->printf(OfflineCompiler::queryHelp.data());
 }
 
+NameVersionPair::NameVersionPair(ConstStringRef name, unsigned int version) {
+    this->version = version;
+    this->name[OCLOC_NAME_VERSION_MAX_NAME_SIZE - 1] = '\0';
+    strncpy_s(this->name, sizeof(this->name), name.data(), name.size());
+};
+
+std::vector<NameVersionPair> OfflineCompiler::getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper) {
+    std::vector<NameVersionPair> ret;
+    std::vector<std::string> args;
+    args.push_back("ocloc");
+    args.push_back("-device");
+    args.push_back(product.str());
+    int retVal = 0;
+    std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
+    if (nullptr == compiler) {
+        return {};
+    }
+    auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo, compiler->releaseHelper.get());
+    auto extensions = NEO::CompilerOptions::tokenize(extensionsStr, ' ');
+    ret.reserve(extensions.size());
+    for (const auto &ext : extensions) {
+        unsigned int version = 0;
+        if (needVersions) {
+            version = NEO::getOclCExtensionVersion(ext.str(), CL_MAKE_VERSION(1u, 0, 0));
+        }
+        ret.emplace_back(ext, version);
+    }
+    return ret;
+}
+
+std::vector<NameVersionPair> OfflineCompiler::getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper) {
+    std::vector<std::string> args;
+    args.push_back("ocloc");
+    args.push_back("-device");
+    args.push_back(product.str());
+    int retVal = 0;
+    std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
+    if (nullptr == compiler) {
+        return {};
+    }
+
+    auto deviceOpenCLCVersions = compiler->compilerProductHelper->getDeviceOpenCLCVersions(compiler->getHardwareInfo(), {});
+    NameVersionPair openClCVersion{"OpenCL C", 0};
+
+    std::vector<NameVersionPair> allSupportedVersions;
+    for (auto &ver : deviceOpenCLCVersions) {
+        openClCVersion.version = CL_MAKE_VERSION(ver.major, ver.minor, 0);
+        allSupportedVersions.push_back(openClCVersion);
+    }
+    return allSupportedVersions;
+}
+
+std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper) {
+    std::vector<std::string> args;
+    args.push_back("ocloc");
+    args.push_back("-device");
+    args.push_back(product.str());
+    int retVal = 0;
+    std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
+    if (nullptr == compiler) {
+        return {};
+    }
+
+    OpenClCFeaturesContainer availableFeatures;
+    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures, *compiler->compilerProductHelper);
+
+    std::vector<NameVersionPair> allSupportedFeatures;
+    for (auto &feature : availableFeatures) {
+        allSupportedFeatures.push_back({feature.name, feature.version});
+    }
+    return allSupportedFeatures;
+}
+
+std::vector<NameVersionPair> getCommonNameVersion(const std::vector<std::vector<NameVersionPair>> &perTarget) {
+    std::vector<NameVersionPair> commonExtensionsVec;
+    if (perTarget.size() == 1) {
+        commonExtensionsVec = perTarget[0];
+    } else {
+        std::map<std::string, std::map<unsigned int, int>> allExtensions;
+        for (const auto &targetExt : perTarget) {
+            for (const auto &ext : targetExt) {
+                ++allExtensions[ext.name][ext.version];
+            }
+        }
+        int numTargets = static_cast<int>(perTarget.size());
+        for (const auto &extScore : allExtensions) {
+            for (const auto &version : extScore.second) {
+                if ((version.second == numTargets)) {
+                    commonExtensionsVec.emplace_back(ConstStringRef(extScore.first), version.first);
+                }
+            }
+        }
+    }
+    return commonExtensionsVec;
+}
+
+std::vector<NameVersionPair> getCommonExtensions(std::vector<ConstStringRef> products, bool needVersions, OclocArgHelper *helper) {
+    std::vector<std::vector<NameVersionPair>> perTarget;
+    for (const auto &targetProduct : products) {
+        auto extensions = OfflineCompiler::getExtensions(targetProduct, needVersions, helper);
+        perTarget.push_back(extensions);
+    }
+
+    auto commonExtensions = getCommonNameVersion(perTarget);
+    return commonExtensions;
+}
+
+std::vector<NameVersionPair> getCommonOpenCLCVersions(std::vector<ConstStringRef> products, OclocArgHelper *helper) {
+    std::vector<std::vector<NameVersionPair>> perTarget;
+    for (const auto &targetProduct : products) {
+        auto versions = OfflineCompiler::getOpenCLCVersions(targetProduct, helper);
+        perTarget.push_back(versions);
+    }
+
+    return getCommonNameVersion(perTarget);
+}
+
+std::vector<NameVersionPair> getCommonOpenCLCFeatures(std::vector<ConstStringRef> products, OclocArgHelper *helper) {
+    std::vector<std::vector<NameVersionPair>> perTarget;
+    for (const auto &targetProduct : products) {
+        auto features = OfflineCompiler::getOpenCLCFeatures(targetProduct, helper);
+        perTarget.push_back(features);
+    }
+
+    return getCommonNameVersion(perTarget);
+}
+
+std::string formatNameVersionString(std::vector<NameVersionPair> extensions, bool needVersions) {
+    std::vector<std::string> formatedExtensions;
+    formatedExtensions.reserve(extensions.size());
+    for (const auto &ext : extensions) {
+        formatedExtensions.push_back({});
+        auto it = formatedExtensions.rbegin();
+        bool needsQuoutes = (nullptr != strstr(ext.name, " "));
+        it->reserve(strnlen_s(ext.name, sizeof(ext.name)) + (needsQuoutes ? 2 : 0) + (needVersions ? 16 : 0));
+        if (needsQuoutes) {
+            it->append("\"");
+        }
+        it->append(ext.name);
+        if (needsQuoutes) {
+            it->append("\"");
+        }
+        if (needVersions) {
+            it->append(":");
+            it->append(std::to_string(CL_VERSION_MAJOR(ext.version)));
+            it->append(".");
+            it->append(std::to_string(CL_VERSION_MINOR(ext.version)));
+            it->append(".");
+            it->append(std::to_string(CL_VERSION_PATCH(ext.version)));
+        }
+    }
+    return ConstStringRef(" ").join(formatedExtensions);
+}
+
 int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
-    if (allArgs.size() != 3) {
-        helper->printf("Error: Invalid command line. Expected ocloc query <argument>");
+    if (allArgs.size() < 3) {
+        helper->printf("Error: Invalid command line. Expected ocloc query <argument>. See ocloc query --help\n");
         return OCLOC_INVALID_COMMAND_LINE;
     }
 
-    auto retVal = OCLOC_SUCCESS;
-    auto &arg = allArgs[2];
-
-    if (Queries::queryNeoRevision == arg) {
-        auto revision = NEO::getRevision();
-        helper->saveOutput(Queries::queryNeoRevision.data(), revision.c_str(), revision.size() + 1);
-    } else if (Queries::queryOCLDriverVersion == arg) {
-        auto driverVersion = NEO::getOclDriverVersion();
-        helper->saveOutput(Queries::queryOCLDriverVersion.data(), driverVersion.c_str(), driverVersion.size() + 1);
-    } else if (Queries::queryIgcRevision == arg) {
-        auto igcFacade = std::make_unique<OclocIgcFacade>(helper);
-        NEO::HardwareInfo hwInfo{};
-        auto initResult = igcFacade->initialize(hwInfo);
-        if (initResult == OCLOC_SUCCESS) {
-            auto igcRev = igcFacade->getIgcRevision();
-            helper->saveOutput(Queries::queryIgcRevision.data(), igcRev, strlen(igcRev) + 1);
+    std::vector<ConstStringRef> targetProducts;
+    std::vector<Queries::QueryType> queries;
+    auto argIt = allArgs.begin() + 2;
+    std::string deviceArg = "*";
+    while (argIt != allArgs.end()) {
+        if ("-device" == *argIt) {
+            if (argIt + 1 == allArgs.end()) {
+                helper->printf("Error: Invalid command line : -device must be followed by device name\n");
+            }
+            ++argIt;
+            deviceArg = *argIt;
+        } else if (Queries::queryNeoRevision == *argIt) {
+            queries.push_back(Queries::QueryType::neoRevision);
+        } else if (Queries::queryOCLDriverVersion == *argIt) {
+            queries.push_back(Queries::QueryType::oclDriverVersion);
+        } else if (Queries::queryIgcRevision == *argIt) {
+            queries.push_back(Queries::QueryType::igcRevision);
+        } else if (Queries::queryOCLDeviceExtensions == *argIt) {
+            queries.push_back(Queries::QueryType::oclDeviceExtensions);
+        } else if (Queries::queryOCLDeviceExtensionsWithVersion == *argIt) {
+            queries.push_back(Queries::QueryType::oclDeviceExtensionsWithVersion);
+        } else if (Queries::queryOCLDeviceProfile == *argIt) {
+            queries.push_back(Queries::QueryType::oclDeviceProfile);
+        } else if (Queries::queryOCLDeviceOpenCLCAllVersions == *argIt) {
+            queries.push_back(Queries::QueryType::oclDeviceOpenCLCAllVersions);
+        } else if (Queries::queryOCLDeviceOpenCLCFeatures == *argIt) {
+            queries.push_back(Queries::QueryType::oclDeviceOpenCLCFeatures);
+        } else if ("--help" == *argIt) {
+            printQueryHelp(helper);
+            return 0;
+        } else {
+            helper->printf("Error: Invalid command line.\nUnknown argument %s\n", argIt->c_str());
+            return OCLOC_INVALID_COMMAND_LINE;
         }
-    } else if ("--help" == arg) {
-        printQueryHelp(helper);
-    } else {
-        helper->printf("Error: Invalid command line. Unknown argument %s.", arg.c_str());
-        retVal = OCLOC_INVALID_COMMAND_LINE;
+
+        ++argIt;
     }
 
-    return retVal;
+    if (NEO::requestedFatBinary(deviceArg, helper)) {
+        targetProducts = NEO::getTargetProductsForFatbinary(deviceArg, helper);
+    } else {
+        targetProducts.push_back(deviceArg);
+    }
+
+    for (const auto &queryType : queries) {
+        switch (queryType) {
+        default:
+            helper->printf("Error: Invalid command line. See ocloc query --help\n");
+            break;
+        case Queries::QueryType::neoRevision: {
+            auto revision = NEO::getRevision();
+            helper->saveOutput(Queries::queryNeoRevision.str(), revision.c_str(), revision.size() + 1);
+            helper->printf("%s\n", revision.c_str());
+        } break;
+        case Queries::QueryType::oclDriverVersion: {
+            auto driverVersion = NEO::getOclDriverVersion();
+            helper->saveOutput(Queries::queryOCLDriverVersion.str(), driverVersion.c_str(), driverVersion.size() + 1);
+            helper->printf("%s\n", driverVersion.c_str());
+        } break;
+        case Queries::QueryType::igcRevision: {
+            auto igcFacade = std::make_unique<OclocIgcFacade>(helper);
+            NEO::HardwareInfo hwInfo{};
+            auto initResult = igcFacade->initialize(hwInfo);
+            if (initResult == OCLOC_SUCCESS) {
+                auto igcRev = igcFacade->getIgcRevision();
+                helper->saveOutput(Queries::queryIgcRevision.str(), igcRev, strlen(igcRev) + 1);
+                helper->printf("%s\n", igcRev);
+            }
+        } break;
+        case Queries::QueryType::oclDeviceExtensions: {
+            auto commonExtensionsVec = getCommonExtensions(targetProducts, false, helper);
+            auto commonExtString = formatNameVersionString(commonExtensionsVec, false);
+            helper->saveOutput(Queries::queryOCLDeviceExtensions.str(), commonExtString.c_str(), commonExtString.size());
+            helper->printf("%s\n", commonExtString.c_str());
+        } break;
+        case Queries::QueryType::oclDeviceExtensionsWithVersion: {
+            auto commonExtensionsVec = getCommonExtensions(targetProducts, true, helper);
+            auto commonExtString = formatNameVersionString(commonExtensionsVec, true);
+            helper->saveOutput(Queries::queryOCLDeviceExtensionsWithVersion.str(), commonExtensionsVec.data(), commonExtensionsVec.size() * sizeof(NameVersionPair));
+            helper->printf("%s\n", commonExtString.c_str());
+        } break;
+        case Queries::QueryType::oclDeviceProfile: {
+            ConstStringRef profile{"FULL_PROFILE\n"};
+            helper->saveOutput(Queries::queryOCLDeviceProfile.str(), profile.data(), profile.size());
+            helper->printf("%s\n", profile.data());
+        } break;
+        case Queries::QueryType::oclDeviceOpenCLCAllVersions: {
+            auto commonVersionsVec = getCommonOpenCLCVersions(targetProducts, helper);
+            auto commonVersionsString = formatNameVersionString(commonVersionsVec, true);
+            helper->saveOutput(Queries::queryOCLDeviceOpenCLCAllVersions.str(), commonVersionsVec.data(), commonVersionsVec.size() * sizeof(NameVersionPair));
+            helper->printf("%s\n", commonVersionsString.c_str());
+        } break;
+        case Queries::QueryType::oclDeviceOpenCLCFeatures: {
+            auto commonFeaturesVec = getCommonOpenCLCFeatures(targetProducts, helper);
+            auto commonFeaturesString = formatNameVersionString(commonFeaturesVec, true);
+            helper->saveOutput(Queries::queryOCLDeviceOpenCLCFeatures.str(), commonFeaturesVec.data(), commonFeaturesVec.size() * sizeof(NameVersionPair));
+            helper->printf("%s\n", commonFeaturesString.c_str());
+        } break;
+        }
+    }
+
+    return OCLOC_SUCCESS;
 }
 
 void printAcronymIdsHelp(OclocArgHelper *helper) {
@@ -428,6 +662,51 @@ int OfflineCompiler::buildSourceCode() {
 }
 
 int OfflineCompiler::build() {
+    if (inputFile.empty()) {
+        argHelper->printf("Error: Input file name missing.\n");
+        return OCLOC_INVALID_COMMAND_LINE;
+    } else if (!argHelper->fileExists(inputFile)) {
+        argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
+        return OCLOC_INVALID_FILE;
+    }
+
+    const char *source = nullptr;
+    std::unique_ptr<char[]> sourceFromFile;
+    size_t sourceFromFileSize = 0;
+    sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
+    if (sourceFromFileSize == 0) {
+        return OCLOC_INVALID_FILE;
+    }
+    if (inputFileLlvm || inputFileSpirV) {
+        // use the binary input "as is"
+        sourceCode.assign(sourceFromFile.get(), sourceFromFileSize);
+    } else {
+        // for text input, we also accept files used as runtime builtins
+        source = strstr((const char *)sourceFromFile.get(), "R\"===(");
+        sourceCode = (source != nullptr) ? getStringWithinDelimiters(sourceFromFile.get()) : sourceFromFile.get();
+    }
+
+    if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
+        const auto fclInitializationResult = fclFacade->initialize(hwInfo);
+        if (fclInitializationResult != OCLOC_SUCCESS) {
+            argHelper->printf("Error! FCL initialization failure. Error code = %d\n", fclInitializationResult);
+            return fclInitializationResult;
+        }
+
+        preferredIntermediateRepresentation = fclFacade->getPreferredIntermediateRepresentation();
+    } else {
+        if (!isQuiet()) {
+            argHelper->printf("Compilation from IR - skipping loading of FCL\n");
+        }
+        preferredIntermediateRepresentation = IGC::CodeType::spirV;
+    }
+
+    const auto igcInitializationResult = igcFacade->initialize(hwInfo);
+    if (igcInitializationResult != OCLOC_SUCCESS) {
+        argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
+        return igcInitializationResult;
+    }
+
     int retVal = OCLOC_SUCCESS;
     if (isOnlySpirV()) {
         retVal = buildIrBinary();
@@ -558,12 +837,7 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
 int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles) {
     this->dumpFiles = dumpFiles;
     int retVal = OCLOC_SUCCESS;
-    const char *source = nullptr;
-    std::unique_ptr<char[]> sourceFromFile;
-    size_t sourceFromFileSize = 0;
     this->pBuildInfo = std::make_unique<buildInfo>();
-    auto cacheConfig = getDefaultCompilerCacheConfig();
-    cacheDir = cacheConfig.cacheDir;
     retVal = parseCommandLine(numArgs, allArgs);
     if (showHelp) {
         printUsage();
@@ -637,7 +911,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if (!formatToEnforce.empty()) {
         enforceFormat(formatToEnforce);
     }
-
     if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
         if (false == inputFileSpirV && false == CompilerOptions::contains(options, CompilerOptions::generateSourcePath) && false == CompilerOptions::contains(options, CompilerOptions::useCMCompiler)) {
             auto sourcePathStringOption = CompilerOptions::generateSourcePath.str();
@@ -646,7 +919,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             options = CompilerOptions::concatenate(options, sourcePathStringOption);
         }
     }
-
     if (deviceName.empty()) {
         std::string emptyDeviceOptions = "-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes,"
                                          "+__opencl_c_3d_image_writes,+__opencl_c_images";
@@ -656,45 +928,10 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
         appendExtraInternalOptions(internalOptions);
     }
-
     parseDebugSettings();
 
-    // set up the device inside the program
-    sourceFromFile = argHelper->loadDataFromFile(inputFile, sourceFromFileSize);
-    if (sourceFromFileSize == 0) {
-        retVal = OCLOC_INVALID_FILE;
-        return retVal;
-    }
-
-    if (inputFileLlvm || inputFileSpirV) {
-        // use the binary input "as is"
-        sourceCode.assign(sourceFromFile.get(), sourceFromFileSize);
-    } else {
-        // for text input, we also accept files used as runtime builtins
-        source = strstr((const char *)sourceFromFile.get(), "R\"===(");
-        sourceCode = (source != nullptr) ? getStringWithinDelimiters(sourceFromFile.get()) : sourceFromFile.get();
-    }
-
-    if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
-        const auto fclInitializationResult = fclFacade->initialize(hwInfo);
-        if (fclInitializationResult != OCLOC_SUCCESS) {
-            argHelper->printf("Error! FCL initialization failure. Error code = %d\n", fclInitializationResult);
-            return fclInitializationResult;
-        }
-
-        preferredIntermediateRepresentation = fclFacade->getPreferredIntermediateRepresentation();
-    } else {
-        if (!isQuiet()) {
-            argHelper->printf("Compilation from IR - skipping loading of FCL\n");
-        }
-        preferredIntermediateRepresentation = IGC::CodeType::spirV;
-    }
-
-    const auto igcInitializationResult = igcFacade->initialize(hwInfo);
-    if (igcInitializationResult != OCLOC_SUCCESS) {
-        argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
-        return igcInitializationResult;
-    }
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    cacheDir = cacheConfig.cacheDir;
     if (allowCaching) {
         cacheConfig.cacheDir = cacheDir;
         cache = std::make_unique<CompilerCache>(cacheConfig);
@@ -854,14 +1091,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 }
             }
         }
-
-        if (inputFile.empty()) {
-            argHelper->printf("Error: Input file name missing.\n");
-            retVal = OCLOC_INVALID_COMMAND_LINE;
-        } else if (!argHelper->fileExists(inputFile)) {
-            argHelper->printf("Error: Input file %s missing.\n", inputFile.c_str());
-            retVal = OCLOC_INVALID_FILE;
-        }
     }
 
     return retVal;
@@ -956,7 +1185,7 @@ std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
 }
 
 void OfflineCompiler::printUsage() {
-    argHelper->printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
+    argHelper->printf(R"OCLOC_HELP(Compiles input file to Intel Compute GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
 Different input and intermediate file formats are available.
 
@@ -1119,7 +1348,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
-)===",
+)OCLOC_HELP",
                       getSupportedDevices(argHelper).c_str(),
                       getDeprecatedDevices(argHelper).c_str());
 }

@@ -218,6 +218,27 @@ class ConstStringRef {
         return ('\0' == *rhs);
     }
 
+    template <typename ContainerT>
+    std::string join(const ContainerT &container) {
+        std::string ret;
+        if (container.empty()) {
+            return ret;
+        }
+
+        size_t len = container.size() - 1;
+        for (const auto &substr : container) {
+            len += substr.size();
+        }
+        ret.reserve(len);
+
+        ret.append(*container.begin());
+        for (auto it = container.begin() + 1, e = container.end(); it != e; ++it) {
+            ret.append(this->ptr, this->len);
+            ret.append(*it);
+        }
+        return ret;
+    }
+
   protected:
     ConstStringRef(std::nullptr_t) = delete;
 

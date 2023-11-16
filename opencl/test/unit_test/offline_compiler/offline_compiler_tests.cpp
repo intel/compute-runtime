@@ -1602,15 +1602,17 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndFclInitFailureWhenInitIsPerfo
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.mockFclFacade->shouldFailLoadingOfFclLib = true;
 
-    testing::internal::CaptureStdout();
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OCLOC_SUCCESS, initResult);
+    testing::internal::CaptureStdout();
+    const auto buildResult = mockOfflineCompiler.build();
     const auto output = testing::internal::GetCapturedStdout();
 
     std::stringstream expectedErrorMessage;
     expectedErrorMessage << "Error! Loading of FCL library has failed! Filename: " << Os::frontEndDllName << "\n"
                          << "Error! FCL initialization failure. Error code = -6\n";
 
-    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, initResult);
+    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, buildResult);
     EXPECT_EQ(expectedErrorMessage.str(), output);
 }
 
@@ -1625,15 +1627,17 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndIgcInitFailureWhenInitIsPerfo
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.mockIgcFacade->shouldFailLoadingOfIgcLib = true;
 
-    testing::internal::CaptureStdout();
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OCLOC_SUCCESS, initResult);
+    testing::internal::CaptureStdout();
+    const auto buildResult = mockOfflineCompiler.build();
     const auto output = testing::internal::GetCapturedStdout();
 
     std::stringstream expectedErrorMessage;
     expectedErrorMessage << "Error! Loading of IGC library has failed! Filename: " << Os::igcDllName << "\n"
                          << "Error! IGC initialization failure. Error code = -6\n";
 
-    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, initResult);
+    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, buildResult);
     EXPECT_EQ(expectedErrorMessage.str(), output);
 }
 
@@ -1756,7 +1760,9 @@ TEST_F(OfflineCompilerTests, givenZeroSizeInputFileWhenInitializationIsPerformed
     mockOfflineCompiler.uniqueHelper->shouldLoadDataFromFileReturnZeroSize = true;
 
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
-    EXPECT_EQ(OCLOC_INVALID_FILE, initResult);
+    EXPECT_EQ(OCLOC_SUCCESS, initResult);
+    const auto buildResult = mockOfflineCompiler.build();
+    EXPECT_EQ(OCLOC_INVALID_FILE, buildResult);
 }
 
 TEST_F(OfflineCompilerTests, givenInvalidIgcOutputWhenCompilingKernelThenOutOfHostMemoryIsReturned) {
@@ -2173,8 +2179,10 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
         "-spirv_input"};
 
     MockOfflineCompiler offlineCompiler;
-    auto ret = offlineCompiler.initialize(argv.size(), argv);
-    EXPECT_EQ(0, ret);
+    auto ret = offlineCompiler.initialize(argv.size(), argv, true);
+    EXPECT_EQ(OCLOC_SUCCESS, ret);
+    ret = offlineCompiler.build();
+    EXPECT_EQ(OCLOC_SUCCESS, ret);
     EXPECT_FALSE(offlineCompiler.fclFacade->isInitialized());
     EXPECT_TRUE(offlineCompiler.igcFacade->isInitialized());
 }
@@ -2285,9 +2293,9 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
 
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    retVal = pOfflineCompiler->build();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
-    EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
     debugManager.flags.PrintDebugMessages.set(false);
     delete pOfflineCompiler;
@@ -2455,6 +2463,7 @@ TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildSourceCodeThenSuccessIsRetur
         auto cacheMock = new CompilerCacheMock();
         mockOfflineCompiler->cache.reset(cacheMock);
         cacheMock->numberOfLoadResult = 1u;
+        mockOfflineCompiler->sourceCode = "__kernel void k(){}";
         retVal = mockOfflineCompiler->buildSourceCode();
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, mockOfflineCompiler->genBinary);
@@ -2471,6 +2480,7 @@ TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildSourceCodeThenSuccessIsRetur
         auto cacheMock = new CompilerCacheMock();
         mockOfflineCompiler->cache.reset(cacheMock);
         cacheMock->numberOfLoadResult = 2u;
+        mockOfflineCompiler->sourceCode = "__kernel void k(){}";
         retVal = mockOfflineCompiler->buildSourceCode();
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2488,6 +2498,7 @@ TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildSourceCodeThenSuccessIsRetur
         auto cacheMock = new CompilerCacheMock();
         mockOfflineCompiler->cache.reset(cacheMock);
         cacheMock->numberOfLoadResult = 3u;
+        mockOfflineCompiler->sourceCode = "__kernel void k(){}";
         retVal = mockOfflineCompiler->buildSourceCode();
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, mockOfflineCompiler->debugDataBinary);
@@ -2537,6 +2548,7 @@ TEST(OfflineCompilerTest, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIsCac
 
     auto cacheMock = new CompilerCacheMock();
     mockOfflineCompiler->cache.reset(cacheMock);
+    mockOfflineCompiler->sourceCode = "__kernel void k(){}";
     retVal = mockOfflineCompiler->buildSourceCode();
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2771,7 +2783,7 @@ TEST(OfflineCompilerTest, GivenSourceCodeWhenBuildingThenSuccessIsReturned) {
     EXPECT_EQ(nullptr, mockOfflineCompiler->genBinary);
     EXPECT_EQ(0u, mockOfflineCompiler->genBinarySize);
 
-    retVal = mockOfflineCompiler->buildSourceCode();
+    retVal = mockOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(nullptr, mockOfflineCompiler->genBinary);
@@ -2824,7 +2836,7 @@ TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuc
     retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = mockOfflineCompiler->buildSourceCode();
+    retVal = mockOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -3089,13 +3101,18 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
+    struct StdoutCaptureRAII {
+        ~StdoutCaptureRAII() {
+            testing::internal::GetCapturedStdout();
+        }
+    } stdoutCaptureRAII;
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
     mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     mockOfflineCompiler.inputFileSpirV = true;
-    retVal = mockOfflineCompiler.buildSourceCode();
+    retVal = mockOfflineCompiler.build();
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
     NEO::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
@@ -3104,7 +3121,7 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     mockOfflineCompiler.inputFileSpirV = false;
     mockOfflineCompiler.inputFileLlvm = true;
     mockIgcOclDeviceCtx->requestedTranslationCtxs.clear();
-    retVal = mockOfflineCompiler.buildSourceCode();
+    retVal = mockOfflineCompiler.build();
 
     ASSERT_EQ(mockOfflineCompiler.irBinarySize, mockOfflineCompiler.sourceCode.size());
     EXPECT_EQ(0, memcmp(mockOfflineCompiler.irBinary, mockOfflineCompiler.sourceCode.data(), mockOfflineCompiler.sourceCode.size()));
@@ -3113,8 +3130,6 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
     expectedTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
-
-    testing::internal::GetCapturedStdout();
 }
 
 TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTranslationContextIsUsed) {
@@ -3147,12 +3162,14 @@ TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
                                          "-device", gEnvironment->devicePrefix.c_str()};
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvLlvm.size(), argvLlvm);
+    mockOfflineCompiler->build();
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 
     std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", clFiles + "binary_with_zeroes",
                                           "-device", gEnvironment->devicePrefix.c_str()};
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV);
+    mockOfflineCompiler->build();
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 }
 
@@ -3182,7 +3199,7 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
 
     mockOfflineCompiler.inputFileSpirV = true;
 
-    retVal = mockOfflineCompiler.buildSourceCode();
+    retVal = mockOfflineCompiler.build();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_STREQ("test_options_passed", mockOfflineCompiler.options.c_str());
@@ -3311,11 +3328,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForCompiledDeviceWhenCmdLineParsedTh
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    testing::internal::CaptureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
-    std::string output = testing::internal::GetCapturedStdout();
-
-    EXPECT_NE(0u, output.size());
 
     auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
     EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions")));
@@ -3440,11 +3453,7 @@ TEST(OfflineCompilerTest, givenMultipleDeviceOptionsWhenCmdLineParsedThenDeviceO
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    testing::internal::CaptureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
-    std::string output = testing::internal::GetCapturedStdout();
-
-    EXPECT_NE(0u, output.size());
 
     auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
     EXPECT_TRUE(hasSubstr(perDeviceOptions[gEnvironment->devicePrefix.c_str()], std::string("devOptions1")));
@@ -3496,11 +3505,7 @@ TEST(OfflineCompilerTest, givenMultipleDeviceOptionsForCompiledDeviceAndDeviceOp
         "-options",
         "options2"};
 
-    testing::internal::CaptureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
-    std::string output = testing::internal::GetCapturedStdout();
-
-    EXPECT_NE(0u, output.size());
 
     auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
     EXPECT_TRUE(hasSubstr(perDeviceOptions[notCompiledDevice], std::string("devOptions2")));
@@ -3545,11 +3550,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasW
         productForDeviceOptions1.c_str(),
         "devOptions2"};
 
-    testing::internal::CaptureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
-    std::string output = testing::internal::GetCapturedStdout();
-
-    EXPECT_NE(0u, output.size());
 
     auto perDeviceOptions = mockOfflineCompiler->perDeviceOptions;
     EXPECT_TRUE(hasSubstr(perDeviceOptions[productForDeviceOptions0], std::string("devOptions1")));
@@ -3931,6 +3932,7 @@ TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBi
     EXPECT_EQ(0u, compiler.generateElfBinaryCalled);
     EXPECT_EQ(0u, compiler.writeOutAllFilesCalled);
 
+    compiler.inputFile = clFiles + "copybuffer.cl";
     auto status = compiler.build();
     EXPECT_EQ(expectedError, status);
 
@@ -4137,9 +4139,12 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
 
             testing::internal::CaptureStdout();
 
-            ocloc.sourceCode = c.input;
             ocloc.inputFileLlvm = c.isLlvm;
             ocloc.inputFileSpirV = c.isSpirv;
+            ocloc.inputFile = "src";
+            ocloc.uniqueHelper->filesMap["src"] = c.input;
+            ocloc.uniqueHelper->callBaseFileExists = false;
+            ocloc.uniqueHelper->callBaseLoadDataFromFile = false;
             ocloc.build();
             auto log = ocloc.argHelper->getPrinterRef().getLog().str();
             ocloc.clearLog();
@@ -4151,7 +4156,7 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
                     EXPECT_FALSE(hasSubstr(log, w)) << " Case : " << caseNum;
                 }
             } else {
-                EXPECT_TRUE(hasSubstr(log, c.expectedWarning)) << " Case : " << caseNum;
+                EXPECT_TRUE(hasSubstr(log, c.expectedWarning)) << " Case : " << caseNum << " : " << c.expectedWarning << ". Got : " << log;
                 EXPECT_STREQ(log.c_str(), output.c_str());
             }
             caseNum++;
@@ -4550,6 +4555,177 @@ TEST(OclocArgHelperTest, GivenValidSourceFileWhenReadingItViaHelperAsBinaryThenI
 
     const auto isContentIdentical = (0 == std::memcmp(input, fileContent.data(), inputLength));
     EXPECT_TRUE(isContentIdentical);
+}
+
+TEST(OclocQuery, WhenQueryingDeviceExtensionsThenExtensionsStringIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.callBaseFileExists = false;
+    argHelper.callBaseLoadDataFromFile = false;
+    argHelper.callBaseReadBinaryFile = false;
+    argHelper.callBaseReadFileToVectorOfStrings = false;
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::string query = "CL_DEVICE_EXTENSIONS";
+    std::string commonExt = "cl_khr_icd";
+
+    std::vector<std::string> argv = {"ocloc", "query", query};
+
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    auto log = argHelper.getPrinterRef().getLog().str();
+    EXPECT_FALSE(log.empty());
+    EXPECT_TRUE(hasSubstr(log, commonExt)) << commonExt << " e/ " << log;
+
+    ASSERT_EQ(1U, vfs.count(query));
+    auto file = vfs[query];
+    EXPECT_FALSE(file.empty());
+    EXPECT_TRUE(hasSubstr(file, commonExt)) << commonExt << " e/ " << file;
+}
+
+TEST(OclocQuery, WhenQueryingDeviceExtensionsWithVersionsThenExtensionsStringWithVersionsIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.callBaseFileExists = false;
+    argHelper.callBaseLoadDataFromFile = false;
+    argHelper.callBaseReadBinaryFile = false;
+    argHelper.callBaseReadFileToVectorOfStrings = false;
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::string query = "CL_DEVICE_EXTENSIONS_WITH_VERSION";
+    std::string commonExt = "cl_khr_icd:1.0.0";
+    ocloc_name_version extWithVersion;
+    strcpy_s(extWithVersion.name, sizeof(extWithVersion.name), "cl_khr_icd");
+    extWithVersion.version = CL_MAKE_VERSION(1, 0, 0);
+
+    std::vector<std::string> argv = {"ocloc", "query", query};
+
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    auto log = argHelper.getPrinterRef().getLog().str();
+    EXPECT_FALSE(log.empty());
+    EXPECT_TRUE(hasSubstr(log, commonExt)) << commonExt << " e/ " << log;
+
+    ASSERT_EQ(1U, vfs.count(query));
+    auto file = vfs[query];
+    EXPECT_NE(0U, file.size());
+    EXPECT_EQ(0U, file.size() % sizeof(ocloc_name_version));
+    auto it = reinterpret_cast<ocloc_name_version *>(file.data());
+    auto end = reinterpret_cast<ocloc_name_version *>(file.data() + file.size());
+    decltype(it) found = nullptr;
+    for (; it < end; ++it) {
+        if ((0 == strcmp(extWithVersion.name, it->name)) && (extWithVersion.version == it->version)) {
+            found = it;
+        }
+    }
+    ASSERT_NE(nullptr, found);
+}
+
+TEST(OclocQuery, WhenQueryingDeviceProfileThenFullProfileStringIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.callBaseFileExists = false;
+    argHelper.callBaseLoadDataFromFile = false;
+    argHelper.callBaseReadBinaryFile = false;
+    argHelper.callBaseReadFileToVectorOfStrings = false;
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::string query = "CL_DEVICE_PROFILE";
+    std::string expProfile = "FULL_PROFILE";
+
+    std::vector<std::string> argv = {"ocloc", "query", query};
+
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    auto log = argHelper.getPrinterRef().getLog().str();
+    EXPECT_FALSE(log.empty());
+    EXPECT_TRUE(hasSubstr(log, expProfile)) << expProfile << " e/ " << log;
+
+    ASSERT_EQ(1U, vfs.count(query));
+    auto file = vfs[query];
+    EXPECT_FALSE(file.empty());
+    EXPECT_TRUE(hasSubstr(file, expProfile)) << expProfile << " e/ " << file;
+}
+
+TEST(OclocQuery, WhenQueryingDeviceOpenCLCAllVersionsThenVersionsStringIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.callBaseFileExists = false;
+    argHelper.callBaseLoadDataFromFile = false;
+    argHelper.callBaseReadBinaryFile = false;
+    argHelper.callBaseReadFileToVectorOfStrings = false;
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::string query = "CL_DEVICE_OPENCL_C_ALL_VERSIONS";
+    std::string commonVer = "\"OpenCL C\":1.2";
+    ocloc_name_version oclcVersion;
+    strcpy_s(oclcVersion.name, sizeof(oclcVersion.name), "OpenCL C");
+    oclcVersion.version = CL_MAKE_VERSION(1, 2, 0);
+
+    std::vector<std::string> argv = {"ocloc", "query", query};
+
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    auto log = argHelper.getPrinterRef().getLog().str();
+    EXPECT_FALSE(log.empty());
+    EXPECT_TRUE(hasSubstr(log, commonVer)) << commonVer << " e/ " << log;
+
+    ASSERT_EQ(1U, vfs.count(query));
+    auto file = vfs[query];
+    EXPECT_NE(0U, file.size());
+    EXPECT_EQ(0U, file.size() % sizeof(ocloc_name_version));
+    auto it = reinterpret_cast<ocloc_name_version *>(file.data());
+    auto end = reinterpret_cast<ocloc_name_version *>(file.data() + file.size());
+    decltype(it) found = nullptr;
+    for (; it < end; ++it) {
+        if ((0 == strcmp(oclcVersion.name, it->name)) && (oclcVersion.version == it->version)) {
+            found = it;
+        }
+    }
+    EXPECT_NE(nullptr, found);
+}
+
+TEST(OclocQuery, WhenQueryingDeviceOpenCFeaturesThenFeaturesStringWithVersionsIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.callBaseFileExists = false;
+    argHelper.callBaseLoadDataFromFile = false;
+    argHelper.callBaseReadBinaryFile = false;
+    argHelper.callBaseReadFileToVectorOfStrings = false;
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::string query = "CL_DEVICE_OPENCL_C_FEATURES";
+    std::string commonFeature = "__opencl_c_int64:3.0.0";
+    ocloc_name_version featureWithVersion;
+    strcpy_s(featureWithVersion.name, sizeof(featureWithVersion.name), "__opencl_c_int64");
+    featureWithVersion.version = CL_MAKE_VERSION(3, 0, 0);
+
+    std::vector<std::string> argv = {"ocloc", "query", query};
+
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    auto log = argHelper.getPrinterRef().getLog().str();
+    EXPECT_FALSE(log.empty());
+    EXPECT_TRUE(hasSubstr(log, commonFeature)) << commonFeature << " e/ " << log;
+
+    ASSERT_EQ(1U, vfs.count(query));
+    auto file = vfs[query];
+    EXPECT_NE(0U, file.size());
+    EXPECT_EQ(0U, file.size() % sizeof(ocloc_name_version));
+    auto it = reinterpret_cast<ocloc_name_version *>(file.data());
+    auto end = reinterpret_cast<ocloc_name_version *>(file.data() + file.size());
+    decltype(it) found = nullptr;
+    for (; it < end; ++it) {
+        if ((0 == strcmp(featureWithVersion.name, it->name)) && (featureWithVersion.version == it->version)) {
+            found = it;
+        }
+    }
+    ASSERT_NE(nullptr, found);
 }
 
 } // namespace NEO

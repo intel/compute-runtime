@@ -30,7 +30,10 @@ MockOfflineCompiler::MockOfflineCompiler() : OfflineCompiler() {
 MockOfflineCompiler::~MockOfflineCompiler() = default;
 
 int MockOfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &argv) {
-    return OfflineCompiler::initialize(numArgs, argv, true);
+    auto ret = OfflineCompiler::initialize(numArgs, argv, true);
+    igcFacade->initialize(hwInfo);
+    fclFacade->initialize(hwInfo);
+    return ret;
 }
 
 void MockOfflineCompiler::storeGenBinary(const void *pSrc, const size_t srcSize) {

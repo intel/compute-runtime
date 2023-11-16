@@ -31,24 +31,27 @@
 #include <set>
 
 namespace NEO {
+bool requestedFatBinary(ConstStringRef deviceArg, OclocArgHelper *helper) {
+    auto deviceName = deviceArg.str();
+    ProductConfigHelper::adjustDeviceName(deviceName);
+    auto release = helper->productConfigHelper->getReleaseFromDeviceName(deviceName);
+    auto family = helper->productConfigHelper->getFamilyFromDeviceName(deviceName);
+
+    auto retVal = deviceArg.contains("*");
+    retVal |= deviceArg.contains(":");
+    retVal |= deviceArg.contains(",");
+    retVal |= family != AOT::UNKNOWN_FAMILY;
+    retVal |= release != AOT::UNKNOWN_RELEASE;
+
+    return retVal;
+}
+
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper) {
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
-            ConstStringRef deviceArg(args[argIndex + 1]);
-            auto deviceName = deviceArg.str();
-            ProductConfigHelper::adjustDeviceName(deviceName);
-            auto release = helper->productConfigHelper->getReleaseFromDeviceName(deviceName);
-            auto family = helper->productConfigHelper->getFamilyFromDeviceName(deviceName);
-
-            auto retVal = deviceArg.contains("*");
-            retVal |= deviceArg.contains(":");
-            retVal |= deviceArg.contains(",");
-            retVal |= family != AOT::UNKNOWN_FAMILY;
-            retVal |= release != AOT::UNKNOWN_RELEASE;
-
-            return retVal;
+            return requestedFatBinary(args[argIndex + 1], helper);
         }
     }
     return false;

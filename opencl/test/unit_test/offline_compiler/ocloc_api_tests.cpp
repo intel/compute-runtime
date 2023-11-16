@@ -191,7 +191,7 @@ TEST(OclocApiTests, GivenNoQueryWhenQueryingThenErrorIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Expected ocloc query <argument>", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Expected ocloc query <argument>. See ocloc query --help\n", output.c_str());
 }
 
 TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
@@ -208,7 +208,7 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Unknown argument unknown_query.", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line.\nUnknown argument unknown_query\n", output.c_str());
 }
 
 TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {

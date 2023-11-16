@@ -314,3 +314,76 @@ HWTEST_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessM
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled());
 }
+
+HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{3, 0});
+    ASSERT_LT(3U, versions.size());
+
+    EXPECT_EQ(1, versions[0].major);
+    EXPECT_EQ(0, versions[0].minor);
+
+    EXPECT_EQ(1, versions[1].major);
+    EXPECT_EQ(1, versions[1].minor);
+
+    EXPECT_EQ(1, versions[2].major);
+    EXPECT_EQ(2, versions[2].minor);
+
+    if (pDevice->getHardwareInfo().capabilityTable.clVersionSupport == 30) {
+        ASSERT_EQ(4U, versions.size());
+        EXPECT_EQ(3, versions[3].major);
+        EXPECT_EQ(0, versions[3].minor);
+    } else {
+        EXPECT_EQ(3U, versions.size());
+    }
+}
+
+HWTEST_F(CompilerProductHelperFixture, WhenLimitedListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToProvidedMax) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{1, 1});
+    ASSERT_EQ(2U, versions.size());
+
+    EXPECT_EQ(1, versions[0].major);
+    EXPECT_EQ(0, versions[0].minor);
+
+    EXPECT_EQ(1, versions[1].major);
+    EXPECT_EQ(1, versions[1].minor);
+}
+
+HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsEmptyThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{0, 0});
+    ASSERT_LT(3U, versions.size());
+
+    EXPECT_EQ(1, versions[0].major);
+    EXPECT_EQ(0, versions[0].minor);
+
+    EXPECT_EQ(1, versions[1].major);
+    EXPECT_EQ(1, versions[1].minor);
+
+    EXPECT_EQ(1, versions[2].major);
+    EXPECT_EQ(2, versions[2].minor);
+
+    if (pDevice->getHardwareInfo().capabilityTable.clVersionSupport == 30) {
+        ASSERT_EQ(4U, versions.size());
+        EXPECT_EQ(3, versions[3].major);
+        EXPECT_EQ(0, versions[3].minor);
+    } else {
+        EXPECT_EQ(3U, versions.size());
+    }
+}
+
+HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpenCLCVersionsWhenMaxVersionIsBelow10ThenReturnsListOfAllSupportedVersionsByTheAssociatedDeviceTrimmedToOclC12) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto versions = compilerProductHelper.getDeviceOpenCLCVersions(pDevice->getHardwareInfo(), NEO::OclCVersion{0, 1});
+    ASSERT_EQ(3U, versions.size());
+
+    EXPECT_EQ(1, versions[0].major);
+    EXPECT_EQ(0, versions[0].minor);
+
+    EXPECT_EQ(1, versions[1].major);
+    EXPECT_EQ(1, versions[1].minor);
+
+    EXPECT_EQ(1, versions[2].major);
+    EXPECT_EQ(2, versions[2].minor);
+}

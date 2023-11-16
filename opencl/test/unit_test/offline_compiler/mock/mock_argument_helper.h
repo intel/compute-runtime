@@ -105,6 +105,7 @@ class MockOclocArgHelper : public OclocArgHelper {
     }
 
     void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) override {
+        filesMap[filename] = std::string(reinterpret_cast<const char *>(pData), dataSize);
         if (interceptOutput) {
             auto &fileContent = interceptedFiles[filename];
             fileContent.resize(dataSize, '\0');

@@ -29,6 +29,9 @@ OclocFclFacade::OclocFclFacade(OclocArgHelper *argHelper)
 OclocFclFacade::~OclocFclFacade() = default;
 
 int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
+    if (initialized) {
+        return OCLOC_SUCCESS;
+    }
     fclLib = loadFclLibrary();
     if (!fclLib) {
         argHelper->printf("Error! Loading of FCL library has failed! Filename: %s\n", Os::frontEndDllName);

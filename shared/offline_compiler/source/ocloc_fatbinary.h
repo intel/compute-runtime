@@ -22,6 +22,7 @@ struct ArEncoder;
 }
 class OfflineCompiler;
 
+bool requestedFatBinary(ConstStringRef deviceArg, OclocArgHelper *helper);
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper);
 inline bool requestedFatBinary(int argc, const char *argv[], OclocArgHelper *helper) {
     std::vector<std::string> args;

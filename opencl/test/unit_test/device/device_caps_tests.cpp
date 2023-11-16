@@ -64,7 +64,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
         }
 
-        EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator);
+        EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator) << " versions count : " << clDevice.getDeviceInfo().openclCAllVersions.size();
     }
 
     void verifyOpenclCFeatures(MockClDevice &clDevice) {

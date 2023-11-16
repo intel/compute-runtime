@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "igfxfmid.h"
 
@@ -19,6 +20,23 @@ namespace NEO {
 class CompilerProductHelper;
 struct HardwareInfo;
 class ReleaseHelper;
+
+struct OclCVersion {
+    unsigned short major = 0;
+    unsigned short minor = 0;
+};
+
+constexpr bool operator>(OclCVersion lhs, OclCVersion rhs) {
+    return (lhs.major > rhs.major) || ((lhs.major == rhs.major) && (lhs.minor >= rhs.minor));
+}
+
+constexpr bool operator==(OclCVersion lhs, OclCVersion rhs) {
+    return (lhs.major == rhs.major) && (lhs.minor == rhs.minor);
+}
+
+constexpr bool operator>=(OclCVersion lhs, OclCVersion rhs) {
+    return (lhs > rhs) || (lhs == rhs);
+}
 
 using CompilerProductHelperCreateFunctionType = std::unique_ptr<CompilerProductHelper> (*)();
 extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT];
@@ -55,6 +73,7 @@ class CompilerProductHelper {
     virtual uint32_t getDefaultHwIpVersion() const = 0;
     virtual uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const = 0;
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
+    virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled() const = 0;
 
@@ -95,6 +114,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     uint32_t getDefaultHwIpVersion() const override;
     uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const override;
     std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
+    StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled() const override;
 

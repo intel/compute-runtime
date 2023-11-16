@@ -204,6 +204,32 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+StackVec<OclCVersion, 5> CompilerProductHelperHw<gfxProduct>::getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const {
+    if ((max.major == 0) && (max.minor != 0)) {
+        max.major = 1;
+        max.minor = 2;
+    }
+
+    struct {
+        OclCVersion num;
+        bool supported;
+    } supportedVersionsMatrix[] = {
+        {OclCVersion{1, 0}, true},
+        {OclCVersion{1, 1}, true},
+        {OclCVersion{1, 2}, true},
+        {OclCVersion{3, 0}, hwInfo.capabilityTable.clVersionSupport == 30}};
+
+    StackVec<OclCVersion, 5> ret;
+    for (const auto &version : supportedVersionsMatrix) {
+        if (version.supported && ((0 == max.major) || (max >= version.num))) {
+            ret.push_back(version.num);
+        }
+    }
+
+    return ret;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled() const {
     return false;
 }
