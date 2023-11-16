@@ -97,6 +97,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
 
         rootDeviceEnvironment.initReleaseHelper();
+        rootDeviceEnvironment.setRcsExposure();
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));

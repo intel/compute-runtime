@@ -106,3 +106,18 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionAndProductFamilyOverrideWhenPrepareDe
     EXPECT_TRUE(success);
     EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
 }
+
+TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledThenSetFtrFlag) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    ASSERT_TRUE(success);
+
+    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+
+    if (releaseHelper == nullptr) {
+        EXPECT_TRUE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode);
+    } else {
+        EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper->isRcsExposureDisabled());
+    }
+}
