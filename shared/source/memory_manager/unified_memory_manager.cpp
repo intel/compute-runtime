@@ -42,25 +42,6 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData
     allocations.erase(iter);
 }
 
-void SVMAllocsManager::SortedVectorBasedAllocationTracker::insert(const SvmAllocationData &allocationsPair) {
-    allocations.push_back(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), std::make_unique<SvmAllocationData>(allocationsPair)));
-    for (size_t i = allocations.size() - 1; i > 0; --i) {
-        if (allocations[i].first < allocations[i - 1].first) {
-            std::iter_swap(allocations.begin() + i, allocations.begin() + i - 1);
-        } else {
-            break;
-        }
-    }
-}
-
-void SVMAllocsManager::SortedVectorBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
-    auto gpuAddress = reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
-    auto removeIt = std::remove_if(allocations.begin(), allocations.end(), [&gpuAddress](const auto &other) {
-        return gpuAddress == other.first;
-    });
-    allocations.erase(removeIt);
-}
-
 void SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
     std::lock_guard<std::mutex> lock(this->mtx);
     allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr);
@@ -132,34 +113,6 @@ SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *
     return nullptr;
 }
 
-SvmAllocationData *SVMAllocsManager::SortedVectorBasedAllocationTracker::get(const void *ptr) {
-    if (allocations.size() == 0) {
-        return nullptr;
-    }
-    if (!ptr) {
-        return nullptr;
-    }
-
-    int begin = 0;
-    int end = static_cast<int>(allocations.size() - 1);
-    while (end >= begin) {
-        int currentPos = (begin + end) / 2;
-        const auto &allocation = allocations[currentPos];
-        if (allocation.first == ptr || (allocation.first < ptr &&
-                                        (reinterpret_cast<uintptr_t>(ptr) < (reinterpret_cast<uintptr_t>(allocation.first) + allocation.second->size)))) {
-            return allocation.second.get();
-        } else if (ptr < allocation.first) {
-            end = currentPos - 1;
-            continue;
-        } else {
-            begin = currentPos + 1;
-            continue;
-        }
-    }
-
-    return nullptr;
-}
-
 void SVMAllocsManager::MapOperationsTracker::insert(SvmMapOperation mapOperation) {
     operations.insert(std::make_pair(mapOperation.regionSvmPtr, mapOperation));
 }
@@ -184,16 +137,16 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
                                                                   uint32_t requestedTypesMask) {
     std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->svmAllocs.allocations) {
-        if (rootDeviceIndex >= allocation.second->gpuAllocations.getGraphicsAllocations().size()) {
+        if (rootDeviceIndex >= allocation.second.gpuAllocations.getGraphicsAllocations().size()) {
             continue;
         }
 
-        if (!(allocation.second->memoryType & requestedTypesMask) ||
-            (nullptr == allocation.second->gpuAllocations.getGraphicsAllocation(rootDeviceIndex))) {
+        if (!(allocation.second.memoryType & requestedTypesMask) ||
+            (nullptr == allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex))) {
             continue;
         }
 
-        auto alloc = allocation.second->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        auto alloc = allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
         residencyContainer.push_back(alloc);
     }
 }
@@ -201,8 +154,8 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
 void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask) {
     std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->svmAllocs.allocations) {
-        if (allocation.second->memoryType & requestedTypesMask) {
-            auto gpuAllocation = allocation.second->gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
+        if (allocation.second.memoryType & requestedTypesMask) {
+            auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
             if (gpuAllocation == nullptr) {
                 continue;
             }
@@ -712,7 +665,7 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
 bool SVMAllocsManager::hasHostAllocations() {
     std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->svmAllocs.allocations) {
-        if (allocation.second->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+        if (allocation.second.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
             return true;
         }
     }
@@ -742,7 +695,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     }
     if (parseAllAllocations) {
         for (auto &allocation : this->svmAllocs.allocations) {
-            auto gpuAllocation = allocation.second->gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
+            auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
             if (gpuAllocation == nullptr) {
                 continue;
             }
@@ -859,7 +812,7 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
 void SVMAllocsManager::prefetchSVMAllocs(Device &device, CommandStreamReceiver &commandStreamReceiver) {
     std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->svmAllocs.allocations) {
-        NEO::SvmAllocationData allocData = *allocation.second;
+        NEO::SvmAllocationData allocData = allocation.second;
         this->prefetchMemory(device, commandStreamReceiver, allocData);
     }
 }

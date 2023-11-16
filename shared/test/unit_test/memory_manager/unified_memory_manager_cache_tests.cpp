@@ -17,72 +17,6 @@
 
 using namespace NEO;
 
-TEST(SortedVectorBasedAllocationTrackerTests, givenSortedVectorBasedAllocationTrackerWhenInsertRemoveAndGetThenStoreDataProperly) {
-    SvmAllocationData data(1u);
-    SVMAllocsManager::SortedVectorBasedAllocationTracker tracker;
-
-    MockGraphicsAllocation graphicsAllocations[] = {{reinterpret_cast<void *>(0x1 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x2 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x3 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x4 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x5 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x6 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x7 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x8 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0x9 * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k},
-                                                    {reinterpret_cast<void *>(0xA * MemoryConstants::pageSize64k), MemoryConstants::pageSize64k}};
-    const auto graphicsAllocationsSize = sizeof(graphicsAllocations) / sizeof(MockGraphicsAllocation);
-    for (uint32_t i = graphicsAllocationsSize - 1; i >= graphicsAllocationsSize / 2; --i) {
-        data.gpuAllocations.addAllocation(&graphicsAllocations[i]);
-        data.device = reinterpret_cast<Device *>(graphicsAllocations[i].getGpuAddress());
-        tracker.insert(data);
-    }
-    for (uint32_t i = 0; i < graphicsAllocationsSize / 2; ++i) {
-        data.gpuAllocations.addAllocation(&graphicsAllocations[i]);
-        data.device = reinterpret_cast<Device *>(graphicsAllocations[i].getGpuAddress());
-        tracker.insert(data);
-    }
-
-    EXPECT_EQ(tracker.getNumAllocs(), graphicsAllocationsSize);
-    for (uint64_t i = 0; i < graphicsAllocationsSize; ++i) {
-        EXPECT_EQ((i + 1) * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].first));
-        EXPECT_EQ((i + 1) * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].second->device));
-    }
-
-    auto addr1 = reinterpret_cast<void *>(graphicsAllocations[7].getGpuAddress());
-    auto data1 = tracker.get(addr1);
-    EXPECT_EQ(data1->device, addr1);
-
-    MockGraphicsAllocation graphicsAlloc{reinterpret_cast<void *>(0x0), MemoryConstants::pageSize64k};
-    data.gpuAllocations.addAllocation(&graphicsAlloc);
-    data.device = reinterpret_cast<Device *>(graphicsAlloc.getGpuAddress());
-    tracker.insert(data);
-
-    EXPECT_EQ(tracker.getNumAllocs(), graphicsAllocationsSize + 1);
-    for (uint64_t i = 0; i < graphicsAllocationsSize + 1; ++i) {
-        EXPECT_EQ(i * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].first));
-        EXPECT_EQ(i * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].second->device));
-    }
-    EXPECT_EQ(data1->device, addr1);
-
-    auto addr2 = reinterpret_cast<void *>(graphicsAllocations[1].getGpuAddress());
-    auto data2 = tracker.get(addr2);
-    EXPECT_EQ(data1->device, addr1);
-    EXPECT_EQ(data2->device, addr2);
-    tracker.remove(*data2);
-    EXPECT_EQ(tracker.getNumAllocs(), graphicsAllocationsSize);
-    for (uint64_t i = 0; i < graphicsAllocationsSize; ++i) {
-        if (i < 2) {
-            EXPECT_EQ(i * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].first));
-            EXPECT_EQ(i * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].second->device));
-        } else {
-            EXPECT_EQ((i + 1) * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].first));
-            EXPECT_EQ((i + 1) * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(tracker.allocations[static_cast<uint32_t>(i)].second->device));
-        }
-    }
-    EXPECT_EQ(data1->device, addr1);
-}
-
 TEST(SvmDeviceAllocationCacheTest, givenAllocationCacheDefaultWhenCheckingIfEnabledThenItIsDisabled) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
@@ -283,7 +217,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentFlagsWhenAllocat
     auto svmManager = std::make_unique<MockSVMAllocsManager>(rootDevice->getMemoryManager(), false);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
 
-    constexpr auto allocationSizeBasis = MemoryConstants::kiloByte;
+    constexpr auto allocationSizeBasis = MemoryConstants::pageSize64k;
     size_t defaultAllocSize = allocationSizeBasis << 0;
     std::map<uint32_t, DeviceBitfield> subDeviceBitfields = {{0u, {01}}, {1u, {10}}};
     SvmDeviceAllocationCacheTestDataType

@@ -313,8 +313,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithPro
 }
 
 NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *externalPtr) {
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
@@ -333,8 +332,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromS
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
@@ -352,8 +350,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
@@ -368,8 +365,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
     return alloc;
 }
 NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += 0x1000;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
@@ -428,8 +424,7 @@ void MemoryOpenIpcHandleTest::TearDown() {
 }
 
 NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
@@ -445,8 +440,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
 }
 
 NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
@@ -465,8 +459,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
@@ -486,8 +479,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
         return nullptr;
     }
 
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += 0x1000;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
@@ -505,8 +497,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }
-    auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
-    sharedHandleAddress += properties.size;
+    auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
