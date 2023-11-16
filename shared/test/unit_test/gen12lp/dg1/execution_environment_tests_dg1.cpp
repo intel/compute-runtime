@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/destructor_counted.h"
@@ -24,7 +25,11 @@ HWTEST2_F(RootDeviceEnvironmentTests, givenRootDeviceEnvironmentWhenAILInitProce
             return false;
         }
     };
-    rootDeviceEnvironment->ailConfiguration.reset(new AILDG1());
+    VariableBackup<AILConfiguration *> ailConfiguration(&ailConfigurationTable[productFamily]);
+
+    AILDG1 ailDg1;
+    ailConfigurationTable[productFamily] = &ailDg1;
+
     EXPECT_EQ(false, rootDeviceEnvironment->initAilConfiguration());
 }
 } // namespace NEO

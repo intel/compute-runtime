@@ -28,7 +28,12 @@ HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCall
         bool hashCorrect = {true};
     };
 
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
     AILMock ail;
+    ailConfigurationTable[productFamily] = &ail;
+    auto ailConfiguration = AILConfiguration::get(defaultHwInfo->platform.eProductFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
     std::string_view fixCode = "else { SYNC_WARPS; }";
 
     for (auto name : {"FAHBench-gui", "FAHBench-cmd"}) {

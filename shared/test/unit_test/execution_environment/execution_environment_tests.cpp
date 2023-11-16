@@ -207,17 +207,6 @@ TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCc
     EXPECT_TRUE(hwInfo->featureTable.flags.ftrRcsNode);
 }
 
-TEST(RootDeviceEnvironment, givenEnableAILFlagSetToFalseWhenInitializingAILConfigurationThenSkipInitializingIt) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableAIL.set(false);
-
-    MockExecutionEnvironment executionEnvironment;
-    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    ASSERT_EQ(nullptr, rootDeviceEnvironment->ailConfiguration);
-    rootDeviceEnvironment->initAilConfiguration();
-    EXPECT_EQ(nullptr, rootDeviceEnvironment->ailConfiguration);
-}
-
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));

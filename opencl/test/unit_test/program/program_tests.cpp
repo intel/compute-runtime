@@ -680,10 +680,10 @@ void MinimumProgramFixture::TearDown() {
     NEO::PlatformFixture::tearDown();
 }
 
-HWTEST2_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourcesDoNotChange, IsDG2) {
-    auto pDevice = pContext->getDevice(0);
-    auto rootDeviceEnvironment = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-    rootDeviceEnvironment->ailConfiguration.reset(nullptr);
+TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourcesDoNotChange) {
+
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+    ailConfigurationTable[productFamily] = nullptr;
     const char *sources[] = {"kernel() {}"};
     size_t knownSourceSize = strlen(sources[0]);
 
@@ -701,10 +701,9 @@ HWTEST2_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSo
     pProgram->release();
 }
 
-HWTEST2_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotMarkApplicationContextAsNonZebin, IsAtLeastSkl) {
-    auto pDevice = pContext->getDevice(0);
-    auto rootDeviceEnvironment = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-    rootDeviceEnvironment->ailConfiguration.reset(nullptr);
+HWTEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotMarkApplicationContextAsNonZebin) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+    ailConfigurationTable[productFamily] = nullptr;
     const char *dummyKernelSources[] = {"kernel void _(){}"}; // if detected - should trigger fallback to CTNI
     size_t knownSourceSize = strlen(dummyKernelSources[0]);
 
@@ -755,10 +754,10 @@ HWTEST2_F(MinimumProgramFixture, givenAILReturningTrueForFallbackRequirementWhen
             return true;
         }
     };
-    auto pDevice = pContext->getDevice(0);
-    auto rootDeviceEnvironment = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-    rootDeviceEnvironment->ailConfiguration.reset(new MockAIL());
+    VariableBackup<AILConfiguration *> ailConfiguration(&ailConfigurationTable[productFamily]);
 
+    MockAIL mockAIL;
+    ailConfigurationTable[productFamily] = &mockAIL;
     ASSERT_FALSE(pContext->checkIfContextIsNonZebin());
 
     const char *kernelSources[] = {"some source code"};

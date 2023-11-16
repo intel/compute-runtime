@@ -13,8 +13,10 @@ namespace NEO {
 class MockAILConfiguration : public AILConfiguration {
   public:
     bool initProcessExecutableName() override {
+        initCalled = true;
         return true;
     }
+    bool initCalled = false;
     void modifyKernelIfRequired(std::string &kernel) override {}
 
     bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override {
@@ -31,7 +33,7 @@ class MockAILConfiguration : public AILConfiguration {
 };
 
 template <PRODUCT_FAMILY productFamily>
-class AILWhitebox : public AILConfigurationHw<productFamily> {
+class AILMock : public AILConfigurationHw<productFamily> {
   public:
     using AILConfiguration::apply;
     using AILConfiguration::isKernelHashCorrect;
