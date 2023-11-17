@@ -11,6 +11,8 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/core/test/unit_tests/mock.h"
 
@@ -98,6 +100,9 @@ class AUBFixtureL0 {
             aubCsr->expectMMIO(mmioRegister, expectedValue);
         }
     }
+
+    std::string aubFileName;
+    std::unique_ptr<VariableBackup<NEO::UltHwConfig>> backupUltConfig;
 
     const uint32_t rootDeviceIndex = 0;
     NEO::ExecutionEnvironment *executionEnvironment;

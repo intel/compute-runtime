@@ -26,6 +26,9 @@ struct UltHwConfig {
 
     bool csrBaseCallCreatePreemption = true;
     bool csrCreatePreemptionReturnValue = true;
+    bool reserved = false;
+
+    const char *aubTestName = nullptr;
 };
 
 extern UltHwConfig ultHwConfig;

@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/tests_configuration.h"
@@ -55,6 +56,8 @@ class AUBFixture : public CommandQueueHwFixture {
     void setUp(const HardwareInfo *hardwareInfo) {
         const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
 
+        backupUltConfig = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
+
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
@@ -68,6 +71,9 @@ class AUBFixture : public CommandQueueHwFixture {
         std::stringstream strfilename;
         strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
         strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
+
+        aubFileName = strfilename.str();
+        ultHwConfig.aubTestName = aubFileName.c_str();
 
         auto pDevice = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
         device = std::make_unique<MockClDevice>(pDevice);
@@ -176,6 +182,9 @@ class AUBFixture : public CommandQueueHwFixture {
 
   private:
     using CommandQueueHwFixture::setUp;
+    std::string aubFileName;
+    std::unique_ptr<VariableBackup<UltHwConfig>> backupUltConfig;
+
 }; // namespace NEO
 
 template <typename KernelFixture>

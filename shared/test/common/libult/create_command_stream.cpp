@@ -7,7 +7,9 @@
 
 #include "shared/test/common/libult/create_command_stream.h"
 
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/create_command_stream_impl.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -15,6 +17,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/tests_configuration.h"
 
 namespace NEO {
 
@@ -27,6 +30,14 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
 
     if (ultHwConfig.useHwCsr) {
         return createCommandStreamImpl(executionEnvironment, rootDeviceIndex, deviceBitfield);
+    }
+
+    if (ultHwConfig.aubTestName != nullptr) {
+        if (testMode == TestMode::AubTestsWithTbx) {
+            return TbxCommandStreamReceiver::create(ultHwConfig.aubTestName, true, executionEnvironment, rootDeviceIndex, deviceBitfield);
+        } else {
+            return AUBCommandStreamReceiver::create(ultHwConfig.aubTestName, true, executionEnvironment, rootDeviceIndex, deviceBitfield);
+        }
     }
 
     auto funcCreate = commandStreamReceiverFactory[IGFX_MAX_CORE + hwInfo->platform.eRenderCoreFamily];

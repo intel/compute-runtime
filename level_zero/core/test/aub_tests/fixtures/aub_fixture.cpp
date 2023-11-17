@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
@@ -41,6 +42,7 @@ void AUBFixtureL0::setUp() {
 void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled) {
     ASSERT_NE(nullptr, hardwareInfo);
     const auto &hwInfo = *hardwareInfo;
+    backupUltConfig = std::make_unique<VariableBackup<NEO::UltHwConfig>>(&NEO::ultHwConfig);
 
     executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
@@ -50,9 +52,8 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     if (debuggingEnabled) {
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     }
-    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     auto engineType = getChosenEngineType(hwInfo);
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -60,6 +61,11 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
 
     strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
+
+    aubFileName = strfilename.str();
+    NEO::ultHwConfig.aubTestName = aubFileName.c_str();
+
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
     if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
         this->csr = NEO::TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
