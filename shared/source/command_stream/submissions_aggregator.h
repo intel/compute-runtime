@@ -37,6 +37,7 @@ struct BatchBuffer {
                 bool dispatchMonitorFence);
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
+    ResidencyContainer *allocationsForResidency = nullptr;
     size_t startOffset = 0u;
     size_t chainedBatchBufferStartOffset = 0u;
     uint64_t taskStartAddress = 0; // if task not available, use CSR stream

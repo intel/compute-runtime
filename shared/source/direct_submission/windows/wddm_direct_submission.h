@@ -32,13 +32,14 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     bool handleResidency() override;
     void handleCompletionFence(uint64_t completionValue, MonitoredFence &fence);
     void ensureRingCompletion() override;
-    void handleSwitchRingBuffers() override;
+    void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) override;
     void handleStopRingBuffer() override;
     uint64_t updateTagValue(bool requireMonitorFence) override;
     bool dispatchMonitorFenceRequired(bool requireMonitorFence) override;
     uint64_t updateTagValueImpl();
     void getTagAddressValue(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;
+    MOCKABLE_VIRTUAL void updateMonitorFenceValueForResidencyList(ResidencyContainer *allocationsForResidency);
 
     OsContextWin *osContextWin;
     Wddm *wddm;

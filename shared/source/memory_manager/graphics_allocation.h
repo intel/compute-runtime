@@ -306,6 +306,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     SurfaceStateInHeapInfo getBindlessInfo() {
         return bindlessInfo;
     }
+    MOCKABLE_VIRTUAL void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};

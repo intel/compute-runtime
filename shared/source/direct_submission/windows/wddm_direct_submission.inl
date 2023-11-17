@@ -62,7 +62,7 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
                                  this->getSizeNewResourceHandler() +
                                  this->getSizeSwitchRingBufferSection() +
                                  this->getSizeEnd(false);
-    this->switchRingBuffersNeeded(requiredMinimalSize);
+    this->switchRingBuffersNeeded(requiredMinimalSize, nullptr);
 
     this->handleNewResourcesSubmission();
 
@@ -129,9 +129,10 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
+void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->disableMonitorFence) {
         updateTagValueImpl();
+        updateMonitorFenceValueForResidencyList(allocationsForResidency);
     }
 }
 
@@ -192,6 +193,20 @@ inline bool WddmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t ri
         return false;
     }
     return true;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::updateMonitorFenceValueForResidencyList(ResidencyContainer *allocationsForResidency) {
+    if (allocationsForResidency == nullptr) {
+        return;
+    }
+    const auto currentFence = osContextWin->getResidencyController().getMonitoredFence().currentFenceValue;
+    auto contextId = osContextWin->getContextId();
+    for (uint32_t i = 0; i < allocationsForResidency->size(); i++) {
+        WddmAllocation *allocation = static_cast<WddmAllocation *>((*allocationsForResidency)[i]);
+        // Update fence value not to early destroy / evict allocation
+        allocation->updateCompletionDataForAllocationAndFragments(currentFence, contextId);
+    }
 }
 
 } // namespace NEO

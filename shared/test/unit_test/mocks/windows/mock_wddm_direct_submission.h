@@ -47,10 +47,18 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::semaphores;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
+    using BaseClass::updateMonitorFenceValueForResidencyList;
     using BaseClass::updateTagValue;
     using BaseClass::useNotifyForPostSync;
     using BaseClass::wddm;
     using BaseClass::WddmDirectSubmission;
     using typename BaseClass::RingBufferUse;
+
+    void updateMonitorFenceValueForResidencyList(ResidencyContainer *allocationsForResidency) override {
+        updateMonitorFenceValueForResidencyListCalled++;
+        BaseClass::updateMonitorFenceValueForResidencyList(allocationsForResidency);
+    }
+
+    uint32_t updateMonitorFenceValueForResidencyListCalled = 0u;
 };
 } // namespace NEO

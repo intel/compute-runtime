@@ -82,6 +82,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::startRingBuffer;
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
+    using BaseClass::switchRingBuffersNeeded;
     using BaseClass::systemMemoryFenceAddressSet;
     using BaseClass::unblockGpu;
     using BaseClass::useNotifyForPostSync;
@@ -152,7 +153,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         return handleResidencyReturn;
     }
 
-    void handleSwitchRingBuffers() override {}
+    void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) override {}
 
     uint64_t updateTagValue(bool requireMonitorFence) override {
         return updateTagValueReturn;

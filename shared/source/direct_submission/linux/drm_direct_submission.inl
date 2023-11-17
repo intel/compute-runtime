@@ -195,7 +195,7 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
+void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->disableMonitorFence) {
         this->currentTagData.tagValue++;
 

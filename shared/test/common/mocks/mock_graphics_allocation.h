@@ -57,6 +57,11 @@ class MockGraphicsAllocation : public MemoryAllocation {
         handle = internalHandle;
         return peekInternalHandleResult;
     }
+    void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) override {
+        updateCompletionDataForAllocationAndFragmentsCalledtimes++;
+    }
+
+    uint64_t updateCompletionDataForAllocationAndFragmentsCalledtimes = 0;
     int peekInternalHandleResult = 0;
     uint64_t internalHandle = 0;
 };

@@ -111,9 +111,9 @@ class DirectSubmissionHw {
     size_t getSizeNewResourceHandler();
     virtual void handleStopRingBuffer(){};
     virtual void ensureRingCompletion(){};
-    void switchRingBuffersNeeded(size_t size);
-    virtual uint64_t switchRingBuffers();
-    virtual void handleSwitchRingBuffers() = 0;
+    void switchRingBuffersNeeded(size_t size, ResidencyContainer *allocationsForResidency);
+    uint64_t switchRingBuffers(ResidencyContainer *allocationsForResidency);
+    virtual void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) = 0;
     GraphicsAllocation *switchRingBuffersAllocations();
 
     constexpr static uint64_t updateTagValueFail = std::numeric_limits<uint64_t>::max();

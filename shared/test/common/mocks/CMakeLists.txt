@@ -79,6 +79,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_modules_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_multi_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_context_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
@@ -90,6 +91,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_packet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
 )

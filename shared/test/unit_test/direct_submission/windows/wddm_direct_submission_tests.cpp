@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_os_context_win.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
@@ -287,7 +288,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
 
-    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
+    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers(nullptr);
     EXPECT_EQ(expectedGpuVa, gpuVa);
     EXPECT_EQ(wddmDirectSubmission.ringBuffers[1].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
 
@@ -316,7 +317,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
 
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress();
 
-    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
+    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers(nullptr);
     EXPECT_EQ(expectedGpuVa, gpuVa);
     EXPECT_EQ(wddmDirectSubmission.ringBuffers[1].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
 
@@ -375,7 +376,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
 
-    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
+    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers(nullptr);
     EXPECT_EQ(expectedGpuVa, gpuVa);
     EXPECT_EQ(wddmDirectSubmission.ringBuffers[2u].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
 
@@ -409,7 +410,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
 
-    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
+    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers(nullptr);
     EXPECT_EQ(expectedGpuVa, gpuVa);
     EXPECT_EQ(wddmDirectSubmission.ringBuffers.size(), 2u);
     EXPECT_EQ(wddmDirectSubmission.ringBuffers[1u].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
@@ -567,7 +568,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleSwitchR
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     wddmDirectSubmission.disableMonitorFence = true;
 
-    wddmDirectSubmission.handleSwitchRingBuffers();
+    wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
 }
@@ -975,4 +976,49 @@ HWTEST_F(WddmDirectSubmissionTest,
     EXPECT_EQ(QueueThrottle::LOW, wddmDirectSubmission.lastSubmittedThrottle);
 
     memoryManager->freeGraphicsMemory(clientCommandBuffer);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenNullPtrResidencyControllerWhenUpdatingResidencyAfterSwitchRingThenReturnBeforeAccessingContextId) {
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    auto mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.osContextWin = mockOsContextWin.get();
+    wddmDirectSubmission.updateMonitorFenceValueForResidencyList(nullptr);
+    EXPECT_EQ(mockOsContextWin->getResidencyControllerCalledTimes, 0u);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenEmptyResidencyControllerWhenUpdatingResidencyAfterSwitchRingThenReturnAfterAccessingContextId) {
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    auto mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.osContextWin = mockOsContextWin.get();
+    ResidencyContainer container;
+    wddmDirectSubmission.updateMonitorFenceValueForResidencyList(&container);
+    EXPECT_EQ(mockOsContextWin->getResidencyControllerCalledTimes, 1u);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenResidencyControllerWhenUpdatingResidencyAfterSwitchRingThenAllocationCallUpdateResidency) {
+
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    auto mockOsContextWin = std::make_unique<MockOsContextWin>(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.osContextWin = mockOsContextWin.get();
+    ResidencyContainer container;
+    NEO::MockGraphicsAllocation mockGa;
+    container.push_back(&mockGa);
+    wddmDirectSubmission.updateMonitorFenceValueForResidencyList(&container);
+    EXPECT_EQ(mockGa.updateCompletionDataForAllocationAndFragmentsCalledtimes, 1u);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersThenUpdateResidencyCalled) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
+    EXPECT_EQ(wddmDirectSubmission.updateMonitorFenceValueForResidencyListCalled, 1u);
 }

@@ -82,6 +82,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     if (submissionStatus != SubmissionStatus::SUCCESS) {
         return submissionStatus;
     }
+    batchBuffer.allocationsForResidency = &allocationsForResidency;
     if (this->directSubmission.get()) {
         this->startControllingDirectSubmissions();
         auto ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));

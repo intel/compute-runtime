@@ -119,7 +119,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
 
     EXPECT_TRUE(drmDirectSubmission.handleResidency());
 
-    EXPECT_NE(0ull, drmDirectSubmission.switchRingBuffers());
+    EXPECT_NE(0ull, drmDirectSubmission.switchRingBuffers(nullptr));
 
     EXPECT_EQ(0ull, drmDirectSubmission.updateTagValue(drmDirectSubmission.dispatchMonitorFenceRequired(false)));
 
@@ -895,7 +895,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenHandleSwitchRingBu
     auto newCompletionFenceValue = 10u;
     drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
-    drmDirectSubmission.handleSwitchRingBuffers();
+    drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
 }
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaEnabledAndRingNotStartedThenCompletionFenceIsNotUpdated) {
@@ -910,7 +910,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 
     drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
-    drmDirectSubmission.handleSwitchRingBuffers();
+    drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, prevCompletionFenceVal);
 }
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaEnabledAndRingStartedThenCompletionFenceIsUpdated) {
@@ -925,7 +925,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 
     drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
-    drmDirectSubmission.handleSwitchRingBuffers();
+    drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
     drmDirectSubmission.ringStart = false;
 }
@@ -939,7 +939,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 
     drmDirectSubmission.currentTagData.tagValue = newCompletionFenceValue;
     drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence = prevCompletionFenceVal;
-    drmDirectSubmission.handleSwitchRingBuffers();
+    drmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
 }
 

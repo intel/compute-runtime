@@ -24,7 +24,9 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_os_context_win.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm_residency_controller.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
@@ -60,17 +62,6 @@ class MockWddmResidencyController : public WddmResidencyController {
     }
 };
 
-class MockOsContextWin : public OsContextWin {
-  public:
-    MockOsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-        : OsContextWin(wddm, rootDeviceIndex, contextId, engineDescriptor),
-          mockResidencyController(wddm, contextId) {}
-
-    WddmResidencyController &getResidencyController() override { return mockResidencyController; };
-
-    MockWddmResidencyController mockResidencyController;
-};
-
 struct WddmResidencyControllerTest : ::testing::Test {
     const uint32_t osContextId = 0u;
 
@@ -88,7 +79,7 @@ struct WddmResidencyControllerTest : ::testing::Test {
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
     WddmMock *wddm = nullptr;
     std::unique_ptr<MockOsContextWin> mockOsContextWin;
-    MockWddmResidencyController *residencyController = nullptr;
+    NEO::MockWddmResidencyController *residencyController = nullptr;
 };
 
 struct WddmResidencyControllerWithGdiTest : ::testing::Test {
@@ -112,7 +103,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
     WddmMock *wddm = nullptr;
     std::unique_ptr<MockOsContextWin> mockOsContextWin;
-    MockWddmResidencyController *residencyController = nullptr;
+    NEO::MockWddmResidencyController *residencyController = nullptr;
     MockGdi *gdi = nullptr;
 };
 
@@ -201,7 +192,7 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThe
     wddm->init();
 
     std::memset(&gdi->getRegisterTrimNotificationArg(), 0, sizeof(D3DKMT_REGISTERTRIMNOTIFICATION));
-    MockWddmResidencyController residencyController{*wddm, 0u};
+    NEO::MockWddmResidencyController residencyController{*wddm, 0u};
 
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
     EXPECT_EQ(nullptr, residencyController.trimCallbackHandle);

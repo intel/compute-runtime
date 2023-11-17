@@ -518,7 +518,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
 
     size_t requiredSize = startSize + getSizeDispatch(false, false, dispatchMonitorFenceRequired(true)) + getSizeEnd(false);
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
-        switchRingBuffers();
+        switchRingBuffers(nullptr);
     }
     uint64_t gpuStartVa = ringCommandStream.getCurrentGpuAddressPosition();
 
@@ -978,7 +978,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         }
     }
 
-    this->switchRingBuffersNeeded(requiredMinimalSize);
+    this->switchRingBuffersNeeded(requiredMinimalSize, batchBuffer.allocationsForResidency);
 
     if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingQueueStall();
@@ -1047,14 +1047,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersNeeded(size_t size) {
+void DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersNeeded(size_t size, ResidencyContainer *allocationsForResidency) {
     if (this->ringCommandStream.getAvailableSpace() < size) {
-        this->switchRingBuffers();
+        this->switchRingBuffers(allocationsForResidency);
     }
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers() {
+inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers(ResidencyContainer *allocationsForResidency) {
     GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
     void *flushPtr = ringCommandStream.getSpace(0);
     uint64_t currentBufferGpuVa = ringCommandStream.getCurrentGpuAddressPosition();
@@ -1067,7 +1067,7 @@ inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers() {
     ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), ringCommandStream.getMaxAvailableSpace());
     ringCommandStream.replaceGraphicsAllocation(nextRingBuffer);
 
-    handleSwitchRingBuffers();
+    handleSwitchRingBuffers(allocationsForResidency);
 
     return currentBufferGpuVa;
 }

@@ -124,6 +124,15 @@ uint32_t GraphicsAllocation::getNumHandlesForKmdSharedAllocation(uint32_t numBan
     return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
 }
 
+void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) {
+    getResidencyData().updateCompletionData(newFenceValue, contextId);
+
+    for (uint32_t allocationId = 0; allocationId < fragmentsStorage.fragmentCount; allocationId++) {
+        auto residencyData = fragmentsStorage.fragmentStorageData[allocationId].residency;
+        residencyData->updateCompletionData(newFenceValue, contextId);
+    }
+}
+
 constexpr TaskCountType GraphicsAllocation::objectNotUsed;
 constexpr TaskCountType GraphicsAllocation::objectNotResident;
 constexpr TaskCountType GraphicsAllocation::objectAlwaysResident;
