@@ -1053,7 +1053,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreate
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
     DrmMemoryManager drmMemoryManger(gemCloseWorkerMode::gemCloseWorkerActive, false, false, *executionEnvironment);
-    EXPECT_NE(nullptr, drmMemoryManger.peekGemCloseWorker());
+    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice) {
+        EXPECT_NE(nullptr, drmMemoryManger.peekGemCloseWorker());
+    } else {
+        EXPECT_EQ(nullptr, drmMemoryManger.peekGemCloseWorker());
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds) {
@@ -2803,7 +2807,11 @@ TEST_F(DrmMemoryManagerBasic, givenEnabledGemCloseWorkerWhenMemoryManagerIsCreat
 TEST_F(DrmMemoryManagerBasic, givenDefaultGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
     MemoryManagerCreate<DrmMemoryManager> memoryManager(false, false, gemCloseWorkerMode::gemCloseWorkerActive, false, false, executionEnvironment);
 
-    EXPECT_NE(memoryManager.peekGemCloseWorker(), nullptr);
+    if (executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice) {
+        EXPECT_NE(nullptr, memoryManager.peekGemCloseWorker());
+    } else {
+        EXPECT_EQ(nullptr, memoryManager.peekGemCloseWorker());
+    }
 }
 
 TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
