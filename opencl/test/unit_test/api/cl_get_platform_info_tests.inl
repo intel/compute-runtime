@@ -226,6 +226,8 @@ TEST_F(ClGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenThey
     for (size_t i = 0; i < extensionsCount; i++) {
         if (strcmp(platformExtensionsWithVersion[i].name, "cl_khr_integer_dot_product") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), platformExtensionsWithVersion[i].version);
+        } else if (strcmp(platformExtensionsWithVersion[i].name, "cl_khr_external_memory") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(0, 9u, 1u), platformExtensionsWithVersion[i].version);
         } else {
             EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), platformExtensionsWithVersion[i].version);
         }

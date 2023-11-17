@@ -982,6 +982,8 @@ TEST_F(DeviceGetCapsTest, givenDefaultDeviceWhenQueriedForExtensionsWithVersionT
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
         if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), extensionWithVersion.version);
+        } else if (strcmp(extensionWithVersion.name, "cl_khr_external_memory") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(0, 9u, 1u), extensionWithVersion.version);
         } else {
             EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), extensionWithVersion.version);
         }
@@ -999,6 +1001,8 @@ TEST_F(DeviceGetCapsTest, givenClDeviceWhenGetExtensionsVersionCalledThenCorrect
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
         if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
             EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
+        } else if (strcmp(extensionWithVersion.name, "cl_khr_external_memory") == 0) {
+            EXPECT_EQ(CL_MAKE_VERSION(0, 9u, 1u), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
         } else {
             EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
         }

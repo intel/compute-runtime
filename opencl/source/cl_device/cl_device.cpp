@@ -285,6 +285,8 @@ const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
 cl_version ClDevice::getExtensionVersion(std::string name) {
     if (name.compare("cl_khr_integer_dot_product") == 0)
         return CL_MAKE_VERSION(2u, 0, 0);
+    else if (name.compare("cl_khr_external_memory") == 0)
+        return CL_MAKE_VERSION(0, 9u, 1u);
     else
         return CL_MAKE_VERSION(1u, 0, 0);
 }
