@@ -42,6 +42,12 @@ template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, De
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
 
+    bool ipcPool = eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC;
+
+    if (ipcPool && counterBased) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     RootDeviceIndicesContainer rootDeviceIndices;
     uint32_t maxRootDeviceIndex = 0u;
     uint32_t currentNumDevices = numDevices;
@@ -108,7 +114,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         if (graphicsAllocation) {
             eventPoolAllocations->addAllocation(graphicsAllocation);
             allocatedMemory = true;
-            if (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC) {
+            if (ipcPool) {
                 uint64_t handle = 0;
                 this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle) == 0);
             }
@@ -121,7 +127,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
                                                                                                    allocationProperties,
                                                                                                    *eventPoolAllocations);
-        if (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC) {
+        if (ipcPool) {
             this->isShareableEventMemory = eventPoolAllocations->getDefaultGraphicsAllocation()->isShareableHostMemory;
         }
         allocatedMemory = (nullptr != eventPoolPtr);
