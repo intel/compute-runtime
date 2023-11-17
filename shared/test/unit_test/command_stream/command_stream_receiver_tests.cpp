@@ -147,9 +147,24 @@ HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRIn
     EXPECT_FALSE(ret);
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {
+HWTEST_F(CommandStreamReceiverTest, givenFlagsDisabledWhenCallFillReusableAllocationsListThenDoNotAllocateCommandBuffer) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
+    pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+
+    commandStreamReceiver->fillReusableAllocationsList();
+
+    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
@@ -158,19 +173,26 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCallFillReusableAllocationsListT
 
     EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
+
+    auto allocation = internalAllocationStorage->getAllocationsForReuse().peekHead();
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, allocation->getAllocationType());
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenFlagDisabledWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {
+HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForInternalHeapsWhenCallFillReusableAllocationsListThenAllocateInternalHeapAndMakeItResident) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(1);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
     commandStreamReceiver->fillReusableAllocationsList();
 
-    EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
+    EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
+
+    auto allocation = internalAllocationStorage->getAllocationsForReuse().peekHead();
+    EXPECT_EQ(AllocationType::INTERNAL_HEAP, allocation->getAllocationType());
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestPreallocationCalledThenPreallocateCommandBufferCorrectly) {
@@ -2110,6 +2132,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsFo
 HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndEarlyPreallocatedAllocationInReuseListWhenCallingEnsureCommandBufferAllocationThenObtainAllocationFromInternalAllocationStorage) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
 
     commandStreamReceiver->fillReusableAllocationsList();

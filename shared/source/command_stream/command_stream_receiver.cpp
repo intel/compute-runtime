@@ -262,8 +262,8 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
     commandStream.replaceGraphicsAllocation(allocation);
 }
 
-void CommandStreamReceiver::preallocateCommandBuffer() {
-    const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER,
+void CommandStreamReceiver::preallocateAllocation(AllocationType type, size_t size) {
+    const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, size, type,
                                                                  isMultiOsContextCapable(), false, deviceBitfield};
     auto allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     if (allocation) {
@@ -272,11 +272,24 @@ void CommandStreamReceiver::preallocateCommandBuffer() {
     }
 }
 
+void CommandStreamReceiver::preallocateCommandBuffer() {
+    preallocateAllocation(AllocationType::COMMAND_BUFFER, MemoryConstants::pageSize64k);
+}
+
+void CommandStreamReceiver::preallocateInternalHeap() {
+    preallocateAllocation(AllocationType::INTERNAL_HEAP, MemoryConstants::pageSize64k);
+}
+
 void CommandStreamReceiver::fillReusableAllocationsList() {
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
     for (auto i = 0u; i < amountToFill; i++) {
         preallocateCommandBuffer();
+    }
+
+    auto internalHeapsToFill = getProductHelper().getInternalHeapsPreallocated();
+    for (auto i = 0u; i < internalHeapsToFill; i++) {
+        preallocateInternalHeap();
     }
 }
 

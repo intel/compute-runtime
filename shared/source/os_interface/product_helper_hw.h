@@ -120,6 +120,7 @@ class ProductHelperHw : public ProductHelper {
     bool isTranslationExceptionSupported() const override;
     uint32_t getMaxNumSamplers() const override;
     uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
+    uint32_t getInternalHeapsPreallocated() const override;
     bool isPlatformDpasSupported() const override;
     bool isPlatformDp4aSupported() const override;
     bool overrideAllocationCacheable(const AllocationData &allocationData) const override;

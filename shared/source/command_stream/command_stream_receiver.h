@@ -23,6 +23,7 @@
 
 namespace NEO {
 
+enum class AllocationType;
 enum class DebugPauseState : uint32_t;
 struct BatchBuffer;
 struct HardwareInfo;
@@ -434,7 +435,9 @@ class CommandStreamReceiver {
 
     void requestPreallocation();
     void releasePreallocationRequest();
+    void preallocateAllocation(AllocationType type, size_t size);
     void preallocateCommandBuffer();
+    void preallocateInternalHeap();
 
   protected:
     void cleanupResources();

@@ -349,6 +349,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskD2H, 0, "0: default, >0: bitmask: in
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocations, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers and heaps at initialization of immediate command list.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocationsPerCmdQueue, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers for each initialized opencl command queue.")
+DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfInternalHeapsToPreallocate, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of internal heaps when initializing csr.")
 DECLARE_DEBUG_VARIABLE(int32_t, UseHighAlignmentForHeapExtended, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver aligns HEAP_EXTENDED allocations to GPU VA that is next power of 2 for a given size, if disables GPU VA is using 2MB/64KB alignment.")
 DECLARE_DEBUG_VARIABLE(int32_t, DispatchCmdlistCmdBufferPrimary, -1, "-1: default, 0: dispatch command buffers as seconadry, 1: dispatch command buffers as primary and chain")
 DECLARE_DEBUG_VARIABLE(int32_t, UseImmediateFlushTask, -1, "-1: default, 0: use regular flush task, 1: use immediate flush task")

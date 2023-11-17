@@ -799,6 +799,14 @@ uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQue
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
+    if (DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    }
+    return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &) const {
     return false;
 }

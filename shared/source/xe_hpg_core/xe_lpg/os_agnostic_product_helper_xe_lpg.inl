@@ -102,4 +102,12 @@ uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQue
     return 2u;
 }
 
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
+    if (DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    }
+    return 1u;
+}
+
 } // namespace NEO
