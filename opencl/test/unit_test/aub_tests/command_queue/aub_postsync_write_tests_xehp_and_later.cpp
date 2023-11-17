@@ -37,8 +37,6 @@ struct PostSyncWriteXeHPTests : public HelloWorldFixture<AUBHelloWorldFixtureFac
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledWhenEnqueueingThenWritePostsyncOperation) {
-    MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
-
     const uint32_t bufferSize = 4;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
@@ -47,18 +45,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledW
     buffer->forceDisallowCPUCopy = true;
 
     uint8_t writeData[bufferSize] = {1, 2, 3, 4};
-    cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
     expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + buffer->getOffset()), writeData, bufferSize);
 
     typename FamilyType::TimestampPacketType expectedTimestampValues[4] = {1, 1, 1, 1};
-    auto tagGpuAddress = reinterpret_cast<void *>(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGpuAddress());
+    auto tagGpuAddress = reinterpret_cast<void *>(pCmdQ->getTimestampPacketContainer()->peekNodes().at(0)->getGpuAddress());
     expectMemoryNotEqual<FamilyType>(tagGpuAddress, expectedTimestampValues, 4 * sizeof(typename FamilyType::TimestampPacketType));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
     DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
-    MockCommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, nullptr);
-
     const uint32_t bufferSize = 4;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
@@ -67,10 +63,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWh
     buffer->forceDisallowCPUCopy = true;
 
     uint8_t writeData[bufferSize] = {1, 2, 3, 4};
-    cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
     expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + buffer->getOffset()), writeData, bufferSize);
 
-    auto tagGpuAddress = reinterpret_cast<void *>(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGpuAddress());
+    auto tagGpuAddress = reinterpret_cast<void *>(pCmdQ->getTimestampPacketContainer()->peekNodes().at(0)->getGpuAddress());
 
     constexpr auto timestampPacketTypeSize = sizeof(typename FamilyType::TimestampPacketType);
     if constexpr (timestampPacketTypeSize == 4u) {
