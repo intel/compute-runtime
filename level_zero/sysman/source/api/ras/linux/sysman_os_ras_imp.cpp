@@ -90,7 +90,6 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
 
 ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) {
     ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-
     uint32_t totalCategoryCount = 0;
     std::vector<uint32_t> numCategoriesBySources = {};
     for (auto &rasSource : rasSources) {
@@ -117,6 +116,29 @@ ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t 
         result = localResult;
         if (remainingCategories == 0u) {
             break;
+        }
+    }
+    return result;
+}
+
+ze_result_t LinuxRasImp::osRasClearStateExp(zes_ras_error_category_exp_t category) {
+    if (pFsAccess->isRootUser() == false) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Insufficient permissions and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    }
+
+    if (ZES_RAS_ERROR_CATEGORY_EXP_L3FABRIC_ERRORS < category) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+
+    ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    for (auto &rasSource : rasSources) {
+        result = rasSource->osRasClearStateExp(category);
+        if (result != ZE_RESULT_SUCCESS) {
+            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+                continue;
+            }
+            return result;
         }
     }
     return result;

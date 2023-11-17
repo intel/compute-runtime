@@ -222,7 +222,7 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
             }
         }
 
-        if (mockPmuReadAfterClear == true) {
+        if ((mockPmuReadAfterClear == true) && (mockPmuReadTile == false)) {
             if (mockPmuReadCountAfterClear == 0) {
                 mockPmuReadCountAfterClear++;
                 return mockedPmuReadForCorrectableAndSuccessReturn(fd, data, sizeOfdata);
@@ -240,24 +240,29 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         }
 
         if (mockPmuReadTile == true) {
-            if (mockPmuReadTileCount == 0) {
+            if (mockPmuReadAfterClear == true) {
+                mockPmuReadCountAfterClear++;
+            }
+            if ((mockPmuReadTileCount == 0) && (mockPmuReadCountAfterClear < 4)) {
                 mockPmuReadTileCount++;
                 return mockedPmuReadForCorrectableTile0AndSuccessReturn(fd, data, sizeOfdata);
             }
 
-            else if (mockPmuReadTileCount == 1) {
+            else if ((mockPmuReadTileCount == 1) && (mockPmuReadCountAfterClear < 4)) {
                 mockPmuReadTileCount++;
                 return mockedPmuReadForUncorrectableTile0AndSuccessReturn(fd, data, sizeOfdata);
             }
 
-            else if (mockPmuReadTileCount == 2) {
+            else if ((mockPmuReadTileCount == 2) && (mockPmuReadCountAfterClear < 4)) {
                 mockPmuReadTileCount++;
                 return mockedPmuReadForCorrectableTile1AndSuccessReturn(fd, data, sizeOfdata);
             }
 
-            else if (mockPmuReadTileCount == 3) {
+            else if ((mockPmuReadTileCount == 3) && (mockPmuReadCountAfterClear < 4)) {
                 mockPmuReadTileCount++;
                 return mockedPmuReadForUncorrectableTile1AndSuccessReturn(fd, data, sizeOfdata);
+            } else {
+                return mockedPmuReadAfterClearAndSuccessReturn(fd, data, sizeOfdata);
             }
         }
         return 0;

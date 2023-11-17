@@ -1156,14 +1156,18 @@ ze_result_t zesRasGetStateExp(
     if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Ras::fromHandle(hRas)->rasGetStateExp(pCount, pState);
     } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 }
 
 ze_result_t zesRasClearStateExp(
     zes_ras_handle_t hRas,
     zes_ras_error_category_exp_t category) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Ras::fromHandle(hRas)->rasClearStateExp(category);
+    } else {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 }
 
 ze_result_t zesDeviceEventRegister(

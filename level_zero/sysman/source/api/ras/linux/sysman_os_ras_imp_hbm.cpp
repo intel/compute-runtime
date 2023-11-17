@@ -24,13 +24,13 @@ void LinuxRasSourceHbm::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t>
 }
 
 ze_result_t LinuxRasSourceHbm::getMemoryErrorCountFromFw(zes_ras_error_type_t rasErrorType, uint32_t subDeviceCount, uint64_t &errorCount) {
+    if (pFwInterface == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     return pFwInterface->fwGetMemoryErrorCount(rasErrorType, subDeviceCount, subdeviceId, errorCount);
 }
 
 ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
-    if (pFwInterface == nullptr) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
     if (clear == true) {
         uint64_t errorCount = 0;
         ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
@@ -51,10 +51,6 @@ ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t c
 }
 
 ze_result_t LinuxRasSourceHbm::osRasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) {
-    if (pFwInterface == nullptr) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     uint64_t errorCount = 0;
     ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
     if (result != ZE_RESULT_SUCCESS) {
@@ -70,6 +66,18 @@ ze_result_t LinuxRasSourceHbm::osRasGetStateExp(uint32_t numCategoriesRequested,
 uint32_t LinuxRasSourceHbm::osRasGetCategoryCount() {
     // Return one for "MEMORY" category
     return 1u;
+}
+
+ze_result_t LinuxRasSourceHbm::osRasClearStateExp(zes_ras_error_category_exp_t category) {
+    if (category == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
+        uint64_t errorCount = 0;
+        ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        errorBaseline = errorCount;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 LinuxRasSourceHbm::LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), osRasErrorType(type), subdeviceId(subdeviceId) {
