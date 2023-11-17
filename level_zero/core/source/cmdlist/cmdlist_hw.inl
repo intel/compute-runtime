@@ -363,7 +363,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         }
     }
 
-    handleCounterBasedEventTransition(event);
+    if (!handleCounterBasedEventOperations(event)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     auto res = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), threadGroupDimensions,
                                             event, launchParams);
@@ -402,7 +404,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
         event->resetKernelCountAndPacketUsedCount();
     }
 
-    handleCounterBasedEventTransition(event);
+    if (!handleCounterBasedEventOperations(event)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
@@ -442,7 +446,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
-    handleCounterBasedEventTransition(event);
+    if (!handleCounterBasedEventOperations(event)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(event, true, false);
     launchParams.isIndirect = true;
@@ -482,7 +488,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
-    handleCounterBasedEventTransition(event);
+    if (!handleCounterBasedEventOperations(event)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(event, true, false);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(pNumLaunchArguments));
@@ -580,7 +588,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(signalEvent, true, false);
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
@@ -1240,7 +1250,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         return ret;
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(signalEvent, true, false);
     auto &rootDeviceEnvironment = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()];
@@ -1428,7 +1440,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     launchParams.numKernelsInSplitLaunch = kernelCounter;
     launchParams.isKernelSplitOperation = kernelCounter > 1;
@@ -1847,7 +1861,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         return res;
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     bool hostPointerNeedsFlush = false;
 
@@ -2097,7 +2113,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             return ret;
         }
 
-        handleCounterBasedEventTransition(signalEvent);
+        if (!handleCounterBasedEventOperations(signalEvent)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
 
         auto neoDevice = device->getNEODevice();
         appendEventForProfiling(signalEvent, true, false);
@@ -2342,7 +2360,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     auto event = Event::fromHandle(hEvent);
     event->resetKernelCountAndPacketUsedCount();
 
-    handleCounterBasedEventTransition(event);
+    if (!handleCounterBasedEventOperations(event)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
     NEO::Device *neoDevice = device->getNEODevice();
@@ -2642,7 +2662,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(signalEvent, true, false);
 
@@ -3161,7 +3183,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(signalEvent, true, false);
 
@@ -3314,7 +3338,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         handleInOrderImplicitDependencies(false);
     }
 
-    handleCounterBasedEventTransition(signalEvent);
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     appendEventForProfiling(signalEvent, true, false);
 
@@ -3603,18 +3629,26 @@ bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventTransition(Event *signalEvent) {
-    if (signalEvent && (NEO::DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() == 1)) {
-        if (signalEvent->isCounterBasedExplicitlyEnabled()) {
-            return;
+bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Event *signalEvent) {
+    if (signalEvent) {
+        if (signalEvent->isCounterBased() && !isInOrderExecutionEnabled()) {
+            return false;
         }
 
-        if (isInOrderExecutionEnabled() && (this->cmdListType == TYPE_IMMEDIATE)) {
-            signalEvent->enableCounterBasedMode(false);
-        } else {
-            signalEvent->disableImplicitCounterBasedMode();
+        if ((NEO::DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() == 1)) {
+            if (signalEvent->isCounterBasedExplicitlyEnabled()) {
+                return true;
+            }
+
+            if (isInOrderExecutionEnabled() && (this->cmdListType == TYPE_IMMEDIATE)) {
+                signalEvent->enableCounterBasedMode(false);
+            } else {
+                signalEvent->disableImplicitCounterBasedMode();
+            }
         }
     }
+
+    return true;
 }
 
 } // namespace L0

@@ -1043,7 +1043,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
     }
-    this->handleCounterBasedEventTransition(signalEvent);
+    this->handleCounterBasedEventOperations(signalEvent);
 
     const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : cpuMemCopyInfo.srcPtr;
     void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;

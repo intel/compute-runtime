@@ -88,7 +88,9 @@ struct BcsSplit {
 
         auto signalEvent = Event::fromHandle(hSignalEvent);
 
-        cmdList->handleCounterBasedEventTransition(signalEvent);
+        if (!cmdList->handleCounterBasedEventOperations(signalEvent)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
 
         auto totalSize = size;
         auto engineCount = cmdQsForSplit.size();
