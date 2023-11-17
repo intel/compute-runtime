@@ -24,6 +24,11 @@ bool ReleaseHelperHw<releaseType>::isPipeControlPriorToNonPipelinedStateCommands
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPipeControlPriorToPipelineSelectWaRequired() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isProgramAllStateComputeCommandFieldsWARequired() const {
     return false;
 }

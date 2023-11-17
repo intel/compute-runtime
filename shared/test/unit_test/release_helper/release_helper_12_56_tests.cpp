@@ -26,6 +26,7 @@ TEST_F(ReleaseHelper1256Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isAdjustWalkOrderAvailable());
         EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
+        EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_TRUE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
         EXPECT_FALSE(releaseHelper->isPrefetchDisablingRequired());
         EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());

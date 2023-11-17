@@ -25,6 +25,13 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
+    if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        args.renderTargetCacheFlushEnable = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
+    }
+
     if (DebugManager.flags.CleanStateInPreamble.get()) {
         auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
         cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
@@ -75,6 +82,9 @@ size_t PreambleHelper<Family>::getCmdSizeForPipelineSelect(const RootDeviceEnvir
     size_t size = 0;
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     size += sizeof(PIPELINE_SELECT);
+    if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+    }
     if (DebugManager.flags.CleanStateInPreamble.get()) {
         size += sizeof(PIPELINE_SELECT);
         size += 2 * MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);

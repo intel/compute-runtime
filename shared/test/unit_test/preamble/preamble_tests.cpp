@@ -276,7 +276,11 @@ HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsC
     hwParser.parseCommands<FamilyType>(stream);
 
     auto numPipeControl = hwParser.getCommandsList<PIPE_CONTROL>().size();
-    EXPECT_EQ(2u, numPipeControl);
+    auto expectedNumPipeControl = 2u;
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(mockDevice->getRootDeviceEnvironment())) {
+        expectedNumPipeControl++;
+    }
+    EXPECT_EQ(expectedNumPipeControl, numPipeControl);
     auto numPipelineSelect = hwParser.getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(2u, numPipelineSelect);
 }
