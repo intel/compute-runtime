@@ -67,13 +67,13 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     return ret;
 }
 
-std::vector<uint8_t> compileToNative(const std::string &src, const std::string &deviceName, const std::string &options, const std::string &internalOptions, std::string &outCompilerLog) {
+std::vector<uint8_t> compileToNative(const std::string &src, const std::string &deviceName, const std::string &revisionId, const std::string &options, const std::string &internalOptions, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-q", "-device", deviceName.c_str(), "-file", mainFileName, "-o", "output.bin", "", "", "", ""};
+    const char *argv[] = {"ocloc", "-q", "-device", deviceName.c_str(), "-revision_id", revisionId.c_str(), "-file", mainFileName, "-o", "output.bin", "", "", "", ""};
     uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 4;
-    int argIndex = 8;
+    int argIndex = 10;
     if (options.size() > 0) {
         argv[argIndex++] = "-options";
         argv[argIndex++] = options.c_str();

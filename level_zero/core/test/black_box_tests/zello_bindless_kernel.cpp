@@ -80,14 +80,14 @@ enum class ExecutionMode : uint32_t {
     ImmSyncCmdList
 };
 
-void createModule(const char *sourceCode, bool bindless, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, ze_module_handle_t &module) {
+void createModule(const char *sourceCode, bool bindless, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module) {
     std::string buildLog;
     std::string bindlessOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
     std::string internalOptions = "";
     if (bindless) {
         internalOptions = bindlessOptions;
     }
-    auto bin = compileToNative(sourceCode, deviceName, "", internalOptions, buildLog);
+    auto bin = compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -183,13 +183,13 @@ void run(const ze_kernel_handle_t &copyKernel, const ze_kernel_handle_t &fillKer
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
 }
 
-bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId) {
+bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
-    createModule(source, true, context, device, deviceId, module);
-    createModule(source2, false, context, device, deviceId, module2);
+    createModule(source, true, context, device, deviceId, revisionId, module);
+    createModule(source2, false, context, device, deviceId, revisionId, module2);
 
     ExecutionMode executionModes[] = {ExecutionMode::CommandQueue, ExecutionMode::ImmSyncCmdList};
     ze_kernel_handle_t copyKernel = nullptr;
@@ -214,13 +214,13 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
     return outputValidated;
 }
 
-bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, int imageCount) {
+bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId, int imageCount) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t copyKernel = nullptr;
 
-    createModule(source3, true, context, device, deviceId, module);
+    createModule(source3, true, context, device, deviceId, revisionId, module);
     createKernel(module, copyKernel, kernelName3.c_str());
 
     CommandHandler commandHandler;
@@ -348,6 +348,9 @@ int main(int argc, char *argv[]) {
     ss.setf(std::ios::hex, std::ios::basefield);
     ss << "0x" << deviceProperties.deviceId;
 
+    ze_device_uuid_t uuid = deviceProperties.uuid;
+    std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
+
     int testCase = 0;
     testCase = getParamValue(argc, argv, "", "--test-case", 0);
 
@@ -356,14 +359,14 @@ int main(int argc, char *argv[]) {
     case 0:
         std::cout << "test case: testBindlessBufferCopy\n"
                   << std::endl;
-        outputValidated = testBindlessBufferCopy(context, device, ss.str());
+        outputValidated = testBindlessBufferCopy(context, device, ss.str(), revisionId);
         break;
     case 1:
         std::cout << "test case: testBindlessImages\n"
                   << std::endl;
         auto imageCount = getParamValue(argc, argv, "", "--image-count", 4 * 4096 + 8);
         std::cout << "--image-count: " << imageCount << std::endl;
-        outputValidated = testBindlessImages(context, device, ss.str(), imageCount);
+        outputValidated = testBindlessImages(context, device, ss.str(), revisionId, imageCount);
         break;
     }
 
