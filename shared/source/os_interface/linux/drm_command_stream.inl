@@ -15,7 +15,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -43,7 +42,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     residency.reserve(512);
     execObjectsStorage.reserve(512);
 
-    if (this->drm->isVmBindAvailable() || !rootDeviceEnvironment->getHardwareInfo()->capabilityTable.isIntegratedDevice) {
+    if (this->drm->isVmBindAvailable()) {
         gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
     }
 

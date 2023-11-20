@@ -79,9 +79,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     template <typename GfxFamily>
     void tearDownT() {
         memoryManager->waitForDeletions();
-        if (memoryManager->peekGemCloseWorker()) {
-            memoryManager->peekGemCloseWorker()->close(true);
-        }
+        memoryManager->peekGemCloseWorker()->close(true);
         delete csr;
         if (mock->ioctlTearDownExpects) {
             EXPECT_EQ(mock->ioctlCount.gemWait, mock->ioctlTearDownExpected.gemWait);

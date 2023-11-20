@@ -83,8 +83,7 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
             return;
         }
         localMemAllocs.emplace_back();
-        disableGemCloseWorker &= (getDrm(rootDeviceIndex).isVmBindAvailable() ||
-                                  !executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.isIntegratedDevice);
+        disableGemCloseWorker &= getDrm(rootDeviceIndex).isVmBindAvailable();
     }
 
     if (disableGemCloseWorker) {

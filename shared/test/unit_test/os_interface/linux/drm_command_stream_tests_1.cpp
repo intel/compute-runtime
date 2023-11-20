@@ -199,7 +199,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenFlushingThenAvailableSpaceDoesNotCh
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
 
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -288,7 +288,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThen
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -334,7 +334,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyBbWhenFlushingThenSucceeds
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -356,7 +356,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyNotPaddedBbWhenFlushingThe
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -384,7 +384,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
@@ -433,7 +433,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSuccee
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
     mock->ioctlTearDownExpected.gemClose = 1;
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpects = true;
 
     EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
@@ -476,7 +476,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushin
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
     mock->ioctlTearDownExpected.gemClose = 1;
-    mock->ioctlTearDownExpected.gemWait = 1 + executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpects = true;
 
     EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
