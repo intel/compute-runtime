@@ -53,5 +53,47 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGetOsInterfaceIsInvokedThe
     EXPECT_EQ(pWddmSysmanImp, osInterface);
 }
 
+class MockOsSysman : public L0::OsSysman {
+    L0::SysmanDeviceImp *pParentSysmanDeviceImp;
+
+  public:
+    ze_result_t mockReturnResult = ZE_RESULT_SUCCESS;
+    MockOsSysman(L0::SysmanDeviceImp *pParentSysmanDeviceImp) {
+        this->pParentSysmanDeviceImp = pParentSysmanDeviceImp;
+    }
+    ze_result_t init() override { return mockReturnResult; }
+    ze_bool_t isDriverModelSupported() override { return false; }
+    std::vector<ze_device_handle_t> &getDeviceHandles() override {
+        return pParentSysmanDeviceImp->deviceHandles;
+    }
+    ze_device_handle_t getCoreDeviceHandle() override {
+        return pParentSysmanDeviceImp->hCoreDevice;
+    }
+    static MockOsSysman *create(L0::SysmanDeviceImp *pParentSysmanDeviceImp) {
+        MockOsSysman *pTestSysmanImp = new MockOsSysman(pParentSysmanDeviceImp);
+        return static_cast<MockOsSysman *>(pTestSysmanImp);
+    }
+};
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenDrmVersionIsXeThenUnSupportedIsReturned) {
+    auto osSysmanOriginal = pSysmanDeviceImp->pOsSysman;
+    MockOsSysman *testOsSysman = MockOsSysman::create(pSysmanDeviceImp);
+    testOsSysman->mockReturnResult = ZE_RESULT_SUCCESS;
+    pSysmanDeviceImp->pOsSysman = testOsSysman;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanDeviceImp->init());
+    pSysmanDeviceImp->pOsSysman = osSysmanOriginal;
+    delete testOsSysman;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceImpWhenOsSysmanInitFailsThenUnSupportedIsReturned) {
+    auto osSysmanOriginal = pSysmanDeviceImp->pOsSysman;
+    MockOsSysman *testOsSysman = MockOsSysman::create(pSysmanDeviceImp);
+    testOsSysman->mockReturnResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    pSysmanDeviceImp->pOsSysman = testOsSysman;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanDeviceImp->init());
+    pSysmanDeviceImp->pOsSysman = osSysmanOriginal;
+    delete testOsSysman;
+}
+
 } // namespace ult
 } // namespace L0

@@ -16,6 +16,7 @@
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
+#include "drm/drm.h"
 #include "drm/intel_hwconfig_types.h"
 
 namespace NEO {
@@ -152,6 +153,53 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThen
     zes_device_ecc_properties_t props = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceSetEccState(device, &newState, &props));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetEccState(device, &props));
+    static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndSysmanHandleIsSetToNullWhenSysmanAPICalledThenErrorIsReturned) {
+    ze_device_handle_t hSysman = device->toHandle();
+    auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();
+    static_cast<DeviceImp *>(device)->setSysmanHandle(nullptr);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::schedulerGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::processesGetState(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::pciGetBars(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::powerGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::frequencyGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::engineGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::standbyGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::firmwareGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::memoryGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::fabricPortGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::temperatureGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::rasGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::fanGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::diagnosticsGet(hSysman, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::performanceGet(hSysman, &count, nullptr));
+    zes_device_properties_t properties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceGetProperties(hSysman, &properties));
+    zes_device_state_t state;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceGetState(hSysman, &state));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceReset(hSysman, true));
+    zes_pci_properties_t pciProperties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::pciGetProperties(hSysman, &pciProperties));
+    zes_pci_state_t pciState;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::pciGetState(hSysman, &pciState));
+    zes_pci_stats_t pciStats;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::pciGetStats(hSysman, &pciStats));
+    zes_event_type_flags_t events = ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceEventRegister(hSysman, events));
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::powerGetCardDomain(hSysman, &phPower));
+    ze_bool_t eccAvailable = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceEccAvailable(device, &eccAvailable));
+    ze_bool_t eccConfigurable = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceEccConfigurable(device, &eccConfigurable));
+    zes_device_ecc_desc_t newState = {};
+    zes_device_ecc_properties_t props = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceSetEccState(device, &newState, &props));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::SysmanDevice::deviceGetEccState(device, &props));
     static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
@@ -888,6 +936,85 @@ TEST_F(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSy
     auto pSysmanDeviceImp = std::make_unique<SysmanDeviceImp>(device->toHandle());
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxSysmanImp->init());
+}
+
+class MockOsSysman : public L0::OsSysman {
+    L0::SysmanDeviceImp *pParentSysmanDeviceImp;
+
+  public:
+    ze_bool_t mockDriverVersionSupported = false;
+    ze_result_t mockInitResult = ZE_RESULT_SUCCESS;
+    MockOsSysman(L0::SysmanDeviceImp *pParentSysmanDeviceImp) {
+        this->pParentSysmanDeviceImp = pParentSysmanDeviceImp;
+    }
+    ze_result_t init() override { return mockInitResult; }
+    ze_bool_t isDriverModelSupported() override { return mockDriverVersionSupported; }
+    std::vector<ze_device_handle_t> &getDeviceHandles() override {
+        return pParentSysmanDeviceImp->deviceHandles;
+    }
+    ze_device_handle_t getCoreDeviceHandle() override {
+        return pParentSysmanDeviceImp->hCoreDevice;
+    }
+    static MockOsSysman *create(L0::SysmanDeviceImp *pParentSysmanDeviceImp) {
+        MockOsSysman *pTestSysmanImp = new MockOsSysman(pParentSysmanDeviceImp);
+        return static_cast<MockOsSysman *>(pTestSysmanImp);
+    }
+};
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenisDriverModelSupportedReturnsTrueThenSuccessIsReturned) {
+    auto osSysmanOriginal = pSysmanDeviceImp->pOsSysman;
+    MockOsSysman *testOsSysman = MockOsSysman::create(pSysmanDeviceImp);
+    testOsSysman->mockInitResult = ZE_RESULT_SUCCESS;
+    testOsSysman->mockDriverVersionSupported = true;
+    pSysmanDeviceImp->pOsSysman = testOsSysman;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanDeviceImp->init());
+    pSysmanDeviceImp->pOsSysman = osSysmanOriginal;
+    delete testOsSysman;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenisDriverModelSupportedReturnsFalseThenUnSupportedIsReturned) {
+    auto osSysmanOriginal = pSysmanDeviceImp->pOsSysman;
+    MockOsSysman *testOsSysman = MockOsSysman::create(pSysmanDeviceImp);
+    testOsSysman->mockInitResult = ZE_RESULT_SUCCESS;
+    testOsSysman->mockDriverVersionSupported = false;
+    pSysmanDeviceImp->pOsSysman = testOsSysman;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanDeviceImp->init());
+    pSysmanDeviceImp->pOsSysman = osSysmanOriginal;
+    delete testOsSysman;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceImpWhenOsSysmanInitFailsThenUnSupportedIsReturned) {
+    auto osSysmanOriginal = pSysmanDeviceImp->pOsSysman;
+    MockOsSysman *testOsSysman = MockOsSysman::create(pSysmanDeviceImp);
+    testOsSysman->mockInitResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    pSysmanDeviceImp->pOsSysman = testOsSysman;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanDeviceImp->init());
+    pSysmanDeviceImp->pOsSysman = osSysmanOriginal;
+    delete testOsSysman;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenDrmVersionIsXeThenFalseIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        const char *drmVersion = "xe";
+        if (request == DRM_IOCTL_VERSION) {
+            auto pVersion = static_cast<DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
+        }
+        return 0;
+    });
+    EXPECT_EQ(false, pLinuxSysmanImp->isDriverModelSupported());
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenDrmVersionIsi915ThenTrueIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        const char *drmVersion = "i915";
+        if (request == DRM_IOCTL_VERSION) {
+            auto pVersion = static_cast<DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
+        }
+        return 0;
+    });
+    EXPECT_EQ(true, pLinuxSysmanImp->isDriverModelSupported());
 }
 
 } // namespace ult

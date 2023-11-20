@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ struct OsSysman {
     static OsSysman *create(SysmanDeviceImp *pSysmanImp);
     virtual std::vector<ze_device_handle_t> &getDeviceHandles() = 0;
     virtual ze_device_handle_t getCoreDeviceHandle() = 0;
+    virtual ze_bool_t isDriverModelSupported() = 0;
 };
 
 } // namespace L0

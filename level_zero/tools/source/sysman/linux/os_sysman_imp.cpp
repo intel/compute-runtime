@@ -140,6 +140,15 @@ SysmanDeviceImp *LinuxSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
 }
 
+ze_bool_t LinuxSysmanImp::isDriverModelSupported() {
+    auto drmVersion = getDrm().getDrmVersion(getDrm().getFileDescriptor());
+    if ("i915" == drmVersion) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 static std::string modifyPathOnLevel(std::string realPciPath, uint8_t nLevel) {
     size_t loc;
     // we need to change the absolute path to 'nLevel' levels up

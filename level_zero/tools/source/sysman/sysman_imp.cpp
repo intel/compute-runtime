@@ -106,6 +106,12 @@ ze_result_t SysmanDeviceImp::init() {
     updateSubDeviceHandlesLocally();
 
     auto result = pOsSysman->init();
+    if (result == ZE_RESULT_SUCCESS) {
+        ze_bool_t driverModelSupported = pOsSysman->isDriverModelSupported();
+        if (!driverModelSupported) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
     return result;
 }
 

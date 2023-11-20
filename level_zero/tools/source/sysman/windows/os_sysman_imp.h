@@ -35,6 +35,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     void releaseFwUtilInterface();
     std::vector<ze_device_handle_t> &getDeviceHandles() override;
     ze_device_handle_t getCoreDeviceHandle() override;
+    ze_bool_t isDriverModelSupported() override;
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;

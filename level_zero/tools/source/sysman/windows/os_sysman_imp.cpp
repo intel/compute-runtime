@@ -53,6 +53,11 @@ FirmwareUtil *WddmSysmanImp::getFwUtilInterface() {
 Device *WddmSysmanImp::getDeviceHandle() {
     return pDevice;
 }
+
+ze_bool_t WddmSysmanImp::isDriverModelSupported() {
+    return true;
+}
+
 std::vector<ze_device_handle_t> &WddmSysmanImp::getDeviceHandles() {
     return pParentSysmanDeviceImp->deviceHandles;
 }

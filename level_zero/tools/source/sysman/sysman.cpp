@@ -39,8 +39,10 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
     if (ZE_RESULT_SUCCESS != sysmanDevice->init()) {
         delete sysmanDevice;
         sysmanDevice = nullptr;
+        sysmanInitFromCore = false;
+    } else {
+        sysmanInitFromCore = true;
     }
-    sysmanInitFromCore = true;
 
     L0::DeviceImp *device = static_cast<DeviceImp *>(Device::fromHandle(coreDevice));
     for (auto &subDevice : device->subDevices) {
