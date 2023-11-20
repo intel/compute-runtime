@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
 
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
@@ -26,6 +27,9 @@ class CommandStreamReceiver;
 
 class AUBCommandStreamFixture : public CommandStreamFixture {
   public:
+    static CommandStreamReceiver *prepareComputeEngine(MockDevice &device, const std::string &filename);
+    static void prepareCopyEngines(MockDevice &device, const std::string &filename);
+
     void setUp(CommandQueue *pCommandQueue);
     void tearDown();
 

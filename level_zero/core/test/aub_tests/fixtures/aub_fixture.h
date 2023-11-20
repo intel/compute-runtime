@@ -50,7 +50,6 @@ class AUBFixtureL0 {
     void setUp();
     void setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled);
     void tearDown();
-    static void prepareCopyEngines(NEO::MockDevice &device, const std::string &filename);
 
     template <typename FamilyType>
     NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() const {

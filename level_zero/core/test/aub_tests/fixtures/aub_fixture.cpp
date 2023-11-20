@@ -26,15 +26,6 @@
 namespace L0 {
 AUBFixtureL0::AUBFixtureL0() = default;
 AUBFixtureL0::~AUBFixtureL0() = default;
-void AUBFixtureL0::prepareCopyEngines(NEO::MockDevice &device, const std::string &filename) {
-    for (auto i = 0u; i < device.allEngines.size(); i++) {
-        if (NEO::EngineHelpers::isBcs(device.allEngines[i].getEngineType())) {
-            NEO::CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
-            pBcsCommandStreamReceiver = NEO::AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-            device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);
-        }
-    }
-}
 
 void AUBFixtureL0::setUp() {
     setUp(NEO::defaultHwInfo.get(), false);
@@ -67,14 +58,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
 
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
-    if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
-        this->csr = NEO::TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
-    } else {
-        this->csr = NEO::AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
-    }
-
-    neoDevice->resetCommandStreamReceiver(this->csr);
-    prepareCopyEngines(*neoDevice, strfilename.str());
+    this->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));

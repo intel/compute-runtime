@@ -7,7 +7,9 @@
 
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -21,6 +23,31 @@
 
 namespace NEO {
 
+CommandStreamReceiver *AUBCommandStreamFixture::prepareComputeEngine(MockDevice &device, const std::string &filename) {
+    CommandStreamReceiver *pCommandStreamReceiver = nullptr;
+    if (testMode == TestMode::AubTestsWithTbx) {
+        pCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+    } else {
+        pCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+    }
+    device.resetCommandStreamReceiver(pCommandStreamReceiver);
+    return pCommandStreamReceiver;
+}
+
+void AUBCommandStreamFixture::prepareCopyEngines(MockDevice &device, const std::string &filename) {
+    for (auto i = 0u; i < device.allEngines.size(); i++) {
+        if (EngineHelpers::isBcs(device.allEngines[i].getEngineType())) {
+            CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
+            if (testMode == TestMode::AubTestsWithTbx) {
+                pBcsCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+            } else {
+                pBcsCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
+            }
+            device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);
+        }
+    }
+}
+
 void AUBCommandStreamFixture::setUp(CommandQueue *pCmdQ) {
     ASSERT_NE(pCmdQ, nullptr);
     auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
@@ -33,10 +60,10 @@ void AUBCommandStreamFixture::setUp(CommandQueue *pCmdQ) {
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
 
-    pCommandStreamReceiver = AUBFixture::prepareComputeEngine(device, strfilename.str());
+    pCommandStreamReceiver = prepareComputeEngine(device, strfilename.str());
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 
-    AUBFixture::prepareCopyEngines(device, strfilename.str());
+    prepareCopyEngines(device, strfilename.str());
 
     CommandStreamFixture::setUp(pCmdQ);
 

@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
-#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
@@ -29,30 +28,6 @@ namespace NEO {
 
 class AUBFixture : public CommandQueueHwFixture {
   public:
-    static CommandStreamReceiver *prepareComputeEngine(MockDevice &device, const std::string &filename) {
-        CommandStreamReceiver *pCommandStreamReceiver = nullptr;
-        if (testMode == TestMode::AubTestsWithTbx) {
-            pCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-        } else {
-            pCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-        }
-        device.resetCommandStreamReceiver(pCommandStreamReceiver);
-        return pCommandStreamReceiver;
-    }
-    static void prepareCopyEngines(MockDevice &device, const std::string &filename) {
-        for (auto i = 0u; i < device.allEngines.size(); i++) {
-            if (EngineHelpers::isBcs(device.allEngines[i].getEngineType())) {
-                CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
-                if (testMode == TestMode::AubTestsWithTbx) {
-                    pBcsCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-                } else {
-                    pBcsCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-                }
-                device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);
-            }
-        }
-    }
-
     void setUp(const HardwareInfo *hardwareInfo) {
         const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
 
@@ -78,9 +53,7 @@ class AUBFixture : public CommandQueueHwFixture {
         auto pDevice = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
         device = std::make_unique<MockClDevice>(pDevice);
 
-        this->csr = prepareComputeEngine(*pDevice, strfilename.str());
-
-        prepareCopyEngines(*pDevice, strfilename.str());
+        this->csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
         CommandQueueHwFixture::setUp(AUBFixture::device.get(), cl_command_queue_properties(0));
     }
