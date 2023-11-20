@@ -1169,8 +1169,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 auto &sampler = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>();
                 sampler.bindful = maxIndirectSamplerStateSize + maxSamplerStateSize * src.samplerIndex;
                 dst.payloadMappings.samplerTable.numSamplers = std::max<uint8_t>(dst.payloadMappings.samplerTable.numSamplers, static_cast<uint8_t>(src.samplerIndex + 1));
+            } else {
+                dst.kernelAttributes.numArgsStateful++;
             }
-            dst.kernelAttributes.numArgsStateful++;
             break;
         case Types::Kernel::PayloadArgument::MemoryAddressingModeStateless:
             if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {

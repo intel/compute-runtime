@@ -1588,6 +1588,37 @@ kernels:
     EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulSamplerWhenDecodingZeInfoThenNumberOfStatefulArgsDoesNotCountSampler) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            0
+          arg_index:       0
+          addrmode:        stateful
+          addrspace:       sampler
+          access_type:     readwrite
+          sampler_index:   0
+          sampler_type:    texture
+        - arg_type:        arg_bypointer
+          offset:          8
+          size:            4
+          arg_index:       1
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+
+    EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessImageAddressingWhenDecodingZeInfoThenImageAddressingModeIsBindless) {
     ConstStringRef zeinfo = R"===(
 kernels:
