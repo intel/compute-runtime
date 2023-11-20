@@ -95,11 +95,6 @@ void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirec
 }
 
 template <>
-const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() const {
-    return {4, 8};
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();

@@ -76,3 +76,7 @@ TEST_F(ReleaseHelper1271Tests, whenCheckPreferredAllocationMethodThenAllocateByK
 TEST_F(ReleaseHelper1271Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }
+
+TEST_F(ReleaseHelper1271Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
+    whenGettingThreadsPerEuConfigsThen4And8AreReturned();
+}

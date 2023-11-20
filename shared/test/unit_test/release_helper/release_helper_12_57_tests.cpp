@@ -60,3 +60,7 @@ TEST_F(ReleaseHelper1257Tests, whenShouldAdjustCalledThenFalseReturned) {
 TEST_F(ReleaseHelper1257Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }
+
+TEST_F(ReleaseHelper1257Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
+    whenGettingThreadsPerEuConfigsThen4And8AreReturned();
+}

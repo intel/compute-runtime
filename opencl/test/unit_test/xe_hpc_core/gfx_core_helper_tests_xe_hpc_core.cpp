@@ -638,16 +638,6 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFen
     EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
-XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    auto &configs = gfxCoreHelper.getThreadsPerEUConfigs();
-
-    EXPECT_EQ(2U, configs.size());
-    EXPECT_EQ(4U, configs[0]);
-    EXPECT_EQ(8U, configs[1]);
-}
-
 using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
 
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDefaultProductHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {

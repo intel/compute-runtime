@@ -142,16 +142,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    auto &configs = gfxCoreHelper.getThreadsPerEUConfigs();
-
-    EXPECT_EQ(2U, configs.size());
-    EXPECT_EQ(4U, configs[0]);
-    EXPECT_EQ(8U, configs[1]);
-}
-
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.isDummyBlitWaRequired());

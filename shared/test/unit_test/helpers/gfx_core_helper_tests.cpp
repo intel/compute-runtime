@@ -141,14 +141,6 @@ TEST_F(GfxCoreHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNam
     EXPECT_STREQ("RCS", csTraits.name.c_str());
 }
 
-using isTglLpOrBelow = IsAtMostProduct<IGFX_TIGERLAKE_LP>;
-HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenNoConfigsAreReturned, isTglLpOrBelow) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    auto &configs = gfxCoreHelper.getThreadsPerEUConfigs();
-    EXPECT_EQ(0U, configs.size());
-}
-
 TEST_F(GfxCoreHelperTest, whenGetGpuTimeStampInNSIsCalledThenTimestampIsMaskedBasedOnResolution) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 

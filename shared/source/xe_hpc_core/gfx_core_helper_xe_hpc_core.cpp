@@ -141,11 +141,6 @@ const StackVec<size_t, 3> GfxCoreHelperHw<Family>::getDeviceSubGroupSizes() cons
 }
 
 template <>
-const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() const {
-    return {4, 8};
-}
-
-template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();

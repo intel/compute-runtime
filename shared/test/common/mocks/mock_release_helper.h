@@ -33,5 +33,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, std::vector<uint32_t>, {128}, ());
     ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getNumThreadsPerEu, uint32_t, 8u, ());
+    ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, ());
 };
 } // namespace NEO

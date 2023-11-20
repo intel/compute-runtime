@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/hw_ip_version.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <memory>
 #include <optional>
@@ -23,6 +24,8 @@ enum class AllocationType;
 inline constexpr uint32_t maxArchitecture = 64;
 using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(HardwareIpVersion hardwareIpVersion);
 inline createReleaseHelperFunctionType *releaseHelperFactory[maxArchitecture]{};
+
+using ThreadsPerEUConfigs = StackVec<uint32_t, 6>;
 
 class ReleaseHelper {
   public:
@@ -49,6 +52,7 @@ class ReleaseHelper {
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
     virtual uint32_t getNumThreadsPerEu() const = 0;
+    virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -82,6 +86,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     std::vector<uint32_t> getSupportedNumGrfs() const override;
     bool isBindlessAddressingDisabled() const override;
     uint32_t getNumThreadsPerEu() const override;
+    const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

@@ -534,11 +534,6 @@ const StackVec<size_t, 3> GfxCoreHelperHw<GfxFamily>::getDeviceSubGroupSizes() c
 }
 
 template <typename GfxFamily>
-const StackVec<uint32_t, 6> GfxCoreHelperHw<GfxFamily>::getThreadsPerEUConfigs() const {
-    return {};
-}
-
-template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const {}
 
 template <typename GfxFamily>

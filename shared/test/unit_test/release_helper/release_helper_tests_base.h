@@ -29,6 +29,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenShouldAdjustCalledThenTrueReturned();
     void whenShouldAdjustCalledThenFalseReturned();
     void whenGettingSupportedNumGrfsThenValues128And256Returned();
+    void whenGettingThreadsPerEuConfigsThen4And8AreReturned();
 
     virtual std::vector<uint32_t> getRevisions() = 0;
 

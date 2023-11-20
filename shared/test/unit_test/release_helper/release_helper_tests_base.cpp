@@ -115,3 +115,16 @@ void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValues128And256Retur
         EXPECT_EQ(expectedValues, releaseHelper->getSupportedNumGrfs());
     }
 }
+
+void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThen4And8AreReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        auto &configs = releaseHelper->getThreadsPerEUConfigs();
+
+        EXPECT_EQ(2U, configs.size());
+        EXPECT_EQ(4U, configs[0]);
+        EXPECT_EQ(8U, configs[1]);
+    }
+}

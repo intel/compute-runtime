@@ -107,4 +107,9 @@ template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getNumThreadsPerEu() const {
     return 8u;
 }
+
+template <ReleaseType releaseType>
+const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs() const {
+    return {4, 8};
+}
 } // namespace NEO

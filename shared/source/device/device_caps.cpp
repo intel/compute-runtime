@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <iomanip>
 
@@ -42,6 +43,7 @@ void Device::initializeCaps() {
 
     auto &productHelper = this->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = this->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    auto releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
 
     bool ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
     if (DebugManager.flags.ForceOCLVersion.get() != 0) {
@@ -136,7 +138,10 @@ void Device::initializeCaps() {
         deviceInfo.maxNumEUsPerDualSubSlice = deviceInfo.maxNumEUsPerSubSlice;
     }
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
-    deviceInfo.threadsPerEUConfigs = gfxCoreHelper.getThreadsPerEUConfigs();
+
+    if (releaseHelper) {
+        deviceInfo.threadsPerEUConfigs = releaseHelper->getThreadsPerEUConfigs();
+    }
     auto maxWS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
     maxWS = Math::prevPowerOfTwo(maxWS);
