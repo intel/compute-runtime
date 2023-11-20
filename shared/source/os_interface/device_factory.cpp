@@ -170,10 +170,16 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
 
     for (auto &hwDeviceId : hwDeviceIds) {
         if (initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceId), rootDeviceIndex) == false) {
-            return false;
+            continue;
         }
 
         rootDeviceIndex++;
+    }
+
+    executionEnvironment.rootDeviceEnvironments.resize(rootDeviceIndex);
+
+    if (rootDeviceIndex == 0) {
+        return false;
     }
 
     executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());

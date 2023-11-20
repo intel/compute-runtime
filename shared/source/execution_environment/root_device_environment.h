@@ -61,7 +61,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     bool isWddmOnLinux() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
-    bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
     void initOsTime();
     void initGmm();
     void initDebuggerL0(Device *neoDevice);

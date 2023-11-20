@@ -121,3 +121,56 @@ TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledTh
         EXPECT_NE(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrRcsNode, releaseHelper->isRcsExposureDisabled());
     }
 }
+
+TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(3);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 3u);
+
+    EXPECT_EQ(3u, executionEnvironment.rootDeviceEnvironments.size());
+    auto rootDeviceEnvironment0 = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    auto rootDeviceEnvironment1 = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[1].get());
+    auto rootDeviceEnvironment2 = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[2].get());
+
+    rootDeviceEnvironment0->initOsInterfaceResults.push_back(true);
+    rootDeviceEnvironment0->initOsInterfaceExpectedCallCount = 1u;
+
+    // making rootDeviceEnvironment1 returning false on first call and true on second call
+    rootDeviceEnvironment1->initOsInterfaceResults.push_back(false);
+    rootDeviceEnvironment1->initOsInterfaceResults.push_back(true);
+    rootDeviceEnvironment1->initOsInterfaceExpectedCallCount = 2u;
+
+    rootDeviceEnvironment2->initOsInterfaceExpectedCallCount = 0u;
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+    ASSERT_TRUE(success);
+
+    EXPECT_EQ(2u, executionEnvironment.rootDeviceEnvironments.size());
+
+    EXPECT_EQ(1u, rootDeviceEnvironment0->initOsInterfaceCalled);
+    EXPECT_EQ(2u, rootDeviceEnvironment1->initOsInterfaceCalled);
+}
+
+TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesFailsForAllDevicesThenFailureIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(3);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 3u);
+
+    EXPECT_EQ(3u, executionEnvironment.rootDeviceEnvironments.size());
+    auto rootDeviceEnvironment0 = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    auto rootDeviceEnvironment1 = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[1].get());
+    auto rootDeviceEnvironment2 = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[2].get());
+
+    // making root device environment failing three times (once per device)
+    rootDeviceEnvironment0->initOsInterfaceResults.push_back(false);
+    rootDeviceEnvironment0->initOsInterfaceResults.push_back(false);
+    rootDeviceEnvironment0->initOsInterfaceResults.push_back(false);
+    rootDeviceEnvironment0->initOsInterfaceExpectedCallCount = 3u;
+    rootDeviceEnvironment1->initOsInterfaceExpectedCallCount = 0u;
+    rootDeviceEnvironment2->initOsInterfaceExpectedCallCount = 0u;
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+    EXPECT_FALSE(success);
+
+    EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments.size());
+}

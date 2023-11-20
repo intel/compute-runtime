@@ -10,16 +10,24 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
+#include <optional>
+
 namespace NEO {
 
 struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
+    using BaseClass = RootDeviceEnvironment;
     using RootDeviceEnvironment::hwInfo;
     using RootDeviceEnvironment::isDummyAllocationInitialized;
     using RootDeviceEnvironment::isWddmOnLinuxEnable;
     using RootDeviceEnvironment::RootDeviceEnvironment;
-    ~MockRootDeviceEnvironment() override = default;
+    ~MockRootDeviceEnvironment() override;
 
     void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override;
+    bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) override;
+
+    std::vector<bool> initOsInterfaceResults;
+    uint32_t initOsInterfaceCalled = 0u;
+    std::optional<uint32_t> initOsInterfaceExpectedCallCount;
     bool initAubCenterCalled = false;
     bool localMemoryEnabledReceived = false;
     std::string aubFileNameReceived = "";

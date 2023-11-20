@@ -10,6 +10,8 @@
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 extern bool useMockGmm;
 
@@ -23,6 +25,23 @@ void MockRootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std
         MockAubCenterFixture::setMockAubCenter(*this);
     }
     RootDeviceEnvironment::initAubCenter(localMemoryEnabled, aubFileName, csrType);
+}
+bool MockRootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
+    initOsInterfaceCalled++;
+    if (!initOsInterfaceResults.empty()) {
+        auto retVal = initOsInterfaceResults[initOsInterfaceCalled - 1];
+        if (retVal) {
+            RootDeviceEnvironment::initOsInterface(std::move(hwDeviceId), rootDeviceIndex);
+        }
+        return retVal;
+    }
+    return RootDeviceEnvironment::initOsInterface(std::move(hwDeviceId), rootDeviceIndex);
+}
+
+MockRootDeviceEnvironment::~MockRootDeviceEnvironment() {
+    if (initOsInterfaceExpectedCallCount) {
+        EXPECT_EQ(*initOsInterfaceExpectedCallCount, initOsInterfaceCalled);
+    }
 }
 
 MockExecutionEnvironment::MockExecutionEnvironment() : MockExecutionEnvironment(defaultHwInfo.get()) {}
