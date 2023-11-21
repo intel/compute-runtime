@@ -2042,7 +2042,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     std::string emptyString = "";
     zeDriverGetLastErrorDescription(device->getDriverHandle(), &pStr);
     EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
     size_t buildLogSize;
     zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr);
     EXPECT_GT(static_cast<int>(buildLogSize), 0);

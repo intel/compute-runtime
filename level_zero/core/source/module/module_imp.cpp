@@ -1421,12 +1421,11 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
             }
         }
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {
+            driverHandle->clearErrorDescription();
             if (functionSymbolExportEnabledCounter == 0) {
                 driverHandle->setErrorDescription("Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
                 PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
-                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
         moduleId->copyPatchedSegments(isaSegmentsForPatching);
