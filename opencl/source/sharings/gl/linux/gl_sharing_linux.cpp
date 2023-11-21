@@ -18,11 +18,6 @@ GLSharingFunctionsLinux::GLSharingFunctionsLinux(GLType glhdcType, GLContext glh
 }
 GLSharingFunctionsLinux::~GLSharingFunctionsLinux() = default;
 
-bool GLSharingFunctionsLinux::isGlSharingEnabled() {
-    std::unique_ptr<OsLibrary> dynLibrary(OsLibrary::load(""));
-    return (*dynLibrary)["glEnable"] != nullptr;
-}
-
 bool GLSharingFunctionsLinux::isOpenGlExtensionSupported(const unsigned char *pExtensionString) {
     if (glGetStringi == nullptr || glGetIntegerv == nullptr) {
         return false;

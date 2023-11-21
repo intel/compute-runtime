@@ -39,7 +39,6 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
 
     GLboolean initGLFunctions() override;
     bool isOpenGlSharingSupported() override;
-    static bool isGlSharingEnabled();
 
     // Arb sync event
     template <typename EventType = GlArbSyncEvent>

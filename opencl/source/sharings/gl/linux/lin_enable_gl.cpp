@@ -81,7 +81,7 @@ void GlSharingBuilderFactory::fillGlobalDispatchTable() {
 }
 
 std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
-    auto isGlSharingEnabled = GLSharingFunctionsLinux::isGlSharingEnabled();
+    auto isGlSharingEnabled = true;
 
     if (debugManager.flags.AddClGlSharing.get() != -1) {
         isGlSharingEnabled = debugManager.flags.AddClGlSharing.get();
