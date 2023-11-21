@@ -13,6 +13,7 @@ using namespace NEO;
 namespace ULT {
 
 class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFactory>,
+                                  public ClHardwareParse,
                                   public ::testing::Test {
     typedef RunKernelFixture<AUBRunKernelFixtureFactory> ParentClass;
 
@@ -217,8 +218,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     // Compute our memory expecations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(cl_uint);
-    AUBCommandStreamFixture::expectMemory<FamilyType>(pDestinationMemory1, pExpectedMemory1, sizeWritten);
-    AUBCommandStreamFixture::expectMemory<FamilyType>(pDestinationMemory2, pExpectedMemory2, sizeWritten);
+    expectMemory<FamilyType>(pDestinationMemory1, pExpectedMemory1, sizeWritten);
+    expectMemory<FamilyType>(pDestinationMemory2, pExpectedMemory2, sizeWritten);
 
     // ensure we didn't overwrite existing memory
     if (sizeWritten < bufferSize) {
@@ -227,8 +228,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
         auto pUnwrittenMemory2 = (pDestinationMemory2 + sizeWritten / sizeof(cl_uint));
         auto pExpectedUnwrittenMemory1 = &destinationMemory1[globalWorkItems];
         auto pExpectedUnwrittenMemory2 = &destinationMemory2[globalWorkItems];
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pUnwrittenMemory1, pExpectedUnwrittenMemory1, sizeRemaining);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pUnwrittenMemory2, pExpectedUnwrittenMemory2, sizeRemaining);
+        expectMemory<FamilyType>(pUnwrittenMemory1, pExpectedUnwrittenMemory1, sizeRemaining);
+        expectMemory<FamilyType>(pUnwrittenMemory2, pExpectedUnwrittenMemory2, sizeRemaining);
     }
 
     ::alignedFree(destinationMemory1);
@@ -481,9 +482,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
         }
     }
 
-    AUBCommandStreamFixture::expectMemory<FamilyType>(destinationMV, expectedMV, sizeof(expectedMV));
-    AUBCommandStreamFixture::expectMemory<FamilyType>(destinationResiduals, expectedResiduals, sizeof(expectedResiduals));
-    AUBCommandStreamFixture::expectMemory<FamilyType>(destinationShapes, expectedShapes, sizeof(expectedShapes));
+    expectMemory<FamilyType>(destinationMV, expectedMV, sizeof(expectedMV));
+    expectMemory<FamilyType>(destinationResiduals, expectedResiduals, sizeof(expectedResiduals));
+    expectMemory<FamilyType>(destinationShapes, expectedShapes, sizeof(expectedShapes));
 
     delete predMvBuffer;
     delete motionVectorBuffer;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,25 +9,25 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 namespace NEO {
 
-struct CommandEnqueueAUBFixture : public CommandEnqueueBaseFixture,
-                                  public AUBCommandStreamFixture {
-    using AUBCommandStreamFixture::setUp;
+struct CommandEnqueueAUBFixture : public AUBFixture {
     void setUp() {
-        CommandEnqueueBaseFixture::setUp(cl_command_queue_properties(0));
-        AUBCommandStreamFixture::setUp(pCmdQ);
+        AUBFixture::setUp(nullptr);
+        pDevice = &device->device;
+        pClDevice = device.get();
     }
 
     void tearDown() {
-        AUBCommandStreamFixture::tearDown();
-        CommandEnqueueBaseFixture::tearDown();
+        AUBFixture::tearDown();
     }
+    MockDevice *pDevice = nullptr;
+    MockClDevice *pClDevice = nullptr;
 };
 } // namespace NEO

@@ -62,6 +62,7 @@ class AUBFixture : public CommandQueueHwFixture {
     }
 
     GraphicsAllocation *createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size);
+    GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size);
 
     template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() const {
@@ -136,6 +137,11 @@ class AUBFixture : public CommandQueueHwFixture {
         if (csrSimulated) {
             csrSimulated->expectMemoryCompressed(gfxAddress, srcAddress, length);
         }
+    }
+
+    template <typename FamilyType>
+    void pollForCompletion() {
+        getSimulatedCsr<FamilyType>()->pollForCompletion();
     }
 
     static void *getGpuPointer(GraphicsAllocation *allocation) {

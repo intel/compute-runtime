@@ -123,7 +123,7 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
         tSrc += slicePitch;
         tRef += slicePitch;
     }
-    AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, src, rowPitch * slicePitch);
+    expectMemory<FamilyType>(pDestMemory, src, rowPitch * slicePitch);
 
     delete srcBuffer;
     delete dstBuffer;

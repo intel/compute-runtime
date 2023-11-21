@@ -96,9 +96,9 @@ HWTEST_P(AUBWriteBufferRect, Given3dWhenWritingBufferThenExpectationsAreMet) {
     for (unsigned int i = 0; i < rowPitch; i++) {
         // one slice will be copied from src. all others should be zeros
         if (i == zBuffOffs) {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + slicePitch * i, srcMemory + slicePitch * zHostOffs, slicePitch);
+            expectMemory<FamilyType>(pDestMemory + slicePitch * i, srcMemory + slicePitch * zHostOffs, slicePitch);
         } else {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + slicePitch * i, ptr.data(), slicePitch);
+            expectMemory<FamilyType>(pDestMemory + slicePitch * i, ptr.data(), slicePitch);
         }
     }
 
@@ -172,9 +172,9 @@ struct AUBWriteBufferRectUnaligned
         EXPECT_EQ(CL_SUCCESS, retVal);
         pCmdQ->finish();
 
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, referenceMemory, rowPitch);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1], ptrOffset(srcMemory, offset), size);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1] + size, referenceMemory, bufferSize - size - rowPitch);
+        expectMemory<FamilyType>(pDestMemory, referenceMemory, rowPitch);
+        expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1], ptrOffset(srcMemory, offset), size);
+        expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1] + size, referenceMemory, bufferSize - size - rowPitch);
     }
 };
 

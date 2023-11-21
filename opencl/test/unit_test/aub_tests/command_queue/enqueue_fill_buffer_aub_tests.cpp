@@ -71,14 +71,14 @@ HWTEST_P(AUBFillBuffer, WhenFillingThenExpectationsMet) {
     // The memory under offset should be untouched
     if (offset) {
         cl_float *destMemoryRef = ptrOffset(&destMemory[0], offset);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, destMemoryRef, offset);
+        expectMemory<FamilyType>(pDestMemory, destMemoryRef, offset);
         pDestMemory = ptrOffset(pDestMemory, offset);
     }
 
     // Compute our memory expecations based on kernel execution
     auto pEndMemory = ptrOffset(pDestMemory, size);
     while (pDestMemory < pEndMemory) {
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, pattern, patternSize);
+        expectMemory<FamilyType>(pDestMemory, pattern, patternSize);
         pDestMemory = ptrOffset(pDestMemory, patternSize);
     }
 
@@ -87,7 +87,7 @@ HWTEST_P(AUBFillBuffer, WhenFillingThenExpectationsMet) {
     if (offset + size < sizeUserMemory) {
         size_t sizeRemaining = sizeUserMemory - size - offset;
         cl_float *destMemoryRef = ptrOffset(&destMemory[0], offset + size);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, destMemoryRef, sizeRemaining);
+        expectMemory<FamilyType>(pDestMemory, destMemoryRef, sizeRemaining);
     }
     delete destBuffer;
 }
@@ -132,12 +132,12 @@ HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompl
         pCmdQ->flush();
     }
 
-    AUBCommandStreamFixture::pollForCompletion<FamilyType>();
+    pollForCompletion<FamilyType>();
 
     pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
     auto pEndMemory = ptrOffset(pDestMemory, numWrites * size);
     while (pDestMemory < pEndMemory) {
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, pattern, patternSize);
+        expectMemory<FamilyType>(pDestMemory, pattern, patternSize);
         pDestMemory = ptrOffset(pDestMemory, patternSize);
     }
 }

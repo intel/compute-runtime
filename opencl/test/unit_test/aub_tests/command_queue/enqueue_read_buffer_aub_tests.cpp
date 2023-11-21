@@ -75,7 +75,7 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = pCommandStreamReceiver->getTemporaryAllocations().peekHead();
+    allocation = csr->getTemporaryAllocations().peekHead();
     while (allocation && allocation->getUnderlyingBuffer() != pDestMemory) {
         allocation = allocation->next;
     }
@@ -87,7 +87,7 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
     cl_float *destGpuaddress = reinterpret_cast<cl_float *>(allocation->getGpuAddress());
     // Compute our memory expecations based on kernel execution
     size_t sizeUserMemory = sizeof(destMemory);
-    AUBCommandStreamFixture::expectMemory<FamilyType>(destGpuaddress, pSrcMemory, sizeWritten);
+    expectMemory<FamilyType>(destGpuaddress, pSrcMemory, sizeWritten);
 
     // If the copykernel wasn't max sized, ensure we didn't overwrite existing memory
     if (offset + sizeWritten < sizeUserMemory) {
@@ -95,7 +95,7 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
         destGpuaddress = ptrOffset(destGpuaddress, sizeWritten);
 
         size_t sizeRemaining = sizeUserMemory - sizeWritten - offset;
-        AUBCommandStreamFixture::expectMemory<FamilyType>(destGpuaddress, pDestMemory, sizeRemaining);
+        expectMemory<FamilyType>(destGpuaddress, pDestMemory, sizeRemaining);
     }
 }
 
@@ -154,7 +154,7 @@ HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpe
     GraphicsAllocation *dstAllocation = createResidentAllocationAndStoreItInCsr(dstMemory, sizeof(dstMemory));
     cl_float *dstGpuAddress = reinterpret_cast<cl_float *>(dstAllocation->getGpuAddress());
 
-    AUBCommandStreamFixture::expectMemory<FamilyType>(dstGpuAddress, srcMemory, sizeof(dstMemory));
+    expectMemory<FamilyType>(dstGpuAddress, srcMemory, sizeof(dstMemory));
 }
 
 struct AUBReadBufferUnaligned
@@ -210,7 +210,7 @@ struct AUBReadBufferUnaligned
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         // Check the memory
-        AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), ptrOffset(srcMemory, offset), size);
+        expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), ptrOffset(srcMemory, offset), size);
     }
 };
 

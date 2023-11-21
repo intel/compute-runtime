@@ -83,7 +83,7 @@ HWTEST_P(AUBCopyBuffer, WhenCopyingThenExpectationsMet) {
 
     // Compute our memory expecations based on kernel execution
     size_t sizeUserMemory = sizeof(dstMemory);
-    AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, sizeCopied);
+    expectMemory<FamilyType>(pDstMemory, pSrcMemory, sizeCopied);
 
     // If the copykernel wasn't max sized, ensure we didn't overwrite existing memory
     if (dstOffset + sizeCopied < sizeUserMemory) {
@@ -91,7 +91,7 @@ HWTEST_P(AUBCopyBuffer, WhenCopyingThenExpectationsMet) {
         float *dstMemoryRef = ptrOffset(dstMemory, sizeCopied);
 
         size_t sizeRemaining = sizeUserMemory - sizeCopied - dstOffset;
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, dstMemoryRef, sizeRemaining);
+        expectMemory<FamilyType>(pDstMemory, dstMemoryRef, sizeRemaining);
     }
 
     delete srcBuffer;

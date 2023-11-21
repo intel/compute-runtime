@@ -83,18 +83,18 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
     // Compute our memory expecations based on kernel execution
     size_t sizeUserMemory = 1024 * sizeof(float);
     auto pVal = ptrOffset(pDestMemory, offset);
-    AUBCommandStreamFixture::expectMemory<FamilyType>(pVal, pSrcMemory, sizeWritten);
+    expectMemory<FamilyType>(pVal, pSrcMemory, sizeWritten);
 
     // if offset provided, check the beginning
     if (offset > 0) {
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, zeroMemory, offset);
+        expectMemory<FamilyType>(pDestMemory, zeroMemory, offset);
     }
     // If the copykernel wasn't max sized, ensure we didn't overwrite existing memory
     if (offset + sizeWritten < sizeUserMemory) {
         pDestMemory = ptrOffset(pVal, sizeWritten);
 
         size_t sizeRemaining = sizeUserMemory - sizeWritten - offset;
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, zeroMemory, sizeRemaining);
+        expectMemory<FamilyType>(pDestMemory, zeroMemory, sizeRemaining);
     }
 
     delete dstBuffer;
@@ -158,7 +158,7 @@ struct AUBWriteBufferUnaligned
 
         // Check the memory
         auto bufferGPUPtr = reinterpret_cast<char *>((buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
-        AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(bufferGPUPtr, offset), ptrOffset(srcMemory, offset), size);
+        expectMemory<FamilyType>(ptrOffset(bufferGPUPtr, offset), ptrOffset(srcMemory, offset), size);
     }
 };
 

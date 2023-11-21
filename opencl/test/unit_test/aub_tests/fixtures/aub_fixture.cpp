@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,13 @@ GraphicsAllocation *AUBFixture::createHostPtrAllocationFromSvmPtr(void *svmPtr, 
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     allocation->setAllocationType(AllocationType::BUFFER);
     allocation->setMemObjectsAllocationWithWritableFlags(true);
+    return allocation;
+}
+
+GraphicsAllocation *AUBFixture::createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {
+    GraphicsAllocation *allocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, address);
+    csr->makeResidentHostPtrAllocation(allocation);
+    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     return allocation;
 }
 

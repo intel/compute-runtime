@@ -76,6 +76,6 @@ HWTEST_F(AUBMapBuffer, WhenMappingAndUnmappingThenExpectationsAreMet) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     for (size_t i = 0; i < bufferSize; i++) {
-        AUBCommandStreamFixture::expectMemory<FamilyType>(&readMemory[i], &i, sizeof(uint8_t));
+        expectMemory<FamilyType>(&readMemory[i], &i, sizeof(uint8_t));
     }
 }

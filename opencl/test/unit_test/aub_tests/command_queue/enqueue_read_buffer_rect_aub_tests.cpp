@@ -97,9 +97,9 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     for (unsigned int i = 0; i < rowPitch; i++) {
         // one slice will be copied from src. all others should be zeros
         if (i == zHostOffs) {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(destMemory + slicePitch * i, srcMemory + slicePitch * zBuffOffs, slicePitch);
+            expectMemory<FamilyType>(destMemory + slicePitch * i, srcMemory + slicePitch * zBuffOffs, slicePitch);
         } else {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(destMemory + slicePitch * i, ptr, slicePitch);
+            expectMemory<FamilyType>(destMemory + slicePitch * i, ptr, slicePitch);
         }
     }
     delete[] ptr;
@@ -178,9 +178,9 @@ struct AUBReadBufferRectUnaligned
         retVal = pCmdQ->flush();
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        AUBCommandStreamFixture::expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &srcMemory[rowPitch * bufferOrigin[1]], size);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size + offset), referenceMemory, bufferSize - offset - size);
+        expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
+        expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &srcMemory[rowPitch * bufferOrigin[1]], size);
+        expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size + offset), referenceMemory, bufferSize - offset - size);
         pCmdQ->finish();
         alignedFree(dstMemory);
     }
