@@ -46,7 +46,7 @@ if(WIN32)
   target_link_libraries(ocloc_segfault_test dbghelp)
 endif()
 if(UNIX)
-  target_link_libraries(ocloc_segfault_test dl pthread)
+  target_link_libraries(ocloc_segfault_test dl pthread execinfo)
 endif()
 
 set(CLOC_SEGFAULT_TEST_INCLUDES
