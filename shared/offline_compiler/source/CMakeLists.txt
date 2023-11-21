@@ -264,6 +264,9 @@ endif()
 
 if(UNIX)
   target_link_libraries(${OCLOC_NAME}_lib dl pthread)
+  set_property(TARGET ${OCLOC_NAME}_lib
+               APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/ocloc.exports"
+  )
 endif()
 
 set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB} PARENT_SCOPE)
