@@ -28,6 +28,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::memoryPool;
     using MemoryAllocation::objectNotResident;
     using MemoryAllocation::objectNotUsed;
+    using MemoryAllocation::residency;
     using MemoryAllocation::size;
     using MemoryAllocation::usageInfos;
 
@@ -59,6 +60,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
     }
     void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) override {
         updateCompletionDataForAllocationAndFragmentsCalledtimes++;
+        MemoryAllocation::updateCompletionDataForAllocationAndFragments(newFenceValue, contextId);
     }
 
     uint64_t updateCompletionDataForAllocationAndFragmentsCalledtimes = 0;

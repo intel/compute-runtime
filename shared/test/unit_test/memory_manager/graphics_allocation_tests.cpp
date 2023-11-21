@@ -521,3 +521,28 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     graphicsAllocation.prepareHostPtrForResidency(&csr);
     EXPECT_EQ(graphicsAllocation.hostPtrTaskCountAssignment, 0u);
 }
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationsWithFragmentsWhenCallingForUpateFenceThenAllResidencyDataHasUpdatedValue) {
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.fragmentsStorage.fragmentCount = 3;
+
+    auto residencyData1 = std::make_unique<ResidencyData>(3);
+    auto residencyData2 = std::make_unique<ResidencyData>(3);
+    auto residencyData3 = std::make_unique<ResidencyData>(3);
+
+    graphicsAllocation.fragmentsStorage.fragmentStorageData[0].residency = residencyData1.get();
+    graphicsAllocation.fragmentsStorage.fragmentStorageData[1].residency = residencyData2.get();
+    graphicsAllocation.fragmentsStorage.fragmentStorageData[2].residency = residencyData3.get();
+
+    uint64_t newFenceValue = 0x54321;
+    auto contextId = 0u;
+
+    graphicsAllocation.updateCompletionDataForAllocationAndFragments(newFenceValue, contextId);
+
+    EXPECT_EQ(graphicsAllocation.getResidencyData().getFenceValueForContextId(contextId), newFenceValue);
+
+    for (uint32_t allocationId = 0; allocationId < graphicsAllocation.fragmentsStorage.fragmentCount; allocationId++) {
+        auto residencyData = graphicsAllocation.fragmentsStorage.fragmentStorageData[allocationId].residency;
+        EXPECT_EQ(residencyData->getFenceValueForContextId(contextId), newFenceValue);
+    }
+}
