@@ -35,6 +35,7 @@ class AubHelper : public NonCopyableOrMovableClass {
         case AllocationType::SVM_GPU:
         case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         case AllocationType::ASSERT_BUFFER:
+        case AllocationType::TAG_BUFFER:
             return true;
         default:
             return false;

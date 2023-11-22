@@ -111,6 +111,40 @@ TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsSetThenGetMemBankSizeReturnsCorre
     EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo));
 }
 
+TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectResult) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+
+        bool isOneTimeWritable = AubHelper::isOneTimeAubWritableAllocationType(allocType);
+
+        switch (allocType) {
+        case AllocationType::PIPE:
+        case AllocationType::CONSTANT_SURFACE:
+        case AllocationType::GLOBAL_SURFACE:
+        case AllocationType::KERNEL_ISA:
+        case AllocationType::KERNEL_ISA_INTERNAL:
+        case AllocationType::PRIVATE_SURFACE:
+        case AllocationType::SCRATCH_SURFACE:
+        case AllocationType::WORK_PARTITION_SURFACE:
+        case AllocationType::BUFFER:
+        case AllocationType::BUFFER_HOST_MEMORY:
+        case AllocationType::IMAGE:
+        case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+        case AllocationType::EXTERNAL_HOST_PTR:
+        case AllocationType::MAP_ALLOCATION:
+        case AllocationType::SVM_GPU:
+        case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+        case AllocationType::ASSERT_BUFFER:
+        case AllocationType::TAG_BUFFER:
+            EXPECT_TRUE(isOneTimeWritable);
+            break;
+        default:
+            EXPECT_FALSE(isOneTimeWritable);
+            break;
+        }
+    }
+}
+
 TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeReturnsCorrectValue) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &sysInfo = hwInfo.gtSystemInfo;
