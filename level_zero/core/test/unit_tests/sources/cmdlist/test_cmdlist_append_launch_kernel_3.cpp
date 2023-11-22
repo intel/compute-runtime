@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/encode_interrupt_helper.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -1031,6 +1030,8 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(2, false);
+    EXPECT_TRUE(events[0]->isKmdWaitModeEnabled());
+    EXPECT_TRUE(events[1]->isKmdWaitModeEnabled());
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(2));
 
@@ -1150,43 +1151,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress() + counterOffset, immCmdList->isQwordInOrderCounter()));
 }
 
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingSemaphoreThenProgramUserInterrupt, IsAtLeastSkl) {
-    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(NEO::EncodeUserInterruptHelper::afterSemaphoreMask);
-
-    auto eventPool = createEvents<FamilyType>(1, false);
-    auto eventHandle = events[0]->toHandle();
-    events[0]->makeCounterBasedInitiallyDisabled();
-
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-
-    auto offset = cmdStream->getUsed();
-
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), offset),
-        cmdStream->getUsed() - offset));
-
-    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
-    ASSERT_NE(nullptr, userInterruptCmd);
-
-    auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(1u, allCmds.size());
-}
-
 HWTEST2_F(InOrderCmdListTests, givenTimestmapEventWhenProgrammingBarrierThenDontAddPipeControl, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -1218,93 +1182,58 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(NEO::EncodeUserInterruptHelper::onSignalingFenceMask);
+    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(1);
 
-    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventPool = createEvents<FamilyType>(2, false);
     auto eventHandle = events[0]->toHandle();
     events[0]->makeCounterBasedInitiallyDisabled();
+
+    EXPECT_FALSE(events[1]->isKmdWaitModeEnabled());
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdStream->getCpuBase(), offset),
-        cmdStream->getUsed() - offset));
-
-    auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
-    ASSERT_NE(nullptr, sdiCmd);
-
-    EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), sdiCmd->getAddress());
-
-    auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
-    ASSERT_NE(nullptr, userInterruptCmd);
-
-    auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(1u, allCmds.size());
-}
-
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAsMaskWhenDispatchingStoreDataImmAndSemaphoreThenProgramUserInterrupt, IsAtLeastSkl) {
-    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-
-    constexpr int32_t invalidMask = 0b100;
-
-    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(invalidMask);
-
-    auto eventPool = createEvents<FamilyType>(1, false);
-    auto eventHandle = events[0]->toHandle();
-    events[0]->makeCounterBasedInitiallyDisabled();
-
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-
-    auto offset = cmdStream->getUsed();
-
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
-
-    {
+    auto validateInterrupt = [&](bool interruptExpected) {
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), offset),
             cmdStream->getUsed() - offset));
 
+        auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+
+        ASSERT_NE(cmdList.end(), itor);
+
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
+        ASSERT_NE(nullptr, sdiCmd);
+
+        EXPECT_EQ(immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress(), sdiCmd->getAddress());
+
+        auto userInterruptCmd = genCmdCast<MI_USER_INTERRUPT *>(*(++itor));
+        ASSERT_EQ(interruptExpected, nullptr != userInterruptCmd);
+
         auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(0u, allCmds.size());
-    }
+        EXPECT_EQ(interruptExpected ? 1u : 0u, allCmds.size());
+    };
 
-    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(NEO::EncodeUserInterruptHelper::onSignalingFenceMask | NEO::EncodeUserInterruptHelper::afterSemaphoreMask);
+    // no signal Event
+    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
+    validateInterrupt(false);
 
+    // regular signal Event
     offset = cmdStream->getUsed();
+    immCmdList->appendBarrier(events[1]->toHandle(), 1, &eventHandle, false);
+    validateInterrupt(false);
 
-    immCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
-
-    {
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-            cmdList,
-            ptrOffset(cmdStream->getCpuBase(), offset),
-            cmdStream->getUsed() - offset));
-
-        auto allCmds = findAll<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(2u, allCmds.size());
-    }
+    // signal Event with kmd wait mode
+    offset = cmdStream->getUsed();
+    events[1]->enableKmdWaitMode();
+    immCmdList->appendBarrier(events[1]->toHandle(), 1, &eventHandle, false);
+    validateInterrupt(true);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
@@ -4067,7 +3996,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    immCmdList->appendSignalInOrderDependencyCounter();
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));

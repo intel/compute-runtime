@@ -242,6 +242,8 @@ struct Event : _ze_event_handle_t {
     const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
     bool hasKerneMappedTsCapability = false;
     std::shared_ptr<InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+    void enableKmdWaitMode() { kmdWaitMode = true; }
+    bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
@@ -299,6 +301,7 @@ struct Event : _ze_event_handle_t {
     bool usingContextEndOffset = false;
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
+    bool kmdWaitMode = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 

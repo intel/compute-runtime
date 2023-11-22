@@ -471,7 +471,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
     }
 
     CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nonWalkerSignalingHasRelaxedOrdering);
-    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter();
+    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

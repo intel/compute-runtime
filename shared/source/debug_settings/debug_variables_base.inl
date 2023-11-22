@@ -258,7 +258,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDriverVersion, -1, "-1: default, >=0: Use value as reported driver version")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitForUserFenceOnEventHostSynchronize, -1, "-1: default, 0: Disabled, 1: Enabled. If enabled, use WaitUserFence KMD call for in-order Events instead of active polling on host.")
 DECLARE_DEBUG_VARIABLE(int32_t, DisableSystemPointerKernelArgument, -1, "-1: default, 0: Disabled, 1: using a system pointer for kernel argument returns an error.")
-DECLARE_DEBUG_VARIABLE(int32_t, ProgramUserInterruptOnResolvedDependency, -1, "-1: default, 0: Disabled, >=1: bitfield. 01b: program after semaphore, 10b: on signaling fence (non-walker append).")
+DECLARE_DEBUG_VARIABLE(int32_t, ProgramUserInterruptOnResolvedDependency, -1, "-1: default, 0: Disabled, 1: On signaling append completion (if possible) - for example in-order counter update")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRegularCmdListPatching, -1, "-1: default, 0: Disabled, 1: If set, patch counter value on execute call")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRelaxedOrderingForEventsChaining, -1, "-1: default, 0: Disabled, 1: If set, send 2 immediate flushes to avoid stalling RelaxedOrdering Scheduler.")
 

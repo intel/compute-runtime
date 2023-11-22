@@ -87,6 +87,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->enableCounterBasedMode(true);
     }
 
+    if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1) {
+        event->enableKmdWaitMode();
+    }
+
     return event;
 }
 
@@ -457,7 +461,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     do {
-        if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1 && isCounterBased()) {
+        if (isKmdWaitModeEnabled() && isCounterBased()) {
             ret = waitForUserFence(timeout);
         } else {
             ret = queryStatus();

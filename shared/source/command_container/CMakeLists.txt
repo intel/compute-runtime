@@ -15,7 +15,6 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_alu_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_tgllp_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/encode_interrupt_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_surface_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.h
