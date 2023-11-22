@@ -1526,6 +1526,10 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if ((NEO::DebugManager.flags.ForceBcsEngineIndex.get() != -1) && NEO::EngineHelper::isCopyOnlyEngineType(getEngineGroupTypeForOrdinal(ordinal))) {
+        index = static_cast<uint32_t>(NEO::DebugManager.flags.ForceBcsEngineIndex.get());
+    }
+
     if (ordinal < numEngineGroups) {
         auto &engines = engineGroups[ordinal].engines;
         if (index >= engines.size()) {
