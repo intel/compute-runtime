@@ -23,55 +23,24 @@
 
 namespace NEO {
 
-CommandStreamReceiver *AUBCommandStreamFixture::prepareComputeEngine(MockDevice &device, const std::string &filename) {
-    CommandStreamReceiver *pCommandStreamReceiver = nullptr;
-    if (testMode == TestMode::AubTestsWithTbx) {
-        pCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-    } else {
-        pCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-    }
-    device.resetCommandStreamReceiver(pCommandStreamReceiver);
-    return pCommandStreamReceiver;
-}
-
-void AUBCommandStreamFixture::prepareCopyEngines(MockDevice &device, const std::string &filename) {
-    for (auto i = 0u; i < device.allEngines.size(); i++) {
-        if (EngineHelpers::isBcs(device.allEngines[i].getEngineType())) {
-            CommandStreamReceiver *pBcsCommandStreamReceiver = nullptr;
-            if (testMode == TestMode::AubTestsWithTbx) {
-                pBcsCommandStreamReceiver = TbxCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-            } else {
-                pBcsCommandStreamReceiver = AUBCommandStreamReceiver::create(filename, true, *device.executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield());
-            }
-            device.resetCommandStreamReceiver(pBcsCommandStreamReceiver, i);
-        }
-    }
-}
-
-void AUBCommandStreamFixture::setUp(CommandQueue *pCmdQ) {
-    ASSERT_NE(pCmdQ, nullptr);
-    auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-
-    const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
-    std::stringstream strfilename;
-    auto engineType = pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getEngineType();
-
-    strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
-
-    pCommandStreamReceiver = prepareComputeEngine(device, strfilename.str());
-    ASSERT_NE(nullptr, pCommandStreamReceiver);
-
-    prepareCopyEngines(device, strfilename.str());
+void AUBCommandStreamFixture::setUp(const HardwareInfo *hardwareInfo) {
+    AUBFixture::setUp(hardwareInfo);
 
     CommandStreamFixture::setUp(pCmdQ);
 
+    pClDevice = device.get();
+    pDevice = &pClDevice->device;
+    pCommandStreamReceiver = csr;
     pTagMemory = pCommandStreamReceiver->getTagAddress();
     this->commandQueue = pCmdQ;
 }
 
+void AUBCommandStreamFixture::setUp() {
+    setUp(nullptr);
+}
+
 void AUBCommandStreamFixture::tearDown() {
     CommandStreamFixture::tearDown();
+    AUBFixture::tearDown();
 }
 } // namespace NEO

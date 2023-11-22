@@ -24,8 +24,7 @@ static const unsigned int testImageDimensions = 17;
 auto const elementSize = 4; // sizeof CL_RGBA * CL_UNORM_INT8
 
 struct AUBCreateImage
-    : public CommandDeviceFixture,
-      public AUBCommandStreamFixture,
+    : public AUBCommandStreamFixture,
       public ::testing::Test {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
@@ -35,8 +34,7 @@ struct AUBCreateImage
         if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
-        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
-        CommandStreamFixture::setUp(pCmdQ);
+        CommandStreamFixture::setUp();
 
         imageFormat.image_channel_data_type = CL_UNORM_INT8;
         imageFormat.image_channel_order = CL_RGBA;
@@ -56,7 +54,6 @@ struct AUBCreateImage
     void TearDown() override {
         image.reset();
         CommandStreamFixture::tearDown();
-        CommandDeviceFixture::tearDown();
     }
 
     std::unique_ptr<Image> image;

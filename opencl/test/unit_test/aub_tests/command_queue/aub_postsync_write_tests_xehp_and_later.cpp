@@ -20,16 +20,16 @@
 
 using namespace NEO;
 
-struct PostSyncWriteXeHPTests : public HelloWorldFixture<AUBHelloWorldFixtureFactory>, public ::testing::Test {
+struct PostSyncWriteXeHPTests : public AUBCommandStreamFixture, public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(true);
 
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::setUp();
+        AUBCommandStreamFixture::setUp();
         EXPECT_TRUE(pCommandStreamReceiver->peekTimestampPacketWriteEnabled());
     };
 
     void TearDown() override {
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::tearDown();
+        AUBCommandStreamFixture::tearDown();
     }
 
     DebugManagerStateRestore restore;
@@ -39,7 +39,7 @@ struct PostSyncWriteXeHPTests : public HelloWorldFixture<AUBHelloWorldFixtureFac
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledWhenEnqueueingThenWritePostsyncOperation) {
     const uint32_t bufferSize = 4;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     memset(graphicsAllocation->getUnderlyingBuffer(), 0, graphicsAllocation->getUnderlyingBufferSize());
     buffer->forceDisallowCPUCopy = true;
@@ -50,14 +50,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledW
 
     typename FamilyType::TimestampPacketType expectedTimestampValues[4] = {1, 1, 1, 1};
     auto tagGpuAddress = reinterpret_cast<void *>(pCmdQ->getTimestampPacketContainer()->peekNodes().at(0)->getGpuAddress());
-    expectMemoryNotEqual<FamilyType>(tagGpuAddress, expectedTimestampValues, 4 * sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(tagGpuAddress, expectedTimestampValues, 4 * sizeof(typename FamilyType::TimestampPacketType));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
     DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
     const uint32_t bufferSize = 4;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     memset(graphicsAllocation->getUnderlyingBuffer(), 0, graphicsAllocation->getUnderlyingBufferSize());
     buffer->forceDisallowCPUCopy = true;
@@ -109,10 +109,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhen
     auto endTimestampAddress2 = TimestampPacketHelper::getGlobalEndGpuAddress(*node1);
     auto endTimestampAddress3 = TimestampPacketHelper::getContextEndGpuAddress(*node2);
     auto endTimestampAddress4 = TimestampPacketHelper::getGlobalEndGpuAddress(*node2);
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
 
     clReleaseEvent(outEvent1);
     clReleaseEvent(outEvent2);
@@ -140,10 +140,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenMultipleWalkersWhenEnq
     auto endTimestampAddress2 = TimestampPacketHelper::getGlobalEndGpuAddress(*timestampNodes[0]);
     auto endTimestampAddress3 = TimestampPacketHelper::getContextEndGpuAddress(*timestampNodes[1]);
     auto endTimestampAddress4 = TimestampPacketHelper::getGlobalEndGpuAddress(*timestampNodes[1]);
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectMemoryNotEqual<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
 
     clReleaseEvent(outEvent);
 }

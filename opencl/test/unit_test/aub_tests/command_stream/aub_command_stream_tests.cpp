@@ -24,23 +24,13 @@
 
 using namespace NEO;
 
-struct AUBFixture : public AUBCommandStreamFixture,
-                    public CommandQueueFixture,
-                    public ClDeviceFixture {
-
-    using AUBCommandStreamFixture::setUp;
-    using CommandQueueFixture::setUp;
-
+struct AUBCommandStreamNoopFixture : public AUBCommandStreamFixture {
     void setUp() {
-        ClDeviceFixture::setUp();
-        CommandQueueFixture::setUp(nullptr, pClDevice, 0);
-        AUBCommandStreamFixture::setUp(pCmdQ);
+        AUBCommandStreamFixture::setUp();
     }
 
     void tearDown() {
         AUBCommandStreamFixture::tearDown();
-        CommandQueueFixture::tearDown();
-        ClDeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -73,7 +63,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 };
 
-using AUBcommandstreamTests = Test<AUBFixture>;
+using AUBcommandstreamTests = Test<AUBCommandStreamNoopFixture>;
 
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
@@ -111,7 +101,7 @@ HWTEST_F(AUBcommandstreamTests, WhenCreatingResidentAllocationThenAllocationIsRe
 
     getSimulatedCsr<FamilyType>()->initializeEngine();
 
-    auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
+    auto &commandStreamReceiver = device->getGpgpuCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     commandStreamReceiver.processResidency(allocationsForResidency, 0u);

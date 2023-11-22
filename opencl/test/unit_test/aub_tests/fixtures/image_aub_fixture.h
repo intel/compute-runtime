@@ -22,7 +22,7 @@ struct ImagesSupportedMatcher {
 };
 
 namespace NEO {
-struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture {
+struct ImageAubFixture : public AUBCommandStreamFixture {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
     using AUBCommandStreamFixture::setUp;
@@ -37,39 +37,23 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
                 GTEST_SKIP();
             }
 
-            hardwareInfo = *defaultHwInfo;
+            auto hardwareInfo = *defaultHwInfo;
             hardwareInfo.capabilityTable.blitterOperationsSupported = true;
-            ClDeviceFixture::setUpImpl(&hardwareInfo);
+            CommandStreamFixture::setUp(&hardwareInfo);
         } else {
-            ClDeviceFixture::setUp();
+            CommandStreamFixture::setUp(nullptr);
         }
-
-        context = new MockContext(pClDevice);
-
-        cl_int retVal = CL_SUCCESS;
-        auto clQueue = clCreateCommandQueueWithProperties(context, pClDevice, nullptr, &retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        pCmdQ = castToObject<CommandQueue>(clQueue);
-
-        CommandStreamFixture::setUp(pCmdQ);
     }
 
     void tearDown() {
         if (pCmdQ) {
             auto blocked = pCmdQ->isQueueBlocked();
             UNRECOVERABLE_IF(blocked);
-            pCmdQ->release();
-        }
-        if (context) {
-            context->release();
         }
 
         CommandStreamFixture::tearDown();
-        ClDeviceFixture::tearDown();
     }
 
     DebugManagerStateRestore restorer;
-    CommandQueue *pCmdQ = nullptr;
-    MockContext *context = nullptr;
 };
 } // namespace NEO

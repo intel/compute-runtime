@@ -38,6 +38,7 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
+        executionEnvironment->calculateMaxOsContextCount();
 
         auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         auto engineType = getChosenEngineType(hwInfo);

@@ -29,8 +29,7 @@ struct MapImageParams {
 };
 
 struct AUBMapImage
-    : public CommandDeviceFixture,
-      public AUBCommandStreamFixture,
+    : public AUBCommandStreamFixture,
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, MapImageParams>>,
       public ::testing::Test {
     typedef AUBCommandStreamFixture CommandStreamFixture;
@@ -41,20 +40,15 @@ struct AUBMapImage
         if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
-        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
-        CommandStreamFixture::setUp(pCmdQ);
-
-        context = std::make_unique<MockContext>(pClDevice);
+        CommandStreamFixture::setUp();
     }
 
     void TearDown() override {
         srcImage.reset();
-        context.reset();
+
         CommandStreamFixture::tearDown();
-        CommandDeviceFixture::tearDown();
     }
 
-    std::unique_ptr<MockContext> context;
     std::unique_ptr<Image> srcImage;
 };
 
@@ -125,7 +119,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
     srcImage.reset(Image::create(
-        context.get(),
+        context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,

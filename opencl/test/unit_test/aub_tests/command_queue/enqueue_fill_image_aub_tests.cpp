@@ -75,8 +75,7 @@ struct FillChannelType {
 // clang-format on
 
 struct AubFillImage
-    : public CommandDeviceFixture,
-      public AUBCommandStreamFixture,
+    : public AUBCommandStreamFixture,
       public ::testing::WithParamInterface<std::tuple<FillChannelType, uint32_t /*cl_channel_order*/, FillImageParams>>,
       public ::testing::Test {
 
@@ -95,24 +94,20 @@ struct AubFillImage
             // sRGBA and sBGRA support only unorm int8 type
             GTEST_SKIP();
         }
-        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
-        CommandStreamFixture::setUp(pCmdQ);
 
-        context = std::make_unique<MockContext>(pClDevice);
-        if ((pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features == false) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
+        CommandStreamFixture::setUp();
+
+        if ((device->getHardwareInfo().capabilityTable.supportsOcl21Features == false) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
             GTEST_SKIP();
         }
     }
 
     void TearDown() override {
         image.reset();
-        context.reset();
 
         CommandStreamFixture::tearDown();
-        CommandDeviceFixture::tearDown();
     }
 
-    std::unique_ptr<MockContext> context;
     std::unique_ptr<Image> image;
 };
 
@@ -183,7 +178,7 @@ HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     image.reset(Image::create(
-        context.get(),
+        context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
         0,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,8 @@ namespace NEO {
 ////////////////////////////////////////////////////////////////////////////////
 // Factory where all command stream traffic funnels to an AUB file
 ////////////////////////////////////////////////////////////////////////////////
-struct AUBHelloWorldFixtureFactory : public HelloWorldFixtureFactory {
-    typedef AUBCommandStreamFixture CommandStreamFixture;
+struct AUBHelloWorldFixtureFactory {
+    typedef NEO::IndirectHeapFixture IndirectHeapFixture;
+    typedef NEO::HelloWorldKernelFixture KernelFixture;
 };
 } // namespace NEO

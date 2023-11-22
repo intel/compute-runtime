@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,16 +35,15 @@ struct AUBSimpleArgFixtureFactory : public SimpleArgFixtureFactory,
 template <typename FixtureFactory>
 struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
                           public FixtureFactory::CommandStreamFixture,
-                          public FixtureFactory::CommandQueueFixture,
-                          public FixtureFactory::KernelFixture,
-                          public ClDeviceFixture {
+                          public FixtureFactory::KernelFixture {
+
     typedef typename FixtureFactory::IndirectHeapFixture IndirectHeapFixture;
     typedef typename FixtureFactory::CommandStreamFixture CommandStreamFixture;
-    typedef typename FixtureFactory::CommandQueueFixture CommandQueueFixture;
     typedef typename FixtureFactory::KernelFixture KernelFixture;
 
     using AUBCommandStreamFixture::setUp;
-    using CommandQueueFixture::pCmdQ;
+    using CommandStreamFixture::pClDevice;
+    using CommandStreamFixture::pCmdQ;
     using CommandStreamFixture::pCS;
     using IndirectHeapFixture::setUp;
     using KernelFixture::pKernel;
@@ -52,11 +51,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
 
   public:
     void setUp() {
-        ClDeviceFixture::setUp();
-        ASSERT_NE(nullptr, pClDevice);
-        CommandQueueFixture::setUp(pClDevice, 0);
-        ASSERT_NE(nullptr, pCmdQ);
-        CommandStreamFixture::setUp(pCmdQ);
+        CommandStreamFixture::setUp();
         ASSERT_NE(nullptr, pCS);
         IndirectHeapFixture::setUp(pCmdQ);
         KernelFixture::setUp(pClDevice);
@@ -95,8 +90,6 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         KernelFixture::tearDown();
         IndirectHeapFixture::tearDown();
         CommandStreamFixture::tearDown();
-        CommandQueueFixture::tearDown();
-        ClDeviceFixture::tearDown();
     }
 
     int argVal = 0;

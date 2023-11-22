@@ -46,21 +46,72 @@ cl_uint TestSimdTable[] = {
     8, 16, 32};
 
 namespace ULT {
-struct AUBHelloWorld
-    : public HelloWorldFixture<AUBHelloWorldFixtureFactory>,
-      public ClHardwareParse,
-      public ::testing::Test {
+template <typename FixtureFactory>
+struct AUBHelloWorldFixture
+    : public AUBCommandStreamFixture,
+      public FixtureFactory::KernelFixture,
+      public FixtureFactory::IndirectHeapFixture,
+      public ClHardwareParse {
 
-    void SetUp() override {
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::setUp();
+    typedef typename FixtureFactory::KernelFixture KernelFixture;
+    using KernelFixture::pKernel;
+
+    void setUp() {
+        AUBCommandStreamFixture::setUp(nullptr);
         ClHardwareParse::setUp();
+
+        IndirectHeapFixture::setUp(pCmdQ);
+        KernelFixture::setUp(device.get(), kernelFilename, kernelName);
+        ASSERT_NE(nullptr, pKernel);
+
+        auto retVal = CL_INVALID_VALUE;
+
+        destBuffer = Buffer::create(
+            context,
+            CL_MEM_READ_WRITE,
+            sizeUserMemory,
+            nullptr,
+            retVal);
+
+        srcBuffer = Buffer::create(
+            context,
+            CL_MEM_READ_WRITE,
+            sizeUserMemory,
+            nullptr,
+            retVal);
+
+        pDestMemory = destBuffer->getCpuAddressForMapping();
+        pSrcMemory = srcBuffer->getCpuAddressForMapping();
+
+        memset(pDestMemory, destPattern, sizeUserMemory);
+        memset(pSrcMemory, srcPattern, sizeUserMemory);
+
+        pKernel->setArg(0, srcBuffer);
+        pKernel->setArg(1, destBuffer);
     }
 
-    void TearDown() override {
+    void tearDown() {
+        srcBuffer->release();
+        destBuffer->release();
+
+        KernelFixture::tearDown();
+        IndirectHeapFixture::tearDown();
         ClHardwareParse::tearDown();
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::tearDown();
+        AUBCommandStreamFixture::tearDown();
     }
+
+    Buffer *srcBuffer = nullptr;
+    Buffer *destBuffer = nullptr;
+    void *pSrcMemory = nullptr;
+    void *pDestMemory = nullptr;
+    size_t sizeUserMemory = 128 * sizeof(float);
+    const char *kernelFilename = "CopyBuffer_simd";
+    const char *kernelName = "CopyBuffer";
+    const int srcPattern = 85;
+    const int destPattern = 170;
 };
+
+using AUBHelloWorld = Test<AUBHelloWorldFixture<AUBHelloWorldFixtureFactory>>;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAddressesAreAligned) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
@@ -117,9 +168,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAddressesAreAl
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
-struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtureFactory>,
+struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFixtureFactory>,
                                     public ::testing::TestWithParam<std::tuple<uint32_t /*cl_uint*/, TestParam>> {
-    typedef HelloWorldFixture<AUBHelloWorldFixtureFactory> ParentClass;
+    typedef AUBHelloWorldFixture<AUBHelloWorldFixtureFactory> ParentClass;
 
     void SetUp() override {
         std::tie(KernelFixture::simd, param) = GetParam();
