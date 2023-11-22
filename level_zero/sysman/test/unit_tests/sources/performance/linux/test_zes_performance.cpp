@@ -138,7 +138,7 @@ class ZesPerformanceFixtureI915 : public ZesPerformanceFixture {
 };
 
 TEST_F(ZesPerformanceFixtureI915, GivenKmdInterfaceWhenGettingSysFsFilenamesForPerformanceForI915VersionThenProperPathsAreReturned) {
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getProductFamily());
     EXPECT_STREQ(std::string(i915MediaFreqFactorFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactor, 0, true).c_str());
     EXPECT_STREQ(std::string(i915MediaFreqFactorScaleFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale, 0, true).c_str());
 }
@@ -199,7 +199,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenMediaDomainTypeWhenGettingPerfHandlesThen
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
 
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getProductFamily());
     auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
 
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
@@ -213,7 +213,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenComputeDomainTypeWhenGettingPerfHandlesTh
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getProductFamily());
     auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
 
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_COMPUTE);
@@ -234,7 +234,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenComputeDomainTypeWhenCallingPerformanceSe
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getProductFamily());
     auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
     double pFactor = 0.0;
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_COMPUTE);

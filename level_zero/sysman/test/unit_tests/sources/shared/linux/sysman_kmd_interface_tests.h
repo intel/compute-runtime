@@ -45,26 +45,6 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     }
 };
 
-class MockSysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
-  public:
-    using L0::Sysman::SysmanKmdInterface::pFsAccess;
-    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-    MockSysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceXe(productFamily) {}
-    ~MockSysmanKmdInterfaceXe() override = default;
-};
-
-class MockFsAccessInterface : public L0::Sysman::FsAccessInterface {
-  public:
-    MockFsAccessInterface() = default;
-    ~MockFsAccessInterface() override = default;
-};
-
-class MockSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
-  public:
-    MockSysFsAccessInterface() = default;
-    ~MockSysFsAccessInterface() override = default;
-};
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

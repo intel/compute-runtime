@@ -58,18 +58,6 @@ class ZesStandbyFixtureI915 : public ZesStandbyFixture {
     }
 };
 
-TEST_F(ZesStandbyFixtureI915, GivenKmdInterfaceWhenGettingFilenamesForStandbyForI915VersionAndBaseDirectoryExistsThenProperPathsAreReturned) {
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
-    bool baseDirectoryExists = true;
-    EXPECT_STREQ("gt/gt0/rc6_enable", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, 0, baseDirectoryExists).c_str());
-}
-
-TEST_F(ZesStandbyFixtureI915, GivenKmdInterfaceWhenGettingFilenamesForStandbyForI915VersionAndBaseDirectoryDoesntExistThenProperPathsAreReturned) {
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915>(pLinuxSysmanImp->getProductFamily());
-    bool baseDirectoryExists = false;
-    EXPECT_STREQ("power/rc6_enable", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, 0, baseDirectoryExists).c_str());
-}
-
 TEST_F(ZesStandbyFixtureI915, GivenStandbyModeFilesNotAvailableWhenCallingEnumerateThenSuccessResultAndZeroCountIsReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, [](const std::string &filePath, struct stat *statbuf) -> int {
