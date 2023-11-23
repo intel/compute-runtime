@@ -40,6 +40,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
@@ -106,9 +107,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -289,9 +290,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
     auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
@@ -316,9 +317,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAp
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
     auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
@@ -343,11 +344,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhe
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = false;
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -375,11 +376,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAp
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = false;
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
 
@@ -670,8 +671,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenRetur
 }
 
 struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
-    struct MockEvent : public EventImp<uint32_t> {
-        using EventImp<uint32_t>::counterBasedMode;
+    struct FixtureMockEvent : public EventImp<uint32_t> {
+        using EventImp<uint32_t>::Event::counterBasedMode;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
         using EventImp<uint32_t>::inOrderExecSignalValue;
@@ -719,7 +720,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
-            events.emplace_back(DestroyableZeUniquePtr<MockEvent>(static_cast<MockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
+            events.emplace_back(DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
             EXPECT_EQ(Event::CounterBasedMode::ExplicitlyEnabled, events.back()->counterBasedMode);
             EXPECT_TRUE(events.back()->isCounterBased());
         }
@@ -815,7 +816,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     std::unique_ptr<NEO::MockOsContext> mockCopyOsContext;
 
     uint32_t createdCmdLists = 0;
-    std::vector<DestroyableZeUniquePtr<MockEvent>> events;
+    std::vector<DestroyableZeUniquePtr<FixtureMockEvent>> events;
     std::vector<std::unique_ptr<Mock<CommandQueue>>> mockCmdQs;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount = {3, 2, 1};
@@ -913,7 +914,7 @@ HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListTh
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
 
     eventDesc.index = 0;
-    auto event = std::unique_ptr<MockEvent>(static_cast<MockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
+    auto event = std::unique_ptr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_TRUE(event->isCounterBased());
 
     auto handle = event->toHandle();
@@ -935,6 +936,27 @@ HWTEST2_F(InOrderCmdListTests, givenIpcAndCounterBasedEventPoolFlagsWhenCreating
 
     EXPECT_EQ(nullptr, eventPool);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, returnValue);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenIpcPoolEventWhenTryingToImplicitlyConverToCounterBasedEventThenDisallow, IsAtLeastSkl) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    auto eventPoolForExport = std::unique_ptr<WhiteBox<EventPool>>(static_cast<WhiteBox<EventPool> *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+    auto eventPoolImported = std::unique_ptr<WhiteBox<EventPool>>(static_cast<WhiteBox<EventPool> *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+
+    eventPoolForExport->isIpcPoolFlag = true;
+    eventPoolImported->isImportedIpcPool = true;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    DestroyableZeUniquePtr<FixtureMockEvent> event0(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolForExport.get(), &eventDesc, device)));
+    EXPECT_EQ(Event::CounterBasedMode::ImplicitlyDisabled, event0->counterBasedMode);
+
+    DestroyableZeUniquePtr<FixtureMockEvent> event1(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolImported.get(), &eventDesc, device)));
+    EXPECT_EQ(Event::CounterBasedMode::ImplicitlyDisabled, event1->counterBasedMode);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusThenReturnNotReady, IsAtLeastSkl) {

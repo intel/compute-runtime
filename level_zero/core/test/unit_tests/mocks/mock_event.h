@@ -60,7 +60,9 @@ struct WhiteBox<::L0::EventPool> : public ::L0::EventPool {
     using BaseClass::isDeviceEventPoolAllocation;
     using BaseClass::isHostVisibleEventPoolAllocation;
     using BaseClass::isImportedIpcPool;
+    using BaseClass::isIpcPoolFlag;
     using BaseClass::isShareableEventMemory;
+    using BaseClass::numEvents;
 };
 
 using EventPool = WhiteBox<::L0::EventPool>;

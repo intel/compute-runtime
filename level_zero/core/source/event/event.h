@@ -365,6 +365,7 @@ struct EventPool : _ze_event_pool_handle_t {
     }
 
     bool isCounterBased() const { return counterBased; }
+    bool isIpcPoolFlagSet() const { return isIpcPoolFlag; }
 
   protected:
     EventPool() = default;
@@ -390,6 +391,7 @@ struct EventPool : _ze_event_pool_handle_t {
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;
     bool isImportedIpcPool = false;
+    bool isIpcPoolFlag = false;
     bool isShareableEventMemory = false;
     bool isImplicitScalingCapable = false;
     bool counterBased = false;

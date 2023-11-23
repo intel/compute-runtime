@@ -50,6 +50,9 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->maxKernelCount = eventPool->getMaxKernelCount();
     event->maxPacketCount = eventPool->getEventMaxPackets();
     event->isFromIpcPool = eventPool->getImportedIpcPool();
+    if (event->isFromIpcPool || eventPool->isIpcPoolFlagSet()) {
+        event->disableImplicitCounterBasedMode();
+    }
 
     event->kernelEventCompletionData =
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);

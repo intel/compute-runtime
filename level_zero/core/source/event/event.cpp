@@ -42,9 +42,7 @@ template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, De
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
 
-    bool ipcPool = eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC;
-
-    if (ipcPool && counterBased) {
+    if (isIpcPoolFlagSet() && counterBased) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -114,7 +112,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         if (graphicsAllocation) {
             eventPoolAllocations->addAllocation(graphicsAllocation);
             allocatedMemory = true;
-            if (ipcPool) {
+            if (isIpcPoolFlagSet()) {
                 uint64_t handle = 0;
                 this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle) == 0);
             }
@@ -127,7 +125,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
                                                                                                    allocationProperties,
                                                                                                    *eventPoolAllocations);
-        if (ipcPool) {
+        if (isIpcPoolFlagSet()) {
             this->isShareableEventMemory = eventPoolAllocations->getDefaultGraphicsAllocation()->isShareableHostMemory;
         }
         allocatedMemory = (nullptr != eventPoolPtr);
@@ -206,6 +204,8 @@ void EventPool::setupDescriptorFlags(const ze_event_pool_desc_t *desc) {
     if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
         eventPoolFlags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     }
+
+    this->isIpcPoolFlag = !!(eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC);
 
     auto pNext = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
 
