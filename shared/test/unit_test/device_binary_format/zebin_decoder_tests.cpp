@@ -1586,6 +1586,34 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
 
     EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
+
+    ConstStringRef zeinfo3 = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+        - arg_type:        const_base
+          offset:          136
+          size:            8
+          bti_value:       1
+        - arg_type:        global_base
+          offset:          144
+          size:            8
+          bti_value:       2
+...
+)===";
+    err = decodeZeInfoKernelEntry(zeinfo3);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+
+    EXPECT_EQ(3u, kernelDescriptor->kernelAttributes.numArgsStateful);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulSamplerWhenDecodingZeInfoThenNumberOfStatefulArgsDoesNotCountSampler) {

@@ -558,6 +558,8 @@ DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlP
 
     if (dst.payloadMappings.bindingTable.numEntries > 0U) {
         generateSSHWithBindingTable(dst);
+        DEBUG_BREAK_IF(dst.kernelAttributes.numArgsStateful > dst.payloadMappings.bindingTable.numEntries);
+        dst.kernelAttributes.numArgsStateful = std::max(dst.kernelAttributes.numArgsStateful, static_cast<uint16_t>(dst.payloadMappings.bindingTable.numEntries));
     }
 
     if (dst.payloadMappings.samplerTable.numSamplers > 0U) {
