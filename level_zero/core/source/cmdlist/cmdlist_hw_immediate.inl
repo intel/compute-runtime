@@ -900,6 +900,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible);
 
+    uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->inOrderDependencyCounter : 0;
+
     if (inOrderWaitAllowed) {
         status = synchronizeInOrderExecution(timeout);
     } else {
@@ -914,17 +916,23 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         }
     }
 
-    if (handlePostWaitOperations && status != ZE_RESULT_NOT_READY) {
-        if (status == ZE_RESULT_SUCCESS) {
-            this->cmdQImmediate->unregisterCsrClient();
-
-            if (tempAllocsCleanupRequired) {
-                internalAllocStorage->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-            }
+    if (status != ZE_RESULT_NOT_READY) {
+        if (isInOrderExecutionEnabled()) {
+            this->latestHostWaitedInOrderSyncValue = inOrderSyncValue;
         }
 
-        this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
-        this->checkAssert();
+        if (handlePostWaitOperations) {
+            if (status == ZE_RESULT_SUCCESS) {
+                this->cmdQImmediate->unregisterCsrClient();
+
+                if (tempAllocsCleanupRequired) {
+                    internalAllocStorage->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                }
+            }
+
+            this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
+            this->checkAssert();
+        }
     }
 
     return status;

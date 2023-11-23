@@ -333,7 +333,7 @@ struct CommandListCoreFamily : CommandListImp {
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
     bool canSkipInOrderEventWait(const Event &event) const;
-    void handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
+    bool handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;
@@ -342,6 +342,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
+    uint64_t latestHostWaitedInOrderSyncValue = 0;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
 };
 

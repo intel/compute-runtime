@@ -2283,30 +2283,37 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed) {
+bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed) {
     if (hasInOrderDependencies()) {
+        if (this->latestHostWaitedInOrderSyncValue >= inOrderExecInfo->inOrderDependencyCounter) {
+            return false;
+        }
+
         if (relaxedOrderingAllowed) {
             NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
         }
 
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, this->inOrderAllocationOffset, relaxedOrderingAllowed, true);
+
+        return true;
     }
+
+    return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency) {
-    bool inOrderDependencies = false;
+    bool inOrderDependenciesSent = false;
 
     if (this->latestOperationRequiredNonWalkerInOrderCmdsChaining && !relaxedOrderingAllowed) {
         waitForImplicitInOrderDependency = false;
     }
 
     if (waitForImplicitInOrderDependency) {
-        handleInOrderImplicitDependencies(relaxedOrderingAllowed);
-        inOrderDependencies = hasInOrderDependencies();
+        inOrderDependenciesSent = handleInOrderImplicitDependencies(relaxedOrderingAllowed);
     }
 
-    if (relaxedOrderingAllowed && numWaitEvents > 0 && !inOrderDependencies) {
+    if (relaxedOrderingAllowed && numWaitEvents > 0 && !inOrderDependenciesSent) {
         NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
     }
 
