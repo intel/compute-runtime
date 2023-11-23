@@ -62,6 +62,47 @@ typedef struct _ze_intel_device_module_dp_exp_properties_t {
     ze_intel_device_module_dp_exp_flags_t flags;                                    ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
 } ze_intel_device_module_dp_exp_properties_t;
 
+#ifndef ZE_INTEL_EVENT_SYNC_MODE
+/// @brief Event sync mode extension name
+#define ZE_INTEL_EVENT_SYNC_MODE "ZE_intel_experimental_event_sync_mode"
+#endif // ZE_INTEL_EVENT_SYNC_MODE
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Event sync mode extension Version(s)
+typedef enum _ze_intel_event_sync_mode_exp_version_t {
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_intel_event_sync_mode_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported event sync mode flags
+typedef uint32_t ze_intel_event_sync_mode_exp_flags_t;
+typedef enum _ze_intel_event_sync_mode_exp_flag_t {
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT = ZE_BIT(0),   ///< Low power host synchronization mode, for better CPU utilization
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT = ZE_BIT(1), ///< Generate interrupt when Event is signalled on Device
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} ze_intel_event_sync_mode_exp_flag_t;
+
+#ifndef ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC
+/// @brief stype for _ze_intel_event_sync_mode_exp_flag_t
+#define ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC (ze_structure_type_t)0x00030016
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Extended descriptor for event sync mode
+///
+/// @details
+///     - Implementation must support ::ZE_intel_experimental_event_sync_mode extension
+///     - May be passed to ze_event_desc_t through pNext.
+typedef struct _ze_intel_event_sync_mode_exp_desc_t {
+    ze_structure_type_t stype;                          ///< [in] type of this structure
+    const void *pNext;                                  ///< [in][optional] must be null or a pointer to an extension-specific
+                                                        ///< structure (i.e. contains stype and pNext).
+    ze_intel_event_sync_mode_exp_flags_t syncModeFlags; /// <in> valid combination of ::ze_intel_event_sync_mode_exp_flag_t
+} ze_intel_event_sync_mode_exp_desc_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
