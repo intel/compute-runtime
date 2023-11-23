@@ -36,6 +36,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;
     using CommandQueue::h2dEngines;
+    using CommandQueue::heaplessModeEnabled;
     using CommandQueue::isCopyOnly;
     using CommandQueue::isTextureCacheFlushNeeded;
     using CommandQueue::migrateMultiGraphicsAllocationsIfRequired;

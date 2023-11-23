@@ -20,8 +20,9 @@ struct PipeControlArgs;
 
 template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {
-    typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     struct ImmediateFlushData {
         PipelineSelectArgs pipelineSelectArgs{};
@@ -176,6 +177,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
     void dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device);
+    uint64_t getScratchPatchAddress();
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
@@ -202,7 +204,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
     bool are4GbHeapsAvailable() const;
 
-    uint64_t getScratchPatchAddress();
     void createScratchSpaceController();
 
     bool detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const;

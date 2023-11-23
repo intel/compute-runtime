@@ -47,6 +47,7 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 inline void HardwareInterface<GfxFamily>::programWalker(
     LinearStream &commandStream,
     Kernel &kernel,
@@ -57,8 +58,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     const DispatchInfo &dispatchInfo,
     HardwareInterfaceWalkerArgs &walkerArgs) {
 
-    auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
-    WALKER_TYPE walkerCmd = GfxFamily::cmdInitGpgpuWalker;
+    auto walkerCmdBuf = allocateWalkerSpace<WalkerType>(commandStream, kernel);
+    WalkerType walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     uint32_t dim = dispatchInfo.getDim();
     uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
@@ -82,7 +83,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            false, false, 0u);
 
-    HardwareCommandsHelper<GfxFamily>::sendIndirectState(
+    HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, INTERFACE_DESCRIPTOR_DATA>(
         commandStream,
         dsh,
         ioh,
@@ -98,6 +99,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         &walkerCmd,
         nullptr,
         kernelUsesLocalIds,
+        0,
         commandQueue.getDevice());
 
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor};

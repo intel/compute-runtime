@@ -27,6 +27,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
@@ -505,7 +506,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         dispatchRayTracingStateCommand(commandStreamCSR, device);
     }
 
-    programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
+    if (this->heaplessModeEnabled == false) {
+        programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
+    }
 
     programPreemption(commandStreamCSR, dispatchFlags);
 

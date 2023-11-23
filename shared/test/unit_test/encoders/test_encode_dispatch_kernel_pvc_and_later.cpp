@@ -33,9 +33,9 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenOverrideSlmTotalSizeDebugVari
 
     bool requiresUncachedMocs = false;
 
-    int32_t maxValueToProgram = 0xC;
+    uint32_t maxValueToProgram = 0xC;
 
-    for (int32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
+    for (uint32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
         DebugManager.flags.OverrideSlmAllocationSize.set(valueToProgram);
         cmdContainer->reset();
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);

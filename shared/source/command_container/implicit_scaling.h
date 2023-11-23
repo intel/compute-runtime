@@ -40,14 +40,16 @@ template <typename GfxFamily>
 struct ImplicitScalingDispatch {
     using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
+    template <typename WalkerType>
     static size_t getSize(bool apiSelfCleanup,
                           bool preferStaticPartitioning,
                           const DeviceBitfield &devices,
                           const Vec3<size_t> &groupStart,
                           const Vec3<size_t> &groupCount);
 
+    template <typename WalkerType>
     static void dispatchCommands(LinearStream &commandStream,
-                                 WALKER_TYPE &walkerCmd,
+                                 WalkerType &walkerCmd,
                                  void **outWalkerPtr,
                                  const DeviceBitfield &devices,
                                  uint32_t &partitionCount,

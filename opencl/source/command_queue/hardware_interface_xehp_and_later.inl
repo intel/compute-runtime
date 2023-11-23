@@ -8,7 +8,9 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -37,6 +39,7 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 inline void HardwareInterface<GfxFamily>::programWalker(
     LinearStream &commandStream,
     Kernel &kernel,
@@ -47,9 +50,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     const DispatchInfo &dispatchInfo,
     HardwareInterfaceWalkerArgs &walkerArgs) {
 
-    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using InterfaceDescriptorType = typename WalkerType::InterfaceDescriptorType;
+    WalkerType walkerCmd = GfxFamily::template getInitGpuWalker<WalkerType>();
 
-    COMPUTE_WALKER walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     auto &kernelInfo = kernel.getKernelInfo();
 
     uint32_t dim = dispatchInfo.getDim();
@@ -75,7 +78,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                                  simd);
 
     bool inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
-    auto idd = &walkerCmd.getInterfaceDescriptor();
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
 
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
@@ -86,27 +88,40 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     if (timestampPacketNode) {
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
+        GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacket<WalkerType>(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
-    if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
-        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, 0, rootDeviceEnvironment);
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
+
+    if constexpr (heaplessModeEnabled == false) {
+        if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
+            EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, 0, rootDeviceEnvironment);
+        }
     }
 
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
-                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
-                                                           localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
+    GpgpuWalkerHelper<GfxFamily>::template setGpgpuWalkerThreadData<WalkerType>(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
+                                                                                numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
+                                                                                localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
 
-    HardwareCommandsHelper<GfxFamily>::sendIndirectState(
+    auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
+    uint64_t scratchAddress = 0;
+
+    if constexpr (heaplessModeEnabled) {
+        auto scratchAllocation = queueCsr.getScratchAllocation();
+        if (scratchAllocation) {
+            scratchAddress = scratchAllocation->getGpuAddress();
+        }
+    }
+
+    HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, InterfaceDescriptorType>(
         commandStream,
         dsh,
         ioh,
         ssh,
         kernel,
-        kernel.getKernelStartAddress(localIdsGenerationByRuntime, kernelUsesLocalIds, isCcsUsed, false),
+        kernel.getKernelStartAddress(localIdsGenerationByRuntime, kernelUsesLocalIds, isCcsUsed, heaplessModeEnabled),
         simd,
         walkerArgs.localWorkSizes,
         threadGroupCount,
@@ -114,8 +129,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         walkerArgs.interfaceDescriptorIndex,
         walkerArgs.preemptionMode,
         &walkerCmd,
-        idd,
+        interfaceDescriptor,
         localIdsGenerationByRuntime,
+        scratchAddress,
         commandQueue.getDevice());
 
     bool kernelSystemAllocation = false;
@@ -126,7 +142,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor};
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
@@ -139,18 +155,18 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     if (partitionWalker) {
         const uint64_t workPartitionAllocationGpuVa = commandQueue.getDevice().getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
-        ImplicitScalingDispatch<GfxFamily>::dispatchCommands(commandStream,
-                                                             walkerCmd,
-                                                             nullptr,
-                                                             devices,
-                                                             partitionCount,
-                                                             false,
-                                                             false,
-                                                             kernel.usesImages(),
-                                                             queueCsr.getDcFlushSupport(),
-                                                             kernel.isSingleSubdevicePreferred(),
-                                                             workPartitionAllocationGpuVa,
-                                                             hwInfo);
+        ImplicitScalingDispatch<GfxFamily>::template dispatchCommands<WalkerType>(commandStream,
+                                                                                  walkerCmd,
+                                                                                  nullptr,
+                                                                                  devices,
+                                                                                  partitionCount,
+                                                                                  false,
+                                                                                  false,
+                                                                                  kernel.usesImages(),
+                                                                                  queueCsr.getDcFlushSupport(),
+                                                                                  kernel.isSingleSubdevicePreferred(),
+                                                                                  workPartitionAllocationGpuVa,
+                                                                                  hwInfo);
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
             queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
         }
@@ -159,7 +175,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             timestampPacketNode->setPacketsUsed(partitionCount);
         }
     } else {
-        auto computeWalkerOnStream = commandStream.getSpaceForCmd<typename GfxFamily::COMPUTE_WALKER>();
+        auto computeWalkerOnStream = commandStream.getSpaceForCmd<WalkerType>();
         *computeWalkerOnStream = walkerCmd;
     }
 }

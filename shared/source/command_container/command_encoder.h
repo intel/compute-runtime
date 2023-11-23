@@ -96,12 +96,15 @@ struct EncodeDispatchKernel {
 
     static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
-    static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+    template <typename WalkerType>
+    static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
-    static void appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
+    template <typename InterfaceDescriptorType>
+    static void appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
                                           const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 
-    static void setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
+    template <typename InterfaceDescriptorType>
+    static void setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
                            const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void *getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset);
@@ -129,15 +132,19 @@ struct EncodeDispatchKernel {
                                  uint32_t requiredWorkGroupOrder,
                                  const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
+    template <typename InterfaceDescriptorType>
+    static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 
-    static void adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WALKER_TYPE &walkerCmd);
+    template <typename WalkerType, typename InterfaceDescriptorType>
+    static void adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd);
 
     static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
 
-    static void adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo);
+    template <typename WalkerType>
+    static void adjustTimestampPacket(WalkerType &walkerCmd, const HardwareInfo &hwInfo);
 
-    static void setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
+    template <typename WalkerType>
+    static void setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
 
     static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -326,6 +333,7 @@ struct EncodeStateBaseAddressArgs {
     bool multiOsContextCapable = false;
     bool isRcs = false;
     bool doubleSbaWa = false;
+    bool heaplessModeEnabled = false;
 };
 
 template <typename GfxFamily>

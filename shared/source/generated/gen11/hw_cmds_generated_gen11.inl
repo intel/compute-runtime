@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,194 +47,6 @@ typedef struct tagBINDING_TABLE_STATE {
     }
 } BINDING_TABLE_STATE;
 STATIC_ASSERT(4 == sizeof(BINDING_TABLE_STATE));
-typedef struct tagGPGPU_WALKER {
-    union tagTheStructure {
-        struct tagCommon {
-            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t PredicateEnable : BITFIELD_RANGE(8, 8);
-            uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
-            uint32_t IndirectParameterEnable : BITFIELD_RANGE(10, 10);
-            uint32_t Reserved_11 : BITFIELD_RANGE(11, 15);
-            uint32_t Subopcode : BITFIELD_RANGE(16, 23);
-            uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
-            uint32_t Pipeline : BITFIELD_RANGE(27, 28);
-            uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            uint32_t InterfaceDescriptorOffset : BITFIELD_RANGE(0, 5);
-            uint32_t Reserved_38 : BITFIELD_RANGE(6, 31);
-            uint32_t IndirectDataLength : BITFIELD_RANGE(0, 16);
-            uint32_t Reserved_81 : BITFIELD_RANGE(17, 31);
-            uint32_t Reserved_96 : BITFIELD_RANGE(0, 5);
-            uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
-            uint32_t ThreadWidthCounterMaximum : BITFIELD_RANGE(0, 5);
-            uint32_t Reserved_134 : BITFIELD_RANGE(6, 7);
-            uint32_t ThreadHeightCounterMaximum : BITFIELD_RANGE(8, 13);
-            uint32_t Reserved_142 : BITFIELD_RANGE(14, 15);
-            uint32_t ThreadDepthCounterMaximum : BITFIELD_RANGE(16, 21);
-            uint32_t Reserved_150 : BITFIELD_RANGE(22, 29);
-            uint32_t SimdSize : BITFIELD_RANGE(30, 31);
-            uint32_t ThreadGroupIdStartingX;
-            uint32_t Reserved_192;
-            uint32_t ThreadGroupIdXDimension;
-            uint32_t ThreadGroupIdStartingY;
-            uint32_t Reserved_288;
-            uint32_t ThreadGroupIdYDimension;
-            uint32_t ThreadGroupIdStartingResumeZ;
-            uint32_t ThreadGroupIdZDimension;
-            uint32_t RightExecutionMask;
-            uint32_t BottomExecutionMask;
-        } Common;
-        uint32_t RawData[15];
-    } TheStructure;
-    typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_DWORD_COUNT_N = 0xd,
-    } DWORD_LENGTH;
-    typedef enum tagSUBOPCODE {
-        SUBOPCODE_GPGPU_WALKER_SUBOP = 0x5,
-    } SUBOPCODE;
-    typedef enum tagMEDIA_COMMAND_OPCODE {
-        MEDIA_COMMAND_OPCODE_GPGPU_WALKER = 0x1,
-    } MEDIA_COMMAND_OPCODE;
-    typedef enum tagPIPELINE {
-        PIPELINE_MEDIA = 0x2,
-    } PIPELINE;
-    typedef enum tagCOMMAND_TYPE {
-        COMMAND_TYPE_GFXPIPE = 0x3,
-    } COMMAND_TYPE;
-    typedef enum tagSIMD_SIZE {
-        SIMD_SIZE_SIMD8 = 0x0,
-        SIMD_SIZE_SIMD16 = 0x1,
-        SIMD_SIZE_SIMD32 = 0x2,
-    } SIMD_SIZE;
-    typedef enum tagPATCH_CONSTANTS {
-        INDIRECTDATASTARTADDRESS_BYTEOFFSET = 0xc,
-        INDIRECTDATASTARTADDRESS_INDEX = 0x3,
-    } PATCH_CONSTANTS;
-    inline void init() {
-        memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common.Subopcode = SUBOPCODE_GPGPU_WALKER_SUBOP;
-        TheStructure.Common.MediaCommandOpcode = MEDIA_COMMAND_OPCODE_GPGPU_WALKER;
-        TheStructure.Common.Pipeline = PIPELINE_MEDIA;
-        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.SimdSize = SIMD_SIZE_SIMD8;
-    }
-    static tagGPGPU_WALKER sInit() {
-        GPGPU_WALKER state;
-        state.init();
-        return state;
-    }
-    inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 15);
-        return TheStructure.RawData[index];
-    }
-    inline void setPredicateEnable(const bool value) {
-        TheStructure.Common.PredicateEnable = value;
-    }
-    inline bool getPredicateEnable() const {
-        return (TheStructure.Common.PredicateEnable);
-    }
-    inline void setIndirectParameterEnable(const bool value) {
-        TheStructure.Common.IndirectParameterEnable = value;
-    }
-    inline bool getIndirectParameterEnable() const {
-        return (TheStructure.Common.IndirectParameterEnable);
-    }
-    inline void setInterfaceDescriptorOffset(const uint32_t value) {
-        TheStructure.Common.InterfaceDescriptorOffset = value;
-    }
-    inline uint32_t getInterfaceDescriptorOffset() const {
-        return (TheStructure.Common.InterfaceDescriptorOffset);
-    }
-    inline void setIndirectDataLength(const uint32_t value) {
-        TheStructure.Common.IndirectDataLength = value;
-    }
-    inline uint32_t getIndirectDataLength() const {
-        return (TheStructure.Common.IndirectDataLength);
-    }
-    typedef enum tagINDIRECTDATASTARTADDRESS {
-        INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
-        INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
-    } INDIRECTDATASTARTADDRESS;
-    inline void setIndirectDataStartAddress(const uint32_t value) {
-        TheStructure.Common.IndirectDataStartAddress = value >> INDIRECTDATASTARTADDRESS_BIT_SHIFT;
-    }
-    inline uint32_t getIndirectDataStartAddress() const {
-        return (TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT);
-    }
-    inline void setThreadWidthCounterMaximum(const uint32_t value) {
-        TheStructure.Common.ThreadWidthCounterMaximum = value - 1;
-    }
-    inline uint32_t getThreadWidthCounterMaximum() const {
-        return (TheStructure.Common.ThreadWidthCounterMaximum + 1);
-    }
-    inline void setThreadHeightCounterMaximum(const uint32_t value) {
-        TheStructure.Common.ThreadHeightCounterMaximum = value - 1;
-    }
-    inline uint32_t getThreadHeightCounterMaximum() const {
-        return (TheStructure.Common.ThreadHeightCounterMaximum + 1);
-    }
-    inline void setThreadDepthCounterMaximum(const uint32_t value) {
-        TheStructure.Common.ThreadDepthCounterMaximum = value;
-    }
-    inline uint32_t getThreadDepthCounterMaximum() const {
-        return (TheStructure.Common.ThreadDepthCounterMaximum);
-    }
-    inline void setSimdSize(const SIMD_SIZE value) {
-        TheStructure.Common.SimdSize = value;
-    }
-    inline SIMD_SIZE getSimdSize() const {
-        return static_cast<SIMD_SIZE>(TheStructure.Common.SimdSize);
-    }
-    inline void setThreadGroupIdStartingX(const uint32_t value) {
-        TheStructure.Common.ThreadGroupIdStartingX = value;
-    }
-    inline uint32_t getThreadGroupIdStartingX() const {
-        return (TheStructure.Common.ThreadGroupIdStartingX);
-    }
-    inline void setThreadGroupIdXDimension(const uint32_t value) {
-        TheStructure.Common.ThreadGroupIdXDimension = value;
-    }
-    inline uint32_t getThreadGroupIdXDimension() const {
-        return (TheStructure.Common.ThreadGroupIdXDimension);
-    }
-    inline void setThreadGroupIdStartingY(const uint32_t value) {
-        TheStructure.Common.ThreadGroupIdStartingY = value;
-    }
-    inline uint32_t getThreadGroupIdStartingY() const {
-        return (TheStructure.Common.ThreadGroupIdStartingY);
-    }
-    inline void setThreadGroupIdYDimension(const uint32_t value) {
-        TheStructure.Common.ThreadGroupIdYDimension = value;
-    }
-    inline uint32_t getThreadGroupIdYDimension() const {
-        return (TheStructure.Common.ThreadGroupIdYDimension);
-    }
-    inline void setThreadGroupIdStartingResumeZ(const uint32_t value) {
-        TheStructure.Common.ThreadGroupIdStartingResumeZ = value;
-    }
-    inline uint32_t getThreadGroupIdStartingResumeZ() const {
-        return (TheStructure.Common.ThreadGroupIdStartingResumeZ);
-    }
-    inline void setThreadGroupIdZDimension(const uint32_t value) {
-        TheStructure.Common.ThreadGroupIdZDimension = value;
-    }
-    inline uint32_t getThreadGroupIdZDimension() const {
-        return (TheStructure.Common.ThreadGroupIdZDimension);
-    }
-    inline void setRightExecutionMask(const uint32_t value) {
-        TheStructure.Common.RightExecutionMask = value;
-    }
-    inline uint32_t getRightExecutionMask() const {
-        return (TheStructure.Common.RightExecutionMask);
-    }
-    inline void setBottomExecutionMask(const uint32_t value) {
-        TheStructure.Common.BottomExecutionMask = value;
-    }
-    inline uint32_t getBottomExecutionMask() const {
-        return (TheStructure.Common.BottomExecutionMask);
-    }
-} GPGPU_WALKER;
-STATIC_ASSERT(60 == sizeof(GPGPU_WALKER));
 
 typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     union tagTheStructure {
@@ -465,11 +277,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline uint32_t getNumberOfThreadsInGpgpuThreadGroup() const {
         return (TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup);
     }
-    inline void setSharedLocalMemorySize(const SHARED_LOCAL_MEMORY_SIZE value) {
+    inline void setSharedLocalMemorySize(const uint32_t value) { // patched
         TheStructure.Common.SharedLocalMemorySize = value;
     }
-    inline SHARED_LOCAL_MEMORY_SIZE getSharedLocalMemorySize() const {
-        return static_cast<SHARED_LOCAL_MEMORY_SIZE>(TheStructure.Common.SharedLocalMemorySize);
+    inline uint32_t getSharedLocalMemorySize() const { // patched
+        return static_cast<uint32_t>(TheStructure.Common.SharedLocalMemorySize);
     }
     inline void setBarrierEnable(const uint32_t value) {
         TheStructure.Common.BarrierEnable = (value > 0u) ? 1u : 0u;
@@ -491,6 +303,197 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     }
 } INTERFACE_DESCRIPTOR_DATA;
 STATIC_ASSERT(32 == sizeof(INTERFACE_DESCRIPTOR_DATA));
+
+typedef struct tagGPGPU_WALKER {
+    union tagTheStructure {
+        struct tagCommon {
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t PredicateEnable : BITFIELD_RANGE(8, 8);
+            uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
+            uint32_t IndirectParameterEnable : BITFIELD_RANGE(10, 10);
+            uint32_t Reserved_11 : BITFIELD_RANGE(11, 15);
+            uint32_t Subopcode : BITFIELD_RANGE(16, 23);
+            uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
+            uint32_t Pipeline : BITFIELD_RANGE(27, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            uint32_t InterfaceDescriptorOffset : BITFIELD_RANGE(0, 5);
+            uint32_t Reserved_38 : BITFIELD_RANGE(6, 31);
+            uint32_t IndirectDataLength : BITFIELD_RANGE(0, 16);
+            uint32_t Reserved_81 : BITFIELD_RANGE(17, 31);
+            uint32_t Reserved_96 : BITFIELD_RANGE(0, 5);
+            uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
+            uint32_t ThreadWidthCounterMaximum : BITFIELD_RANGE(0, 5);
+            uint32_t Reserved_134 : BITFIELD_RANGE(6, 7);
+            uint32_t ThreadHeightCounterMaximum : BITFIELD_RANGE(8, 13);
+            uint32_t Reserved_142 : BITFIELD_RANGE(14, 15);
+            uint32_t ThreadDepthCounterMaximum : BITFIELD_RANGE(16, 21);
+            uint32_t Reserved_150 : BITFIELD_RANGE(22, 29);
+            uint32_t SimdSize : BITFIELD_RANGE(30, 31);
+            uint32_t ThreadGroupIdStartingX;
+            uint32_t Reserved_192;
+            uint32_t ThreadGroupIdXDimension;
+            uint32_t ThreadGroupIdStartingY;
+            uint32_t Reserved_288;
+            uint32_t ThreadGroupIdYDimension;
+            uint32_t ThreadGroupIdStartingResumeZ;
+            uint32_t ThreadGroupIdZDimension;
+            uint32_t RightExecutionMask;
+            uint32_t BottomExecutionMask;
+        } Common;
+        uint32_t RawData[15];
+    } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_DWORD_COUNT_N = 0xd,
+    } DWORD_LENGTH;
+    typedef enum tagSUBOPCODE {
+        SUBOPCODE_GPGPU_WALKER_SUBOP = 0x5,
+    } SUBOPCODE;
+    typedef enum tagMEDIA_COMMAND_OPCODE {
+        MEDIA_COMMAND_OPCODE_GPGPU_WALKER = 0x1,
+    } MEDIA_COMMAND_OPCODE;
+    typedef enum tagPIPELINE {
+        PIPELINE_MEDIA = 0x2,
+    } PIPELINE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_GFXPIPE = 0x3,
+    } COMMAND_TYPE;
+    typedef enum tagSIMD_SIZE {
+        SIMD_SIZE_SIMD8 = 0x0,
+        SIMD_SIZE_SIMD16 = 0x1,
+        SIMD_SIZE_SIMD32 = 0x2,
+    } SIMD_SIZE;
+    typedef enum tagPATCH_CONSTANTS {
+        INDIRECTDATASTARTADDRESS_BYTEOFFSET = 0xc,
+        INDIRECTDATASTARTADDRESS_INDEX = 0x3,
+    } PATCH_CONSTANTS;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
+        TheStructure.Common.Subopcode = SUBOPCODE_GPGPU_WALKER_SUBOP;
+        TheStructure.Common.MediaCommandOpcode = MEDIA_COMMAND_OPCODE_GPGPU_WALKER;
+        TheStructure.Common.Pipeline = PIPELINE_MEDIA;
+        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
+        TheStructure.Common.SimdSize = SIMD_SIZE_SIMD8;
+    }
+    static tagGPGPU_WALKER sInit() {
+        GPGPU_WALKER state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        DEBUG_BREAK_IF(index >= 15);
+        return TheStructure.RawData[index];
+    }
+    inline void setPredicateEnable(const bool value) {
+        TheStructure.Common.PredicateEnable = value;
+    }
+    inline bool getPredicateEnable() const {
+        return (TheStructure.Common.PredicateEnable);
+    }
+    inline void setIndirectParameterEnable(const bool value) {
+        TheStructure.Common.IndirectParameterEnable = value;
+    }
+    inline bool getIndirectParameterEnable() const {
+        return (TheStructure.Common.IndirectParameterEnable);
+    }
+    inline void setInterfaceDescriptorOffset(const uint32_t value) {
+        TheStructure.Common.InterfaceDescriptorOffset = value;
+    }
+    inline uint32_t getInterfaceDescriptorOffset() const {
+        return (TheStructure.Common.InterfaceDescriptorOffset);
+    }
+    inline void setIndirectDataLength(const uint32_t value) {
+        TheStructure.Common.IndirectDataLength = value;
+    }
+    inline uint32_t getIndirectDataLength() const {
+        return (TheStructure.Common.IndirectDataLength);
+    }
+    typedef enum tagINDIRECTDATASTARTADDRESS {
+        INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
+        INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
+    } INDIRECTDATASTARTADDRESS;
+    inline void setIndirectDataStartAddress(const uint32_t value) {
+        TheStructure.Common.IndirectDataStartAddress = value >> INDIRECTDATASTARTADDRESS_BIT_SHIFT;
+    }
+    inline uint32_t getIndirectDataStartAddress() const {
+        return (TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT);
+    }
+    inline void setThreadWidthCounterMaximum(const uint32_t value) {
+        TheStructure.Common.ThreadWidthCounterMaximum = value - 1;
+    }
+    inline uint32_t getThreadWidthCounterMaximum() const {
+        return (TheStructure.Common.ThreadWidthCounterMaximum + 1);
+    }
+    inline void setThreadHeightCounterMaximum(const uint32_t value) {
+        TheStructure.Common.ThreadHeightCounterMaximum = value - 1;
+    }
+    inline uint32_t getThreadHeightCounterMaximum() const {
+        return (TheStructure.Common.ThreadHeightCounterMaximum + 1);
+    }
+    inline void setThreadDepthCounterMaximum(const uint32_t value) {
+        TheStructure.Common.ThreadDepthCounterMaximum = value;
+    }
+    inline uint32_t getThreadDepthCounterMaximum() const {
+        return (TheStructure.Common.ThreadDepthCounterMaximum);
+    }
+    inline void setSimdSize(const SIMD_SIZE value) {
+        TheStructure.Common.SimdSize = value;
+    }
+    inline SIMD_SIZE getSimdSize() const {
+        return static_cast<SIMD_SIZE>(TheStructure.Common.SimdSize);
+    }
+    inline void setThreadGroupIdStartingX(const uint32_t value) {
+        TheStructure.Common.ThreadGroupIdStartingX = value;
+    }
+    inline uint32_t getThreadGroupIdStartingX() const {
+        return (TheStructure.Common.ThreadGroupIdStartingX);
+    }
+    inline void setThreadGroupIdXDimension(const uint32_t value) {
+        TheStructure.Common.ThreadGroupIdXDimension = value;
+    }
+    inline uint32_t getThreadGroupIdXDimension() const {
+        return (TheStructure.Common.ThreadGroupIdXDimension);
+    }
+    inline void setThreadGroupIdStartingY(const uint32_t value) {
+        TheStructure.Common.ThreadGroupIdStartingY = value;
+    }
+    inline uint32_t getThreadGroupIdStartingY() const {
+        return (TheStructure.Common.ThreadGroupIdStartingY);
+    }
+    inline void setThreadGroupIdYDimension(const uint32_t value) {
+        TheStructure.Common.ThreadGroupIdYDimension = value;
+    }
+    inline uint32_t getThreadGroupIdYDimension() const {
+        return (TheStructure.Common.ThreadGroupIdYDimension);
+    }
+    inline void setThreadGroupIdStartingResumeZ(const uint32_t value) {
+        TheStructure.Common.ThreadGroupIdStartingResumeZ = value;
+    }
+    inline uint32_t getThreadGroupIdStartingResumeZ() const {
+        return (TheStructure.Common.ThreadGroupIdStartingResumeZ);
+    }
+    inline void setThreadGroupIdZDimension(const uint32_t value) {
+        TheStructure.Common.ThreadGroupIdZDimension = value;
+    }
+    inline uint32_t getThreadGroupIdZDimension() const {
+        return (TheStructure.Common.ThreadGroupIdZDimension);
+    }
+    inline void setRightExecutionMask(const uint32_t value) {
+        TheStructure.Common.RightExecutionMask = value;
+    }
+    inline uint32_t getRightExecutionMask() const {
+        return (TheStructure.Common.RightExecutionMask);
+    }
+    inline void setBottomExecutionMask(const uint32_t value) {
+        TheStructure.Common.BottomExecutionMask = value;
+    }
+    inline uint32_t getBottomExecutionMask() const {
+        return (TheStructure.Common.BottomExecutionMask);
+    }
+    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
+
+} GPGPU_WALKER;
+STATIC_ASSERT(60 == sizeof(GPGPU_WALKER));
 
 typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
     union tagTheStructure {

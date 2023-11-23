@@ -55,7 +55,14 @@ class HardwareInterface {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
+    template <typename WalkerType>
     static void dispatchWalker(
+        CommandQueue &commandQueue,
+        const MultiDispatchInfo &multiDispatchInfo,
+        const CsrDependencies &csrDependencies,
+        HardwareInterfaceWalkerArgs &walkerArgs);
+
+    static void dispatchWalkerCommon(
         CommandQueue &commandQueue,
         const MultiDispatchInfo &multiDispatchInfo,
         const CsrDependencies &csrDependencies,
@@ -94,6 +101,7 @@ class HardwareInterface {
         DebugPauseState waitCondition,
         const HardwareInfo &hwInfo);
 
+    template <typename WalkerType>
     static void programWalker(
         LinearStream &commandStream,
         Kernel &kernel,
@@ -104,12 +112,14 @@ class HardwareInterface {
         const DispatchInfo &dispatchInfo,
         HardwareInterfaceWalkerArgs &walkerArgs);
 
-    static WALKER_TYPE *allocateWalkerSpace(LinearStream &commandStream,
-                                            const Kernel &kernel);
+    template <typename WalkerType>
+    static WalkerType *allocateWalkerSpace(LinearStream &commandStream,
+                                           const Kernel &kernel);
 
     static void obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
                                     bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh);
 
+    template <typename WalkerType>
     static void dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream,
                                        IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh,
                                        HardwareInterfaceWalkerArgs &walkerArgs);

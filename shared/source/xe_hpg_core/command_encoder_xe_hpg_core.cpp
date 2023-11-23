@@ -26,15 +26,17 @@ using Family = NEO::XeHpgCoreFamily;
 namespace NEO {
 
 template <>
-void EncodeDispatchKernel<Family>::adjustTimestampPacket(WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo) {
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const HardwareInfo &hwInfo) {
     auto &postSyncData = walkerCmd.getPostSync();
 
     postSyncData.setDataportSubsliceCacheFlush(true);
 }
 
 template <>
-void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
     const uint32_t workGroupCountPerDss = threadsPerDssCount / threadsPerThreadGroup;
@@ -92,7 +94,8 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 }
 
 template <>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WALKER_TYPE &walkerCmd) {
+template <typename WalkerType, typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd) {
     const auto &productHelper = device.getProductHelper();
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         if (interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup() == 1) {
@@ -109,6 +112,7 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 }
 
 template <>
+template <>
 void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo) {
     using BARRIERS = INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS;
     static const LookupArray<uint32_t, BARRIERS, 2> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
@@ -118,7 +122,8 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     bool l3PrefetchDisable = releaseHelper->isPrefetchDisablingRequired();
     int32_t overrideL3PrefetchDisable = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
@@ -217,6 +222,13 @@ size_t EncodeMiFlushDW<Family>::getWaSize(const EncodeDummyBlitWaArgs &waArgs) {
 template void flushGpuCache<Family>(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo);
 
 template struct EncodeDispatchKernel<Family>;
+template void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::WALKER_TYPE>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+template void EncodeDispatchKernel<Family>::adjustTimestampPacket<Family::WALKER_TYPE>(Family::WALKER_TYPE &walkerCmd, const HardwareInfo &hwInfo);
+template void EncodeDispatchKernel<Family>::setGrfInfo<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData, const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
+template void EncodeDispatchKernel<Family>::appendAdditionalIDDFields<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
+template void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData<Family::WALKER_TYPE, Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, Family::WALKER_TYPE &walkerCmd);
+template void EncodeDispatchKernel<Family>::setupPostSyncMocs<Family::WALKER_TYPE>(Family::WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
+
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;
 template struct EncodeMathMMIO<Family>;

@@ -573,6 +573,7 @@ class CommandStreamReceiver {
     volatile bool resourcesInitialized = false;
     bool doubleSbaWa = false;
     bool dshSupported = false;
+    bool heaplessModeEnabled = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

@@ -78,8 +78,8 @@ class PreemptionHelper {
 
     static PreemptionMode getDefaultPreemptionMode(const HardwareInfo &hwInfo);
 
-    template <typename GfxFamily>
-    static void programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode);
+    template <typename GfxFamily, typename InterfaceDescriptorType>
+    static void programInterfaceDescriptorDataPreemption(InterfaceDescriptorType *idd, PreemptionMode preemptionMode);
 
   protected:
     template <typename GfxFamily>

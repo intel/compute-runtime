@@ -133,6 +133,26 @@ struct XeHpcCoreFamily : public XeHpcCore {
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;
     }
+
+    template <typename WalkerType = WALKER_TYPE>
+    static WalkerType getInitGpuWalker() {
+        return cmdInitGpgpuWalker;
+    }
+
+    template <typename WalkerType = WALKER_TYPE>
+    static constexpr size_t getInterfaceDescriptorSize() {
+        return sizeof(INTERFACE_DESCRIPTOR_DATA);
+    }
+
+    template <typename InterfaceDescriptorType>
+    static InterfaceDescriptorType getInitInterfaceDescriptor() {
+        return cmdInitInterfaceDescriptorData;
+    }
+
+    template <typename WalkerType>
+    static constexpr bool isHeaplessMode() {
+        return false;
+    }
 };
 
 } // namespace NEO

@@ -464,7 +464,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
     walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
-    HardwareInterface<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::template dispatchWalker<COMPUTE_WALKER>(
         cmdQ,
         multiDispatchInfo,
         CsrDependencies(),

@@ -17,8 +17,9 @@
 namespace NEO {
 
 template <typename GfxFamily>
+template <typename WalkerType>
 inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
-    WALKER_TYPE *walkerCmd,
+    WalkerType *walkerCmd,
     const KernelDescriptor &kernelDescriptor,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
@@ -58,9 +59,10 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
-    WALKER_TYPE *walkerCmd,
+    WalkerType *walkerCmd,
     TagNodeBase *timestampPacketNode,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
 
@@ -78,6 +80,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
     size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getRootDeviceEnvironment()) ? 2 : 1);

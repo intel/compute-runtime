@@ -19,11 +19,14 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
+
+#include "hardware_commands_helper.h"
 
 namespace NEO {
 
@@ -117,66 +120,68 @@ size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType, typename InterfaceDescriptorType>
 size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     uint64_t kernelStartOffset,
     size_t sizeCrossThreadData,
     size_t sizePerThreadData,
-    size_t bindingTablePointer,
+    [[maybe_unused]] size_t bindingTablePointer,
     [[maybe_unused]] size_t offsetSamplerState,
-    uint32_t numSamplers,
+    [[maybe_unused]] uint32_t numSamplers,
     const uint32_t threadGroupCount,
     uint32_t threadsPerThreadGroup,
     const Kernel &kernel,
-    uint32_t bindingTablePrefetchSize,
+    [[maybe_unused]] uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     const Device &device,
-    WALKER_TYPE *walkerCmd) {
-    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
+    WalkerType *walkerCmd,
+    InterfaceDescriptorType *inlineInterfaceDescriptor) {
 
-    const auto &hardwareInfo = device.getHardwareInfo();
-    const auto &kernelDescriptor = kernel.getKernelInfo().kernelDescriptor;
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     // Allocate some memory for the interface descriptor
-    auto pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
-    auto interfaceDescriptor = GfxFamily::cmdInitInterfaceDescriptorData;
+    InterfaceDescriptorType *pInterfaceDescriptor = nullptr;
+    auto interfaceDescriptor = GfxFamily::template getInitInterfaceDescriptor<InterfaceDescriptorType>();
 
-    // Program the kernel start pointer
-    interfaceDescriptor.setKernelStartPointer(static_cast<uint32_t>(kernelStartOffset & std::numeric_limits<uint32_t>::max()));
+    if constexpr (heaplessModeEnabled) {
+        pInterfaceDescriptor = inlineInterfaceDescriptor;
+        interfaceDescriptor.setKernelStartPointer(kernelStartOffset);
+    } else {
+        pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
+        interfaceDescriptor.setKernelStartPointer(static_cast<uint32_t>(kernelStartOffset));
+    }
 
-    // # of threads in thread group should be based on LWS.
+    //  # of threads in thread group should be based on LWS.
     interfaceDescriptor.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
     auto slmTotalSize = kernel.getSlmTotalSize();
+    const auto &kernelDescriptor = kernel.getKernelInfo().kernelDescriptor;
 
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, device.getRootDeviceEnvironment());
-    auto &productHelper = device.getProductHelper();
-    productHelper.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                   kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
-    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, device.getRootDeviceEnvironment(), threadsPerThreadGroup,
-                                                               slmTotalSize, SlmPolicy::SlmPolicyNone);
+    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, device.getRootDeviceEnvironment(),
+                                                               threadsPerThreadGroup, slmTotalSize, SlmPolicy::SlmPolicyNone);
 
-    interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
+    if constexpr (heaplessModeEnabled == false) {
+        interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
-    if constexpr (GfxFamily::supportsSampler) {
-        if (device.getDeviceInfo().imageSupport) {
-            interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+        if constexpr (GfxFamily::supportsSampler) {
+            if (device.getDeviceInfo().imageSupport) {
+                interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+            }
         }
+        EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
     }
 
-    EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
-
+    const auto &hardwareInfo = device.getHardwareInfo();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto programmableIDSLMSize =
-        static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hardwareInfo, slmTotalSize));
+    auto programmableIDSLMSize = static_cast<uint32_t>(gfxCoreHelper.computeSlmValues(hardwareInfo, slmTotalSize));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        programmableIDSLMSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());
+        programmableIDSLMSize = static_cast<uint32_t>(DebugManager.flags.OverrideSlmAllocationSize.get());
     }
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
@@ -212,6 +217,7 @@ void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType, typename InterfaceDescriptorType>
 size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     LinearStream &commandStream,
     IndirectHeap &dsh,
@@ -225,34 +231,42 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const uint64_t offsetInterfaceDescriptorTable,
     uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
-    WALKER_TYPE *walkerCmd,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+    WalkerType *walkerCmd,
+    InterfaceDescriptorType *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
+    uint64_t scratchAddress,
     const Device &device) {
 
-    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
-    auto inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
-
     // Copy the kernel over to the ISH
-    const auto &kernelInfo = kernel.getKernelInfo();
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
-    ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-
-    size_t dstBindingTablePointer = HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
-
-    // Copy our sampler state if it exists
-    const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
+    size_t dstBindingTablePointer = 0;
     uint32_t samplerCount = 0;
     uint32_t samplerStateOffset = 0;
-    if (isValidOffset(samplerTable.tableOffset) && isValidOffset(samplerTable.borderColor)) {
-        samplerCount = samplerTable.numSamplers;
-        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
-                                                                       samplerCount, samplerTable.borderColor,
-                                                                       kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
-                                                                       device.getRootDeviceEnvironment());
+    uint32_t bindingTablePrefetchSize = 0;
+
+    if constexpr (heaplessModeEnabled == false) {
+
+        ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+        dstBindingTablePointer = HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
+
+        const auto &kernelInfo = kernel.getKernelInfo();
+        // Copy our sampler state if it exists
+        const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
+        if (isValidOffset(samplerTable.tableOffset) && isValidOffset(samplerTable.borderColor)) {
+            samplerCount = samplerTable.numSamplers;
+            samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
+                                                                           samplerCount, samplerTable.borderColor,
+                                                                           kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
+                                                                           device.getRootDeviceEnvironment());
+        }
+
+        if (EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch()) {
+            bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
+        }
     }
+
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto grfSize = kernel.getDescriptor().kernelAttributes.numGrfRequired;
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
@@ -260,9 +274,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
-    size_t offsetCrossThreadData = HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
+    auto inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
+    size_t offsetCrossThreadData = HardwareCommandsHelper<GfxFamily>::sendCrossThreadData<WalkerType>(
         ioh, kernel, inlineDataProgrammingRequired,
-        walkerCmd, sizeCrossThreadData);
+        walkerCmd, sizeCrossThreadData, scratchAddress);
 
     size_t sizePerThreadDataTotal = 0;
     size_t sizePerThreadData = 0;
@@ -275,14 +290,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         kernel,
         localWorkSize);
 
-    uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
+    uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * GfxFamily::template getInterfaceDescriptorSize<WalkerType>();
 
-    auto bindingTablePrefetchSize = 0;
-    if (EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch()) {
-        bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
-    }
-
-    HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
+    HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData<WalkerType, InterfaceDescriptorType>(
         dsh,
         offsetInterfaceDescriptor,
         kernelStartOffset,
@@ -296,30 +306,35 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         kernel,
         bindingTablePrefetchSize,
         preemptionMode,
-        inlineInterfaceDescriptor,
         device,
-        walkerCmd);
+        walkerCmd,
+        inlineInterfaceDescriptor);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);
         kernel.getPatchInfoDataList().push_back(patchInfoData);
     }
 
-    // Program media state flush to set interface descriptor offset
-    sendMediaStateFlush(
-        commandStream,
-        interfaceDescriptorIndex);
+    if constexpr (heaplessModeEnabled == false) {
+        // Program media state flush to set interface descriptor offset
+        sendMediaStateFlush(
+            commandStream,
+            interfaceDescriptorIndex);
 
-    DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
-    walkerCmd->setIndirectDataStartAddress(static_cast<uint32_t>(offsetCrossThreadData));
-    setInterfaceDescriptorOffset(walkerCmd, interfaceDescriptorIndex);
-
-    auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
-                                      WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-    walkerCmd->setIndirectDataLength(indirectDataLength);
+        DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
+        walkerCmd->setIndirectDataStartAddress(static_cast<uint32_t>(offsetCrossThreadData));
+        setInterfaceDescriptorOffset(walkerCmd, interfaceDescriptorIndex);
+        auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
+                                          WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+        walkerCmd->setIndirectDataLength(indirectDataLength);
+    }
 
     return offsetCrossThreadData;
 }
+
+template <typename GfxFamily>
+template <typename WalkerType>
+void HardwareCommandsHelper<GfxFamily>::programInlineData(Kernel &kernel, WalkerType *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress) {}
 
 template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {

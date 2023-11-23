@@ -384,6 +384,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     void handlePostCompletionOperations(bool checkQueueCompletion);
 
+    bool getHeaplessModeEnabled() const { return this->heaplessModeEnabled; }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -477,6 +479,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool dcFlushRequiredOnStallingCommandsOnNextFlush = false;
     bool splitBarrierRequired = false;
     bool gpgpuCsrClientRegistered = false;
+    bool heaplessModeEnabled = false;
 };
 
 template <typename PtrType>

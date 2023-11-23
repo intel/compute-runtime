@@ -195,7 +195,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaComputeWalkerTest, givenSystemMemoryFenceG
 
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
     walkerArgs.currentTimestampPacketNodes = &timestampPacket;
-    HardwareInterface<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::template dispatchWalker<COMPUTE_WALKER>(
         commandQueue,
         multiDispatchInfo,
         CsrDependencies(),

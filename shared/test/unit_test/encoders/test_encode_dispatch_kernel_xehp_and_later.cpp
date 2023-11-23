@@ -176,9 +176,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
     dispatchInterface->getSlmTotalSizeResult = slmTotalSize;
 
     bool requiresUncachedMocs = false;
-    int32_t maxValueToProgram = 0x8;
+    uint32_t maxValueToProgram = 0x8;
 
-    for (int32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
+    for (uint32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
         DebugManager.flags.OverrideSlmAllocationSize.set(valueToProgram);
         cmdContainer->reset();
 
@@ -1164,7 +1164,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     size_t total = cmdContainer->getCommandStream()->getUsed();
     size_t partitionedWalkerSize = total - containerUsedAfterBase;
 
-    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::getSize(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
     EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
 
     GenCmdList partitionedWalkerList;
@@ -1215,7 +1215,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     EXPECT_EQ(2u, dispatchArgs.partitionCount);
     size_t partitionedWalkerSize = cmdContainer->getCommandStream()->getUsed();
 
-    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::getSize(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
     EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
 
     GenCmdList partitionedWalkerList;
@@ -1314,7 +1314,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
     EXPECT_EQ(2u, dispatchArgs.partitionCount);
     size_t partitionedWalkerSize = cmdContainer->getCommandStream()->getUsed();
 
-    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::getSize(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
     EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
 
     GenCmdList partitionedWalkerList;

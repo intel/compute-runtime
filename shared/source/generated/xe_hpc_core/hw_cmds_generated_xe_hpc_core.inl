@@ -5382,11 +5382,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline uint32_t getNumberOfThreadsInGpgpuThreadGroup() const {
         return TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup;
     }
-    inline void setSharedLocalMemorySize(const SHARED_LOCAL_MEMORY_SIZE value) {
+    inline void setSharedLocalMemorySize(const uint32_t value) { // patched
         TheStructure.Common.SharedLocalMemorySize = value;
     }
-    inline SHARED_LOCAL_MEMORY_SIZE getSharedLocalMemorySize() const {
-        return static_cast<SHARED_LOCAL_MEMORY_SIZE>(TheStructure.Common.SharedLocalMemorySize);
+    inline uint32_t getSharedLocalMemorySize() const { // patched
+        return static_cast<uint32_t>(TheStructure.Common.SharedLocalMemorySize);
     }
     inline void setRoundingMode(const ROUNDING_MODE value) {
         TheStructure.Common.RoundingMode = value;
@@ -5808,6 +5808,7 @@ typedef struct tagCOMPUTE_WALKER {
     inline uint32_t *getInlineDataPointer() {
         return reinterpret_cast<uint32_t *>(&TheStructure.Common.InlineData);
     }
+    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
 } COMPUTE_WALKER;
 STATIC_ASSERT(156 == sizeof(COMPUTE_WALKER));
 

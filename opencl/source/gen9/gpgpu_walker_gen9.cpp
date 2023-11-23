@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,35 +12,37 @@
 
 namespace NEO {
 
+using Family = Gen9Family;
+
 template <>
-void GpgpuWalkerHelper<Gen9Family>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
+void GpgpuWalkerHelper<Family>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
     if (disablePerfMode) {
         if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Set bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<Gen9Family>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
+            GpgpuWalkerHelper<Family>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_OR, L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     } else {
         if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Add PIPE_CONTROL with CS_Stall to wait till GPU finishes its work
-            typedef typename Gen9Family::PIPE_CONTROL PIPE_CONTROL;
+            typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
             auto pipeControlSpace = reinterpret_cast<PIPE_CONTROL *>(pCommandStream->getSpace(sizeof(PIPE_CONTROL)));
-            auto pipeControl = Gen9Family::cmdInitPipeControl;
+            auto pipeControl = Family::cmdInitPipeControl;
             pipeControl.setCommandStreamerStallEnable(true);
             *pipeControlSpace = pipeControl;
 
             // Clear bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<Gen9Family>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);
+            GpgpuWalkerHelper<Family>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, AluRegisters::OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);
         }
     }
 }
 
 template <>
-size_t GpgpuWalkerHelper<Gen9Family>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
-    typedef typename Gen9Family::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
-    typedef typename Gen9Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename Gen9Family::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename Gen9Family::MI_MATH MI_MATH;
-    typedef typename Gen9Family::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
+size_t GpgpuWalkerHelper<Family>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
+    typedef typename Family::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
+    typedef typename Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename Family::MI_MATH MI_MATH;
+    typedef typename Family::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
     size_t n = 0;
     if (pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
         n += sizeof(PIPE_CONTROL) +
@@ -54,10 +56,18 @@ size_t GpgpuWalkerHelper<Gen9Family>::getSizeForWADisableLSQCROPERFforOCL(const 
     return n;
 }
 
-template class HardwareInterface<Gen9Family>;
+template class HardwareInterface<Family>;
 
-template class GpgpuWalkerHelper<Gen9Family>;
+template void HardwareInterface<Family>::dispatchWalker<Family::WALKER_TYPE>(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs);
+template void HardwareInterface<Family>::programWalker<Family::WALKER_TYPE>(LinearStream &commandStream, Kernel &kernel, CommandQueue &commandQueue, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, const DispatchInfo &dispatchInfo, HardwareInterfaceWalkerArgs &walkerArgs);
+template void HardwareInterface<Family>::dispatchKernelCommands<Family::WALKER_TYPE>(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, HardwareInterfaceWalkerArgs &walkerArgs);
+template Family::WALKER_TYPE *HardwareInterface<Family>::allocateWalkerSpace<Family::WALKER_TYPE>(LinearStream &commandStream, const Kernel &kernel);
 
-template struct EnqueueOperation<Gen9Family>;
+template class GpgpuWalkerHelper<Family>;
+template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::WALKER_TYPE>(LinearStream *cmdStream, Family::WALKER_TYPE *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
+template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::WALKER_TYPE>(Family::WALKER_TYPE *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t globalOffsets[3], const size_t startWorkGroups[3],
+                                                                                         const size_t numWorkGroups[3], const size_t localWorkSizesIn[3], uint32_t simd, uint32_t workDim, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, uint32_t requiredWorkGroupOrder);
+
+template struct EnqueueOperation<Family>;
 
 } // namespace NEO

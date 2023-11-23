@@ -320,10 +320,6 @@ void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, con
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) const {
-}
-
-template <>
 void ProductHelperHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) const {
 }
 

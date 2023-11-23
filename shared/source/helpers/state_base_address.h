@@ -16,7 +16,6 @@ enum class MemoryCompressionState;
 class GmmHelper;
 class IndirectHeap;
 class LinearStream;
-
 struct DispatchFlags;
 struct HardwareInfo;
 struct StateBaseAddressProperties;

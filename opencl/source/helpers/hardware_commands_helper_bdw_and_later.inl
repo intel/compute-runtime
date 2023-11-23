@@ -71,13 +71,15 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
-    WALKER_TYPE *walkerCmd,
-    uint32_t &sizeCrossThreadData) {
-    indirectHeap.align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    WalkerType *walkerCmd,
+    uint32_t &sizeCrossThreadData,
+    uint64_t scratchAddress) {
+    indirectHeap.align(WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {

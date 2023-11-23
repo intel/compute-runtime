@@ -56,22 +56,23 @@ WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(uint64_t workPar
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup,
                                                    bool preferStaticPartitioning,
                                                    const DeviceBitfield &devices,
                                                    const Vec3<size_t> &groupStart,
                                                    const Vec3<size_t> &groupCount) {
-    typename GfxFamily::COMPUTE_WALKER::PARTITION_TYPE partitionType{};
+    typename WalkerType::PARTITION_TYPE partitionType{};
     bool staticPartitioning = false;
     const uint32_t tileCount = static_cast<uint32_t>(devices.count());
 
-    const uint32_t partitionCount = WalkerPartition::computePartitionCountAndPartitionType<GfxFamily>(tileCount,
-                                                                                                      preferStaticPartitioning,
-                                                                                                      groupStart,
-                                                                                                      groupCount,
-                                                                                                      {},
-                                                                                                      &partitionType,
-                                                                                                      &staticPartitioning);
+    const uint32_t partitionCount = WalkerPartition::computePartitionCountAndPartitionType<GfxFamily, WalkerType>(tileCount,
+                                                                                                                  preferStaticPartitioning,
+                                                                                                                  groupStart,
+                                                                                                                  groupCount,
+                                                                                                                  {},
+                                                                                                                  &partitionType,
+                                                                                                                  &staticPartitioning);
     UNRECOVERABLE_IF(staticPartitioning && (tileCount != partitionCount));
     WalkerPartition::WalkerPartitionArgs args = prepareWalkerPartitionArgs<GfxFamily>(0u,
                                                                                       tileCount,
@@ -87,8 +88,9 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup,
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandStream,
-                                                          WALKER_TYPE &walkerCmd,
+                                                          WalkerType &walkerCmd,
                                                           void **outWalkerPtr,
                                                           const DeviceBitfield &devices,
                                                           uint32_t &partitionCount,
@@ -104,7 +106,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     const bool preferStaticPartitioning = workPartitionAllocationGpuVa != 0u;
 
     bool staticPartitioning = false;
-    partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily>(&walkerCmd, tileCount, preferStaticPartitioning, usesImages, &staticPartitioning);
+    partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily, WalkerType>(&walkerCmd, tileCount, preferStaticPartitioning, usesImages, &staticPartitioning);
 
     WalkerPartition::WalkerPartitionArgs args = prepareWalkerPartitionArgs<GfxFamily>(workPartitionAllocationGpuVa,
                                                                                       tileCount,
@@ -116,35 +118,35 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                       dcFlush,
                                                                                       forceExecutionOnSingleTile);
 
-    auto dispatchCommandsSize = getSize(apiSelfCleanup, preferStaticPartitioning, devices, {walkerCmd.getThreadGroupIdStartingX(), walkerCmd.getThreadGroupIdStartingY(), walkerCmd.getThreadGroupIdStartingZ()}, {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()});
+    auto dispatchCommandsSize = getSize<WalkerType>(apiSelfCleanup, preferStaticPartitioning, devices, {walkerCmd.getThreadGroupIdStartingX(), walkerCmd.getThreadGroupIdStartingY(), walkerCmd.getThreadGroupIdStartingZ()}, {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()});
     void *commandBuffer = commandStream.getSpace(dispatchCommandsSize);
     uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed() - dispatchCommandsSize;
 
     if (staticPartitioning) {
         UNRECOVERABLE_IF(tileCount != partitionCount);
-        WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
-                                                                                outWalkerPtr,
-                                                                                cmdBufferGpuAddress,
-                                                                                &walkerCmd,
-                                                                                totalProgrammedSize,
-                                                                                args,
-                                                                                hwInfo);
+        WalkerPartition::constructStaticallyPartitionedCommandBuffer<GfxFamily, WalkerType>(commandBuffer,
+                                                                                            outWalkerPtr,
+                                                                                            cmdBufferGpuAddress,
+                                                                                            &walkerCmd,
+                                                                                            totalProgrammedSize,
+                                                                                            args,
+                                                                                            hwInfo);
     } else {
         if (DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
             partitionCount = DebugManager.flags.ExperimentalSetWalkerPartitionCount.get();
             if (partitionCount == 1u) {
-                walkerCmd.setPartitionType(GfxFamily::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+                walkerCmd.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
             }
             args.partitionCount = partitionCount;
         }
 
-        WalkerPartition::constructDynamicallyPartitionedCommandBuffer<GfxFamily>(commandBuffer,
-                                                                                 outWalkerPtr,
-                                                                                 cmdBufferGpuAddress,
-                                                                                 &walkerCmd,
-                                                                                 totalProgrammedSize,
-                                                                                 args,
-                                                                                 hwInfo);
+        WalkerPartition::constructDynamicallyPartitionedCommandBuffer<GfxFamily, WalkerType>(commandBuffer,
+                                                                                             outWalkerPtr,
+                                                                                             cmdBufferGpuAddress,
+                                                                                             &walkerCmd,
+                                                                                             totalProgrammedSize,
+                                                                                             args,
+                                                                                             hwInfo);
     }
     UNRECOVERABLE_IF(totalProgrammedSize != dispatchCommandsSize);
 }

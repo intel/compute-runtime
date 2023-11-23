@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,48 +12,58 @@
 
 namespace NEO {
 
+using Family = Gen12LpFamily;
+
 template <>
-void GpgpuWalkerHelper<Gen12LpFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<Gen12LpFamily> *storeCmd) {
+void GpgpuWalkerHelper<Family>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<Family> *storeCmd) {
     storeCmd->setMmioRemapEnable(true);
 }
 
 template <>
-void HardwareInterface<Gen12LpFamily>::dispatchWorkarounds(
+void HardwareInterface<Family>::dispatchWorkarounds(
     LinearStream *commandStream,
     CommandQueue &commandQueue,
     Kernel &kernel,
     const bool &enable) {
 
-    using MI_LOAD_REGISTER_IMM = typename Gen12LpFamily::MI_LOAD_REGISTER_IMM;
-    using PIPE_CONTROL = typename Gen12LpFamily::PIPE_CONTROL;
+    using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     if (kernel.requiresWaDisableRccRhwoOptimization()) {
 
-        PIPE_CONTROL cmdPipeControl = Gen12LpFamily::cmdInitPipeControl;
+        PIPE_CONTROL cmdPipeControl = Family::cmdInitPipeControl;
         cmdPipeControl.setCommandStreamerStallEnable(true);
         auto pCmdPipeControl = commandStream->getSpaceForCmd<PIPE_CONTROL>();
         *pCmdPipeControl = cmdPipeControl;
 
         uint32_t value = enable ? 0x40004000 : 0x40000000;
-        NEO::LriHelper<Gen12LpFamily>::program(commandStream,
-                                               0x7010,
-                                               value,
-                                               false);
+        NEO::LriHelper<Family>::program(commandStream,
+                                        0x7010,
+                                        value,
+                                        false);
     }
 }
 
 template <>
-size_t GpgpuWalkerHelper<Gen12LpFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
+size_t GpgpuWalkerHelper<Family>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
     if (pKernel->requiresWaDisableRccRhwoOptimization()) {
-        return (2 * (sizeof(Gen12LpFamily::PIPE_CONTROL) + sizeof(Gen12LpFamily::MI_LOAD_REGISTER_IMM)));
+        return (2 * (sizeof(Gen12LpFamily::PIPE_CONTROL) + sizeof(Family::MI_LOAD_REGISTER_IMM)));
     }
     return 0u;
 }
 
-template class HardwareInterface<Gen12LpFamily>;
+template class HardwareInterface<Family>;
 
-template class GpgpuWalkerHelper<Gen12LpFamily>;
+template void HardwareInterface<Family>::dispatchWalker<Family::WALKER_TYPE>(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs);
+template void HardwareInterface<Family>::programWalker<Family::WALKER_TYPE>(LinearStream &commandStream, Kernel &kernel, CommandQueue &commandQueue, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, const DispatchInfo &dispatchInfo, HardwareInterfaceWalkerArgs &walkerArgs);
+template void HardwareInterface<Family>::dispatchKernelCommands<Family::WALKER_TYPE>(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, HardwareInterfaceWalkerArgs &walkerArgs);
+template Family::WALKER_TYPE *HardwareInterface<Family>::allocateWalkerSpace<Family::WALKER_TYPE>(LinearStream &commandStream, const Kernel &kernel);
 
-template struct EnqueueOperation<Gen12LpFamily>;
+template class GpgpuWalkerHelper<Family>;
+template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::WALKER_TYPE>(LinearStream *cmdStream, Family::WALKER_TYPE *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
+template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::WALKER_TYPE>(Family::WALKER_TYPE *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t globalOffsets[3], const size_t startWorkGroups[3],
+                                                                                         const size_t numWorkGroups[3], const size_t localWorkSizesIn[3], uint32_t simd, uint32_t workDim, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, uint32_t requiredWorkGroupOrder);
+
+template struct EnqueueOperation<Family>;
 
 } // namespace NEO

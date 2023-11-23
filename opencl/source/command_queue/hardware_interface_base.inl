@@ -23,9 +23,16 @@
 namespace NEO {
 
 template <typename GfxFamily>
-inline typename GfxFamily::WALKER_TYPE *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream, const Kernel &kernel) {
-    auto walkerCmd = commandStream.getSpaceForCmd<WALKER_TYPE>();
+template <typename WalkerType>
+inline WalkerType *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream, const Kernel &kernel) {
+    auto walkerCmd = commandStream.getSpaceForCmd<WalkerType>();
     return walkerCmd;
+}
+
+template <typename GfxFamily>
+inline void HardwareInterface<GfxFamily>::dispatchWalkerCommon(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs) {
+
+    dispatchWalker<typename GfxFamily::WALKER_TYPE>(commandQueue, multiDispatchInfo, csrDependencies, walkerArgs);
 }
 
 template <typename GfxFamily>
@@ -61,6 +68,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 void HardwareInterface<GfxFamily>::dispatchWalker(
     CommandQueue &commandQueue,
     const MultiDispatchInfo &multiDispatchInfo,
@@ -111,7 +119,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     walkerArgs.interfaceDescriptorIndex = 0;
     walkerArgs.offsetInterfaceDescriptorTable = dsh->getUsed();
 
-    size_t totalInterfaceDescriptorTableSize = sizeof(INTERFACE_DESCRIPTOR_DATA);
+    size_t totalInterfaceDescriptorTableSize = GfxFamily::template getInterfaceDescriptorSize<WalkerType>();
 
     getDefaultDshSpace(walkerArgs.offsetInterfaceDescriptorTable, commandQueue, multiDispatchInfo, totalInterfaceDescriptorTableSize, dsh, commandStream);
 
@@ -143,7 +151,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
         walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);
 
-        dispatchKernelCommands(commandQueue, dispatchInfo, *commandStream, *dsh, *ioh, *ssh, walkerArgs);
+        dispatchKernelCommands<WalkerType>(commandQueue, dispatchInfo, *commandStream, *dsh, *ioh, *ssh, walkerArgs);
 
         walkerArgs.currentDispatchIndex++;
         dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
@@ -164,6 +172,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream,
                                                           IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh,
                                                           HardwareInterfaceWalkerArgs &walkerArgs) {
@@ -223,7 +232,7 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
 
     dispatchWorkarounds(&commandStream, commandQueue, kernel, true);
 
-    programWalker(commandStream, kernel, commandQueue, dsh, ioh, ssh, dispatchInfo, walkerArgs);
+    programWalker<WalkerType>(commandStream, kernel, commandQueue, dsh, ioh, ssh, dispatchInfo, walkerArgs);
 
     dispatchWorkarounds(&commandStream, commandQueue, kernel, false);
 }

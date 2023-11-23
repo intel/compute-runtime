@@ -70,8 +70,8 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenKernelWhenWalkerIsProgramme
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
 
     mockKernel->kernelInfo.heapInfo.kernelHeapSize = 1;
-    HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                 heap, heap, heap, dispatchInfo, walkerArgs);
+    HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                          heap, heap, heap, dispatchInfo, walkerArgs);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream, 0);
@@ -121,8 +121,8 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenProperThreadGroupSizesWhenWa
     hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
 
     {
-        HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     heap, heap, heap, dispatchInfo, walkerArgs);
+        HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                              heap, heap, heap, dispatchInfo, walkerArgs);
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, 0);
         auto itorWalker = find<COMPUTE_WALKER *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
@@ -152,8 +152,8 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
     {
         // default
 
-        HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     heap, heap, heap, dispatchInfo, walkerArgs);
+        HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                              heap, heap, heap, dispatchInfo, walkerArgs);
 
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, 0);
@@ -171,8 +171,8 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
         commandsOffset = commandStream.getUsed();
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(1);
 
-        HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     heap, heap, heap, dispatchInfo, walkerArgs);
+        HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                              heap, heap, heap, dispatchInfo, walkerArgs);
 
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);
@@ -190,8 +190,8 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
         commandsOffset = commandStream.getUsed();
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(0);
 
-        HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     heap, heap, heap, dispatchInfo, walkerArgs);
+        HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
+                                                                              heap, heap, heap, dispatchInfo, walkerArgs);
 
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);

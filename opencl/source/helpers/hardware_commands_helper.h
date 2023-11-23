@@ -37,6 +37,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
 
     inline static uint32_t additionalSizeRequiredDsh();
 
+    template <typename WalkerType, typename InterfaceDescriptorType>
     static size_t sendInterfaceDescriptorData(
         const IndirectHeap &indirectHeap,
         uint64_t offsetInterfaceDescriptor,
@@ -51,9 +52,9 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
         PreemptionMode preemptionMode,
-        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
         const Device &device,
-        WALKER_TYPE *walkerCmd);
+        WalkerType *walkerCmd,
+        InterfaceDescriptorType *inlineInterfaceDescriptor);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
@@ -64,13 +65,16 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t offsetInterfaceDescriptorData,
         size_t sizeInterfaceDescriptorData);
 
+    template <typename WalkerType>
     static size_t sendCrossThreadData(
         IndirectHeap &indirectHeap,
         Kernel &kernel,
         bool inlineDataProgrammingRequired,
-        WALKER_TYPE *walkerCmd,
-        uint32_t &sizeCrossThreadData);
+        WalkerType *walkerCmd,
+        uint32_t &sizeCrossThreadData,
+        uint64_t scratchAddress);
 
+    template <typename WalkerType, typename InterfaceDescriptorType>
     static size_t sendIndirectState(
         LinearStream &commandStream,
         IndirectHeap &dsh,
@@ -84,10 +88,14 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const uint64_t offsetInterfaceDescriptorTable,
         uint32_t &interfaceDescriptorIndex,
         PreemptionMode preemptionMode,
-        WALKER_TYPE *walkerCmd,
-        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+        WalkerType *walkerCmd,
+        InterfaceDescriptorType *inlineInterfaceDescriptor,
         bool localIdsGenerationByRuntime,
+        uint64_t scratchAddress,
         const Device &device);
+
+    template <typename WalkerType>
+    static void programInlineData(Kernel &kernel, WalkerType *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress);
 
     static void programPerThreadData(
         bool localIdsGenerationByRuntime,

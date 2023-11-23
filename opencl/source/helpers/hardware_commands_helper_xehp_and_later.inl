@@ -52,14 +52,20 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
-    WALKER_TYPE *walkerCmd,
-    uint32_t &sizeCrossThreadData) {
+    WalkerType *walkerCmd,
+    uint32_t &sizeCrossThreadData,
+    [[maybe_unused]] uint64_t scratchAddress) {
 
-    indirectHeap.align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
+
+    if constexpr (heaplessModeEnabled == false) {
+        indirectHeap.align(WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    }
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *dest = nullptr;
@@ -96,11 +102,16 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), gfxCoreHelper);
     }
 
-    using InlineData = typename GfxFamily::INLINE_DATA;
-    using GRF = typename GfxFamily::GRF;
-    uint32_t inlineDataSize = sizeof(InlineData);
     uint32_t sizeToCopy = sizeCrossThreadData;
     if (inlineDataProgrammingRequired == true) {
+
+        using InlineData = typename GfxFamily::INLINE_DATA;
+        uint32_t inlineDataSize = sizeof(InlineData);
+
+        if constexpr (heaplessModeEnabled) {
+            inlineDataSize = 64;
+        }
+
         sizeToCopy = std::min(inlineDataSize, sizeCrossThreadData);
         dest = reinterpret_cast<char *>(walkerCmd->getInlineDataPointer());
         memcpy_s(dest, sizeToCopy, kernel.getCrossThreadData(), sizeToCopy);
@@ -112,6 +123,14 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     if (sizeCrossThreadData > 0) {
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
+    }
+
+    if constexpr (heaplessModeEnabled) {
+        auto device = kernel.getContext().getDevice(0);
+        uint64_t indirectDataAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), indirectHeap.getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
+        indirectDataAddress += indirectHeap.getHeapGpuStartOffset();
+
+        HardwareCommandsHelper<GfxFamily>::programInlineData<WalkerType>(kernel, walkerCmd, indirectDataAddress, scratchAddress);
     }
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {

@@ -247,7 +247,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCS(uint32_t cmdType, bool res
     if (isCommandWithoutKernel(cmdType)) {
         return EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue);
     } else {
-        return EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel, dispatchInfo);
+        return EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel<typename GfxFamily::WALKER_TYPE>(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel, dispatchInfo);
     }
 }
 

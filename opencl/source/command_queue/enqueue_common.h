@@ -552,11 +552,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     dispatchWalkerArgs.event = event;
     dispatchWalkerArgs.relaxedOrderingEnabled = relaxedOrderingEnabled;
 
-    HardwareInterface<GfxFamily>::dispatchWalker(
-        *this,
-        multiDispatchInfo,
-        csrDeps,
-        dispatchWalkerArgs);
+    HardwareInterface<GfxFamily>::dispatchWalkerCommon(*this, multiDispatchInfo, csrDeps, dispatchWalkerArgs);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         for (auto &dispatchInfo : multiDispatchInfo) {

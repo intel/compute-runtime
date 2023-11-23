@@ -109,6 +109,7 @@ std::string Program::getInternalOptions() const {
     auto isDebuggerActive = pClDevice->getDevice().getDebugger() != nullptr;
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper);
+
     return internalOptions;
 }
 

@@ -29,7 +29,8 @@
 namespace NEO {
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto grfSize = sizeof(typename Family::GRF);
@@ -92,7 +93,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
                                                        kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
-    auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
+    auto slmSize = static_cast<uint32_t>(
         gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
     idd.setSharedLocalMemorySize(slmSize);
 
@@ -239,7 +240,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 false,                       // useGlobalAtomics
                 false,                       // multiOsContextCapable
                 args.isRcs,                  // isRcs
-                container.doubleSbaWaRef()}; // doubleSbaWa
+                container.doubleSbaWaRef(),  // doubleSbaWa
+                false,                       // heaplessModeEnabled
+            };
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
             args.requiresUncachedMocs = false;
@@ -394,17 +397,20 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor,
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor,
                                                         uint32_t value,
                                                         const HardwareInfo &hwInfo) {
     interfaceDescriptor.setBarrierEnable(value);
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+template <typename WalkerType>
+inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
 
 template <typename Family>
 inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceInfo) {
@@ -592,7 +598,8 @@ inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::opti
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {}
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {}
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}

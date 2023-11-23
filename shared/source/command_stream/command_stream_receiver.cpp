@@ -25,6 +25,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -96,6 +97,9 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     this->l1CachePolicyData.init(productHelper);
 
     registeredClients.reserve(16);
+
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

@@ -58,8 +58,8 @@ static uint32_t slmSizeInKb[] = {1, 4, 8, 16, 32, 64};
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgrammingIsCorrect) {
     ASSERT_NE(nullptr, pClDevice);
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     WALKER_TYPE walkerCmd{};
     // define kernel info
     kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
@@ -74,7 +74,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
 
-    size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
+    size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<WALKER_TYPE, INTERFACE_DESCRIPTOR_DATA>(
         indirectHeap,
         interfaceDescriptorOffset,
         0,
@@ -88,9 +88,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
         kernel,
         4u,
         pDevice->getPreemptionMode(),
-        nullptr,
         *pDevice,
-        &walkerCmd);
+        &walkerCmd,
+        nullptr);
 
     // add the heap base + offset
     uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;
@@ -149,6 +149,7 @@ INSTANTIATE_TEST_CASE_P(
 HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
     WALKER_TYPE walkerCmd{};
     uint32_t expectedSlmSize = 5;
     DebugManagerStateRestore dbgRestore;
@@ -166,7 +167,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
     INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
 
-    HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
+    HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<WALKER_TYPE, INTERFACE_DESCRIPTOR_DATA>(
         indirectHeap,
         interfaceDescriptorOffset,
         0,
@@ -180,9 +181,9 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
         kernel,
         4u,
         pDevice->getPreemptionMode(),
-        &interfaceDescriptorData,
         *pDevice,
-        &walkerCmd);
+        &walkerCmd,
+        &interfaceDescriptorData);
 
     auto pInterfaceDescriptor = HardwareCommandsHelper<FamilyType>::getInterfaceDescriptor(indirectHeap, interfaceDescriptorOffset, &interfaceDescriptorData);
 

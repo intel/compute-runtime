@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -21,6 +22,7 @@ namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(StateBaseAddressHelperArgs<GfxFamily> &args, NEO::LinearStream &commandStream) {
     StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
+
     auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     *cmdSpace = *args.stateBaseAddressCmd;
 

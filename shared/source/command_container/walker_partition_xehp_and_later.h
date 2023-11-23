@@ -71,17 +71,19 @@ inline void *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed, siz
     return commandToReturn;
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitionCount,
                                                bool preferStaticPartitioning,
                                                const Vec3<size_t> &groupStart,
                                                const Vec3<size_t> &groupCount,
-                                               std::optional<typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE> requestedPartitionType,
-                                               typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE *outSelectedPartitionType,
+                                               std::optional<typename WalkerType::PARTITION_TYPE> requestedPartitionType,
+                                               typename WalkerType::PARTITION_TYPE *outSelectedPartitionType,
                                                bool *outSelectStaticPartitioning) {
+
+    using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
     // For non uniform starting point, there is no support for partition in Hardware. Disable partitioning and select dynamic algorithm
     if (groupStart.x || groupStart.y || groupStart.z) {
-        *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_DISABLED;
+        *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_DISABLED;
         *outSelectStaticPartitioning = false;
         return 1u;
     }
@@ -90,18 +92,18 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
     bool disablePartitionForPartitionCountOne{};
 
     if (NEO::DebugManager.flags.ExperimentalSetWalkerPartitionType.get() != -1) {
-        requestedPartitionType = static_cast<typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE>(NEO::DebugManager.flags.ExperimentalSetWalkerPartitionType.get());
+        requestedPartitionType = static_cast<PARTITION_TYPE>(NEO::DebugManager.flags.ExperimentalSetWalkerPartitionType.get());
     }
 
     if (requestedPartitionType.has_value()) {
         switch (requestedPartitionType.value()) {
-        case COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_X:
+        case PARTITION_TYPE::PARTITION_TYPE_X:
             workgroupCount = groupCount.x;
             break;
-        case COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Y:
+        case PARTITION_TYPE::PARTITION_TYPE_Y:
             workgroupCount = groupCount.y;
             break;
-        case COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Z:
+        case PARTITION_TYPE::PARTITION_TYPE_Z:
             workgroupCount = groupCount.z;
             break;
         default:
@@ -124,11 +126,11 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
 
         // we first try with deepest dimension to see if we can partition there
         if (groupCount.z > 1 && (zImbalance <= minimalThreshold)) {
-            *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Z;
+            *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Z;
         } else if (groupCount.y > 1 && (yImbalance < minimalThreshold)) {
-            *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Y;
+            *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Y;
         } else if (groupCount.x % preferredMinimalPartitionCount == 0) {
-            *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_X;
+            *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_X;
         }
         // if we are here then there is no dimension that results in even distribution, choose max dimension to minimize impact
         else {
@@ -138,11 +140,11 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
         if (goWithMaxAlgorithm) {
             // default mode, select greatest dimension
             if (maxDimension == groupCount.x) {
-                *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_X;
+                *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_X;
             } else if (maxDimension == groupCount.y) {
-                *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Y;
+                *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Y;
             } else {
-                *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Z;
+                *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Z;
             }
         }
 
@@ -175,32 +177,35 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
     }
 
     if (partitionCount == 1u && disablePartitionForPartitionCountOne) {
-        *outSelectedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_DISABLED;
+        *outSelectedPartitionType = PARTITION_TYPE::PARTITION_TYPE_DISABLED;
     }
 
     return static_cast<uint32_t>(partitionCount);
 }
 
-template <typename GfxFamily>
-uint32_t computePartitionCountAndSetPartitionType(COMPUTE_WALKER<GfxFamily> *walker,
+template <typename GfxFamily, typename WalkerType>
+uint32_t computePartitionCountAndSetPartitionType(WalkerType *walker,
                                                   uint32_t preferredMinimalPartitionCount,
                                                   bool preferStaticPartitioning,
                                                   bool usesImages,
                                                   bool *outSelectStaticPartitioning) {
+
+    using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
+
     const Vec3<size_t> groupStart = {walker->getThreadGroupIdStartingX(), walker->getThreadGroupIdStartingY(), walker->getThreadGroupIdStartingZ()};
     const Vec3<size_t> groupCount = {walker->getThreadGroupIdXDimension(), walker->getThreadGroupIdYDimension(), walker->getThreadGroupIdZDimension()};
-    std::optional<typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE> requestedPartitionType{};
+    std::optional<PARTITION_TYPE> requestedPartitionType{};
     if (usesImages) {
-        requestedPartitionType = COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_X;
+        requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_X;
     }
-    typename COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE partitionType{};
-    const auto partitionCount = computePartitionCountAndPartitionType<GfxFamily>(preferredMinimalPartitionCount,
-                                                                                 preferStaticPartitioning,
-                                                                                 groupStart,
-                                                                                 groupCount,
-                                                                                 requestedPartitionType,
-                                                                                 &partitionType,
-                                                                                 outSelectStaticPartitioning);
+    PARTITION_TYPE partitionType{};
+    const auto partitionCount = computePartitionCountAndPartitionType<GfxFamily, WalkerType>(preferredMinimalPartitionCount,
+                                                                                             preferStaticPartitioning,
+                                                                                             groupStart,
+                                                                                             groupCount,
+                                                                                             requestedPartitionType,
+                                                                                             &partitionType,
+                                                                                             outSelectStaticPartitioning);
     walker->setPartitionType(partitionType);
     return partitionCount;
 }
@@ -426,10 +431,10 @@ void programSelfCleanupEndSection(void *&inputAddress,
     programTilesSynchronizationWithAtomics<GfxFamily>(inputAddress, totalBytesProgrammed, finalSyncTileCountAddress, 2 * args.tileCount);
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 void programTilesSynchronizationWithPostSyncs(void *&currentBatchBufferPointer,
                                               uint32_t &totalBytesProgrammed,
-                                              COMPUTE_WALKER<GfxFamily> *inputWalker,
+                                              WalkerType *inputWalker,
                                               uint32_t partitionCount) {
     const auto postSyncAddress = inputWalker->getPostSync().getDestinationAddress() + 8llu;
     for (uint32_t partitionId = 0u; partitionId < partitionCount; partitionId++) {
@@ -472,13 +477,13 @@ uint64_t computeWalkerSectionStart(WalkerPartitionArgs &args) {
            computeWalkerSectionSize<GfxFamily>();
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgrammed,
-                               COMPUTE_WALKER<GfxFamily> *inputWalker,
+                               WalkerType *inputWalker,
                                uint32_t partitionCount,
                                bool forceExecutionOnSingleTile) {
-    auto computeWalker = putCommand<COMPUTE_WALKER<GfxFamily>>(inputAddress, totalBytesProgrammed);
-    COMPUTE_WALKER<GfxFamily> cmd = *inputWalker;
+    auto computeWalker = putCommand<WalkerType>(inputAddress, totalBytesProgrammed);
+    WalkerType cmd = *inputWalker;
 
     if (partitionCount > 1) {
         auto partitionType = inputWalker->getPartitionType();
@@ -486,14 +491,14 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         assert(inputWalker->getThreadGroupIdStartingX() == 0u);
         assert(inputWalker->getThreadGroupIdStartingY() == 0u);
         assert(inputWalker->getThreadGroupIdStartingZ() == 0u);
-        assert(partitionType != COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+        assert(partitionType != WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
 
         cmd.setWorkloadPartitionEnable(true);
 
         auto workgroupCount = 0u;
-        if (partitionType == COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_X) {
+        if (partitionType == WalkerType::PARTITION_TYPE::PARTITION_TYPE_X) {
             workgroupCount = inputWalker->getThreadGroupIdXDimension();
-        } else if (partitionType == COMPUTE_WALKER<GfxFamily>::PARTITION_TYPE::PARTITION_TYPE_Y) {
+        } else if (partitionType == WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y) {
             workgroupCount = inputWalker->getThreadGroupIdYDimension();
         } else {
             workgroupCount = inputWalker->getThreadGroupIdZDimension();
@@ -540,11 +545,11 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
 32. BATCH_BUFFER_END ( optional )
 */
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                                   void **outWalkerPtr,
                                                   uint64_t gpuAddressOfAllocation,
-                                                  COMPUTE_WALKER<GfxFamily> *inputWalker,
+                                                  WalkerType *inputWalker,
                                                   uint32_t &totalBytesProgrammed,
                                                   WalkerPartitionArgs &args,
                                                   const NEO::HardwareInfo &hwInfo) {
@@ -617,7 +622,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         args.secondaryBatchBuffer);
 
     // Walker section
-    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.forceExecutionOnSingleTile);
+    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.forceExecutionOnSingleTile);
     if (outWalkerPtr) {
         *outWalkerPtr = walkerPtr;
     }
@@ -686,11 +691,11 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
            bbStartSize;
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
                                                  void **outWalkerPtr,
                                                  uint64_t gpuAddressOfAllocation,
-                                                 COMPUTE_WALKER<GfxFamily> *inputWalker,
+                                                 WalkerType *inputWalker,
                                                  uint32_t &totalBytesProgrammed,
                                                  WalkerPartitionArgs &args,
                                                  const NEO::HardwareInfo &hwInfo) {
@@ -730,7 +735,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
 
     // Synchronize tiles after walker
     if (args.semaphoreProgrammingRequired) {
-        programTilesSynchronizationWithPostSyncs<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
+        programTilesSynchronizationWithPostSyncs<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount);
     }
 
     if (args.crossTileAtomicSynchronization || args.emitSelfCleanup) {

@@ -118,8 +118,8 @@ template <typename GfxFamily>
 void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, const Device &device) {
 }
 
-template <typename GfxFamily>
-void PreemptionHelper::programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode) {
+template <typename GfxFamily, typename InterfaceDescriptorType>
+void PreemptionHelper::programInterfaceDescriptorDataPreemption(InterfaceDescriptorType *idd, PreemptionMode preemptionMode) {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     if (preemptionMode == PreemptionMode::MidThread) {
         idd->setThreadPreemptionDisable(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_DISABLE);

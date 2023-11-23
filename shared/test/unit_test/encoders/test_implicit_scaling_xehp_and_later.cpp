@@ -33,7 +33,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCm
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -76,7 +76,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndNoPartiti
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, false, false, false, dcFlushFlag,
@@ -120,7 +120,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndPartition
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -167,7 +167,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -219,7 +219,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPa
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -273,7 +273,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -324,7 +324,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -361,7 +361,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -398,7 +398,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPrefe
     size_t expectedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    expectedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
+    expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, partitionCount, true, false, false, dcFlushFlag,
@@ -445,7 +445,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -513,7 +513,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -573,7 +573,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -633,7 +633,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -700,7 +700,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -763,7 +763,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -828,7 +828,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -896,7 +896,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
@@ -963,7 +963,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getSize(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;

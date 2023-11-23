@@ -17,6 +17,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -98,6 +99,8 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool imm
         this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
         this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
         this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, !immediateCmdListQueue);
+        auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+        this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
     }
     return returnValue;
 }

@@ -21,8 +21,9 @@
 namespace NEO {
 
 template <typename GfxFamily>
+template <typename WalkerType>
 size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
-    WALKER_TYPE *walkerCmd,
+    WalkerType *walkerCmd,
     const KernelDescriptor &kernelDescriptor,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
@@ -50,7 +51,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     }
 
     walkerCmd->setExecutionMask(static_cast<uint32_t>(executionMask));
-    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
+    walkerCmd->setSimdSize(getSimdConfig<WalkerType>(simd));
     walkerCmd->setMessageSimd(walkerCmd->getSimdSize());
 
     if (DebugManager.flags.ForceSimdMessageSizeInWalker.get() != -1) {
@@ -64,6 +65,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     // 1) cross-thread inline data will be put into R1, but if kernel uses local ids, then cross-thread should be put further back
     // so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
     // 2) Auto-generation of local ids should be possible, when in fact local ids are used
+
     if (!localIdsGenerationByRuntime && kernelUsesLocalIds) {
         uint32_t emitLocalIdsForDim = 0;
         if (kernelDescriptor.kernelAttributes.localId[0]) {
@@ -77,6 +79,7 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
         }
         walkerCmd->setEmitLocalId(emitLocalIdsForDim);
     }
+
     if (inlineDataProgrammingRequired == true) {
         walkerCmd->setEmitInlineParameter(1);
     }
@@ -94,20 +97,20 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
-                                                        WALKER_TYPE *walkerCmd,
+                                                        WalkerType *walkerCmd,
                                                         TagNodeBase *timestampPacketNode,
                                                         const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
 
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &postSyncData = walkerCmd->getPostSync();
     postSyncData.setDataportPipelineFlush(true);
 
-    EncodeDispatchKernel<GfxFamily>::setupPostSyncMocs(*walkerCmd, rootDeviceEnvironment,
-                                                       MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment));
+    EncodeDispatchKernel<GfxFamily>::template setupPostSyncMocs<WalkerType>(*walkerCmd, rootDeviceEnvironment,
+                                                                            MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment));
 
-    EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, hwInfo);
+    EncodeDispatchKernel<GfxFamily>::template adjustTimestampPacket<WalkerType>(*walkerCmd, hwInfo);
 
     if (DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
         postSyncData.setOperation(GfxFamily::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);
@@ -119,8 +122,11 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
         auto contextStartAddress = TimestampPacketHelper::getContextStartGpuAddress(*timestampPacketNode);
         postSyncData.setDestinationAddress(contextStartAddress);
     }
-    if (DebugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
-        walkerCmd->setSystolicModeEnable((DebugManager.flags.OverrideSystolicInComputeWalker.get()));
+
+    if constexpr (std::is_same_v<WalkerType, typename GfxFamily::COMPUTE_WALKER>) {
+        if (DebugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
+            walkerCmd->setSystolicModeEnable((DebugManager.flags.OverrideSystolicInComputeWalker.get()));
+        }
     }
 }
 
@@ -130,10 +136,11 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
     size_t numBarriers = MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getRootDeviceEnvironment()) ? 2 : 1;
 
-    size_t size = sizeof(typename GfxFamily::COMPUTE_WALKER) +
+    size_t size = sizeof(WalkerType) +
                   (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * numBarriers) +
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.kernelHeapSize, commandQueue.getDevice().getRootDeviceEnvironment());
@@ -144,7 +151,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
         Vec3<size_t> groupCount = dispatchInfo.getNumberOfWorkgroups();
         UNRECOVERABLE_IF(groupCount.x == 0);
         const bool staticPartitioning = commandQueue.getGpgpuCommandStreamReceiver().isStaticWorkPartitioningEnabled();
-        size += static_cast<size_t>(ImplicitScalingDispatch<GfxFamily>::getSize(false, staticPartitioning, devices, groupStart, groupCount));
+        size += static_cast<size_t>(ImplicitScalingDispatch<GfxFamily>::template getSize<WalkerType>(false, staticPartitioning, devices, groupStart, groupCount));
     }
 
     size += PerformanceCounters::getGpuCommandsSize(commandQueue.getPerfCounters(), commandQueue.getGpgpuEngine().osContext->getEngineType(), reservePerfCounters);

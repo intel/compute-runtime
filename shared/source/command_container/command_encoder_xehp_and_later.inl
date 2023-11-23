@@ -37,7 +37,8 @@ constexpr size_t TimestampDestinationAddressAlignment = 16;
 constexpr size_t ImmWriteDestinationAddressAlignment = 8;
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
@@ -77,9 +78,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData,
                                              sizePerThreadData, rootDeviceEnvironment);
-    auto &productHelper = args.device->getProductHelper();
-    productHelper.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                   kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
     auto requiredWorkgroupOrder = args.dispatchInterface->getRequiredWorkgroupOrder();
@@ -105,17 +103,18 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        hwInfo);
 
     auto &gfxCoreHelper = args.device->getGfxCoreHelper();
-    auto slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(
+    auto slmSize = static_cast<uint32_t>(
         gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());
+        slmSize = static_cast<uint32_t>(DebugManager.flags.OverrideSlmAllocationSize.get());
     }
     idd.setSharedLocalMemorySize(slmSize);
 
     auto bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
     bool skipSshProgramming = false;
 
+    auto &productHelper = args.device->getProductHelper();
     if (productHelper.isSkippingStatefulInformationRequired(kernelDescriptor)) {
         bindingTableStateCount = 0u;
         skipSshProgramming = true;
@@ -272,7 +271,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.useGlobalAtomics,       // useGlobalAtomics
             args.partitionCount > 1,     // multiOsContextCapable
             args.isRcs,                  // isRcs
-            container.doubleSbaWaRef()}; // doubleSbaWa
+            container.doubleSbaWaRef(),  // doubleSbaWa
+            false,                       // heaplessModeEnabled
+        };
         EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
         container.setDirtyStateForAllHeaps(false);
     }
@@ -392,7 +393,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {
+template <typename WalkerType>
+inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {
     auto &postSyncData = walkerCmd.getPostSync();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 

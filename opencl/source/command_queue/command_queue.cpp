@@ -17,6 +17,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
@@ -102,6 +103,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto &productHelper = device->getProductHelper();
+        auto &compilerProductHelper = device->getCompilerProductHelper();
         auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
 
         bcsAllowed = productHelper.isBlitterFullySupported(hwInfo) &&
@@ -127,6 +129,8 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getDevice().getL0Debugger()) {
             device->getDevice().getL0Debugger()->notifyCommandQueueCreated(&device->getDevice());
         }
+
+        this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
     }
 }
 

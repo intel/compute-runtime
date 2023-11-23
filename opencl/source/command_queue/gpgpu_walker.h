@@ -35,8 +35,9 @@ class GpgpuWalkerHelper {
     static size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
     static size_t getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel);
 
+    template <typename WalkerType>
     static size_t setGpgpuWalkerThreadData(
-        WALKER_TYPE *walkerCmd,
+        WalkerType *walkerCmd,
         const KernelDescriptor &kernelDescriptor,
         const size_t globalOffsets[3],
         const size_t startWorkGroups[3],
@@ -67,9 +68,10 @@ class GpgpuWalkerHelper {
         TagNodeBase &hwPerfCounter,
         LinearStream *commandStream);
 
+    template <typename WalkerType>
     static void setupTimestampPacket(
         LinearStream *cmdStream,
-        WALKER_TYPE *walkerCmd,
+        WalkerType *walkerCmd,
         TagNodeBase *timestampPacketNode,
         const RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -94,6 +96,7 @@ struct EnqueueOperation {
     static size_t getSizeForCacheFlushAfterWalkerCommands(const Kernel &kernel, const CommandQueue &commandQueue);
 
   private:
+    template <typename WalkerType>
     static size_t getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo);
     static size_t getSizeRequiredCSNonKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue);
 };
