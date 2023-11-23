@@ -13,11 +13,18 @@ SPDX-License-Identifier: MIT
 
 # Overview
 
+Implementation must support `ZE_intel_experimental_command_list_memory_sync` extension.
+
 ## Wait On Memory
 
 Wait On Memory provides a low level dependency mechanism through memory locations. It could be used to implement event-like synchronization mechanism where the wait on a memory location is on a value written by a EU thread. A potential use case is to hide context switching latencies between different engine classes.
 
 This functionality is also useful in heterogenous multi-device synchronization setups where, for example, a network card could write to memory location to indicate a packet is ready for consumption and the device waits on memory location via this extension.
+
+Depending on HW, implementation may support different data size to wait (`zexCommandListAppendWaitOnMemory` / `zexCommandListAppendWaitOnMemory64`).
+
+Application must query minimal supported size via `ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t` struct.  
+Not supported API will return error.
 
 ## Write To Memory
 Write To Memory is a counterpart to the wait on memory method to allow for scenarios where user prefers to write to the memory location from the accelerator device.

@@ -62,6 +62,37 @@ typedef struct _ze_intel_device_module_dp_exp_properties_t {
     ze_intel_device_module_dp_exp_flags_t flags;                                    ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
 } ze_intel_device_module_dp_exp_properties_t;
 
+#ifndef ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
+/// @brief wait on memory extension name
+#define ZE_INTEL_COMMAND_LIST_MEMORY_SYNC "ZE_intel_experimental_command_list_memory_sync"
+#endif // ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Cmd List memory sync extension Version(s)
+typedef enum _ze_intel_command_list_memory_sync_exp_version_t {
+    ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_intel_command_list_memory_sync_exp_version_t;
+
+#ifndef ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC
+/// @brief stype for _ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t
+#define ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC (ze_structure_type_t)0x00030017
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Extended descriptor for cmd list memory sync
+///
+/// @details
+///     - Implementation must support ::ZE_intel_experimental_command_list_memory_sync extension
+///     - May be passed to ze_device_properties_t through pNext.
+typedef struct _ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t {
+    ze_structure_type_t stype = ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC; ///< [in] type of this structure
+    const void *pNext;                                                                                         ///< [in][optional] must be null or a pointer to an extension-specific
+                                                                                                               ///< structure (i.e. contains stype and pNext).
+    uint32_t cmdListWaitOnMemoryDataSizeInBytes;                                                               /// <out> Defines supported data size for zexCommandListAppendWaitOnMemory[64] API
+} ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t;
+
 #ifndef ZE_INTEL_EVENT_SYNC_MODE
 /// @brief Event sync mode extension name
 #define ZE_INTEL_EVENT_SYNC_MODE "ZE_intel_experimental_event_sync_mode"
