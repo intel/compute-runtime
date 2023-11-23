@@ -22,7 +22,7 @@
 namespace L0 {
 bool sysmanInitFromCore = false;
 
-struct OsSysmanDriver *GlobalOsSysmanDriver = nullptr;
+struct OsSysmanDriver *globalOsSysmanDriver = nullptr;
 
 void DeviceImp::createSysmanHandle(bool isSubDevice) {
     if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
@@ -47,8 +47,8 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
         static_cast<DeviceImp *>(subDevice)->setSysmanHandle(sysmanDevice);
     }
 
-    if (GlobalOsSysmanDriver == nullptr) {
-        GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+    if (globalOsSysmanDriver == nullptr) {
+        globalOsSysmanDriver = L0::OsSysmanDriver::create();
     }
     return sysmanDevice;
 }
@@ -68,13 +68,13 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
 
-    if (GlobalOsSysmanDriver == nullptr) {
+    if (globalOsSysmanDriver == nullptr) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    return GlobalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    return globalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t DriverHandleImp::sysmanEventsListenEx(
@@ -84,12 +84,12 @@ ze_result_t DriverHandleImp::sysmanEventsListenEx(
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
 
-    if (GlobalOsSysmanDriver == nullptr) {
+    if (globalOsSysmanDriver == nullptr) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    return GlobalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
+    return globalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t SysmanDevice::performanceGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_perf_handle_t *phPerformance) {

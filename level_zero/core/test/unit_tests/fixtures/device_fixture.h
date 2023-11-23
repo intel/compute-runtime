@@ -32,7 +32,7 @@ struct Device;
 struct ContextImp;
 
 extern uint32_t driverCount;
-extern _ze_driver_handle_t *GlobalDriverHandle;
+extern _ze_driver_handle_t *globalDriverHandle;
 namespace ult {
 class MockBuiltins;
 
@@ -54,7 +54,7 @@ struct DeviceFixture {
     const uint32_t rootDeviceIndex = 0u;
     template <typename HelperType>
     HelperType &getHelper() const;
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
+    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
     VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
 
@@ -117,7 +117,7 @@ struct MultiDeviceFixture {
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
 
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&GlobalDriverHandle};
+    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
     VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
 

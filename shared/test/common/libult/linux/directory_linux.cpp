@@ -22,7 +22,7 @@ std::map<std::string, std::vector<std::string>> directoryFilesMap = {};
 std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
 
-    if (Directory::ReturnEmptyFilesVector) {
+    if (Directory::returnEmptyFilesVector) {
         return files;
     }
 

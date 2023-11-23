@@ -13,7 +13,7 @@
 
 const std::string iafPath = "device/";
 const std::string iafDirectory = "iaf.";
-const std::string pscbin_version = "/pscbin_version";
+const std::string pscbinVersion = "/pscbin_version";
 
 namespace L0 {
 namespace Sysman {
@@ -34,7 +34,7 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
         for (const auto &entry : list) {
             if (!iafDirectory.compare(entry.substr(0, iafDirectory.length()))) {
                 // device/iaf.X/pscbin_version, where X is the hardware slot number
-                path = iafPath + entry + pscbin_version;
+                path = iafPath + entry + pscbinVersion;
             }
         }
         if (path.empty()) {

@@ -42,9 +42,9 @@ struct TimestampPacketTests : public ::testing::Test {
     struct MockTagNode : public TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> {
         using TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>::gpuAddress;
     };
-
-    template <typename MI_SEMAPHORE_WAIT>
-    void verifySemaphore(MI_SEMAPHORE_WAIT *semaphoreCmd, TagNodeBase *timestampPacketNode, uint32_t packetId) {
+    template <typename FamilyType>
+    void verifySemaphore(typename FamilyType::MI_SEMAPHORE_WAIT *semaphoreCmd, TagNodeBase *timestampPacketNode, uint32_t packetId) {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         EXPECT_NE(nullptr, semaphoreCmd);
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
@@ -72,7 +72,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreIsProgrammedThenUseGpuAd
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
     auto it = hwParser.cmdList.begin();
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgrammedThenUseGpuAddress) {
@@ -92,7 +92,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreIsProgra
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
     auto it = hwParser.cmdList.begin();
     for (uint32_t packetId = 0; packetId < mockNode.getPacketsUsed(); packetId++) {
-        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, packetId);
+        verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, packetId);
     }
 }
 

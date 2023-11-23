@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,15 +22,15 @@ enum class RELOCATION_X8664_TYPE : uint32_t {
     R_X8664_32 = 0xa
 };
 
-template <ELF_IDENTIFIER_CLASS NumBits = EI_CLASS_64>
+template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
 struct Elf {
     struct ProgramHeaderAndData {
-        const ElfProgramHeader<NumBits> *header = nullptr;
+        const ElfProgramHeader<numBits> *header = nullptr;
         ArrayRef<const uint8_t> data;
     };
 
     struct SectionHeaderAndData {
-        const ElfSectionHeader<NumBits> *header;
+        const ElfSectionHeader<numBits> *header;
         ArrayRef<const uint8_t> data;
     };
 
@@ -44,7 +44,7 @@ struct Elf {
         std::string symbolName;
     };
     using Relocations = std::vector<RelocationInfo>;
-    using SymbolsTable = std::vector<ElfSymbolEntry<NumBits>>;
+    using SymbolsTable = std::vector<ElfSymbolEntry<numBits>>;
 
     bool decodeSections(std::string &outError);
 
@@ -73,11 +73,11 @@ struct Elf {
         return std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + nameOffset);
     }
 
-    decltype(ElfSymbolEntry<NumBits>::value) getSymbolValue(uint32_t idx) const {
+    decltype(ElfSymbolEntry<numBits>::value) getSymbolValue(uint32_t idx) const {
         return symbolTable[idx].value;
     }
 
-    decltype(ElfSectionHeader<NumBits>::offset) getSectionOffset(uint32_t idx) const {
+    decltype(ElfSectionHeader<numBits>::offset) getSectionOffset(uint32_t idx) const {
         return sectionHeaders[idx].header->offset;
     }
 
@@ -93,7 +93,7 @@ struct Elf {
         return symbolTable;
     }
 
-    const ElfFileHeader<NumBits> *elfFileHeader = nullptr;
+    const ElfFileHeader<numBits> *elfFileHeader = nullptr;
     StackVec<ProgramHeaderAndData, 32> programHeaders;
     StackVec<SectionHeaderAndData, 32> sectionHeaders;
 
@@ -107,19 +107,19 @@ struct Elf {
     Relocations debugInfoRelocations;
 };
 
-template <ELF_IDENTIFIER_CLASS NumBits = EI_CLASS_64>
-const ElfFileHeader<NumBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary);
+template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
+const ElfFileHeader<numBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary);
 extern template const ElfFileHeader<EI_CLASS_32> *decodeElfFileHeader<EI_CLASS_32>(const ArrayRef<const uint8_t>);
 extern template const ElfFileHeader<EI_CLASS_64> *decodeElfFileHeader<EI_CLASS_64>(const ArrayRef<const uint8_t>);
 
-template <ELF_IDENTIFIER_CLASS NumBits = EI_CLASS_64>
-Elf<NumBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std::string &outWarning);
+template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
+Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std::string &outWarning);
 extern template Elf<EI_CLASS_32> decodeElf<EI_CLASS_32>(const ArrayRef<const uint8_t>, std::string &, std::string &);
 extern template Elf<EI_CLASS_64> decodeElf<EI_CLASS_64>(const ArrayRef<const uint8_t>, std::string &, std::string &);
 
-template <ELF_IDENTIFIER_CLASS NumBits>
+template <ELF_IDENTIFIER_CLASS numBits>
 inline bool isElf(const ArrayRef<const uint8_t> binary) {
-    return (nullptr != decodeElfFileHeader<NumBits>(binary));
+    return (nullptr != decodeElfFileHeader<numBits>(binary));
 }
 
 inline bool isElf(const ArrayRef<const uint8_t> binary) {

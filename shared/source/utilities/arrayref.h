@@ -42,9 +42,9 @@ class ArrayRef {
         : begIt((ctr.size() > 0) ? &*ctr.begin() : nullptr), endIt((ctr.size() > 0) ? (&*(ctr.end() - 1) + 1) : nullptr) {
     }
 
-    template <size_t Size>
-    ArrayRef(DataType (&array)[Size])
-        : begIt(&array[0]), endIt(&array[Size]) {
+    template <size_t size>
+    ArrayRef(DataType (&array)[size])
+        : begIt(&array[0]), endIt(&array[size]) {
     }
 
     ArrayRef() = default;

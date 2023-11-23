@@ -22,8 +22,8 @@ FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
     return fileLoggerInstance;
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {
+template <DebugFunctionalityLevel debugLevel>
+FileLogger<debugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {
     logFileName = std::move(filename);
     if (enabled()) {
         std::remove(logFileName.c_str());
@@ -36,11 +36,11 @@ FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &f
     logAllocationStdout = flags.LogAllocationStdout.get();
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-FileLogger<DebugLevel>::~FileLogger() = default;
+template <DebugFunctionalityLevel debugLevel>
+FileLogger<debugLevel>::~FileLogger() = default;
 
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
     std::lock_guard theLock(mutex);
     std::ofstream outFile(filename, mode);
     if (outFile.is_open()) {
@@ -49,8 +49,8 @@ void FileLogger<DebugLevel>::writeToFile(std::string filename, const char *str, 
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::logDebugString(bool enableLog, std::string_view debugString) {
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::logDebugString(bool enableLog, std::string_view debugString) {
     if (enabled()) {
         if (enableLog) {
             writeToFile(logFileName, debugString.data(), debugString.size(), std::ios::app);
@@ -58,8 +58,8 @@ void FileLogger<DebugLevel>::logDebugString(bool enableLog, std::string_view deb
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::dumpKernel(const std::string &name, const std::string &src) {
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::dumpKernel(const std::string &name, const std::string &src) {
     if (false == enabled()) {
         return;
     }
@@ -70,8 +70,8 @@ void FileLogger<DebugLevel>::dumpKernel(const std::string &name, const std::stri
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::logApiCall(const char *function, bool enter, int32_t errorCode) {
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_t errorCode) {
     if (false == enabled()) {
         return;
     }
@@ -92,8 +92,8 @@ void FileLogger<DebugLevel>::logApiCall(const char *function, bool enter, int32_
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAllocation) {
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::logAllocation(GraphicsAllocation const *graphicsAllocation) {
     if (logAllocationType) {
         printDebugString(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
     }
@@ -126,15 +126,15 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-size_t FileLogger<DebugLevel>::getInput(const size_t *input, int32_t index) {
+template <DebugFunctionalityLevel debugLevel>
+size_t FileLogger<debugLevel>::getInput(const size_t *input, int32_t index) {
     if (enabled() == false)
         return 0;
     return input != nullptr ? input[index] : 0;
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void FileLogger<DebugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries) {
+template <DebugFunctionalityLevel debugLevel>
+void FileLogger<debugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries) {
     if (false == enabled()) {
         return;
     }

@@ -88,7 +88,7 @@ using CmdServicesMemTraceVersion = AubMemDump::CmdServicesMemTraceVersion;
 
 static auto sizeMemoryWriteHeader = sizeof(CmdServicesMemTraceMemoryWrite) - sizeof(CmdServicesMemTraceMemoryWrite::data);
 
-extern const size_t g_dwordCountMax;
+extern const size_t dwordCountMax;
 
 void AubFileStream::open(const char *filePath) {
     fileHandle.open(filePath, std::ofstream::binary);
@@ -151,7 +151,7 @@ void AubFileStream::writeMemoryWriteHeader(uint64_t physAddress, size_t size, ui
     CmdServicesMemTraceMemoryWrite header = {};
     auto alignedBlockSize = (size + sizeof(uint32_t) - 1) & ~(sizeof(uint32_t) - 1);
     auto dwordCount = (sizeMemoryWriteHeader + alignedBlockSize) / sizeof(uint32_t);
-    DEBUG_BREAK_IF(dwordCount > AubMemDump::g_dwordCountMax);
+    DEBUG_BREAK_IF(dwordCount > AubMemDump::dwordCountMax);
 
     header.setHeader();
     header.dwordCount = static_cast<uint32_t>(dwordCount - 1);
@@ -237,7 +237,7 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
     header.addressSpace = addressSpace;
 
     auto headerSize = sizeof(CmdServicesMemTraceMemoryCompare) - sizeof(CmdServicesMemTraceMemoryCompare::data);
-    auto blockSizeMax = g_dwordCountMax * sizeof(uint32_t) - headerSize;
+    auto blockSizeMax = dwordCountMax * sizeof(uint32_t) - headerSize;
 
     // We have to decompose memory into chunks that can be streamed per iteration
     while (sizeRemaining > 0) {

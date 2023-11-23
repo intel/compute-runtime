@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,26 +49,26 @@ struct StringSectionBuilder {
     uint32_t undefStringIdx;
 };
 
-template <ELF_IDENTIFIER_CLASS NumBits = EI_CLASS_64>
+template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
 struct ElfEncoder {
     ElfEncoder(bool addUndefSectionHeader = true, bool addHeaderSectionNamesSection = true,
-               typename ElfSectionHeaderTypes<NumBits>::AddrAlign defaultDataAlignment = 8U);
+               typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignment = 8U);
 
-    void appendSection(const ElfSectionHeader<NumBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
-    void appendSegment(const ElfProgramHeader<NumBits> &programHeader, const ArrayRef<const uint8_t> segmentData);
+    void appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
+    void appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData);
 
-    ElfSectionHeader<NumBits> &appendSection(SECTION_HEADER_TYPE sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
-    ElfProgramHeader<NumBits> &appendSegment(PROGRAM_HEADER_TYPE segmentType, const ArrayRef<const uint8_t> segmentData);
-    uint32_t getSectionHeaderIndex(const ElfSectionHeader<NumBits> &sectionHeader);
+    ElfSectionHeader<numBits> &appendSection(SECTION_HEADER_TYPE sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
+    ElfProgramHeader<numBits> &appendSegment(PROGRAM_HEADER_TYPE segmentType, const ArrayRef<const uint8_t> segmentData);
+    uint32_t getSectionHeaderIndex(const ElfSectionHeader<numBits> &sectionHeader);
     void appendProgramHeaderLoad(size_t sectionId, uint64_t vAddr, uint64_t segSize);
 
     template <typename SectionHeaderEnumT>
-    ElfSectionHeader<NumBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
+    ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
         return appendSection(static_cast<SECTION_HEADER_TYPE>(sectionType), sectionLabel, sectionData);
     }
 
     template <typename SectionHeaderEnumT>
-    ElfSectionHeader<NumBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const std::string &sectionData) {
+    ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const std::string &sectionData) {
         return appendSection(static_cast<SECTION_HEADER_TYPE>(sectionType), sectionLabel,
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(sectionData.c_str()), sectionData.size() + 1));
     }
@@ -77,18 +77,18 @@ struct ElfEncoder {
 
     std::vector<uint8_t> encode() const;
 
-    ElfFileHeader<NumBits> &getElfFileHeader() {
+    ElfFileHeader<numBits> &getElfFileHeader() {
         return elfFileHeader;
     }
 
   protected:
     bool addUndefSectionHeader = false;
     bool addHeaderSectionNamesSection = false;
-    typename ElfSectionHeaderTypes<NumBits>::AddrAlign defaultDataAlignment = 8U;
+    typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignment = 8U;
     uint64_t maxDataAlignmentNeeded = 1U;
-    ElfFileHeader<NumBits> elfFileHeader;
-    StackVec<ElfProgramHeader<NumBits>, 32> programHeaders;
-    StackVec<ElfSectionHeader<NumBits>, 32> sectionHeaders;
+    ElfFileHeader<numBits> elfFileHeader;
+    StackVec<ElfProgramHeader<numBits>, 32> programHeaders;
+    StackVec<ElfSectionHeader<numBits>, 32> sectionHeaders;
     std::vector<uint8_t> data;
     StringSectionBuilder strSecBuilder;
     struct ProgramSectionID {

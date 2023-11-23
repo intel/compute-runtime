@@ -36,7 +36,7 @@
 
 using namespace NEO;
 
-static const unsigned int g_scTestBufferSizeInBytes = 16;
+static const unsigned int testBufferSizeInBytes = 16;
 
 TEST(Buffer, WhenValidateHandleTypeThenReturnFalse) {
     MemoryProperties memoryProperties;
@@ -67,7 +67,7 @@ class ExportBufferTests : public ClDeviceFixture,
     std::unique_ptr<MockContext> context;
     MemoryManager *contextMemoryManager;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    unsigned char pHostPtr[g_scTestBufferSizeInBytes];
+    unsigned char pHostPtr[testBufferSizeInBytes];
 };
 
 struct ValidExportHostPtr
@@ -98,7 +98,7 @@ struct ValidExportHostPtr
         return Buffer::create(
             context.get(),
             flags,
-            g_scTestBufferSizeInBytes,
+            testBufferSizeInBytes,
             pHostPtr,
             retVal);
     }
@@ -109,7 +109,7 @@ struct ValidExportHostPtr
 
 TEST_F(ValidExportHostPtr, givenPropertiesWithDmaBufWhenValidateInputAndCreateBufferThenInvalidPropertyIsSet) {
     cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x1234, 0};
-    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, testBufferSizeInBytes, nullptr, retVal);
     EXPECT_EQ(retVal, CL_INVALID_PROPERTY);
     EXPECT_EQ(nullptr, buffer);
 
@@ -120,7 +120,7 @@ TEST_F(ValidExportHostPtr, givenInvalidPropertiesWithNtHandleWhenValidateInputAn
 
     osHandle invalidHandle = static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->invalidSharedHandle;
     cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, invalidHandle, 0};
-    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, testBufferSizeInBytes, nullptr, retVal);
 
     EXPECT_EQ(retVal, CL_INVALID_MEM_OBJECT);
     EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);
@@ -132,7 +132,7 @@ TEST_F(ValidExportHostPtr, givenInvalidPropertiesWithNtHandleWhenValidateInputAn
 TEST_F(ValidExportHostPtr, givenPropertiesWithNtHandleWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
 
     cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x1234, 0};
-    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, testBufferSizeInBytes, nullptr, retVal);
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);

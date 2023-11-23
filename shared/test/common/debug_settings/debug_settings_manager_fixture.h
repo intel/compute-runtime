@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,15 +40,15 @@ class TestDebugFlagsChecker {
     }
 };
 
-template <DebugFunctionalityLevel DebugLevel>
-class TestDebugSettingsManager : public DebugSettingsManager<DebugLevel> {
+template <DebugFunctionalityLevel debugLevel>
+class TestDebugSettingsManager : public DebugSettingsManager<debugLevel> {
   public:
-    using DebugSettingsManager<DebugLevel>::dumpFlags;
-    using DebugSettingsManager<DebugLevel>::settingsDumpFileName;
+    using DebugSettingsManager<debugLevel>::dumpFlags;
+    using DebugSettingsManager<debugLevel>::settingsDumpFileName;
 
-    TestDebugSettingsManager() : DebugSettingsManager<DebugLevel>("") {}
+    TestDebugSettingsManager() : DebugSettingsManager<debugLevel>("") {}
     SettingsReader *getSettingsReader() {
-        return DebugSettingsManager<DebugLevel>::readerImpl.get();
+        return DebugSettingsManager<debugLevel>::readerImpl.get();
     }
 };
 

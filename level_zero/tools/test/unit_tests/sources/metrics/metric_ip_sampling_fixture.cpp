@@ -14,7 +14,7 @@
 #include <level_zero/zet_api.h>
 
 namespace L0 {
-extern _ze_driver_handle_t *GlobalDriverHandle;
+extern _ze_driver_handle_t *globalDriverHandle;
 
 namespace ult {
 
@@ -48,7 +48,7 @@ void MetricIpSamplingFixture::SetUp() {
         auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
         metricOaSource.setInitializationState(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
-    GlobalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
+    globalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
 }
 
 void MetricIpSamplingFixture::TearDown() {
@@ -67,7 +67,7 @@ void MetricIpSamplingTimestampFixture::SetUp() {
     auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     metricOaSource.setInitializationState(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 
-    GlobalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
+    globalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
 }
 
 void MetricIpSamplingTimestampFixture::TearDown() {

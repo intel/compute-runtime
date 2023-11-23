@@ -873,8 +873,9 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacket
 }
 
 struct BlitEnqueueWithDebugCapabilityTests : public BlitEnqueueTests<0> {
-    template <typename MI_SEMAPHORE_WAIT>
+    template <typename FamilyType>
     void findSemaphores(GenCmdList &cmdList) {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
         while (semaphore != cmdList.end()) {
@@ -901,8 +902,9 @@ struct BlitEnqueueWithDebugCapabilityTests : public BlitEnqueueTests<0> {
         }
     }
 
-    template <typename MI_FLUSH_DW>
+    template <typename FamilyType>
     void findMiFlushes(GenCmdList &cmdList) {
+        using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
         auto miFlush = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
         while (miFlush != cmdList.end()) {
@@ -956,12 +958,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenDis
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(ultBcsCsr->commandStream);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, semaphoreBeforeCopyFound);
     EXPECT_EQ(1u, semaphoreAfterCopyFound);
 
-    findMiFlushes<MI_FLUSH_DW>(hwParser.cmdList);
+    findMiFlushes<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, miFlushBeforeCopyFound);
     EXPECT_EQ(1u, miFlushAfterCopyFound);
@@ -1000,12 +1002,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetToMinus
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(ultBcsCsr->commandStream);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(2u, semaphoreBeforeCopyFound);
     EXPECT_EQ(2u, semaphoreAfterCopyFound);
 
-    findMiFlushes<MI_FLUSH_DW>(hwParser.cmdList);
+    findMiFlushes<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(2u, miFlushBeforeCopyFound);
     EXPECT_EQ(2u, miFlushAfterCopyFound);
@@ -1030,12 +1032,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToBefor
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(ultBcsCsr->commandStream);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, semaphoreBeforeCopyFound);
     EXPECT_EQ(0u, semaphoreAfterCopyFound);
 
-    findMiFlushes<MI_FLUSH_DW>(hwParser.cmdList);
+    findMiFlushes<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, miFlushBeforeCopyFound);
     EXPECT_EQ(0u, miFlushAfterCopyFound);
@@ -1060,12 +1062,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToAfter
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(ultBcsCsr->commandStream);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(0u, semaphoreBeforeCopyFound);
     EXPECT_EQ(1u, semaphoreAfterCopyFound);
 
-    findMiFlushes<MI_FLUSH_DW>(hwParser.cmdList);
+    findMiFlushes<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(0u, miFlushBeforeCopyFound);
     EXPECT_EQ(1u, miFlushAfterCopyFound);
@@ -1090,12 +1092,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToBefor
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(ultBcsCsr->commandStream);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, semaphoreBeforeCopyFound);
     EXPECT_EQ(1u, semaphoreAfterCopyFound);
 
-    findMiFlushes<MI_FLUSH_DW>(hwParser.cmdList);
+    findMiFlushes<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, miFlushBeforeCopyFound);
     EXPECT_EQ(1u, miFlushAfterCopyFound);

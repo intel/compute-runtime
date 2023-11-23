@@ -72,12 +72,12 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
 
 typedef Test<DispatchInfoBuilderFixture> DispatchInfoBuilderTest;
 
-template <SplitDispatch::Dim Dim, SplitDispatch::SplitMode Mode>
-class DispatchInfoBuilderMock : DispatchInfoBuilder<Dim, Mode> {
+template <SplitDispatch::Dim dim, SplitDispatch::SplitMode mode>
+class DispatchInfoBuilderMock : DispatchInfoBuilder<dim, mode> {
   public:
-    using DispatchInfoBuilder<Dim, Mode>::DispatchInfoBuilder;
+    using DispatchInfoBuilder<dim, mode>::DispatchInfoBuilder;
     void pushSplit(const DispatchInfo &dispatchInfo, MultiDispatchInfo &outMdi) {
-        DispatchInfoBuilder<Dim, Mode>::pushSplit(dispatchInfo, outMdi);
+        DispatchInfoBuilder<dim, mode>::pushSplit(dispatchInfo, outMdi);
     }
 };
 

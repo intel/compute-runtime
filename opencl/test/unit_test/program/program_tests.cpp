@@ -2342,7 +2342,7 @@ TEST(ProgramTest, givenImagesSupportedWhenCreatingProgramThenInternalOptionsAreC
     }
 }
 
-template <int32_t ErrCodeToReturn, bool spirv = true>
+template <int32_t errCodeToReturn, bool spirv = true>
 struct CreateProgramFromBinaryMock : public MockProgram {
     using MockProgram::MockProgram;
 
@@ -2352,7 +2352,7 @@ struct CreateProgramFromBinaryMock : public MockProgram {
         this->irBinarySize = binarySize;
         this->isSpirV = spirv;
         memcpy_s(this->irBinary.get(), binarySize, pBinary, binarySize);
-        return ErrCodeToReturn;
+        return errCodeToReturn;
     }
 };
 

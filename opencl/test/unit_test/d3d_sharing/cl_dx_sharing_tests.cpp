@@ -21,7 +21,7 @@
 
 #include "gtest/gtest.h"
 
-static const DXGI_FORMAT DXGIformats[] = {
+static const DXGI_FORMAT dxgiFormats[] = {
     DXGI_FORMAT_R32G32B32A32_TYPELESS,
     DXGI_FORMAT_R32G32B32A32_FLOAT,
     DXGI_FORMAT_R32G32B32A32_UINT,
@@ -162,7 +162,7 @@ struct ClIntelSharingFormatQueryDX1X : public PlatformFixture, public ::testing:
         mockSharingFcns->checkFormatSupportSetParam1 = true;
         mockSharingFcns->checkFormatSupportParamsSet.pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
 
-        availableFormats = ArrayRef<const DXGI_FORMAT>(DXGIformats);
+        availableFormats = ArrayRef<const DXGI_FORMAT>(dxgiFormats);
         retrievedFormats.assign(availableFormats.size(), DXGI_FORMAT_UNKNOWN);
     }
     void TearDown() override {

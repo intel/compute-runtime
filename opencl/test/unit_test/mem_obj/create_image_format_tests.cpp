@@ -21,10 +21,10 @@ using namespace NEO;
 
 static const unsigned int testImageDimensions = 32;
 
-template <cl_mem_flags _flags>
+template <cl_mem_flags clMemFlags>
 class CreateImageFormatTest : public testing::TestWithParam<size_t> {
   public:
-    CreateImageFormatTest() : flags(_flags) {
+    CreateImageFormatTest() : flags(clMemFlags) {
     }
 
   protected:
@@ -36,18 +36,16 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
         ASSERT_GT(surfaceFormatTable.size(), indexImageFormat);
 
         surfaceFormat = &surfaceFormatTable[indexImageFormat];
-        // clang-format off
-        imageDesc.image_type        = CL_MEM_OBJECT_IMAGE2D;
-        imageDesc.image_width       = testImageDimensions;
-        imageDesc.image_height      = testImageDimensions;
-        imageDesc.image_depth       = 1;
-        imageDesc.image_array_size  = 1;
-        imageDesc.image_row_pitch   = 0;
+        imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imageDesc.image_width = testImageDimensions;
+        imageDesc.image_height = testImageDimensions;
+        imageDesc.image_depth = 1;
+        imageDesc.image_array_size = 1;
+        imageDesc.image_row_pitch = 0;
         imageDesc.image_slice_pitch = 0;
-        imageDesc.num_mip_levels    = 0;
-        imageDesc.num_samples       = 0;
+        imageDesc.num_mip_levels = 0;
+        imageDesc.num_samples = 0;
         imageDesc.mem_object = NULL;
-        // clang-format on
     }
 
     void TearDown() override {

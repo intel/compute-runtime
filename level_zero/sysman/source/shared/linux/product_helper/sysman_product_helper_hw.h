@@ -32,7 +32,7 @@ template <PRODUCT_FAMILY gfxProduct>
 struct EnableSysmanProductHelper {
     EnableSysmanProductHelper() {
         auto sysmanProductHelperCreateFunction = SysmanProductHelperHw<gfxProduct>::create;
-        SysmanProductHelperFactory[gfxProduct] = sysmanProductHelperCreateFunction;
+        sysmanProductHelperFactory[gfxProduct] = sysmanProductHelperCreateFunction;
     }
 };
 

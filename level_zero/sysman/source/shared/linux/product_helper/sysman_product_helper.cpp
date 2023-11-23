@@ -10,7 +10,7 @@
 namespace L0 {
 namespace Sysman {
 
-SysmanProductHelperCreateFunctionType SysmanProductHelperFactory[IGFX_MAX_PRODUCT] = {};
+SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT] = {};
 
 }
 } // namespace L0

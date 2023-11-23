@@ -36,12 +36,12 @@ ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
-    if (GlobalOsSysmanDriver == nullptr) {
+    if (globalOsSysmanDriver == nullptr) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman driver not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    static_cast<LinuxSysmanDriverImp *>(GlobalOsSysmanDriver)->eventRegister(events, pLinuxSysmanImp->getSysmanDeviceImp());
+    static_cast<LinuxSysmanDriverImp *>(globalOsSysmanDriver)->eventRegister(events, pLinuxSysmanImp->getSysmanDeviceImp());
     return ZE_RESULT_SUCCESS;
 }
 
@@ -137,7 +137,7 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
 }
 
 void LinuxEventsUtil::init() {
-    pUdevLib = static_cast<LinuxSysmanDriverImp *>(GlobalOsSysmanDriver)->getUdevLibHandle();
+    pUdevLib = static_cast<LinuxSysmanDriverImp *>(globalOsSysmanDriver)->getUdevLibHandle();
 }
 
 ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {

@@ -30,7 +30,7 @@ struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
 
-static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
+static const float yTilingRatioValue = 1.3862943611198906188344642429164f;
 
 struct DeviceInfoKernelPayloadConstants {
     void *slmWindow = nullptr;

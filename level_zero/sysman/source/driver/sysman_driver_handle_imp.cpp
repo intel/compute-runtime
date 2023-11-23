@@ -24,7 +24,7 @@
 namespace L0 {
 namespace Sysman {
 
-struct SysmanDriverHandleImp *GlobalSysmanDriver;
+struct SysmanDriverHandleImp *globalSysmanDriver;
 
 SysmanDriverHandleImp::SysmanDriverHandleImp() = default;
 
@@ -70,7 +70,7 @@ SysmanDriverHandle *SysmanDriverHandle::create(NEO::ExecutionEnvironment &execut
     }
 
     driverHandle->extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
-    GlobalSysmanDriver = driverHandle;
+    globalSysmanDriver = driverHandle;
     *returnValue = res;
     return driverHandle;
 }

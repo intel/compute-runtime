@@ -14,7 +14,7 @@ using namespace NEO;
 
 namespace NEO {
 bool isGTPinInitialized = false;
-gtpin::ocl::gtpin_events_t GTPinCallbacks = {0};
+gtpin::ocl::gtpin_events_t gtpinCallbacks = {0};
 } // namespace NEO
 
 // Do not change this code, needed to avoid compiler optimization that breaks GTPin_Init
@@ -70,7 +70,7 @@ GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_serv
     passMapBuffer(mapBuffer, pDriverServices->bufferMap);
     passUnMapBuffer(unMapBuffer, pDriverServices->bufferUnMap);
     // End of WA
-    GTPinCallbacks = *pGtpinEvents;
+    gtpinCallbacks = *pGtpinEvents;
     isGTPinInitialized = true;
 
     return GTPIN_DI_SUCCESS;

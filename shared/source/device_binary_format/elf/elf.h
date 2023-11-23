@@ -153,7 +153,7 @@ struct ElfFileHeaderIdentity {
 };
 static_assert(sizeof(ElfFileHeaderIdentity) == 16, "");
 
-template <int NumBits>
+template <int numBits>
 struct ElfProgramHeaderTypes;
 
 template <>
@@ -180,7 +180,7 @@ struct ElfProgramHeaderTypes<EI_CLASS_64> {
     using Align = uint64_t;
 };
 
-template <int NumBits>
+template <int numBits>
 struct ElfProgramHeader;
 
 template <>
@@ -210,7 +210,7 @@ struct ElfProgramHeader<EI_CLASS_64> {
 static_assert(sizeof(ElfProgramHeader<EI_CLASS_32>) == 0x20, "");
 static_assert(sizeof(ElfProgramHeader<EI_CLASS_64>) == 0x38, "");
 
-template <int NumBits>
+template <int numBits>
 struct ElfSectionHeaderTypes;
 
 template <>
@@ -241,24 +241,24 @@ struct ElfSectionHeaderTypes<EI_CLASS_64> {
     using EntSize = uint64_t;
 };
 
-template <int NumBits>
+template <int numBits>
 struct ElfSectionHeader {
-    typename ElfSectionHeaderTypes<NumBits>::Name name = 0U;           // offset to string in string section names
-    typename ElfSectionHeaderTypes<NumBits>::Type type = SHT_NULL;     // section type
-    typename ElfSectionHeaderTypes<NumBits>::Flags flags = SHF_NONE;   // section flags
-    typename ElfSectionHeaderTypes<NumBits>::Addr addr = 0U;           // VA of section in memory
-    typename ElfSectionHeaderTypes<NumBits>::Offset offset = 0U;       // absolute offset of section data in file
-    typename ElfSectionHeaderTypes<NumBits>::Size size = 0U;           // size of section's data
-    typename ElfSectionHeaderTypes<NumBits>::Link link = SHN_UNDEF;    // index of associated section
-    typename ElfSectionHeaderTypes<NumBits>::Info info = 0U;           // extra information
-    typename ElfSectionHeaderTypes<NumBits>::AddrAlign addralign = 0U; // section alignment
-    typename ElfSectionHeaderTypes<NumBits>::EntSize entsize = 0U;     // section's entries size
+    typename ElfSectionHeaderTypes<numBits>::Name name = 0U;           // offset to string in string section names
+    typename ElfSectionHeaderTypes<numBits>::Type type = SHT_NULL;     // section type
+    typename ElfSectionHeaderTypes<numBits>::Flags flags = SHF_NONE;   // section flags
+    typename ElfSectionHeaderTypes<numBits>::Addr addr = 0U;           // VA of section in memory
+    typename ElfSectionHeaderTypes<numBits>::Offset offset = 0U;       // absolute offset of section data in file
+    typename ElfSectionHeaderTypes<numBits>::Size size = 0U;           // size of section's data
+    typename ElfSectionHeaderTypes<numBits>::Link link = SHN_UNDEF;    // index of associated section
+    typename ElfSectionHeaderTypes<numBits>::Info info = 0U;           // extra information
+    typename ElfSectionHeaderTypes<numBits>::AddrAlign addralign = 0U; // section alignment
+    typename ElfSectionHeaderTypes<numBits>::EntSize entsize = 0U;     // section's entries size
 };
 
 static_assert(sizeof(ElfSectionHeader<EI_CLASS_32>) == 0x28, "");
 static_assert(sizeof(ElfSectionHeader<EI_CLASS_64>) == 0x40, "");
 
-template <ELF_IDENTIFIER_CLASS NumBits>
+template <ELF_IDENTIFIER_CLASS numBits>
 struct ElfFileHeaderTypes;
 
 template <>
@@ -295,22 +295,22 @@ struct ElfFileHeaderTypes<EI_CLASS_64> {
     using ShStrNdx = uint16_t;
 };
 
-template <ELF_IDENTIFIER_CLASS NumBits>
+template <ELF_IDENTIFIER_CLASS numBits>
 struct ElfFileHeader {
-    ElfFileHeaderIdentity identity = ElfFileHeaderIdentity(NumBits);                               // elf file identity
-    typename ElfFileHeaderTypes<NumBits>::Type type = ET_NONE;                                     // elf file type
-    typename ElfFileHeaderTypes<NumBits>::Machine machine = EM_NONE;                               // target machine
-    typename ElfFileHeaderTypes<NumBits>::Version version = 1U;                                    // elf file version
-    typename ElfFileHeaderTypes<NumBits>::Entry entry = 0U;                                        // entry point (start address)
-    typename ElfFileHeaderTypes<NumBits>::PhOff phOff = 0U;                                        // absolute offset to program header table in file
-    typename ElfFileHeaderTypes<NumBits>::ShOff shOff = 0U;                                        // absolute offset to section header table in file
-    typename ElfFileHeaderTypes<NumBits>::Flags flags = 0U;                                        // target-dependent flags
-    typename ElfFileHeaderTypes<NumBits>::EhSize ehSize = sizeof(ElfFileHeader<NumBits>);          // header size
-    typename ElfFileHeaderTypes<NumBits>::PhEntSize phEntSize = sizeof(ElfProgramHeader<NumBits>); // size of entries in program header table
-    typename ElfFileHeaderTypes<NumBits>::PhNum phNum = 0U;                                        // number of entries in pogram header table
-    typename ElfFileHeaderTypes<NumBits>::ShEntSize shEntSize = sizeof(ElfSectionHeader<NumBits>); // size of entries section header table
-    typename ElfFileHeaderTypes<NumBits>::ShNum shNum = 0U;                                        // number of entries in section header table
-    typename ElfFileHeaderTypes<NumBits>::ShStrNdx shStrNdx = SHN_UNDEF;                           // index of section header table with section names
+    ElfFileHeaderIdentity identity = ElfFileHeaderIdentity(numBits);                               // elf file identity
+    typename ElfFileHeaderTypes<numBits>::Type type = ET_NONE;                                     // elf file type
+    typename ElfFileHeaderTypes<numBits>::Machine machine = EM_NONE;                               // target machine
+    typename ElfFileHeaderTypes<numBits>::Version version = 1U;                                    // elf file version
+    typename ElfFileHeaderTypes<numBits>::Entry entry = 0U;                                        // entry point (start address)
+    typename ElfFileHeaderTypes<numBits>::PhOff phOff = 0U;                                        // absolute offset to program header table in file
+    typename ElfFileHeaderTypes<numBits>::ShOff shOff = 0U;                                        // absolute offset to section header table in file
+    typename ElfFileHeaderTypes<numBits>::Flags flags = 0U;                                        // target-dependent flags
+    typename ElfFileHeaderTypes<numBits>::EhSize ehSize = sizeof(ElfFileHeader<numBits>);          // header size
+    typename ElfFileHeaderTypes<numBits>::PhEntSize phEntSize = sizeof(ElfProgramHeader<numBits>); // size of entries in program header table
+    typename ElfFileHeaderTypes<numBits>::PhNum phNum = 0U;                                        // number of entries in pogram header table
+    typename ElfFileHeaderTypes<numBits>::ShEntSize shEntSize = sizeof(ElfSectionHeader<numBits>); // size of entries section header table
+    typename ElfFileHeaderTypes<numBits>::ShNum shNum = 0U;                                        // number of entries in section header table
+    typename ElfFileHeaderTypes<numBits>::ShStrNdx shStrNdx = SHN_UNDEF;                           // index of section header table with section names
 };
 
 static_assert(sizeof(ElfFileHeader<EI_CLASS_32>) == 0x34, "");
@@ -323,7 +323,7 @@ struct ElfNoteSection {
 };
 static_assert(sizeof(ElfNoteSection) == 0xC, "");
 
-template <int NumBits>
+template <int numBits>
 struct ElfSymbolEntryTypes;
 
 template <>
@@ -346,7 +346,7 @@ struct ElfSymbolEntryTypes<EI_CLASS_64> {
     using Size = uint64_t;
 };
 
-template <ELF_IDENTIFIER_CLASS NumBits>
+template <ELF_IDENTIFIER_CLASS numBits>
 struct ElfSymbolEntry;
 
 template <>
@@ -431,7 +431,7 @@ struct ElfSymbolEntry<EI_CLASS_64> {
 };
 static_assert(sizeof(ElfSymbolEntry<EI_CLASS_64>) == 0x18, "");
 
-template <int NumBits>
+template <int numBits>
 struct ElfRelocationEntryTypes;
 
 template <>
@@ -506,10 +506,10 @@ constexpr ElfRelocationEntryTypes<EI_CLASS_64>::Info setRelocationType(ElfReloca
 }
 } // namespace RelocationFuncs
 
-template <ELF_IDENTIFIER_CLASS NumBits>
+template <ELF_IDENTIFIER_CLASS numBits>
 struct ElfRel {
-    using Offset = typename ElfRelocationEntryTypes<NumBits>::Offset;
-    using Info = typename ElfRelocationEntryTypes<NumBits>::Info;
+    using Offset = typename ElfRelocationEntryTypes<numBits>::Offset;
+    using Info = typename ElfRelocationEntryTypes<numBits>::Info;
     Offset offset = 0U;
     Info info = 0U;
 
@@ -533,11 +533,11 @@ struct ElfRel {
 static_assert(sizeof(ElfRel<EI_CLASS_32>) == 0x8, "");
 static_assert(sizeof(ElfRel<EI_CLASS_64>) == 0x10, "");
 
-template <int NumBits>
+template <int numBits>
 struct ElfRela {
-    using Offset = typename ElfRelocationEntryTypes<NumBits>::Offset;
-    using Info = typename ElfRelocationEntryTypes<NumBits>::Info;
-    using Addend = typename ElfRelocationEntryTypes<NumBits>::Addend;
+    using Offset = typename ElfRelocationEntryTypes<numBits>::Offset;
+    using Info = typename ElfRelocationEntryTypes<numBits>::Info;
+    using Addend = typename ElfRelocationEntryTypes<numBits>::Addend;
     Offset offset = 0U;
     Info info = 0U;
     Addend addend = 0U;

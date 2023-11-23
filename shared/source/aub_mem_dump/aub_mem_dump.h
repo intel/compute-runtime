@@ -270,7 +270,7 @@ struct AubDump : public std::conditional<TraitsIn::addressingBits == 32, AubPage
     using BaseHelper = typename std::conditional<Traits::addressingBits == 32, AubPageTableHelper32<Traits>, AubPageTableHelper64<Traits>>::type;
     using Stream = typename Traits::Stream;
 
-    typedef union _MiContextDescriptorReg_ {
+    union MiContextDescriptorReg {
         struct {
             uint64_t valid : 1;                  //[0]
             uint64_t forcePageDirRestore : 1;    //[1]
@@ -286,7 +286,7 @@ struct AubDump : public std::conditional<TraitsIn::addressingBits == 32, AubPage
         } sData;
         uint32_t ulData[2];
         uint64_t qwordData[2 / 2];
-    } MiContextDescriptorReg, *pMiContextDescriptorReg;
+    };
 
     // Write a block of memory to a given address space using an optional hint
     static void addMemoryWrite(Stream &stream, uint64_t addr, const void *memory, size_t blockSize, int addressSpace, int hint = DataTypeHintValues::TraceNotype);
@@ -410,6 +410,6 @@ struct LrcaHelperCccs : public LrcaHelper {
     }
 };
 
-extern const uint64_t g_pageMask;
-extern const size_t g_dwordCountMax;
+extern const uint64_t pageMask;
+extern const size_t dwordCountMax;
 } // namespace AubMemDump

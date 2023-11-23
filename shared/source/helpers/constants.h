@@ -52,7 +52,7 @@ inline constexpr uint64_t max36BitAddress = (maxNBitValue(36));
 inline constexpr uint64_t max48BitAddress = maxNBitValue(48);
 inline constexpr uintptr_t page4kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
 inline constexpr uintptr_t page64kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::page64kMask;
-inline constexpr int GfxAddressBits = is64bit ? 48 : 32;
+inline constexpr int gfxAddressBits = is64bit ? 48 : 32;
 inline constexpr uint64_t maxSvmAddress = is64bit ? maxNBitValue(47) : maxNBitValue(32);
 inline constexpr size_t chunkThreshold = MemoryConstants::pageSize64k;
 

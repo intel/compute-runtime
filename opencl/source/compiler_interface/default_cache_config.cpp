@@ -19,19 +19,19 @@
 #include <string>
 
 namespace NEO {
-std::string NeoCachePersistent = "NEO_CACHE_PERSISTENT";
-std::string NeoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
-std::string NeoCacheDir = "NEO_CACHE_DIR";
-std::string ClCacheDir = "cl_cache_dir";
+std::string neoCachePersistent = "NEO_CACHE_PERSISTENT";
+std::string neoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
+std::string neoCacheDir = "NEO_CACHE_DIR";
+std::string clCacheDir = "cl_cache_dir";
 
 CompilerCacheConfig getDefaultCompilerCacheConfig() {
     CompilerCacheConfig ret;
     NEO::EnvironmentVariableReader envReader;
 
-    if (envReader.getSetting(NeoCachePersistent.c_str(), defaultCacheEnabled()) != 0) {
+    if (envReader.getSetting(neoCachePersistent.c_str(), defaultCacheEnabled()) != 0) {
         ret.enabled = true;
         std::string emptyString = "";
-        ret.cacheDir = envReader.getSetting(NeoCacheDir.c_str(), emptyString);
+        ret.cacheDir = envReader.getSetting(neoCacheDir.c_str(), emptyString);
 
         if (ret.cacheDir.empty()) {
             if (!checkDefaultCacheDirSettings(ret.cacheDir, envReader)) {
@@ -47,7 +47,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         }
 
         ret.cacheFileExtension = ".cl_cache";
-        ret.cacheSize = static_cast<size_t>(envReader.getSetting(NeoCacheMaxSize.c_str(), static_cast<int64_t>(MemoryConstants::gigaByte)));
+        ret.cacheSize = static_cast<size_t>(envReader.getSetting(neoCacheMaxSize.c_str(), static_cast<int64_t>(MemoryConstants::gigaByte)));
 
         if (ret.cacheSize == 0u) {
             ret.cacheSize = std::numeric_limits<size_t>::max();
@@ -56,7 +56,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         return ret;
     }
 
-    ret.cacheDir = envReader.getSetting(ClCacheDir.c_str(), static_cast<std::string>(CL_CACHE_LOCATION));
+    ret.cacheDir = envReader.getSetting(clCacheDir.c_str(), static_cast<std::string>(CL_CACHE_LOCATION));
 
     if (NEO::SysCalls::pathExists(ret.cacheDir)) {
         ret.enabled = true;

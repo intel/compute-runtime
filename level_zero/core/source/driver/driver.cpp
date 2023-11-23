@@ -24,8 +24,8 @@
 
 namespace L0 {
 
-_ze_driver_handle_t *GlobalDriverHandle;
-bool LevelZeroDriverInitialized = false;
+_ze_driver_handle_t *globalDriverHandle;
+bool levelZeroDriverInitialized = false;
 uint32_t driverCount = 0;
 
 void DriverImp::initialize(ze_result_t *result) {
@@ -68,8 +68,8 @@ void DriverImp::initialize(ze_result_t *result) {
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
     if (!neoDevices.empty()) {
-        GlobalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables, result);
-        if (GlobalDriverHandle != nullptr) {
+        globalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables, result);
+        if (globalDriverHandle != nullptr) {
             driverCount = 1;
             *result = ZE_RESULT_SUCCESS;
 
@@ -84,9 +84,9 @@ void DriverImp::initialize(ze_result_t *result) {
                 }
             }
             if (*result != ZE_RESULT_SUCCESS) {
-                delete GlobalDriver;
-                GlobalDriverHandle = nullptr;
-                GlobalDriver = nullptr;
+                delete globalDriver;
+                globalDriverHandle = nullptr;
+                globalDriver = nullptr;
                 driverCount = 0;
             }
         }
@@ -119,7 +119,7 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        phDriverHandles[i] = GlobalDriverHandle;
+        phDriverHandles[i] = globalDriverHandle;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -130,14 +130,14 @@ Driver *Driver::driver = &driverImp;
 
 ze_result_t init(ze_init_flags_t flags) {
     if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY)) {
-        L0::LevelZeroDriverInitialized = false;
+        L0::levelZeroDriverInitialized = false;
         return ZE_RESULT_ERROR_UNINITIALIZED;
     } else {
         ze_result_t result = Driver::get()->driverInit(flags);
         if (result == ZE_RESULT_SUCCESS) {
-            L0::LevelZeroDriverInitialized = true;
+            L0::levelZeroDriverInitialized = true;
         } else {
-            L0::LevelZeroDriverInitialized = false;
+            L0::levelZeroDriverInitialized = false;
         }
         return result;
     }

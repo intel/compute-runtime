@@ -1453,7 +1453,7 @@ TEST(DrmTest, GivenDrmWhenDiscoveringDevicesThenCloseOnExecFlagIsPassedToFdOpen)
     EXPECT_NE(0u, SysCalls::openFuncCalled);
 
     SysCalls::openFuncCalled = 0;
-    VariableBackup<bool> emptyDir(&NEO::Directory::ReturnEmptyFilesVector, true);
+    VariableBackup<bool> emptyDir(&NEO::Directory::returnEmptyFilesVector, true);
     devices = Drm::discoverDevices(*executionEnvironment);
     EXPECT_NE(0u, SysCalls::openFuncCalled);
 }

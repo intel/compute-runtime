@@ -17,7 +17,7 @@
 #include <level_zero/zet_api.h>
 
 namespace L0 {
-extern _ze_driver_handle_t *GlobalDriverHandle;
+extern _ze_driver_handle_t *globalDriverHandle;
 
 namespace ult {
 

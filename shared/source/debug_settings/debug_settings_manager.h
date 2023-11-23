@@ -32,7 +32,7 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
         NEO::printDebugString(flag, __VA_ARGS__);
 
 namespace NEO {
-template <DebugFunctionalityLevel DebugLevel>
+template <DebugFunctionalityLevel debugLevel>
 class FileLogger;
 extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 
@@ -113,7 +113,7 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #undef DECLARE_DEBUG_VARIABLE
 };
 
-template <DebugFunctionalityLevel DebugLevel>
+template <DebugFunctionalityLevel debugLevel>
 class DebugSettingsManager {
   public:
     DebugSettingsManager(const char *registryPath);
@@ -123,11 +123,11 @@ class DebugSettingsManager {
     DebugSettingsManager &operator=(const DebugSettingsManager &) = delete;
 
     static constexpr bool registryReadAvailable() {
-        return (DebugLevel == DebugFunctionalityLevel::Full) || (DebugLevel == DebugFunctionalityLevel::RegKeys);
+        return (debugLevel == DebugFunctionalityLevel::Full) || (debugLevel == DebugFunctionalityLevel::RegKeys);
     }
 
     static constexpr bool disabled() {
-        return DebugLevel == DebugFunctionalityLevel::None;
+        return debugLevel == DebugFunctionalityLevel::None;
     }
 
     void getHardwareInfoOverride(std::string &hwInfoConfig);
@@ -207,6 +207,6 @@ extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                  \
     }
 
-template <DebugFunctionalityLevel DebugLevel>
-const char *DebugSettingsManager<DebugLevel>::settingsDumpFileName = "igdrcl_dumped.config";
+template <DebugFunctionalityLevel debugLevel>
+const char *DebugSettingsManager<debugLevel>::settingsDumpFileName = "igdrcl_dumped.config";
 }; // namespace NEO

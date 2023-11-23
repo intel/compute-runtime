@@ -11,7 +11,7 @@
 #include <memory>
 #include <sstream>
 
-constexpr int MIN_ARG_COUNT = 7;
+constexpr int minArgCount = 7;
 
 static void showUsage(std::string name) {
     std::cerr << "Usage " << name << "<option(s)> - ALL BUT -p, --platform MUST BE SPECIFIED\n"
@@ -97,7 +97,7 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, st
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < MIN_ARG_COUNT) {
+    if (argc < minArgCount) {
         showUsage(argv[0]);
         return 1;
     }

@@ -1513,9 +1513,9 @@ bool WddmMemoryManager::isStatelessAccessRequired(AllocationType type) {
     return false;
 }
 
-template <bool Is32Bit>
+template <bool is32Bit>
 void WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa) {
-    if constexpr (Is32Bit) {
+    if constexpr (is32Bit) {
         auto rootDeviceIndex = wddmAllocation.getRootDeviceIndex();
         if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm()) {
             if (isStatelessAccessRequired(wddmAllocation.getAllocationType())) {

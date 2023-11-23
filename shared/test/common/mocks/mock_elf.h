@@ -11,9 +11,9 @@
 
 #include <unordered_map>
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS NumBits = NEO::Elf::EI_CLASS_64>
-struct MockElf : public NEO::Elf::Elf<NumBits> {
-    using BaseClass = NEO::Elf::Elf<NumBits>;
+template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>
+struct MockElf : public NEO::Elf::Elf<numBits> {
+    using BaseClass = NEO::Elf::Elf<numBits>;
 
     using BaseClass::debugInfoRelocations;
     using BaseClass::relocations;
@@ -23,17 +23,17 @@ struct MockElf : public NEO::Elf::Elf<NumBits> {
         if (overrideSectionNames) {
             return sectionNames.find(id)->second;
         }
-        return NEO::Elf::Elf<NumBits>::getSectionName(id);
+        return NEO::Elf::Elf<numBits>::getSectionName(id);
     }
 
     std::string getSymbolName(uint32_t nameOffset) const override {
         if (overrideSymbolName) {
             return std::to_string(nameOffset);
         }
-        return NEO::Elf::Elf<NumBits>::getSymbolName(nameOffset);
+        return NEO::Elf::Elf<numBits>::getSymbolName(nameOffset);
     }
 
-    using ElfSymT = NEO::Elf::ElfSymbolEntry<NumBits>;
+    using ElfSymT = NEO::Elf::ElfSymbolEntry<numBits>;
     void addSymbol(typename ElfSymT::Name name, typename ElfSymT::Value value, typename ElfSymT::Size size, typename ElfSymT::Shndx shndx,
                    typename ElfSymT::Info type, typename ElfSymT::Info binding) {
         ElfSymT sym{};
@@ -67,15 +67,15 @@ struct MockElf : public NEO::Elf::Elf<NumBits> {
     bool overrideSymbolName = false;
 };
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS NumBits = NEO::Elf::EI_CLASS_64>
-struct MockElfEncoder : public NEO::Elf::ElfEncoder<NumBits> {
-    using NEO::Elf::ElfEncoder<NumBits>::sectionHeaders;
+template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>
+struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
+    using NEO::Elf::ElfEncoder<numBits>::sectionHeaders;
 
     uint32_t getLastSectionHeaderIndex() {
         return uint32_t(sectionHeaders.size()) - 1;
     }
 
-    NEO::Elf::ElfSectionHeader<NumBits> *getSectionHeader(uint32_t idx) {
+    NEO::Elf::ElfSectionHeader<numBits> *getSectionHeader(uint32_t idx) {
         return sectionHeaders.data() + idx;
     }
 

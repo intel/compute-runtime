@@ -17,8 +17,8 @@
 
 namespace NEO {
 
-template <DebugFunctionalityLevel DebugLevel>
-ClFileLogger<DebugLevel>::ClFileLogger(FileLogger<DebugLevel> &baseLoggerIn, const DebugVariables &flags) : baseLogger(baseLoggerIn) {
+template <DebugFunctionalityLevel debugLevel>
+ClFileLogger<debugLevel>::ClFileLogger(FileLogger<debugLevel> &baseLoggerIn, const DebugVariables &flags) : baseLogger(baseLoggerIn) {
     dumpKernelArgsEnabled = flags.DumpKernelArgs.get();
 }
 
@@ -27,8 +27,8 @@ ClFileLogger<globalDebugFunctionalityLevel> &getClFileLogger() {
     return clFileLoggerInstance;
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void ClFileLogger<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDispatchInfo) {
+template <DebugFunctionalityLevel debugLevel>
+void ClFileLogger<debugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDispatchInfo) {
     if (false == baseLogger.enabled()) {
         return;
     }
@@ -100,8 +100,8 @@ void ClFileLogger<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDisp
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-const std::string ClFileLogger<DebugLevel>::getEvents(const uintptr_t *input, uint32_t numOfEvents) {
+template <DebugFunctionalityLevel debugLevel>
+const std::string ClFileLogger<debugLevel>::getEvents(const uintptr_t *input, uint32_t numOfEvents) {
     if (false == baseLogger.enabled()) {
         return "";
     }
@@ -116,8 +116,8 @@ const std::string ClFileLogger<DebugLevel>::getEvents(const uintptr_t *input, ui
     return os.str();
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-const std::string ClFileLogger<DebugLevel>::getMemObjects(const uintptr_t *input, uint32_t numOfObjects) {
+template <DebugFunctionalityLevel debugLevel>
+const std::string ClFileLogger<debugLevel>::getMemObjects(const uintptr_t *input, uint32_t numOfObjects) {
     if (false == baseLogger.enabled()) {
         return "";
     }

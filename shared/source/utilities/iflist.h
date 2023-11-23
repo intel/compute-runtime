@@ -88,7 +88,7 @@ struct IFNode {
     NodeObjectType *next;
 };
 
-template <typename NodeObjectType, bool ThreadSafe = true, bool OwnsNodes = false>
+template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = false>
 class IFList {
   public:
     IFList()
@@ -106,34 +106,34 @@ class IFList {
     IFList(const IFList &) = delete;
     IFList &operator=(const IFList &) = delete;
 
-    template <bool C = ThreadSafe>
-    typename std::enable_if<C, void>::type pushFrontOne(NodeObjectType &node) {
+    template <bool c = threadSafe>
+    typename std::enable_if<c, void>::type pushFrontOne(NodeObjectType &node) {
         node.next = head;
         compareExchangeHead(node.next, &node);
     }
 
-    template <bool C = ThreadSafe>
-    typename std::enable_if<C, NodeObjectType *>::type detachNodes() {
+    template <bool c = threadSafe>
+    typename std::enable_if<c, NodeObjectType *>::type detachNodes() {
         NodeObjectType *rest = head;
         compareExchangeHead(rest, nullptr);
         return rest;
     }
 
-    template <bool C = ThreadSafe>
-    typename std::enable_if<!C, void>::type pushFrontOne(NodeObjectType &node) {
+    template <bool c = threadSafe>
+    typename std::enable_if<!c, void>::type pushFrontOne(NodeObjectType &node) {
         node.next = head;
         head = &node;
     }
 
-    template <bool C = ThreadSafe>
-    typename std::enable_if<!C, NodeObjectType *>::type detachNodes() {
+    template <bool c = threadSafe>
+    typename std::enable_if<!c, NodeObjectType *>::type detachNodes() {
         NodeObjectType *rest = head;
         head = nullptr;
         return rest;
     }
 
-    template <bool C = ThreadSafe>
-    typename std::enable_if<!C, void>::type splice(NodeObjectType &nodes) {
+    template <bool c = threadSafe>
+    typename std::enable_if<!c, void>::type splice(NodeObjectType &nodes) {
         if (head == nullptr) {
             head = &nodes;
         } else {
@@ -157,24 +157,24 @@ class IFList {
     }
 
   protected:
-    template <bool C = OwnsNodes>
-    typename std::enable_if<C, void>::type cleanup() {
+    template <bool c = ownsNodes>
+    typename std::enable_if<c, void>::type cleanup() {
         deleteAll();
     }
 
-    template <bool C = OwnsNodes>
-    typename std::enable_if<!C, void>::type cleanup() {
+    template <bool c = ownsNodes>
+    typename std::enable_if<!c, void>::type cleanup() {
         ;
     }
 
-    template <bool C = ThreadSafe>
-    typename std::enable_if<C, void>::type compareExchangeHead(NodeObjectType *&expected, NodeObjectType *desired) {
+    template <bool c = threadSafe>
+    typename std::enable_if<c, void>::type compareExchangeHead(NodeObjectType *&expected, NodeObjectType *desired) {
         while (!NEO::MultiThreadHelpers::atomicCompareExchangeWeakSpin(head, expected, desired)) {
             ;
         }
     }
 
-    PtrType_t<NodeObjectType, ThreadSafe> head;
+    PtrType_t<NodeObjectType, threadSafe> head;
 };
 
 template <typename NodeObjectType>
@@ -185,8 +185,8 @@ struct IFNodeRef : IFNode<IFNodeRef<NodeObjectType>> {
     NodeObjectType *ref;
 };
 
-template <typename NodeObjectType, bool ThreadSafe = true, bool OwnsNodes = true>
-class IFRefList : public IFList<IFNodeRef<NodeObjectType>, ThreadSafe, OwnsNodes> {
+template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = true>
+class IFRefList : public IFList<IFNodeRef<NodeObjectType>, threadSafe, ownsNodes> {
   public:
     void pushRefFrontOne(NodeObjectType &node) {
         auto up = std::unique_ptr<IFNodeRef<NodeObjectType>>(new IFNodeRef<NodeObjectType>(&node));

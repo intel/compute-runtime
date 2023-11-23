@@ -12,13 +12,13 @@
 void L0::UltConfigListenerL0::OnTestStart(const ::testing::TestInfo &testInfo) {
     BaseUltConfigListener::OnTestStart(testInfo);
 
-    GlobalDriverHandle = nullptr;
+    globalDriverHandle = nullptr;
     driverCount = 0;
 }
 
 void L0::UltConfigListenerL0::OnTestEnd(const ::testing::TestInfo &testInfo) {
 
-    EXPECT_EQ(nullptr, GlobalDriverHandle);
+    EXPECT_EQ(nullptr, globalDriverHandle);
     EXPECT_EQ(0u, driverCount);
 
     BaseUltConfigListener::OnTestEnd(testInfo);

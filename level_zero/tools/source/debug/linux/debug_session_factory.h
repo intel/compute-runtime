@@ -16,12 +16,12 @@ enum DebugSessionLinuxType {
 };
 
 using DebugSessionLinuxAllocatorFn = DebugSession *(*)(const zet_debug_config_t &, Device *, ze_result_t &, bool);
-extern DebugSessionLinuxAllocatorFn DebugSessionLinuxFactory[];
+extern DebugSessionLinuxAllocatorFn debugSessionLinuxFactory[];
 
 template <uint32_t driverType, typename DebugSessionType>
 struct DebugSessionLinuxPopulateFactory {
     DebugSessionLinuxPopulateFactory() {
-        DebugSessionLinuxFactory[driverType] = DebugSessionType::createLinuxSession;
+        debugSessionLinuxFactory[driverType] = DebugSessionType::createLinuxSession;
     }
 };
 

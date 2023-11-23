@@ -38,7 +38,7 @@ ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
 
-    auto pLinuxSysmanDriverImp = static_cast<LinuxSysmanDriverImp *>(GlobalSysmanDriver->pOsSysmanDriver);
+    auto pLinuxSysmanDriverImp = static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver);
     if (pLinuxSysmanDriverImp == nullptr) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman driver not initialized\n");

@@ -16,18 +16,18 @@ namespace NEO {
 
 namespace Elf {
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-const ElfFileHeader<NumBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary) {
-    if (binary.size() < sizeof(ElfFileHeader<NumBits>)) {
+template <ELF_IDENTIFIER_CLASS numBits>
+const ElfFileHeader<numBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary) {
+    if (binary.size() < sizeof(ElfFileHeader<numBits>)) {
         return nullptr;
     }
 
-    const ElfFileHeader<NumBits> *header = reinterpret_cast<const ElfFileHeader<NumBits> *>(binary.begin());
+    const ElfFileHeader<numBits> *header = reinterpret_cast<const ElfFileHeader<numBits> *>(binary.begin());
     bool validHeader = (header->identity.magic[0] == elfMagic[0]);
     validHeader &= (header->identity.magic[1] == elfMagic[1]);
     validHeader &= (header->identity.magic[2] == elfMagic[2]);
     validHeader &= (header->identity.magic[3] == elfMagic[3]);
-    validHeader &= (header->identity.eClass == NumBits);
+    validHeader &= (header->identity.eClass == numBits);
 
     return validHeader ? header : nullptr;
 }
@@ -35,10 +35,10 @@ const ElfFileHeader<NumBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> 
 template const ElfFileHeader<EI_CLASS_32> *decodeElfFileHeader<EI_CLASS_32>(const ArrayRef<const uint8_t>);
 template const ElfFileHeader<EI_CLASS_64> *decodeElfFileHeader<EI_CLASS_64>(const ArrayRef<const uint8_t>);
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-Elf<NumBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std::string &outWarning) {
-    Elf<NumBits> ret = {};
-    ret.elfFileHeader = decodeElfFileHeader<NumBits>(binary);
+template <ELF_IDENTIFIER_CLASS numBits>
+Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std::string &outWarning) {
+    Elf<numBits> ret = {};
+    ret.elfFileHeader = decodeElfFileHeader<numBits>(binary);
     if (nullptr == ret.elfFileHeader) {
         outErrReason = "Invalid or missing ELF header";
         return {};
@@ -54,7 +54,7 @@ Elf<NumBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
         return {};
     }
 
-    const ElfProgramHeader<NumBits> *programHeader = reinterpret_cast<const ElfProgramHeader<NumBits> *>(binary.begin() + ret.elfFileHeader->phOff);
+    const ElfProgramHeader<numBits> *programHeader = reinterpret_cast<const ElfProgramHeader<numBits> *>(binary.begin() + ret.elfFileHeader->phOff);
     for (decltype(ret.elfFileHeader->phNum) i = 0; i < ret.elfFileHeader->phNum; ++i) {
         if (programHeader->offset + programHeader->fileSz > binary.size()) {
             outErrReason = "Out of bounds program header offset/filesz, program header idx : " + std::to_string(i);
@@ -65,7 +65,7 @@ Elf<NumBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
         programHeader = ptrOffset(programHeader, ret.elfFileHeader->phEntSize);
     }
 
-    const ElfSectionHeader<NumBits> *sectionHeader = reinterpret_cast<const ElfSectionHeader<NumBits> *>(binary.begin() + ret.elfFileHeader->shOff);
+    const ElfSectionHeader<numBits> *sectionHeader = reinterpret_cast<const ElfSectionHeader<numBits> *>(binary.begin() + ret.elfFileHeader->shOff);
     for (decltype(ret.elfFileHeader->shNum) i = 0; i < ret.elfFileHeader->shNum; ++i) {
         ArrayRef<const uint8_t> data;
         if (SHT_NOBITS != sectionHeader->type) {
@@ -86,16 +86,16 @@ Elf<NumBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
     return ret;
 }
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-bool Elf<NumBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
+template <ELF_IDENTIFIER_CLASS numBits>
+bool Elf<numBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
     if (sectionHeaderData.header->type == SECTION_HEADER_TYPE::SHT_SYMTAB) {
-        auto symSize = sizeof(ElfSymbolEntry<NumBits>);
+        auto symSize = sizeof(ElfSymbolEntry<numBits>);
         if (symSize != sectionHeaderData.header->entsize) {
             outError.append("Invalid symbol table entries size - expected : " + std::to_string(symSize) + ", got : " + std::to_string(sectionHeaderData.header->entsize) + "\n");
             return false;
         }
         auto numberOfSymbols = static_cast<size_t>(sectionHeaderData.header->size / sectionHeaderData.header->entsize);
-        auto symbol = reinterpret_cast<const ElfSymbolEntry<NumBits> *>(sectionHeaderData.data.begin());
+        auto symbol = reinterpret_cast<const ElfSymbolEntry<numBits> *>(sectionHeaderData.data.begin());
 
         symbolTable.resize(numberOfSymbols);
         for (size_t i = 0; i < numberOfSymbols; i++) {
@@ -106,10 +106,10 @@ bool Elf<NumBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::st
     return true;
 }
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
+template <ELF_IDENTIFIER_CLASS numBits>
+bool Elf<numBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
     if (sectionHeaderData.header->type == SECTION_HEADER_TYPE::SHT_RELA) {
-        auto relaSize = sizeof(ElfRela<NumBits>);
+        auto relaSize = sizeof(ElfRela<numBits>);
         if (relaSize != sectionHeaderData.header->entsize) {
             outError.append("Invalid rela entries size - expected : " + std::to_string(relaSize) + ", got : " + std::to_string(sectionHeaderData.header->entsize) + "\n");
             return false;
@@ -121,7 +121,7 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
         auto debugDataRelocation = isDebugDataRelocation(ConstStringRef(sectionName.c_str()));
         Relocations &relocs = debugDataRelocation ? debugInfoRelocations : relocations;
 
-        auto rela = reinterpret_cast<const ElfRela<NumBits> *>(sectionHeaderData.data.begin());
+        auto rela = reinterpret_cast<const ElfRela<numBits> *>(sectionHeaderData.data.begin());
 
         // there may be multiple rela sections, reserve additional size
         auto previousEntries = relocations.size();
@@ -130,8 +130,8 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
 
         for (auto i = previousEntries; i < allEntries; i++) {
 
-            int symbolIndex = extractSymbolIndex<ElfRela<NumBits>>(*rela);
-            auto relocType = extractRelocType<ElfRela<NumBits>>(*rela);
+            int symbolIndex = extractSymbolIndex<ElfRela<numBits>>(*rela);
+            auto relocType = extractRelocType<ElfRela<numBits>>(*rela);
             int symbolSectionIndex = symbolTable[symbolIndex].shndx;
             std::string name = std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + symbolTable[symbolIndex].name);
 
@@ -143,7 +143,7 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
     }
 
     if (sectionHeaderData.header->type == SECTION_HEADER_TYPE::SHT_REL) {
-        auto relSize = sizeof(ElfRel<NumBits>);
+        auto relSize = sizeof(ElfRel<numBits>);
         if (relSize != sectionHeaderData.header->entsize) {
             outError.append("Invalid rel entries size - expected : " + std::to_string(relSize) + ", got : " + std::to_string(sectionHeaderData.header->entsize) + "\n");
             return false;
@@ -156,7 +156,7 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
         auto debugDataRelocation = isDebugDataRelocation(ConstStringRef(sectionName.c_str()));
         Relocations &relocs = debugDataRelocation ? debugInfoRelocations : relocations;
 
-        auto reloc = reinterpret_cast<const ElfRel<NumBits> *>(sectionHeaderData.data.begin());
+        auto reloc = reinterpret_cast<const ElfRel<numBits> *>(sectionHeaderData.data.begin());
 
         // there may be multiple rel sections, reserve additional size
         auto previousEntries = relocations.size();
@@ -164,8 +164,8 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
         relocs.reserve(allEntries);
 
         for (auto i = previousEntries; i < allEntries; i++) {
-            int symbolIndex = extractSymbolIndex<ElfRel<NumBits>>(*reloc);
-            auto relocType = extractRelocType<ElfRel<NumBits>>(*reloc);
+            int symbolIndex = extractSymbolIndex<ElfRel<numBits>>(*reloc);
+            auto relocType = extractRelocType<ElfRel<numBits>>(*reloc);
             int symbolSectionIndex = symbolTable[symbolIndex].shndx;
             std::string name = std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + symbolTable[symbolIndex].name);
 
@@ -179,8 +179,8 @@ bool Elf<NumBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
     return true;
 }
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-bool Elf<NumBits>::decodeSections(std::string &outError) {
+template <ELF_IDENTIFIER_CLASS numBits>
+bool Elf<numBits>::decodeSections(std::string &outError) {
     bool success = true;
     for (size_t i = 0; i < sectionHeaders.size(); i++) {
         success &= decodeSymTab(sectionHeaders[i], outError);
@@ -194,8 +194,8 @@ bool Elf<NumBits>::decodeSections(std::string &outError) {
     return success;
 }
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-bool Elf<NumBits>::isDebugDataRelocation(ConstStringRef sectionName) {
+template <ELF_IDENTIFIER_CLASS numBits>
+bool Elf<numBits>::isDebugDataRelocation(ConstStringRef sectionName) {
     if (sectionName.startsWith(NEO::Elf::SpecialSectionNames::debug.data())) {
         return true;
     }

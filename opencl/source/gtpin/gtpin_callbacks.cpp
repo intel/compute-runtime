@@ -36,7 +36,7 @@ namespace NEO {
 
 using GTPinLockType = std::recursive_mutex;
 
-extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
+extern gtpin::ocl::gtpin_events_t gtpinCallbacks;
 
 igc_init_t *pIgcInit = nullptr;
 std::atomic<int> sequenceCount(1);
@@ -53,13 +53,13 @@ void gtpinNotifyContextCreate(cl_context context) {
         auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
         gtpinPlatformInfo.gen_version = (gtpin::GTPIN_GEN_VERSION)gtpinHelper.getGenVersion();
         gtpinPlatformInfo.device_id = static_cast<uint32_t>(pDevice->getHardwareInfo().platform.usDeviceID);
-        (*GTPinCallbacks.onContextCreate)((context_handle_t)context, &gtpinPlatformInfo, &pIgcInit);
+        (*gtpinCallbacks.onContextCreate)((context_handle_t)context, &gtpinPlatformInfo, &pIgcInit);
     }
 }
 
 void gtpinNotifyContextDestroy(cl_context context) {
     if (isGTPinInitialized) {
-        (*GTPinCallbacks.onContextDestroy)((context_handle_t)context);
+        (*gtpinCallbacks.onContextDestroy)((context_handle_t)context);
     }
 }
 
@@ -105,7 +105,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
             paramsIn.debug_data_size = static_cast<uint32_t>(pMultiDeviceKernel->getProgram()->getDebugDataSize(rootDeviceIndex));
         }
         instrument_params_out_t paramsOut = {0};
-        (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
+        (*gtpinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
         // Substitute ISA of created kernel with instrumented code
         pKernel->substituteKernelHeap(paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
         pKernel->setKernelId(paramsOut.kernel_id);
@@ -126,9 +126,9 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         uint32_t kernelOffset = 0;
         resource_handle_t resource = 0;
         // Notify GT-Pin that abstract "command buffer" was created
-        (*GTPinCallbacks.onCommandBufferCreate)((context_handle_t)context, commandBuffer);
+        (*gtpinCallbacks.onCommandBufferCreate)((context_handle_t)context, commandBuffer);
         // Notify GT-Pin that kernel was submited for execution
-        (*GTPinCallbacks.onKernelSubmit)(commandBuffer, kernelId, &kernelOffset, &resource);
+        (*gtpinCallbacks.onKernelSubmit)(commandBuffer, kernelId, &kernelOffset, &resource);
         // Create new record in Kernel Execution Queue describing submited kernel
         pKernel->setStartOffset(kernelOffset);
         gtpinkexec_t kExec;
@@ -194,7 +194,7 @@ void gtpinNotifyTaskCompletion(TaskCountType completedTaskCount) {
     for (size_t n = 0; n < numElems;) {
         if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
             // Notify GT-Pin that execution of "command buffer" was completed
-            (*GTPinCallbacks.onCommandBufferComplete)(kernelExecQueue[n].commandBuffer);
+            (*gtpinCallbacks.onCommandBufferComplete)(kernelExecQueue[n].commandBuffer);
             // Remove kernel's record from Kernel Execution Queue
             kernelExecQueue.erase(kernelExecQueue.begin() + n);
             numElems--;

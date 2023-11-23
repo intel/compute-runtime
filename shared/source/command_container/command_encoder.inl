@@ -406,7 +406,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
     auto bufferSize = alignUp(args.size, getSurfaceBaseAddressAlignment());
 
-    SURFACE_STATE_BUFFER_LENGTH length = {0};
+    SurfaceStateBufferLength length = {0};
     length.length = static_cast<uint32_t>(bufferSize - 1);
 
     surfaceState->setWidth(length.surfaceState.width + 1);

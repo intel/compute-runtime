@@ -22,6 +22,15 @@ struct PipeControlArgs;
 struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
 
+union SurfaceStateBufferLength {
+    uint32_t length;
+    struct SurfaceState {
+        uint32_t width : 7;   // BITFIELD_RANGE(0, 6)
+        uint32_t height : 14; // BITFIELD_RANGE(7, 20)
+        uint32_t depth : 11;  // BITFIELD_RANGE(21, 31)
+    } surfaceState;
+};
+
 template <typename GfxFamily>
 struct EncodeSurfaceState {
     using R_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;

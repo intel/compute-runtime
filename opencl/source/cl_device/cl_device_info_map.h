@@ -19,9 +19,9 @@ namespace NEO {
 
 namespace ClDeviceInfoTable {
 
-template <cl_device_info Param, typename _Type, _Type ClDeviceInfo::*val>
+template <cl_device_info clDeviceInfoParam, typename _Type, _Type ClDeviceInfo::*val>
 struct ClMapBase {
-    enum { param = Param };
+    enum { param = clDeviceInfoParam };
     typedef _Type Type;
     enum { size = sizeof(Type) };
 
@@ -30,9 +30,9 @@ struct ClMapBase {
     }
 };
 
-template <cl_device_info Param, typename _Type, _Type DeviceInfo::*val>
+template <cl_device_info clDeviceInfoParam, typename _Type, _Type DeviceInfo::*val>
 struct MapBase {
-    enum { param = Param };
+    enum { param = clDeviceInfoParam };
     typedef _Type Type;
     enum { size = sizeof(Type) };
 
@@ -41,15 +41,15 @@ struct MapBase {
     }
 };
 
-template <cl_device_info Param>
+template <cl_device_info param>
 struct Map {};
 
 //////////////////////////////////////////////////////
 // DeviceInfo mapping table
-// Map<Param>::param    - i.e. CL_DEVICE_ADDRESS_BITS
-// Map<Param>::Type     - i.e. cl_uint
-// Map<Param>::size     - ie. sizeof( cl_uint )
-// Map<Param>::getValue - ie. return deviceInfo.AddressBits
+// Map<param>::param    - i.e. CL_DEVICE_ADDRESS_BITS
+// Map<param>::Type     - i.e. cl_uint
+// Map<param>::size     - ie. sizeof( cl_uint )
+// Map<param>::getValue - ie. return deviceInfo.AddressBits
 //////////////////////////////////////////////////////
 // clang-format off
 // please keep alphabetical order

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class GraphicsAllocation;
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
 
-template <DebugFunctionalityLevel DebugLevel>
+template <DebugFunctionalityLevel debugLevel>
 class FileLogger {
   public:
     FileLogger(std::string filename, const DebugVariables &flags);
@@ -30,7 +30,7 @@ class FileLogger {
     FileLogger &operator=(const FileLogger &) = delete;
 
     static constexpr bool enabled() {
-        return DebugLevel == DebugFunctionalityLevel::Full;
+        return debugLevel == DebugFunctionalityLevel::Full;
     }
 
     void dumpKernel(const std::string &name, const std::string &src);

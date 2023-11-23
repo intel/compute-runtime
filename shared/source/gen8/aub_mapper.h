@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ template <>
 struct AUBFamilyMapper<Gen8Family> {
     enum { device = AubMemDump::DeviceValues::Bdw };
 
-    using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;
+    using AubTraits = AubMemDump::Traits<device, MemoryConstants::gfxAddressBits>;
 
     static const AubMemDump::LrcaHelper *const csTraits[aub_stream::NUM_ENGINES];
 

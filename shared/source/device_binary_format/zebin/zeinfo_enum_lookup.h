@@ -179,8 +179,8 @@ using AddrMode = Types::Kernel::InlineSamplers::AddrMode;
 inline constexpr ConstStringRef name = "inline sampler addressing mode";
 inline constexpr LookupArray<ConstStringRef, AddrMode, 5> lookup({{{none, AddrMode::None},
                                                                    {repeat, AddrMode::Repeat},
-                                                                   {clamp_edge, AddrMode::ClampEdge},
-                                                                   {clamp_border, AddrMode::ClampBorder},
+                                                                   {clampEdge, AddrMode::ClampEdge},
+                                                                   {clampBorder, AddrMode::ClampBorder},
                                                                    {mirror, AddrMode::Mirror}}});
 static_assert(lookup.size() == static_cast<size_t>(AddrMode::Max) - 1, "Every enum field must be present");
 } // namespace InlineSamplerAddrMode

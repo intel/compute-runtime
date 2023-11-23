@@ -278,7 +278,7 @@ void onCommandBufferComplete(gtpin::command_buffer_handle_t cb) {
 
 namespace NEO {
 extern bool isGTPinInitialized;
-extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
+extern gtpin::ocl::gtpin_events_t gtpinCallbacks;
 extern std::deque<gtpinkexec_t> kernelExecQueue;
 TEST_F(ClEnqueueWaitForEventsTests, WhenGTPinIsInitializedAndEnqueingWaitForEventsThenGTPinIsNotified) {
 
@@ -289,7 +289,7 @@ TEST_F(ClEnqueueWaitForEventsTests, WhenGTPinIsInitializedAndEnqueingWaitForEven
     auto retVal = CL_SUCCESS;
     isGTPinInitialized = true;
 
-    GTPinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     gtpin::resource_handle_t resource = 0;
     gtpin::command_buffer_handle_t commandBuffer = 0;
     gtpinkexec_t kExec;

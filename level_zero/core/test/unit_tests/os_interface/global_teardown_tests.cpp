@@ -19,37 +19,37 @@ namespace L0 {
 namespace ult {
 
 TEST(GlobalTearDownCallbackTests, givenL0LoaderThenGlobalTeardownCallbackIsCalled) {
-    L0::LevelZeroDriverInitialized = true;
+    L0::levelZeroDriverInitialized = true;
     std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(L0::ult::testLoaderDllName)};
     EXPECT_EQ(ZE_RESULT_SUCCESS, setDriverTeardownHandleInLoader(L0::ult::testLoaderDllName));
-    L0::LevelZeroDriverInitialized = false;
+    L0::levelZeroDriverInitialized = false;
 }
 TEST(GlobalTearDownCallbackTests, givenL0LoaderButL0DriverDidNotInitThenSetTearDownReturnsUninitialized) {
-    L0::LevelZeroDriverInitialized = false;
+    L0::levelZeroDriverInitialized = false;
     std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(L0::ult::testLoaderDllName)};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, setDriverTeardownHandleInLoader(L0::ult::testLoaderDllName));
 }
 TEST(GlobalTearDownCallbackTests, givenL0LoaderIsMissingThenGlobalTeardownCallbackIsNotCalled) {
-    L0::LevelZeroDriverInitialized = true;
+    L0::levelZeroDriverInitialized = true;
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, setDriverTeardownHandleInLoader("invalid.so"));
-    L0::LevelZeroDriverInitialized = false;
+    L0::levelZeroDriverInitialized = false;
 }
 TEST(GlobalTearDownCallbackTests, givenL0LoaderWithoutGlobalTeardownCallbackThenGlobalTeardownCallbackIsNotCalled) {
-    L0::LevelZeroDriverInitialized = true;
+    L0::levelZeroDriverInitialized = true;
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, setDriverTeardownHandleInLoader(L0::ult::testDllName));
-    L0::LevelZeroDriverInitialized = false;
+    L0::levelZeroDriverInitialized = false;
 }
 TEST(GlobalTearDownTests, givenCallToGlobalTearDownFunctionThenGlobalDriversAreNull) {
     globalDriverTeardown();
-    EXPECT_EQ(GlobalDriver, nullptr);
-    EXPECT_EQ(Sysman::GlobalSysmanDriver, nullptr);
+    EXPECT_EQ(globalDriver, nullptr);
+    EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 }
 TEST(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWithNullSysManDriverThenGlobalDriverIsNull) {
-    delete Sysman::GlobalSysmanDriver;
-    Sysman::GlobalSysmanDriver = nullptr;
+    delete Sysman::globalSysmanDriver;
+    Sysman::globalSysmanDriver = nullptr;
     globalDriverTeardown();
-    EXPECT_EQ(GlobalDriver, nullptr);
-    EXPECT_EQ(Sysman::GlobalSysmanDriver, nullptr);
+    EXPECT_EQ(globalDriver, nullptr);
+    EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 }
 } // namespace ult
 } // namespace L0

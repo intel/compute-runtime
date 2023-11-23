@@ -52,7 +52,7 @@ static const uint32_t primeNumbers[] = {
     19, 17, 13, 11,
     7, 5, 3, 2};
 
-static const size_t MAX_PRIMES = sizeof(primeNumbers) / sizeof(primeNumbers[0]);
+static const size_t maxPrimes = sizeof(primeNumbers) / sizeof(primeNumbers[0]);
 
 // Recursive template function to test prime factors
 template <uint32_t primeIndex>
@@ -220,7 +220,7 @@ void computeWorkgroupSize1D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], 
     workSize = std::min(workSize, maxWorkGroupSize);
 
     // Try all primes as potential factors
-    workSize = factor<MAX_PRIMES - 1>(items, workSize, maxWorkGroupSize);
+    workSize = factor<maxPrimes - 1>(items, workSize, maxWorkGroupSize);
 
     workGroupSize[0] = workSize;
     workGroupSize[1] = 1;

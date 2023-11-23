@@ -15,7 +15,7 @@
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 
 namespace L0 {
-DebugSessionLinuxAllocatorFn DebugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_MAX] = {};
+DebugSessionLinuxAllocatorFn debugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_MAX] = {};
 
 DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
 
@@ -28,9 +28,9 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
 
     DebugSessionLinuxAllocatorFn allocator = nullptr;
     if ("xe" == drmVersion) {
-        allocator = DebugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_XE];
+        allocator = debugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_XE];
     } else {
-        allocator = DebugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_I915];
+        allocator = debugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_I915];
     }
     if (!allocator) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

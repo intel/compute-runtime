@@ -253,8 +253,8 @@ inline constexpr ConstStringRef normalized("normalized");
 namespace AddrMode {
 inline constexpr ConstStringRef none("none");
 inline constexpr ConstStringRef repeat("repeat");
-inline constexpr ConstStringRef clamp_edge("clamp_edge");
-inline constexpr ConstStringRef clamp_border("clamp_border");
+inline constexpr ConstStringRef clampEdge("clamp_edge");
+inline constexpr ConstStringRef clampBorder("clamp_border");
 inline constexpr ConstStringRef mirror("mirror");
 } // namespace AddrMode
 

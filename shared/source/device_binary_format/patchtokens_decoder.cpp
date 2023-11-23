@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,10 +126,10 @@ inline void assignToken(StackVecStrings &stringVec, const SPatchItemHeader *src)
     stringVec[stringToken->Index] = stringToken;
 }
 
-template <size_t S>
-inline void assignTokenInArray(const SPatchDataParameterBuffer *(&tokensArray)[S], const SPatchDataParameterBuffer *src, StackVecUnhandledTokens &unhandledTokens) {
+template <size_t s>
+inline void assignTokenInArray(const SPatchDataParameterBuffer *(&tokensArray)[s], const SPatchDataParameterBuffer *src, StackVecUnhandledTokens &unhandledTokens) {
     auto sourceIndex = src->SourceOffset >> 2;
-    if (sourceIndex >= S) {
+    if (sourceIndex >= s) {
         DBG_LOG(LogPatchTokens, "\n  .Type", "Unhandled sourceIndex ", sourceIndex);
         DEBUG_BREAK_IF(true);
         unhandledTokens.push_back(src);
@@ -138,8 +138,8 @@ inline void assignTokenInArray(const SPatchDataParameterBuffer *(&tokensArray)[S
     assignToken(tokensArray[sourceIndex], src);
 }
 
-template <typename PatchT, size_t NumInlineEl>
-inline void addTok(StackVec<const PatchT *, NumInlineEl> &tokensVec, const SPatchItemHeader *src) {
+template <typename PatchT, size_t numInlineEl>
+inline void addTok(StackVec<const PatchT *, numInlineEl> &tokensVec, const SPatchItemHeader *src) {
     tokensVec.push_back(reinterpret_cast<const PatchT *>(src));
 }
 

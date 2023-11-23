@@ -55,8 +55,8 @@ struct DummyDNode : IDNode<DummyDNode> {
     uint32_t *destructorsCounter;
 };
 
-template <typename NodeType = DummyFNode, size_t ArraySize>
-void makeList(NodeType *(&nodes)[ArraySize], uint32_t *destructorsCounter = nullptr) {
+template <typename NodeType = DummyFNode, size_t arraySize>
+void makeList(NodeType *(&nodes)[arraySize], uint32_t *destructorsCounter = nullptr) {
     NodeType *prev = nullptr;
     for (NodeType *&nd : nodes) {
         nd = new NodeType(destructorsCounter);
@@ -178,9 +178,9 @@ TEST(IFNode, WhenVerifingSequenceThenCorrectValueIsReturned) {
     }
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iFListTestPushFrontOne() {
-    IFList<DummyFNode, ThreadSafe, false> list;
+    IFList<DummyFNode, threadSafe, false> list;
     ASSERT_TRUE(list.peekIsEmpty());
 
     DummyFNode node1;
@@ -234,9 +234,9 @@ TEST(IFList, WhenSplicingAndDeletingAllThenListIsEmpty) {
     ASSERT_EQ(2 * sizeof(nodes) / sizeof(nodes[0]), destructorCounter);
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iFListTestDetachNodes() {
-    IFList<DummyFNode, ThreadSafe, false> list;
+    IFList<DummyFNode, threadSafe, false> list;
 
     uint32_t destructorCounter = 0;
     static const uint32_t maxNodes = 17;
@@ -282,11 +282,11 @@ TEST(IFList, WhenExchangingHeadThenResultIsCorrect) {
     EXPECT_EQ(nullptr, nd2.next);
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iFRefListTestPushFrontOne() {
     uint32_t destructorCounter = 0;
     {
-        auto list = std::unique_ptr<IFRefList<DummyFNode, ThreadSafe, true>>(new IFRefList<DummyFNode, ThreadSafe, true>());
+        auto list = std::unique_ptr<IFRefList<DummyFNode, threadSafe, true>>(new IFRefList<DummyFNode, threadSafe, true>());
         ASSERT_TRUE(list->peekIsEmpty());
 
         DummyFNode node1(&destructorCounter);
@@ -502,9 +502,9 @@ TEST(IDNode, WhenVerifyingSequenceThenResultIsCorrect) {
     }
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListTestPushOne() {
-    IDList<DummyDNode, ThreadSafe, false, false> list(nullptr);
+    IDList<DummyDNode, threadSafe, false, false> list(nullptr);
     ASSERT_TRUE(list.peekIsEmpty());
     ASSERT_EQ(nullptr, list.peekHead());
     ASSERT_EQ(nullptr, list.peekTail());
@@ -595,14 +595,14 @@ TEST(IDList, WhenResettingThenListIsEmpty) {
     ASSERT_EQ(sizeof(nodes) / sizeof(nodes[0]), destructorCounter);
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListSpliceAndDeleteAll() {
     DummyDNode *nodes[7];
     DummyDNode *nodes2[sizeof(nodes) / sizeof(nodes[0])];
     uint32_t destructorCounter = 0;
     makeList(nodes, &destructorCounter);
     makeList(nodes2, &destructorCounter);
-    IDList<DummyDNode, ThreadSafe, false, false> list;
+    IDList<DummyDNode, threadSafe, false, false> list;
     list.splice(*nodes[0]);
     EXPECT_FALSE(list.peekIsEmpty());
     EXPECT_EQ(nodes[0], list.peekHead());
@@ -633,9 +633,9 @@ TEST(IDList, GivenNonThreadSafeWhenSplicingAndDeletingAllThenResultIsCorrect) {
     iDListSpliceAndDeleteAll<false>();
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListTestDetachNodes() {
-    IDList<DummyDNode, ThreadSafe, false, false> list;
+    IDList<DummyDNode, threadSafe, false, false> list;
 
     uint32_t destructorCounter = 0;
     static const uint32_t maxNodes = 17;
@@ -659,9 +659,9 @@ TEST(IDList, GivenNonThreadSafeWhenDetachingNodesThenResultIsCorrect) {
     iDListTestDetachNodes<false>();
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListTestRemoveOne() {
-    IDList<DummyDNode, ThreadSafe, false, false> list;
+    IDList<DummyDNode, threadSafe, false, false> list;
 
     DummyDNode nodes[3];
 
@@ -719,9 +719,9 @@ TEST(IDList, GivenNonThreadSafeWhenRemovingOneThenResultIsCorrect) {
     iDListTestRemoveOne<false>();
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListTestRemoveFrontOne() {
-    IDList<DummyDNode, ThreadSafe, false, false> list;
+    IDList<DummyDNode, threadSafe, false, false> list;
 
     DummyDNode nodes[3];
     DummyDNode *head = nullptr;
@@ -780,11 +780,11 @@ TEST(IDList, GivenNonThreadSafeWhenRemovingFrontOneThenResultIsCorrect) {
     iDListTestRemoveFrontOne<false>();
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListTestDetachSequence() {
     DummyDNode *nodes[10];
     makeList(nodes);
-    IDList<DummyDNode, ThreadSafe, false, false> list(nodes[0]);
+    IDList<DummyDNode, threadSafe, false, false> list(nodes[0]);
     DummyDNode *detachedNodes = nullptr;
 
     detachedNodes = list.detachSequence(*nodes[1], *nodes[3]);
@@ -849,9 +849,9 @@ TEST(IDList, GivenNonThreadSafeWhenDetachingSequenceThenResultIsCorrect) {
     iDListTestDetachSequence<false>();
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDListTestPeekContains() {
-    IDList<DummyDNode, ThreadSafe, false, false> list;
+    IDList<DummyDNode, threadSafe, false, false> list;
 
     DummyDNode *node1 = new DummyDNode;
     EXPECT_FALSE(list.peekContains(*node1));
@@ -892,16 +892,16 @@ TEST(IDList, GivenNonThreadSafeWhenPeekingThenResultIsCorrect) {
     iDListTestPeekContains<false>();
 }
 
-template <typename NodeObjectType, bool ThreadSafe, bool OwnsNodes, bool SupportRecursiveLock>
+template <typename NodeObjectType, bool threadSafe, bool ownsNodes, bool supportRecursiveLock>
 void testIDListSpinlock() {
-    struct ListMock : IDList<NodeObjectType, ThreadSafe, OwnsNodes, SupportRecursiveLock> {
+    struct ListMock : IDList<NodeObjectType, threadSafe, ownsNodes, supportRecursiveLock> {
         std::atomic_flag &getLockedRef() { return this->locked; }
         std::atomic<std::thread::id> &getLockOwnerRef() { return this->lockOwner; }
-        using ListenerT = void (*)(IDList<NodeObjectType, ThreadSafe, OwnsNodes, SupportRecursiveLock> &list);
+        using ListenerT = void (*)(IDList<NodeObjectType, threadSafe, ownsNodes, supportRecursiveLock> &list);
         ListenerT &getSpinLockedListenerRef() { return this->spinLockedListener; }
 
         int32_t lockLoopCount = 0;
-        static void listener(IDList<NodeObjectType, ThreadSafe, OwnsNodes, SupportRecursiveLock> &list) {
+        static void listener(IDList<NodeObjectType, threadSafe, ownsNodes, supportRecursiveLock> &list) {
             ListMock &l = reinterpret_cast<ListMock &>(list);
             EXPECT_LT(0, l.lockLoopCount);
             --l.lockLoopCount;
@@ -941,11 +941,11 @@ TEST(IDList, GivenLockedIDListWhenProcessLockedIsUsedThenWaitsInSpinlock) {
     testIDListSpinlock<DummyDNode, true, false, false>();
 }
 
-template <typename NodeObjectType, bool ThreadSafe, bool OwnsNodes, bool SupportRecursiveLock>
+template <typename NodeObjectType, bool threadSafe, bool ownsNodes, bool supportRecursiveLock>
 void testIDListUnlockOnException() {
     using ExType = std::runtime_error;
 
-    struct ListMock : IDList<NodeObjectType, ThreadSafe, OwnsNodes, SupportRecursiveLock> {
+    struct ListMock : IDList<NodeObjectType, threadSafe, ownsNodes, supportRecursiveLock> {
         void throwExFromLock() {
             this->template processLocked<ListMock, &ListMock::throwExFromLockImpl>(nullptr, nullptr);
         }
@@ -969,9 +969,9 @@ TEST(IDList, GivenInsideLockWhenExceptionIsThrownThenUnlocksBeforeRethrowingExce
     testIDListUnlockOnException<DummyDNode, true, false, false>();
 }
 
-template <bool ThreadSafe>
+template <bool threadSafe>
 void iDRefListTestPushFrontOne() {
-    auto list = std::unique_ptr<IDRefList<DummyDNode, ThreadSafe, true>>(new IDRefList<DummyDNode, ThreadSafe, true>());
+    auto list = std::unique_ptr<IDRefList<DummyDNode, threadSafe, true>>(new IDRefList<DummyDNode, threadSafe, true>());
     ASSERT_TRUE(list->peekIsEmpty());
 
     DummyDNode node1;

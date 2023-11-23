@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -669,17 +669,17 @@ void dumpOrNullObjArg(const T *value, std::stringstream &out, const std::string 
     }
 }
 
-template <typename T, size_t Size>
-void dumpOrNullArrayIfNotEmpty(T (&value)[Size], const std::string &arrayName, std::stringstream &out, const std::string &indent) {
+template <typename T, size_t size>
+void dumpOrNullArrayIfNotEmpty(T (&value)[size], const std::string &arrayName, std::stringstream &out, const std::string &indent) {
     bool allEmpty = true;
-    for (size_t i = 0; i < Size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         allEmpty = allEmpty && (value[i] == nullptr);
     }
     if (allEmpty) {
         return;
     }
-    out << indent << arrayName << " [" << Size << "] :\n";
-    for (size_t i = 0; i < Size; ++i) {
+    out << indent << arrayName << " [" << size << "] :\n";
+    for (size_t i = 0; i < size; ++i) {
         if (value[i] == nullptr) {
             continue;
         }

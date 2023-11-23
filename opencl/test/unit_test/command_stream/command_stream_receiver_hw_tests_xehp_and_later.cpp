@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
@@ -195,7 +196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     EXPECT_EQ(scratchController->scratchAllocation->getGpuAddress(), scratchState->getSurfaceBaseAddress());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_SCRATCH, scratchState->getSurfaceType());
 
-    SURFACE_STATE_BUFFER_LENGTH length = {0};
+    SurfaceStateBufferLength length = {0};
     length.length = static_cast<uint32_t>(computeUnits - 1);
     EXPECT_EQ(length.surfaceState.depth + 1u, scratchState->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, scratchState->getWidth());

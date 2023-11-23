@@ -51,24 +51,22 @@ class ZeroCopyBufferTest : public ClDeviceFixture,
     bool misalignPointer;
 };
 
-static const int Multiplier = 1000;
-static const int CacheLinedAlignedSize = MemoryConstants::cacheLineSize * Multiplier;
-static const int CacheLinedMisAlignedSize = CacheLinedAlignedSize - 1;
-static const int PageAlignSize = MemoryConstants::preferredAlignment * Multiplier;
+static const int multiplier = 1000;
+static const int cacheLinedAlignedSize = MemoryConstants::cacheLineSize * multiplier;
+static const int cacheLinedMisAlignedSize = cacheLinedAlignedSize - 1;
+static const int pageAlignSize = MemoryConstants::preferredAlignment * multiplier;
 
-// clang-format off
-//flags, size to alloc, alignment, size, ZeroCopy, misalignPointer
-std::tuple<uint64_t , size_t, size_t, int, bool, bool> Inputs[] = {std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, CacheLinedMisAlignedSize, false, true),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedAlignedSize, MemoryConstants::preferredAlignment, CacheLinedAlignedSize, false, true),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedAlignedSize, MemoryConstants::preferredAlignment, CacheLinedAlignedSize, true, false),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, CacheLinedMisAlignedSize, false, false),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, PageAlignSize, MemoryConstants::preferredAlignment, PageAlignSize, true, false),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_USE_HOST_PTR, CacheLinedMisAlignedSize, MemoryConstants::cacheLineSize, CacheLinedAlignedSize, true, false),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_COPY_HOST_PTR, CacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, CacheLinedMisAlignedSize, true, true),
-                                                                           std::make_tuple((cl_mem_flags)CL_MEM_COPY_HOST_PTR, CacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, CacheLinedMisAlignedSize, true, false),
-                                                                           std::make_tuple((cl_mem_flags)NULL, 0, 0, CacheLinedMisAlignedSize, true, false),
-                                                                           std::make_tuple((cl_mem_flags)NULL, 0, 0, CacheLinedAlignedSize, true, true)};
-// clang-format on
+// flags, size to alloc, alignment, size, ZeroCopy, misalignPointer
+std::tuple<uint64_t, size_t, size_t, int, bool, bool> inputs[] = {std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, false, true),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedAlignedSize, MemoryConstants::preferredAlignment, cacheLinedAlignedSize, false, true),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedAlignedSize, MemoryConstants::preferredAlignment, cacheLinedAlignedSize, true, false),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, false, false),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), pageAlignSize, MemoryConstants::preferredAlignment, pageAlignSize, true, false),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::cacheLineSize, cacheLinedAlignedSize, true, false),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_COPY_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, true, true),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_COPY_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, true, false),
+                                                                  std::make_tuple(0, 0, 0, cacheLinedMisAlignedSize, true, false),
+                                                                  std::make_tuple(0, 0, 0, cacheLinedAlignedSize, true, true)};
 
 TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
 
@@ -101,7 +99,7 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
 INSTANTIATE_TEST_CASE_P(
     ZeroCopyBufferTests,
     ZeroCopyBufferTest,
-    testing::ValuesIn(Inputs));
+    testing::ValuesIn(inputs));
 
 TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndUseHostptrDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;

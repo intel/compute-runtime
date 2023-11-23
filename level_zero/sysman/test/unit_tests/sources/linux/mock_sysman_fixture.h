@@ -73,7 +73,7 @@ class SysmanDeviceFixture : public ::testing::Test {
         driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
         driverHandle->initialize(*execEnv);
         pSysmanDevice = driverHandle->sysmanDevices[0];
-        L0::Sysman::GlobalSysmanDriver = driverHandle.get();
+        L0::Sysman::globalSysmanDriver = driverHandle.get();
 
         L0::Sysman::sysmanOnlyInit = true;
 
@@ -83,7 +83,7 @@ class SysmanDeviceFixture : public ::testing::Test {
         pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
     }
     void TearDown() override {
-        L0::Sysman::GlobalSysmanDriver = nullptr;
+        L0::Sysman::globalSysmanDriver = nullptr;
         L0::Sysman::sysmanOnlyInit = false;
     }
 

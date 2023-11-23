@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
-#include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
@@ -448,15 +447,6 @@ struct MemorySynchronizationCommands {
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
-};
-
-union SURFACE_STATE_BUFFER_LENGTH {
-    uint32_t length;
-    struct SurfaceState {
-        uint32_t width : BITFIELD_RANGE(0, 6);
-        uint32_t height : BITFIELD_RANGE(7, 20);
-        uint32_t depth : BITFIELD_RANGE(21, 31);
-    } surfaceState;
 };
 
 } // namespace NEO

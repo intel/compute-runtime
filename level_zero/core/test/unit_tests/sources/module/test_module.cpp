@@ -406,7 +406,7 @@ HWTEST_F(ModuleTest, givenBufferWhenOffsetIsNotPatchedThenSizeIsDecereasedByOffs
     auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-    SURFACE_STATE_BUFFER_LENGTH length = {0};
+    SurfaceStateBufferLength length = {0};
     length.length = static_cast<uint32_t>((gpuAlloc->getUnderlyingBufferSize() - offset) - 1);
     EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
     EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
@@ -447,7 +447,7 @@ HWTEST_F(ModuleTest, givenUnalignedHostBufferWhenSurfaceStateProgrammedThenUnali
     auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-    SURFACE_STATE_BUFFER_LENGTH length = {0};
+    SurfaceStateBufferLength length = {0};
     length.length = alignUp(static_cast<uint32_t>((mockGa.getUnderlyingBufferSize() + allocationOffset)), alignment) - 1;
     EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
     EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
@@ -2462,7 +2462,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
         auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
         auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        SurfaceStateBufferLength length = {0};
         length.length = static_cast<uint32_t>((baseAlloc->getUnderlyingBufferSize() + offsetAlloc->getUnderlyingBufferSize()) - 1);
         EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
@@ -2534,7 +2534,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
         auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
         auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        SurfaceStateBufferLength length = {0};
         length.length = static_cast<uint32_t>(offsetAlloc->getUnderlyingBufferSize() - 1);
         EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
@@ -2596,7 +2596,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
         auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
         auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        SurfaceStateBufferLength length = {0};
         length.length = static_cast<uint32_t>(baseAlloc->getUnderlyingBufferSize() - 1);
         EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
@@ -2673,7 +2673,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         auto argInfo = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
         auto surfaceStateAddressRaw = ptrOffset(kernel->getSurfaceStateHeapData(), argInfo.bindful);
         auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
-        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        SurfaceStateBufferLength length = {0};
         length.length = static_cast<uint32_t>((MemoryConstants::gigaByte * 4) - 1);
         EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width + 1));
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));

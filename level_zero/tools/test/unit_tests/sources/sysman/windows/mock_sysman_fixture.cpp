@@ -30,8 +30,8 @@ void SysmanDeviceFixture::SetUp() {
     pOsSysman = pSysmanDeviceImp->pOsSysman;
     pWddmSysmanImp = static_cast<PublicWddmSysmanImp *>(pOsSysman);
 
-    if (GlobalOsSysmanDriver == nullptr) {
-        GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+    if (globalOsSysmanDriver == nullptr) {
+        globalOsSysmanDriver = L0::OsSysmanDriver::create();
     }
 }
 
@@ -40,9 +40,9 @@ void SysmanDeviceFixture::TearDown() {
         GTEST_SKIP();
     }
 
-    if (GlobalOsSysmanDriver != nullptr) {
-        delete GlobalOsSysmanDriver;
-        GlobalOsSysmanDriver = nullptr;
+    if (globalOsSysmanDriver != nullptr) {
+        delete globalOsSysmanDriver;
+        globalOsSysmanDriver = nullptr;
     }
 
     SysmanEnabledFixture::TearDown();

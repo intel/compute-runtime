@@ -31,7 +31,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
 };
 
-extern struct SysmanDriverHandleImp *GlobalSysmanDriver;
+extern struct SysmanDriverHandleImp *globalSysmanDriver;
 
 } // namespace Sysman
 } // namespace L0

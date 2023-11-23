@@ -175,6 +175,6 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t clearErrorDescription() override;
 };
 
-extern struct DriverHandleImp *GlobalDriver;
+extern struct DriverHandleImp *globalDriver;
 
 } // namespace L0

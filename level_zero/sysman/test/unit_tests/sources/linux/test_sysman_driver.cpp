@@ -104,7 +104,7 @@ TEST_F(SysmanDriverTestMultipleFamilySupport, whenInitializingSysmanDriverWithAr
     }
 
     delete driverHandle;
-    L0::Sysman::GlobalSysmanDriver = nullptr;
+    L0::Sysman::globalSysmanDriver = nullptr;
 }
 
 struct SysmanDriverTestMultipleFamilyNoSupport : public ::testing::Test {
@@ -202,7 +202,7 @@ struct SysmanDriverHandleTest : public ::testing::Test {
         }
 
         driverHandle = L0::Sysman::SysmanDriverHandle::create(*executionEnvironment, &returnValue);
-        L0::Sysman::GlobalSysmanDriverHandle = driverHandle;
+        L0::Sysman::globalSysmanDriverHandle = driverHandle;
         L0::Sysman::driverCount = 1;
         L0::Sysman::sysmanOnlyInit = true;
     }
@@ -210,8 +210,8 @@ struct SysmanDriverHandleTest : public ::testing::Test {
         if (driverHandle) {
             delete driverHandle;
         }
-        L0::Sysman::GlobalSysmanDriver = nullptr;
-        L0::Sysman::GlobalSysmanDriverHandle = nullptr;
+        L0::Sysman::globalSysmanDriver = nullptr;
+        L0::Sysman::globalSysmanDriverHandle = nullptr;
         L0::Sysman::driverCount = 0;
         L0::Sysman::sysmanOnlyInit = false;
     }
@@ -277,7 +277,7 @@ TEST_F(SysmanDriverHandleTest, givenInitializedDriverWhenZesDriverGetIsCalledThe
     result = zesDriverGet(&count, &hDriverHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, hDriverHandle);
-    EXPECT_EQ(hDriverHandle, L0::Sysman::GlobalSysmanDriver);
+    EXPECT_EQ(hDriverHandle, L0::Sysman::globalSysmanDriver);
 }
 
 TEST_F(SysmanDriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDeviceIsObtained) {

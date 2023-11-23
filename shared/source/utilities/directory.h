@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace NEO {
 
 namespace Directory {
-extern bool ReturnEmptyFilesVector;
+extern bool returnEmptyFilesVector;
 
 std::vector<std::string> getFiles(const std::string &path);
 void createDirectory(const std::string &path);

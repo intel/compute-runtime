@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,10 @@
 namespace NEO {
 struct MultiDispatchInfo;
 
-template <DebugFunctionalityLevel DebugLevel>
+template <DebugFunctionalityLevel debugLevel>
 class ClFileLogger : public NonCopyableOrMovableClass {
   public:
-    ClFileLogger(FileLogger<DebugLevel> &baseLoggerInm, const DebugVariables &flags);
+    ClFileLogger(FileLogger<debugLevel> &baseLoggerInm, const DebugVariables &flags);
 
     void dumpKernelArgs(const MultiDispatchInfo *multiDispatchInfo);
     const std::string getEvents(const uintptr_t *input, uint32_t numOfEvents);
@@ -27,7 +27,7 @@ class ClFileLogger : public NonCopyableOrMovableClass {
 
   protected:
     bool dumpKernelArgsEnabled = false;
-    FileLogger<DebugLevel> &baseLogger;
+    FileLogger<debugLevel> &baseLogger;
 };
 
 ClFileLogger<globalDebugFunctionalityLevel> &getClFileLogger();

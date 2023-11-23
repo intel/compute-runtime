@@ -49,7 +49,7 @@ template <typename Traits>
 void AubDump<Traits>::addMemoryWrite(typename Traits::Stream &stream, uint64_t addr, const void *memory, size_t sizeRemaining, int addressSpace, int hint) {
     // We can only dump a relatively small amount per CmdServicesMemTraceMemoryWrite
     auto sizeMemoryWriteHeader = sizeof(CmdServicesMemTraceMemoryWrite) - sizeof(CmdServicesMemTraceMemoryWrite::data);
-    auto blockSizeMax = g_dwordCountMax * sizeof(uint32_t) - sizeMemoryWriteHeader;
+    auto blockSizeMax = dwordCountMax * sizeof(uint32_t) - sizeMemoryWriteHeader;
 
     if (hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextRcs ||
         hint == CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceLogicalRingContextBcs ||
@@ -75,8 +75,8 @@ void AubDump<Traits>::addMemoryWrite(typename Traits::Stream &stream, uint64_t a
 // Reserve memory in the GGTT.
 template <typename Traits>
 uint64_t AubDump<Traits>::reserveAddress(typename Traits::Stream &stream, uint32_t addr, size_t size, unsigned int addressSpace, uint64_t physStart, AubGTTData data) {
-    auto startPage = addr & g_pageMask;
-    auto endPage = (addr + size - 1) & g_pageMask;
+    auto startPage = addr & pageMask;
+    auto endPage = (addr + size - 1) & pageMask;
     auto numPages = (uint32_t)(((endPage - startPage) / 4096) + 1);
 
     // Can only handle 16 bits of dwordCount.
@@ -166,7 +166,7 @@ uint64_t AubPageTableHelper32<Traits>::reserveAddressPPGTT(typename Traits::Stre
                                       addressSpace, hint);
 
         auto currPDE = startPDE;
-        auto physPage = BaseClass::getPTEAddress(startPTE) & g_pageMask;
+        auto physPage = BaseClass::getPTEAddress(startPTE) & pageMask;
         while (currPDE <= endPDE) {
             auto pde = physPage | NEO::AubHelper::getPTEntryBits(additionalBits);
 
@@ -189,7 +189,7 @@ uint64_t AubPageTableHelper32<Traits>::reserveAddressPPGTT(typename Traits::Stre
                                       addressSpace, hint);
 
         auto currPTE = startPTE;
-        auto physPage = physAddress & g_pageMask;
+        auto physPage = physAddress & pageMask;
         while (currPTE <= endPTE) {
             auto pte = physPage | additionalBits;
 
@@ -238,7 +238,7 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
                                       addressSpace, hint);
 
         auto currPML4 = startPML4;
-        auto physPage = BaseClass::getPDPAddress(startPDP) & g_pageMask;
+        auto physPage = BaseClass::getPDPAddress(startPDP) & pageMask;
         while (currPML4 <= endPML4) {
             auto pml4 = physPage | NEO::AubHelper::getPTEntryBits(additionalBits);
 
@@ -261,7 +261,7 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
                                       addressSpace, hint);
 
         auto currPDP = startPDP;
-        auto physPage = BaseClass::getPDEAddress(startPDE) & g_pageMask;
+        auto physPage = BaseClass::getPDEAddress(startPDE) & pageMask;
         while (currPDP <= endPDP) {
             auto pdp = physPage | NEO::AubHelper::getPTEntryBits(additionalBits);
 
@@ -284,7 +284,7 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
                                       addressSpace, hint);
 
         auto currPDE = startPDE;
-        auto physPage = BaseClass::getPTEAddress(startPTE) & g_pageMask;
+        auto physPage = BaseClass::getPTEAddress(startPTE) & pageMask;
         while (currPDE <= endPDE) {
             auto pde = physPage | NEO::AubHelper::getPTEntryBits(additionalBits);
 
@@ -307,7 +307,7 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
                                       addressSpace, hint);
 
         auto currPTE = startPTE;
-        auto physPage = physAddress & g_pageMask;
+        auto physPage = physAddress & pageMask;
         while (currPTE <= endPTE) {
             auto pte = physPage | additionalBits;
 

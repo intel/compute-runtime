@@ -27,7 +27,7 @@ using namespace NEO;
 typedef ::testing::Types<NullSurface, HostPtrSurface, GeneralSurface> SurfaceTypes;
 
 namespace createSurface {
-template <typename surfType>
+template <typename SurfType>
 Surface *create(char *data, GraphicsAllocation *gfxAllocation);
 
 template <>

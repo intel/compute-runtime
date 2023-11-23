@@ -576,7 +576,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
 void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
     commandList->destroy();
     commandQueue->destroy();
-    L0::GlobalDriver = nullptr;
+    L0::globalDriver = nullptr;
 }
 
 } // namespace ult

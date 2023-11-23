@@ -272,7 +272,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
 
     size_t size = 0x1000;
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
 
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
@@ -309,7 +309,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
 
     size_t size = 0x1000;
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
 
     uint64_t gpuAddr = 0;
     size_t allocSize = size;
@@ -343,7 +343,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
 
     size_t size = 0x1000;
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
 
     uint64_t gpuAddr = 0;
     size_t allocSize = size;

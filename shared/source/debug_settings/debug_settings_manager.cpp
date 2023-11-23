@@ -32,8 +32,8 @@ static std::string toString(const T &arg) {
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
+template <DebugFunctionalityLevel debugLevel>
+DebugSettingsManager<debugLevel>::DebugSettingsManager(const char *registryPath) {
     readerImpl = SettingsReaderCreator::create(std::string(registryPath));
     ApiSpecificConfig::initPrefixes();
     injectSettingsFromReader();
@@ -44,13 +44,13 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath)
         ;
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
+template <DebugFunctionalityLevel debugLevel>
+DebugSettingsManager<debugLevel>::~DebugSettingsManager() {
     readerImpl.reset();
 };
 
-template <DebugFunctionalityLevel DebugLevel>
-void DebugSettingsManager<DebugLevel>::getHardwareInfoOverride(std::string &hwInfoConfig) {
+template <DebugFunctionalityLevel debugLevel>
+void DebugSettingsManager<debugLevel>::getHardwareInfoOverride(std::string &hwInfoConfig) {
     std::string str = flags.HardwareInfoOverride.get();
     if (str[0] == '\"') {
         str.pop_back();
@@ -72,17 +72,17 @@ static const char *convPrefixToString(DebugVarPrefix prefix) {
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
+template <DebugFunctionalityLevel debugLevel>
 template <typename DataType>
-void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue, std::ostringstream &ostring) {
+void DebugSettingsManager<debugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue, std::ostringstream &ostring) {
     if (variableValue != defaultValue) {
         const auto variableStringValue = toString(variableValue);
         ostring << "Non-default value of debug variable: " << variableName << " = " << variableStringValue.c_str() << '\n';
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void DebugSettingsManager<DebugLevel>::getStringWithFlags(std::string &allFlags, std::string &changedFlags) const {
+template <DebugFunctionalityLevel debugLevel>
+void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags, std::string &changedFlags) const {
     std::ostringstream allFlagsStream;
     allFlagsStream.str("");
 
@@ -115,8 +115,8 @@ void DebugSettingsManager<DebugLevel>::getStringWithFlags(std::string &allFlags,
     changedFlags = changedFlagsStream.str();
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void DebugSettingsManager<DebugLevel>::dumpFlags() const {
+template <DebugFunctionalityLevel debugLevel>
+void DebugSettingsManager<debugLevel>::dumpFlags() const {
     if (flags.PrintDebugSettings.get() == false) {
         return;
     }
@@ -133,8 +133,8 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
     settingsDumpFile << allFlags;
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
+template <DebugFunctionalityLevel debugLevel>
+void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                        \
     {                                                                                                                    \

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,13 @@
 
 #include <map>
 
-template <DebugFunctionalityLevel DebugLevel>
-class TestFileLogger : public NEO::FileLogger<DebugLevel> {
+template <DebugFunctionalityLevel debugLevel>
+class TestFileLogger : public NEO::FileLogger<debugLevel> {
   public:
-    using NEO::FileLogger<DebugLevel>::FileLogger;
+    using NEO::FileLogger<debugLevel>::FileLogger;
 
     ~TestFileLogger() override {
-        std::remove(NEO::FileLogger<DebugLevel>::logFileName.c_str());
+        std::remove(NEO::FileLogger<debugLevel>::logFileName.c_str());
     }
 
     void useRealFiles(bool value) {
@@ -34,7 +34,7 @@ class TestFileLogger : public NEO::FileLogger<DebugLevel> {
 
         savedFiles[filename] << std::string(str, str + length);
         if (mockFileSystem == false) {
-            NEO::FileLogger<DebugLevel>::writeToFile(filename, str, length, mode);
+            NEO::FileLogger<debugLevel>::writeToFile(filename, str, length, mode);
         }
     };
 

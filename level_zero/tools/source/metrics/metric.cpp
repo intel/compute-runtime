@@ -226,7 +226,7 @@ ze_result_t MetricDeviceContext::enableMetricApi() {
 
     bool failed = false;
 
-    auto driverHandle = L0::DriverHandle::fromHandle(GlobalDriverHandle);
+    auto driverHandle = L0::DriverHandle::fromHandle(globalDriverHandle);
     auto rootDevices = std::vector<ze_device_handle_t>();
     auto subDevices = std::vector<ze_device_handle_t>();
 

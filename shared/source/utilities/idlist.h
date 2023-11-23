@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,10 +167,10 @@ struct IDNode {
     NodeObjectType *next;
 };
 
-template <typename NodeObjectType, bool ThreadSafe = true, bool OwnsNodes = false, bool SupportRecursiveLock = true>
+template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = false, bool supportRecursiveLock = true>
 class IDList {
   public:
-    using ThisType = IDList<NodeObjectType, ThreadSafe, OwnsNodes, SupportRecursiveLock>;
+    using ThisType = IDList<NodeObjectType, threadSafe, ownsNodes, supportRecursiveLock>;
 
     IDList()
         : head(nullptr), tail(nullptr), locked(), spinLockedListener(nullptr) {
@@ -251,8 +251,8 @@ class IDList {
     NodeObjectType *peekTailImpl(NodeObjectType *, void *) {
         return tail;
     }
-    template <bool C = OwnsNodes>
-    typename std::enable_if<C, void>::type cleanup() {
+    template <bool c = ownsNodes>
+    typename std::enable_if<c, void>::type cleanup() {
         if (head != nullptr) {
             head->deleteThisAndAllNext();
         }
@@ -260,8 +260,8 @@ class IDList {
         tail = nullptr;
     }
 
-    template <bool C = OwnsNodes>
-    typename std::enable_if<!C, void>::type cleanup() {
+    template <bool c = ownsNodes>
+    typename std::enable_if<!c, void>::type cleanup() {
         ;
     }
 
@@ -271,8 +271,8 @@ class IDList {
         }
     }
 
-    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node1, void *data), bool C1 = ThreadSafe, bool C2 = SupportRecursiveLock>
-    typename std::enable_if<C1 && !C2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
+    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
+    typename std::enable_if<c1 && !c2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
         while (locked.test_and_set(std::memory_order_acquire)) {
             notifySpinLocked();
         }
@@ -290,8 +290,8 @@ class IDList {
         return ret;
     }
 
-    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node1, void *data), bool C1 = ThreadSafe, bool C2 = SupportRecursiveLock>
-    typename std::enable_if<C1 && C2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
+    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
+    typename std::enable_if<c1 && c2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
         std::thread::id currentThreadId = std::this_thread::get_id();
         if (lockOwner == currentThreadId) {
             return (static_cast<T *>(this)->*Process)(node1, data);
@@ -318,8 +318,8 @@ class IDList {
         return ret;
     }
 
-    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node, void *data), bool C = ThreadSafe>
-    typename std::enable_if<!C, NodeObjectType *>::type processLocked(NodeObjectType *node = nullptr, void *data = nullptr) {
+    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node, void *data), bool c = threadSafe>
+    typename std::enable_if<!c, NodeObjectType *>::type processLocked(NodeObjectType *node = nullptr, void *data = nullptr) {
         return (this->*Process)(node, data);
     }
 
@@ -459,8 +459,8 @@ struct IDNodeRef : IDNode<IDNodeRef<NodeObjectType>> {
     NodeObjectType *ref;
 };
 
-template <typename NodeObjectType, bool ThreadSafe = true, bool OwnsNodes = true>
-class IDRefList : public IDList<IDNodeRef<NodeObjectType>, ThreadSafe, OwnsNodes> {
+template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = true>
+class IDRefList : public IDList<IDNodeRef<NodeObjectType>, threadSafe, ownsNodes> {
   public:
     void pushRefFrontOne(NodeObjectType &node) {
         auto refNode = std::unique_ptr<IDNodeRef<NodeObjectType>>(new IDNodeRef<NodeObjectType>(&node));

@@ -93,11 +93,8 @@ union FloatConversion {
     float f;
 };
 
-// clang-format off
-static const FloatConversion PosInfinity = {0x7f800000};
-static const FloatConversion NegInfinity = {0xff800000};
-static const FloatConversion Nan         = {0x7fc00000};
-// clang-format on
+static const FloatConversion posInfinity = {0x7f800000};
+static const FloatConversion negInfinity = {0xff800000};
 
 inline uint16_t float2Half(float f) {
     FloatConversion u;
@@ -106,7 +103,7 @@ inline uint16_t float2Half(float f) {
     uint32_t fsign = (u.u >> 16) & 0x8000;
     float x = std::fabs(f);
 
-    // Nan
+    // nan
     if (x != x) {
         u.u >>= (24 - 11);
         u.u &= 0x7fff;
@@ -116,7 +113,7 @@ inline uint16_t float2Half(float f) {
 
     // overflow
     if (x >= std::ldexp(1.0f, 16)) {
-        if (x == PosInfinity.f)
+        if (x == posInfinity.f)
             return 0x7c00 | fsign;
 
         return 0x7bff | fsign;

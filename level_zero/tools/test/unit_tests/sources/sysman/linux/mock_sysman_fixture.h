@@ -75,8 +75,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
 
-        if (GlobalOsSysmanDriver == nullptr) {
-            GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+        if (globalOsSysmanDriver == nullptr) {
+            globalOsSysmanDriver = L0::OsSysmanDriver::create();
         }
 
         pSysmanDeviceImp->init();
@@ -87,9 +87,9 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
             GTEST_SKIP();
         }
 
-        if (GlobalOsSysmanDriver != nullptr) {
-            delete GlobalOsSysmanDriver;
-            GlobalOsSysmanDriver = nullptr;
+        if (globalOsSysmanDriver != nullptr) {
+            delete globalOsSysmanDriver;
+            globalOsSysmanDriver = nullptr;
         }
 
         DeviceFixture::tearDown();
@@ -135,8 +135,8 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
 
-        if (GlobalOsSysmanDriver == nullptr) {
-            GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+        if (globalOsSysmanDriver == nullptr) {
+            globalOsSysmanDriver = L0::OsSysmanDriver::create();
         }
 
         pSysmanDeviceImp->init();
@@ -147,9 +147,9 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        if (GlobalOsSysmanDriver != nullptr) {
-            delete GlobalOsSysmanDriver;
-            GlobalOsSysmanDriver = nullptr;
+        if (globalOsSysmanDriver != nullptr) {
+            delete globalOsSysmanDriver;
+            globalOsSysmanDriver = nullptr;
         }
         unsetenv("ZES_ENABLE_SYSMAN");
         MultiDeviceFixture::tearDown();

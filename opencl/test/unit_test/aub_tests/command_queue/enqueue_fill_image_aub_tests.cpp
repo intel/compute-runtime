@@ -18,61 +18,58 @@
 
 using namespace NEO;
 
-// clang-format off
 struct FillImageParams {
     cl_mem_object_type imageType;
     size_t offsets[3];
 } imageParams[] = {
-    {CL_MEM_OBJECT_IMAGE1D, { 0u, 0u, 0u}}, 
-    {CL_MEM_OBJECT_IMAGE1D, { 1u, 0u, 0u}}, 
-    {CL_MEM_OBJECT_IMAGE2D, { 0u, 0u, 0u}}, 
-    {CL_MEM_OBJECT_IMAGE2D, { 1u, 2u, 0u}},
-    {CL_MEM_OBJECT_IMAGE3D, { 0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE3D, { 1u, 2u, 3u}}
-};
+    {CL_MEM_OBJECT_IMAGE1D, {0u, 0u, 0u}},
+    {CL_MEM_OBJECT_IMAGE1D, {1u, 0u, 0u}},
+    {CL_MEM_OBJECT_IMAGE2D, {0u, 0u, 0u}},
+    {CL_MEM_OBJECT_IMAGE2D, {1u, 2u, 0u}},
+    {CL_MEM_OBJECT_IMAGE3D, {0u, 0u, 0u}},
+    {CL_MEM_OBJECT_IMAGE3D, {1u, 2u, 3u}}};
 
-static const uint32_t fillValues[4] = { 0x3f800000, 0x00000000, 0x3f555555, 0x3f2aaaaa };
+static const uint32_t fillValues[4] = {0x3f800000, 0x00000000, 0x3f555555, 0x3f2aaaaa};
 
-static const uint16_t expectedHALF_FLOAT[4] = {0x3c00, 0x0000, 0x3aaa, 0x3955};
+static const uint16_t expectedHalfFloat[4] = {0x3c00, 0x0000, 0x3aaa, 0x3955};
 
-static const uint16_t expectedUNORM16[4]    = {0xffff, 0x0000, 0xd554, 0xaaa9};
-static const uint8_t  expectedUNORM8[4]     = {  0xff,   0x00,   0xd4,   0xa9};
-//The distance between sRGB values and the expected values should not be greater than 0.6f
-//In this test, for simplicity purposes, we are checking if the distance is 0
-static const uint8_t  expectedUNORM8sRGB[4]     = {  0xff,   0x00,   0xeb,   0xa9};
-static const uint8_t  expectedUNORM8sBGR[4]     = {  0xeb,   0x00,   0xff,   0xa9};
+static const uint16_t expectedUnorm16[4] = {0xffff, 0x0000, 0xd554, 0xaaa9};
+static const uint8_t expectedUnorm8[4] = {0xff, 0x00, 0xd4, 0xa9};
+// The distance between sRGB values and the expected values should not be greater than 0.6f
+// In this test, for simplicity purposes, we are checking if the distance is 0
+static const uint8_t expectedUnorm8srgb[4] = {0xff, 0x00, 0xeb, 0xa9};
+static const uint8_t expectedUnorm8sbgr[4] = {0xeb, 0x00, 0xff, 0xa9};
 
-static const uint16_t expectedSNORM16[4]    = {0x7fff, 0x0000, 0x6AA9, 0x5554};
-static const uint8_t  expectedSNORM8[4]     = {  0x7f,   0x00,   0x69,   0x54};
+static const uint16_t expectedSnorm16[4] = {0x7fff, 0x0000, 0x6AA9, 0x5554};
+static const uint8_t expectedSnorm8[4] = {0x7f, 0x00, 0x69, 0x54};
 
-static auto     expectedSINT32    = fillValues;
-static uint16_t expectedSINT16[4] = { 0x0000, 0x0000, 0x5555, 0xaaaa };
-static uint8_t  expectedSINT8[4]  = {   0x00,   0x00,   0x55,   0xaa };
+static auto expectedSint32 = fillValues;
+static uint16_t expectedSint16[4] = {0x0000, 0x0000, 0x5555, 0xaaaa};
+static uint8_t expectedSint8[4] = {0x00, 0x00, 0x55, 0xaa};
 
-static auto     expectedUINT32    = fillValues;
-static uint16_t expectedUINT16[4] = { 0x0000, 0x0000, 0x5555, 0xaaaa };
-static uint8_t  expectedUINT8[4]  = {   0x00,   0x00,   0x55,   0xaa };
+static auto expectedUint32 = fillValues;
+static uint16_t expectedUint16[4] = {0x0000, 0x0000, 0x5555, 0xaaaa};
+static uint8_t expectedUint8[4] = {0x00, 0x00, 0x55, 0xaa};
 
-static auto expectedFLOAT = fillValues;
+static auto expectedFloat = fillValues;
 
 // ChannelTypes/FillValues for test
 struct FillChannelType {
     cl_channel_type type;
     const void *expectedValues;
 } fillChannelTypes[] = {
-    {CL_SNORM_INT8,     expectedSNORM8},
-    {CL_SNORM_INT16,    expectedSNORM16},
-    {CL_UNORM_INT8,     expectedUNORM8},
-    {CL_UNORM_INT16,    expectedUNORM16},
-    {CL_SIGNED_INT8,    expectedSINT8},
-    {CL_SIGNED_INT16,   expectedSINT16},
-    {CL_SIGNED_INT32,   expectedSINT32},
-    {CL_UNSIGNED_INT8,  expectedUINT8},
-    {CL_UNSIGNED_INT16, expectedUINT16},
-    {CL_UNSIGNED_INT32, expectedUINT32},
-    {CL_HALF_FLOAT,     expectedHALF_FLOAT},
-    {CL_FLOAT,          expectedFLOAT}};
-// clang-format on
+    {CL_SNORM_INT8, expectedSnorm8},
+    {CL_SNORM_INT16, expectedSnorm16},
+    {CL_UNORM_INT8, expectedUnorm8},
+    {CL_UNORM_INT16, expectedUnorm16},
+    {CL_SIGNED_INT8, expectedSint8},
+    {CL_SIGNED_INT16, expectedSint16},
+    {CL_SIGNED_INT32, expectedSint32},
+    {CL_UNSIGNED_INT8, expectedUint8},
+    {CL_UNSIGNED_INT16, expectedUint16},
+    {CL_UNSIGNED_INT32, expectedUint32},
+    {CL_HALF_FLOAT, expectedHalfFloat},
+    {CL_FLOAT, expectedFloat}};
 
 struct AubFillImage
     : public AUBCommandStreamFixture,
@@ -228,10 +225,10 @@ HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
 
     auto expected = std::get<0>(GetParam()).expectedValues;
     if (imageFormat.image_channel_order == CL_sRGBA) {
-        expected = expectedUNORM8sRGB;
+        expected = expectedUnorm8srgb;
     }
     if (imageFormat.image_channel_order == CL_sBGRA) {
-        expected = expectedUNORM8sBGR;
+        expected = expectedUnorm8sbgr;
     }
 
     auto pImageData = dstMemory;

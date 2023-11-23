@@ -17,15 +17,6 @@
 
 namespace NEO {
 
-union SURFACE_STATE_BUFFER_LENGTH {
-    uint32_t length;
-    struct SurfaceState {
-        uint32_t width : 7;
-        uint32_t height : 14;
-        uint32_t depth : 11;
-    } surfaceState;
-};
-
 template <typename GfxFamily>
 void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
                                          bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {

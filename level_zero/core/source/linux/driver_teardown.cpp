@@ -15,7 +15,7 @@
 namespace L0 {
 
 ze_result_t setDriverTeardownHandleInLoader(const char *loaderLibraryName) {
-    if (L0::LevelZeroDriverInitialized) {
+    if (L0::levelZeroDriverInitialized) {
         ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(loaderLibraryName)};
         if (loaderLibrary) {

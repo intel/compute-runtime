@@ -24,15 +24,6 @@
 
 namespace NEO {
 
-union SURFACE_STATE_BUFFER_LENGTH {
-    uint32_t length;
-    struct SurfaceState {
-        uint32_t width : BITFIELD_RANGE(0, 6);
-        uint32_t height : BITFIELD_RANGE(7, 20);
-        uint32_t depth : BITFIELD_RANGE(21, 31);
-    } surfaceState;
-};
-
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex, bool useGlobalAtomics) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
@@ -58,7 +49,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
         // than the maximal image width. Mock image1d_buffer with SURFACE_TYPE_SURFTYPE_BUFFER.
-        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        SurfaceStateBufferLength length = {0};
         length.length = static_cast<uint32_t>(getImageDesc().image_width - 1);
 
         depth = static_cast<uint32_t>(length.surfaceState.depth + 1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,12 @@
 
 namespace NEO {
 
-template <cl_device_info Param>
+template <cl_device_info param>
 inline void ClDevice::getCap(const void *&src,
                              size_t &size,
                              size_t &retSize) {
-    src = &ClDeviceInfoTable::Map<Param>::getValue(*this);
-    retSize = size = ClDeviceInfoTable::Map<Param>::size;
+    src = &ClDeviceInfoTable::Map<param>::getValue(*this);
+    retSize = size = ClDeviceInfoTable::Map<param>::size;
 }
 
 } // namespace NEO

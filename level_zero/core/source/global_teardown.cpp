@@ -11,13 +11,13 @@
 namespace L0 {
 
 void globalDriverTeardown() {
-    if (GlobalDriver != nullptr) {
-        delete GlobalDriver;
-        GlobalDriver = nullptr;
+    if (globalDriver != nullptr) {
+        delete globalDriver;
+        globalDriver = nullptr;
     }
-    if (Sysman::GlobalSysmanDriver != nullptr) {
-        delete Sysman::GlobalSysmanDriver;
-        Sysman::GlobalSysmanDriver = nullptr;
+    if (Sysman::globalSysmanDriver != nullptr) {
+        delete Sysman::globalSysmanDriver;
+        Sysman::globalSysmanDriver = nullptr;
     }
 }
 } // namespace L0

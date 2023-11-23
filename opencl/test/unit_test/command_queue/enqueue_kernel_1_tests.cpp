@@ -1728,8 +1728,9 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         debugPauseStateAddress = csr.getDebugPauseStateGPUAddress();
     }
 
-    template <typename MI_SEMAPHORE_WAIT>
+    template <typename FamilyType>
     bool verifySemaphore(const GenCmdList::iterator &iterator, uint64_t debugPauseStateAddress, DebugPauseState requiredDebugPauseState) {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*iterator);
 
         if ((static_cast<uint32_t>(requiredDebugPauseState) == semaphoreCmd->getSemaphoreDataDword()) &&
@@ -1780,16 +1781,17 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         return false;
     }
 
-    template <typename MI_SEMAPHORE_WAIT>
+    template <typename FamilyType>
     void findSemaphores(GenCmdList &cmdList) {
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
 
         while (semaphore != cmdList.end()) {
-            if (verifySemaphore<MI_SEMAPHORE_WAIT>(semaphore, debugPauseStateAddress, DebugPauseState::hasUserStartConfirmation)) {
+            if (verifySemaphore<FamilyType>(semaphore, debugPauseStateAddress, DebugPauseState::hasUserStartConfirmation)) {
                 semaphoreBeforeWalkerFound++;
             }
 
-            if (verifySemaphore<MI_SEMAPHORE_WAIT>(semaphore, debugPauseStateAddress, DebugPauseState::hasUserEndConfirmation)) {
+            if (verifySemaphore<FamilyType>(semaphore, debugPauseStateAddress, DebugPauseState::hasUserEndConfirmation)) {
                 semaphoreAfterWalkerFound++;
             }
 
@@ -1857,7 +1859,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, semaphoreBeforeWalkerFound);
     EXPECT_EQ(1u, semaphoreAfterWalkerFound);
@@ -1882,7 +1884,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToMinusTwoWhenDispatchWalker
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     findPipeControls<FamilyType>(hwParser.cmdList);
 
@@ -1906,7 +1908,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     findPipeControls<FamilyType>(hwParser.cmdList);
 
@@ -1930,7 +1932,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     findPipeControls<FamilyType>(hwParser.cmdList);
 
@@ -1954,7 +1956,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     findPipeControls<FamilyType>(hwParser.cmdList);
 
@@ -1979,7 +1981,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
-    findSemaphores<MI_SEMAPHORE_WAIT>(hwParser.cmdList);
+    findSemaphores<FamilyType>(hwParser.cmdList);
 
     findPipeControls<FamilyType>(hwParser.cmdList);
 

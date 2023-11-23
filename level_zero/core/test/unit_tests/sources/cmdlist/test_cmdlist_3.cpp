@@ -192,7 +192,6 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCor
     commandList->hostPtrMap.clear();
 }
 
-template <NEO::AllocationType AllocType>
 class DeviceHostPtrFailMock : public MockDeviceImp {
   public:
     using MockDeviceImp::MockDeviceImp;
@@ -205,7 +204,7 @@ class DeviceHostPtrFailMock : public MockDeviceImp {
 };
 
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationCalledWithInvalidPtrThenNullptrReturned, IsAtLeastSkl) {
-    auto failDevice = std::make_unique<DeviceHostPtrFailMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>(device->getNEODevice(), execEnv);
+    auto failDevice = std::make_unique<DeviceHostPtrFailMock>(device->getNEODevice(), execEnv);
     failDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(failDevice.get(), NEO::EngineGroupType::Copy, 0u);
@@ -1429,13 +1428,13 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 }
 
-template <NEO::AllocationType AllocType>
+template <NEO::AllocationType allocType>
 class MyDeviceMock : public MockDeviceImp {
   public:
     using MockDeviceImp::MockDeviceImp;
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override {
         auto alloc = std::make_unique<NEO::MockGraphicsAllocation>(const_cast<void *>(buffer), reinterpret_cast<uintptr_t>(buffer), size);
-        alloc->allocationType = AllocType;
+        alloc->allocationType = allocType;
         return alloc.release();
     }
     const NEO::HardwareInfo &getHwInfo() const override {

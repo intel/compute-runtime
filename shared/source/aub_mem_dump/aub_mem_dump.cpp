@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,9 @@
 
 namespace AubMemDump {
 
-const uint64_t g_pageMask = ~(4096ull - 1);
+const uint64_t pageMask = ~(4096ull - 1);
 
-const size_t g_dwordCountMax = 65536;
+const size_t dwordCountMax = 65536;
 
 // Some page table constants used in virtualizing the page tables.
 // clang-format off

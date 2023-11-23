@@ -40,7 +40,7 @@
 
 using namespace NEO;
 
-static const unsigned int g_scTestBufferSizeInBytes = 16;
+static const unsigned int testBufferSizeInBytes = 16;
 
 TEST(Buffer, giveBufferWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
     MockContext ctx;
@@ -875,7 +875,7 @@ class BufferTest : public ClDeviceFixture,
     std::unique_ptr<MockContext> context;
     MemoryManager *contextMemoryManager;
     cl_mem_flags flags = 0;
-    unsigned char pHostPtr[g_scTestBufferSizeInBytes];
+    unsigned char pHostPtr[testBufferSizeInBytes];
 };
 
 typedef BufferTest NoHostPtr;
@@ -884,7 +884,7 @@ TEST_P(NoHostPtr, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
-        g_scTestBufferSizeInBytes,
+        testBufferSizeInBytes,
         nullptr,
         retVal);
 
@@ -920,7 +920,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
-        g_scTestBufferSizeInBytes,
+        testBufferSizeInBytes,
         nullptr,
         retVal);
 
@@ -935,7 +935,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemUseHostPtrThenInvalidHo
     auto buffer = Buffer::create(
         context.get(),
         flags | CL_MEM_USE_HOST_PTR,
-        g_scTestBufferSizeInBytes,
+        testBufferSizeInBytes,
         nullptr,
         retVal);
     EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
@@ -948,7 +948,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemCopyHostPtrThenInvalidH
     auto buffer = Buffer::create(
         context.get(),
         flags | CL_MEM_COPY_HOST_PTR,
-        g_scTestBufferSizeInBytes,
+        testBufferSizeInBytes,
         nullptr,
         retVal);
     EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
@@ -961,7 +961,7 @@ TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
-        g_scTestBufferSizeInBytes,
+        testBufferSizeInBytes,
         nullptr,
         retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -1023,7 +1023,7 @@ struct ValidHostPtr
         return Buffer::create(
             context.get(),
             flags,
-            g_scTestBufferSizeInBytes,
+            testBufferSizeInBytes,
             pHostPtr,
             retVal);
     }
@@ -1056,7 +1056,7 @@ TEST_P(ValidHostPtr, WhenBufferIsCreatedThenAddressMatchesOnlyForHostPtr) {
 
     if (flags & CL_MEM_COPY_HOST_PTR) {
         // Buffer should contain a copy of host memory
-        EXPECT_EQ(0, memcmp(pHostPtr, address, sizeof(g_scTestBufferSizeInBytes)));
+        EXPECT_EQ(0, memcmp(pHostPtr, address, sizeof(testBufferSizeInBytes)));
         EXPECT_EQ(nullptr, buffer->getHostPtr());
     }
 }
@@ -1065,20 +1065,20 @@ TEST_P(ValidHostPtr, WhenGettingBufferSizeThenSizeIsCorrect) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
-    EXPECT_EQ(g_scTestBufferSizeInBytes, buffer->getSize());
+    EXPECT_EQ(testBufferSizeInBytes, buffer->getSize());
 }
 
 TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroFlagsThenItCreatesSuccesfuly) {
     auto retVal = CL_SUCCESS;
     auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
-                                   g_scTestBufferSizeInBytes,
+                                   testBufferSizeInBytes,
                                    pHostPtr,
                                    &retVal);
 
     ASSERT_NE(nullptr, clBuffer);
 
-    cl_buffer_region region = {0, g_scTestBufferSizeInBytes};
+    cl_buffer_region region = {0, testBufferSizeInBytes};
 
     auto subBuffer = clCreateSubBuffer(clBuffer,
                                        0,
@@ -1096,12 +1096,12 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithParen
     auto retVal = CL_SUCCESS;
     auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
-                                   g_scTestBufferSizeInBytes,
+                                   testBufferSizeInBytes,
                                    pHostPtr,
                                    &retVal);
 
     ASSERT_NE(nullptr, clBuffer);
-    cl_buffer_region region = {0, g_scTestBufferSizeInBytes};
+    cl_buffer_region region = {0, testBufferSizeInBytes};
 
     const cl_mem_flags allValidFlags =
         CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
@@ -1145,12 +1145,12 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithInval
 
     auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
-                                   g_scTestBufferSizeInBytes,
+                                   testBufferSizeInBytes,
                                    pHostPtr,
                                    &retVal);
 
     ASSERT_NE(nullptr, clBuffer);
-    cl_buffer_region region = {0, g_scTestBufferSizeInBytes};
+    cl_buffer_region region = {0, testBufferSizeInBytes};
 
     auto subBuffer = clCreateSubBuffer(clBuffer,
                                        invalidFlags,
@@ -1200,7 +1200,7 @@ TEST_P(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
 }
 
 TEST_P(ValidHostPtr, WhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
-    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, g_scTestBufferSizeInBytes, pHostPtr, retVal);
+    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, testBufferSizeInBytes, pHostPtr, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(nullptr, buffer);
 
@@ -1249,7 +1249,7 @@ class BufferCalculateHostPtrSize : public testing::TestWithParam<std::tuple<size
     size_t hostPtrSize;
 };
 /* origin, region, rowPitch, slicePitch, hostPtrSize*/
-static std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t> Inputs[] = {std::make_tuple(0, 0, 0, 1, 1, 1, 10, 1, 1),
+static std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t> inputs[] = {std::make_tuple(0, 0, 0, 1, 1, 1, 10, 1, 1),
                                                                                                       std::make_tuple(0, 0, 0, 7, 1, 1, 10, 1, 7),
                                                                                                       std::make_tuple(0, 0, 0, 7, 3, 1, 10, 1, 27),
                                                                                                       std::make_tuple(0, 0, 0, 7, 1, 3, 10, 10, 27),
@@ -1271,7 +1271,7 @@ TEST_P(BufferCalculateHostPtrSize, WhenCalculatingHostPtrSizeThenItIsCorrect) {
 INSTANTIATE_TEST_CASE_P(
     BufferCalculateHostPtrSizes,
     BufferCalculateHostPtrSize,
-    testing::ValuesIn(Inputs));
+    testing::ValuesIn(inputs));
 
 TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopyWhenAskedForStorageThenHostPtrIsReturned) {
     DebugManagerStateRestore dbgRestorer;
@@ -1773,7 +1773,7 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 5, svmPtr, 0, nullptr, 0, 0, false, false);
 
     EXPECT_EQ(castToUint64(svmPtr), surfaceState.getSurfaceBaseAddress());
-    SURFACE_STATE_BUFFER_LENGTH length = {};
+    SurfaceStateBufferLength length = {};
     length.surfaceState.width = surfaceState.getWidth() - 1;
     length.surfaceState.height = surfaceState.getHeight() - 1;
     length.surfaceState.depth = surfaceState.getDepth() - 1;

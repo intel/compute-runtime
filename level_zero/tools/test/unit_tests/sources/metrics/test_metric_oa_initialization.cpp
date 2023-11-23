@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-extern _ze_driver_handle_t *GlobalDriverHandle;
+extern _ze_driver_handle_t *globalDriverHandle;
 namespace ult {
 
 class MockOsLibrary : public NEO::OsLibrary {
@@ -48,7 +48,7 @@ using MetricInitializationTest = Test<MetricContextFixture>;
 
 TEST_F(MetricInitializationTest, GivenOaDependenciesAreAvailableThenMetricInitializationIsSuccess) {
 
-    GlobalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
+    globalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
     OaMetricSourceImp::osLibraryLoadFunction = MockOsLibrary::load;
     EXPECT_EQ(device->getMetricDeviceContext().enableMetricApi(), ZE_RESULT_SUCCESS);
     OaMetricSourceImp::osLibraryLoadFunction = NEO::OsLibrary::load;

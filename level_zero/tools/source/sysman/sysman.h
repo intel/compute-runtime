@@ -98,7 +98,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ~SysmanDevice() = default;
 };
 
-extern struct OsSysmanDriver *GlobalOsSysmanDriver;
+extern struct OsSysmanDriver *globalOsSysmanDriver;
 
 class SysmanDeviceHandleContext {
   public:

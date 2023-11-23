@@ -787,9 +787,9 @@ TEST_F(SysmanDeviceFixture, GivenValidEnumeratedHandlesWhenReleaseIsCalledThenHa
 }
 
 TEST_F(SysmanDeviceFixture, GivenDriverEventsUtilAsNullWhenSysmanDriverDestructorIsCalledThenVerifyNoExceptionOccured) {
-    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&globalOsSysmanDriver);
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
-    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+    globalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
     auto pUdevLib = new UdevLibMock();
     pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLib;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-template <uint8_t NumBits>
+template <uint8_t numBits>
 struct StorageType;
 
 template <>
@@ -36,13 +36,13 @@ struct StorageType<64> {
     using Type = uint64_t;
 };
 
-template <uint8_t NumBits>
+template <uint8_t numBits>
 struct StorageType {
-    using Type = typename StorageType<NumBits + 1>::Type;
+    using Type = typename StorageType<numBits + 1>::Type;
 };
 
-template <uint8_t NumBits>
-using StorageTypeT = typename StorageType<NumBits>::Type;
+template <uint8_t numBits>
+using StorageTypeT = typename StorageType<numBits>::Type;
 
 template <uint8_t IntegerBits, uint8_t FractionalBits, uint8_t TotalBits = IntegerBits + FractionalBits>
 struct UnsignedFixedPointValue {

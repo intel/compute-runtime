@@ -129,8 +129,8 @@ bool readZeInfoValueChecked(const NEO::Yaml::YamlParser &parser, const NEO::Yaml
     return false;
 }
 
-template <typename DestinationT, size_t Len>
-bool readZeInfoValueCollectionCheckedArr(std::array<DestinationT, Len> &vec, const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, ConstStringRef context, std::string &outErrReason) {
+template <typename DestinationT, size_t len>
+bool readZeInfoValueCollectionCheckedArr(std::array<DestinationT, len> &vec, const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, ConstStringRef context, std::string &outErrReason) {
     auto collectionNodes = parser.createChildrenRange(node);
     size_t index = 0U;
     bool isValid = true;
@@ -139,16 +139,16 @@ bool readZeInfoValueCollectionCheckedArr(std::array<DestinationT, Len> &vec, con
         isValid &= readZeInfoValueChecked(parser, elementNd, vec[index++], context, outErrReason);
     }
 
-    if (index != Len) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : wrong size of collection " + parser.readKey(node).str() + " in context of : " + context.str() + ". Got : " + std::to_string(index) + " expected : " + std::to_string(Len) + "\n");
+    if (index != len) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : wrong size of collection " + parser.readKey(node).str() + " in context of : " + context.str() + ". Got : " + std::to_string(index) + " expected : " + std::to_string(len) + "\n");
         isValid = false;
     }
     return isValid;
 }
 
-template <typename DestinationT, size_t Len>
-bool readZeInfoValueCollectionChecked(DestinationT (&vec)[Len], const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, ConstStringRef context, std::string &outErrReason) {
-    auto &array = reinterpret_cast<std::array<DestinationT, Len> &>(vec);
+template <typename DestinationT, size_t len>
+bool readZeInfoValueCollectionChecked(DestinationT (&vec)[len], const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, ConstStringRef context, std::string &outErrReason) {
+    auto &array = reinterpret_cast<std::array<DestinationT, len> &>(vec);
     return readZeInfoValueCollectionCheckedArr(array, parser, node, context, outErrReason);
 }
 
@@ -198,8 +198,8 @@ DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser,
     return validTable ? DecodeError::Success : DecodeError::InvalidBinary;
 }
 
-template <typename ElSize, size_t Len>
-bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSize, CrossThreadDataOffset baseOffset) {
+template <typename ElSize, size_t len>
+bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[len], size_t vecSize, CrossThreadDataOffset baseOffset) {
     switch (vecSize) {
     default:
         return false;

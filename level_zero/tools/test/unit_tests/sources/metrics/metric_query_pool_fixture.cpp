@@ -23,7 +23,7 @@ void MetricQueryPoolTest::SetUp() {
 void MetricQueryPoolTest::TearDown() {
     MetricContextFixture::tearDown();
     driverHandle.reset();
-    GlobalDriver = nullptr;
+    globalDriver = nullptr;
 }
 
 void MultiDeviceMetricQueryPoolTest::SetUp() {
@@ -36,7 +36,7 @@ void MultiDeviceMetricQueryPoolTest::SetUp() {
 void MultiDeviceMetricQueryPoolTest::TearDown() {
     MetricMultiDeviceFixture::tearDown();
     driverHandle.reset();
-    GlobalDriver = nullptr;
+    globalDriver = nullptr;
 }
 
 } // namespace ult

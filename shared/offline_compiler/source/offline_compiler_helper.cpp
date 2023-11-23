@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,12 @@
 
 namespace NEO {
 
-template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
+template <DebugFunctionalityLevel debugLevel>
+DebugSettingsManager<debugLevel>::DebugSettingsManager(const char *registryPath) {
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
+template <DebugFunctionalityLevel debugLevel>
+DebugSettingsManager<debugLevel>::~DebugSettingsManager() {
     readerImpl.reset();
 };
 

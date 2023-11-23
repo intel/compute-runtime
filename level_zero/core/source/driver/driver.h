@@ -25,6 +25,6 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
 
 extern bool sysmanInitFromCore;
 extern uint32_t driverCount;
-extern _ze_driver_handle_t *GlobalDriverHandle;
-extern bool LevelZeroDriverInitialized;
+extern _ze_driver_handle_t *globalDriverHandle;
+extern bool levelZeroDriverInitialized;
 } // namespace L0

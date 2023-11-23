@@ -106,7 +106,7 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
     RENDER_SURFACE_STATE state = Family::cmdInitRenderSurfaceState;
     auto surfaceSize = alignUp(bufferSize, 4);
 
-    SURFACE_STATE_BUFFER_LENGTH length = {0};
+    SurfaceStateBufferLength length = {0};
     length.length = static_cast<uint32_t>(surfaceSize - 1);
 
     state.setWidth(length.surfaceState.width + 1);

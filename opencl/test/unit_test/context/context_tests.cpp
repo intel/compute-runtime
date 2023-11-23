@@ -800,7 +800,7 @@ void onContextDestroy(gtpin::context_handle_t context) {
 }
 
 namespace NEO {
-extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
+extern gtpin::ocl::gtpin_events_t gtpinCallbacks;
 TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotifiedBeforeSVMAllocManagerGetsDestroyed) {
     auto mockContext = reinterpret_cast<MockGTPinTestContext *>(context);
     if (mockContext->svmAllocsManager) {
@@ -808,7 +808,7 @@ TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotified
     }
     mockContext->svmAllocsManager = new MockSVMAllocManager();
 
-    GTPinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
     delete context;
     EXPECT_TRUE(MockSVMAllocManager::svmAllocManagerDeleted);
 }

@@ -21,7 +21,7 @@
 
 namespace L0 {
 namespace Sysman {
-_ze_driver_handle_t *GlobalSysmanDriverHandle = nullptr;
+_ze_driver_handle_t *globalSysmanDriverHandle = nullptr;
 uint32_t driverCount = 0;
 bool sysmanOnlyInit = false;
 
@@ -60,7 +60,7 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
             rootDeviceIndex++;
         }
 
-        GlobalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
+        globalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
         driverCount = 1;
     } else {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
@@ -103,7 +103,7 @@ ze_result_t driverHandleGet(uint32_t *pCount, zes_driver_handle_t *phDriverHandl
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        phDriverHandles[i] = GlobalSysmanDriverHandle;
+        phDriverHandles[i] = globalSysmanDriverHandle;
     }
 
     return ZE_RESULT_SUCCESS;

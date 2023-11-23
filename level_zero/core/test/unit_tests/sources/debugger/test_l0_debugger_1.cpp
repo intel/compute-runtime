@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/preamble.h"
@@ -224,7 +225,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
 
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
     length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
 
     EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
@@ -782,7 +783,7 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCrea
 
     EXPECT_EQ(globalBindlessBase, bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getHeapGpuBase());
 
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
     length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
 
     EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());

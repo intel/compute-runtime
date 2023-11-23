@@ -100,16 +100,16 @@ struct Float2HalfParams {
     uint16_t uintOutput;
 };
 
-// clang-format off
+static const FloatConversion nanFloat = {0x7fc00000};
+
 Float2HalfParams float2HalfParams[] = {
-    {0.0f,                  0x0000},
-    {1.0f,                  0x3c00},
-    {PosInfinity.f,         0x7c00},
-    {Nan.f,                 0x7e00},
-    {std::ldexp(1.0f, 16),  0x7bff},
+    {0.0f, 0x0000},
+    {1.0f, 0x3c00},
+    {posInfinity.f, 0x7c00},
+    {nanFloat.f, 0x7e00},
+    {std::ldexp(1.0f, 16), 0x7bff},
     {std::ldexp(1.0f, -25), 0x0000},
     {std::ldexp(1.0f, -15), 0x0200}};
-// clang-format on
 
 typedef ::testing::TestWithParam<Float2HalfParams> Float2HalfTest;
 

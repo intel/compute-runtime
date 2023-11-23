@@ -438,7 +438,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), gfxCoreHelper.getRenderSurfaceStateSize());
 
     size_t size = 0x1000;
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
     length.length = static_cast<uint32_t>(size - 1);
     uint64_t addr = 0x2000;
     size_t offset = 0x1000;
@@ -505,7 +505,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvided
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     size_t size = 0x1000;
-    SURFACE_STATE_BUFFER_LENGTH length;
+    SurfaceStateBufferLength length;
     uint64_t addr = 0x2000;
     uint32_t pitch = 0;
 

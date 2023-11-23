@@ -21,12 +21,12 @@ class SysmanProductHelper;
 class LinuxSysmanImp;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
-extern SysmanProductHelperCreateFunctionType SysmanProductHelperFactory[IGFX_MAX_PRODUCT];
+extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
 
 class SysmanProductHelper {
   public:
     static std::unique_ptr<SysmanProductHelper> create(PRODUCT_FAMILY product) {
-        auto productHelperCreateFunction = SysmanProductHelperFactory[product];
+        auto productHelperCreateFunction = sysmanProductHelperFactory[product];
         if (productHelperCreateFunction == nullptr) {
             return nullptr;
         }

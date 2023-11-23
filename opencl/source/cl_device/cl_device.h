@@ -103,12 +103,12 @@ class ClDevice : public BaseObject<_cl_device_id> {
                                size_t &retSize);
 
     // This helper template is meant to simplify getDeviceInfo
-    template <cl_device_info Param>
+    template <cl_device_info param>
     void getCap(const void *&src,
                 size_t &size,
                 size_t &retSize);
 
-    template <cl_device_info Param>
+    template <cl_device_info param>
     void getStr(const void *&src,
                 size_t &size,
                 size_t &retSize);

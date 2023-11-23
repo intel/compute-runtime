@@ -29,12 +29,12 @@ namespace NEO {
 
 using ClDeviceInfoTable::Map;
 
-template <cl_device_info Param>
+template <cl_device_info param>
 inline void ClDevice::getStr(const void *&src,
                              size_t &size,
                              size_t &retSize) {
-    src = Map<Param>::getValue(*this);
-    retSize = size = strlen(Map<Param>::getValue(*this)) + 1;
+    src = Map<param>::getValue(*this);
+    retSize = size = strlen(Map<param>::getValue(*this)) + 1;
 }
 
 template <>

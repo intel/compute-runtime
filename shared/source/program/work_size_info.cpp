@@ -68,7 +68,7 @@ void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
         useStrictRatio = false;
     } else if (yTiledSurfaces == true) {
         useRatio = true;
-        targetRatio = YTilingRatioValue;
+        targetRatio = yTilingRatioValue;
         useStrictRatio = true;
     }
 }

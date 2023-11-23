@@ -53,9 +53,9 @@ OsSysmanDriver *OsSysmanDriver::create() {
 }
 
 void __attribute__((destructor)) osSysmanDriverDestructor() {
-    if (GlobalOsSysmanDriver != nullptr) {
-        delete GlobalOsSysmanDriver;
-        GlobalOsSysmanDriver = nullptr;
+    if (globalOsSysmanDriver != nullptr) {
+        delete globalOsSysmanDriver;
+        globalOsSysmanDriver = nullptr;
     }
 }
 
