@@ -1022,3 +1022,31 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffers
     wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(wddmDirectSubmission.updateMonitorFenceValueForResidencyListCalled, 1u);
 }
+
+template <typename GfxFamily, typename Dispatcher>
+struct MyMockWddmDirectSubmission : public MockWddmDirectSubmission<GfxFamily, Dispatcher> {
+    using BaseClass = MockWddmDirectSubmission<GfxFamily, Dispatcher>;
+    using BaseClass::MockWddmDirectSubmission;
+    void updateMonitorFenceValueForResidencyList(ResidencyContainer *allocationsForResidency) override {
+        lockInTesting = true;
+        while (lockInTesting)
+            ;
+        BaseClass::updateMonitorFenceValueForResidencyList(allocationsForResidency);
+    }
+    std::atomic<bool> lockInTesting = false;
+};
+
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersThenUpdateResidencyCalledWithinLock) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MyMockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    std::thread th([&]() {
+        wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
+    });
+    while (!wddmDirectSubmission.lockInTesting)
+        ;
+    auto tryLock = reinterpret_cast<MockWddmResidencyController *>(&(wddmDirectSubmission.osContextWin->getResidencyController()))->lock.try_lock();
+    EXPECT_FALSE(tryLock);
+    wddmDirectSubmission.lockInTesting = false;
+    th.join();
+}

@@ -12,6 +12,7 @@ namespace NEO {
 class MockWddmResidencyController : public WddmResidencyController {
   public:
     using WddmResidencyController::lastTrimFenceValue;
+    using WddmResidencyController::lock;
     using WddmResidencyController::trimCallbackHandle;
     using WddmResidencyController::trimCandidateList;
     using WddmResidencyController::trimCandidatesCount;

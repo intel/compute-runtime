@@ -131,6 +131,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->disableMonitorFence) {
+        auto lock = osContextWin->getResidencyController().acquireLock();
         updateTagValueImpl();
         updateMonitorFenceValueForResidencyList(allocationsForResidency);
     }
