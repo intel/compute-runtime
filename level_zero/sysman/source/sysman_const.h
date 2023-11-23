@@ -20,6 +20,12 @@ constexpr double maxPerformanceFactor = 100;
 constexpr double halfOfMaxPerformanceFactor = 50;
 constexpr double minPerformanceFactor = 0;
 
+constexpr uint32_t numSocTemperatureEntries = 7;     // entries would be PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC
+constexpr uint32_t numCoreTemperatureEntries = 4;    // entries would be CORE0, CORE1, CORE2, CORE3
+constexpr uint32_t numComputeTemperatureEntries = 3; // entries would be IA, GT and LLC
+constexpr uint32_t invalidMaxTemperature = 125;
+constexpr uint32_t invalidMinTemperature = 10;
+
 namespace L0 {
 namespace Sysman {
 struct SteadyClock {

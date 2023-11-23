@@ -5,9 +5,12 @@
  *
  */
 
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/sysman_const.h"
+
+#include <algorithm>
 
 namespace L0 {
 namespace Sysman {
@@ -31,6 +34,75 @@ void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(cons
     } else {
         *pMultiplier = 0;
     }
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+    auto isValidTemperature = [](auto temperature) {
+        if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
+            return false;
+        }
+        return true;
+    };
+
+    auto getMaxTemperature = [&](auto temperature, auto numTemperatureEntries) {
+        uint32_t maxTemperature = 0;
+        for (uint32_t count = 0; count < numTemperatureEntries; count++) {
+            uint32_t localTemperatureVal = (temperature >> (8 * count)) & 0xff;
+            if (isValidTemperature(localTemperatureVal)) {
+                if (localTemperatureVal > maxTemperature) {
+                    maxTemperature = localTemperatureVal;
+                }
+            }
+        }
+        return maxTemperature;
+    };
+
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::string key;
+
+    // SOC_TEMPERATURES is present in all product families
+    uint64_t socTemperature = 0;
+    key = "SOC_TEMPERATURES";
+    result = pPmt->readValue(key, socTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    // Check max temperature among possible sensors like PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC across SOC_TEMPERATURES
+    uint32_t maxSocTemperature = getMaxTemperature(socTemperature, numSocTemperatureEntries);
+
+    *pTemperature = static_cast<double>(maxSocTemperature);
+
+    return result;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+    double gpuMaxTemperature = 0;
+    uint64_t socTemperature = 0;
+    // Gpu temperature is obtained from GT_TEMP in SOC_TEMPERATURE's bit 0 to 7.
+    std::string key = "SOC_TEMPERATURES";
+    auto result = pPmt->readValue(key, socTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    gpuMaxTemperature = static_cast<double>(socTemperature & 0xff);
+
+    *pTemperature = gpuMaxTemperature;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace Sysman

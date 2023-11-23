@@ -26,11 +26,11 @@ constexpr uint32_t tileMaxTemperature = 0x34;
 constexpr uint8_t computeTempIndex = 8;
 constexpr uint8_t coreTempIndex = 12;
 constexpr uint8_t socTempIndex = 0;
-constexpr uint8_t tempArrForNoSubDevices[19] = {0x12, 0x23, 0x43, 0xde, 0xa3, 0xce, 0x23, 0x11, 0x45, 0x32, 0x67, 0x47, 0xac, 0x21, 0x03, 0x90, 0, 0, 0};
+constexpr uint8_t tempArrForNoSubDevices[19] = {0x09, 0x23, 0x43, 0xde, 0xa3, 0xce, 0x23, 0x11, 0x45, 0x32, 0x67, 0x47, 0xac, 0x21, 0x03, 0x90, 0, 0, 0};
 constexpr uint8_t computeIndexForNoSubDevices = 9;
 constexpr uint8_t gtTempIndexForNoSubDevices = 0;
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
-std::string gpuUpstreamPortPathInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
+static std::string gpuUpstreamPortPathInTemperature = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 const std::string realPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
 const std::string realPathTelem2 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
 const std::string realPathTelem3 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
@@ -51,6 +51,7 @@ struct MockTemperaturePmt : public L0::Sysman::PlatformMonitoringTech {
     ze_result_t mockReadValueResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadCoreTempResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadComputeTempResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadSocTempResult = ZE_RESULT_SUCCESS;
 
     ~MockTemperaturePmt() override {
         rootDeviceTelemNodeIndex = 0;
@@ -112,6 +113,9 @@ struct MockTemperaturePmt : public L0::Sysman::PlatformMonitoringTech {
         }
 
         if (key.compare("SOC_TEMPERATURES") == 0) {
+            if (mockReadSocTempResult != ZE_RESULT_SUCCESS) {
+                return mockReadSocTempResult;
+            }
             val = 0;
             for (uint8_t i = 0; i < sizeof(uint64_t); i++) {
                 val |= (uint64_t)tempArrForNoSubDevices[(socTempIndex) + i] << (i * 8);

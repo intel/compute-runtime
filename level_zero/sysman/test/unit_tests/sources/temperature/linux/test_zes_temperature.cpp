@@ -68,7 +68,7 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
     }
 };
 
-TEST_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetSysmanTemperatureGetThenZeroCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds) {
+HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetSysmanTemperatureGetThenZeroCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds, IsPVC) {
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -107,7 +107,7 @@ HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTe
     }
 }
 
-TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned) {
+HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned, IsPVC) {
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -116,7 +116,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempe
     }
 }
 
-TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned) {
+HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned, IsPVC) {
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -137,7 +137,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileInd
     }
 }
 
-TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsWhenGettingTemperatureThenFailureReturned) {
+HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsWhenGettingTemperatureThenFailureReturned, IsPVC) {
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
 
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
@@ -320,6 +320,16 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupporte
     pPublicLinuxTemperatureImp->setSensorType(ZES_TEMP_SENSORS_MEMORY_MIN);
     double temperature;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPublicLinuxTemperatureImp->getSensorTemperature(&temperature));
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempSensorsMemoryMinSupportThenFalseIsReturned) {
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
+    uint32_t subdeviceId = 0;
+
+    auto pPublicLinuxTemperatureImp = std::make_unique<L0::Sysman::LinuxTemperatureImp>(pOsSysman, onSubdevice, subdeviceId);
+    pPublicLinuxTemperatureImp->setSensorType(ZES_TEMP_SENSORS_MEMORY_MIN);
+    EXPECT_EQ(false, pPublicLinuxTemperatureImp->isTempModuleSupported());
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidateEnumerateRootTelemIndexWhengetRealPathFailsThenFailureReturned) {

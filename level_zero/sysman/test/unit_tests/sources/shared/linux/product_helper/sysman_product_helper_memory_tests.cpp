@@ -13,7 +13,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-struct SysmanProductHelperTest : public SysmanDeviceFixture {
+struct SysmanProductHelperMemoryTest : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
     }
@@ -22,7 +22,7 @@ struct SysmanProductHelperTest : public SysmanDeviceFixture {
     }
 };
 
-HWTEST2_F(SysmanProductHelperTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsPVC) {
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsPVC) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_properties_t properties;
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, static_cast<const L0::Sysman::LinuxSysmanImp *>(pLinuxSysmanImp));
@@ -32,7 +32,7 @@ HWTEST2_F(SysmanProductHelperTest, GivenSysmanProductHelperInstanceWhenCallingMe
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-HWTEST2_F(SysmanProductHelperTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsDG1) {
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsDG1) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_properties_t properties;
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, static_cast<const L0::Sysman::LinuxSysmanImp *>(pLinuxSysmanImp));
@@ -42,7 +42,7 @@ HWTEST2_F(SysmanProductHelperTest, GivenSysmanProductHelperInstanceWhenCallingMe
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-HWTEST2_F(SysmanProductHelperTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsDG2) {
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsDG2) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_mem_properties_t properties;
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, static_cast<const L0::Sysman::LinuxSysmanImp *>(pLinuxSysmanImp));
@@ -52,7 +52,7 @@ HWTEST2_F(SysmanProductHelperTest, GivenSysmanProductHelperInstanceWhenCallingMe
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanProductHelperTest, GivenInvalidProductFamilyWhenCallingProductHelperCreateThenNullPtrIsReturned) {
+TEST_F(SysmanProductHelperMemoryTest, GivenInvalidProductFamilyWhenCallingProductHelperCreateThenNullPtrIsReturned) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(IGFX_UNKNOWN);
     EXPECT_EQ(nullptr, pSysmanProductHelper);
 }

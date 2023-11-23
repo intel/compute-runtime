@@ -20,6 +20,7 @@ namespace Sysman {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
+class SysmanProductHelper;
 class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
@@ -36,15 +37,11 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
 
   private:
     ze_result_t getGlobalMaxTemperature(double *pTemperature);
-    ze_result_t getGlobalMinTemperature(double *pTemperature);
     ze_result_t getGpuMaxTemperature(double *pTemperature);
-    ze_result_t getGpuMinTemperature(double *pTemperature);
     ze_result_t getMemoryMaxTemperature(double *pTemperature);
-    ze_result_t getGlobalMaxTemperatureNoSubDevice(double *pTemperature);
-    ze_result_t getGpuMaxTemperatureNoSubDevice(double *pTemperature);
     uint32_t subdeviceId = 0;
     ze_bool_t isSubdevice = 0;
-    PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
 };
 
 } // namespace Sysman

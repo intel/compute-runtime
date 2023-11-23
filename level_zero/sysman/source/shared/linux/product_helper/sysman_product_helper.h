@@ -19,6 +19,7 @@ namespace Sysman {
 
 class SysmanProductHelper;
 class LinuxSysmanImp;
+class PlatformMonitoringTech;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
 extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
@@ -40,6 +41,12 @@ class SysmanProductHelper {
 
     // Performance
     virtual void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) = 0;
+
+    // temperature
+    virtual ze_result_t getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
+    virtual ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
+    virtual ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
+    virtual bool isMemoryMaxTemperatureSupported() = 0;
 
     virtual ~SysmanProductHelper() = default;
 

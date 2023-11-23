@@ -6,6 +6,9 @@
  */
 
 #pragma once
+
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 
 namespace L0 {
@@ -25,6 +28,12 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Performance
     void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) override;
+
+    // temperature
+    ze_result_t getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
+    ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
+    ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
+    bool isMemoryMaxTemperatureSupported() override;
 
     ~SysmanProductHelperHw() override = default;
 
