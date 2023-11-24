@@ -17,6 +17,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/include/ze_intel_gpu.h"
 
@@ -214,6 +215,104 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     computeCommandQueueDesc.index = numCopyQueues + 2;
     res = device->createCommandQueue(&computeCommandQueueDesc, &hCommandQueue);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+}
+
+HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWithLinkedEngineSetWhenCreatingCommandQueueThenOverrideEngineIndex, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 2;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+
+    auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::LinkedCopy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+            ze_command_queue_handle_t commandQueue = {};
+
+            ze_command_queue_desc_t desc = {};
+            desc.ordinal = ordinal + 1;
+            desc.index = index;
+            ze_result_t res = context->createCommandQueue(deviceImp, &desc, &commandQueue);
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+            EXPECT_NE(nullptr, commandQueue);
+
+            auto queue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueue));
+
+            EXPECT_EQ(engineGroups[expectedCopyOrdinal].engines[newIndex - 1].commandStreamReceiver, queue->csr);
+
+            queue->destroy();
+        }
+    }
+}
+
+HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWithInvalidIndexSetWhenCreatingCommandQueueThenReturnError, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 999;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+
+    auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::LinkedCopy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    ze_command_queue_handle_t commandQueue = {};
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = expectedCopyOrdinal + 1;
+    desc.index = 0;
+    ze_result_t res = context->createCommandQueue(deviceImp, &desc, &commandQueue);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
+}
+
+HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWithMainEngineSetWhenCreatingCommandQueueThenOverrideEngineIndex, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 0;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+
+    auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::Copy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+            ze_command_queue_handle_t commandQueue = {};
+
+            ze_command_queue_desc_t desc = {};
+            desc.ordinal = ordinal + 1;
+            desc.index = index;
+            ze_result_t res = context->createCommandQueue(deviceImp, &desc, &commandQueue);
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+            EXPECT_NE(nullptr, commandQueue);
+
+            auto queue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueue));
+
+            EXPECT_EQ(engineGroups[expectedCopyOrdinal].engines[newIndex].commandStreamReceiver, queue->csr);
+
+            queue->destroy();
+        }
+    }
 }
 
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,

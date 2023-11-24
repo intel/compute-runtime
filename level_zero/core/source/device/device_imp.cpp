@@ -1526,6 +1526,41 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if ((NEO::DebugManager.flags.ForceBcsEngineIndex.get() != -1) && NEO::EngineHelper::isCopyOnlyEngineType(getEngineGroupTypeForOrdinal(ordinal))) {
+        index = static_cast<uint32_t>(NEO::DebugManager.flags.ForceBcsEngineIndex.get());
+
+        constexpr uint32_t invalidOrdinal = std::numeric_limits<uint32_t>::max();
+
+        auto findOrdinal = [&](NEO::EngineGroupType type) -> uint32_t {
+            bool subDeviceCopyEngines = (ordinal >= numEngineGroups);
+            auto &lookupGroup = subDeviceCopyEngines ? this->subDeviceCopyEngineGroups : engineGroups;
+
+            uint32_t ordinal = invalidOrdinal;
+
+            for (uint32_t i = 0; i < lookupGroup.size(); i++) {
+                if (lookupGroup[i].engineGroupType == type) {
+                    ordinal = (i + (subDeviceCopyEngines ? numEngineGroups : 0));
+                    break;
+                }
+            }
+
+            return ordinal;
+        };
+
+        if (index == 0 && getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::Copy) {
+            ordinal = findOrdinal(NEO::EngineGroupType::Copy);
+        } else if (index > 0) {
+            if (getEngineGroupTypeForOrdinal(ordinal) != NEO::EngineGroupType::LinkedCopy) {
+                ordinal = findOrdinal(NEO::EngineGroupType::LinkedCopy);
+            }
+            index--;
+        }
+
+        if (ordinal == invalidOrdinal) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
     if (ordinal < numEngineGroups) {
         auto &engines = engineGroups[ordinal].engines;
         if (index >= engines.size()) {

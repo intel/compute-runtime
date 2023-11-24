@@ -117,6 +117,190 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
     commandQueue->destroy();
 }
 
+HWTEST2_F(CommandQueueCommandsXeHpc, givenDebugFlagWithLinkedEngineSetWhenCreatingCommandQueueThenOverrideEngineIndex, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 2;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    auto &engineGroups = testNeoDevice->getRegularEngineGroups();
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::LinkedCopy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    bool queueCreated = false;
+    bool hasMultiInstancedEngine = false;
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+            bool copyOrdinal = NEO::EngineHelper::isCopyOnlyEngineType(engineGroups[ordinal].engineGroupType);
+            if (engineGroups[ordinal].engines.size() > 1 && copyOrdinal) {
+                hasMultiInstancedEngine = true;
+            }
+
+            ze_command_queue_handle_t commandQueue = {};
+
+            ze_command_queue_desc_t desc = {};
+            desc.ordinal = ordinal;
+            desc.index = index;
+            ze_result_t res = context->createCommandQueue(testL0Device.get(), &desc, &commandQueue);
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+            EXPECT_NE(nullptr, commandQueue);
+
+            auto queue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueue));
+
+            if (copyOrdinal) {
+                EXPECT_EQ(engineGroups[expectedCopyOrdinal].engines[newIndex - 1].commandStreamReceiver, queue->csr);
+                queueCreated = true;
+            } else {
+                EXPECT_EQ(engineGroups[ordinal].engines[index].commandStreamReceiver, queue->csr);
+            }
+
+            queue->destroy();
+        }
+    }
+
+    EXPECT_EQ(hasMultiInstancedEngine, queueCreated);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenDebugFlagWithInvalidIndexSetWhenCreatingCommandQueueThenReturnError, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 999;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    auto &engineGroups = testNeoDevice->getRegularEngineGroups();
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::LinkedCopy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    ze_command_queue_handle_t commandQueue = {};
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = expectedCopyOrdinal;
+    desc.index = 0;
+    ze_result_t res = context->createCommandQueue(testL0Device.get(), &desc, &commandQueue);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenDebugFlagWithNonExistingIndexSetWhenCreatingCommandQueueThenReturnError, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 1;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    auto &engineGroups = testNeoDevice->getRegularEngineGroups();
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::Copy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    ze_command_queue_handle_t commandQueue = {};
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = expectedCopyOrdinal;
+    desc.index = 0;
+    ze_result_t res = context->createCommandQueue(testL0Device.get(), &desc, &commandQueue);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenDebugFlagWithMainEngineSetWhenCreatingCommandQueueThenOverrideEngineIndex, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    const uint32_t newIndex = 0;
+    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    auto &engineGroups = testNeoDevice->getRegularEngineGroups();
+
+    uint32_t expectedCopyOrdinal = 0;
+    for (uint32_t i = 0; i < engineGroups.size(); i++) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::Copy) {
+            expectedCopyOrdinal = i;
+            break;
+        }
+    }
+
+    bool queueCreated = false;
+    bool hasMultiInstancedEngine = false;
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+            bool copyOrdinal = NEO::EngineHelper::isCopyOnlyEngineType(engineGroups[ordinal].engineGroupType);
+            if (engineGroups[ordinal].engines.size() > 1 && copyOrdinal) {
+                hasMultiInstancedEngine = true;
+            }
+
+            ze_command_queue_handle_t commandQueue = {};
+
+            ze_command_queue_desc_t desc = {};
+            desc.ordinal = ordinal;
+            desc.index = index;
+            ze_result_t res = context->createCommandQueue(testL0Device.get(), &desc, &commandQueue);
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+            EXPECT_NE(nullptr, commandQueue);
+
+            auto queue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueue));
+
+            if (copyOrdinal) {
+                EXPECT_EQ(engineGroups[expectedCopyOrdinal].engines[newIndex].commandStreamReceiver, queue->csr);
+                queueCreated = true;
+            } else {
+                EXPECT_EQ(engineGroups[ordinal].engines[index].commandStreamReceiver, queue->csr);
+            }
+
+            queue->destroy();
+        }
+    }
+
+    EXPECT_EQ(hasMultiInstancedEngine, queueCreated);
+}
+
 HWTEST2_F(CommandQueueCommandsXeHpc, givenLinkedCopyEngineOrdinalWhenCreatingThenSetAsCopyOnly, IsXeHpcCore) {
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
