@@ -62,6 +62,8 @@ struct BatchBuffer {
 
 struct CommandBuffer : public IDNode<CommandBuffer> {
     CommandBuffer(Device &device);
+    CommandBuffer &operator=(const CommandBuffer &) = delete;
+    CommandBuffer &operator=(CommandBuffer &&) = delete;
     ~CommandBuffer() override;
     ResidencyContainer surfaces;
     BatchBuffer batchBuffer;
