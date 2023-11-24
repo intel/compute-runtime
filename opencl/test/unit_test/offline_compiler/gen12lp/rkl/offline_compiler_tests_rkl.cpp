@@ -27,3 +27,14 @@ RKLTEST_F(MockOfflineCompilerRklTests, givenRklWhenAppendExtraInternalOptionsThe
     size_t found = internalOptions.find(NEO::CompilerOptions::forceEmuInt32DivRemSP.data());
     EXPECT_NE(std::string::npos, found);
 }
+
+RKLTEST_F(MockOfflineCompilerRklTests, givenRklWhenAppendExtraInternalOptionsThenBindlessModeNotApplied) {
+
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.deviceName = "rkl";
+    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
+    mockOfflineCompiler.appendExtraInternalOptions(internalOptions);
+    size_t found = internalOptions.find(NEO::CompilerOptions::bindlessMode.data());
+    EXPECT_EQ(std::string::npos, found);
+}

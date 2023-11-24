@@ -899,6 +899,9 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     }
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
     CompilerOptions::applyExtraInternalOptions(internalOptions, *compilerProductHelper);
+    if (releaseHelper && !releaseHelper->isBindlessAddressingDisabled()) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode.str());
+    }
 }
 
 void OfflineCompiler::parseDebugSettings() {
