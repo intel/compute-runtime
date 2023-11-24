@@ -1840,7 +1840,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         areMultipleSubDevicesInContext,           // areMultipleSubDevicesInContext
         false,                                    // overrideSurfaceStateBaseAddress
         debuggingEnabled,                         // isDebuggerActive
-        this->doubleSbaWa                         // doubleSbaWa
+        this->doubleSbaWa,                        // doubleSbaWa
+        this->heaplessModeEnabled                 // heaplessModeEnabled
     };
 
     StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, csrCommandStream);

@@ -478,7 +478,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         false,                                              // areMultipleSubDevicesInContext
         false,                                              // overrideSurfaceStateBaseAddress
         isDebuggerActive,                                   // isDebuggerActive
-        args.doubleSbaWa                                    // doubleSbaWa
+        args.doubleSbaWa,                                   // doubleSbaWa
+        args.heaplessModeEnabled                            // heaplessModeEnabled
     };
 
     StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,

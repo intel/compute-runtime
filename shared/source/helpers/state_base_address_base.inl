@@ -23,6 +23,10 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(StateBaseAddressHelperArgs<GfxFamily> &args, NEO::LinearStream &commandStream) {
     StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(args);
 
+    if (args.heaplessModeEnabled) {
+        programHeaplessStateBaseAddress(*args.stateBaseAddressCmd);
+    }
+
     auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     *cmdSpace = *args.stateBaseAddressCmd;
 
@@ -131,6 +135,10 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 template <typename GfxFamily>
 typename GfxFamily::STATE_BASE_ADDRESS *StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(LinearStream &cmdStream) {
     return cmdStream.getSpaceForCmd<typename GfxFamily::STATE_BASE_ADDRESS>();
+}
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::programHeaplessStateBaseAddress(STATE_BASE_ADDRESS &sba) {
 }
 
 template <typename GfxFamily>

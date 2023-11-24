@@ -54,6 +54,7 @@ struct StateBaseAddressHelperArgs {
     bool overrideSurfaceStateBaseAddress = false;
     bool isDebuggerActive = false;
     bool doubleSbaWa = false;
+    bool heaplessModeEnabled = false;
 };
 
 template <typename GfxFamily>
@@ -76,5 +77,7 @@ struct StateBaseAddressHelper {
     static void programBindingTableBaseAddress(LinearStream &commandStream, uint64_t baseAddress, uint32_t sizeInPages, GmmHelper *gmmHelper);
 
     static uint32_t getMaxBindlessSurfaceStates();
+
+    static void programHeaplessStateBaseAddress(STATE_BASE_ADDRESS &sba);
 };
 } // namespace NEO

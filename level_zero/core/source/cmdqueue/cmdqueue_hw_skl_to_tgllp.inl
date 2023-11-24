@@ -88,7 +88,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         false,                                            // areMultipleSubDevicesInContext
         false,                                            // overrideSurfaceStateBaseAddress
         isDebuggerActive,                                 // isDebuggerActive
-        this->doubleSbaWa                                 // doubleSbaWa
+        this->doubleSbaWa,                                // doubleSbaWa
+        this->heaplessModeEnabled                         // this->heaplessModeEnabled
     };
 
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs, commandStream);
