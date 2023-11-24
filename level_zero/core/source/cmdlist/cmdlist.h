@@ -34,7 +34,28 @@ struct Event;
 struct Kernel;
 struct CommandQueue;
 
+enum class RequiredPartitionDim : uint32_t {
+    None = 0,
+    X,
+    Y,
+    Z
+};
+
+enum class RequiredDispatchWalkOrder : uint32_t {
+    None = 0,
+    X,
+    Y,
+    Additional
+};
+
 struct CmdListKernelLaunchParams {
+    static constexpr uint32_t additionalSizeParamNotSet = std::numeric_limits<uint32_t>::max();
+
+    RequiredPartitionDim requiredPartitionDim = RequiredPartitionDim::None;
+    RequiredDispatchWalkOrder requiredDispatchWalkOrder = RequiredDispatchWalkOrder::None;
+    uint32_t additionalSizeParam = additionalSizeParamNotSet;
+    uint32_t numKernelsInSplitLaunch = 0;
+    uint32_t numKernelsExecutedInSplitLaunch = 0;
     bool isIndirect = false;
     bool isPredicate = false;
     bool isCooperative = false;
@@ -43,8 +64,6 @@ struct CmdListKernelLaunchParams {
     bool isDestinationAllocationInSystemMemory = false;
     bool isHostSignalScopeEvent = false;
     bool skipInOrderNonWalkerSignaling = false;
-    uint32_t numKernelsInSplitLaunch = 0;
-    uint32_t numKernelsExecutedInSplitLaunch = 0;
 };
 
 struct CmdListReturnPoint {
