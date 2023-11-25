@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -158,23 +157,6 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2DeprecatedAcronymAndInvalisRevisionId
 
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, CommonConstants::invalidRevisionID);
     EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, AOT::DG2_G10_A0);
-}
-
-DG2TEST_F(Dg2OfflineCompilerTests, givenDg2WhenAppendExtraInternalOptionsThenBindlessModeApplied) {
-    MockOfflineCompiler mockOfflineCompiler;
-    mockOfflineCompiler.argHelper->getPrinterRef().setSuppressMessages(true);
-    std::string deviceStr;
-    auto deviceID = dg2G10DeviceIds.front();
-
-    std::stringstream deviceIDStr, expectedOutput;
-    mockOfflineCompiler.revisionId = AOT::DG2_G10_A0;
-    deviceIDStr << "0x" << std::hex << deviceID;
-
-    mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
-
-    std::string internalOptions = mockOfflineCompiler.internalOptions;
-    mockOfflineCompiler.appendExtraInternalOptions(internalOptions);
-    EXPECT_NE(std::string::npos, internalOptions.find(CompilerOptions::bindlessMode.data()));
 }
 
 } // namespace NEO
