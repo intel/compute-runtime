@@ -36,7 +36,7 @@ class DrmMemoryManagerWithSubDevicesPrelimTest : public ::testing::Test {
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
         memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
@@ -75,7 +75,7 @@ class DrmMemoryManagerLocalMemoryPrelimTest : public ::testing::Test {
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
         memoryManager = new TestedDrmMemoryManager(localMemoryEnabled, false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

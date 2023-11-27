@@ -105,7 +105,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         mock->ioctlCallsCount = 0;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.pushUnique(i);
@@ -155,7 +155,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         mock->ioctlCallsCount = 0;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.pushUnique(i);
@@ -196,7 +196,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         mock->fdToHandleRetVal = -1;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.pushUnique(i);
@@ -236,7 +236,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenMultiRootDeviceEnvironmen
     mock->fdToHandleRetVal = -1;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 
@@ -267,7 +267,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         mock->fdToHandleRetVal = -1;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.pushUnique(i);

@@ -707,7 +707,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, WhenVmBindAvaialableThenMemoryManager
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenNoVmBindSupportInDrmWhenCheckForSupportThenDefaultResidencyHandlerIsReturned) {
     mock->bindAvailable = false;
-    auto handler = DrmMemoryOperationsHandler::create(*mock, 0u);
+    auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
     mock->context.vmBindCalled = 0u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -722,7 +722,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndNoMultiTileWhenC
     DebugManager.flags.CreateMultipleSubDevices.set(1u);
     mock->bindAvailable = false;
 
-    auto handler = DrmMemoryOperationsHandler::create(*mock, 0u);
+    auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
     mock->context.vmBindCalled = 0u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -736,7 +736,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndNoMultiTileWhenC
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDisabledVmBindWhenCreateDrmHandlerThenVmBindIsNotUsed) {
     mock->context.vmBindReturn = 0;
     mock->bindAvailable = false;
-    auto handler = DrmMemoryOperationsHandler::create(*mock, 0u);
+    auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
     mock->context.vmBindCalled = false;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});

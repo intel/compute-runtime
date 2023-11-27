@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -50,7 +51,9 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     if (productHelper.configureHwInfoDrm(hardwareInfo, hardwareInfo, *rootDeviceEnv)) {
         return false;
     }
-    rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
+
+    const bool isCsrHwWithAub = DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_HW_WITH_AUB;
+    rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex, isCsrHwWithAub);
 
     return true;
 }

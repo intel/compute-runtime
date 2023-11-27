@@ -25,7 +25,7 @@ void DrmMemoryManagerBasic::SetUp() {
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
         executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-        executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, i);
+        executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, i, false);
         executionEnvironment.rootDeviceEnvironments[i]->initGmm();
     }
 }
@@ -51,7 +51,7 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
         rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
-        rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
+        rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i, false);
         rootDeviceEnvironment->builtins.reset(new MockBuiltins);
         rootDeviceEnvironment->initGmm();
     }
@@ -135,7 +135,7 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocal
         rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
-        rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
+        rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i, false);
         rootDeviceEnvironment->initGmm();
         i++;
     }
@@ -146,7 +146,7 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocal
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
     mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, *mock));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
     memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));
 
     ASSERT_NE(nullptr, memoryManager);

@@ -43,6 +43,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
+    using CommandStreamReceiver::localMemoryEnabled;
     using CommandStreamReceiver::newResources;
     using CommandStreamReceiver::numClients;
     using CommandStreamReceiver::osContext;
@@ -77,6 +78,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     SubmissionStatus flushTagUpdate() override { return SubmissionStatus::SUCCESS; };
     void updateTagFromWait() override{};
     bool isUpdateTagFromWaitEnabled() override { return false; };
+
+    void writeMemoryAub(aub_stream::AllocationParams &allocationParams) override {
+        writeMemoryAubCalled++;
+    }
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
@@ -206,6 +211,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     int *flushBatchedSubmissionsCallCounter = nullptr;
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
+    uint32_t writeMemoryAubCalled = 0;
     uint32_t makeResidentCalledTimes = 0;
     uint32_t downloadAllocationsCalledCount = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;

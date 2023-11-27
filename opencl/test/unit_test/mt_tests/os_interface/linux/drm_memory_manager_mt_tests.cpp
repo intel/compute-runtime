@@ -40,7 +40,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
     mock->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
@@ -112,7 +112,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
     auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
     mock->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
 

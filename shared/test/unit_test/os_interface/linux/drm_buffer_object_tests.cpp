@@ -231,7 +231,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenValidateHostptrIsCalledThenErr
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
     OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(0u, mock.get()));
@@ -256,7 +256,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
-    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
     OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(0u, mock.get()));
@@ -407,7 +407,7 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
     drm->errnoRetVal = EOPNOTSUPP;
     drm->baseErrno = false;
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
 
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
@@ -436,7 +436,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
     EXPECT_TRUE(drm->isPerContextVMRequired());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
 
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
@@ -480,7 +480,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     drm->latestCreatedVmId = 1;
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
 
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
@@ -538,7 +538,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     drm->latestCreatedVmId = 1;
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
 
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
@@ -590,7 +590,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationFailsThenFenceValueNotGrow) {
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     uint64_t initFenceValue = 10u;
     drm->fenceVal[0] = initFenceValue;
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
@@ -622,7 +622,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsThenFenceValueGrow) {
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     uint64_t initFenceValue = 10u;
     drm->fenceVal[0] = initFenceValue;
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
@@ -654,7 +654,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationFailsThenFenceValueNotGrow) {
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     uint64_t initFenceValue = 10u;
     drm->fenceVal[0] = initFenceValue;
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
@@ -686,7 +686,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsThenFenceValueGrow) {
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     uint64_t initFenceValue = 10u;
     drm->fenceVal[0] = initFenceValue;
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));

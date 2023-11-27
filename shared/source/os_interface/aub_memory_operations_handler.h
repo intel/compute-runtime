@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -30,7 +31,11 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
 
     void setAubManager(aub_stream::AubManager *aubManager);
 
+    bool isAubWritable(GraphicsAllocation &graphicsAllocation, Device *device) const;
+    void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, Device *device);
+
   protected:
+    DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation, Device *device) const;
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
         return std::unique_lock<SpinLock>{lock};
     }
