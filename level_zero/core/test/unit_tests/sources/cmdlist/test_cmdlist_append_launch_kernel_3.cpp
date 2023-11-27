@@ -2104,6 +2104,16 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalkerSignallingAllowedThenReturnTrue, IsAtLeastXeHpcCore) {
+    DebugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->signalScope = 0;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_TRUE(immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get()));
+}
+
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -2144,6 +2154,10 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->signalScope = 0;
 
+    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
+        GTEST_SKIP(); // not supported
+    }
+
     immCmdList->inOrderExecInfo->inOrderDependencyCounter = 1;
 
     EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
@@ -2154,7 +2168,6 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
 
     ASSERT_EQ(2u, immCmdList->flushData.size());
     EXPECT_EQ(2u, immCmdList->inOrderExecInfo->inOrderDependencyCounter);
-
     {
 
         GenCmdList cmdList;
