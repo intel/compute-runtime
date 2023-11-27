@@ -1050,3 +1050,13 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffers
     wddmDirectSubmission.lockInTesting = false;
     th.join();
 }
+
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersThenPrevRingIndexPassedForCompletionUpdate) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.currentRingBuffer = 0;
+    wddmDirectSubmission.previousRingBuffer = 1;
+    wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
+    EXPECT_EQ(wddmDirectSubmission.ringBufferForCompletionFence, wddmDirectSubmission.previousRingBuffer);
+}

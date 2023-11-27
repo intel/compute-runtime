@@ -75,7 +75,7 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
     this->unblockGpu();
     this->currentQueueWorkCount++;
 
-    this->updateTagValueImpl();
+    this->updateTagValueImpl(this->currentRingBuffer);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -124,7 +124,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
     if (this->disableMonitorFence) {
-        updateTagValueImpl();
+        updateTagValueImpl(this->currentRingBuffer);
     }
 }
 
@@ -132,7 +132,7 @@ template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->disableMonitorFence) {
         auto lock = osContextWin->getResidencyController().acquireLock();
-        updateTagValueImpl();
+        updateTagValueImpl(this->previousRingBuffer);
         updateMonitorFenceValueForResidencyList(allocationsForResidency);
     }
 }
@@ -150,7 +150,7 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requir
     }
 
     if (requireMonitorFence) {
-        return this->updateTagValueImpl();
+        return this->updateTagValueImpl(this->currentRingBuffer);
     }
     MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
     return currentFence.currentFenceValue;
@@ -162,12 +162,12 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(b
 }
 
 template <typename GfxFamily, typename Dispatcher>
-uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValueImpl() {
+uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValueImpl(uint32_t completionBufferIndex) {
     MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
 
     currentFence.lastSubmittedFence = currentFence.currentFenceValue;
     currentFence.currentFenceValue++;
-    this->ringBuffers[this->currentRingBuffer].completionFence = currentFence.lastSubmittedFence;
+    this->ringBuffers[completionBufferIndex].completionFence = currentFence.lastSubmittedFence;
 
     return currentFence.lastSubmittedFence;
 }

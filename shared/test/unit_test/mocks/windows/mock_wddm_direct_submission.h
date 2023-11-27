@@ -40,6 +40,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::lastSubmittedThrottle;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
+    using BaseClass::previousRingBuffer;
     using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;
     using BaseClass::ringFence;
@@ -58,7 +59,11 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
         updateMonitorFenceValueForResidencyListCalled++;
         BaseClass::updateMonitorFenceValueForResidencyList(allocationsForResidency);
     }
-
+    uint64_t updateTagValueImpl(uint32_t completionBufferIndex) override {
+        ringBufferForCompletionFence = completionBufferIndex;
+        return BaseClass::updateTagValueImpl(completionBufferIndex);
+    }
     uint32_t updateMonitorFenceValueForResidencyListCalled = 0u;
+    uint32_t ringBufferForCompletionFence = 0u;
 };
 } // namespace NEO
