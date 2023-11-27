@@ -1563,9 +1563,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     auto dstAllocationStruct = getAlignedAllocationData(this->device, dstPtr, dstSize, false);
     auto srcAllocationStruct = getAlignedAllocationData(this->device, srcPtr, srcSize, true);
 
+    UNRECOVERABLE_IF(srcSlicePitch && srcPitch == 0);
     Vec3<size_t> srcSize3 = {srcPitch ? srcPitch : srcRegion->width + srcRegion->originX,
                              srcSlicePitch ? srcSlicePitch / srcPitch : srcRegion->height + srcRegion->originY,
                              srcRegion->depth + srcRegion->originZ};
+    UNRECOVERABLE_IF(dstSlicePitch && dstPitch == 0);
     Vec3<size_t> dstSize3 = {dstPitch ? dstPitch : dstRegion->width + dstRegion->originX,
                              dstSlicePitch ? dstSlicePitch / dstPitch : dstRegion->height + dstRegion->originY,
                              dstRegion->depth + dstRegion->originZ};
