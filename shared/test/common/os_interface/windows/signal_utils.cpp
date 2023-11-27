@@ -11,11 +11,20 @@
 
 #include "gtest/gtest.h"
 
+#include <condition_variable>
 #include <io.h>
 #include <signal.h>
+#include <thread>
 
 std::string lastTest("");
 static int newStdOut = -1;
+
+namespace NEO {
+extern const char *executionName;
+extern unsigned int ultIterationMaxTime;
+} // namespace NEO
+
+std::unique_ptr<std::thread> alarmThread;
 
 LONG WINAPI ultExceptionFilter(
     _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
@@ -49,9 +58,48 @@ int setAbrt(bool enableAbrt) {
 }
 
 int setAlarm(bool enableAlarm) {
+    std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
+
+    if (enableAlarm) {
+        std::string envVar = std::string("NEO_") + NEO::executionName + "_DISABLE_TEST_ALARM";
+        char *envValue = getenv(envVar.c_str());
+        if (envValue != nullptr) {
+            enableAlarm = false;
+            std::cout << "WARNING: SIGALRM handler disabled by environment variable: " << envVar << std::endl;
+        }
+    }
+
+    if (enableAlarm) {
+        std::condition_variable threadStarted;
+        alarmThread = std::make_unique<std::thread>([&]() {
+            auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
+            auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+            if (ultIterationMaxTimeEnv != nullptr) {
+                currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
+            }
+            unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
+            std::cout << "set timeout to: " << alarmTime << std::endl;
+            threadStarted.notify_all();
+            std::this_thread::sleep_for(std::chrono::seconds(alarmTime));
+            printf("timeout on %s\n", lastTest.c_str());
+            abort();
+        });
+
+        std::mutex mtx;
+        std::unique_lock<std::mutex> lock(mtx);
+        threadStarted.wait(lock);
+    }
+
     return 0;
 }
 
 int setSegv(bool enableSegv) {
     return 0;
+}
+
+void cleanupSignals() {
+    if (alarmThread) {
+        alarmThread->detach();
+        alarmThread.reset();
+    }
 }

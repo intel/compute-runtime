@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,3 +12,5 @@ int setAlarm(bool enableAlarm);
 int setSegv(bool enableSegv);
 
 int setAbrt(bool enableAbrt);
+
+void cleanupSignals();

@@ -217,6 +217,7 @@ int main(int argc, char **argv) {
     }
 
     retVal = RUN_ALL_TESTS();
+    cleanupSignals();
 
     if (showTestStats) {
         std::cout << getTestStats() << std::endl;

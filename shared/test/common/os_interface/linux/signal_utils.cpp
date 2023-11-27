@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,3 +131,5 @@ int setSegv(bool enableSegv) {
     }
     return 0;
 }
+
+void cleanupSignals() {}

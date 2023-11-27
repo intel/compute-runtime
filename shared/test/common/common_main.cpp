@@ -421,6 +421,7 @@ int main(int argc, char **argv) {
         Device::createPerformanceCountersFunc = [](Device *) -> std::unique_ptr<NEO::PerformanceCounters> { return {}; };
 
         retVal = RUN_ALL_TESTS();
+        cleanupSignals();
 
         if (showTestStats) {
             std::cout << getTestStats() << std::endl;

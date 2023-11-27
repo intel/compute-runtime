@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
         return sigOut;
 
     retVal = RUN_ALL_TESTS();
+    cleanupSignals();
 
     return retVal;
 }

@@ -215,7 +215,7 @@ BOOL WINAPI wglMakeCurrent(HDC arg1, HGLRC arg2) {
     }
     return (GLboolean)1;
 };
-PROC mockLoader(const char *name) {
+PROC __stdcall mockLoader(const char *name) {
     if (strcmp(name, "realFunction") == 0) {
         return reinterpret_cast<PROC>(*realFunction);
     }
