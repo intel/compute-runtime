@@ -47,10 +47,10 @@ inline constexpr uint32_t testValueGemCreate = 0x8273;
 class DrmMockXe : public DrmMockCustom {
   public:
     DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
-        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(queryMemUsage);
+        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
         xeQueryMemUsage->num_regions = 3;
         xeQueryMemUsage->regions[0] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
+            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             1,                             // instance
             0,                             // padding
             MemoryConstants::pageSize,     // min page size
@@ -58,15 +58,15 @@ class DrmMockXe : public DrmMockCustom {
             MemoryConstants::megaByte      // used size
         };
         xeQueryMemUsage->regions[1] = {
-            XE_MEM_REGION_CLASS_SYSMEM, // class
-            0,                          // instance
-            0,                          // padding
-            MemoryConstants::pageSize,  // min page size
-            MemoryConstants::gigaByte,  // total size
-            MemoryConstants::kiloByte   // used size
+            DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
+            0,                              // instance
+            0,                              // padding
+            MemoryConstants::pageSize,      // min page size
+            MemoryConstants::gigaByte,      // total size
+            MemoryConstants::kiloByte       // used size
         };
         xeQueryMemUsage->regions[2] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
+            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             2,                             // instance
             0,                             // padding
             MemoryConstants::pageSize,     // min page size
@@ -77,25 +77,25 @@ class DrmMockXe : public DrmMockCustom {
         auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(queryGtList.begin());
         xeQueryGtList->num_gt = 3;
         xeQueryGtList->gt_list[0] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // gt_id
-            12500000,              // clock_freq
-            0b100,                 // native mem regions
-            0x011,                 // slow mem regions
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // gt_id
+            12500000,                  // clock_freq
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
         };
         xeQueryGtList->gt_list[1] = {
-            XE_QUERY_GT_TYPE_MEDIA, // type
-            1,                      // gt_id
-            12500000,               // clock freq
-            0b001,                  // native mem regions
-            0x110,                  // slow mem regions
+            DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+            1,                          // gt_id
+            12500000,                   // clock freq
+            0b001,                      // native mem regions
+            0x110,                      // slow mem regions
         };
         xeQueryGtList->gt_list[2] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // gt_id
-            12500000,              // clock freq
-            0b010,                 // native mem regions
-            0x101,                 // slow mem regions
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // gt_id
+            12500000,                  // clock freq
+            0b010,                     // native mem regions
+            0x101,                     // slow mem regions
         };
     }
 
@@ -169,7 +169,7 @@ class DrmMockXe : public DrmMockCustom {
                 }
                 deviceQuery->size = sizeof(queryEngines);
                 break;
-            case DRM_XE_DEVICE_QUERY_MEM_USAGE:
+            case DRM_XE_DEVICE_QUERY_MEM_REGIONS:
                 if (deviceQuery->data) {
                     memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryMemUsage, sizeof(queryMemUsage));
                 }

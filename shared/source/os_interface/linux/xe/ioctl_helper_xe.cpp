@@ -86,15 +86,15 @@ const char *IoctlHelperXe::xeGetClassName(int className) {
 
 const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
     switch (bindOperation) {
-    case XE_VM_BIND_OP_MAP:
+    case DRM_XE_VM_BIND_OP_MAP:
         return "MAP";
-    case XE_VM_BIND_OP_UNMAP:
+    case DRM_XE_VM_BIND_OP_UNMAP:
         return "UNMAP";
-    case XE_VM_BIND_OP_MAP_USERPTR:
+    case DRM_XE_VM_BIND_OP_MAP_USERPTR:
         return "MAP_USERPTR";
-    case XE_VM_BIND_OP_UNMAP_ALL:
+    case DRM_XE_VM_BIND_OP_UNMAP_ALL:
         return "UNMAP ALL";
-    case XE_VM_BIND_OP_PREFETCH:
+    case DRM_XE_VM_BIND_OP_PREFETCH:
         return "PREFETCH";
     }
     return "Unknown operation";
@@ -102,13 +102,13 @@ const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
 
 const char *IoctlHelperXe::xeGetBindFlagsName(int bindFlags) {
     switch (bindFlags) {
-    case XE_VM_BIND_FLAG_READONLY:
+    case DRM_XE_VM_BIND_FLAG_READONLY:
         return "READ_ONLY";
-    case XE_VM_BIND_FLAG_ASYNC:
+    case DRM_XE_VM_BIND_FLAG_ASYNC:
         return "ASYNC";
-    case XE_VM_BIND_FLAG_IMMEDIATE:
+    case DRM_XE_VM_BIND_FLAG_IMMEDIATE:
         return "IMMEDIATE";
-    case XE_VM_BIND_FLAG_NULL:
+    case DRM_XE_VM_BIND_FLAG_NULL:
         return "NULL";
     }
     return "Unknown flag";
@@ -149,27 +149,27 @@ bool IoctlHelperXe::initialize() {
     struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(data.data());
     queryConfig.data = castToUint64(config);
     IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
-    xeLog("XE_QUERY_CONFIG_REV_AND_DEVICE_ID\t%#llx\n",
-          config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID]);
+    xeLog("DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID\t%#llx\n",
+          config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID]);
     xeLog("  REV_ID\t\t\t\t%#llx\n",
-          (config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
+          (config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
     xeLog("  DEVICE_ID\t\t\t\t%#llx\n",
-          config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff);
-    xeLog("XE_QUERY_CONFIG_FLAGS\t\t\t%#llx\n",
-          config->info[XE_QUERY_CONFIG_FLAGS]);
-    xeLog("  XE_QUERY_CONFIG_FLAGS_HAS_VRAM\t%s\n",
-          config->info[XE_QUERY_CONFIG_FLAGS] &
-                  XE_QUERY_CONFIG_FLAGS_HAS_VRAM
+          config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff);
+    xeLog("DRM_XE_QUERY_CONFIG_FLAGS\t\t\t%#llx\n",
+          config->info[DRM_XE_QUERY_CONFIG_FLAGS]);
+    xeLog("  DRM_XE_QUERY_CONFIG_FLAG_HAS_VRAM\t%s\n",
+          config->info[DRM_XE_QUERY_CONFIG_FLAGS] &
+                  DRM_XE_QUERY_CONFIG_FLAG_HAS_VRAM
               ? "ON"
               : "OFF");
-    xeLog("XE_QUERY_CONFIG_MIN_ALIGNMENT\t\t%#llx\n",
-          config->info[XE_QUERY_CONFIG_MIN_ALIGNMENT]);
-    xeLog("XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
-          config->info[XE_QUERY_CONFIG_VA_BITS]);
+    xeLog("DRM_XE_QUERY_CONFIG_MIN_ALIGNMENT\t\t%#llx\n",
+          config->info[DRM_XE_QUERY_CONFIG_MIN_ALIGNMENT]);
+    xeLog("DRM_XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
+          config->info[DRM_XE_QUERY_CONFIG_VA_BITS]);
 
-    chipsetId = config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
-    revId = static_cast<int>((config->info[XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
-    hasVram = config->info[XE_QUERY_CONFIG_FLAGS] & XE_QUERY_CONFIG_FLAGS_HAS_VRAM ? 1 : 0;
+    chipsetId = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
+    revId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
+    hasVram = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_VRAM ? 1 : 0;
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
@@ -279,7 +279,7 @@ inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_query_mem_reg
 }
 
 std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
-    auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_USAGE);
+    auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_REGIONS);
     auto gtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
 
     if (memUsageData.empty() || gtListData.empty()) {
@@ -287,15 +287,15 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     }
 
     MemoryInfo::RegionContainer regionsContainer{};
-    auto xeMemUsageData = reinterpret_cast<drm_xe_query_mem_usage *>(memUsageData.data());
+    auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
     auto xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(gtListData.data());
 
     std::array<drm_xe_query_mem_region *, 64> memoryRegionInstances{};
 
-    for (auto i = 0u; i < xeMemUsageData->num_regions; i++) {
-        auto &region = xeMemUsageData->regions[i];
+    for (auto i = 0u; i < xeMemRegionsData->num_regions; i++) {
+        auto &region = xeMemRegionsData->regions[i];
         memoryRegionInstances[region.instance] = &region;
-        if (region.mem_class == XE_MEM_REGION_CLASS_SYSMEM) {
+        if (region.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
             regionsContainer.push_back(createMemoryRegionFromXeMemRegion(region));
         }
     }
@@ -305,9 +305,9 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     }
 
     for (auto i = 0u; i < xeGtListData->num_gt; i++) {
-        if (xeGtListData->gt_list[i].type != XE_QUERY_GT_TYPE_MEDIA) {
-            uint64_t nativeMemRegions = xeGtListData->gt_list[i].native_mem_regions;
-            auto regionIndex = Math::log2(nativeMemRegions);
+        if (xeGtListData->gt_list[i].type != DRM_XE_QUERY_GT_TYPE_MEDIA) {
+            uint64_t nearMemRegions = xeGtListData->gt_list[i].near_mem_regions;
+            auto regionIndex = Math::log2(nearMemRegions);
             UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
             regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
             xeTimestampFrequency = xeGtListData->gt_list[i].clock_freq;
@@ -467,7 +467,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
 
     auto tileIndex = 0u;
     for (auto gt = 0u; gt < gtIdToTile.size(); gt++) {
-        if (xeGtListData->gt_list[gt].type != XE_QUERY_GT_TYPE_MEDIA) {
+        if (xeGtListData->gt_list[gt].type != DRM_XE_QUERY_GT_TYPE_MEDIA) {
             gtIdToTile[gt] = tileIndex++;
         }
     }
@@ -481,15 +481,15 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
 
         uint32_t gtId = topo->gt_id;
 
-        if (xeGtListData->gt_list[gtId].type != XE_QUERY_GT_TYPE_MEDIA) {
+        if (xeGtListData->gt_list[gtId].type != DRM_XE_QUERY_GT_TYPE_MEDIA) {
             switch (topo->type) {
-            case XE_TOPO_DSS_GEOMETRY:
+            case DRM_XE_TOPO_DSS_GEOMETRY:
                 fillMask(geomDss[gtIdToTile[gtId]], topo);
                 break;
-            case XE_TOPO_DSS_COMPUTE:
+            case DRM_XE_TOPO_DSS_COMPUTE:
                 fillMask(computeDss[gtIdToTile[gtId]], topo);
                 break;
-            case XE_TOPO_EU_PER_DSS:
+            case DRM_XE_TOPO_EU_PER_DSS:
                 fillMask(euDss[gtIdToTile[gtId]], topo);
                 break;
             default:
@@ -612,7 +612,7 @@ int IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, ui
     struct drm_xe_wait_user_fence wait = {};
     wait.addr = addr;
     wait.op = op;
-    wait.flags = DRM_XE_UFENCE_WAIT_SOFT_OP;
+    wait.flags = DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP;
     wait.value = value;
     wait.mask = mask;
     wait.timeout = timeout;
@@ -630,16 +630,16 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
     uint64_t mask;
     switch (dataWidth) {
     case static_cast<uint32_t>(Drm::ValueWidth::U64):
-        mask = DRM_XE_UFENCE_WAIT_U64;
+        mask = DRM_XE_UFENCE_WAIT_MASK_U64;
         break;
     case static_cast<uint32_t>(Drm::ValueWidth::U32):
-        mask = DRM_XE_UFENCE_WAIT_U32;
+        mask = DRM_XE_UFENCE_WAIT_MASK_U32;
         break;
     case static_cast<uint32_t>(Drm::ValueWidth::U16):
-        mask = DRM_XE_UFENCE_WAIT_U16;
+        mask = DRM_XE_UFENCE_WAIT_MASK_U16;
         break;
     default:
-        mask = DRM_XE_UFENCE_WAIT_U8;
+        mask = DRM_XE_UFENCE_WAIT_MASK_U8;
         break;
     }
     if (timeout == -1) {
@@ -647,7 +647,7 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
         timeout = TimeoutControls::maxTimeout;
     }
     if (address) {
-        return xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_GTE, address, value, timeout);
+        return xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout);
     }
     return 0;
 }
@@ -714,7 +714,7 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
                       completionGpuAddress, counterValue, engine);
 
                 struct drm_xe_sync sync[1] = {};
-                sync[0].flags = DRM_XE_SYNC_USER_FENCE | DRM_XE_SYNC_SIGNAL;
+                sync[0].flags = DRM_XE_SYNC_FLAG_USER_FENCE | DRM_XE_SYNC_FLAG_SIGNAL;
                 sync[0].addr = completionGpuAddress;
                 sync[0].timeline_value = counterValue;
                 struct drm_xe_exec exec = {};
@@ -883,9 +883,9 @@ int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
 
     switch (drmParam) {
     case DrmParam::MemoryClassDevice:
-        return XE_MEM_REGION_CLASS_VRAM;
+        return DRM_XE_MEM_REGION_CLASS_VRAM;
     case DrmParam::MemoryClassSystem:
-        return XE_MEM_REGION_CLASS_SYSMEM;
+        return DRM_XE_MEM_REGION_CLASS_SYSMEM;
     case DrmParam::EngineClassRender:
         return DRM_XE_ENGINE_CLASS_RENDER;
     case DrmParam::EngineClassCopy:
@@ -1067,10 +1067,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::GemVmCreate: {
         GemVmControl *d = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_create args = {};
-        args.flags = DRM_XE_VM_CREATE_ASYNC_DEFAULT |
-                     DRM_XE_VM_CREATE_COMPUTE_MODE;
+        args.flags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
+                     DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE;
         if (drm.hasPageFaultSupport()) {
-            args.flags |= DRM_XE_VM_CREATE_FAULT_MODE;
+            args.flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         }
         ret = IoctlHelper::ioctl(request, &args);
         d->vmId = ret ? 0 : args.vm_id;
@@ -1238,7 +1238,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     if (index != invalidIndex) {
 
         drm_xe_sync sync[1] = {};
-        sync[0].flags = DRM_XE_SYNC_USER_FENCE | DRM_XE_SYNC_SIGNAL;
+        sync[0].flags = DRM_XE_SYNC_FLAG_USER_FENCE | DRM_XE_SYNC_FLAG_SIGNAL;
         auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.extensions);
         UNRECOVERABLE_IF(!xeBindExtUserFence);
         UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
@@ -1252,19 +1252,19 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         bind.syncs = reinterpret_cast<uintptr_t>(&sync);
         bind.bind.range = vmBindParams.length;
         bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
-        bind.bind.flags = XE_VM_BIND_FLAG_ASYNC;
+        bind.bind.flags = DRM_XE_VM_BIND_FLAG_ASYNC;
         bind.bind.obj_offset = vmBindParams.offset;
 
         if (isBind) {
-            bind.bind.op = XE_VM_BIND_OP_MAP;
+            bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
             bind.bind.obj = vmBindParams.handle;
             if (bindInfo[index].handle & XE_USERPTR_FAKE_FLAG) {
-                bind.bind.op = XE_VM_BIND_OP_MAP_USERPTR;
+                bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
                 bind.bind.obj = 0;
                 bind.bind.obj_offset = bindInfo[index].userptr;
             }
         } else {
-            bind.bind.op = XE_VM_BIND_OP_UNMAP;
+            bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
             bind.bind.obj = 0;
             if (bindInfo[index].handle & XE_USERPTR_FAKE_FLAG) {
                 bind.bind.obj_offset = bindInfo[index].userptr;
@@ -1293,7 +1293,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             return ret;
         }
 
-        return xeWaitUserFence(DRM_XE_UFENCE_WAIT_U64, DRM_XE_UFENCE_WAIT_EQ,
+        return xeWaitUserFence(DRM_XE_UFENCE_WAIT_MASK_U64, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
                                sync[0].timeline_value, XE_ONE_SEC);
     }

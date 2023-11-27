@@ -314,8 +314,8 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     // Default no translation:
     verifyDrmGetParamValue(static_cast<int>(DrmParam::ExecRender), DrmParam::ExecRender);
     // test exception:
-    verifyDrmGetParamValue(XE_MEM_REGION_CLASS_VRAM, DrmParam::MemoryClassDevice);
-    verifyDrmGetParamValue(XE_MEM_REGION_CLASS_SYSMEM, DrmParam::MemoryClassSystem);
+    verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_VRAM, DrmParam::MemoryClassDevice);
+    verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_SYSMEM, DrmParam::MemoryClassSystem);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_RENDER, DrmParam::EngineClassRender);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COPY, DrmParam::EngineClassCopy);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_VIDEO_DECODE, DrmParam::EngineClassVideo);
@@ -459,17 +459,17 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeClassName("vecs", DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE);
     verifyXeClassName("ccs", DRM_XE_ENGINE_CLASS_COMPUTE);
 
-    verifyXeOperationBindName("MAP", XE_VM_BIND_OP_MAP);
-    verifyXeOperationBindName("UNMAP", XE_VM_BIND_OP_UNMAP);
-    verifyXeOperationBindName("MAP_USERPTR", XE_VM_BIND_OP_MAP_USERPTR);
-    verifyXeOperationBindName("UNMAP ALL", XE_VM_BIND_OP_UNMAP_ALL);
-    verifyXeOperationBindName("PREFETCH", XE_VM_BIND_OP_PREFETCH);
+    verifyXeOperationBindName("MAP", DRM_XE_VM_BIND_OP_MAP);
+    verifyXeOperationBindName("UNMAP", DRM_XE_VM_BIND_OP_UNMAP);
+    verifyXeOperationBindName("MAP_USERPTR", DRM_XE_VM_BIND_OP_MAP_USERPTR);
+    verifyXeOperationBindName("UNMAP ALL", DRM_XE_VM_BIND_OP_UNMAP_ALL);
+    verifyXeOperationBindName("PREFETCH", DRM_XE_VM_BIND_OP_PREFETCH);
     verifyXeOperationBindName("Unknown operation", -1);
 
-    verifyXeFlagsBindName("READ_ONLY", XE_VM_BIND_FLAG_READONLY);
-    verifyXeFlagsBindName("ASYNC", XE_VM_BIND_FLAG_ASYNC);
-    verifyXeFlagsBindName("IMMEDIATE", XE_VM_BIND_FLAG_IMMEDIATE);
-    verifyXeFlagsBindName("NULL", XE_VM_BIND_FLAG_NULL);
+    verifyXeFlagsBindName("READ_ONLY", DRM_XE_VM_BIND_FLAG_READONLY);
+    verifyXeFlagsBindName("ASYNC", DRM_XE_VM_BIND_FLAG_ASYNC);
+    verifyXeFlagsBindName("IMMEDIATE", DRM_XE_VM_BIND_FLAG_IMMEDIATE);
+    verifyXeFlagsBindName("NULL", DRM_XE_VM_BIND_FLAG_NULL);
     verifyXeFlagsBindName("Unknown flag", -1);
 
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_RENDER", DRM_XE_ENGINE_CLASS_RENDER);
@@ -539,17 +539,17 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     {
         GemVmControl test = {};
         drm.pageFaultSupported = false;
-        uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_ASYNC_DEFAULT |
-                                         DRM_XE_VM_CREATE_COMPUTE_MODE;
+        uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
+                                         DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
         EXPECT_EQ(test.flags, expectedVmCreateFlags);
 
         drm.pageFaultSupported = true;
-        expectedVmCreateFlags = DRM_XE_VM_CREATE_ASYNC_DEFAULT |
-                                DRM_XE_VM_CREATE_COMPUTE_MODE |
-                                DRM_XE_VM_CREATE_FAULT_MODE;
+        expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
+                                DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE |
+                                DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
@@ -686,9 +686,9 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
 
     uint16_t tileId = 0;
     for (auto gtId = 0u; gtId < 3u; gtId++) {
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
     }
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
@@ -733,9 +733,9 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
 
     uint16_t tileId = 0;
     for (auto gtId = 0u; gtId < 3u; gtId++) {
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(gtId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
     }
 
     DrmQueryTopologyData topologyData{};
@@ -784,20 +784,20 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
     auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm.queryGtList.begin());
     xeQueryGtList->num_gt = 1;
     xeQueryGtList->gt_list[0] = {
-        XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                      // gt_id
-        12500000,               // clock freq
-        0b100,                  // native mem regions
-        0x011,                  // slow mem regions
+        DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // gt_id
+        12500000,                   // clock freq
+        0b100,                      // native mem regions
+        0x011,                      // slow mem regions
     };
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
     uint16_t tileId = 0;
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
 
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
@@ -829,40 +829,40 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
     auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm.queryGtList.begin());
     xeQueryGtList->num_gt = 4;
     xeQueryGtList->gt_list[0] = {
-        XE_QUERY_GT_TYPE_MAIN, // type
-        0,                     // gt_id
-        12500000,              // clock freq
-        0b100,                 // native mem regions
-        0x011,                 // slow mem regions
+        DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // gt_id
+        12500000,                  // clock freq
+        0b100,                     // native mem regions
+        0x011,                     // slow mem regions
     };
     xeQueryGtList->gt_list[1] = {
-        XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                      // gt_id
-        12500000,               // clock freq
-        0b100,                  // native mem regions
-        0x011,                  // slow mem regions
+        DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // gt_id
+        12500000,                   // clock freq
+        0b100,                      // native mem regions
+        0x011,                      // slow mem regions
     };
     xeQueryGtList->gt_list[2] = {
-        XE_QUERY_GT_TYPE_MAIN, // type
-        0,                     // gt_id
-        12500000,              // clock freq
-        0b010,                 // native mem regions
-        0x101,                 // slow mem regions
+        DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // gt_id
+        12500000,                  // clock freq
+        0b010,                     // native mem regions
+        0x101,                     // slow mem regions
     };
     xeQueryGtList->gt_list[3] = {
-        XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                      // gt_id
-        12500000,               // clock freq
-        0b001,                  // native mem regions
-        0x100,                  // slow mem regions
+        DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // gt_id
+        12500000,                   // clock freq
+        0b001,                      // native mem regions
+        0x100,                      // slow mem regions
     };
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     for (auto tileId = 0; tileId < 4; tileId++) {
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
     }
 
     DrmQueryTopologyData topologyData{};
@@ -890,10 +890,10 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
 
 struct DrmMockXe2T : public DrmMockXe {
     DrmMockXe2T(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {
-        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(queryMemUsage);
+        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
         xeQueryMemUsage->num_regions = 3;
         xeQueryMemUsage->regions[0] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
+            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             1,                             // instance
             0,                             // padding
             MemoryConstants::pageSize,     // min page size
@@ -901,15 +901,15 @@ struct DrmMockXe2T : public DrmMockXe {
             MemoryConstants::megaByte      // used size
         };
         xeQueryMemUsage->regions[1] = {
-            XE_MEM_REGION_CLASS_SYSMEM, // class
-            0,                          // instance
-            0,                          // padding
-            MemoryConstants::pageSize,  // min page size
-            MemoryConstants::gigaByte,  // total size
-            MemoryConstants::kiloByte   // used size
+            DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
+            0,                              // instance
+            0,                              // padding
+            MemoryConstants::pageSize,      // min page size
+            MemoryConstants::gigaByte,      // total size
+            MemoryConstants::kiloByte       // used size
         };
         xeQueryMemUsage->regions[2] = {
-            XE_MEM_REGION_CLASS_VRAM,      // class
+            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             2,                             // instance
             0,                             // padding
             MemoryConstants::pageSize,     // min page size
@@ -920,18 +920,18 @@ struct DrmMockXe2T : public DrmMockXe {
         auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(queryGtList.begin());
         xeQueryGtList->num_gt = 2;
         xeQueryGtList->gt_list[0] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // gt_id
-            12500000,              // clock freq
-            0b100,                 // native mem regions
-            0x011,                 // slow mem regions
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // gt_id
+            12500000,                  // clock freq
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
         };
         xeQueryGtList->gt_list[1] = {
-            XE_QUERY_GT_TYPE_MAIN, // type
-            0,                     // gt_id
-            12500000,              // clock freq
-            0b010,                 // native mem regions
-            0x101,                 // slow mem regions
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // gt_id
+            12500000,                  // clock freq
+            0b010,                     // native mem regions
+            0x101,                     // slow mem regions
         };
     }
 };
@@ -945,9 +945,9 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
 
     // symetric tiles
     for (uint16_t tileId = 0; tileId < 2u; tileId++) {
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
     }
 
     DrmQueryTopologyData topologyData{};
@@ -1000,14 +1000,14 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
 
     // half dss disabled on tile 0
     uint16_t tileId = 0;
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0x0, 0x0, 0x0, 0x0});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0x0, 0x0, 0x0, 0x0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
 
     tileId = 1;
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
-    drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
 
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
@@ -1068,9 +1068,9 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
         // even dss disabled
         uint8_t data = 0b1010'1010;
 
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_DSS_COMPUTE, 8, {data, data, data, data, data, data, data, data});
-        drm.addMockedQueryTopologyData(tileId, XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {data, data, data, data, data, data, data, data});
+        drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
     }
 
     DrmQueryTopologyData topologyData{};
@@ -1261,17 +1261,17 @@ TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered
     EXPECT_NE(nullptr, memoryInfo);
 
     auto memoryClassInstance0 = memoryInfo->getMemoryRegionClassAndInstance(0, *defaultHwInfo);
-    EXPECT_EQ(static_cast<uint16_t>(XE_MEM_REGION_CLASS_SYSMEM), memoryClassInstance0.memoryClass);
+    EXPECT_EQ(static_cast<uint16_t>(DRM_XE_MEM_REGION_CLASS_SYSMEM), memoryClassInstance0.memoryClass);
     EXPECT_EQ(0u, memoryClassInstance0.memoryInstance);
     EXPECT_EQ(MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0));
 
     auto memoryClassInstance1 = memoryInfo->getMemoryRegionClassAndInstance(0b01, *defaultHwInfo);
-    EXPECT_EQ(static_cast<uint16_t>(XE_MEM_REGION_CLASS_VRAM), memoryClassInstance1.memoryClass);
+    EXPECT_EQ(static_cast<uint16_t>(DRM_XE_MEM_REGION_CLASS_VRAM), memoryClassInstance1.memoryClass);
     EXPECT_EQ(2u, memoryClassInstance1.memoryInstance);
     EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b01));
 
     auto memoryClassInstance2 = memoryInfo->getMemoryRegionClassAndInstance(0b10, *defaultHwInfo);
-    EXPECT_EQ(static_cast<uint16_t>(XE_MEM_REGION_CLASS_VRAM), memoryClassInstance2.memoryClass);
+    EXPECT_EQ(static_cast<uint16_t>(DRM_XE_MEM_REGION_CLASS_VRAM), memoryClassInstance2.memoryClass);
     EXPECT_EQ(1u, memoryClassInstance2.memoryInstance);
     EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b10));
 
@@ -1308,7 +1308,7 @@ TEST(IoctlHelperXeTest, givenNoMemoryRegionsWhenCreatingMemoryInfoThenMemoryInfo
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
-    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_usage *>(drm.queryMemUsage);
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm.queryMemUsage);
     xeQueryMemUsage->num_regions = 0u;
     auto memoryInfo = xeIoctlHelper->createMemoryInfo();
     EXPECT_EQ(nullptr, memoryInfo);
@@ -1402,10 +1402,10 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         auto &waitUserFence = drm.waitUserFenceInputs[0];
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_EQ), waitUserFence.op);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_SOFT_OP), waitUserFence.flags);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP), waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
-        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_U64), waitUserFence.mask);
+        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_MASK_U64), waitUserFence.mask);
         EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.num_engines);
         EXPECT_EQ(0u, waitUserFence.instances);
@@ -1426,10 +1426,10 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         auto &waitUserFence = drm.waitUserFenceInputs[0];
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_EQ), waitUserFence.op);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_SOFT_OP), waitUserFence.flags);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP), waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
-        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_U64), waitUserFence.mask);
+        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_MASK_U64), waitUserFence.mask);
         EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.num_engines);
         EXPECT_EQ(0u, waitUserFence.instances);

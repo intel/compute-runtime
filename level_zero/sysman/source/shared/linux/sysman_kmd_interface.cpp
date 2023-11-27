@@ -224,17 +224,17 @@ int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup
 
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
-        config = XE_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        config = DRM_XE_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_COMPUTE_ALL:
     case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = XE_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        config = DRM_XE_PMU_RENDER_GROUP_BUSY(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_COPY_ALL:
-        config = XE_PMU_COPY_GROUP_BUSY(subDeviceId);
+        config = DRM_XE_PMU_COPY_GROUP_BUSY(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = XE_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        config = DRM_XE_PMU_MEDIA_GROUP_BUSY(subDeviceId);
         break;
     default:
         break;
