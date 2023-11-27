@@ -111,6 +111,8 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler_create.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler_with_aub_dump.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_allocations_container.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_allocations_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller.cpp

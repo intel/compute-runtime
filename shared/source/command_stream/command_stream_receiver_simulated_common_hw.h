@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/memory_banks.h"
 
 #include "aub_mapper_common.h"
@@ -20,7 +21,6 @@ struct AubStream;
 namespace NEO {
 class AddressMapper;
 class GraphicsAllocation;
-class HardwareContextController;
 template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
   protected:
@@ -59,6 +59,9 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) = 0;
     virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
+    void writeMemoryAub(aub_stream::AllocationParams &allocationParams) override {
+        hardwareContextController->writeMemory(allocationParams);
+    }
 
     virtual void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool isAubWritable(GraphicsAllocation &graphicsAllocation) const = 0;

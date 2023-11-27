@@ -23,6 +23,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_file_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h

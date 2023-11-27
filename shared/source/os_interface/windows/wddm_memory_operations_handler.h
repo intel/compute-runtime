@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 
 namespace NEO {
 
+struct RootDeviceEnvironment;
 class Wddm;
 class WddmResidentAllocationsContainer;
 
@@ -19,6 +20,8 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     WddmMemoryOperationsHandler(Wddm *wddm);
     ~WddmMemoryOperationsHandler() override;
+
+    static std::unique_ptr<WddmMemoryOperationsHandler> create(Wddm *wddm, RootDeviceEnvironment *rootDeviceEnvironment, bool withAubDump);
 
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;

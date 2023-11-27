@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 
 namespace NEO {
 class OsContextLinux;
+struct RootDeviceEnvironment;
 class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
   public:
     DrmMemoryOperationsHandlerDefault(uint32_t rootDeviceIndex);
+    DrmMemoryOperationsHandlerDefault(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : DrmMemoryOperationsHandlerDefault(rootDeviceIndex) {}
     ~DrmMemoryOperationsHandlerDefault() override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;

@@ -16,6 +16,8 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/spinlock.h"
 
+#include "aubstream/allocation_params.h"
+
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -245,6 +247,7 @@ class CommandStreamReceiver {
     virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation) { return writeMemory(gfxAllocation, false, 0, 0); }
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) { return false; }
+    virtual void writeMemoryAub(aub_stream::AllocationParams &allocationParams){};
 
     virtual bool isMultiOsContextCapable() const = 0;
 

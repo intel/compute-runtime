@@ -312,7 +312,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         mock->setupIoctlHelper(hwInfo->platform.eProductFamily);
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
-        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
         executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
         mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
@@ -425,7 +425,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();

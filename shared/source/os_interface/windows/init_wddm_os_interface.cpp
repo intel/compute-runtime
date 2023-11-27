@@ -21,7 +21,10 @@ bool initWddmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, RootDeviceEnv
     if (!wddm->init()) {
         return false;
     }
-    rootDeviceEnv->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+
+    const bool isCsrHwWithAub = DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_HW_WITH_AUB;
+    rootDeviceEnv->memoryOperationsInterface = WddmMemoryOperationsHandler::create(wddm, rootDeviceEnv, isCsrHwWithAub);
+
     return true;
 }
 } // namespace NEO
