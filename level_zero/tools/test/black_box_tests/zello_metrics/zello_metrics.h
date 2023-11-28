@@ -11,7 +11,9 @@
 #include <level_zero/zes_api.h>
 #include <level_zero/zet_api.h>
 
+#include <functional>
 #include <iostream>
+#include <map>
 #include <vector>
 
 #define VALIDATECALL(myZeCall)                  \
@@ -32,6 +34,19 @@
             std::terminate();                                                  \
         }                                                                      \
     } while (0);
+
+#define ZELLO_METRICS_ADD_TEST(x) \
+    static auto x##add = ZelloMetricsTestList::get().add(#x, x);
+
+class ZelloMetricsTestList {
+  public:
+    static bool add(std::string testName, std::function<bool()> testFunction);
+    static ZelloMetricsTestList &get();
+    static std::map<std::string, std::function<bool()>> &getTests();
+
+  protected:
+    static std::map<std::string, std::function<bool()>> tests;
+};
 
 class SystemParameter {
 
