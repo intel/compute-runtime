@@ -9,6 +9,7 @@
 
 #include <level_zero/ze_api.h>
 
+#include <bitset>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -234,5 +235,9 @@ struct CommandHandler {
     ze_result_t synchronize();
     ze_result_t destroy();
 };
+
+using TestBitMask = std::bitset<32>;
+
+TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue);
 
 } // namespace LevelZeroBlackBoxTests

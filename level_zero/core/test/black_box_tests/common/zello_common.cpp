@@ -619,4 +619,18 @@ ze_result_t CommandHandler::destroy() {
     return result;
 }
 
+TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue) {
+    uint32_t value = static_cast<uint32_t>(getParamValue(argc, argv, "-m", "-mask", static_cast<int>(defaultValue)));
+    std::cerr << "Test mask ";
+    if (value != defaultValue) {
+        std::cerr << "override ";
+    } else {
+        std::cerr << "default ";
+    }
+    TestBitMask bitValue(value);
+    std::cerr << "value 0b" << bitValue << std::endl;
+
+    return bitValue;
+}
+
 } // namespace LevelZeroBlackBoxTests

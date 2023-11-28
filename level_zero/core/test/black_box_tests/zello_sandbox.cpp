@@ -8,7 +8,6 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-#include <bitset>
 #include <cstring>
 #include <sstream>
 
@@ -565,22 +564,6 @@ std::string testEventSyncForMultiTileAndCopy(bool immediate, bool tsEvent) {
     return testStream.str();
 }
 
-using TestBitMask = std::bitset<32>;
-
-TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue) {
-    uint32_t value = static_cast<uint32_t>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-m", "-mask", static_cast<int>(defaultValue)));
-    std::cerr << "Test mask ";
-    if (value != defaultValue) {
-        std::cerr << "override ";
-    } else {
-        std::cerr << "default ";
-    }
-    TestBitMask bitValue(value);
-    std::cerr << "value 0b" << bitValue << std::endl;
-
-    return bitValue;
-}
-
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMemoryTransfer5x = 0u;
     constexpr uint32_t bitNumberTestEventSyncForMultiTileAndCopy = 1u;
@@ -592,7 +575,7 @@ int main(int argc, char *argv[]) {
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     bool asyncMode = !LevelZeroBlackBoxTests::isSyncQueueEnabled(argc, argv);
     bool immediateFirst = LevelZeroBlackBoxTests::isImmediateFirst(argc, argv);
-    TestBitMask testMask = getTestMask(argc, argv, std::numeric_limits<uint32_t>::max());
+    LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, std::numeric_limits<uint32_t>::max());
 
     ze_context_handle_t context = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
