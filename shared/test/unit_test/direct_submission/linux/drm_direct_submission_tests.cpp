@@ -943,9 +943,9 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
     EXPECT_EQ(drmDirectSubmission.ringBuffers[prevRingBufferIndex].completionFence, newCompletionFenceValue + 1);
 }
 
-HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenGettingDefaultInputMonitorFencePolicyThenDefaultIsFalse) {
+HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenGettingDefaultInputMonitorFencePolicyThenDefaultIsTrue) {
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    EXPECT_FALSE(drmDirectSubmission.inputMonitorFenceDispatchRequirement);
+    EXPECT_TRUE(drmDirectSubmission.inputMonitorFenceDispatchRequirement);
 }
 
 HWTEST_F(DrmDirectSubmissionTest,

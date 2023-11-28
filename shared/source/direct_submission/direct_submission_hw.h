@@ -246,6 +246,6 @@ class DirectSubmissionHw {
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
-    bool inputMonitorFenceDispatchRequirement = false;
+    bool inputMonitorFenceDispatchRequirement = true;
 };
 } // namespace NEO
