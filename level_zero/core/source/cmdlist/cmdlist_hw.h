@@ -250,10 +250,10 @@ struct CommandListCoreFamily : public CommandListImp {
                                                      const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                      Event *signalEvent);
 
-    MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
-                                                              const ze_group_count_t &threadGroupDimensions,
-                                                              Event *event,
-                                                              const CmdListKernelLaunchParams &launchParams);
+    virtual ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
+                                                     const ze_group_count_t &threadGroupDimensions,
+                                                     Event *event,
+                                                     const CmdListKernelLaunchParams &launchParams);
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelSplit(Kernel *kernel,
                                                          const ze_group_count_t &threadGroupDimensions,
                                                          Event *event,
