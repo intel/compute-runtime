@@ -138,21 +138,6 @@ HWTEST2_F(AILTests, givenPreGen12AndAndProcessNameIsNotResolveWhenApplyWithDavin
     EXPECT_TRUE(rtTable.hostPtrTrackingEnabled);
 }
 
-HWTEST_F(AILTests, GivenPlatformHasNoAilAvailableWhenAilIsEnabledThenAilInitializationReturnsTrue) {
-    DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.EnableAIL.set(true);
-
-    HardwareInfo hwInfo{};
-    hwInfo.platform.eProductFamily = productFamily;
-    hwInfo.platform.eRenderCoreFamily = renderCoreFamily;
-
-    NEO::MockExecutionEnvironment executionEnvironment{&hwInfo, true, 1};
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    rootDeviceEnvironment->ailConfiguration.reset(nullptr);
-
-    EXPECT_TRUE(rootDeviceEnvironment->initAilConfiguration());
-}
-
 HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, IsAtLeastGen9) {
     AILWhitebox<productFamily> ail;
     ail.processName = "other";

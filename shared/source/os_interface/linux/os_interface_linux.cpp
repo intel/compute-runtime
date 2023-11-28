@@ -52,9 +52,6 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     }
     rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
 
-    [[maybe_unused]] bool result = rootDeviceEnv->initAilConfiguration();
-    DEBUG_BREAK_IF(!result);
-
     return true;
 }
 

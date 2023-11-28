@@ -37,6 +37,12 @@ bool MockRootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hw
     }
     return RootDeviceEnvironment::initOsInterface(std::move(hwDeviceId), rootDeviceIndex);
 }
+bool MockRootDeviceEnvironment::initAilConfiguration() {
+    if (ailInitializationResult.has_value()) {
+        return *ailInitializationResult;
+    } else
+        return RootDeviceEnvironment::initAilConfiguration();
+}
 
 MockRootDeviceEnvironment::~MockRootDeviceEnvironment() {
     if (initOsInterfaceExpectedCallCount) {

@@ -174,3 +174,12 @@ TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesFailsForAl
 
     EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments.size());
 }
+
+TEST_F(DeviceFactoryTests, givenFailedAilInitializationResultWhenPrepareDeviceEnvironmentsIsCalledThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto mockRootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    mockRootDeviceEnvironment->ailInitializationResult = false;
+
+    bool res = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_FALSE(res);
+}

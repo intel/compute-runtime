@@ -24,6 +24,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -485,6 +486,43 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnab
     ASSERT_FALSE(executionEnvironment.isFP64EmulationEnabled());
     executionEnvironment.setFP64EmulationEnabled();
     EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
+}
+
+TEST(ExecutionEnvironmentWithAILTests, whenAILConfigurationIsNullptrAndEnableAILFlagIsTrueWhenInitializingAILThenReturnFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableAIL.set(true);
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->ailInitializationResult = {};
+    rootDeviceEnvironment->ailConfiguration.reset(nullptr);
+
+    EXPECT_FALSE(rootDeviceEnvironment->initAilConfiguration());
+}
+
+TEST(ExecutionEnvironmentWithAILTests, whenPlatformHasNoAILHelperAvailableAndEnableAILFlagIsFalseWhenInitializingAILThenReturnTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableAIL.set(false);
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->ailInitializationResult = {};
+    rootDeviceEnvironment->ailConfiguration.reset(nullptr);
+
+    EXPECT_TRUE(rootDeviceEnvironment->initAilConfiguration());
+}
+
+TEST(ExecutionEnvironmentWithAILTests, whenAILConfigurationFailsOnInitProcessExecutableNameThenAILInitializationReturnFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->ailInitializationResult = {};
+
+    rootDeviceEnvironment->ailConfiguration.reset(new MockAILConfiguration());
+    auto mockAILConfiguration = static_cast<MockAILConfiguration *>(rootDeviceEnvironment->ailConfiguration.get());
+    mockAILConfiguration->initProcessExecutableNameResult = false;
+    ASSERT_NE(nullptr, rootDeviceEnvironment->ailConfiguration);
+
+    EXPECT_FALSE(rootDeviceEnvironment->initAilConfiguration());
 }
 
 TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithDefaultDeviceHierarchyThenExecutionEnvironmentIsInitializedCorrectly) {

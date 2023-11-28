@@ -17,14 +17,8 @@ using RootDeviceEnvironmentTests = ::testing::Test;
 HWTEST2_F(RootDeviceEnvironmentTests, givenRootDeviceEnvironmentWhenAILInitProcessExecutableNameReturnsFailedThenInitAilConfigurationReturnsFail, IsDG1) {
     MockExecutionEnvironment executionEnvironment{};
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+    rootDeviceEnvironment->ailInitializationResult = false;
 
-    class AILDG1 : public AILConfigurationHw<productFamily> {
-      public:
-        bool initProcessExecutableName() override {
-            return false;
-        }
-    };
-    rootDeviceEnvironment->ailConfiguration.reset(new AILDG1());
     EXPECT_EQ(false, rootDeviceEnvironment->initAilConfiguration());
 }
 } // namespace NEO

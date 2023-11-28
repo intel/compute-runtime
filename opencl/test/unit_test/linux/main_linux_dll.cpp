@@ -7,7 +7,6 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -62,15 +61,13 @@ class DrmTestsFixture {
         if (deviceDescriptorTable[0].deviceId == 0) {
             GTEST_SKIP();
         }
-
-        executionEnvironment.prepareRootDeviceEnvironments(1);
-        rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
+        mockRootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(mockExecutionEnvironment.rootDeviceEnvironments[0].get());
     }
 
     void tearDown() {
     }
-    ExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
+    MockExecutionEnvironment mockExecutionEnvironment;
+    MockRootDeviceEnvironment *mockRootDeviceEnvironment = nullptr;
 };
 
 typedef Test<DrmTestsFixture> DrmTests;
@@ -108,14 +105,14 @@ struct DrmSimpleTests : public ::testing::Test {
             GTEST_SKIP();
         }
     }
+    MockExecutionEnvironment mockExecutionEnvironment;
 };
 
 TEST_F(DrmSimpleTests, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHwDeviceIds) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
     openCounter = 2;
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_EQ(2u, hwDeviceIds.size());
 }
 
@@ -124,8 +121,7 @@ TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingFilterBdfWhenGetDevice
     DebugManager.flags.FilterBdfPath.set("invalid");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = nullptr; // open shouldn't be called
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
@@ -135,8 +131,7 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceUsingFilterBdfWhenGetDeviceFdT
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
     openCounter = 10;
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("/dev/dri/by-path/platform-4010000000.pcie-pci-0000:00:02.0-render", lastOpenedPath.c_str());
@@ -149,18 +144,16 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDevice
     VariableBackup<decltype(entryIndex)> backupEntryIndex(&entryIndex, 0u);
     openFull = openWithCounter;
 
-    ExecutionEnvironment executionEnvironment;
-
     entryIndex = 0;
     openCounter = 1;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("0000:00:03.1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
 
     entryIndex = 0;
     openCounter = 2;
-    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
     EXPECT_STREQ("0000:00:03.1", hwDeviceIds[0]->as<HwDeviceIdDrm>()->getPciPath());
@@ -175,8 +168,7 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
     openFull = openWithCounter;
     openCounter = 1;
 
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD128", lastOpenedPath.c_str());
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
@@ -185,7 +177,7 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
 
     readLinkCalledTimes = 0;
     openCounter = 2;
-    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
@@ -198,9 +190,7 @@ TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeni
 TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     ::testing::internal::CaptureStdout();
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = DrmWrap::createDrm(*(mockExecutionEnvironment.rootDeviceEnvironments[0].get()));
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlEntries.set(true);
@@ -218,14 +208,13 @@ struct DrmFailedIoctlTests : public ::testing::Test {
             GTEST_SKIP();
         }
     }
+    MockExecutionEnvironment mockExecutionEnvironment;
 };
 
 TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpectedIoctlIsPrinted) {
     ::testing::internal::CaptureStdout();
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = DrmWrap::createDrm(*(mockExecutionEnvironment.rootDeviceEnvironments[0].get()));
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlEntries.set(true);
@@ -242,9 +231,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     constexpr long long initialMin = std::numeric_limits<long long>::max();
     constexpr long long initialMax = std::numeric_limits<long long>::min();
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto drm = DrmWrap::createDrm(*(mockExecutionEnvironment.rootDeviceEnvironments[0].get()));
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlTimes.set(true);
@@ -369,8 +356,7 @@ TEST_F(DrmSimpleTests, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOp
     openFull = openWithCounter;
     openCounter = 0;
 
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_EQ(0u, hwDeviceIds.size());
 }
 
@@ -380,12 +366,11 @@ TEST_F(DrmSimpleTests, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateM
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
     VariableBackup<decltype(readLinkCalledTimes)> backupReadlink(&readLinkCalledTimes, 0);
     openFull = openWithCounter;
-    ExecutionEnvironment executionEnvironment;
     const uint32_t requestedNumRootDevices = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
 
     openCounter = 4;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
@@ -398,12 +383,11 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
     DebugManagerStateRestore stateRestore;
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
-    ExecutionEnvironment executionEnvironment;
     const uint32_t requestedNumRootDevices = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
 
     openCounter = 4;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_STREQ("/dev/dri/by-path/platform-4010000000.pcie-pci-0000:00:02.0-render", lastOpenedPath.c_str());
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
@@ -415,7 +399,7 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
 TEST_F(DrmTests, GivenSelectedIncorectDeviceByDeviceIdWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterDeviceId.set("invalid");
-    auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm1 = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm1, nullptr);
 }
 
@@ -425,7 +409,7 @@ TEST_F(DrmTests, GivenSelectedCorrectDeviceByDeviceIdWhenGetDeviceFdThenSucceed)
     deviceIdStr << std::hex << deviceId;
 
     DebugManager.flags.FilterDeviceId.set(deviceIdStr.str());
-    auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm1 = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm1, nullptr);
 }
 
@@ -447,7 +431,7 @@ TEST_F(DrmSimpleTests, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProper
 }
 
 TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErrors) {
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
     GetParam getParam{};
@@ -498,9 +482,9 @@ TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErro
 }
 
 TEST_F(DrmTests, WhenCreatingTwiceThenDifferentDrmReturned) {
-    auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm1 = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm1, nullptr);
-    auto drm2 = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm2 = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm2, nullptr);
     EXPECT_NE(drm1, drm2);
 }
@@ -509,14 +493,14 @@ TEST_F(DrmTests, WhenDriDeviceFoundThenDrmCreatedOnFallback) {
     VariableBackup<decltype(haveDri)> backupHaveDri(&haveDri);
 
     haveDri = 1;
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 }
 
 TEST_F(DrmTests, GivenNoDeviceWhenCreatingDrmThenNullIsReturned) {
     VariableBackup<decltype(haveDri)> backupHaveDri(&haveDri);
     haveDri = -1;
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -532,7 +516,7 @@ TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
 
     ::testing::internal::CaptureStderr();
     ::testing::internal::CaptureStdout();
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     std::string errStr = ::testing::internal::GetCapturedStderr();
     EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffff, revisionId: ffff")));
@@ -544,18 +528,18 @@ TEST_F(DrmTests, GivenKnownDeviceWhenCreatingDrmThenHwInfoIsProperlySet) {
 
     revisionId = 123;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
-    EXPECT_EQ(revisionId, rootDeviceEnvironment->getHardwareInfo()->platform.usRevId);
-    EXPECT_EQ(deviceId, rootDeviceEnvironment->getHardwareInfo()->platform.usDeviceID);
+    EXPECT_EQ(revisionId, mockRootDeviceEnvironment->getHardwareInfo()->platform.usRevId);
+    EXPECT_EQ(deviceId, mockRootDeviceEnvironment->getHardwareInfo()->platform.usDeviceID);
 }
 
 TEST_F(DrmTests, GivenNoSoftPinWhenCreatingDrmThenNullIsReturned) {
     VariableBackup<decltype(haveSoftPin)> backupHaveSoftPin(&haveSoftPin);
     haveSoftPin = 0;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -563,7 +547,7 @@ TEST_F(DrmTests, WhenCantFindDeviceIdThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnDeviceId)> backupFailOnDeviceId(&failOnDeviceId);
     failOnDeviceId = -1;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -571,7 +555,7 @@ TEST_F(DrmTests, WhenCantQueryEuCountThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnEuTotal)> backupfailOnEuTotal(&failOnEuTotal);
     failOnEuTotal = -1;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -579,7 +563,7 @@ TEST_F(DrmTests, WhenCantQuerySubsliceCountThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnSubsliceTotal)> backupfailOnSubsliceTotal(&failOnSubsliceTotal);
     failOnSubsliceTotal = -1;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -587,7 +571,7 @@ TEST_F(DrmTests, WhenCantQueryRevisionIdThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnRevisionId)> backupFailOnRevisionId(&failOnRevisionId);
     failOnRevisionId = -1;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -595,7 +579,7 @@ TEST_F(DrmTests, WhenCantQuerySoftPinSupportThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnSoftPin)> backupFailOnSoftPin(&failOnSoftPin);
     failOnSoftPin = -1;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
 }
 
@@ -603,7 +587,7 @@ TEST_F(DrmTests, GivenFailOnParamBoostWhenCreatingDrmThenDrmIsCreated) {
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
     failOnParamBoost = -1;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     // non-fatal error - issue warning only
     EXPECT_NE(drm, nullptr);
 }
@@ -611,7 +595,7 @@ TEST_F(DrmTests, GivenFailOnParamBoostWhenCreatingDrmThenDrmIsCreated) {
 TEST_F(DrmTests, GivenFailOnContextCreateWhenCreatingDrmThenDrmIsCreated) {
     VariableBackup<decltype(failOnContextCreate)> backupFailOnContextCreate(&failOnContextCreate);
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnContextCreate = -1;
     EXPECT_EQ(-1, drm->createDrmContext(1, false, false));
@@ -622,7 +606,7 @@ TEST_F(DrmTests, GivenFailOnContextCreateWhenCreatingDrmThenDrmIsCreated) {
 TEST_F(DrmTests, GivenFailOnSetPriorityWhenCreatingDrmThenDrmIsCreated) {
     VariableBackup<decltype(failOnSetPriority)> backupFailOnSetPriority(&failOnSetPriority);
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnSetPriority = -1;
     auto drmContext = drm->createDrmContext(1, false, false);
@@ -635,7 +619,7 @@ TEST_F(DrmTests, WhenCantQueryDrmVersionThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnDrmVersion)> backupFailOnDrmVersion(&failOnDrmVersion);
 
     failOnDrmVersion = -1;
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     failOnDrmVersion = 0;
 }
@@ -644,7 +628,7 @@ TEST_F(DrmTests, GivenInvalidDrmVersionNameWhenCreatingDrmThenNullIsReturned) {
     VariableBackup<decltype(failOnDrmVersion)> backupFailOnDrmVersion(&failOnDrmVersion);
 
     strcpy(providedDrmVersion, "NA");
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     failOnDrmVersion = 0;
     strcpy(providedDrmVersion, "i915");
@@ -654,7 +638,7 @@ TEST_F(DrmTests, whenDrmIsCreatedThenSetMemoryRegionsDoesntFailAndDrmObjectIsRet
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(1);
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 }
 
@@ -666,16 +650,16 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverridePatIndex.set(0);
 
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    MockExecutionEnvironment mockExecutionEnvironment;
+    auto drm = new DrmMockSuccess(fakeFd, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     drm->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment, DriverModelType::UNKNOWN);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(mockExecutionEnvironment, DriverModelType::UNKNOWN);
     EXPECT_NE(nullptr, drmMemoryManager.get());
-    executionEnvironment.memoryManager = std::move(drmMemoryManager);
+    mockExecutionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
 TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmMemoryManagerThenHostPtrValidationIsDisabled) {
@@ -687,17 +671,17 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.forceOsAgnosticMemoryManager = false;
 
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
+    MockExecutionEnvironment mockExecutionEnvironment;
+    auto drm = new DrmMockSuccess(fakeFd, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     drm->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment, DriverModelType::UNKNOWN);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(mockExecutionEnvironment, DriverModelType::UNKNOWN);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     EXPECT_FALSE(static_cast<DrmMemoryManager *>(drmMemoryManager.get())->isValidateHostMemoryEnabled());
-    executionEnvironment.memoryManager = std::move(drmMemoryManager);
+    mockExecutionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
 TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsSetToTrueOn64Bit) {
@@ -708,14 +692,14 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
     DebugManagerStateRestore restore;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
     if (drm->isPerContextVMRequired()) {
         GTEST_SKIP();
     }
 
-    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(mockRootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_EQ(id + 1, drm->getVirtualMemoryAddressSpace(id));
     }
@@ -726,14 +710,14 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     DebugManager.flags.UseVmBind.set(1);
 
-    rootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    mockExecutionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     ASSERT_NE(drm, nullptr);
     if (drm->isVmBindAvailable()) {
         EXPECT_TRUE(drm->isPerContextVMRequired());
 
-        auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        auto numSubDevices = GfxCoreHelper::getSubDevicesCount(mockRootDeviceEnvironment->getHardwareInfo());
         for (auto id = 0u; id < numSubDevices; id++) {
             EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(id));
         }
@@ -751,9 +735,9 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     DebugManager.flags.UseVmBind.set(0);
     DebugManager.flags.PrintDebugMessages.set(true);
 
-    rootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    mockRootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
     if (drm->isPerContextVMRequired()) {
@@ -762,7 +746,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
         GTEST_SKIP();
     }
 
-    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(mockRootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_NE(0u, drm->getVirtualMemoryAddressSpace(id));
     }
@@ -785,7 +769,7 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
 
     ::testing::internal::CaptureStderr();
     ::testing::internal::CaptureStdout();
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
     EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(0));
@@ -861,11 +845,11 @@ int main(int argc, char **argv) {
 }
 
 TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
-    auto oldHwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    auto oldHwInfo = mockRootDeviceEnvironment->getMutableHardwareInfo();
     *oldHwInfo = {};
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
-    auto currentHwInfo = rootDeviceEnvironment->getHardwareInfo();
+    auto currentHwInfo = mockRootDeviceEnvironment->getHardwareInfo();
     EXPECT_NE(IGFX_UNKNOWN, currentHwInfo->platform.eProductFamily);
     EXPECT_NE(IGFX_UNKNOWN_CORE, currentHwInfo->platform.eRenderCoreFamily);
     EXPECT_LT(0u, currentHwInfo->gtSystemInfo.EUCount);
@@ -913,7 +897,7 @@ TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
     entryIndex = 1;
     openCounter = 2;
 
-    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     ASSERT_NE(drm, nullptr);
     EXPECT_EQ(drm->getPciBusInfo().pciDomain, 0u);
     EXPECT_EQ(drm->getPciBusInfo().pciBus, 0u);
@@ -923,7 +907,7 @@ TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
     entryIndex = 2;
     openCounter = 1;
 
-    drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     ASSERT_NE(drm, nullptr);
     EXPECT_EQ(drm->getPciBusInfo().pciDomain, 0u);
     EXPECT_EQ(drm->getPciBusInfo().pciBus, 0u);
@@ -938,7 +922,7 @@ TEST_F(DrmTests, givenValidPciPathThenPciBusInfoIsAvailable) {
     for (uint32_t idx = 7; idx < 11; idx++) {
         entryIndex = idx;
         openCounter = 1;
-        drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+        drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
         ASSERT_NE(drm, nullptr);
 
         EXPECT_EQ(drm->getPciBusInfo().pciDomain, referenceData[idx - 7][0]);
@@ -956,16 +940,16 @@ TEST_F(DrmTests, givenInValidPciPathThenNothingIsReturned) {
 
     entryIndex = 11;
     openCounter = 1;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    auto hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 
     entryIndex = 12;
     openCounter = 1;
-    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 
     entryIndex = 13;
     openCounter = 1;
-    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }

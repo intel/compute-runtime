@@ -63,6 +63,10 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         rootDeviceEnvironment.initGfxCoreHelper();
         rootDeviceEnvironment.initApiGfxCoreHelper();
         rootDeviceEnvironment.initCompilerProductHelper();
+        rootDeviceEnvironment.initAilConfigurationHelper();
+        if (false == rootDeviceEnvironment.initAilConfiguration()) {
+            return false;
+        }
 
         auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 

@@ -102,7 +102,7 @@ void RootDeviceEnvironment::prepareForCleanup() const {
 
 bool RootDeviceEnvironment::initAilConfiguration() {
     if (ailConfiguration == nullptr) {
-        return true;
+        return (false == DebugManager.flags.EnableAIL.get());
     }
 
     auto result = ailConfiguration->initProcessExecutableName();
