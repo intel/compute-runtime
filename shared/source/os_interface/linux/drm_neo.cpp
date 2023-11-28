@@ -436,6 +436,12 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     rootDeviceEnvironment.initGfxCoreHelper();
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initCompilerProductHelper();
+    rootDeviceEnvironment.initAilConfigurationHelper();
+    auto result = rootDeviceEnvironment.initAilConfiguration();
+    if (false == result) {
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: AIL creation failed!\n");
+        return -1;
+    }
 
     hwInfo->platform.usDeviceID = deviceId;
     hwInfo->platform.usRevId = revisionId;

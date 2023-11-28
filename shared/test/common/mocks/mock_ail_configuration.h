@@ -12,8 +12,9 @@
 namespace NEO {
 class MockAILConfiguration : public AILConfiguration {
   public:
+    bool initProcessExecutableNameResult = true;
     bool initProcessExecutableName() override {
-        return true;
+        return initProcessExecutableNameResult;
     }
     void modifyKernelIfRequired(std::string &kernel) override {}
 

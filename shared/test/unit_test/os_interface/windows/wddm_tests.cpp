@@ -120,6 +120,16 @@ TEST_F(WddmTests, WhenCallingReInitializeContextWithContextCreateDisabledFlagEna
     EXPECT_EQ(0u, newContext->getWddmContextHandle());
 }
 
+TEST_F(WddmTests, givenFailedAilInitializationResultWhenInitializingWddmThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    MockRootDeviceEnvironment mockRootDeviceEnvironment(executionEnvironment);
+    mockRootDeviceEnvironment.ailInitializationResult = false;
+
+    auto wddm = Wddm::createWddm(nullptr, mockRootDeviceEnvironment);
+    auto res = wddm->init();
+    EXPECT_FALSE(res);
+}
+
 TEST(WddmNewRsourceTest, whenSetNewResourcesBoundToPageTableThenSetInContextFromProperRootDeviceEnvironment) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(2);

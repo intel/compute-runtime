@@ -55,9 +55,6 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     const bool isCsrHwWithAub = debugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_HW_WITH_AUB;
     rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex, isCsrHwWithAub);
 
-    [[maybe_unused]] bool result = rootDeviceEnv->initAilConfiguration();
-    DEBUG_BREAK_IF(!result);
-
     return true;
 }
 

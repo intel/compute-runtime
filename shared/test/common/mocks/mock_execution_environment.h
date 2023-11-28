@@ -24,6 +24,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 
     void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override;
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) override;
+    bool initAilConfiguration() override;
 
     std::vector<bool> initOsInterfaceResults;
     uint32_t initOsInterfaceCalled = 0u;
@@ -32,6 +33,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
     bool localMemoryEnabledReceived = false;
     std::string aubFileNameReceived = "";
     bool useMockAubCenter = true;
+    std::optional<bool> ailInitializationResult{true};
 };
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
