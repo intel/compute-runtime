@@ -137,8 +137,8 @@ struct BcsSplit {
 
         if (cmdList->isInOrderExecutionEnabled()) {
             cmdList->appendSignalInOrderDependencyCounter(signalEvent);
-            cmdList->handleInOrderDependencyCounter(signalEvent, false);
         }
+        cmdList->handleInOrderDependencyCounter(signalEvent, false);
 
         return result;
     }

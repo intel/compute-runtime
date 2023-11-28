@@ -444,11 +444,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams, relaxedOrderingDispatch);
 
-    if (isInOrderExecutionEnabled() && launchParams.skipInOrderNonWalkerSignaling) {
-        // skip only in base appendLaunchKernel()
+    if (launchParams.skipInOrderNonWalkerSignaling) {
         auto event = Event::fromHandle(hSignalEvent);
 
-        handleInOrderNonWalkerSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
+        if (isInOrderExecutionEnabled()) {
+            // Skip only in base appendLaunchKernel(). Handle remaining operations here.
+            handleInOrderNonWalkerSignaling(event, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, ret);
+        }
         CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(event, true);
     }
 
@@ -706,7 +708,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool signalInOrderCompletion) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest) {
     bool allSignaled = true;
     for (auto i = 0u; i < numEvents; i++) {
         allSignaled &= (!this->dcFlushSupport && Event::fromHandle(phWaitEvents[i])->isAlreadyCompleted());
@@ -716,7 +718,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     }
     checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, relaxedOrderingAllowed, trackDependencies, signalInOrderCompletion);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, relaxedOrderingAllowed, trackDependencies, apiRequest);
     this->dependenciesPresent = true;
     return flushImmediate(ret, true, true, false, false, nullptr);
 }
@@ -1043,7 +1045,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
     }
-    this->handleCounterBasedEventOperations(signalEvent);
+
+    if (!this->handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     const void *cpuMemcpySrcPtr = srcLockPointer ? srcLockPointer : cpuMemCopyInfo.srcPtr;
     void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;

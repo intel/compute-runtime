@@ -194,6 +194,12 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
     }
     this->setIsCompleted();
     unsetCmdQueue();
+
+    if (!isCounterBased()) {
+        // Temporary assignment. If in-order CmdList required to use Event allocation for HW commands chaining, we need to wait for the counter.
+        // After successful host synchronization, we can unset CL counter.
+        unsetInOrderExecInfo();
+    }
     for (auto &csr : csrs) {
         csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
@@ -289,7 +295,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         return ZE_RESULT_SUCCESS;
     }
 
-    if (isCounterBased()) {
+    if (isCounterBased() || this->inOrderExecInfo.get()) {
         return queryCounterBasedEventStatus();
     } else {
         return queryStatusEventPackets();
@@ -517,11 +523,6 @@ ze_result_t EventImp<TagSizeT>::reset() {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (this->counterBasedMode == CounterBasedMode::ImplicitlyEnabled) {
-        inOrderExecInfo.reset();
-        inOrderExecSignalValue = 0;
-    }
-
     if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
         if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus() != ZE_RESULT_SUCCESS) {
             printf("\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
@@ -530,6 +531,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
         hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
+    unsetInOrderExecInfo();
     unsetCmdQueue();
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);

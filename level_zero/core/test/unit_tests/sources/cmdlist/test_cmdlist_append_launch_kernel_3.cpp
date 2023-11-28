@@ -1109,18 +1109,99 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventWhenAppendEventResetCalledThenRe
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendEventReset(events[0]->toHandle()));
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenDontSetInOrderParams, IsAtLeastSkl) {
+HWTEST2_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignmentWhenCallingSynchronizeOrResetThenUnset, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer());
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedInitiallyDisabled();
+
+    auto nonWalkerSignallingSupported = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->inOrderExecInfo.get() != nullptr);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(1));
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->inOrderExecInfo.get() != nullptr);
+
+    if (nonWalkerSignallingSupported) {
+        *hostAddress = 1;
+    } else {
+        *reinterpret_cast<uint64_t *>(events[0]->getCompletionFieldHostAddress()) = Event::STATE_SIGNALED;
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
+    EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->inOrderExecInfo.get() != nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->reset());
+    EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrderParamsOnlyWhenChainingIsRequired, IsAtLeastSkl) {
+    uint32_t counterOffset = 64;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = counterOffset;
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->makeCounterBasedInitiallyDisabled();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_FALSE(events[0]->isCounterBased());
+
+    if (immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
+        EXPECT_EQ(events[0]->inOrderExecSignalValue, 1u);
+        EXPECT_NE(events[0]->inOrderExecInfo.get(), nullptr);
+        EXPECT_EQ(events[0]->inOrderAllocationOffset, counterOffset);
+    } else {
+        EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
+        EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
+        EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
+    }
+
+    auto copyImmCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    uint32_t copyData = 0;
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    copyImmCmdList->appendMemoryCopy(deviceAlloc, &copyData, 1, events[0]->toHandle(), 0, nullptr, false, false);
 
     EXPECT_FALSE(events[0]->isCounterBased());
     EXPECT_EQ(events[0]->inOrderExecSignalValue, 0u);
     EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
+
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnRegularCmdListThenUnsetInOrderData, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedInitiallyDisabled();
+
+    auto nonWalkerSignallingSupported = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
+
+    EXPECT_TRUE(immCmdList->isInOrderExecutionEnabled());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(nonWalkerSignallingSupported, events[0]->inOrderExecInfo.get() != nullptr);
+
+    immCmdList->inOrderExecInfo.reset();
+    EXPECT_FALSE(immCmdList->isInOrderExecutionEnabled());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(nullptr, events[0]->inOrderExecInfo.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastXeHpCore) {
@@ -1734,6 +1815,9 @@ HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEven
     zex_wait_on_mem_desc_t desc;
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), copyData, 1, eventHandle, false));
+
+    immCmdList->copyThroughLockedPtrEnabled = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendMemoryCopy(alloc, &copyData, 1, eventHandle, 0, nullptr, false, false));
 
     context->freeMem(alloc);
 }

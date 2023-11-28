@@ -367,8 +367,7 @@ void Event::disableImplicitCounterBasedMode() {
 
     if (counterBasedMode == CounterBasedMode::ImplicitlyEnabled || counterBasedMode == CounterBasedMode::InitiallyDisabled) {
         counterBasedMode = CounterBasedMode::ImplicitlyDisabled;
-        inOrderExecInfo.reset();
-        inOrderExecSignalValue = 0;
+        unsetInOrderExecInfo();
     }
 }
 
@@ -460,5 +459,11 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 }
 
 NEO::GraphicsAllocation *Event::getInOrderExecDataAllocation() const { return inOrderExecInfo.get() ? &inOrderExecInfo->getDeviceCounterAllocation() : nullptr; }
+
+void Event::unsetInOrderExecInfo() {
+    inOrderExecInfo.reset();
+    inOrderAllocationOffset = 0;
+    inOrderExecSignalValue = 0;
+}
 
 } // namespace L0

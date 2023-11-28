@@ -257,6 +257,7 @@ struct Event : _ze_event_handle_t {
     std::shared_ptr<InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
     void enableKmdWaitMode() { kmdWaitMode = true; }
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
+    void unsetInOrderExecInfo();
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
