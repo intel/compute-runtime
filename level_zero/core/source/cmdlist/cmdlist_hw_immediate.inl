@@ -9,15 +9,18 @@
 
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -26,8 +29,13 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/bcs_split.h"
+#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 #include "level_zero/core/source/helpers/in_order_cmd_helpers.h"
+#include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
 
 #include "encode_surface_state_args.h"
 
@@ -558,7 +566,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
 
     ze_result_t ret;
-    CpuMemCopyInfo cpuMemCopyInfo(dstptr, srcptr, size);
+    CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
     this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, cpuMemCopyInfo.srcAllocData);
     this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, cpuMemCopyInfo.dstAllocData);
     if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
@@ -951,7 +959,16 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return false;
     }
 
-    const TransferType transferType = getTransferType(cpuMemCopyInfo.dstAllocData, cpuMemCopyInfo.srcAllocData);
+    if (cpuMemCopyInfo.srcAllocData == nullptr) {
+        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
+        cpuMemCopyInfo.srcIsImportedHostPtr = hostAlloc != nullptr;
+    }
+    if (cpuMemCopyInfo.dstAllocData == nullptr) {
+        auto hostAlloc = this->getDevice()->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, this->getDevice()->getRootDeviceIndex());
+        cpuMemCopyInfo.dstIsImportedHostPtr = hostAlloc != nullptr;
+    }
+
+    const TransferType transferType = getTransferType(cpuMemCopyInfo);
     const size_t transferThreshold = getTransferThreshold(transferType);
 
     bool cpuMemCopyEnabled = false;
@@ -1109,16 +1126,16 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(N
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc) {
-    const bool srcHostUSM = isSuitableUSMHostAlloc(srcAlloc);
-    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(srcAlloc);
-    const bool srcSharedUSM = isSuitableUSMSharedAlloc(srcAlloc);
-    const bool srcHostNonUSM = srcAlloc == nullptr;
+TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo) {
+    const bool srcHostUSM = isSuitableUSMHostAlloc(cpuMemCopyInfo.srcAllocData) || cpuMemCopyInfo.srcIsImportedHostPtr;
+    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData);
+    const bool srcSharedUSM = isSuitableUSMSharedAlloc(cpuMemCopyInfo.srcAllocData);
+    const bool srcHostNonUSM = (cpuMemCopyInfo.srcAllocData == nullptr) && !cpuMemCopyInfo.srcIsImportedHostPtr;
 
-    const bool dstHostUSM = isSuitableUSMHostAlloc(dstAlloc);
-    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(dstAlloc);
-    const bool dstSharedUSM = isSuitableUSMSharedAlloc(dstAlloc);
-    const bool dstHostNonUSM = dstAlloc == nullptr;
+    const bool dstHostUSM = isSuitableUSMHostAlloc(cpuMemCopyInfo.dstAllocData) || cpuMemCopyInfo.dstIsImportedHostPtr;
+    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData);
+    const bool dstSharedUSM = isSuitableUSMSharedAlloc(cpuMemCopyInfo.dstAllocData);
+    const bool dstHostNonUSM = (cpuMemCopyInfo.dstAllocData == nullptr) && !cpuMemCopyInfo.dstIsImportedHostPtr;
 
     if (srcHostNonUSM && dstHostUSM) {
         return HOST_NON_USM_TO_HOST_USM;

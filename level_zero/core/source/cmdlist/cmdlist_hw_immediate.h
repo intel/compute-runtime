@@ -28,12 +28,14 @@ inline constexpr size_t commonImmediateCommandSize = 4 * MemoryConstants::kiloBy
 
 struct CpuMemCopyInfo {
     void *const dstPtr;
-    const void *const srcPtr;
+    void *const srcPtr;
     const size_t size;
     NEO::SvmAllocationData *dstAllocData{nullptr};
     NEO::SvmAllocationData *srcAllocData{nullptr};
+    bool dstIsImportedHostPtr = false;
+    bool srcIsImportedHostPtr = false;
 
-    CpuMemCopyInfo(void *dstPtr, const void *srcPtr, size_t size) : dstPtr(dstPtr), srcPtr(srcPtr), size(size) {}
+    CpuMemCopyInfo(void *dstPtr, void *srcPtr, size_t size) : dstPtr(dstPtr), srcPtr(srcPtr), size(size) {}
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -179,7 +181,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr, bool &lockingFailed);
     bool waitForEventsFromHost();
-    TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc);
+    TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const override;
