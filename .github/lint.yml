@@ -60,7 +60,6 @@ lint:
   reference_projects:
     - NEO
     - IGC
-    - LOCI
     - HSD
     - GSD
 
