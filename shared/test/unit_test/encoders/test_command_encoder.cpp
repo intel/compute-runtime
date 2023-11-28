@@ -214,3 +214,13 @@ HWTEST2_F(CommandEncoderTest, whenAdjustCompressionFormatForPlanarImageThenNothi
         EXPECT_EQ(0xFFu, compressionFormat);
     }
 }
+
+HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetCorrectBit, IsAtLeastGen9) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    MI_BATCH_BUFFER_START cmd = {};
+    LinearStream cmdStream(&cmd, sizeof(MI_BATCH_BUFFER_START));
+
+    EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(&cmdStream, 0, false, false, true);
+    EXPECT_EQ(1u, cmd.getPredicationEnable());
+}

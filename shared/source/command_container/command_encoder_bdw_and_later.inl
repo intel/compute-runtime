@@ -627,4 +627,9 @@ size_t EncodeStates<Family>::getSshHeapSize() {
     return 64 * MemoryConstants::kiloByte;
 }
 
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
+    cmd.setPredicationEnable(predicate);
+}
+
 } // namespace NEO

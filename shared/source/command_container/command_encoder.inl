@@ -970,10 +970,6 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *
 }
 
 template <typename Family>
-void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
-}
-
-template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(LinearStream &commandStream) {
     MI_BATCH_BUFFER_END cmd = Family::cmdInitBatchBufferEnd;
     auto buffer = commandStream.getSpaceForCmd<MI_BATCH_BUFFER_END>();

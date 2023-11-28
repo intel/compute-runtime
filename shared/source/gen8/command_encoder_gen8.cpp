@@ -51,6 +51,10 @@ void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::S
     sbaAddress.surfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
 }
 
+template <>
+void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
+}
+
 template struct EncodeDispatchKernel<Family>;
 template void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::DefaultWalkerType>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::DefaultWalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 template void EncodeDispatchKernel<Family>::adjustTimestampPacket<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const HardwareInfo &hwInfo);
