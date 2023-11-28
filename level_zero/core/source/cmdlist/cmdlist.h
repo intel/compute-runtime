@@ -365,6 +365,10 @@ struct CommandList : _ze_command_list_handle_t {
 
     virtual bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const { return false; }
 
+    bool getCmdListBatchBufferFlag() const {
+        return dispatchCmdListBatchBufferAsPrimary;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
