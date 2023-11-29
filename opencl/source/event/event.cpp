@@ -291,15 +291,18 @@ void Event::setupRelativeProfilingInfo(ProfilingInfo &profilingInfo) {
     }
 }
 
-void Event::setSubmitTimeStamp(const TimeStampData &submitTimeStamp) {
+void Event::setSubmitTimeStamp() {
     UNRECOVERABLE_IF(!cmdQueue);
     auto &device = cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     double resolution = device.getDeviceInfo().profilingTimerResolution;
     UNRECOVERABLE_IF(resolution == 0.0);
-    this->submitTimeStamp.cpuTimeInNs = submitTimeStamp.cpuTimeinNS;
-    this->submitTimeStamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(submitTimeStamp.gpuTimeStamp, resolution);
-    this->submitTimeStamp.gpuTimeStamp = submitTimeStamp.gpuTimeStamp;
+
+    this->cmdQueue->getDevice().getOSTime()->getCpuTime(&this->submitTimeStamp.cpuTimeInNs);
+    TimeStampData submitCpuGpuTime{};
+    this->cmdQueue->getDevice().getOSTime()->getGpuCpuTime(&submitCpuGpuTime);
+    this->submitTimeStamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(submitCpuGpuTime.gpuTimeStamp, resolution);
+    this->submitTimeStamp.gpuTimeStamp = submitCpuGpuTime.gpuTimeStamp;
 
     setupRelativeProfilingInfo(queueTimeStamp);
 }
@@ -606,9 +609,7 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
             }
-            TimeStampData submitTimeStamp{};
-            this->cmdQueue->getDevice().getOSTime()->getGpuCpuTime(&submitTimeStamp);
-            this->setSubmitTimeStamp(submitTimeStamp);
+            this->setSubmitTimeStamp();
             if (profilingCpuPath) {
                 setStartTimeStamp();
             } else {

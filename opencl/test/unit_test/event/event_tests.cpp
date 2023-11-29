@@ -1357,7 +1357,14 @@ TEST_F(EventTest, whenSettingSubmitTimestampThenQueueAndSubmitTimestampsAreSet) 
     submitTimeStamp.cpuTimeinNS = cpuTimeStamp + expectedCpuDiff;
     submitTimeStamp.gpuTimeStamp = expectedQueueGpuTimeStamp + expectedGpuDiff;
 
-    event.setSubmitTimeStamp(submitTimeStamp);
+    auto osTime = static_cast<MockOSTime *>(pDevice->getOSTime());
+    osTime->cpuTimeResult = submitTimeStamp.cpuTimeinNS;
+
+    auto deviceTime = static_cast<MockDeviceTime *>(osTime->deviceTime.get());
+    deviceTime->cpuTimeResult = submitTimeStamp.cpuTimeinNS;
+    deviceTime->gpuTimeStampResult = submitTimeStamp.gpuTimeStamp;
+
+    event.setSubmitTimeStamp();
 
     EXPECT_EQ(expectedQueueGpuTimeStamp, event.queueTimeStamp.gpuTimeStamp);
     EXPECT_EQ(cpuTimeStamp, event.queueTimeStamp.cpuTimeInNs);

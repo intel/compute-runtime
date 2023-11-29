@@ -294,7 +294,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     void setQueueTimeStamp();
-    void setSubmitTimeStamp(const TimeStampData &submitTimeStamp);
+    void setSubmitTimeStamp();
     void setStartTimeStamp();
     void setEndTimeStamp();
 
