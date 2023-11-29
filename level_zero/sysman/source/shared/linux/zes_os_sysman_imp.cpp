@@ -68,6 +68,7 @@ ze_result_t LinuxSysmanImp::init() {
     pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm());
     pSysmanKmdInterface->initFsAccessInterface(*getDrm());
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
+    DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     pPmuInterface = PmuInterface::create(this);
@@ -190,6 +191,7 @@ uint32_t LinuxSysmanImp::getSubDeviceCount() {
 }
 
 SysmanProductHelper *LinuxSysmanImp::getSysmanProductHelper() {
+    UNRECOVERABLE_IF(nullptr == pSysmanProductHelper);
     return pSysmanProductHelper.get();
 }
 
