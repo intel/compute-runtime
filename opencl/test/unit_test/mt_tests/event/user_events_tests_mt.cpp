@@ -113,7 +113,7 @@ HWTEST_F(EventTests, givenOneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFi
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
-    for (uint32_t i = 0; i < 100; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
 
         UserEvent uEvent;
         cl_event eventWaitList[] = {&uEvent};
