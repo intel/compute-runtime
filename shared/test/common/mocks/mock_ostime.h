@@ -14,9 +14,19 @@ namespace NEO {
 static std::atomic<int> PerfTicks{0};
 constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
+  public:
+    ~MockDeviceTime() override = default;
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        pGpuCpuTime->gpuTimeStamp = ++PerfTicks;
-        pGpuCpuTime->cpuTimeinNS = PerfTicks * convertToNs;
+        if (gpuTimeStampResult) {
+            pGpuCpuTime->gpuTimeStamp = *gpuTimeStampResult;
+        } else {
+            pGpuCpuTime->gpuTimeStamp = ++PerfTicks;
+        }
+        if (cpuTimeResult) {
+            pGpuCpuTime->cpuTimeinNS = *cpuTimeResult;
+        } else {
+            pGpuCpuTime->cpuTimeinNS = PerfTicks * convertToNs;
+        }
         return true;
     }
 
@@ -27,16 +37,24 @@ class MockDeviceTime : public DeviceTime {
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
         return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
     }
+    std::optional<uint64_t> gpuTimeStampResult{};
+    std::optional<uint64_t> cpuTimeResult{};
 };
 
 class MockOSTime : public OSTime {
   public:
+    using OSTime::deviceTime;
     MockOSTime() {
         this->deviceTime = std::make_unique<MockDeviceTime>();
     }
+    ~MockOSTime() override = default;
 
     bool getCpuTime(uint64_t *timeStamp) override {
-        *timeStamp = ++PerfTicks * convertToNs;
+        if (cpuTimeResult) {
+            *timeStamp = *cpuTimeResult;
+        } else {
+            *timeStamp = ++PerfTicks * convertToNs;
+        }
         return true;
     };
     double getHostTimerResolution() const override {
@@ -49,6 +67,7 @@ class MockOSTime : public OSTime {
     static std::unique_ptr<OSTime> create() {
         return std::unique_ptr<OSTime>(new MockOSTime());
     }
+    std::optional<uint64_t> cpuTimeResult{};
 };
 
 class MockDeviceTimeWithConstTimestamp : public DeviceTime {
