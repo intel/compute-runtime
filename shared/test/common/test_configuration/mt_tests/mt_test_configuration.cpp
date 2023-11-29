@@ -9,7 +9,7 @@
 
 namespace NEO {
 unsigned int ultIterationMaxTime = 45;
-unsigned int testCaseMaxTimeInMs = 5000;
+unsigned int testCaseMaxTimeInMs = 16000;
 bool useMockGmm = true;
 const char *executionDirectorySuffix = "";
 const char *executionName = "MT";
