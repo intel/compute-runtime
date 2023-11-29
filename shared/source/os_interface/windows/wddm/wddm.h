@@ -216,7 +216,7 @@ class Wddm : public DriverModel {
     }
 
     bool getDeviceExecutionState(D3DKMT_DEVICESTATE_TYPE stateType, void *privateData);
-    bool getDeviceState();
+    MOCKABLE_VIRTUAL bool getDeviceState();
 
   protected:
     bool translateTopologyInfo(TopologyMapping &mapping);

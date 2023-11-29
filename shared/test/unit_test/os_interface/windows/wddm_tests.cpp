@@ -551,6 +551,90 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceE
     EXPECT_EQ(std::string(""), output);
 }
 
+TEST_F(WddmTests, givenDebugFlagSetWhenFailedOnSubmissionThenCheckDeviceState) {
+    DebugManagerStateRestore restorer;
+
+    constexpr uint32_t submitId = 0;
+    constexpr uint32_t deviceStateId = 1;
+
+    std::vector<uint32_t> operations;
+
+    class MyMockWddm : public WddmMock {
+      public:
+        MyMockWddm(RootDeviceEnvironment &rootDeviceEnvironment, std::vector<uint32_t> &operations, uint32_t deviceStateId)
+            : WddmMock(rootDeviceEnvironment), operations(operations), deviceStateId(deviceStateId) {
+        }
+
+        bool getDeviceState() override {
+            operations.push_back(deviceStateId);
+
+            return true;
+        }
+
+        std::vector<uint32_t> &operations;
+        const uint32_t deviceStateId;
+    };
+
+    class MyWddmMockInterface20 : public WddmMockInterface20 {
+      public:
+        MyWddmMockInterface20(Wddm &wddm, std::vector<uint32_t> &operations, uint32_t submitId) : WddmMockInterface20(wddm), operations(operations), submitId(submitId) {
+        }
+
+        bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override {
+            operations.push_back(submitId);
+
+            return submitRetVal;
+        }
+
+        std::vector<uint32_t> &operations;
+        const uint32_t submitId;
+        bool submitRetVal = true;
+    };
+
+    MyMockWddm myMockWddm(*rootDeviceEnvironment, operations, deviceStateId);
+    auto wddmMockInterface = new MyWddmMockInterface20(myMockWddm, operations, submitId);
+
+    myMockWddm.init();
+
+    myMockWddm.wddmInterface.reset(wddmMockInterface);
+
+    COMMAND_BUFFER_HEADER commandBufferHeader{};
+    MonitoredFence monitoredFence{};
+    WddmSubmitArguments submitArguments{};
+    submitArguments.monitorFence = &monitoredFence;
+
+    EXPECT_TRUE(myMockWddm.submit(0, 0, &commandBufferHeader, submitArguments));
+
+    ASSERT_EQ(2u, operations.size());
+    EXPECT_EQ(deviceStateId, operations[0]);
+    EXPECT_EQ(submitId, operations[1]);
+
+    wddmMockInterface->submitRetVal = false;
+
+    EXPECT_FALSE(myMockWddm.submit(0, 0, &commandBufferHeader, submitArguments));
+
+    ASSERT_EQ(4u, operations.size());
+    EXPECT_EQ(deviceStateId, operations[2]);
+    EXPECT_EQ(submitId, operations[3]);
+
+    DebugManager.flags.EnableDeviceStateVerificationAfterFailedSubmission.set(1);
+
+    EXPECT_FALSE(myMockWddm.submit(0, 0, &commandBufferHeader, submitArguments));
+
+    ASSERT_EQ(7u, operations.size());
+    EXPECT_EQ(deviceStateId, operations[4]);
+    EXPECT_EQ(submitId, operations[5]);
+    EXPECT_EQ(deviceStateId, operations[6]);
+
+    wddmMockInterface->submitRetVal = true;
+
+    EXPECT_TRUE(myMockWddm.submit(0, 0, &commandBufferHeader, submitArguments));
+
+    ASSERT_EQ(9u, operations.size());
+    EXPECT_EQ(deviceStateId, operations[7]);
+    EXPECT_EQ(submitId, operations[8]);
+}
+
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsPageFaultThenProperMessageIsVisible) {
     DebugManagerStateRestore restorer{};
     DebugManager.flags.EnableDebugBreak.set(false);

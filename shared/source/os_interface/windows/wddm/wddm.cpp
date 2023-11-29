@@ -1029,6 +1029,8 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     if (status) {
         submitArguments.monitorFence->lastSubmittedFence = submitArguments.monitorFence->currentFenceValue;
         submitArguments.monitorFence->currentFenceValue++;
+    } else if (DebugManager.flags.EnableDeviceStateVerificationAfterFailedSubmission.get() == 1) {
+        getDeviceState();
     }
 
     return status;
