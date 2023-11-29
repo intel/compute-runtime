@@ -130,7 +130,7 @@ TEST_P(CommandQueueTest, GivenNonFailingAllocationWhenCreatingCommandQueueThenCo
 
 INSTANTIATE_TEST_CASE_P(CommandQueue,
                         CommandQueueTest,
-                        ::testing::ValuesIn(AllCommandQueueProperties));
+                        ::testing::ValuesIn(allCommandQueueProperties));
 
 TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
     EXPECT_EQ(CL_SUCCESS, CommandQueue::getErrorCodeFromTaskCount(0));

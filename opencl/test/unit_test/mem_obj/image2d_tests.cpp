@@ -110,11 +110,11 @@ HWTEST_P(CreateImage2DType, GivenValidTypeWhenCreatingImageThenImageCreatedWithC
     delete image;
 }
 
-static cl_mem_object_type Image2DTypes[] = {
+static cl_mem_object_type image2DTypes[] = {
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
     CreateImage2DTestCreate,
     CreateImage2DType,
-    testing::ValuesIn(Image2DTypes));
+    testing::ValuesIn(image2DTypes));

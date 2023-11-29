@@ -123,7 +123,7 @@ TEST_P(GetCommandQueueInfoTest, GivenInvalidParameterWhenGettingCommandQueueInfo
 INSTANTIATE_TEST_CASE_P(
     GetCommandQueueInfoTest,
     GetCommandQueueInfoTest,
-    ::testing::ValuesIn(DefaultCommandQueueProperties));
+    ::testing::ValuesIn(defaultCommandQueueProperties));
 
 using GetCommandQueueFamilyInfoTests = ::testing::Test;
 

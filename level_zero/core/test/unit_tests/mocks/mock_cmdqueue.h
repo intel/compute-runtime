@@ -52,10 +52,10 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
 };
 using CommandQueue = WhiteBox<::L0::CommandQueue>;
 
-static ze_command_queue_desc_t default_cmd_queue_desc = {};
+static ze_command_queue_desc_t defaultCmdqueueDesc = {};
 template <>
 struct Mock<CommandQueue> : public CommandQueue {
-    Mock(L0::Device *device = nullptr, NEO::CommandStreamReceiver *csr = nullptr, const ze_command_queue_desc_t *desc = &default_cmd_queue_desc);
+    Mock(L0::Device *device = nullptr, NEO::CommandStreamReceiver *csr = nullptr, const ze_command_queue_desc_t *desc = &defaultCmdqueueDesc);
     ~Mock() override;
 
     ADDMETHOD_NOBASE(createFence, ze_result_t, ZE_RESULT_SUCCESS, (const ze_fence_desc_t *desc, ze_fence_handle_t *phFence));

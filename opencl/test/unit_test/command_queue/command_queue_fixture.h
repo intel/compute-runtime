@@ -73,7 +73,7 @@ struct CommandQueueFixture {
     CommandQueue *pCmdQ = nullptr;
 };
 
-static const cl_command_queue_properties AllCommandQueueProperties[] = {
+static const cl_command_queue_properties allCommandQueueProperties[] = {
     0,
     CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
     CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
@@ -82,7 +82,7 @@ static const cl_command_queue_properties AllCommandQueueProperties[] = {
     CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
     CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE_DEFAULT};
 
-static const cl_command_queue_properties DefaultCommandQueueProperties[] = {
+static const cl_command_queue_properties defaultCommandQueueProperties[] = {
     0,
     CL_QUEUE_PROFILING_ENABLE,
 };
