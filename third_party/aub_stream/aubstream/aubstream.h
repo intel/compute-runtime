@@ -86,6 +86,10 @@ constexpr uint32_t rll = 3;
 constexpr uint32_t rl = 4;
 } // namespace caller
 
+namespace hardwareContextFlags {
+constexpr uint32_t contextGroup = 1 << 15;
+} // namespace hardwareContextFlags
+
 static_assert(std::is_pod<SurfaceInfo>::value, "SurfaceInfo is not POD type");
 
 } // namespace aub_stream
