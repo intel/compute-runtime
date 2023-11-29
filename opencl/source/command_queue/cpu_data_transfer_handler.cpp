@@ -96,9 +96,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         bool modifySimulationFlags = false;
 
         if (outEventObj) {
-            TimeStampData submitTimeStamp;
-            getDevice().getOSTime()->getGpuCpuTime(&submitTimeStamp);
-            outEventObj->setSubmitTimeStamp(submitTimeStamp);
+            outEventObj->setSubmitTimeStamp();
         }
         // wait for the completness of previous commands
         if (transferProperties.finishRequired) {
