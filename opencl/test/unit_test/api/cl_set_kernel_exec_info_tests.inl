@@ -91,7 +91,12 @@ TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExe
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel_exec_info svmParams[] = {CL_KERNEL_EXEC_INFO_SVM_PTRS, CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM};
+    cl_kernel_exec_info svmParams[] = {CL_KERNEL_EXEC_INFO_SVM_PTRS,
+                                       CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM,
+                                       CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL,
+                                       CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL,
+                                       CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL,
+                                       CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL};
     for (auto svmParam : svmParams) {
         retVal = clSetKernelExecInfo(
             pMockMultiDeviceKernel, // cl_kernel kernel

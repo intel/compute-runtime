@@ -5064,6 +5064,10 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     switch (paramName) {
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
         for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
             const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
             if (!hwInfo.capabilityTable.ftrSvm) {
