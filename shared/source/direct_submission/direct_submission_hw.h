@@ -242,7 +242,7 @@ class DirectSubmissionHw {
     bool completionFenceSupported = false;
     bool isDisablePrefetcherRequired = false;
     bool dcFlushRequired = false;
-    bool detectGpuHang = false;
+    bool detectGpuHang = true;
     bool relaxedOrderingEnabled = false;
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
