@@ -25,7 +25,7 @@ inline void initializeProcess(ze_context_handle_t &context,
                               ze_command_queue_handle_t &cmdQueueCopy,
                               ze_command_list_handle_t &cmdListCopy,
                               bool isServer) {
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     size_t deviceCount = devices.size();
     std::cout << "Number of devices found: " << deviceCount << "\n";
 
@@ -56,7 +56,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     // Print some properties
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     // Create command queue
     uint32_t numQueueGroups = 0;
@@ -301,7 +301,7 @@ void runServer(int commSocket, bool &validRet) {
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello IPC P2P With Event";
-    verbose = isVerbose(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool outputValidationSuccessful = false;
 
     serverDevice = getParamValue(argc, argv, "-s", "--serverdevice", serverDevice);
@@ -328,6 +328,6 @@ int main(int argc, char *argv[]) {
         close(sv[0]);
     }
 
-    printResult(false, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(false, outputValidationSuccessful, blackBoxName);
     return (outputValidationSuccessful ? 0 : 1);
 }

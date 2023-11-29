@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,9 +82,9 @@ int lib_func_add5(int x) {
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Dynamic Link";
     bool outputValidationSuccessful = true;
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
-    bool circularDep = isCircularDepTest(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
+    bool circularDep = LevelZeroBlackBoxTests::isCircularDepTest(argc, argv);
     int numModules = 2;
 
     char *exportModuleSrcValue = const_cast<char *>(exportModuleSrc);
@@ -137,11 +137,11 @@ int main(int argc, char *argv[]) {
 
     // Build Import/Export SPIRVs & Modules
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "reading export module for spirv\n";
     }
     std::string buildLog;
-    auto exportBinaryModule = compileToSpirV(exportModuleSrcValue, "", buildLog);
+    auto exportBinaryModule = LevelZeroBlackBoxTests::compileToSpirV(exportModuleSrcValue, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -156,17 +156,17 @@ int main(int argc, char *argv[]) {
     // -library-compliation is required for the non-kernel functions to be listed as exported by the Intel Graphics Compiler
     exportModuleDesc.pBuildFlags = "-library-compilation";
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "building export module\n";
     }
 
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &exportModuleDesc, &exportModule, nullptr));
 
     if (circularDep) {
-        if (verbose) {
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "reading export module2 for spirv\n";
         }
-        auto exportBinaryModule2 = compileToSpirV(exportModuleSrc2CircDep, "", buildLog);
+        auto exportBinaryModule2 = LevelZeroBlackBoxTests::compileToSpirV(exportModuleSrc2CircDep, "", buildLog);
         if (buildLog.size() > 0) {
             std::cout << "Build log " << buildLog;
         }
@@ -180,17 +180,17 @@ int main(int argc, char *argv[]) {
         // -library-compliation is required for the non-kernel functions to be listed as exported by the Intel Graphics Compiler
         exportModuleDesc2.pBuildFlags = "-library-compilation";
 
-        if (verbose) {
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "building export module\n";
         }
 
         SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &exportModuleDesc2, &exportModule2, nullptr));
     }
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "reading import module for spirv\n";
     }
-    auto importBinaryModule = compileToSpirV(importModuleSrcValue, "", buildLog);
+    auto importBinaryModule = LevelZeroBlackBoxTests::compileToSpirV(importModuleSrcValue, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -204,14 +204,14 @@ int main(int argc, char *argv[]) {
     if (circularDep) {
         importModuleDesc.pBuildFlags = "-library-compilation";
     }
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "building import module\n";
     }
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &importModuleDesc, &importModule, nullptr));
 
     // Dynamically linking the two Modules to resolve the symbols
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "Dynamically linking modules\n";
     }
 
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
     char *logBuffer = new char[buildLogSize]();
     SUCCESS_OR_TERMINATE(zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, logBuffer));
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "Dynamically linked modules\n";
         std::cout << logBuffer << "\n";
     }
@@ -271,11 +271,11 @@ int main(int argc, char *argv[]) {
     // Execute the Kernel in the Import module which calls the Export Module's functions
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "execute kernel in import module\n";
     }
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "sync results from kernel\n";
     }
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Result:" << *(int *)resultBuffer << " invalid\n";
         outputValidationSuccessful = false;
     } else {
-        if (verbose) {
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "Result Buffer is correct with a value of:" << *(int *)resultBuffer << "\n";
         }
     }
@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
     }
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);

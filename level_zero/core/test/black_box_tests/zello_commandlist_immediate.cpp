@@ -43,9 +43,9 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
         cmdQueueDesc.index = 0;
-        selectQueueMode(cmdQueueDesc, useSyncCmdQ);
+        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncCmdQ);
 
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
@@ -54,12 +54,12 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
 
     if (!useSyncCmdQ) {
         if (sharedEvent == nullptr) {
-            createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+            LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         } else {
             event = sharedEvent;
         }
         if (sharedEvent2 == nullptr) {
-            createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+            LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         } else {
             event2 = sharedEvent2;
         }
@@ -110,9 +110,9 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
         cmdQueueDesc.index = 0;
-        selectQueueMode(cmdQueueDesc, useSyncCmdQ);
+        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncCmdQ);
 
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
@@ -120,21 +120,21 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     }
 
     void *dstBuffer = nullptr;
-    uint32_t dstWidth = verbose ? 16 : 1024; // width of the dst 2D buffer in bytes
-    uint32_t dstHeight = verbose ? 32 : 512; // height of the dst 2D buffer in bytes
-    uint32_t dstOriginX = verbose ? 8 : 128; // Offset in bytes
-    uint32_t dstOriginY = verbose ? 8 : 144; // Offset in rows
-    uint32_t dstSize = dstHeight * dstWidth; // Size of the dst buffer
+    uint32_t dstWidth = LevelZeroBlackBoxTests::verbose ? 16 : 1024; // width of the dst 2D buffer in bytes
+    uint32_t dstHeight = LevelZeroBlackBoxTests::verbose ? 32 : 512; // height of the dst 2D buffer in bytes
+    uint32_t dstOriginX = LevelZeroBlackBoxTests::verbose ? 8 : 128; // Offset in bytes
+    uint32_t dstOriginY = LevelZeroBlackBoxTests::verbose ? 8 : 144; // Offset in rows
+    uint32_t dstSize = dstHeight * dstWidth;                         // Size of the dst buffer
 
     void *srcBuffer = nullptr;
-    uint32_t srcWidth = verbose ? 24 : 256;  // width of the src 2D buffer in bytes
-    uint32_t srcHeight = verbose ? 16 : 384; // height of the src 2D buffer in bytes
-    uint32_t srcOriginX = verbose ? 4 : 64;  // Offset in bytes
-    uint32_t srcOriginY = verbose ? 4 : 128; // Offset in rows
-    uint32_t srcSize = srcHeight * srcWidth; // Size of the src buffer
+    uint32_t srcWidth = LevelZeroBlackBoxTests::verbose ? 24 : 256;  // width of the src 2D buffer in bytes
+    uint32_t srcHeight = LevelZeroBlackBoxTests::verbose ? 16 : 384; // height of the src 2D buffer in bytes
+    uint32_t srcOriginX = LevelZeroBlackBoxTests::verbose ? 4 : 64;  // Offset in bytes
+    uint32_t srcOriginY = LevelZeroBlackBoxTests::verbose ? 4 : 128; // Offset in rows
+    uint32_t srcSize = srcHeight * srcWidth;                         // Size of the src buffer
 
-    uint32_t width = verbose ? 8 : 144;  // width of the region to copy
-    uint32_t height = verbose ? 12 : 96; // height of the region to copy
+    uint32_t width = LevelZeroBlackBoxTests::verbose ? 8 : 144;  // width of the region to copy
+    uint32_t height = LevelZeroBlackBoxTests::verbose ? 12 : 96; // height of the region to copy
     const ze_copy_region_t dstRegion = {dstOriginX, dstOriginY, 0, width, height, 0};
     const ze_copy_region_t srcRegion = {srcOriginX, srcOriginY, 0, width, height, 0};
 
@@ -166,12 +166,12 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     if (!useSyncCmdQ) {
         // Create Event Pool and kernel launch event
         if (sharedEvent == nullptr) {
-            createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+            LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         } else {
             event = sharedEvent;
         }
         if (sharedEvent2 == nullptr) {
-            createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+            LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         } else {
             event2 = sharedEvent2;
         }
@@ -207,7 +207,7 @@ void testAppendMemoryCopyRegion(ze_context_handle_t &context, ze_device_handle_t
     }
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "stackBuffer\n";
         for (uint32_t i = 0; i < srcHeight; i++) {
             for (uint32_t j = 0; j < srcWidth; j++) {
@@ -271,7 +271,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     void *dstBuffer = nullptr;
 
     std::string buildLog;
-    auto moduleBinary = compileToSpirV(memcpyBytesTestKernelSrc, "", buildLog);
+    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -293,7 +293,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, numThreads, 1U, 1U, &groupSizeX,
                                                   &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                   << ")" << std::endl;
     }
@@ -304,9 +304,9 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
         cmdQueueDesc.index = 0;
-        selectQueueMode(cmdQueueDesc, useSyncCmdQ);
+        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncCmdQ);
 
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
@@ -338,12 +338,12 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     if (!useSyncCmdQ) {
         // Create Event Pool and kernel launch event
         if (sharedEvent == nullptr) {
-            createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+            LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         } else {
             event = sharedEvent;
         }
         if (sharedEvent2 == nullptr) {
-            createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+            LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         } else {
             event2 = sharedEvent2;
         }
@@ -373,7 +373,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     dispatchTraits.groupCountX = numThreads / groupSizeX;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
                   << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
                   << std::endl;
@@ -399,8 +399,8 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
 
     validRet =
         (0 == memcmp(initDataSrc, readBackData, sizeof(readBackData)));
-    if (verbose && (false == validRet)) {
-        validate(initDataSrc, readBackData, sizeof(readBackData));
+    if (LevelZeroBlackBoxTests::verbose && (false == validRet)) {
+        LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, sizeof(readBackData));
     }
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -425,11 +425,11 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Command List Immediate");
-    verbose = isVerbose(argc, argv);
-    bool useSyncQueue = isSyncQueueEnabled(argc, argv);
-    bool commandListShared = isCommandListShared(argc, argv);
-    bool commandListCoexist = isParamEnabled(argc, argv, "-o", "--coexists");
-    bool eventPoolShared = !isParamEnabled(argc, argv, "-n", "--nopoolshared");
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool useSyncQueue = LevelZeroBlackBoxTests::isSyncQueueEnabled(argc, argv);
+    bool commandListShared = LevelZeroBlackBoxTests::isCommandListShared(argc, argv);
+    bool commandListCoexist = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-o", "--coexists");
+    bool eventPoolShared = !LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-n", "--nopoolshared");
     if (eventPoolShared) {
         std::cerr << "Event pool shared between tests" << std::endl;
     }
@@ -438,16 +438,16 @@ int main(int argc, char *argv[]) {
         commandListShared = false;
     }
 
-    bool aubMode = isAubMode(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device0 = devices[0];
 
     ze_device_properties_t device0Properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device0, &device0Properties));
-    printDeviceProperties(device0Properties);
+    LevelZeroBlackBoxTests::printDeviceProperties(device0Properties);
 
     bool outputValidationSuccessful = false;
 
@@ -456,8 +456,8 @@ int main(int argc, char *argv[]) {
 
     if (!useSyncQueue && eventPoolShared) {
         // Create Event Pool and kernel launch event
-        createEventPoolAndEvents(context, device0, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
-        createEventPoolAndEvents(context, device0, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device0, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device0, eventPool2, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event2, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
     ze_command_list_handle_t cmdList = nullptr;
@@ -467,9 +467,9 @@ int main(int argc, char *argv[]) {
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device0);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device0);
         cmdQueueDesc.index = 0;
-        selectQueueMode(cmdQueueDesc, useSyncQueue);
+        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncQueue);
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListShared));
         cmdList = cmdListShared;
     }
@@ -482,9 +482,9 @@ int main(int argc, char *argv[]) {
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device0);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device0);
         cmdQueueDesc.index = 0;
-        selectQueueMode(cmdQueueDesc, useSyncQueue);
+        LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncQueue);
 
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListStandardMemoryCopy));
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device0, &cmdQueueDesc, &cmdListMemoryCopyRegion));
@@ -496,7 +496,7 @@ int main(int argc, char *argv[]) {
     std::string currentTest;
     currentTest = "Standard Memory Copy";
     testAppendMemoryCopy(context, device0, useSyncQueue, outputValidationSuccessful, cmdList, event, event2);
-    printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     if (outputValidationSuccessful || aubMode) {
         if (commandListCoexist) {
@@ -508,7 +508,7 @@ int main(int argc, char *argv[]) {
         }
         currentTest = "Memory Copy Region";
         testAppendMemoryCopyRegion(context, device0, useSyncQueue, outputValidationSuccessful, cmdList, event, event2);
-        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (outputValidationSuccessful || aubMode) {
@@ -521,7 +521,7 @@ int main(int argc, char *argv[]) {
         }
         currentTest = "Launch GPU Kernel";
         testAppendGpuKernel(context, device0, useSyncQueue, outputValidationSuccessful, cmdList, event, event2);
-        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (commandListShared) {

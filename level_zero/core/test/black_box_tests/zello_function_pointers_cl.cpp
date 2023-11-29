@@ -75,20 +75,20 @@ int main(int argc, char *argv[]) {
 
     // 1. Setup
     bool outputValidationSuccessful;
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     std::string buildLog;
-    auto spirV = compileToSpirV(functionPointersProgram, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(functionPointersProgram, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -131,13 +131,13 @@ int main(int argc, char *argv[]) {
 
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
     ze_command_list_handle_t cmdList;
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
 
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     deviceDesc.ordinal = 0;
@@ -212,8 +212,8 @@ int main(int argc, char *argv[]) {
 
     // 6. Validate
     outputValidationSuccessful = (0 == memcmp(initDataSrc, readBackData, sizeof(readBackData)));
-    if (verbose && (false == outputValidationSuccessful)) {
-        validate(initDataSrc, readBackData, sizeof(readBackData));
+    if (LevelZeroBlackBoxTests::verbose && (false == outputValidationSuccessful)) {
+        LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, sizeof(readBackData));
     }
     SUCCESS_OR_WARNING_BOOL(outputValidationSuccessful);
 
@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

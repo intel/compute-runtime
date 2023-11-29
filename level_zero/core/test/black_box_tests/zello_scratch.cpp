@@ -46,11 +46,11 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     ze_event_handle_t event = nullptr;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     if (useAsync) {
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1, &event, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
     } else {
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     }
@@ -59,7 +59,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-        SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
     }
 
     // Create two shared buffers
@@ -148,7 +148,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
             if (srcCharBuffer[i] != dstCharBuffer[i]) {
                 std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
                           << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                if (!verbose) {
+                if (!LevelZeroBlackBoxTests::verbose) {
                     break;
                 }
             }
@@ -175,7 +175,7 @@ void createModuleKernel(ze_context_handle_t &context,
                         ze_module_handle_t &module,
                         ze_kernel_handle_t &kernel) {
     std::string buildLog;
-    auto spirV = compileToSpirV(moduleSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -215,20 +215,20 @@ void createModuleKernel(ze_context_handle_t &context,
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Scratch";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
-    bool immediateFirst = isImmediateFirst(argc, argv);
-    bool useAsync = isAsyncQueueEnabled(argc, argv);
-    int allocFlagValue = getAllocationFlag(argc, argv, 0);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
+    bool immediateFirst = LevelZeroBlackBoxTests::isImmediateFirst(argc, argv);
+    bool useAsync = LevelZeroBlackBoxTests::isAsyncQueueEnabled(argc, argv);
+    int allocFlagValue = LevelZeroBlackBoxTests::getAllocationFlag(argc, argv, 0);
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
     bool outputValidationSuccessful;
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
@@ -250,13 +250,13 @@ int main(int argc, char *argv[]) {
 
     executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst, useAsync, allocFlagValue);
     caseName = selectCaseName(immediateFirst);
-    printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
 
     if (outputValidationSuccessful || aubMode) {
         immediateFirst = !immediateFirst;
         executeGpuKernelAndValidate(context, device, module, kernel, outputValidationSuccessful, immediateFirst, useAsync, allocFlagValue);
         caseName = selectCaseName(immediateFirst);
-        printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
+        LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, caseName);
     }
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));

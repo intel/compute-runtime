@@ -11,6 +11,8 @@
 
 #include <cstring>
 
+namespace LevelZeroBlackBoxTests {
+
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;
 
@@ -145,3 +147,5 @@ __kernel void memcpy_bytes(__global uchar *dst, const __global uchar *src) {
     }
 }
 )==";
+
+} // namespace LevelZeroBlackBoxTests

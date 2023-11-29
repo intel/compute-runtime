@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,18 +21,18 @@ struct DevObjects {
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello P2P Copy";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     // Set-up
     size_t allocSize = 4096;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         allocSize = 8;
     }
     std::vector<DevObjects> devObjects;
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     bool outputValidationSuccessful = false;
 
     uint32_t deviceCount = static_cast<uint32_t>(devices.size());
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     for (uint32_t i = 0; i < deviceCount; i++) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         SUCCESS_OR_TERMINATE(zeDeviceGetProperties(devices[i], &deviceProperties));
-        printDeviceProperties(deviceProperties);
+        LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
         ze_device_p2p_properties_t deviceP2PProperties{};
         ze_device_p2p_bandwidth_exp_properties_t expP2Pproperties{};
@@ -55,8 +55,8 @@ int main(int argc, char *argv[]) {
             SUCCESS_OR_TERMINATE(zeDeviceGetP2PProperties(devices[i], devices[j], &deviceP2PProperties));
             ze_bool_t canAccessPeer = false;
             SUCCESS_OR_TERMINATE(zeDeviceCanAccessPeer(devices[i], devices[j], &canAccessPeer));
-            if (verbose) {
-                printP2PProperties(deviceP2PProperties, canAccessPeer, i, j);
+            if (LevelZeroBlackBoxTests::verbose) {
+                LevelZeroBlackBoxTests::printP2PProperties(deviceP2PProperties, canAccessPeer, i, j);
             }
             if (canAccessPeer == false) {
                 std::cout << "Device " << i << " cannot access " << j << "\n";
@@ -70,9 +70,9 @@ int main(int argc, char *argv[]) {
 
         devObjects[i].readBackData = new uint8_t[allocSize]();
 
-        devObjects[i].cmdQueue = createCommandQueue(context, devices[i], nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+        devObjects[i].cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, devices[i], nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
 
-        SUCCESS_OR_TERMINATE(createCommandList(context, devices[i], devObjects[i].cmdList));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, devices[i], devObjects[i].cmdList));
 
         ze_device_mem_alloc_desc_t deviceDesc = {};
         deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
             if (value != devObjects[i].readBackData[j]) {
                 outputValidationSuccessful = false;
             }
-            if ((verbose || (outputValidationSuccessful == false)) && (aubMode == false)) {
+            if ((LevelZeroBlackBoxTests::verbose || (outputValidationSuccessful == false)) && (aubMode == false)) {
                 std::cout << "readBackData[" << j << "] = "
                           << static_cast<uint32_t>(devObjects[i].readBackData[j])
                           << ", expected " << static_cast<uint32_t>(value) << "\n";
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

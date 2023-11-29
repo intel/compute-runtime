@@ -241,7 +241,7 @@ void runServer(bool &validRet) {
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Export Import";
-    verbose = isVerbose(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
     for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
@@ -267,6 +267,6 @@ int main(int argc, char *argv[]) {
 
     runServer(outputValidationSuccessful);
 
-    printResult(false, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(false, outputValidationSuccessful, blackBoxName);
     return outputValidationSuccessful ? 0 : 1;
 }

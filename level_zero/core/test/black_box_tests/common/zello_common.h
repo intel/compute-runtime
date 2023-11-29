@@ -16,12 +16,24 @@
 #include <string>
 #include <vector>
 
+namespace LevelZeroBlackBoxTests {
+template <bool terminateOnFailure, typename ResulT>
+inline void validate(ResulT result, const char *message);
+} // namespace LevelZeroBlackBoxTests
+
+#define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL)
+#define SUCCESS_OR_TERMINATE_BOOL(FLAG) LevelZeroBlackBoxTests::validate<true>(!(FLAG), #FLAG)
+#define SUCCESS_OR_WARNING(CALL) LevelZeroBlackBoxTests::validate<false>(CALL, #CALL)
+#define SUCCESS_OR_WARNING_BOOL(FLAG) LevelZeroBlackBoxTests::validate<false>(!(FLAG), #FLAG)
+
+namespace LevelZeroBlackBoxTests {
+
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
 
 extern bool verbose;
 
-template <bool TerminateOnFailure, typename ResulT>
+template <bool terminateOnFailure, typename ResulT>
 inline void validate(ResulT result, const char *message) {
     if (result == ZE_RESULT_SUCCESS) {
         if (verbose) {
@@ -31,19 +43,14 @@ inline void validate(ResulT result, const char *message) {
     }
 
     if (verbose) {
-        std::cerr << (TerminateOnFailure ? "ERROR : " : "WARNING : ") << message << " : " << result
+        std::cerr << (terminateOnFailure ? "ERROR : " : "WARNING : ") << message << " : " << result
                   << std::endl;
     }
 
-    if (TerminateOnFailure) {
+    if (terminateOnFailure) {
         std::terminate();
     }
 }
-
-#define SUCCESS_OR_TERMINATE(CALL) validate<true>(CALL, #CALL)
-#define SUCCESS_OR_TERMINATE_BOOL(FLAG) validate<true>(!(FLAG), #FLAG)
-#define SUCCESS_OR_WARNING(CALL) validate<false>(CALL, #CALL)
-#define SUCCESS_OR_WARNING_BOOL(FLAG) validate<false>(!(FLAG), #FLAG)
 
 bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName);
 
@@ -216,58 +223,16 @@ struct CommandHandler {
 
     bool isImmediate = false;
 
-    ze_result_t create(ze_context_handle_t context, ze_device_handle_t device, bool immediate) {
-        isImmediate = immediate;
-        ze_result_t result;
-        ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
-        cmdQueueDesc.index = 0;
-
-        if (isImmediate) {
-            cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-            result = zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList);
-        } else {
-            cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-            result = zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue);
-            if (result != ZE_RESULT_SUCCESS) {
-                return result;
-            }
-            result = createCommandList(context, device, cmdList);
-        }
-
-        return result;
-    }
+    ze_result_t create(ze_context_handle_t context, ze_device_handle_t device, bool immediate);
 
     ze_result_t appendKernel(ze_kernel_handle_t kernel, const ze_group_count_t &dispatchTraits, ze_event_handle_t event = nullptr) {
         return zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
                                                event, 0, nullptr);
     }
 
-    ze_result_t execute() {
-        auto result = ZE_RESULT_SUCCESS;
-
-        if (!isImmediate) {
-            result = zeCommandListClose(cmdList);
-            if (result == ZE_RESULT_SUCCESS) {
-                result = zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr);
-            }
-        }
-        return result;
-    }
-
-    ze_result_t synchronize() {
-        if (!isImmediate) {
-            return zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max());
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t destroy() {
-        auto result = zeCommandListDestroy(cmdList);
-        if (result == ZE_RESULT_SUCCESS && !isImmediate) {
-            result = zeCommandQueueDestroy(cmdQueue);
-        }
-        return result;
-    }
+    ze_result_t execute();
+    ze_result_t synchronize();
+    ze_result_t destroy();
 };
+
+} // namespace LevelZeroBlackBoxTests

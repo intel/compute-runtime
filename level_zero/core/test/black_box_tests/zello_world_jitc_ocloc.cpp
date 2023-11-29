@@ -22,11 +22,11 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList;
 
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
     // Create two shared buffers
     constexpr size_t allocSize = 4096;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -48,7 +48,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     memset(dstBuffer, 0, allocSize);
 
     std::string buildLog;
-    auto spirV = compileToSpirV(moduleSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -85,7 +85,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
     ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
-    printKernelProperties(kernProps, kernelDesc.pKernelName);
+    LevelZeroBlackBoxTests::printKernelProperties(kernProps, kernelDesc.pKernelName);
 
     uint32_t groupSizeX = 32u;
     uint32_t groupSizeY = 1u;
@@ -136,24 +136,24 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello World JIT";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
 
     bool outputValidationSuccessful;
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     executeKernelAndValidate(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return outputValidationSuccessful ? 0 : 1;
 }

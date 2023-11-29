@@ -59,7 +59,7 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     fenceDesc.flags = 0;
     SUCCESS_OR_TERMINATE(zeFenceCreate(cmdQueue, &fenceDesc, &fence));
     for (int i = 0; i < 2; i++) {
-        if (verbose)
+        if (LevelZeroBlackBoxTests::verbose)
             std::cout << "zeFenceHostSynchronize start iter:" << i << std::endl;
         // Copy from heap to device-allocated memory
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, heapBuffer, allocSize,
@@ -71,7 +71,7 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
         SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, fence));
         SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
-        if (verbose)
+        if (LevelZeroBlackBoxTests::verbose)
             std::cout << "zeFenceHostSynchronize success iter:" << i << std::endl;
         SUCCESS_OR_TERMINATE(zeFenceReset(fence));
         SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
@@ -88,23 +88,23 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Copy Fence";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful;
     testAppendMemoryCopy(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

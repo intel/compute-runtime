@@ -20,8 +20,8 @@ void createCmdQueueAndCmdList(ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdqueue,
                               ze_command_list_handle_t &cmdList) {
     // Create commandQueue and cmdList
-    cmdqueue = createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    cmdqueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
 }
 
 void createCmdQueueAndCmdListWithOrdinal(ze_device_handle_t &device,
@@ -29,8 +29,8 @@ void createCmdQueueAndCmdListWithOrdinal(ze_device_handle_t &device,
                                          ze_command_queue_handle_t &cmdqueue,
                                          ze_command_list_handle_t &cmdList) {
     // Create commandQueue and cmdList
-    cmdqueue = createCommandQueueWithOrdinal(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList, ordinal));
+    cmdqueue = LevelZeroBlackBoxTests::createCommandQueueWithOrdinal(context, device, ordinal, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, ordinal));
 }
 
 // Test Device Signal and Device wait followed by Host Wait
@@ -60,16 +60,16 @@ bool testEventsDeviceSignalDeviceWait(ze_context_handle_t &context, ze_device_ha
     ze_event_pool_handle_t eventPoolDevice, eventPoolHost;
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> deviceEvents(numEvents), hostEvents(numEvents);
-    createEventPoolAndEvents(context, device, eventPoolDevice,
-                             (ze_event_pool_flag_t)0,
-                             numEvents, deviceEvents.data(),
-                             ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
-                             (ze_event_scope_flag_t)0);
-    createEventPoolAndEvents(context, device, eventPoolHost,
-                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
-                             numEvents, hostEvents.data(),
-                             ZE_EVENT_SCOPE_FLAG_HOST,
-                             (ze_event_scope_flag_t)0);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolDevice,
+                                                     (ze_event_pool_flag_t)0,
+                                                     numEvents, deviceEvents.data(),
+                                                     ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
+                                                     (ze_event_scope_flag_t)0);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
+                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                                                     numEvents, hostEvents.data(),
+                                                     ZE_EVENT_SCOPE_FLAG_HOST,
+                                                     (ze_event_scope_flag_t)0);
 
     // Initialize memory
     uint8_t dstValue = 0;
@@ -151,11 +151,11 @@ bool testEventsDeviceSignalHostWait(ze_context_handle_t &context, ze_device_hand
     ze_event_pool_handle_t eventPool;
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
-    createEventPoolAndEvents(context, device, eventPool,
-                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
-                             numEvents, events.data(),
-                             ZE_EVENT_SCOPE_FLAG_HOST,
-                             (ze_event_scope_flag_t)0);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
+                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                                                     numEvents, events.data(),
+                                                     ZE_EVENT_SCOPE_FLAG_HOST,
+                                                     (ze_event_scope_flag_t)0);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, events[0], 0, nullptr));
 
@@ -198,7 +198,7 @@ bool testEventsDeviceSignalHostWait(ze_context_handle_t &context, ze_device_hand
 bool testEventsDeviceSignalHostWaitWithNonZeroOrdinal(ze_context_handle_t &context, ze_device_handle_t &device) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
-    auto ordinals = getComputeQueueOrdinals(device);
+    auto ordinals = LevelZeroBlackBoxTests::getComputeQueueOrdinals(device);
 
     if (ordinals.size() <= 1) {
         return true;
@@ -210,11 +210,11 @@ bool testEventsDeviceSignalHostWaitWithNonZeroOrdinal(ze_context_handle_t &conte
     ze_event_pool_handle_t eventPool;
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
-    createEventPoolAndEvents(context, device, eventPool,
-                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
-                             numEvents, events.data(),
-                             ZE_EVENT_SCOPE_FLAG_HOST,
-                             (ze_event_scope_flag_t)0);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
+                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                                                     numEvents, events.data(),
+                                                     ZE_EVENT_SCOPE_FLAG_HOST,
+                                                     (ze_event_scope_flag_t)0);
 
     bool outputValidationSuccessful = true;
 
@@ -270,11 +270,11 @@ bool testEventsHostSignalHostWait(ze_context_handle_t &context, ze_device_handle
     ze_event_pool_handle_t eventPool;
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
-    createEventPoolAndEvents(context, device, eventPool,
-                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
-                             numEvents, events.data(),
-                             ZE_EVENT_SCOPE_FLAG_HOST,
-                             (ze_event_scope_flag_t)0);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
+                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                                                     numEvents, events.data(),
+                                                     ZE_EVENT_SCOPE_FLAG_HOST,
+                                                     (ze_event_scope_flag_t)0);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdList, 1, &events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, events[1], 0, nullptr));
@@ -319,41 +319,40 @@ int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Events");
 
     bool outputValidationSuccessful = true;
-    ;
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     std::string currentTest;
 
     currentTest = "Device signal and host wait test";
     outputValidationSuccessful = testEventsDeviceSignalHostWait(context, device);
-    printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     if (outputValidationSuccessful || aubMode) {
         currentTest = "Device signal and device wait test";
         outputValidationSuccessful = testEventsDeviceSignalDeviceWait(context, device);
-        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (outputValidationSuccessful || aubMode) {
         currentTest = "Host signal and host wait test";
         outputValidationSuccessful = testEventsHostSignalHostWait(context, device);
-        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     if (outputValidationSuccessful || aubMode) {
         currentTest = "Device signal and host wait with non-zero ordinal";
         outputValidationSuccessful = testEventsDeviceSignalHostWaitWithNonZeroOrdinal(context, device);
-        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

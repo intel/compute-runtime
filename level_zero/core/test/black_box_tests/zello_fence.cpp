@@ -25,7 +25,7 @@ __kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
 void createModule(ze_context_handle_t &context, ze_module_handle_t &module, ze_device_handle_t &device) {
     // Prepare spirV
     std::string buildLog;
-    auto spirV = compileToSpirV(clProgram, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(clProgram, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -63,14 +63,14 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
     ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
-    printKernelProperties(kernProps, kernelDesc.pKernelName);
+    LevelZeroBlackBoxTests::printKernelProperties(kernProps, kernelDesc.pKernelName);
 
     uint32_t groupSizeX = sizeX;
     uint32_t groupSizeY = sizeY;
     uint32_t groupSizeZ = sizeZ;
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, numThreads, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                   << ")" << std::endl;
     }
@@ -98,11 +98,11 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
 
     // Create commandQueue and cmdList
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
 
     // Create module and kernel
     createModule(context, module, device);
@@ -140,7 +140,7 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
     dispatchTraits.groupCountX = numThreads / groupSizeX;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
                   << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
                   << std::endl;
@@ -164,7 +164,7 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
 
     // Wait for fence to be signaled
     SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
-    if (verbose)
+    if (LevelZeroBlackBoxTests::verbose)
         std::cout << "zeFenceHostSynchronize success" << std::endl;
 
     // Tear down
@@ -184,23 +184,23 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Fence";
     bool outputValidationSuccessful;
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     outputValidationSuccessful = testFence(context, device);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return outputValidationSuccessful ? 0 : 1;
 }

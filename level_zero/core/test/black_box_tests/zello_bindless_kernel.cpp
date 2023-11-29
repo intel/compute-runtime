@@ -87,7 +87,7 @@ void createModule(const char *sourceCode, bool bindless, const ze_context_handle
     if (bindless) {
         internalOptions = bindlessOptions;
     }
-    auto bin = compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
+    auto bin = LevelZeroBlackBoxTests::compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -112,7 +112,7 @@ void createKernel(const ze_module_handle_t module, ze_kernel_handle_t &kernel, c
 void run(const ze_kernel_handle_t &copyKernel, const ze_kernel_handle_t &fillKernel,
          ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, ExecutionMode mode, bool &outputValidationSuccessful) {
 
-    CommandHandler commandHandler;
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
     bool isImmediateCmdList = (mode == ExecutionMode::ImmSyncCmdList);
 
     SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
@@ -223,7 +223,7 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
     createModule(source3, true, context, device, deviceId, revisionId, module);
     createKernel(module, copyKernel, kernelName3.c_str());
 
-    CommandHandler commandHandler;
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
     bool isImmediateCmdList = false;
 
     SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
@@ -333,16 +333,16 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
 }
 
 int main(int argc, char *argv[]) {
-    verbose = isVerbose(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool outputValidated = false;
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     std::stringstream ss;
     ss.setf(std::ios::hex, std::ios::basefield);
@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
     int testCase = 0;
-    testCase = getParamValue(argc, argv, "", "--test-case", 0);
+    testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", 0);
 
     switch (testCase) {
     default:
@@ -364,7 +364,7 @@ int main(int argc, char *argv[]) {
     case 1:
         std::cout << "test case: testBindlessImages\n"
                   << std::endl;
-        auto imageCount = getParamValue(argc, argv, "", "--image-count", 4 * 4096 + 8);
+        auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", 4 * 4096 + 8);
         std::cout << "--image-count: " << imageCount << std::endl;
         outputValidated = testBindlessImages(context, device, ss.str(), revisionId, imageCount);
         break;

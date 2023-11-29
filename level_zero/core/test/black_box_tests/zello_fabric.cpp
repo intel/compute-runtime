@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,14 +140,14 @@ int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Fabric";
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
 
-    const bool isSubDeviceDisplayEnabled = isParamEnabled(argc, argv, "-s", "--subDeviceEnable");
+    const bool isSubDeviceDisplayEnabled = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-s", "--subDeviceEnable");
     bool status = true;
 
     status &= showFabricConnectivityMatrix(driverHandle, isSubDeviceDisplayEnabled);
     status &= showFabricConnectivityProperties(driverHandle);
 
-    printResult(false, status, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(false, status, blackBoxName);
     return (status ? 0 : 1);
 }

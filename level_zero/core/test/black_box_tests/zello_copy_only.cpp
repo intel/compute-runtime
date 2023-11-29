@@ -27,7 +27,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
@@ -102,7 +102,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
@@ -173,7 +173,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
@@ -196,21 +196,21 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     void *dstBuffer = nullptr;
-    uint32_t dstWidth = verbose ? 16 : 256;  // width of the dst 2D buffer in bytes
-    uint32_t dstHeight = verbose ? 32 : 128; // height of the dst 2D buffer in bytes
-    uint32_t dstOriginX = verbose ? 8 : 32;  // Offset in bytes
-    uint32_t dstOriginY = verbose ? 8 : 64;  // Offset in rows
-    uint32_t dstSize = dstHeight * dstWidth; // Size of the dst buffer
+    uint32_t dstWidth = LevelZeroBlackBoxTests::verbose ? 16 : 256;  // width of the dst 2D buffer in bytes
+    uint32_t dstHeight = LevelZeroBlackBoxTests::verbose ? 32 : 128; // height of the dst 2D buffer in bytes
+    uint32_t dstOriginX = LevelZeroBlackBoxTests::verbose ? 8 : 32;  // Offset in bytes
+    uint32_t dstOriginY = LevelZeroBlackBoxTests::verbose ? 8 : 64;  // Offset in rows
+    uint32_t dstSize = dstHeight * dstWidth;                         // Size of the dst buffer
 
     void *srcBuffer = nullptr;
-    uint32_t srcWidth = verbose ? 16 : 256;  // width of the dst 2D buffer in bytes
-    uint32_t srcHeight = verbose ? 32 : 128; // height of the dst 2D buffer in bytes
-    uint32_t srcOriginX = verbose ? 8 : 32;  // Offset in bytes
-    uint32_t srcOriginY = verbose ? 8 : 64;  // Offset in rows
-    uint32_t srcSize = dstHeight * dstWidth; // Size of the dst buffer
+    uint32_t srcWidth = LevelZeroBlackBoxTests::verbose ? 16 : 256;  // width of the dst 2D buffer in bytes
+    uint32_t srcHeight = LevelZeroBlackBoxTests::verbose ? 32 : 128; // height of the dst 2D buffer in bytes
+    uint32_t srcOriginX = LevelZeroBlackBoxTests::verbose ? 8 : 32;  // Offset in bytes
+    uint32_t srcOriginY = LevelZeroBlackBoxTests::verbose ? 8 : 64;  // Offset in rows
+    uint32_t srcSize = dstHeight * dstWidth;                         // Size of the dst buffer
 
-    uint32_t width = verbose ? 8 : 64;   // width of the region to copy
-    uint32_t height = verbose ? 12 : 32; // height of the region to copy
+    uint32_t width = LevelZeroBlackBoxTests::verbose ? 8 : 64;   // width of the region to copy
+    uint32_t height = LevelZeroBlackBoxTests::verbose ? 12 : 32; // height of the region to copy
     const ze_copy_region_t dstRegion = {dstOriginX, dstOriginY, 0, width, height, 0};
     const ze_copy_region_t srcRegion = {srcOriginX, srcOriginY, 0, width, height, 0};
 
@@ -258,7 +258,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "srcBufferChar\n";
         for (uint32_t i = 0; i < srcHeight; i++) {
             for (uint32_t j = 0; j < srcWidth; j++) {
@@ -305,7 +305,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
@@ -371,7 +371,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     for (size_t i = 0; i < allocSize; ++i) {
         if (bufferChar0[i] != pattern0) {
             validRet = false;
-            if (verbose) {
+            if (LevelZeroBlackBoxTests::verbose) {
                 std::cout << "dstBufferChar0[" << i << " ] "
                           << static_cast<unsigned int>(bufferChar0[i])
                           << "!= pattern0 " << pattern0 << "\n";
@@ -386,7 +386,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
         for (size_t i = 0; i < allocSize; i++) {
             if (bufferChar1[i] != pattern1[j]) {
                 validRet = false;
-                if (verbose) {
+                if (LevelZeroBlackBoxTests::verbose) {
                     std::cout << "dstBufferChar1[" << i << " ] "
                               << static_cast<unsigned int>(bufferChar1[i])
                               << "!= pattern1[" << j << " ] "
@@ -415,7 +415,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
@@ -438,26 +438,26 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 
     void *dstBuffer = nullptr;
-    uint32_t dstWidth = verbose ? 8 : 64;               // width of the dst 3D buffer in bytes
-    uint32_t dstHeight = verbose ? 8 : 64;              // height of the dst 3D buffer in bytes
-    uint32_t dstDepth = verbose ? 2 : 4;                // depth of the dst 3D buffer in bytes
-    uint32_t dstOriginX = 0;                            // Offset in bytes
-    uint32_t dstOriginY = 0;                            // Offset in rows
-    uint32_t dstOriginZ = 0;                            // Offset in rows
-    uint32_t dstSize = dstHeight * dstWidth * dstDepth; // Size of the dst buffer
+    uint32_t dstWidth = LevelZeroBlackBoxTests::verbose ? 8 : 64;  // width of the dst 3D buffer in bytes
+    uint32_t dstHeight = LevelZeroBlackBoxTests::verbose ? 8 : 64; // height of the dst 3D buffer in bytes
+    uint32_t dstDepth = LevelZeroBlackBoxTests::verbose ? 2 : 4;   // depth of the dst 3D buffer in bytes
+    uint32_t dstOriginX = 0;                                       // Offset in bytes
+    uint32_t dstOriginY = 0;                                       // Offset in rows
+    uint32_t dstOriginZ = 0;                                       // Offset in rows
+    uint32_t dstSize = dstHeight * dstWidth * dstDepth;            // Size of the dst buffer
 
     void *srcBuffer = nullptr;
-    uint32_t srcWidth = verbose ? 8 : 64;               // width of the src 3D buffer in bytes
-    uint32_t srcHeight = verbose ? 8 : 64;              // height of the src 3D buffer in bytes
-    uint32_t srcDepth = verbose ? 2 : 4;                // depth of the src 3D buffer in bytes
-    uint32_t srcOriginX = 0;                            // Offset in bytes
-    uint32_t srcOriginY = 0;                            // Offset in rows
-    uint32_t srcOriginZ = 0;                            // Offset in rows
-    uint32_t srcSize = srcHeight * srcWidth * srcDepth; // Size of the src buffer
+    uint32_t srcWidth = LevelZeroBlackBoxTests::verbose ? 8 : 64;  // width of the src 3D buffer in bytes
+    uint32_t srcHeight = LevelZeroBlackBoxTests::verbose ? 8 : 64; // height of the src 3D buffer in bytes
+    uint32_t srcDepth = LevelZeroBlackBoxTests::verbose ? 2 : 4;   // depth of the src 3D buffer in bytes
+    uint32_t srcOriginX = 0;                                       // Offset in bytes
+    uint32_t srcOriginY = 0;                                       // Offset in rows
+    uint32_t srcOriginZ = 0;                                       // Offset in rows
+    uint32_t srcSize = srcHeight * srcWidth * srcDepth;            // Size of the src buffer
 
-    uint32_t width = verbose ? 8 : 64;  // width of the region to copy
-    uint32_t height = verbose ? 8 : 64; // height of the region to copy
-    uint32_t depth = verbose ? 2 : 4;   // height of the region to copy
+    uint32_t width = LevelZeroBlackBoxTests::verbose ? 8 : 64;  // width of the region to copy
+    uint32_t height = LevelZeroBlackBoxTests::verbose ? 8 : 64; // height of the region to copy
+    uint32_t depth = LevelZeroBlackBoxTests::verbose ? 2 : 4;   // height of the region to copy
     const ze_copy_region_t dstRegion = {dstOriginX, dstOriginY, dstOriginZ, width, height, depth};
     const ze_copy_region_t srcRegion = {srcOriginX, srcOriginY, dstOriginZ, width, height, depth};
 
@@ -508,7 +508,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "srcBufferChar\n";
         for (uint32_t i = 0; i < srcDepth; i++) {
             for (uint32_t j = 0; j < srcHeight; j++) {
@@ -556,17 +556,17 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Copy Only";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful = true;
     testCopyBetweenHeapDeviceAndStack(context, device, outputValidationSuccessful);
@@ -585,7 +585,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

@@ -273,10 +273,10 @@ void runServer(int commSocket, bool &validRet) {
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello IPC P2P";
-    verbose = isVerbose(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
-    useCopyEngine = isParamEnabled(argc, argv, "-c", "--copyengine");
+    useCopyEngine = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-c", "--copyengine");
 
     int sv[2];
     if (socketpair(PF_UNIX, SOCK_STREAM, 0, sv) < 0) {
@@ -299,6 +299,6 @@ int main(int argc, char *argv[]) {
         close(sv[0]);
     }
 
-    printResult(false, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(false, outputValidationSuccessful, blackBoxName);
     return outputValidationSuccessful ? 0 : 1;
 }

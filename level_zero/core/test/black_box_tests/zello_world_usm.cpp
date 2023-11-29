@@ -18,16 +18,16 @@ bool useSyncQueue = false;
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello World USM";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
-    useSyncQueue = isSyncQueueEnabled(argc, argv);
+    useSyncQueue = LevelZeroBlackBoxTests::isSyncQueueEnabled(argc, argv);
     bool outputValidationSuccessful = false;
     // 1. Set-up
     constexpr char srcInitValue = 7;
     constexpr char dstInitValue = 3;
     constexpr size_t bytesPerThread = sizeof(char);
-    uint32_t allocSize = getBufferLength(argc, argv, 4096 + 7);
+    uint32_t allocSize = LevelZeroBlackBoxTests::getBufferLength(argc, argv, 4096 + 7);
     uint32_t numThreads = allocSize / bytesPerThread;
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
@@ -44,12 +44,12 @@ int main(int argc, char *argv[]) {
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     file.seekg(0, file.end);
     auto length = file.tellg();
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, numThreads, 1U, 1U, &groupSizeX,
                                                   &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                   << ")" << std::endl;
     }
@@ -99,15 +99,15 @@ int main(int argc, char *argv[]) {
     cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
-    selectQueueMode(cmdQueueDesc, useSyncQueue);
+    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, useSyncQueue);
 
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
 
     ze_command_list_handle_t cmdList;
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     dispatchTraits.groupCountX = numThreads / groupSizeX;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
                   << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
                   << std::endl;
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return outputValidationSuccessful ? 0 : 1;
 }

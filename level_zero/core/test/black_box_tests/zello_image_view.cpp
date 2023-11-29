@@ -40,7 +40,7 @@ const char *readNV12Module = R"===(
 
 void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     std::string buildLog;
-    auto spirV = compileToSpirV(readNV12Module, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(readNV12Module, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -534,17 +534,17 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Image View";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
     bool outputValidationSuccessful = false;
 
     ze_device_properties_t deviceProperties = {};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     testAppendImageViewNV12Copy(context, device, outputValidationSuccessful);
     if (outputValidationSuccessful || aubMode) {
@@ -553,7 +553,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

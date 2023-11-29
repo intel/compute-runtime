@@ -15,8 +15,8 @@
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Multidev";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     // Set-up
     constexpr size_t allocSize = 4096;
     constexpr size_t bytesPerThread = sizeof(char);
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    devices = zelloInitContextAndGetDevices(context, driverHandle);
+    devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     uint32_t deviceCount = (uint32_t)devices.size();
 
     // Get subdevices for each device and add to total count of devices
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     for (uint32_t i = 0; i < deviceCount; i++) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         SUCCESS_OR_TERMINATE(zeDeviceGetProperties(devices[i], &deviceProperties));
-        printDeviceProperties(deviceProperties);
+        LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
         deviceNames[i].assign(deviceProperties.name, strlen(deviceProperties.name));
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeDeviceGetCacheProperties(devices[i], &cachePropertiesCount, cacheProperties.data()));
 
         for (uint32_t cacheIndex = 0; cacheIndex < cachePropertiesCount; cacheIndex++) {
-            printCacheProperties(cacheIndex, cacheProperties[cacheIndex]);
+            LevelZeroBlackBoxTests::printCacheProperties(cacheIndex, cacheProperties[cacheIndex]);
         }
 
         ze_device_p2p_properties_t deviceP2PProperties = {ZE_STRUCTURE_TYPE_DEVICE_P2P_PROPERTIES};
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
             SUCCESS_OR_TERMINATE(zeDeviceGetP2PProperties(devices[i], devices[j], &deviceP2PProperties));
             ze_bool_t canAccessPeer = false;
             SUCCESS_OR_TERMINATE(zeDeviceCanAccessPeer(devices[i], devices[j], &canAccessPeer));
-            printP2PProperties(deviceP2PProperties, canAccessPeer, i, j);
+            LevelZeroBlackBoxTests::printP2PProperties(deviceP2PProperties, canAccessPeer, i, j);
             if (canAccessPeer == false) {
                 std::cout << "Device " << i << " cannot access " << j << "\n";
                 std::terminate();
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     kernel.resize(deviceCount);
 
     std::string buildLog;
-    auto moduleBinary = compileToSpirV(memcpyBytesTestKernelSrc, "", buildLog);
+    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = getCommandQueueOrdinal(devices[i]);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(devices[i]);
         cmdQueueDesc.index = 0;
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, devices[i], &cmdQueueDesc, &cmdQueue[i]));
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel[i], numThreads, 1U, 1U,
                                                       &groupSizeX, &groupSizeY, &groupSizeZ));
         SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
-        if (verbose) {
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                       << ")" << std::endl;
         }
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
         dispatchTraits.groupCountX = numThreads / groupSizeX;
         dispatchTraits.groupCountY = 1u;
         dispatchTraits.groupCountZ = 1u;
-        if (verbose) {
+        if (LevelZeroBlackBoxTests::verbose) {
             std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
                       << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
                       << std::endl;
@@ -237,7 +237,7 @@ int main(int argc, char *argv[]) {
         std::cout << "\nZello Multidev Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
                   << std::endl;
     }
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

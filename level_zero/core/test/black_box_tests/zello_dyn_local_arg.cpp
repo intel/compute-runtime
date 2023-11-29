@@ -52,7 +52,7 @@ void createModule(ze_module_handle_t &module, ze_context_handle_t &context, ze_d
     // Prepare spirV
     std::string buildLog;
 
-    auto binaryModule = compileToSpirV(clProgram, "", buildLog);
+    auto binaryModule = LevelZeroBlackBoxTests::compileToSpirV(clProgram, "", buildLog);
     if (buildLog.size() > 0) {
         std::cerr << "CL->spirV comilation log : " << buildLog
                   << std::endl;
@@ -75,7 +75,7 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel, size_t
     // Set group sizes
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, static_cast<uint32_t>(numThreads), 1U, 1U, &groupSizeX,
                                                   &groupSizeY, &groupSizeZ));
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                   << ")" << std::endl;
     }
@@ -87,7 +87,7 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context, ze_device_handle_t &
                               ze_command_list_handle_t &cmdList,
                               ze_command_queue_desc_t *cmdQueueDesc,
                               ze_command_list_desc_t *cmdListDesc) {
-    cmdQueueDesc->ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc->ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc->mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, cmdQueueDesc, &cmdqueue));
 
@@ -140,7 +140,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     realResult = reinterpret_cast<int *>(dstBuffer);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cerr << "Inital Gobal Memory Value " << *realResult << std::endl;
     }
 
@@ -154,7 +154,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     dispatchTraits.groupCountX = 3u;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
                   << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
                   << std::endl;
@@ -168,7 +168,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     realResult = reinterpret_cast<int *>(dstBuffer);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cerr << "Final Gobal Memory Value " << *realResult << std::endl;
     }
 
@@ -190,23 +190,23 @@ int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Dyn Local Arg";
     bool outputValidationSuccessful;
 
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     outputValidationSuccessful = testLocalBarrier(context, device);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;

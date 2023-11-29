@@ -46,7 +46,7 @@ enum class PrintfExecutionMode : uint32_t {
 
 void createModule(const ze_context_handle_t context, const ze_device_handle_t device, ze_module_handle_t &module) {
     std::string buildLog;
-    auto spirV = compileToSpirV(source, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(source, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -71,7 +71,7 @@ void createKernel(const ze_module_handle_t module, ze_kernel_handle_t &kernel, c
 void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t &kernel,
                      ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, PrintfExecutionMode mode) {
 
-    CommandHandler commandHandler;
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
     bool isImmediateCmdList = (mode == PrintfExecutionMode::ImmSyncCmdList);
 
     SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
@@ -107,19 +107,19 @@ void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t 
 }
 
 int main(int argc, char *argv[]) {
-    verbose = isVerbose(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     const char *fileName = "zello_printf_output.txt";
     bool validatePrintfOutput = true;
     bool printfValidated = false;
     int stdoutFd = -1;
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     ze_module_handle_t module = nullptr;
     createModule(context, device, module);

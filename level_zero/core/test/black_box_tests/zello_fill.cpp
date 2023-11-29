@@ -41,7 +41,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
 
         ze_command_list_handle_t cmdListInit = nullptr;
         if (useInitFill) {
-            SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdListInit));
+            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListInit));
             SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdListInit, devBuffer, &initPattern, sizeof(initPattern), devBufferSize, nullptr, 0, nullptr));
             SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListInit, nullptr, 0, nullptr));
             SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListInit));
@@ -50,7 +50,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
         }
 
         ze_command_list_handle_t cmdListFill;
-        SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdListFill));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListFill));
 
         void *dst = reinterpret_cast<void *>(reinterpret_cast<uint16_t *>(devBuffer) + offset);
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdListFill, dst, &pattern, sizeof(pattern), (numElements - offset) * sizeof(uint16_t), nullptr, 0, nullptr));
@@ -58,7 +58,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListFill));
 
         ze_command_list_handle_t cmdListCopy;
-        SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdListCopy));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListCopy));
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListCopy, hostBuffer, devBuffer, devBufferSize, nullptr, 0, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListCopy, nullptr, 0, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListCopy));
@@ -98,29 +98,29 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Fill";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
-    size_t maxElemenets = static_cast<uint32_t>(getParamValue(argc, argv, "-e", "--max-elements", 10));
-    bool useInitFill = getParamValue(argc, argv, "-f", "--fill", 1) == 1 ? true : false;
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
+    size_t maxElemenets = static_cast<uint32_t>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--max-elements", 10));
+    bool useInitFill = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-f", "--fill", 1) == 1 ? true : false;
 
     ze_context_handle_t context = nullptr;
-    auto devices = zelloInitContextAndGetDevices(context);
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
     bool outputValidationSuccessful = false;
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     ze_command_queue_handle_t cmdQueue;
-    cmdQueue = createCommandQueue(context, device, nullptr);
+    cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr);
 
     testAppendMemoryCopyFill(context, device, outputValidationSuccessful, cmdQueue, maxElemenets, useInitFill);
 
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);

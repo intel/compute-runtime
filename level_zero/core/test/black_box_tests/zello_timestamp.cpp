@@ -36,9 +36,9 @@ void createImmediateCommandList(ze_device_handle_t &device,
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
     cmdQueueDesc.index = 0;
-    selectQueueMode(cmdQueueDesc, syncMode);
+    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
@@ -85,7 +85,7 @@ void createImmediateCommandList(ze_device_handle_t &device,
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdQueueDesc.ordinal = queueGroupOrdinal;
     cmdQueueDesc.index = 0;
-    selectQueueMode(cmdQueueDesc, syncMode);
+    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
@@ -228,7 +228,7 @@ bool testKernelTimestampHostQuery(int argc, char *argv[],
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
-    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -336,7 +336,7 @@ bool testKernelTimestampAppendQuery(ze_context_handle_t &context,
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
-    createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0u, nullptr));
@@ -390,11 +390,11 @@ bool testKernelTimestampAppendQueryWithDeviceProperties(int argc, char *argv[],
                                                         ze_device_handle_t &device) {
     bool result;
     std::string currentTest;
-    bool aubMode = isAubMode(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     currentTest = "Test Append Write of Global Timestamp: Default Device Properties Structure";
     deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -424,8 +424,8 @@ bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t kernelTsEvent;
 
-    bool runTillDeviceTsOverflows = isParamEnabled(argc, argv, "-d", "--runTillDeviceTsOverflow");
-    bool runTillKernelTsOverflows = isParamEnabled(argc, argv, "-k", "--runTillKernelTsOverflow");
+    bool runTillDeviceTsOverflows = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-d", "--runTillDeviceTsOverflow");
+    bool runTillKernelTsOverflows = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-k", "--runTillKernelTsOverflow");
 
     // Create commandQueue and cmdList
     createCmdQueueAndCmdList(context, device, cmdQueue, cmdList);
@@ -485,7 +485,7 @@ bool testKernelTimestampMapToHostTimescale(int argc, char *argv[],
         dispatchTraits.groupCountY = 1u;
         dispatchTraits.groupCountZ = 1u;
 
-        createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+        LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1, &kernelTsEvent, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, kernelTsEvent, 0, nullptr));
 
         return true;
@@ -608,20 +608,20 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
     constexpr size_t allocSize = 4096;
     ze_group_count_t dispatchTraits;
 
-    bool runTillDeviceTsOverflows = isParamEnabled(argc, argv, "-o", "--runTillOverflow");
-    bool useSingleCommand = isParamEnabled(argc, argv, "-s", "--useSingleCommand");
-    bool useImmediate = isParamEnabled(argc, argv, "-i", "--useImmediate");
+    bool runTillDeviceTsOverflows = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-o", "--runTillOverflow");
+    bool useSingleCommand = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-s", "--useSingleCommand");
+    bool useImmediate = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-i", "--useImmediate");
     int defaultVerboseLevel = 1;
-    int verboseLevel = getParamValue(argc, argv, "-l", "--verboseLevel", defaultVerboseLevel);
+    int verboseLevel = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-l", "--verboseLevel", defaultVerboseLevel);
 
     if (useSingleCommand) {
         eventUsageCount = 1;
     }
 
     ze_event_handle_t kernelTsEvent[maxEventUsageCount];
-    createEventPoolAndEvents(context, device, eventPool,
-                             (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP), maxEventUsageCount, kernelTsEvent,
-                             ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
+                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP), maxEventUsageCount, kernelTsEvent,
+                                                     ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST);
 
     // Create commandQueue and cmdList
     if (useImmediate) {
@@ -802,8 +802,8 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Timestamp");
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
     using testFunction = std::function<bool(int, char *[],
                                             ze_context_handle_t &,
                                             ze_driver_handle_t &,
@@ -817,17 +817,17 @@ int main(int argc, char *argv[]) {
     supportedTests["testKernelMappedTimestampMap"] = testKernelMappedTimestampMap;
 
     const char *defaultString = "testKernelTimestampAppendQueryWithDeviceProperties";
-    const char *test = getParamValue(argc, argv, "-t", "--test", defaultString);
+    const char *test = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-t", "--test", defaultString);
     bool result = false;
     if (supportedTests.find(test) != supportedTests.end()) {
         ze_context_handle_t context = nullptr;
         ze_driver_handle_t driverHandle = nullptr;
-        auto devices = zelloInitContextAndGetDevices(context, driverHandle);
+        auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context, driverHandle);
         auto device = devices[0];
 
         result = supportedTests[test](argc, argv, context, driverHandle, device);
         SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-        printResult(aubMode, result, blackBoxName, test);
+        LevelZeroBlackBoxTests::printResult(aubMode, result, blackBoxName, test);
     }
     result = aubMode ? true : result;
     return result ? 0 : 1;

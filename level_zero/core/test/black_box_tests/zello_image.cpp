@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,9 +30,9 @@ void testAppendImageFunction(ze_context_handle_t &context,
 
     const size_t channels = 4;
 
-    uint32_t hostWidth = verbose ? 5 : 131;
-    uint32_t hostHeight = verbose ? 4 : 89;
-    uint32_t hostDepth = verbose ? 3 : 10;
+    uint32_t hostWidth = LevelZeroBlackBoxTests::verbose ? 5 : 131;
+    uint32_t hostHeight = LevelZeroBlackBoxTests::verbose ? 4 : 89;
+    uint32_t hostDepth = LevelZeroBlackBoxTests::verbose ? 3 : 10;
 
     // Apply a few pixels of offset to copy-in and copy-out
     uint32_t inOffsetX = 1;
@@ -125,7 +125,7 @@ void testAppendImageFunction(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         size_t pixelWidth = channels;
         size_t rowWidth = pixelWidth * hostWidth;
         size_t sliceWidth = rowWidth * hostHeight;
@@ -201,12 +201,12 @@ void testAppendImageFunction(ze_context_handle_t &context,
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Image";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
-    bool do1D = isParamEnabled(argc, argv, "-1", "--1D");
-    bool do2D = isParamEnabled(argc, argv, "-2", "--2D");
-    bool do3D = isParamEnabled(argc, argv, "-3", "--3D");
+    bool do1D = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-1", "--1D");
+    bool do2D = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-2", "--2D");
+    bool do3D = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-3", "--3D");
 
     // by default, do all tests
     if (!do1D && !do2D && !do3D) {
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
     ze_device_handle_t device;
     ze_command_queue_handle_t cmdQueue;
     uint32_t cmdQueueOrdinal;
-    initialize(driver, context, device, cmdQueue, cmdQueueOrdinal);
+    LevelZeroBlackBoxTests::initialize(driver, context, device, cmdQueue, cmdQueueOrdinal);
 
     bool success1D = false;
     bool success2D = false;
@@ -228,19 +228,19 @@ int main(int argc, char *argv[]) {
     if (do1D) {
         caseName = "1D";
         testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success1D, ZE_IMAGE_TYPE_1D);
-        printResult(aubMode, success1D, blackBoxName, caseName);
+        LevelZeroBlackBoxTests::printResult(aubMode, success1D, blackBoxName, caseName);
     }
     if (do2D) {
         caseName = "2D";
         testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success2D, ZE_IMAGE_TYPE_2D);
-        printResult(aubMode, success1D, blackBoxName, caseName);
+        LevelZeroBlackBoxTests::printResult(aubMode, success1D, blackBoxName, caseName);
     }
     if (do3D) {
         caseName = "3D";
         testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
-        printResult(aubMode, success1D, blackBoxName, caseName);
+        LevelZeroBlackBoxTests::printResult(aubMode, success1D, blackBoxName, caseName);
     }
-    teardown(context, cmdQueue);
+    LevelZeroBlackBoxTests::teardown(context, cmdQueue);
 
     bool outputValidationSuccessful = !((do1D && !success1D) || (do2D && !success2D) || (do3D && !success3D));
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

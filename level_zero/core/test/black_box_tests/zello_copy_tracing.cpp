@@ -74,7 +74,7 @@ void onExitInit(
     UserInstanceData *instanceData = reinterpret_cast<UserInstanceData *>(*tracerInstanceUserData);
     SUCCESS_OR_WARNING_BOOL(instanceData->allocCount = initCount);
     float time = 1000.f * (endTime - instanceData->startTime) / CLOCKS_PER_SEC;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "zeInit event " << instanceData->allocCount << " " << time << std::endl;
     }
     delete instanceData;
@@ -129,7 +129,7 @@ void onExitDriverGet(
     UserInstanceData *instanceData = reinterpret_cast<UserInstanceData *>(*tracerInstanceUserData);
     SUCCESS_OR_WARNING_BOOL(instanceData->allocCount = initCount);
     float time = 1000.f * (endTime - instanceData->startTime) / CLOCKS_PER_SEC;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "zeDriverGet event " << instanceData->allocCount << " " << time << std::endl;
     }
     delete instanceData;
@@ -197,7 +197,7 @@ void onExitMemAllocDevice(
     UserInstanceData *instanceData = reinterpret_cast<UserInstanceData *>(*tracerInstanceUserData);
     SUCCESS_OR_WARNING_BOOL(instanceData->allocCount == memAllocDeviceCount);
     float time = 1000.f * (endTime - instanceData->startTime) / CLOCKS_PER_SEC;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "zeDriverAllocDeviceMem event " << instanceData->allocCount << " " << time << std::endl;
     }
     delete instanceData;
@@ -262,7 +262,7 @@ void onExitMemAllocHost(
     UserInstanceData *instanceData = reinterpret_cast<UserInstanceData *>(*tracerInstanceUserData);
     SUCCESS_OR_WARNING_BOOL(instanceData->allocCount == memAllocHostCount);
     float time = 1000.f * (endTime - instanceData->startTime) / CLOCKS_PER_SEC;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "zeMemAllocHost event " << instanceData->allocCount << " " << time << std::endl;
     }
     delete instanceData;
@@ -334,7 +334,7 @@ void onExitMemAllocShared(
     UserInstanceData *instanceData = reinterpret_cast<UserInstanceData *>(*tracerInstanceUserData);
     SUCCESS_OR_WARNING_BOOL(instanceData->allocCount == memAllocSharedCount);
     float time = 1000.f * (endTime - instanceData->startTime) / CLOCKS_PER_SEC;
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "zeMemAllocShared event " << instanceData->allocCount << " " << time << std::endl;
     }
     delete instanceData;
@@ -540,21 +540,21 @@ void testAppendMemoryCopy2(ze_context_handle_t &context, ze_device_handle_t &dev
     SUCCESS_OR_TERMINATE(cmdListDdiTable.pfnCreate(context, device, &cmdListDesc, &cmdList));
 
     void *dstBuffer = nullptr;
-    uint32_t dstWidth = verbose ? 16 : 1024; // width of the dst 2D buffer in bytes
-    uint32_t dstHeight = verbose ? 32 : 512; // height of the dst 2D buffer in bytes
-    uint32_t dstOriginX = verbose ? 8 : 128; // Offset in bytes
-    uint32_t dstOriginY = verbose ? 8 : 144; // Offset in rows
-    uint32_t dstSize = dstHeight * dstWidth; // Size of the dst buffer
+    uint32_t dstWidth = LevelZeroBlackBoxTests::verbose ? 16 : 1024; // width of the dst 2D buffer in bytes
+    uint32_t dstHeight = LevelZeroBlackBoxTests::verbose ? 32 : 512; // height of the dst 2D buffer in bytes
+    uint32_t dstOriginX = LevelZeroBlackBoxTests::verbose ? 8 : 128; // Offset in bytes
+    uint32_t dstOriginY = LevelZeroBlackBoxTests::verbose ? 8 : 144; // Offset in rows
+    uint32_t dstSize = dstHeight * dstWidth;                         // Size of the dst buffer
 
     void *srcBuffer = nullptr;
-    uint32_t srcWidth = verbose ? 24 : 256;  // width of the src 2D buffer in bytes
-    uint32_t srcHeight = verbose ? 16 : 384; // height of the src 2D buffer in bytes
-    uint32_t srcOriginX = verbose ? 4 : 64;  // Offset in bytes
-    uint32_t srcOriginY = verbose ? 4 : 128; // Offset in rows
-    uint32_t srcSize = srcHeight * srcWidth; // Size of the src buffer
+    uint32_t srcWidth = LevelZeroBlackBoxTests::verbose ? 24 : 256;  // width of the src 2D buffer in bytes
+    uint32_t srcHeight = LevelZeroBlackBoxTests::verbose ? 16 : 384; // height of the src 2D buffer in bytes
+    uint32_t srcOriginX = LevelZeroBlackBoxTests::verbose ? 4 : 64;  // Offset in bytes
+    uint32_t srcOriginY = LevelZeroBlackBoxTests::verbose ? 4 : 128; // Offset in rows
+    uint32_t srcSize = srcHeight * srcWidth;                         // Size of the src buffer
 
-    uint32_t width = verbose ? 8 : 144;  // width of the region to copy
-    uint32_t height = verbose ? 12 : 96; // height of the region to copy
+    uint32_t width = LevelZeroBlackBoxTests::verbose ? 8 : 144;  // width of the region to copy
+    uint32_t height = LevelZeroBlackBoxTests::verbose ? 12 : 96; // height of the region to copy
     const ze_copy_region_t dstRegion = {dstOriginX, dstOriginY, 0, width, height, 0};
     const ze_copy_region_t srcRegion = {srcOriginX, srcOriginY, 0, width, height, 0};
 
@@ -594,7 +594,7 @@ void testAppendMemoryCopy2(ze_context_handle_t &context, ze_device_handle_t &dev
     SUCCESS_OR_TERMINATE(cmdQueueDdiTable.pfnSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "stackBuffer\n";
         for (uint32_t i = 0; i < srcHeight; i++) {
             for (uint32_t j = 0; j < srcWidth; j++) {
@@ -633,10 +633,10 @@ void testAppendMemoryCopy2(ze_context_handle_t &context, ze_device_handle_t &dev
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Copy Tracing";
-    verbose = isVerbose(argc, argv);
-    bool aubMode = isAubMode(argc, argv);
+    LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
+    bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
-    setEnvironmentVariable("ZET_ENABLE_API_TRACING_EXP", "1");
+    LevelZeroBlackBoxTests::setEnvironmentVariable("ZET_ENABLE_API_TRACING_EXP", "1");
 
     ze_api_version_t apiVersion = ZE_API_VERSION_CURRENT;
 
@@ -716,7 +716,7 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(deviceDdiTable.pfnGetProperties(device, &deviceProperties));
-    printDeviceProperties(deviceProperties);
+    LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful;
     testAppendMemoryCopy0(context, device, outputValidationSuccessful,
@@ -734,7 +734,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zetTracerExpSetEnabled(tracer, false));
     SUCCESS_OR_TERMINATE(zetTracerExpDestroy(tracer));
 
-    if (verbose) {
+    if (LevelZeroBlackBoxTests::verbose) {
         std::cout << "initCount: " << initCount
                   << " initPrologCount: " << initPrologCount
                   << " initEpilogCount: " << initEpilogCount
@@ -774,7 +774,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(contextDdiTable.pfnDestroy(context));
 
-    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
