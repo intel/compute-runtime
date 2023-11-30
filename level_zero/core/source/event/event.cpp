@@ -459,6 +459,6 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
     }
 }
 
-NEO::GraphicsAllocation *Event::getInOrderExecDataAllocation() const { return inOrderExecInfo.get() ? &inOrderExecInfo->inOrderDependencyCounterAllocation : nullptr; }
+NEO::GraphicsAllocation *Event::getInOrderExecDataAllocation() const { return inOrderExecInfo.get() ? &inOrderExecInfo->getDeviceCounterAllocation() : nullptr; }
 
 } // namespace L0

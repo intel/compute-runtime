@@ -516,7 +516,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
-                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, this->inOrderAllocationOffset);
+                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), this->inOrderAllocationOffset);
             }
 
             return ZE_RESULT_SUCCESS;
@@ -865,7 +865,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible);
 
-    uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->inOrderDependencyCounter : 0;
+    uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
     if (inOrderWaitAllowed) {
         status = synchronizeInOrderExecution(timeout);
@@ -1069,7 +1069,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         signalEvent->setGpuEndTimestamp();
 
         if (signalEvent->isCounterBased()) {
-            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->inOrderDependencyCounter, inOrderAllocationOffset);
+            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderAllocationOffset);
             signalEvent->setIsCompleted();
         } else {
             signalEvent->hostSignal();
@@ -1269,17 +1269,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
     ze_result_t status = ZE_RESULT_NOT_READY;
 
-    auto waitValue = inOrderExecInfo->inOrderDependencyCounter;
+    auto waitValue = inOrderExecInfo->getCounterValue();
 
     lastHangCheckTime = std::chrono::high_resolution_clock::now();
     waitStartTime = lastHangCheckTime;
 
     do {
-        this->csr->downloadAllocation(inOrderExecInfo->inOrderDependencyCounterAllocation);
+        this->csr->downloadAllocation(inOrderExecInfo->getDeviceCounterAllocation());
 
         bool signaled = true;
 
-        auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->inOrderDependencyCounterAllocation.getUnderlyingBuffer(), this->inOrderAllocationOffset));
+        auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer(), this->inOrderAllocationOffset));
 
         for (uint32_t i = 0; i < this->partitionCount; i++) {
             if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {

@@ -21,24 +21,39 @@ class MemoryManager;
 
 namespace L0 {
 
-struct InOrderExecInfo : public NEO::NonCopyableClass {
+class InOrderExecInfo : public NEO::NonCopyableClass {
+  public:
     ~InOrderExecInfo();
 
     InOrderExecInfo() = delete;
 
-    InOrderExecInfo(NEO::GraphicsAllocation &inOrderDependencyCounterAllocation, NEO::MemoryManager &memoryManager, bool isRegularCmdList);
+    InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, bool regularCmdList);
 
-    NEO::GraphicsAllocation &inOrderDependencyCounterAllocation;
+    NEO::GraphicsAllocation &getDeviceCounterAllocation() const { return deviceCounterAllocation; }
+
+    uint64_t getCounterValue() const { return counterValue; }
+    void addCounterValue(uint64_t addValue) { counterValue += addValue; }
+    void resetCounterValue() { counterValue = 0; }
+
+    uint64_t getRegularCmdListSubmissionCounter() const { return regularCmdListSubmissionCounter; }
+    void addRegularCmdListSubmissionCounter(uint64_t addValue) { regularCmdListSubmissionCounter += addValue; }
+
+    bool isRegularCmdList() const { return regularCmdList; }
+
+    void reset();
+
+  protected:
+    NEO::GraphicsAllocation &deviceCounterAllocation;
     NEO::MemoryManager &memoryManager;
-    uint64_t inOrderDependencyCounter = 0;
+    uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
-    bool isRegularCmdList = false;
+    bool regularCmdList = false;
 };
 
 namespace InOrderPatchCommandHelpers {
 inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
-    if (inOrderExecInfo.isRegularCmdList && inOrderExecInfo.regularCmdListSubmissionCounter > 1) {
-        return inOrderExecInfo.inOrderDependencyCounter * (inOrderExecInfo.regularCmdListSubmissionCounter - 1);
+    if (inOrderExecInfo.isRegularCmdList() && inOrderExecInfo.getRegularCmdListSubmissionCounter() > 1) {
+        return inOrderExecInfo.getCounterValue() * (inOrderExecInfo.getRegularCmdListSubmissionCounter() - 1);
     }
 
     return 0;

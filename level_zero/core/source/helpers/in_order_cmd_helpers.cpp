@@ -10,16 +10,24 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include <cstdint>
+#include <string.h>
 #include <vector>
 
 namespace L0 {
 
 InOrderExecInfo::~InOrderExecInfo() {
-    memoryManager.freeGraphicsMemory(&inOrderDependencyCounterAllocation);
+    memoryManager.freeGraphicsMemory(&deviceCounterAllocation);
 }
 
-InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &inOrderDependencyCounterAllocation, NEO::MemoryManager &memoryManager, bool isRegularCmdList)
-    : inOrderDependencyCounterAllocation(inOrderDependencyCounterAllocation), memoryManager(memoryManager), isRegularCmdList(isRegularCmdList) {
+InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, bool regularCmdList)
+    : deviceCounterAllocation(deviceCounterAllocation), memoryManager(memoryManager), regularCmdList(regularCmdList) {
+}
+
+void InOrderExecInfo::reset() {
+    counterValue = 0;
+    regularCmdListSubmissionCounter = 0;
+
+    memset(deviceCounterAllocation.getUnderlyingBuffer(), 0, deviceCounterAllocation.getUnderlyingBufferSize());
 }
 
 } // namespace L0

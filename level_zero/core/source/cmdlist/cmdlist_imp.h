@@ -35,7 +35,7 @@ struct CommandListImp : public CommandList {
     void storeReferenceTsToMappedEvents(bool clear);
     void addToMappedEventList(Event *event);
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
-    void incRegularCmdListSubmissionCounter();
+    void addRegularCmdListSubmissionCounter();
     virtual void patchInOrderCmds() = 0;
 
   protected:

@@ -43,7 +43,7 @@ struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
 struct Kernel;
-struct InOrderExecInfo;
+class InOrderExecInfo;
 
 #pragma pack(1)
 struct IpcEventPoolData {

@@ -1145,10 +1145,10 @@ HWTEST2_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmis
         computeCmdList->close();
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(1u, computeCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
+        EXPECT_EQ(1u, computeCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(2u, computeCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
+        EXPECT_EQ(2u, computeCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
     }
 
     {
@@ -1161,10 +1161,10 @@ HWTEST2_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmis
 
         commandQueue->isCopyOnlyCommandQueue = true;
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(1u, copyCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
+        EXPECT_EQ(1u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-        EXPECT_EQ(2u, copyCmdList->inOrderExecInfo->regularCmdListSubmissionCounter);
+        EXPECT_EQ(2u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
     }
 }
 
