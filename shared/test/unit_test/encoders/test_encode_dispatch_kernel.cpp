@@ -996,25 +996,29 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenThenSshFromContainerIsUsed, IsAtLeastSkl) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithBindingTableWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     uint32_t numBindingTable = 1;
+    alignas(64) uint8_t data[2 * sizeof(RENDER_SURFACE_STATE)];
     RENDER_SURFACE_STATE state = FamilyType::cmdInitRenderSurfaceState;
+    memset(data, 0, sizeof(data));
+    memcpy(data, &state, sizeof(state));
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = static_cast<SurfaceStateHeapOffset>(sizeof(RENDER_SURFACE_STATE));
     dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
 
-    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&state);
+    const uint8_t *sshData = data;
     dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
-    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(RENDER_SURFACE_STATE));
+    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(data));
 
     bool requiresUncachedMocs = false;
+    cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getSpace(sizeof(RENDER_SURFACE_STATE));
     auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
@@ -1023,6 +1027,46 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThen
     auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
 
     EXPECT_NE(usedAfter, usedBefore);
+
+    auto ssh = ptrOffset(cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getCpuBase(), usedBefore);
+    auto *btiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(ssh, dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset));
+    uint32_t surfaceStateOffset = btiTableBase[0].getSurfaceStatePointer();
+    EXPECT_EQ(usedBefore, static_cast<size_t>(surfaceStateOffset));
+}
+
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisalignedBufferAddressWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    uint32_t numBindingTable = 0;
+    alignas(64) uint8_t data[2 * sizeof(RENDER_SURFACE_STATE)];
+    RENDER_SURFACE_STATE state = FamilyType::cmdInitRenderSurfaceState;
+    memset(data, 0, sizeof(data));
+    memcpy(data, &state, sizeof(state));
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0;
+    dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    const uint8_t *sshData = data;
+    dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(sshData);
+    dispatchInterface->getSurfaceStateHeapDataSizeResult = static_cast<uint32_t>(sizeof(RENDER_SURFACE_STATE));
+
+    bool requiresUncachedMocs = false;
+    cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getSpace(sizeof(RENDER_SURFACE_STATE));
+    auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+
+    auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
+
+    EXPECT_NE(usedAfter, usedBefore);
+
+    auto ssh = ptrOffset(cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getCpuBase(), usedBefore);
+    EXPECT_EQ(0, memcmp(ssh, &state, sizeof(state)));
 }
 
 HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenProgrammingWalkerThenKernelStartPointerHasProperOffset, IsBeforeXeHpCore) {

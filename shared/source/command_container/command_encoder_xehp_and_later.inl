@@ -142,13 +142,29 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     container.prepareBindfulSsh();
                     ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
                 }
+
                 uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
                 if (globalBindlessSsh) {
                     bindlessSshBaseOffset += ptrDiff(ssh->getGraphicsAllocation()->getGpuAddress(), ssh->getGraphicsAllocation()->getGpuBaseAddress());
                 }
-                // Allocate space for new ssh data
-                auto dstSurfaceState = ssh->getSpace(sshHeapSize);
-                memcpy_s(dstSurfaceState, sshHeapSize, args.dispatchInterface->getSurfaceStateHeapData(), sshHeapSize);
+
+                if constexpr (heaplessModeEnabled == false) {
+                    if (bindingTableStateCount > 0u) {
+                        auto bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
+                            *ssh,
+                            args.dispatchInterface->getSurfaceStateHeapData(),
+                            args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
+                            kernelDescriptor.payloadMappings.bindingTable.tableOffset));
+
+                        idd.setBindingTablePointer(bindingTablePointer);
+                    }
+                }
+
+                if (bindingTableStateCount == 0) {
+                    // Allocate space for new ssh data
+                    auto dstSurfaceState = ssh->getSpace(sshHeapSize);
+                    memcpy_s(dstSurfaceState, sshHeapSize, args.dispatchInterface->getSurfaceStateHeapData(), sshHeapSize);
+                }
                 args.dispatchInterface->patchBindlessOffsetsInCrossThreadData(bindlessSshBaseOffset);
             }
 

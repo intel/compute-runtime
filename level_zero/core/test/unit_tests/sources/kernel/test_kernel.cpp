@@ -3681,5 +3681,42 @@ TEST_F(BindlessKernelTest, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCross
     EXPECT_EQ(0u, crossThreadData[0]);
 }
 
+TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshTemplateIsAllocated) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    {
+        device->incRefInternal();
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->heapInfo.kernelHeapSize = 1;
+        char kernelHeap[1];
+        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+        kernelInfo->heapInfo.surfaceStateHeapSize = 0;
+        kernelInfo->heapInfo.pSsh = nullptr;
+
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+        kernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+        auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+        argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+        argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+        argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+        kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 1;
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, nullptr, false);
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+
+        EXPECT_EQ(surfaceStateSize, kernelImmutableData->getSurfaceStateHeapSize());
+    }
+}
+
 } // namespace ult
 } // namespace L0

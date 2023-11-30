@@ -129,9 +129,18 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             if (globalBindlessSsh) {
                 bindlessSshBaseOffset += ptrDiff(ssh->getGraphicsAllocation()->getGpuAddress(), ssh->getGraphicsAllocation()->getGpuBaseAddress());
             }
-            // Allocate space for new ssh data
-            auto dstSurfaceState = ssh->getSpace(sshHeapSize);
-            memcpy_s(dstSurfaceState, sshHeapSize, args.dispatchInterface->getSurfaceStateHeapData(), sshHeapSize);
+
+            if (bindingTableStateCount > 0u) {
+                bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
+                    *ssh,
+                    args.dispatchInterface->getSurfaceStateHeapData(),
+                    args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
+                    kernelDescriptor.payloadMappings.bindingTable.tableOffset));
+            } else {
+                // Allocate space for new ssh data
+                auto dstSurfaceState = ssh->getSpace(sshHeapSize);
+                memcpy_s(dstSurfaceState, sshHeapSize, args.dispatchInterface->getSurfaceStateHeapData(), sshHeapSize);
+            }
             args.dispatchInterface->patchBindlessOffsetsInCrossThreadData(bindlessSshBaseOffset);
         }
     }
