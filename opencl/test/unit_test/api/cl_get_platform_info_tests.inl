@@ -283,7 +283,7 @@ TEST_P(GetPlatformInfoTests, GivenValidParamWhenGettingPlatformInfoStringThenNon
     delete[] paramValue;
 }
 
-const cl_platform_info PlatformInfoTestValues[] =
+const cl_platform_info platformInfoTestValues[] =
     {
         CL_PLATFORM_PROFILE,
         CL_PLATFORM_VERSION,
@@ -295,5 +295,5 @@ const cl_platform_info PlatformInfoTestValues[] =
 
 INSTANTIATE_TEST_CASE_P(api,
                         GetPlatformInfoTests,
-                        ::testing::ValuesIn(PlatformInfoTestValues));
+                        ::testing::ValuesIn(platformInfoTestValues));
 } // namespace ULT

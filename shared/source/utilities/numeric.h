@@ -44,13 +44,13 @@ struct StorageType {
 template <uint8_t numBits>
 using StorageTypeT = typename StorageType<numBits>::Type;
 
-template <uint8_t IntegerBits, uint8_t FractionalBits, uint8_t TotalBits = IntegerBits + FractionalBits>
+template <uint8_t integerBits, uint8_t fractionalBits, uint8_t totalBits = integerBits + fractionalBits>
 struct UnsignedFixedPointValue {
     UnsignedFixedPointValue(float v) {
         fromFloatingPoint(v);
     }
 
-    StorageTypeT<TotalBits> &getRawAccess() {
+    StorageTypeT<totalBits> &getRawAccess() {
         return storage;
     }
 
@@ -66,7 +66,7 @@ struct UnsignedFixedPointValue {
     template <typename FloatingType>
     static constexpr FloatingType getMaxRepresentableFloatingPointValue() {
         return static_cast<FloatingType>(
-            static_cast<FloatingType>(maxNBitValue(IntegerBits)) + (static_cast<FloatingType>(maxNBitValue(FractionalBits)) / (1U << FractionalBits)));
+            static_cast<FloatingType>(maxNBitValue(integerBits)) + (static_cast<FloatingType>(maxNBitValue(fractionalBits)) / (1U << fractionalBits)));
     }
 
     template <typename FloatingType>
@@ -77,15 +77,15 @@ struct UnsignedFixedPointValue {
         val = (val > maxFloatVal) ? maxFloatVal : val;
 
         // scale to fixed point representation
-        this->storage = static_cast<StorageTypeT<TotalBits>>(val * (1U << FractionalBits));
+        this->storage = static_cast<StorageTypeT<totalBits>>(val * (1U << fractionalBits));
     }
 
     template <typename FloatingType>
     FloatingType asFloatPointType() {
-        return static_cast<FloatingType>(storage) / (1U << FractionalBits);
+        return static_cast<FloatingType>(storage) / (1U << fractionalBits);
     }
 
-    StorageTypeT<TotalBits> storage = 0;
+    StorageTypeT<totalBits> storage = 0;
 };
 
 using FixedU4D8 = UnsignedFixedPointValue<4, 8>;

@@ -489,12 +489,12 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
-        expectedReadCounters |= VF0HbmHRead;
-        expectedReadCounters = (expectedReadCounters << 32) | VF0HbmLRead;
+        expectedReadCounters |= vF0HbmHRead;
+        expectedReadCounters = (expectedReadCounters << 32) | vF0HbmLRead;
         expectedReadCounters = expectedReadCounters * transactionSize;
         EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
-        expectedWriteCounters |= VF0HbmHWrite;
-        expectedWriteCounters = (expectedWriteCounters << 32) | VF0HbmLWrite;
+        expectedWriteCounters |= vF0HbmHWrite;
+        expectedWriteCounters = (expectedWriteCounters << 32) | vF0HbmLWrite;
         expectedWriteCounters = expectedWriteCounters * transactionSize;
         EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
@@ -525,12 +525,12 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
 
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
-        expectedReadCounters |= VF0HbmHRead;
-        expectedReadCounters = (expectedReadCounters << 32) | VF0HbmLRead;
+        expectedReadCounters |= vF0HbmHRead;
+        expectedReadCounters = (expectedReadCounters << 32) | vF0HbmLRead;
         expectedReadCounters = expectedReadCounters * transactionSize;
         EXPECT_EQ(bandwidth.readCounter, expectedReadCounters);
-        expectedWriteCounters |= VF0HbmHWrite;
-        expectedWriteCounters = (expectedWriteCounters << 32) | VF0HbmLWrite;
+        expectedWriteCounters |= vF0HbmHWrite;
+        expectedWriteCounters = (expectedWriteCounters << 32) | vF0HbmLWrite;
         expectedWriteCounters = expectedWriteCounters * transactionSize;
         EXPECT_EQ(bandwidth.writeCounter, expectedWriteCounters);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;

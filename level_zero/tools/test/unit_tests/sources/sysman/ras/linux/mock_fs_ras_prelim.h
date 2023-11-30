@@ -52,7 +52,6 @@ constexpr uint64_t socFatalMdfiEastCount = 3u;
 constexpr uint64_t socFatalMdfiWestCountTile1 = 0u;
 constexpr uint64_t socFatalPunitTile1 = 3u;
 constexpr uint64_t fatalFpuTile0 = 1u;
-constexpr uint64_t FatalL3FabricTile0 = 4u;
 constexpr uint64_t euAttention = 10u;
 constexpr uint64_t euAttentionTile0 = 5u;
 constexpr uint64_t euAttentionTile1 = 2u;

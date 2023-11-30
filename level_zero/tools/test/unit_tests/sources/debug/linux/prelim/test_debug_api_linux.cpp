@@ -7881,7 +7881,7 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     EXPECT_EQ(1u, deviceIndex);
 }
 
-template <bool BlockOnFence = false>
+template <bool blockOnFence = false>
 struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
     void setUp() {
         DebugApiLinuxMultiDeviceFixture::setUp();
@@ -7896,7 +7896,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         handler = new MockIoctlHandler;
         session->ioctlHandler.reset(handler);
 
-        session->blockOnFenceMode = BlockOnFence;
+        session->blockOnFenceMode = blockOnFence;
         setupSessionClassHandlesAndUuidMap(session.get());
         setupVmToTile(session.get());
     }

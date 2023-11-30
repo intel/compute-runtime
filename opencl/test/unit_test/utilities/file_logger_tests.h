@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,11 @@
 using FullyEnabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::Full>;
 using FullyDisabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::None>;
 
-template <bool DebugFunctionality>
-class TestLoggerApiEnterWrapper : public NEO::LoggerApiEnterWrapper<DebugFunctionality> {
+template <bool debugFunctionality>
+class TestLoggerApiEnterWrapper : public NEO::LoggerApiEnterWrapper<debugFunctionality> {
   public:
-    TestLoggerApiEnterWrapper(const char *functionName, int *errCode) : NEO::LoggerApiEnterWrapper<DebugFunctionality>(functionName, errCode) {
-        if (DebugFunctionality) {
+    TestLoggerApiEnterWrapper(const char *functionName, int *errCode) : NEO::LoggerApiEnterWrapper<debugFunctionality>(functionName, errCode) {
+        if (debugFunctionality) {
             loggedEnter = true;
         }
     }

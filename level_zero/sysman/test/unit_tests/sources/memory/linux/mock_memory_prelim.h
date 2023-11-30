@@ -43,14 +43,14 @@ constexpr uint16_t vF1Hbm2ReadIndex = 344;
 constexpr uint16_t vF1Hbm2WriteIndex = 348;
 constexpr uint16_t vF1Hbm3ReadIndex = 360;
 constexpr uint16_t vF1Hbm3WriteIndex = 364;
-constexpr uint32_t VF0HbmLRead = 16;
-constexpr uint32_t VF0HbmHRead = 2;
-constexpr uint32_t VF0HbmLWrite = 8;
-constexpr uint32_t VF0HbmHWrite = 2;
-constexpr uint32_t VF1HbmLRead = 16;
-constexpr uint32_t VF1HbmHRead = 2;
-constexpr uint32_t VF1HbmLWrite = 8;
-constexpr uint32_t VF1HbmHWrite = 2;
+constexpr uint32_t vF0HbmLRead = 16;
+constexpr uint32_t vF0HbmHRead = 2;
+constexpr uint32_t vF0HbmLWrite = 8;
+constexpr uint32_t vF0HbmHWrite = 2;
+constexpr uint32_t vF1HbmLRead = 16;
+constexpr uint32_t vF1HbmHRead = 2;
+constexpr uint32_t vF1HbmLWrite = 8;
+constexpr uint32_t vF1HbmHWrite = 2;
 
 constexpr uint8_t vF0VfidValue = 1;
 constexpr uint8_t vF0Hbm0ReadValue = 92;
@@ -317,13 +317,13 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
         } else if (key.compare("VF0_HBM3_WRITE") == 0) {
             val = vF0Hbm3WriteValue;
         } else if (key.compare("VF0_HBM_READ_L") == 0) {
-            val = VF0HbmLRead;
+            val = vF0HbmLRead;
         } else if (key.compare("VF0_HBM_READ_H") == 0) {
-            val = VF0HbmHRead;
+            val = vF0HbmHRead;
         } else if (key.compare("VF0_HBM_WRITE_L") == 0) {
-            val = VF0HbmLWrite;
+            val = vF0HbmLWrite;
         } else if (key.compare("VF0_HBM_WRITE_H") == 0) {
-            val = VF0HbmHWrite;
+            val = vF0HbmHWrite;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -356,13 +356,13 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
         } else if (key.compare("VF1_HBM3_WRITE") == 0) {
             val = vF1Hbm3WriteValue;
         } else if (key.compare("VF1_HBM_READ_L") == 0) {
-            val = VF1HbmLRead;
+            val = vF1HbmLRead;
         } else if (key.compare("VF1_HBM_READ_H") == 0) {
-            val = VF1HbmHRead;
+            val = vF1HbmHRead;
         } else if (key.compare("VF1_HBM_WRITE_L") == 0) {
-            val = VF1HbmLWrite;
+            val = vF1HbmLWrite;
         } else if (key.compare("VF1_HBM_WRITE_H") == 0) {
-            val = VF1HbmHWrite;
+            val = vF1HbmHWrite;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

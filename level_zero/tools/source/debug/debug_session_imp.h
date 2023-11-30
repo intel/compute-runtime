@@ -86,8 +86,8 @@ struct DebugSessionImp : DebugSession {
     virtual ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) = 0;
     virtual ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) = 0;
 
-    template <class bufferType, bool write>
-    ze_result_t slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, bufferType buffer);
+    template <class BufferType, bool write>
+    ze_result_t slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, BufferType buffer);
 
     ze_result_t validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
@@ -186,8 +186,8 @@ struct DebugSessionImp : DebugSession {
     uint32_t maxUnitsPerLoop = EXCHANGE_BUFFER_SIZE / slmSendBytesSize;
 };
 
-template <class bufferType, bool write>
-ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, bufferType buffer) {
+template <class BufferType, bool write>
+ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, BufferType buffer) {
     ze_result_t status;
 
     if (!sipSupportsSlm) {

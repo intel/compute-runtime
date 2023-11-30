@@ -11,16 +11,16 @@
 
 namespace NEO {
 
-template <PRODUCT_FAMILY Product>
-inline void AILConfigurationHw<Product>::modifyKernelIfRequired(std::string &kernel) {
+template <PRODUCT_FAMILY product>
+inline void AILConfigurationHw<product>::modifyKernelIfRequired(std::string &kernel) {
 }
 
 //  To avoid a known oneDNN issue in ZEBin handling,
 //  fall back to legacy (patchtoken) format when dummy kernel used by nGen is detected.
 //  Only this specific kernel with that exact source code will be affected.
 
-template <PRODUCT_FAMILY Product>
-inline bool AILConfigurationHw<Product>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
     std::string_view dummyKernelSource{"kernel void _(){}"};
     if (sourcesContain(kernelSources, dummyKernelSource)) {
         return true;
@@ -36,17 +36,17 @@ inline bool AILConfigurationHw<Product>::isFallbackToPatchtokensRequired(const s
     return false;
 }
 
-template <PRODUCT_FAMILY Product>
-inline void AILConfigurationHw<Product>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
+template <PRODUCT_FAMILY product>
+inline void AILConfigurationHw<product>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
 }
 
-template <PRODUCT_FAMILY Product>
-inline bool AILConfigurationHw<Product>::isContextSyncFlagRequired() {
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::isContextSyncFlagRequired() {
     return false;
 }
 
-template <PRODUCT_FAMILY Product>
-inline bool AILConfigurationHw<Product>::useLegacyValidationLogic() {
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::useLegacyValidationLogic() {
     return false;
 }
 

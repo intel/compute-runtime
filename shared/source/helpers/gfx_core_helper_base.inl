@@ -649,44 +649,44 @@ uint64_t GfxCoreHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CacheP
     return -1;
 }
 
-template <typename gfxProduct>
-bool GfxCoreHelperHw<gfxProduct>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
     return false;
 }
 
-template <typename gfxProduct>
-uint32_t GfxCoreHelperHw<gfxProduct>::getAmountOfAllocationsToFill() const {
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getAmountOfAllocationsToFill() const {
     if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
         return debugManager.flags.SetAmountOfReusableAllocations.get();
     }
     return 0u;
 }
 
-template <typename gfxProduct>
-bool GfxCoreHelperHw<gfxProduct>::isChipsetUniqueUUIDSupported() const {
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isChipsetUniqueUUIDSupported() const {
     return false;
 }
 
-template <typename gfxProduct>
-bool GfxCoreHelperHw<gfxProduct>::largeGrfModeSupported() const {
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::largeGrfModeSupported() const {
     return false;
 }
 
-template <typename gfxProduct>
-bool GfxCoreHelperHw<gfxProduct>::isTimestampShiftRequired() const {
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isTimestampShiftRequired() const {
     return true;
 }
 
-template <typename gfxProduct>
-bool GfxCoreHelperHw<gfxProduct>::isRelaxedOrderingSupported() const {
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isRelaxedOrderingSupported() const {
     return false;
 }
 
-template <typename gfxProduct>
-uint32_t GfxCoreHelperHw<gfxProduct>::overrideMaxWorkGroupSize(uint32_t maxWG) const {
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::overrideMaxWorkGroupSize(uint32_t maxWG) const {
     return std::min(maxWG, 1024u);
 }
 

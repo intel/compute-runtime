@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,10 +32,10 @@ inline bool isAr(const ArrayRef<const uint8_t> binary) {
     return NEO::hasSameMagic(arMagic, binary);
 }
 
-template <uint32_t MaxLength>
+template <uint32_t maxLength>
 inline uint64_t readDecimal(const char *decimalAsString) {
     uint64_t ret = 0U;
-    for (uint32_t i = 0; i < MaxLength; ++i) {
+    for (uint32_t i = 0; i < maxLength; ++i) {
         if (('\0' == decimalAsString[i]) || (' ' == decimalAsString[i])) {
             break;
         }
@@ -57,9 +57,9 @@ inline bool isStringPadding(char character) {
     }
 }
 
-template <uint32_t MaxLength>
+template <uint32_t maxLength>
 inline ConstStringRef readUnpaddedString(const char *paddedString) {
-    uint32_t unpaddedSize = MaxLength - 1;
+    uint32_t unpaddedSize = maxLength - 1;
     for (; unpaddedSize > 0U; --unpaddedSize) {
         if (false == isStringPadding(paddedString[unpaddedSize])) {
             break;

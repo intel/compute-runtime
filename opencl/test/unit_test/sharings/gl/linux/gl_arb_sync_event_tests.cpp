@@ -49,9 +49,9 @@ TEST(GlArbSyncEvent, whenCreateArbSyncEventNameIsCalledMultipleTimesThenEachCall
     NEO::destroyArbSyncEventName(name3);
 }
 
-template <bool SignalWaited>
+template <bool signalWaited>
 inline void glArbSyncObjectWaitServerMock(NEO::OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
-    glSyncInfo.waitCalled = SignalWaited;
+    glSyncInfo.waitCalled = signalWaited;
 }
 
 struct MockBaseEvent : Event {
