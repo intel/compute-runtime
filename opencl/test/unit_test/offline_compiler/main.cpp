@@ -201,17 +201,17 @@ int main(int argc, char **argv) {
 
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig)));
 
-    int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0) {
-        return sigOut;
-    }
-
-    sigOut = setSegv(enableSegv);
+    int sigOut = setSegv(enableSegv);
     if (sigOut != 0) {
         return sigOut;
     }
 
     sigOut = setAbrt(enableAbrt);
+    if (sigOut != 0) {
+        return sigOut;
+    }
+
+    sigOut = setAlarm(enableAlarm);
     if (sigOut != 0) {
         return sigOut;
     }

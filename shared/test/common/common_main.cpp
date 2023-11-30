@@ -386,12 +386,7 @@ int main(int argc, char **argv) {
         gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
         gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
-        int sigOut = setAlarm(enableAlarm);
-        if (sigOut != 0) {
-            return sigOut;
-        }
-
-        sigOut = setSegv(enableSegv);
+        int sigOut = setSegv(enableSegv);
         if (sigOut != 0) {
             return sigOut;
         }
@@ -419,6 +414,11 @@ int main(int argc, char **argv) {
         }
 
         Device::createPerformanceCountersFunc = [](Device *) -> std::unique_ptr<NEO::PerformanceCounters> { return {}; };
+
+        sigOut = setAlarm(enableAlarm);
+        if (sigOut != 0) {
+            return sigOut;
+        }
 
         retVal = RUN_ALL_TESTS();
         cleanupSignals();
