@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-struct CommandListImp : CommandList {
+struct CommandListImp : public CommandList {
     using CommandList::CommandList;
 
     ze_result_t destroy() override;

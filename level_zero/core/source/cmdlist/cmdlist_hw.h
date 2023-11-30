@@ -65,7 +65,7 @@ struct CmdListEventOperation {
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-struct CommandListCoreFamily : CommandListImp {
+struct CommandListCoreFamily : public CommandListImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     using CommandListImp::skipInOrderNonWalkerSignalingAllowed;
