@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,5 +180,35 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeContextGetStatus(
     ze_context_handle_t hContext) {
     return L0::zeContextGetStatus(
         hContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeContextMakeMemoryResident(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    void *ptr,
+    size_t size) {
+    return L0::zeContextMakeMemoryResident(hContext, hDevice, ptr, size);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeContextEvictMemory(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    void *ptr,
+    size_t size) {
+    return L0::zeContextEvictMemory(hContext, hDevice, ptr, size);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeContextMakeImageResident(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    ze_image_handle_t hImage) {
+    return L0::zeContextMakeImageResident(hContext, hDevice, hImage);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeContextEvictImage(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    ze_image_handle_t hImage) {
+    return L0::zeContextEvictImage(hContext, hDevice, hImage);
 }
 }
