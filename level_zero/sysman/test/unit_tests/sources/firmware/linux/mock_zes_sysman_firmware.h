@@ -21,7 +21,7 @@ std::vector<std::string> mockSupportedFwTypes = {"GSC", "OptionROM"};
 std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
 std::string mockEmpty = {};
 class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
-class FirmwareFsAccess : public L0::Sysman::FsAccess {};
+class FirmwareFsAccess : public L0::Sysman::FsAccessInterface {};
 
 struct MockFirmwareFsAccess : public FirmwareFsAccess {
     ze_bool_t isReadFwTypes = true;

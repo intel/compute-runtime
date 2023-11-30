@@ -12,14 +12,13 @@
 #include "level_zero/sysman/source/api/memory/sysman_os_memory.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 #include <map>
 
 namespace L0 {
 namespace Sysman {
 
-class SysfsAccess;
+class SysFsAccessInterface;
 struct Device;
 class PlatformMonitoringTech;
 class LinuxSysmanImp;
@@ -37,7 +36,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     NEO::Drm *pDrm = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
     PlatformMonitoringTech *pPmt = nullptr;

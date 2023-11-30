@@ -49,7 +49,7 @@ const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
     {"SOC_TEMPERATURES", 0x60},
     {"CORE_TEMPERATURES", 0x6c}};
 
-struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockPowerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadPeakResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteResult = ZE_RESULT_SUCCESS;
@@ -236,7 +236,7 @@ struct MockPowerSysfsAccess : public L0::Sysman::SysfsAccess {
 
 struct MockPowerPmt : public L0::Sysman::PlatformMonitoringTech {
 
-    MockPowerPmt(L0::Sysman::FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    MockPowerPmt(L0::Sysman::FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
     using L0::Sysman::PlatformMonitoringTech::preadFunction;
     using L0::Sysman::PlatformMonitoringTech::telemetryDeviceEntry;
@@ -244,7 +244,7 @@ struct MockPowerPmt : public L0::Sysman::PlatformMonitoringTech {
         rootDeviceTelemNodeIndex = 0;
     }
 
-    void mockedInit(L0::Sysman::FsAccess *pFsAccess) {
+    void mockedInit(L0::Sysman::FsAccessInterface *pFsAccess) {
         std::string gpuUpstreamPortPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
         if (ZE_RESULT_SUCCESS != L0::Sysman::PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, gpuUpstreamPortPath)) {
             return;
@@ -254,7 +254,7 @@ struct MockPowerPmt : public L0::Sysman::PlatformMonitoringTech {
     }
 };
 
-struct MockPowerFsAccess : public L0::Sysman::FsAccess {
+struct MockPowerFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
         if (directory.compare(baseTelemSysFS) == 0) {
@@ -304,8 +304,8 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockPowerPmt> pPmt;
     std::unique_ptr<MockPowerFsAccess> pFsAccess;
     std::unique_ptr<MockPowerSysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     L0::Sysman::OsPower *pOsPowerOriginal = nullptr;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> pmtMapOriginal;
     void SetUp() override {
@@ -354,8 +354,8 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockPowerPmt> pPmt;
     std::unique_ptr<MockPowerFsAccess> pFsAccess;
     std::unique_ptr<MockPowerSysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     L0::Sysman::OsPower *pOsPowerOriginal = nullptr;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOriginal;
     void SetUp() override {

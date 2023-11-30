@@ -651,8 +651,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingZesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersWithLegacyPathAndCallSucceeds) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -699,8 +699,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersCallSucceeds) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -748,8 +748,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndGetRealPathFailsThenFailureIsReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -774,8 +774,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndListDirectoryFailsThenFailureIsReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -800,8 +800,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndIafSysfsFilesAreNotPresentThenFailureIsReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -827,8 +827,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndLinkFailureSysfsNodeIsAbsentThenZeroLinkFailuresAreReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -878,8 +878,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndLinkDegradesSysfsNodeIsAbsentThenZeroLinkDegradesAreReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -930,8 +930,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndFwErrorSysfsNodeIsAbsentThenZeroFwErrorsAreReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;
@@ -982,8 +982,8 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
 }
 
 TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortGetFabricErrorCountersAndFwCommErrorSysfsNodeIsAbsentThenZeroFwCommErrorsAreReturned) {
-    VariableBackup<FsAccess *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
-    VariableBackup<SysfsAccess *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
+    VariableBackup<FsAccessInterface *> backupFsAccess(&pLinuxSysmanImp->pFsAccess);
+    VariableBackup<SysFsAccessInterface *> backupSysfsAccess(&pLinuxSysmanImp->pSysfsAccess);
     auto pFsAccess = new MockFabricFsAccess;
     auto pSysfsAccess = new MockFabricSysFsAccess;
     pLinuxSysmanImp->pFsAccess = pFsAccess;

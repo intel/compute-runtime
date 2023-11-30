@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -19,7 +20,7 @@ namespace Sysman {
 
 class LinuxPowerImp::PowerLimitRestorer : NEO::NonCopyableOrMovableClass {
   public:
-    PowerLimitRestorer(L0::Sysman::SysfsAccess *pSysfsAccess, std::string powerLimit) : pSysfsAccess(pSysfsAccess), powerLimit(powerLimit) {
+    PowerLimitRestorer(L0::Sysman::SysFsAccessInterface *pSysfsAccess, std::string powerLimit) : pSysfsAccess(pSysfsAccess), powerLimit(powerLimit) {
         result = pSysfsAccess->read(powerLimit, powerLimitValue);
     }
 
@@ -35,7 +36,7 @@ class LinuxPowerImp::PowerLimitRestorer : NEO::NonCopyableOrMovableClass {
 
   protected:
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     std::string powerLimit = {};
     uint64_t powerLimitValue = 0;
 };

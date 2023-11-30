@@ -18,8 +18,9 @@ class ZesSysmanFirmwareFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockFirmwareInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
     std::unique_ptr<MockFirmwareFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
-    MockFirmwareSysfsAccess *pMockSysfsAccess = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysFsAccessOriginal = nullptr;
+    std::unique_ptr<MockFirmwareSysfsAccess> pMockSysfsAccess;
     L0::Sysman::SysmanDevice *device = nullptr;
 
     void SetUp() override {
@@ -28,9 +29,9 @@ class ZesSysmanFirmwareFixture : public SysmanDeviceFixture {
         pFsAccess = std::make_unique<MockFirmwareFsAccess>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
-        pMockSysfsAccess = new MockFirmwareSysfsAccess();
-        delete pLinuxSysmanImp->pSysfsAccess;
-        pLinuxSysmanImp->pSysfsAccess = pMockSysfsAccess;
+        pSysFsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
+        pMockSysfsAccess = std::make_unique<MockFirmwareSysfsAccess>();
+        pLinuxSysmanImp->pSysfsAccess = pMockSysfsAccess.get();
 
         pFwUtilInterfaceOld = pLinuxSysmanImp->pFwUtilInterface;
         pMockFwInterface = std::make_unique<MockFirmwareInterface>();
@@ -50,6 +51,7 @@ class ZesSysmanFirmwareFixture : public SysmanDeviceFixture {
     void TearDown() override {
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->pSysfsAccess = pSysFsAccessOriginal;
         SysmanDeviceFixture::TearDown();
     }
 
@@ -298,7 +300,7 @@ class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockFirmwareInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
     std::unique_ptr<MockFirmwareFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();

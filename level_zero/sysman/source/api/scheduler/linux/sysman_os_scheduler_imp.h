@@ -15,7 +15,7 @@
 
 namespace L0 {
 namespace Sysman {
-class SysfsAccess;
+class SysFsAccessInterface;
 
 // Following below mappings of scheduler properties with sysfs nodes
 // zes_sched_timeslice_properties_t.interval = timeslice_duration_ms
@@ -39,7 +39,7 @@ class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     zes_engine_type_flag_t engineType = ZES_ENGINE_TYPE_FLAG_OTHER;
     ze_bool_t onSubdevice = 0;
     uint32_t subdeviceId = 0;

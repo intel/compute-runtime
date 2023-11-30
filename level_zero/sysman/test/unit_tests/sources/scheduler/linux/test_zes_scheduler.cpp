@@ -56,7 +56,7 @@ class SysmanDeviceSchedulerFixtureI915 : public SysmanDeviceSchedulerFixture {
 
   protected:
     std::unique_ptr<MockSchedulerSysfsAccessI915> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
 
     uint64_t defaultTimeout = 650u;
     uint64_t defaultTimeslice = 1u;
@@ -639,7 +639,7 @@ class SysmanDeviceSchedulerFixtureXe : public SysmanDeviceSchedulerFixture {
 
   protected:
     std::unique_ptr<MockSchedulerSysfsAccessXe> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
 
     uint64_t defaultTimeout = 650u;
     uint64_t defaultTimeslice = 1u;

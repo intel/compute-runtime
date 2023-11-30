@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/api/scheduler/linux/sysman_os_scheduler_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
@@ -513,7 +513,7 @@ static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine
     return ZE_RESULT_SUCCESS;
 }
 
-static ze_result_t getNumEngineTypeAndInstancesForDevice(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, SysfsAccess *pSysfsAccess) {
+static ze_result_t getNumEngineTypeAndInstancesForDevice(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, SysFsAccessInterface *pSysfsAccess) {
     std::vector<std::string> localListOfAllEngines = {};
     auto result = pSysfsAccess->scanDirEntries(LinuxSchedulerImp::engineDir, localListOfAllEngines);
     if (ZE_RESULT_SUCCESS != result) {

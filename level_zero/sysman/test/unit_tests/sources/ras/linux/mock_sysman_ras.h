@@ -14,7 +14,7 @@
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
@@ -264,7 +264,7 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     }
 };
 
-struct MockRasSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockRasSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t mockReadSymLinkStatus = ZE_RESULT_SUCCESS;
     bool mockReadSymLinkResult = false;
@@ -461,7 +461,7 @@ struct MockRasSysfsAccess : public L0::Sysman::SysfsAccess {
     }
 };
 
-struct MockRasFsAccess : public L0::Sysman::FsAccess {
+struct MockRasFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t mockListDirectoryStatus = ZE_RESULT_SUCCESS;
     bool mockReadDirectoryFailure = false;

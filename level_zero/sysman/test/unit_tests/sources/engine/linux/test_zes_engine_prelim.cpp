@@ -25,9 +25,9 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     Drm *pOriginalDrm = nullptr;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     std::unique_ptr<MockEngineSysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOriginal = nullptr;
     std::unique_ptr<MockEngineFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
 
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -315,9 +315,9 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     std::unique_ptr<MockEngineSysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOriginal = nullptr;
     std::unique_ptr<MockEngineFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
 
     void SetUp() override {

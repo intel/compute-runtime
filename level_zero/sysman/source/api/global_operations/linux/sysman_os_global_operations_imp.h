@@ -17,7 +17,9 @@
 
 namespace L0 {
 namespace Sysman {
-class SysfsAccess;
+class SysFsAccessInterface;
+class FsAccessInterface;
+class ProcFsAccessInterface;
 class SysmanKmdInterface;
 
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
@@ -55,9 +57,9 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
         DeviceMemStruct deviceMemStructField;
     };
 
-    FsAccess *pFsAccess = nullptr;
-    ProcfsAccess *pProcfsAccess = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
+    ProcFsAccessInterface *pProcfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     int resetTimeout = 10000; // in milliseconds
     void releaseSysmanDeviceResources();

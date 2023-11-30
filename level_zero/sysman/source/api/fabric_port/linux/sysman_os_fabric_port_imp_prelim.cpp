@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <cstdio>
@@ -45,8 +46,8 @@ ze_result_t LinuxFabricDeviceImp::getThroughput(const zes_fabric_port_id_t portI
 }
 
 ze_result_t LinuxFabricDeviceImp::getFabricDevicePath(std::string &fabricDevicePath) {
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    SysfsAccess *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    SysFsAccessInterface *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     std::string devicePciPath("");
     ze_result_t result = pSysfsAccess->getRealPath("device/", devicePciPath);
     if (result != ZE_RESULT_SUCCESS) {
@@ -81,7 +82,7 @@ ze_result_t LinuxFabricDeviceImp::getFabricDevicePath(std::string &fabricDeviceP
 }
 
 void LinuxFabricDeviceImp::getLinkErrorCount(zes_fabric_port_error_counters_t *pErrors, const std::string &fabricDevicePath, const zes_fabric_port_id_t portId) {
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     std::string fabricLinkErrorPath = fabricDevicePath + "/sd." + std::to_string(portId.attachId) + "/port." + std::to_string(portId.portNumber);
     uint64_t linkErrorCount = 0;
     std::string linkFailureFile = fabricLinkErrorPath + "/link_failures";
@@ -104,7 +105,7 @@ void LinuxFabricDeviceImp::getLinkErrorCount(zes_fabric_port_error_counters_t *p
 }
 
 void LinuxFabricDeviceImp::getFwErrorCount(zes_fabric_port_error_counters_t *pErrors, const std::string &fabricDevicePath, const zes_fabric_port_id_t portId) {
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     uint64_t fwErrorCount = 0;
     std::string fabricFwErrorPath = fabricDevicePath + "/sd." + std::to_string(portId.attachId);
     std::string fwErrorFile = fabricFwErrorPath + "/fw_error";

@@ -14,7 +14,7 @@
 #include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
@@ -91,7 +91,7 @@ struct MockGlobalOperationsFirmwareHandleContext : public L0::Sysman::FirmwareHa
     ADDMETHOD_NOBASE_VOIDRETURN(init, ());
 };
 
-struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t mockScanDirEntriesError = ZE_RESULT_SUCCESS;
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
@@ -363,7 +363,7 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysfsAccess {
     ADDMETHOD_NOBASE(fileExists, bool, true, (const std::string file));
 };
 
-struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcfsAccess {
+struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
 
     const ::pid_t extraPid = 4;
     const int extraFd = 5;
@@ -466,7 +466,7 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcfsAccess {
     MockGlobalOperationsProcfsAccess() = default;
 };
 
-struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccess {
+struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
     ze_result_t readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     std::string mockReadVal = "";

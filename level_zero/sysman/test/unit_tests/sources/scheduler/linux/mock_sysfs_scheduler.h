@@ -10,7 +10,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 
 #include "level_zero/sysman/source/api/scheduler/linux/sysman_os_scheduler_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 #include "drm/xe_drm.h"
@@ -47,7 +47,7 @@ class SchedulerFileProperties {
     }
 };
 
-struct MockSchedulerSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockSchedulerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     std::string preemptTimeout{};
     std::string defaultpreemptTimeout{};

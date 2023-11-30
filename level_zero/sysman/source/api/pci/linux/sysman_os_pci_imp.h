@@ -16,8 +16,7 @@
 
 namespace L0 {
 namespace Sysman {
-class SysfsAccess;
-class FsAccess;
+class SysFsAccessInterface;
 class LinuxSysmanImp;
 struct OsSysman;
 
@@ -37,7 +36,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     ~LinuxPciImp() override = default;
 
   protected:
-    L0::Sysman::SysfsAccess *pSysfsAccess = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccess = nullptr;
     L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     bool getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem);
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;

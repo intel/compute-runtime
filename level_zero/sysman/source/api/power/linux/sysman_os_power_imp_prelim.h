@@ -9,7 +9,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/power/sysman_os_power.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 #include "igfxfmid.h"
 
@@ -20,8 +19,8 @@ namespace L0 {
 namespace Sysman {
 
 class SysmanKmdInterface;
+class SysFsAccessInterface;
 
-class SysfsAccess;
 class PlatformMonitoringTech;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
@@ -44,7 +43,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:

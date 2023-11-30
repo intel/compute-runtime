@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/file_descriptor.h"
 
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <algorithm>
@@ -72,7 +73,7 @@ bool compareTelemNodes(std::string &telemNode1, std::string &telemNode2) {
 }
 
 // Check if Telemetry node(say /sys/class/intel_pmt/telem1) and gpuUpstreamPortPath share same PCI Root port
-static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, const std::string sysfsTelemNode) {
+static bool isValidTelemNode(FsAccessInterface *pFsAccess, const std::string &gpuUpstreamPortPath, const std::string sysfsTelemNode) {
     std::string realPathOfTelemNode;
     auto result = pFsAccess->getRealPath(sysfsTelemNode, realPathOfTelemNode);
     if (result != ZE_RESULT_SUCCESS) {
@@ -88,7 +89,7 @@ static bool isValidTelemNode(FsAccess *pFsAccess, const std::string &gpuUpstream
     return (realPathOfTelemNode.compare(0, gpuUpstreamPortPath.size(), gpuUpstreamPortPath) == 0);
 }
 
-ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess, std::string &gpuUpstreamPortPath) {
+ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccessInterface *pFsAccess, std::string &gpuUpstreamPortPath) {
     std::vector<std::string> listOfTelemNodes;
     auto result = pFsAccess->listDirectory(baseTelemSysFS, listOfTelemNodes);
     if (ZE_RESULT_SUCCESS != result) {
@@ -118,7 +119,7 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
-ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily) {
+ze_result_t PlatformMonitoringTech::init(FsAccessInterface *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily) {
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
     // For XE_HP_SDV and PVC single tile devices, telemetry info is retrieved from
     // tile's telem node rather from root device telem node.
@@ -167,11 +168,11 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
     return ZE_RESULT_SUCCESS;
 }
 
-PlatformMonitoringTech::PlatformMonitoringTech(FsAccess *pFsAccess, ze_bool_t onSubdevice,
+PlatformMonitoringTech::PlatformMonitoringTech(FsAccessInterface *pFsAccess, ze_bool_t onSubdevice,
                                                uint32_t subdeviceId) : subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
 }
 
-void PlatformMonitoringTech::doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
+void PlatformMonitoringTech::doInitPmtObject(FsAccessInterface *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
                                              const std::string &gpuUpstreamPortPath,
                                              std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily) {
     if (pPmt->init(pFsAccess, gpuUpstreamPortPath, productFamily) == ZE_RESULT_SUCCESS) {

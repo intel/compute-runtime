@@ -80,12 +80,17 @@ std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(const NEO::Drm &d
     return pSysmanKmdInterface;
 }
 
-void SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
+ze_result_t SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
     pFsAccess = FsAccessInterface::create();
     pProcfsAccess = ProcFsAccessInterface::create();
     std::string deviceName;
-    pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
+    auto result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), drm.getFileDescriptor(), deviceName);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
     pSysfsAccess = SysFsAccessInterface::create(deviceName);
+    return result;
 }
 
 FsAccessInterface *SysmanKmdInterface::getFsAccess() {
@@ -306,7 +311,7 @@ static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine
 }
 
 static ze_result_t getNumEngineTypeAndInstancesForDevice(std::string engineDir, std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
-                                                         SysfsAccess *pSysfsAccess) {
+                                                         SysFsAccessInterface *pSysfsAccess) {
     std::vector<std::string> localListOfAllEngines = {};
     auto result = pSysfsAccess->scanDirEntries(engineDir, localListOfAllEngines);
     if (ZE_RESULT_SUCCESS != result) {
@@ -338,7 +343,7 @@ static ze_result_t getNumEngineTypeAndInstancesForDevice(std::string engineDir, 
 
 ze_result_t SysmanKmdInterfaceI915::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                                  LinuxSysmanImp *pLinuxSysmanImp,
-                                                                 SysfsAccess *pSysfsAccess,
+                                                                 SysFsAccessInterface *pSysfsAccess,
                                                                  ze_bool_t onSubdevice,
                                                                  uint32_t subdeviceId) {
     return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
@@ -346,7 +351,7 @@ ze_result_t SysmanKmdInterfaceI915::getNumEngineTypeAndInstances(std::map<zes_en
 
 ze_result_t SysmanKmdInterfaceXe::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                                LinuxSysmanImp *pLinuxSysmanImp,
-                                                               SysfsAccess *pSysfsAccess,
+                                                               SysFsAccessInterface *pSysfsAccess,
                                                                ze_bool_t onSubdevice,
                                                                uint32_t subdeviceId) {
     if (onSubdevice) {

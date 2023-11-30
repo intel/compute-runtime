@@ -70,7 +70,7 @@ struct MockGlobalOperationsEngineHandleContext : public L0::Sysman::EngineHandle
     ADDMETHOD_NOBASE_VOIDRETURN(init, (uint32_t subDeviceCount));
 };
 
-struct MockDiagFsAccess : public L0::Sysman::FsAccess {
+struct MockDiagFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t mockReadError = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
     ze_result_t mockListDirError = ZE_RESULT_SUCCESS;
@@ -125,7 +125,7 @@ struct MockDiagFsAccess : public L0::Sysman::FsAccess {
     MockDiagFsAccess() = default;
 };
 
-struct MockDiagSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockDiagSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
     int checkErrorAfterCount = 0;
     ze_result_t getRealPath(const std::string file, std::string &val) override {
@@ -180,7 +180,7 @@ struct MockDiagSysfsAccess : public L0::Sysman::SysfsAccess {
     MockDiagSysfsAccess() = default;
 };
 
-struct MockDiagProcfsAccess : public L0::Sysman::ProcfsAccess {
+struct MockDiagProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
     std::vector<::pid_t> pidList = {1, 2, 3};
     ::pid_t ourDevicePid = 0;
     ze_result_t mockError = ZE_RESULT_SUCCESS;

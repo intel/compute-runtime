@@ -58,9 +58,9 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     L0::Sysman::DiagnosticsHandleContext *pDiagnosticsHandleContextOld = nullptr;
     L0::Sysman::FirmwareHandleContext *pFirmwareHandleContextOld = nullptr;
     L0::Sysman::RasHandleContext *pRasHandleContextOld = nullptr;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    L0::Sysman::ProcfsAccess *pProcfsAccessOld = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::ProcFsAccessInterface *pProcfsAccessOld = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOld = nullptr;
     L0::Sysman::LinuxSysmanImp *pLinuxSysmanImpOld = nullptr;
     L0::Sysman::OsGlobalOperations *pOsGlobalOperationsPrev = nullptr;
     L0::Sysman::GlobalOperations *pGlobalOperationsPrev = nullptr;

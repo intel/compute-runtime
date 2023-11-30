@@ -9,7 +9,7 @@
 
 #include "level_zero/sysman/source/api/firmware/linux/sysman_os_firmware_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 const std::string iafPath = "device/";
 const std::string iafDirectory = "iaf.";

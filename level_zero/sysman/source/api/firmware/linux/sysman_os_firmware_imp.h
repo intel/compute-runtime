@@ -16,6 +16,7 @@ namespace L0 {
 namespace Sysman {
 
 class FirmwareUtil;
+class SysFsAccessInterface;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
   public:
@@ -28,7 +29,7 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
 
   protected:
     FirmwareUtil *pFwInterface = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     std::string osFwType;
 };
 

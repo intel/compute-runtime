@@ -10,10 +10,11 @@
 
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 
 namespace L0 {
 namespace Sysman {
+
+class SysFsAccessInterface;
 
 class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   public:
@@ -39,7 +40,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     ~LinuxFrequencyImp() override = default;
 
   protected:
-    SysfsAccess *pSysfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     ze_result_t getMin(double &min);
     ze_result_t setMin(double min);
     ze_result_t getMax(double &max);

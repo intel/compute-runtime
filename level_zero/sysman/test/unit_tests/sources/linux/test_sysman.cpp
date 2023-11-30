@@ -29,25 +29,17 @@ struct dirent mockEntries[] = {
     {0, 0, 0, 0, "mockDir2"},
 };
 
-inline static int mockAccessFailure(const char *pathname, int mode) {
+inline static int mockStatFailure(const std::string &filePath, struct stat *statbuf) noexcept {
     return -1;
 }
 
-inline static int mockAccessSuccess(const char *pathname, int mode) {
+inline static int mockStatSuccess(const std::string &filePath, struct stat *statbuf) noexcept {
+    statbuf->st_mode = S_IWUSR | S_IRUSR;
     return 0;
 }
 
-inline static int mockStatFailure(const char *pathname, struct stat *sb) noexcept {
-    return -1;
-}
-
-inline static int mockStatSuccess(const char *pathname, struct stat *sb) noexcept {
-    sb->st_mode = S_IWUSR | S_IRUSR;
-    return 0;
-}
-
-inline static int mockStatNoPermissions(const char *pathname, struct stat *sb) noexcept {
-    sb->st_mode = 0;
+inline static int mockStatNoPermissions(const std::string &filePath, struct stat *statbuf) noexcept {
+    statbuf->st_mode = 0;
     return 0;
 }
 
@@ -79,23 +71,13 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanKmdInterfaceWhenCallingListDirectori
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFsAccess->listDirectory("MockDir", listFiles));
 }
 
-TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenCreatedFsAccessHandleWillBeRetrieved) {
-    if (pLinuxSysmanImp->pFsAccess != nullptr) {
-        // delete previously allocated pFsAccess
-        delete pLinuxSysmanImp->pFsAccess;
-        pLinuxSysmanImp->pFsAccess = nullptr;
-    }
-    pLinuxSysmanImp->pFsAccess = L0::Sysman::FsAccess::create();
-    EXPECT_EQ(&pLinuxSysmanImp->getFsAccess(), pLinuxSysmanImp->pFsAccess);
-}
-
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWithValidAndInvalidPathThenSuccessAndFailureAreReturnedRespectively) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->accessSyscall = mockAccessSuccess;
+    NEO::SysCalls::allowFakeDevicePath = true;
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_TRUE(tempFsAccess->directoryExists(path));
-    tempFsAccess->accessSyscall = mockAccessFailure;
+    NEO::SysCalls::allowFakeDevicePath = false;
     path = "invalidDiretory";
     EXPECT_FALSE(tempFsAccess->directoryExists(path));
     delete tempFsAccess;
@@ -103,7 +85,6 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWi
 
 TEST_F(SysmanDeviceFixture, GivenPublicSysfsAccessClassWhenCallingDirectoryExistsWithInvalidPathThenFalseIsRetured) {
     PublicFsAccess *tempSysfsAccess = new PublicFsAccess();
-    tempSysfsAccess->accessSyscall = mockAccessFailure;
     std::string path = "invalidDiretory";
     EXPECT_FALSE(tempSysfsAccess->directoryExists(path));
     delete tempSysfsAccess;
@@ -111,7 +92,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicSysfsAccessClassWhenCallingDirectoryExist
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserHavingWritePermissionsThenSuccessIsReturned) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->statSyscall = mockStatSuccess;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->canWrite(path));
@@ -120,7 +101,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserH
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserHavingReadPermissionsThenSuccessIsReturned) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->statSyscall = mockStatSuccess;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->canRead(path));
@@ -129,7 +110,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserHa
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserNotHavingWritePermissionsThenInsufficientIsReturned) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->statSyscall = mockStatNoPermissions;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatNoPermissions);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, tempFsAccess->canWrite(path));
@@ -138,7 +119,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithUserN
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserNotHavingReadPermissionsThenInsufficientIsReturned) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->statSyscall = mockStatNoPermissions;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatNoPermissions);
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, tempFsAccess->canRead(path));
@@ -147,7 +128,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithUserNo
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithInvalidPathThenErrorIsReturned) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->statSyscall = mockStatFailure;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatFailure);
     std::string path = "invalidPath";
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canRead(path));
     delete tempFsAccess;
@@ -155,7 +136,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanReadWithInvali
 
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithInvalidPathThenErrorIsReturned) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
-    tempFsAccess->statSyscall = mockStatFailure;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatFailure);
     std::string path = "invalidPath";
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempFsAccess->canRead(path));
     delete tempFsAccess;
@@ -163,38 +144,18 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithInval
 
 TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSuccessIsReturned) {
     VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
-    auto fsAccess = pLinuxSysmanImp->getFsAccess();
+    auto fsAccess = &pLinuxSysmanImp->getFsAccess();
 
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
-    EXPECT_TRUE(fsAccess.fileExists(path));
+    EXPECT_TRUE(fsAccess->fileExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErrorIsReturned) {
-    auto fsAccess = pLinuxSysmanImp->getFsAccess();
+    auto fsAccess = &pLinuxSysmanImp->getFsAccess();
 
     std::string path = "noSuchFileOrDirectory";
-    EXPECT_FALSE(fsAccess.fileExists(path));
-}
-
-TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAccessThenCreatedSysfsAccessHandleHandleWillBeRetrieved) {
-    if (pLinuxSysmanImp->pSysfsAccess != nullptr) {
-        // delete previously allocated pSysfsAccess
-        delete pLinuxSysmanImp->pSysfsAccess;
-        pLinuxSysmanImp->pSysfsAccess = nullptr;
-    }
-    pLinuxSysmanImp->pSysfsAccess = L0::Sysman::SysfsAccess::create("");
-    EXPECT_EQ(&pLinuxSysmanImp->getSysfsAccess(), pLinuxSysmanImp->pSysfsAccess);
-}
-
-TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAccessThenCreatedProcfsAccessHandleWillBeRetrieved) {
-    if (pLinuxSysmanImp->pProcfsAccess != nullptr) {
-        // delete previously allocated pProcfsAccess
-        delete pLinuxSysmanImp->pProcfsAccess;
-        pLinuxSysmanImp->pProcfsAccess = nullptr;
-    }
-    pLinuxSysmanImp->pProcfsAccess = L0::Sysman::ProcfsAccess::create();
-    EXPECT_EQ(&pLinuxSysmanImp->getProcfsAccess(), pLinuxSysmanImp->pProcfsAccess);
+    EXPECT_FALSE(fsAccess->fileExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMultipleFilesThenSuccessIsReturned) {
@@ -212,7 +173,7 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMult
     PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
     std::string fileName = {};
     int iVal32;
-    for (auto i = 0; i < L0::Sysman::FdCache::maxSize + 2; i++) {
+    for (auto i = 0; i < L0::Sysman::FdCacheInterface::maxSize + 2; i++) {
         fileName = "mockfile" + std::to_string(i) + ".txt";
         EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->read(fileName, iVal32));
     }
@@ -221,9 +182,9 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMult
 
 TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUpdatedProperly) {
 
-    class MockFdCache : public FdCache {
+    class MockFdCache : public FdCacheInterface {
       public:
-        using FdCache::fdMap;
+        using FdCacheInterface::fdMap;
     };
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -232,7 +193,7 @@ TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUp
 
     std::unique_ptr<MockFdCache> pFdCache = std::make_unique<MockFdCache>();
     std::string fileName = {};
-    for (auto i = 0; i < L0::Sysman::FdCache::maxSize; i++) {
+    for (auto i = 0; i < L0::Sysman::FdCacheInterface::maxSize; i++) {
         fileName = "mockfile" + std::to_string(i) + ".txt";
         EXPECT_LE(0, pFdCache->getFd(fileName));
     }
@@ -242,7 +203,7 @@ TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUp
         EXPECT_LE(0, pFdCache->getFd(fileName));
     }
 
-    for (auto i = 1; i < L0::Sysman::FdCache::maxSize - 1; i++) {
+    for (auto i = 1; i < L0::Sysman::FdCacheInterface::maxSize - 1; i++) {
         fileName = "mockfile" + std::to_string(i) + ".txt";
         EXPECT_LE(0, pFdCache->getFd(fileName));
     }
@@ -259,9 +220,9 @@ TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUp
 
 TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosedAndCacheIsUpdatedProperly) {
 
-    class MockFdCache : public FdCache {
+    class MockFdCache : public FdCacheInterface {
       public:
-        using FdCache::fdMap;
+        using FdCacheInterface::fdMap;
     };
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -275,7 +236,7 @@ TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosed
 
     MockFdCache *pFdCache = new MockFdCache();
     std::string fileName = {};
-    for (auto i = 0; i < L0::Sysman::FdCache::maxSize; i++) {
+    for (auto i = 0; i < L0::Sysman::FdCacheInterface::maxSize; i++) {
         fileName = "mockfile" + std::to_string(i) + ".txt";
         EXPECT_LE(0, pFdCache->getFd(fileName));
     }
@@ -285,7 +246,7 @@ TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosed
         EXPECT_LE(0, pFdCache->getFd(fileName));
     }
 
-    for (auto i = 1; i < L0::Sysman::FdCache::maxSize - 1; i++) {
+    for (auto i = 1; i < L0::Sysman::FdCacheInterface::maxSize - 1; i++) {
         fileName = "mockfile" + std::to_string(i) + ".txt";
         EXPECT_LE(0, pFdCache->getFd(fileName));
     }
@@ -325,15 +286,15 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndOpenSysCallFailsWhenCallingR
 
 TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessIsAliveThenSuccessIsReturned) {
     VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
-    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
+    auto procfsAccess = &pLinuxSysmanImp->getProcfsAccess();
 
-    EXPECT_TRUE(procfsAccess.isAlive(getpid()));
+    EXPECT_TRUE(procfsAccess->isAlive(getpid()));
 }
 
 TEST_F(SysmanDeviceFixture, GivenInvalidPidWhenCallingProcfsAccessIsAliveThenErrorIsReturned) {
-    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
+    auto procfsAccess = &pLinuxSysmanImp->getProcfsAccess();
 
-    EXPECT_FALSE(procfsAccess.isAlive(reinterpret_cast<::pid_t>(-1)));
+    EXPECT_FALSE(procfsAccess->isAlive(reinterpret_cast<::pid_t>(-1)));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingCardBusPortThenReturnedPathIs1LevelUpThenTheCurrentPath) {
@@ -350,11 +311,11 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingCardBusPortThenReturned
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedByIsRootUserAreCorrect) {
     int euid = geteuid();
-    auto pFsAccess = pLinuxSysmanImp->getFsAccess();
+    auto pFsAccess = &pLinuxSysmanImp->getFsAccess();
     if (euid == 0) {
-        EXPECT_EQ(true, pFsAccess.isRootUser());
+        EXPECT_EQ(true, pFsAccess->isRootUser());
     } else {
-        EXPECT_EQ(false, pFsAccess.isRootUser());
+        EXPECT_EQ(false, pFsAccess->isRootUser());
     }
 }
 

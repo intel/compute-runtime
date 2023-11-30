@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
@@ -137,7 +138,7 @@ struct MockEnginePmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     }
 };
 
-struct MockEngineFsAccess : public L0::Sysman::FsAccess {
+struct MockEngineFsAccess : public L0::Sysman::FsAccessInterface {
 
     bool mockReadVal = false;
 
@@ -157,7 +158,7 @@ struct MockEngineFsAccess : public L0::Sysman::FsAccess {
     }
 };
 
-struct MockEngineSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockEngineSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     bool mockReadSymLinkFailure = false;
     bool mockReadSymLinkSuccess = false;

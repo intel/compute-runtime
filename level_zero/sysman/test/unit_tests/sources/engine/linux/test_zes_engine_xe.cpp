@@ -27,6 +27,11 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
+            std::memcpy(buf, str.c_str(), str.size());
+            return static_cast<int>(str.size());
+        });
         device = pSysmanDevice;
         MockNeoDrm *pDrm = new MockNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->ioctlHelper = std::make_unique<NEO::IoctlHelperXe>(*pDrm);

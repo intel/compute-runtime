@@ -10,7 +10,7 @@
 #include "level_zero/sysman/source/api/temperature/linux/sysman_os_temperature_imp.h"
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 namespace L0 {
 namespace Sysman {
@@ -43,7 +43,7 @@ const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
 const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 
 struct MockTemperaturePmt : public L0::Sysman::PlatformMonitoringTech {
-    MockTemperaturePmt(L0::Sysman::FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    MockTemperaturePmt(L0::Sysman::FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
     using L0::Sysman::PlatformMonitoringTech::preadFunction;
     using L0::Sysman::PlatformMonitoringTech::telemetryDeviceEntry;
@@ -56,7 +56,7 @@ struct MockTemperaturePmt : public L0::Sysman::PlatformMonitoringTech {
         rootDeviceTelemNodeIndex = 0;
     }
 
-    void mockedInit(L0::Sysman::FsAccess *pFsAccess) {
+    void mockedInit(L0::Sysman::FsAccessInterface *pFsAccess) {
         if (ZE_RESULT_SUCCESS != PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, gpuUpstreamPortPathInTemperature)) {
             return;
         }
@@ -123,7 +123,7 @@ struct MockTemperaturePmt : public L0::Sysman::PlatformMonitoringTech {
     }
 };
 
-struct MockTemperatureFsAccess : public L0::Sysman::FsAccess {
+struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t mockErrorListDirectory = ZE_RESULT_SUCCESS;
     ze_result_t mockErrorGetRealPath = ZE_RESULT_SUCCESS;
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {

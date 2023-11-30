@@ -9,7 +9,7 @@
 
 #include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
@@ -41,7 +41,7 @@ const std::vector<std::string> mockReadBytes =
         "0x0000000000000000 0x0000000000000000 0x0000000000000000",
 };
 
-struct MockPciSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockPciSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     bool isStringSymLinkEmpty = false;
 

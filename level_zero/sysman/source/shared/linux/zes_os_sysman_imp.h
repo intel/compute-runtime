@@ -29,11 +29,11 @@ namespace Sysman {
 class SysmanProductHelper;
 class PlatformMonitoringTech;
 class PmuInterface;
-class FsAccess;
-class ProcfsAccess;
-class SysfsAccess;
 class FirmwareUtil;
 class SysmanKmdInterface;
+class FsAccessInterface;
+class SysFsAccessInterface;
+class ProcFsAccessInterface;
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
@@ -44,9 +44,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     FirmwareUtil *getFwUtilInterface();
     PmuInterface *getPmuInterface() { return pPmuInterface; }
-    FsAccess &getFsAccess();
-    ProcfsAccess &getProcfsAccess();
-    SysfsAccess &getSysfsAccess();
+    FsAccessInterface &getFsAccess();
+    ProcFsAccessInterface &getProcfsAccess();
+    SysFsAccessInterface &getSysfsAccess();
     SysmanDeviceImp *getSysmanDeviceImp();
     SysmanProductHelper *getSysmanProductHelper();
     uint32_t getSubDeviceCount() override;
@@ -83,9 +83,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
-    FsAccess *pFsAccess = nullptr;
-    ProcfsAccess *pProcfsAccess = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
+    ProcFsAccessInterface *pProcfsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     uint32_t subDeviceCount = 0;
     FirmwareUtil *pFwUtilInterface = nullptr;

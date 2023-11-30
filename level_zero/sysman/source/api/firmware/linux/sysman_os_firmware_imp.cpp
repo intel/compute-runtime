@@ -11,7 +11,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
@@ -29,7 +29,7 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
         pFwInterface->getDeviceSupportedFwTypes(deviceSupportedFwTypes);
     }
 
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     std::vector<std::string> mtdDescriptorStrings = {};
     ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
     if (result != ZE_RESULT_SUCCESS) {

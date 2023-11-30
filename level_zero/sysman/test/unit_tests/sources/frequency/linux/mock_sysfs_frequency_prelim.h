@@ -12,6 +12,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp_prelim.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
@@ -52,7 +53,7 @@ const std::string throttleReasonPL2FileLegacy("gt_throttle_reason_status_pl2");
 const std::string throttleReasonPL4FileLegacy("gt_throttle_reason_status_pl4");
 const std::string throttleReasonThermalFileLegacy("gt_throttle_reason_status_thermal");
 
-struct MockFrequencySysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     double mockMin = 0;
     double mockMax = 0;
     double mockBoost = 0;

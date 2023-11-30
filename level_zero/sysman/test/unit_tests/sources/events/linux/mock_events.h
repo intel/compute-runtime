@@ -18,6 +18,7 @@
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
@@ -67,7 +68,7 @@ struct MockPmuInterfaceImpForEvents : public L0::Sysman::PmuInterfaceImp {
     }
 };
 
-struct MockEventsFsAccess : public L0::Sysman::FsAccess {
+struct MockEventsFsAccess : public L0::Sysman::FsAccessInterface {
 
     bool mockReadValSuccess = false;
     bool mockReadValOne = false;
@@ -174,7 +175,7 @@ struct MockEventsFsAccess : public L0::Sysman::FsAccess {
     MockEventsFsAccess() = default;
 };
 
-struct MockEventsSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockEventsSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
     std::string realPath = "/sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
 

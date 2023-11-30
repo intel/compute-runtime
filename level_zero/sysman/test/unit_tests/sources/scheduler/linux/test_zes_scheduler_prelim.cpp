@@ -35,7 +35,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
 
   protected:
     std::unique_ptr<MockSchedulerSysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
     PublicLinuxSchedulerImp *pLinuxSchedulerImp = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -359,7 +359,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimeoutModeThenVerifyCallSucceeds) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 
@@ -383,7 +383,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimeoutModeAndDebugModeCantBeChangedThenVerifyCallFails) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
     pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
@@ -514,7 +514,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimesliceModeThenVerifyCallSucceeds) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 
@@ -540,7 +540,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimesliceModeAndDebugModeCantBeChangedThenVerifyCallFails) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
     pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
@@ -653,7 +653,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetExclusiveModeThenVerifyCallSucceeds) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 
@@ -672,7 +672,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingExclusiveModeAndDebugModeCantBeChangedThenVerifyCallFails) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
     pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
@@ -790,7 +790,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetComputeUnitDebugModeThenSuccessIsReturned) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 
@@ -811,7 +811,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenGpuProcessCleanupFailedWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
     pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
@@ -833,7 +833,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenGpuProcessCleanupFailedWhenCallingzesS
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pLinuxSysmanImp->pProcfsAccess);
     auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
 

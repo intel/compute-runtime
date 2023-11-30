@@ -23,8 +23,8 @@ std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"
 std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
 std::string mockEmpty = {};
 class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
-class FirmwareFsAccess : public L0::Sysman::FsAccess {};
-class FirmwareSysfsAccess : public L0::Sysman::SysfsAccess {};
+class FirmwareFsAccess : public L0::Sysman::FsAccessInterface {};
+class FirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
 
 struct MockFirmwareFsAccess : public FirmwareFsAccess {
     ze_bool_t isReadFwTypes = true;
@@ -41,7 +41,7 @@ struct MockFirmwareFsAccess : public FirmwareFsAccess {
     }
 };
 
-struct MockFirmwareSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t readResult = ZE_RESULT_SUCCESS;
     ze_result_t scanDirEntriesResult = ZE_RESULT_SUCCESS;

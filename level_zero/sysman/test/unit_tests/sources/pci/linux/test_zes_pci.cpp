@@ -206,8 +206,8 @@ class ZesPciFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockPciSysfsAccess> pSysfsAccess;
     L0::Sysman::SysmanDevice *device = nullptr;
-    L0::Sysman::SysfsAccess *pOriginalSysfsAccess = nullptr;
-    L0::Sysman::FsAccess *pOriginalFsAccess = nullptr;
+    L0::Sysman::SysFsAccessInterface *pOriginalSysfsAccess = nullptr;
+    L0::Sysman::FsAccessInterface *pOriginalFsAccess = nullptr;
     L0::Sysman::PciImp *pPciImp;
     L0::Sysman::OsPci *pOsPciPrev;
     std::unique_ptr<L0::ult::Mock<L0::DriverHandleImp>> driverHandle;

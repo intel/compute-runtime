@@ -380,7 +380,6 @@ TEST_F(ZesStandbyFixtureXe, GivenKmdInterfaceWhenQueryingSupportForStandbyForXeV
 }
 
 class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
-
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     uint32_t subDeviceCount;

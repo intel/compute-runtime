@@ -26,8 +26,8 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockRasPmuInterfaceImp> pPmuInterface;
     std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
     MockRasNeoDrm *pDrm = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
-    L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOriginal = nullptr;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     L0::Sysman::FirmwareUtil *pFwUtilOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
@@ -537,8 +537,8 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockRasPmuInterfaceImp> pPmuInterface;
     std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
     MockRasNeoDrm *pDrm = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
-    L0::Sysman::SysfsAccess *pSysfsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOriginal = nullptr;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
     L0::Sysman::FirmwareUtil *pFwUtilOriginal = nullptr;
     Drm *pOriginalDrm = nullptr;

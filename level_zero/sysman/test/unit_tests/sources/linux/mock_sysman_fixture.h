@@ -20,7 +20,7 @@
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
@@ -148,16 +148,9 @@ class SysmanMultiDeviceFixture : public ::testing::Test {
     DebugManagerStateRestore restorer;
 };
 
-class PublicFsAccess : public L0::Sysman::FsAccess {
-  public:
-    using FsAccess::accessSyscall;
-    using FsAccess::statSyscall;
-};
+class PublicFsAccess : public L0::Sysman::FsAccessInterface {};
 
-class PublicSysfsAccess : public L0::Sysman::SysfsAccess {
-  public:
-    using SysfsAccess::accessSyscall;
-};
+class PublicSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
 
 class PublicLinuxSysmanDriverImp : public L0::Sysman::LinuxSysmanDriverImp {
   public:

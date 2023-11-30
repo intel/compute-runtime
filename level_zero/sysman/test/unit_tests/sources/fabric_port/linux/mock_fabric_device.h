@@ -10,7 +10,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/fabric_port/sysman_fabric_port.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
@@ -27,7 +27,7 @@ struct MockFabricDevice : public L0::Sysman::FabricDevice {
     MockFabricDevice() = default;
 };
 
-class MockFabricFsAccess : public L0::Sysman::FsAccess {
+class MockFabricFsAccess : public L0::Sysman::FsAccessInterface {
   public:
     ze_result_t mockListDirectory = ZE_RESULT_SUCCESS;
     ze_result_t canRead(const std::string file) override {
@@ -65,7 +65,7 @@ class MockFabricFsAccess : public L0::Sysman::FsAccess {
     std::vector<std::string> accessibleDirectories = {};
 };
 
-class MockFabricSysFsAccess : public L0::Sysman::SysfsAccess {
+class MockFabricSysFsAccess : public L0::Sysman::SysFsAccessInterface {
   public:
     ze_result_t getRealPath(const std::string path, std::string &buf) override {
         buf.append("/mockRealPath");

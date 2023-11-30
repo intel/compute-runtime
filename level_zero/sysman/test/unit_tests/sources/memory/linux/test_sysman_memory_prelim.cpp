@@ -44,8 +44,8 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockMemorySysfsAccess> pSysfsAccess;
     std::unique_ptr<MockMemoryFsAccess> pFsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     MockMemoryNeoDrm *pDrm = nullptr;
     Drm *pOriginalDrm = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
@@ -807,7 +807,7 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropert
 class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<MockMemorySysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
     MockMemoryNeoDrm *pDrm = nullptr;
     Drm *pOriginalDrm = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;

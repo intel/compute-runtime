@@ -30,7 +30,7 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
     std::unique_ptr<ProductHelper> pProductHelper;
     std::unique_ptr<ProductHelper> pProductHelperOld;
     uint32_t numClocks = 0;
@@ -927,7 +927,7 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<MockFrequencySysfsAccess> pSysfsAccess;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
     std::unique_ptr<ProductHelper> pProductHelper;
 
     void SetUp() override {

@@ -8,9 +8,11 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <cstring>
+#include <sstream>
 
 namespace L0 {
 namespace Sysman {
@@ -59,7 +61,7 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     // /sys/devices/i915_0000_01_00.0/events/
     // all events are enumerated in sysfs at /sys/devices/i915_0000_01_00.0/events/
     // For above example device is in PCI slot 0000:01:00.0:
-    SysfsAccess *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    SysFsAccessInterface *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     const std::string deviceDir("device");
     const std::string sysDevicesDir("/sys/devices/");
     std::string bdfDir;
@@ -76,7 +78,7 @@ static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std:
     if (eventDirectory != nullptr) {
         *eventDirectory = sysfsNode;
     }
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     result = pFsAccess->listDirectory(sysfsNode, listOfEvents);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directories from %s and returning error:0x%x \n", __FUNCTION__, sysfsNode.c_str(), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);

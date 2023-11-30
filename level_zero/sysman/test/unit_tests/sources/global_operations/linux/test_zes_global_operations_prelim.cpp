@@ -19,9 +19,9 @@ class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockGlobalOperationsFsAccess> pFsAccess;
     std::unique_ptr<MockGlobalOpsFwInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    L0::Sysman::ProcfsAccess *pProcfsAccessOld = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::ProcFsAccessInterface *pProcfsAccessOld = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOld = nullptr;
     L0::Sysman::OsGlobalOperations *pOsGlobalOperationsPrev = nullptr;
     L0::Sysman::GlobalOperations *pGlobalOperationsPrev = nullptr;
     L0::Sysman::GlobalOperationsImp *pGlobalOperationsImp;

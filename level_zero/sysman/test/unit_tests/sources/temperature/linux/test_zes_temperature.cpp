@@ -25,7 +25,7 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
     std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOriginal;
     L0::Sysman::SysmanDevice *device = nullptr;
     void SetUp() override {
@@ -160,7 +160,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
     std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> pmtMapOriginal;
     L0::Sysman::SysmanDevice *device = nullptr;
     void SetUp() override {

@@ -18,7 +18,7 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockFirmwareInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
     std::unique_ptr<MockFirmwareFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
 
     void SetUp() override {
@@ -237,7 +237,7 @@ class ZesFirmwareUninitializedFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockFirmwareInterface> pMockFwInterface;
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
     std::unique_ptr<MockFirmwareFsAccess> pFsAccess;
-    L0::Sysman::FsAccess *pFsAccessOriginal = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();

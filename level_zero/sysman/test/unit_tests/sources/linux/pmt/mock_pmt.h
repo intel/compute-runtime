@@ -30,7 +30,7 @@ const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
 const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
 const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 
-struct MockPmtFsAccess : public L0::Sysman::FsAccess {
+struct MockPmtFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t listDirectoryResult = ZE_RESULT_SUCCESS;
     ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
@@ -145,7 +145,7 @@ struct MockPmtFsAccess : public L0::Sysman::FsAccess {
 
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
-    PublicPlatformMonitoringTech(L0::Sysman::FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    PublicPlatformMonitoringTech(L0::Sysman::FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     using PlatformMonitoringTech::doInitPmtObject;
     using PlatformMonitoringTech::init;
     using PlatformMonitoringTech::keyOffsetMap;

@@ -10,7 +10,9 @@
 #include "level_zero/sysman/source/api/performance/linux/sysman_os_performance_imp_prelim.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+
+#include <list>
 
 namespace L0 {
 namespace Sysman {
@@ -26,7 +28,7 @@ const std::string baseFreqFactorSubDevice1("gt/gt1/base_freq_factor");
 const std::string baseScaleSubDevice1("gt/gt1/base_freq_factor.scale");
 const std::string pwrBalance("sys_pwr_balance");
 
-struct MockPerformanceSysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockPerformanceSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockCanReadResult = ZE_RESULT_SUCCESS;
     ze_bool_t isComputeInvalid = false;

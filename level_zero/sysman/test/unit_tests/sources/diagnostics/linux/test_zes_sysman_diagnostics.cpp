@@ -111,9 +111,9 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockDiagLinuxSysmanImp> pMockDiagLinuxSysmanImp;
 
     L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
-    L0::Sysman::SysfsAccess *pSysfsAccessOld = nullptr;
-    L0::Sysman::FsAccess *pFsAccessOld = nullptr;
-    L0::Sysman::ProcfsAccess *pProcfsAccessOld = nullptr;
+    L0::Sysman::SysFsAccessInterface *pSysfsAccessOld = nullptr;
+    L0::Sysman::FsAccessInterface *pFsAccessOld = nullptr;
+    L0::Sysman::ProcFsAccessInterface *pProcfsAccessOld = nullptr;
     L0::Sysman::EngineHandleContext *pEngineHandleContextOld = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
 
@@ -265,7 +265,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
     pPublicLinuxDiagnosticsImp->osDiagType = "MEMORY_PPR";
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -288,7 +288,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_FORCE_UINT32);
@@ -313,7 +313,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenListProcessFailsThe
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockDiagProcfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -337,7 +337,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentingFailsTh
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -361,7 +361,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -385,7 +385,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetFailsThenC
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pMockDiagLinuxSysmanImp->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
@@ -410,7 +410,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetFailsThenC
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockDiagLinuxSysmanImp->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -434,7 +434,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetSucceedsAn
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockDiagLinuxSysmanImp->setMockReInitSysmanDeviceError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     std::unique_ptr<L0::Sysman::DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<L0::Sysman::DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -458,7 +458,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetSucceedsAn
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pMockDiagLinuxSysmanImp->setMockReInitSysmanDeviceError(ZE_RESULT_ERROR_NOT_AVAILABLE);
@@ -482,7 +482,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
 
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
     pMockDiagProcfsAccess->ourDevicePid = getpid();
@@ -499,7 +499,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFa
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
     pMockDiagProcfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
@@ -514,7 +514,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentFailsConti
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
 
     pMockSysfsAccess->setErrorAfterCount(12, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
@@ -529,7 +529,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
-    VariableBackup<L0::Sysman::ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
+    VariableBackup<L0::Sysman::ProcFsAccessInterface *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pMockSysfsAccess->setErrorAfterCount(1, ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pPublicLinuxDiagnosticsImp->waitForQuiescentCompletion());

@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <cmath>

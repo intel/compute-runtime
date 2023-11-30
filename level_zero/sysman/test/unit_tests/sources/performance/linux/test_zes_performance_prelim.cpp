@@ -23,7 +23,7 @@ constexpr double minPerformanceFactor = 0;
 class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
   protected:
     std::unique_ptr<MockPerformanceSysfsAccess> ptestSysfsAccess;
-    L0::Sysman::SysfsAccess *pOriginalSysfsAccess = nullptr;
+    L0::Sysman::SysFsAccessInterface *pOriginalSysfsAccess = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();

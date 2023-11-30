@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "level_zero/sysman/source/api/scheduler/linux/sysman_os_scheduler_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
@@ -180,7 +180,7 @@ class SchedulerFileProperties {
     }
 };
 
-class MockSchedulerProcfsAccess : public L0::Sysman::ProcfsAccess {
+class MockSchedulerProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
   public:
     MockSchedulerProcfsAccess() = default;
 
@@ -266,8 +266,8 @@ class CalledTimesUpdate {
     int &calledTimesVar;
 };
 
-struct MockSchedulerSysfsAccess : public L0::Sysman::SysfsAccess {
-    using SysfsAccess::deviceNames;
+struct MockSchedulerSysfsAccess : public L0::Sysman::SysFsAccessInterface {
+    using SysFsAccessInterface::deviceNames;
 
     ze_result_t mockReadFileFailureError = ZE_RESULT_SUCCESS;
     ze_result_t mockGetScanDirEntryError = ZE_RESULT_SUCCESS;

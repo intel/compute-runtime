@@ -102,7 +102,7 @@ const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
 const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
 const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
 
-struct MockMemorySysfsAccess : public L0::Sysman::SysfsAccess {
+struct MockMemorySysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     std::vector<ze_result_t> mockReadReturnStatus{};
     std::vector<std::string> mockReadStringValue{};
@@ -263,7 +263,7 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
         this->guid = guid;
     }
 
-    MockMemoryPmt(L0::Sysman::FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    MockMemoryPmt(L0::Sysman::FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
     ze_result_t readValue(const std::string key, uint32_t &val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -438,7 +438,7 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
     }
 };
 
-struct MockMemoryFsAccess : public L0::Sysman::FsAccess {
+struct MockMemoryFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
         if (directory.compare(baseTelemSysFS) == 0) {
             listOfTelemNodes.push_back("telem1");

@@ -23,7 +23,7 @@
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 namespace L0 {
@@ -32,43 +32,31 @@ namespace Sysman {
 const std::string LinuxSysmanImp::deviceDir("device");
 
 ze_result_t LinuxSysmanImp::init() {
-    pFsAccess = FsAccess::create();
-    DEBUG_BREAK_IF(nullptr == pFsAccess);
-
-    if (pProcfsAccess == nullptr) {
-        pProcfsAccess = ProcfsAccess::create();
-    }
-    DEBUG_BREAK_IF(nullptr == pProcfsAccess);
-
-    ze_result_t result;
-    NEO::OSInterface &osInterface = *pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
-    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
-    int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
-    result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, deviceName);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    if (pSysfsAccess == nullptr) {
-        pSysfsAccess = SysfsAccess::create(deviceName);
-    }
-    DEBUG_BREAK_IF(nullptr == pSysfsAccess);
-
     subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pParentSysmanDeviceImp->getHardwareInfo());
     if (subDeviceCount == 1) {
         subDeviceCount = 0;
     }
 
-    rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
-    pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
+    NEO::OSInterface &osInterface = *pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
+    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm());
-    pSysmanKmdInterface->initFsAccessInterface(*getDrm());
+    auto result = pSysmanKmdInterface->initFsAccessInterface(*getDrm());
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    pFsAccess = pSysmanKmdInterface->getFsAccess();
+    pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
+    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
     DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
+    auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
+    int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();
+    rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
+    pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     pPmuInterface = PmuInterface::create(this);
@@ -167,17 +155,17 @@ void LinuxSysmanImp::releasePmtObject() {
     mapOfSubDeviceIdToPmtObject.clear();
 }
 
-FsAccess &LinuxSysmanImp::getFsAccess() {
+FsAccessInterface &LinuxSysmanImp::getFsAccess() {
     UNRECOVERABLE_IF(nullptr == pFsAccess);
     return *pFsAccess;
 }
 
-ProcfsAccess &LinuxSysmanImp::getProcfsAccess() {
+ProcFsAccessInterface &LinuxSysmanImp::getProcfsAccess() {
     UNRECOVERABLE_IF(nullptr == pProcfsAccess);
     return *pProcfsAccess;
 }
 
-SysfsAccess &LinuxSysmanImp::getSysfsAccess() {
+SysFsAccessInterface &LinuxSysmanImp::getSysfsAccess() {
     UNRECOVERABLE_IF(nullptr == pSysfsAccess);
     return *pSysfsAccess;
 }
@@ -227,18 +215,6 @@ void LinuxSysmanImp::releaseFwUtilInterface() {
 }
 
 LinuxSysmanImp::~LinuxSysmanImp() {
-    if (nullptr != pSysfsAccess) {
-        delete pSysfsAccess;
-        pSysfsAccess = nullptr;
-    }
-    if (nullptr != pProcfsAccess) {
-        delete pProcfsAccess;
-        pProcfsAccess = nullptr;
-    }
-    if (nullptr != pFsAccess) {
-        delete pFsAccess;
-        pFsAccess = nullptr;
-    }
     if (nullptr != pPmuInterface) {
         delete pPmuInterface;
         pPmuInterface = nullptr;

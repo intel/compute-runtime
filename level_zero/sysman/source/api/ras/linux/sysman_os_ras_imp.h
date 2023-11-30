@@ -11,7 +11,6 @@
 #include "level_zero/sysman/source/api/ras/sysman_os_ras.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
-#include "level_zero/sysman/source/shared/linux/sysman_fs_access.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <map>
@@ -24,6 +23,8 @@ namespace Sysman {
 
 class LinuxSysmanImp;
 class FirmwareUtil;
+class FsAccessInterface;
+class SysFsAccessInterface;
 
 class LinuxRasSources : NEO::NonCopyableOrMovableClass {
   public:
@@ -43,7 +44,7 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
 
   protected:
     zes_ras_error_type_t osRasErrorType = {};
-    FsAccess *pFsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     std::vector<std::unique_ptr<L0::Sysman::LinuxRasSources>> rasSources = {};
 
@@ -67,8 +68,8 @@ class LinuxRasSourceGt : public LinuxRasSources {
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     zes_ras_error_type_t osRasErrorType = {};
     PmuInterface *pPmuInterface = nullptr;
-    FsAccess *pFsAccess = nullptr;
-    SysfsAccess *pSysfsAccess = nullptr;
+    FsAccessInterface *pFsAccess = nullptr;
+    SysFsAccessInterface *pSysfsAccess = nullptr;
 
   private:
     void initRasErrors(ze_bool_t clear);

@@ -23,11 +23,11 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockEventsFsAccess> pFsAccess;
     MockEventNeoDrm *pDrm = nullptr;
     Drm *pOriginalDrm = nullptr;
-    FsAccess *pFsAccessOriginal = nullptr;
+    FsAccessInterface *pFsAccessOriginal = nullptr;
     OsEvents *pOsEventsPrev = nullptr;
     L0::Sysman::EventsImp *pEventsImp;
     std::unique_ptr<MockEventsSysfsAccess> pSysfsAccess;
-    SysfsAccess *pSysfsAccessOriginal = nullptr;
+    SysFsAccessInterface *pSysfsAccessOriginal = nullptr;
     std::unique_ptr<MockPmuInterfaceImpForEvents> pPmuInterface;
     PmuInterface *pOriginalPmuInterface = nullptr;
     PublicLinuxEventsImp *pLinuxEventsImp = nullptr;
