@@ -99,8 +99,8 @@ void PageFaultDeviceFixture::tearDown() {
 }
 
 void MultiDeviceFixture::setUp() {
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -119,8 +119,8 @@ void MultiDeviceFixture::tearDown() {
 }
 
 void MultiDeviceFixtureHierarchy::setUp() {
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
     executionEnvironment->setExposeSubDevicesAsDevices(exposeSubDevices);
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
@@ -136,8 +136,8 @@ void MultiDeviceFixtureHierarchy::setUp() {
 }
 
 void MultiDeviceFixtureCombinedHierarchy::setUp() {
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
     executionEnvironment->setExposeSubDevicesAsDevices(exposeSubDevices);
     executionEnvironment->setCombinedDeviceHierarchy(combinedHierarchy);
@@ -215,9 +215,9 @@ void SingleRootMultiSubDeviceFixture::setUp() {
     neoDevice = device->getNEODevice();
 }
 void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
-    DebugManager.flags.EnableImplicitScaling.set(implicitScaling);
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.EnableImplicitScaling.set(implicitScaling);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrRcsNode = false;

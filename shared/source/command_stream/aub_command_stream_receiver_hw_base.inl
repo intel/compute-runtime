@@ -82,11 +82,11 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     UNRECOVERABLE_IF(nullptr == stream);
 
     this->dispatchMode = DispatchMode::BatchedDispatch;
-    if (DebugManager.flags.CsrDispatchMode.get()) {
-        this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
+    if (debugManager.flags.CsrDispatchMode.get()) {
+        this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }
 
-    auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
+    auto debugDeviceId = debugManager.flags.OverrideAubDeviceId.get();
     this->aubDeviceId = debugDeviceId == -1
                             ? this->peekHwInfo().capabilityTable.aubDeviceId
                             : static_cast<uint32_t>(debugDeviceId);
@@ -139,7 +139,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
             std::string strWithNonDefaultFlags;
             std::string strWithAllFlags;
 
-            DebugManager.getStringWithFlags(strWithAllFlags, strWithNonDefaultFlags);
+            debugManager.getStringWithFlags(strWithAllFlags, strWithNonDefaultFlags);
             auto vectorWithNonDefaultFlags = StringHelpers::split(strWithNonDefaultFlags, "\n");
             for (auto &comment : vectorWithNonDefaultFlags) {
                 aubManager->addComment((comment).c_str());
@@ -339,7 +339,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
         nullptr, [&](GraphicsAllocation *ptr) { this->getMemoryManager()->freeGraphicsMemory(ptr); });
-    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+    if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         flatBatchBuffer.reset(this->flatBatchBufferHelper->flattenBatchBuffer(this->rootDeviceIndex, batchBuffer, sizeBatchBuffer, this->dispatchMode, this->getOsContext().getDeviceBitfield()));
         if (flatBatchBuffer.get() != nullptr) {
             pBatchBuffer = flatBatchBuffer->getUnderlyingBuffer();
@@ -352,7 +352,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
 
     processResidency(allocationsForResidency, 0u);
 
-    if (!this->standalone || DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+    if (!this->standalone || debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         allocationsForResidency.pop_back();
     }
 
@@ -371,7 +371,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         subCaptureManager->disableSubCapture();
     }
 
-    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+    if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         pollForCompletion();
         batchBuffer.commandBufferAllocation = commandBufferAllocationBackup;
     }
@@ -457,7 +457,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(uint64_t batchB
             AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary);
     }
 
-    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer)));
         addPatchInfoComments();
     }
@@ -790,7 +790,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         return;
     }
 
-    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get() || DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
+    if (debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get() || debugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
         if (!gfxAllocation.isAllocDumpable()) {
             return;
         }

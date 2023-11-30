@@ -145,7 +145,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
 
     const auto &compilerProductHelper = neoDevice.getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
-    auto statelessToStatefulOptimizationDisabled = NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get();
+    auto statelessToStatefulOptimizationDisabled = NEO::debugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     if (forceToStatelessRequired || statelessToStatefulOptimizationDisabled) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
@@ -300,11 +300,11 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
                                                        decodeErrors, decodeWarnings);
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
     if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
         driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     } else {
         this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
@@ -321,7 +321,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
 
         this->isGeneratedByIgc = singleDeviceBinary.generator == NEO::GeneratorType::Igc;
 
-        bool rebuild = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
+        bool rebuild = NEO::debugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
         rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn, false);
         if (rebuild && irBinarySize == 0) {
             driverHandle->clearErrorDescription();
@@ -342,7 +342,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     }
 
     if (nullptr == this->unpackedDeviceBinary) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", NEO::CompilerWarnings::recompiledFromIr.data());
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", NEO::CompilerWarnings::recompiledFromIr.data());
         if (!shouldSuppressRebuildWarning) {
             updateBuildLog(NEO::CompilerWarnings::recompiledFromIr.str());
         }
@@ -375,16 +375,16 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings, gfxCoreHelper);
     if (decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
 
     if (NEO::DecodeError::Success != decodeError) {
         driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
-    if (singleDeviceBinaryFormat == NEO::DeviceBinaryFormat::Zebin && NEO::DebugManager.flags.DumpZEBin.get() == 1) {
+    if (singleDeviceBinaryFormat == NEO::DeviceBinaryFormat::Zebin && NEO::debugManager.flags.DumpZEBin.get() == 1) {
         dumpFileIncrement(reinterpret_cast<const char *>(blob.begin()), blob.size(), "dumped_zebin_module", ".elf");
     }
 
@@ -403,7 +403,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     if (slmNeeded > slmAvailable) {
         driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n",
                                           static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
                            static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
@@ -712,12 +712,12 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
         this->createBuildOptions(buildFlagsInput.c_str(), buildOptions, internalBuildOptions);
 
         if (type == ModuleType::User) {
-            if (NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
-                NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
+            if (NEO::debugManager.flags.InjectInternalBuildOptions.get() != "unk") {
+                NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::debugManager.flags.InjectInternalBuildOptions.get());
             }
 
-            if (NEO::DebugManager.flags.InjectApiBuildOptions.get() != "unk") {
-                NEO::CompilerOptions::concatenateAppend(buildOptions, NEO::DebugManager.flags.InjectApiBuildOptions.get());
+            if (NEO::debugManager.flags.InjectApiBuildOptions.get() != "unk") {
+                NEO::CompilerOptions::concatenateAppend(buildOptions, NEO::debugManager.flags.InjectApiBuildOptions.get());
             }
         }
 
@@ -973,7 +973,7 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
         auto slmInlineSize = kernelImmutableData->getDescriptor().kernelAttributes.slmInlineSize;
         if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
             driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
             res = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
             break;
         }
@@ -1172,7 +1172,7 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
     if (*pfnFunction == nullptr) {
         if (!this->isFunctionSymbolExportEnabled) {
             driverHandle->setErrorDescription("Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         return ZE_RESULT_ERROR_INVALID_FUNCTION_NAME;
@@ -1199,7 +1199,7 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
         } else {
             if (!this->isGlobalSymbolExportEnabled) {
                 driverHandle->setErrorDescription("Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
-                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
             driverHandle->clearErrorDescription();
@@ -1455,7 +1455,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
             driverHandle->clearErrorDescription();
             if (functionSymbolExportEnabledCounter == 0) {
                 driverHandle->setErrorDescription("Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
-                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             }
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
@@ -1553,7 +1553,7 @@ void ModuleImp::registerElfInDebuggerL0() {
         debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
         this->debugElfHandle = debuggerL0->registerElf(&debugData);
 
-        if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
+        if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
             dumpFileIncrement(debugData.vIsa, debugData.vIsaSize, "dumped_debug_module", ".elf");
         }
 

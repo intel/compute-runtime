@@ -115,7 +115,7 @@ class SysmanMultiDeviceFixture : public ::testing::Test {
         hwInfo.capabilityTable.levelZeroSupported = true;
         execEnv = new NEO::ExecutionEnvironment();
         execEnv->prepareRootDeviceEnvironments(numRootDevices);
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
             execEnv->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             execEnv->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();

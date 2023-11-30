@@ -41,12 +41,12 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
     GT_SYSTEM_INFO sysInfo = {};
     PLATFORM platform = {};
     HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
 
     uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
-    DebugManager.flags.CreateMultipleSubDevices.set(0);
+    debugManager.flags.CreateMultipleSubDevices.set(0);
     devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
@@ -75,7 +75,7 @@ TEST(AubHelper, WhenGetMemTypeIsCalledWithAGivenAddressSpaceThenCorrectMemTypeIs
 
 TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsSetThenGetMemBankSizeReturnsCorrectValue) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.HBMSizePerTileInGigabytes.set(8);
+    debugManager.flags.HBMSizePerTileInGigabytes.set(8);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &sysInfo = hwInfo.gtSystemInfo;

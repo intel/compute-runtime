@@ -296,7 +296,7 @@ size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId t
 }
 
 void DebugSession::printBitmask(uint8_t *bitmask, size_t bitmaskSize) {
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
 
         DEBUG_BREAK_IF(bitmaskSize % sizeof(uint64_t) != 0);
 

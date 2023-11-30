@@ -56,7 +56,7 @@ TEST(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSM
 
     constexpr auto bufferSize = 16;
     auto pageSizeNumber = 2;
-    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
     auto extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     cl_int retVal = CL_SUCCESS;
@@ -73,7 +73,7 @@ TEST(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSM
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     pageSizeNumber = 4;
-    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
     extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     usmAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, bufferSize, 0, &retVal);
@@ -89,7 +89,7 @@ TEST(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSM
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     pageSizeNumber = 8;
-    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
     extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     usmAllocation = clSharedMemAllocINTEL(&mockContext, nullptr, nullptr, bufferSize, 0, &retVal);
@@ -700,7 +700,7 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithIn
 
 TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedThenItIsProperlySetInKernel) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
 
     auto mockContext = std::make_unique<MockContext>();
     auto device = mockContext->getDevice(0u);
@@ -893,7 +893,7 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperP
     DebugManagerStateRestore restorer;
     MockCommandQueue cmdQ;
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
-    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(0);
+    debugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(0);
 
     auto retVal = clEnqueueMigrateMemINTEL(&cmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -901,7 +901,7 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperP
 
 TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     MockContext mockContext;
     auto device = mockContext.getDevice(0u);
@@ -926,7 +926,7 @@ TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForK
 
 TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheSubDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     UltClDeviceFactory deviceFactory{1, 4};
     cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
@@ -954,7 +954,7 @@ TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueue
 
 TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheRootDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     UltClDeviceFactory deviceFactory{1, 4};
     cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
@@ -1190,7 +1190,7 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
 
 TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccesIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    debugManager.flags.AllowUnrestrictedSize.set(1);
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     auto allocationSize = static_cast<size_t>(mockContext.getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize) + 1;

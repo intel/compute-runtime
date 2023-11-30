@@ -82,7 +82,7 @@ MemObj::~MemObj() {
         needWait |= multiGraphicsAllocation.getGraphicsAllocations().size() > 1u;
         for (auto graphicsAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
             auto rootDeviceIndex = graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0;
-            bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
+            bool doAsyncDestructions = debugManager.flags.EnableAsyncDestroyAllocations.get();
             if (graphicsAllocation && !associatedMemObject && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
                 memoryManager->removeAllocationFromHostPtrManager(graphicsAllocation);
                 if (!doAsyncDestructions) {
@@ -434,7 +434,7 @@ bool MemObj::isTiledAllocation() const {
 
 bool MemObj::mappingOnCpuAllowed() const {
     auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
-    return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
+    return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !debugManager.flags.DisableZeroCopyForBuffers.get() &&
            !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) &&
            allowCpuAccess();
 }

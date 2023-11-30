@@ -33,7 +33,7 @@ namespace ult {
 using CommandListAppendLaunchKernelMockModule = Test<ModuleMutableCommandListFixture>;
 HWTEST_F(CommandListAppendLaunchKernelMockModule, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    NEO::debugManager.flags.DetectIndirectAccessInKernel.set(1);
     mockKernelImmData->kernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
     kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
@@ -118,7 +118,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationP
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionTheSameFlagIsUsedToSetCmdListThreadArbitrationPolicy) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     createKernel();
     ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
@@ -145,8 +145,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     kernel->setSchedulingHintExp(pHint);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.OverrideThreadArbitrationPolicy.set(0);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -163,7 +163,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     createKernel();
 
@@ -266,7 +266,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynchronousImmCommandListThenPrintfBufferIsPrinted) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
@@ -296,7 +296,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsynchronousImmCommandListThenPrintfBufferIsNotPrintedUntilHostSync) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
@@ -329,7 +329,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsync
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchronousImmCommandListHangsThenPrintfBufferIsPrinted) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
@@ -542,7 +542,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmCommandListWithoutFlushTaskSubmissionAndDestroyKernelAfterListSyncThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t result;
     ze_command_queue_desc_t queueDesc{};
@@ -572,7 +572,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmComman
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToImmCommandListWithoutFlushTaskSubmissionAndDestroyKernelAfterListSyncThenSuccessIsReturnedAndEventSyncDoesNotAccessKernel) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t result;
     ze_command_queue_desc_t queueDesc{};
@@ -626,7 +626,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToImmCommandListWithoutFlushTaskSubmissionAndDestroyKernelAfterEventSyncThenSuccessIsReturnedAndListSyncDoesNotAccessKernel) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t result;
     ze_command_queue_desc_t queueDesc{};
@@ -679,7 +679,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmCommandListWithFlushTaskSubmissionAndDestroyKernelAfterListSyncThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_result_t result;
     ze_command_queue_desc_t queueDesc{};
@@ -709,7 +709,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmComman
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToImmCommandListWithFlushTaskSubmissionAndDestroyKernelAfterListSyncThenSuccessIsReturnedAndEventSyncDoesNotAccessKernel) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_result_t result;
     ze_command_queue_desc_t queueDesc{};
@@ -763,7 +763,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToImmCommandListWithFlushTaskSubmissionAndDestroyKernelAfterEventSyncThenSuccessIsReturnedAndListSyncDoesNotAccessKernel) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_result_t result;
     ze_command_queue_desc_t queueDesc{};
@@ -819,7 +819,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     ze_result_t returnValue;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseBindlessMode.set(0);
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
@@ -1006,7 +1006,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
     size_t numberOfPCsBase = itorPC.size();
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePipeControlPriorToWalker.set(1);
+    debugManager.flags.ForcePipeControlPriorToWalker.set(1);
 
     std::unique_ptr<L0::CommandList> commandListWithDebugKey(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1031,7 +1031,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAndNoSpaceThenNewBatchBufferAllocationIsUsed, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePipeControlPriorToWalker.set(1);
+    debugManager.flags.ForcePipeControlPriorToWalker.set(1);
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -1185,7 +1185,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
 HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenStateIsCleaned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     createKernel();
@@ -1416,7 +1416,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto expectedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
@@ -1440,7 +1440,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
     EXPECT_EQ(expectedThreadArbitrationPolicy, commandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-        DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
+        debugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
         commandList->reset();
         commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
         EXPECT_EQ(threadArbitrationPolicy, commandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);

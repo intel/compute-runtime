@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,8 @@ CacheInfo::~CacheInfo() {
 
 CacheRegion CacheInfo::reserveRegion(size_t cacheReservationSize) {
     uint16_t numWays = (maxReservationNumWays * cacheReservationSize) / maxReservationCacheSize;
-    if (DebugManager.flags.ClosNumCacheWays.get() != -1) {
-        numWays = DebugManager.flags.ClosNumCacheWays.get();
+    if (debugManager.flags.ClosNumCacheWays.get() != -1) {
+        numWays = debugManager.flags.ClosNumCacheWays.get();
         cacheReservationSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
     }
     auto regionIndex = cacheReserve.reserveCache(CacheLevel::Level3, numWays);
@@ -47,8 +47,8 @@ CacheRegion CacheInfo::freeRegion(CacheRegion regionIndex) {
 bool CacheInfo::isRegionReserved(CacheRegion regionIndex, [[maybe_unused]] size_t regionSize) const {
     auto search = cacheRegionsReserved.find(regionIndex);
     if (search != cacheRegionsReserved.end()) {
-        if (DebugManager.flags.ClosNumCacheWays.get() != -1) {
-            auto numWays = DebugManager.flags.ClosNumCacheWays.get();
+        if (debugManager.flags.ClosNumCacheWays.get() != -1) {
+            auto numWays = debugManager.flags.ClosNumCacheWays.get();
             regionSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
         }
         DEBUG_BREAK_IF(search->second != regionSize);

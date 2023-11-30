@@ -75,7 +75,7 @@ TEST(GetTargetDeviceTests, givenDoNotUseProductConfigForValidationWaFlagSetToTru
     auto targetDevice = getTargetDevice(rootDeviceEnvironment);
     EXPECT_FALSE(targetDevice.applyValidationWorkaround);
 
-    NEO::DebugManager.flags.DoNotUseProductConfigForValidationWa.set(true);
+    NEO::debugManager.flags.DoNotUseProductConfigForValidationWa.set(true);
     targetDevice = getTargetDevice(rootDeviceEnvironment);
     EXPECT_TRUE(targetDevice.applyValidationWorkaround);
 }

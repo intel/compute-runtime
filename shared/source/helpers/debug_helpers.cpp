@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace NEO {
 void debugBreak(int line, const char *file) {
-    if (DebugManager.flags.EnableDebugBreak.get()) {
+    if (debugManager.flags.EnableDebugBreak.get()) {
         printf("Assert was called at %d line in file:\n%s\n", line, file);
         fflush(stdout);
         assert(false);

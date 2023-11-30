@@ -19,7 +19,7 @@ class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFac
 
   protected:
     void SetUp() override {
-        DebugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.EnableFreeMemory.set(false);
         ParentClass::setUp();
     }
 

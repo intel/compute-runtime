@@ -74,12 +74,12 @@ void ModuleImmutableDataFixture::MockKernel::setCrossThreadData(uint32_t dataSiz
 }
 
 void ModuleImmutableDataFixture::setUp() {
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     auto hwInfo = NEO::defaultHwInfo.get();
-    if (DebugManager.flags.OverrideRevision.get() != -1) {
+    if (debugManager.flags.OverrideRevision.get() != -1) {
         this->copyHwInfo = *NEO::defaultHwInfo.get();
-        this->copyHwInfo.platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+        this->copyHwInfo.platform.usRevId = static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
         hwInfo = &this->copyHwInfo;
     }
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
@@ -90,7 +90,7 @@ void ModuleImmutableDataFixture::setUp() {
 
 void ModuleImmutableDataFixture::createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData, std::initializer_list<ZebinTestData::appendElfAdditionalSection> additionalSections) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
     const auto &src = zebinData->storage;
@@ -126,7 +126,7 @@ void ModuleImmutableDataFixture::tearDown() {
 }
 
 void ModuleFixture::setUp(bool skipCreatingModules) {
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     DeviceFixture::setUp();
     if (skipCreatingModules == false) {
@@ -186,7 +186,7 @@ void MultiDeviceModuleFixture::setUp() {
 
 void MultiDeviceModuleFixture::createModuleFromMockBinary(uint32_t rootDeviceIndex) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     auto device = driverHandle->devices[rootDeviceIndex];
     zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
@@ -291,7 +291,7 @@ void ModuleWithZebinFixture::tearDown() {
 }
 
 void ImportHostPointerModuleFixture::setUp() {
-    DebugManager.flags.EnableHostPointerImport.set(1);
+    debugManager.flags.EnableHostPointerImport.set(1);
     ModuleFixture::setUp();
 
     hostPointer = driverHandle->getMemoryManager()->allocateSystemMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
@@ -304,7 +304,7 @@ void ImportHostPointerModuleFixture::tearDown() {
 
 MultiTileModuleFixture::MultiTileModuleFixture() : backup({&NEO::ImplicitScaling::apiSupport, true}) {}
 void MultiTileModuleFixture::setUp() {
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 2u;
 

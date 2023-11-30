@@ -92,9 +92,9 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(cachePolicy);
 
-    if (DebugManager.flags.OverrideBlitterMocs.get() == 0) {
+    if (debugManager.flags.OverrideBlitterMocs.get() == 0) {
         mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-    } else if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+    } else if (debugManager.flags.OverrideBlitterMocs.get() == 1) {
         mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     }
 
@@ -114,14 +114,14 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         blitCmd.setCompressionFormat(compressionFormat);
     }
 
-    if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
+    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
         if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
             blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
-            blitCmd.setCompressionFormat(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+            blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
         if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
             blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-            blitCmd.setCompressionFormat(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+            blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
     }
 
@@ -144,7 +144,7 @@ void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocati
     auto &rootDeviceEnvironment = *waArgs.rootDeviceEnvironment;
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    if (DebugManager.flags.OverrideBlitterMocs.get() == 0) {
+    if (debugManager.flags.OverrideBlitterMocs.get() == 0) {
         mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     }
 
@@ -156,10 +156,10 @@ void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocati
         blitCmd.setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
         blitCmd.setCompressionFormat40(compressionFormat);
     }
-    if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
+    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
         if (!MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
             blitCmd.setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-            blitCmd.setCompressionFormat40(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+            blitCmd.setCompressionFormat40(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
     }
 
@@ -224,7 +224,7 @@ template <>
 void BlitCommandsHelper<Family>::encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue) {
     using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
 
-    if (DebugManager.flags.EnableBcsSwControlWa.get() <= 0) {
+    if (debugManager.flags.EnableBcsSwControlWa.get() <= 0) {
         return;
     }
 
@@ -234,9 +234,9 @@ void BlitCommandsHelper<Family>::encodeWa(LinearStream &cmdStream, const BlitPro
     constexpr uint32_t waEnabledMMioValue = 0x40004;
     constexpr uint32_t waDisabledMMioValue = 0x40000;
 
-    const bool applyForSrc = (DebugManager.flags.EnableBcsSwControlWa.get() & srcInSystemMemOnly);
-    const bool applyForDst = (DebugManager.flags.EnableBcsSwControlWa.get() & dstInSystemMemOnly);
-    const bool applyAlways = (DebugManager.flags.EnableBcsSwControlWa.get() == enableAlways);
+    const bool applyForSrc = (debugManager.flags.EnableBcsSwControlWa.get() & srcInSystemMemOnly);
+    const bool applyForDst = (debugManager.flags.EnableBcsSwControlWa.get() & dstInSystemMemOnly);
+    const bool applyAlways = (debugManager.flags.EnableBcsSwControlWa.get() == enableAlways);
 
     const bool enableWa = (!blitProperties.srcAllocation->isAllocatedInLocalMemoryPool() && applyForSrc) ||
                           (!blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() && applyForDst) ||
@@ -263,7 +263,7 @@ template <>
 size_t BlitCommandsHelper<Family>::getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
     using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
 
-    if (DebugManager.flags.EnableBcsSwControlWa.get() <= 0) {
+    if (debugManager.flags.EnableBcsSwControlWa.get() <= 0) {
         return 0;
     }
 

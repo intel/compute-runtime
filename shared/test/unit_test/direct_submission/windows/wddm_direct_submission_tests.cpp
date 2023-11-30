@@ -31,7 +31,7 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
     void SetUp() override {
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-        DebugManager.flags.ForcePreemptionMode.set(preemptionMode);
+        debugManager.flags.ForcePreemptionMode.set(preemptionMode);
 
         WddmFixture::SetUp();
 
@@ -57,7 +57,7 @@ using WddmDirectSubmissionTest = WddmDirectSubmissionFixture<PreemptionMode::Thr
 
 struct WddmDirectSubmissionWithMockGdiDllFixture : public WddmFixtureWithMockGdiDll {
     void setUp() {
-        DebugManager.flags.ForcePreemptionMode.set(PreemptionMode::ThreadGroup);
+        debugManager.flags.ForcePreemptionMode.set(PreemptionMode::ThreadGroup);
 
         WddmFixtureWithMockGdiDll::setUp();
         init();
@@ -347,7 +347,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorF
 
 HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenHandleNewResourcesSubmissionThenDispatchProperCommands) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
+    debugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
     bool ret = wddmDirectSubmission.initialize(false, false);
@@ -399,7 +399,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionMaxRingBuffers.set(2u);
+    debugManager.flags.DirectSubmissionMaxRingBuffers.set(2u);
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -438,7 +438,7 @@ HWTEST_F(WddmDirectSubmissionTest, whenCreateWddmDirectSubmissionThenDisableMoni
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcompletionFenceUpdated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
 
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
@@ -474,7 +474,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWh
 
 HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenNoMonitorFenceHangDetectedWhenUpdatingTagValueThenReturnUpdatedFenceCounter) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDetectGpuHang.set(1);
+    debugManager.flags.DirectSubmissionDetectGpuHang.set(1);
 
     VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
 
@@ -497,7 +497,7 @@ HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenNoMonitorFenceHangDetected
 
 HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenWddmMonitorFenceHangDetectedWhenUpdatingTagValueThenReturnFail) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDetectGpuHang.set(1);
+    debugManager.flags.DirectSubmissionDetectGpuHang.set(1);
 
     VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
 
@@ -516,7 +516,7 @@ HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenWddmMonitorFenceHangDetect
 
 HWTEST_F(WddmDirectSubmissionWithMockGdiDllTest, givenRingMonitorFenceHangDetectedWhenUpdatingTagValueThenReturnFail) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDetectGpuHang.set(1);
+    debugManager.flags.DirectSubmissionDetectGpuHang.set(1);
 
     VariableBackup<bool> backupMonitorFenceCreateSelector(getMonitorFenceCpuAddressSelectorFcn());
 
@@ -580,7 +580,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenCreatingDestroyi
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.WddmResidencyLogger.set(1);
+    debugManager.flags.WddmResidencyLogger.set(1);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -613,7 +613,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.WddmResidencyLogger.set(1);
+    debugManager.flags.WddmResidencyLogger.set(1);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -643,7 +643,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenHandleResidencyT
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.WddmResidencyLogger.set(1);
+    debugManager.flags.WddmResidencyLogger.set(1);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -671,7 +671,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuThenS
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.WddmResidencyLogger.set(1);
+    debugManager.flags.WddmResidencyLogger.set(1);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -885,7 +885,7 @@ HWTEST_F(WddmDirectSubmissionTest,
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(0);
+    debugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(0);
 
     BatchBuffer batchBuffer = {};
     GraphicsAllocation *clientCommandBuffer = nullptr;
@@ -948,7 +948,7 @@ HWTEST_F(WddmDirectSubmissionTest,
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(1);
+    debugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(1);
 
     BatchBuffer batchBuffer = {};
     GraphicsAllocation *clientCommandBuffer = nullptr;

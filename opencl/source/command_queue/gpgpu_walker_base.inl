@@ -218,12 +218,12 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(*multiDispatchInfo.peekMainKernel(), commandQueue);
     }
 
-    if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
+    if (debugManager.flags.PauseOnEnqueue.get() != -1) {
         expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * 2;
         expectedSizeCS += NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * 2;
     }
 
-    if (DebugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {
+    if (debugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {
         expectedSizeCS += sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
     }
     expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDeps);

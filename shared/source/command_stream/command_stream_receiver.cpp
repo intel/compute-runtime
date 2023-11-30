@@ -69,8 +69,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
         this->dispatchMode = DispatchMode::ImmediateDispatch;
     }
-    if (DebugManager.flags.CsrDispatchMode.get()) {
-        this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
+    if (debugManager.flags.CsrDispatchMode.get()) {
+        this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }
     flushStamp.reset(new FlushStampTracker(true));
     for (int i = 0; i < IndirectHeap::Type::NUM_TYPES; ++i) {
@@ -84,7 +84,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling) &&
         subDeviceCount > 1 &&
-        DebugManager.flags.EnableStaticPartitioning.get() != 0) {
+        debugManager.flags.EnableStaticPartitioning.get() != 0) {
         this->activePartitions = subDeviceCount;
         this->staticWorkPartitioningEnabled = true;
     }
@@ -154,8 +154,8 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {
         auto pushAllocations = true;
 
-        if (DebugManager.flags.MakeEachAllocationResident.get() != -1) {
-            pushAllocations = !DebugManager.flags.MakeEachAllocationResident.get();
+        if (debugManager.flags.MakeEachAllocationResident.get() != -1) {
+            pushAllocations = !debugManager.flags.MakeEachAllocationResident.get();
         }
 
         if (pushAllocations) {
@@ -244,8 +244,8 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
 
     auto alignment = MemoryConstants::pageSize64k;
 
-    if (DebugManager.flags.ForceCommandBufferAlignment.get() != -1) {
-        alignment = DebugManager.flags.ForceCommandBufferAlignment.get() * MemoryConstants::kiloByte;
+    if (debugManager.flags.ForceCommandBufferAlignment.get() != -1) {
+        alignment = debugManager.flags.ForceCommandBufferAlignment.get() * MemoryConstants::kiloByte;
     }
 
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, alignment);
@@ -299,8 +299,8 @@ void CommandStreamReceiver::fillReusableAllocationsList() {
 
 void CommandStreamReceiver::requestPreallocation() {
     auto preallocationsPerQueue = getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
-    if (DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
-        preallocationsPerQueue = DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
+    if (debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
+        preallocationsPerQueue = debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
     }
     auto lock = obtainUniqueOwnership();
     requestedPreallocationsAmount += preallocationsPerQueue;
@@ -316,8 +316,8 @@ void CommandStreamReceiver::requestPreallocation() {
 
 void CommandStreamReceiver::releasePreallocationRequest() {
     auto preallocationsPerQueue = getProductHelper().getCommandBuffersPreallocatedPerCommandQueue();
-    if (DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
-        preallocationsPerQueue = DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
+    if (debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get() != -1) {
+        preallocationsPerQueue = debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.get();
     }
     DEBUG_BREAK_IF(preallocationsPerQueue > requestedPreallocationsAmount);
     requestedPreallocationsAmount -= preallocationsPerQueue;
@@ -373,7 +373,7 @@ bool CommandStreamReceiver::skipResourceCleanup() const {
 }
 
 bool CommandStreamReceiver::isGpuHangDetected() const {
-    if (DebugManager.flags.DisableGpuHangDetection.get()) {
+    if (debugManager.flags.DisableGpuHangDetection.get()) {
         return false;
     }
 
@@ -445,7 +445,7 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
-    bool printWaitForCompletion = DebugManager.flags.LogWaitingForCompletion.get();
+    bool printWaitForCompletion = debugManager.flags.LogWaitingForCompletion.get();
     if (printWaitForCompletion) {
         printTagAddressContent(taskCountToWait, params.waitTimeout, true);
     }
@@ -686,7 +686,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
     }
     bool requireInternalHeap = IndirectHeap::Type::INDIRECT_OBJECT == heapType ? canUse4GbHeaps : false;
 
-    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         requireInternalHeap = false;
     }
 
@@ -743,7 +743,7 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
 
     do {
         auto debugPauseStateValue = DebugPauseState::waitingForUserStartConfirmation;
-        if (DebugManager.flags.PauseOnGpuMode.get() != PauseOnGpuProperties::PauseMode::AfterWorkload) {
+        if (debugManager.flags.PauseOnGpuMode.get() != PauseOnGpuProperties::PauseMode::AfterWorkload) {
             do {
                 {
                     std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
@@ -764,7 +764,7 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
             }
         }
 
-        if (DebugManager.flags.PauseOnGpuMode.get() != PauseOnGpuProperties::PauseMode::BeforeWorkload) {
+        if (debugManager.flags.PauseOnGpuMode.get() != PauseOnGpuProperties::PauseMode::BeforeWorkload) {
             do {
                 {
                     std::unique_lock<SpinLock> lock{self->debugPauseStateLock};
@@ -784,7 +784,7 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
                 *self->debugPauseStateAddress = DebugPauseState::hasUserEndConfirmation;
             }
         }
-    } while (DebugManager.flags.PauseOnEnqueue.get() == PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue || DebugManager.flags.PauseOnBlitCopy.get() == PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue);
+    } while (debugManager.flags.PauseOnEnqueue.get() == PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue || debugManager.flags.PauseOnBlitCopy.get() == PauseOnGpuProperties::DebugFlagValues::OnEachEnqueue);
     return nullptr;
 }
 
@@ -797,7 +797,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->setTagAllocation(tagAllocation);
-    auto initValue = DebugManager.flags.EnableNullHardware.get() ? static_cast<uint32_t>(-1) : initialHardwareTag;
+    auto initValue = debugManager.flags.EnableNullHardware.get() ? static_cast<uint32_t>(-1) : initialHardwareTag;
     auto tagAddress = this->tagAddress;
     auto completionFence = reinterpret_cast<TaskCountType *>(getCompletionAddress());
     UNRECOVERABLE_IF(!completionFence);
@@ -808,13 +808,13 @@ bool CommandStreamReceiver::initializeTagAllocation() {
         *completionFence = 0;
         completionFence = ptrOffset(completionFence, this->immWritePostSyncWriteOffset);
     }
-    *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
+    *this->debugPauseStateAddress = debugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintTagAllocationAddress.get(), stdout,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintTagAllocationAddress.get(), stdout,
                        "\nCreated tag allocation %p for engine %u\n",
                        this->tagAddress, static_cast<uint32_t>(osContext->getEngineType()));
 
-    if (DebugManager.flags.PauseOnEnqueue.get() != -1 || DebugManager.flags.PauseOnBlitCopy.get() != -1) {
+    if (debugManager.flags.PauseOnEnqueue.get() != -1 || debugManager.flags.PauseOnBlitCopy.get() != -1) {
         userPauseConfirmation = Thread::create(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
     }
 
@@ -870,8 +870,8 @@ bool CommandStreamReceiver::createPreemptionAllocation() {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
     size_t preemptionSurfaceSize = hwInfo->capabilityTable.requiredPreemptionSurfaceSize;
-    if (DebugManager.flags.OverrideCsrAllocationSize.get() > 0) {
-        preemptionSurfaceSize = DebugManager.flags.OverrideCsrAllocationSize.get();
+    if (debugManager.flags.OverrideCsrAllocationSize.get() > 0) {
+        preemptionSurfaceSize = debugManager.flags.OverrideCsrAllocationSize.get();
     }
     AllocationProperties properties{rootDeviceIndex, true, preemptionSurfaceSize, AllocationType::PREEMPTION, isMultiOsContextCapable(), false, deviceBitfield};
     properties.flags.uncacheable = hwInfo->workaroundTable.flags.waCSRUncachable;
@@ -941,7 +941,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
 }
 
 size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
-    if (DebugManager.flags.DisableTimestampPacketOptimizations.get()) {
+    if (debugManager.flags.DisableTimestampPacketOptimizations.get()) {
         return 1;
     }
 
@@ -967,7 +967,7 @@ bool CommandStreamReceiver::needsPageTableManager() const {
 }
 
 void CommandStreamReceiver::printDeviceIndex() {
-    if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
+    if (debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
         printf("%u: Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
                SysCalls::getProcessId(),
                this->getRootDeviceIndex(),
@@ -982,7 +982,7 @@ void CommandStreamReceiver::checkForNewResources(TaskCountType submittedTaskCoun
     if (useNewResourceImplicitFlush) {
         if (allocationTaskCount == GraphicsAllocation::objectNotUsed && !GraphicsAllocation::isIsaAllocationType(gfxAllocation.getAllocationType())) {
             newResources = true;
-            if (DebugManager.flags.ProvideVerboseImplicitFlush.get()) {
+            if (debugManager.flags.ProvideVerboseImplicitFlush.get()) {
                 printf("New resource detected of type %llu\n", static_cast<unsigned long long>(gfxAllocation.getAllocationType()));
             }
         }

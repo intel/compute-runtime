@@ -1116,7 +1116,7 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
             auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
 
-            if (DebugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
+            if (debugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
                 auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
                 EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
             } else {
@@ -1178,19 +1178,19 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
 };
 
 TEST_P(DeviceAttributeQueryTest, givenDeprecatedDeviceIpVersionWhenVerifyDeviceAttributeThenCorrectResultsAreReturned) {
-    DebugManager.flags.UseDeprecatedClDeviceIpVersion.set(true);
+    debugManager.flags.UseDeprecatedClDeviceIpVersion.set(true);
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     verifyDeviceAttribute(*pClDevice);
 }
 
 TEST_P(DeviceAttributeQueryTest, givenNewDeviceIpVersionWhenVerifyDeviceAttributeThenCorrectResultsAreReturned) {
-    DebugManager.flags.UseDeprecatedClDeviceIpVersion.set(false);
+    debugManager.flags.UseDeprecatedClDeviceIpVersion.set(false);
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     verifyDeviceAttribute(*pClDevice);
 }
 
 TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     auto pRootClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

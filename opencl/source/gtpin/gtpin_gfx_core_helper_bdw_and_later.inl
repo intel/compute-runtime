@@ -15,8 +15,8 @@ namespace NEO {
 template <typename GfxFamily>
 bool GTPinGfxCoreHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo &hwInfo) const {
     bool canUseSharedAllocation = false;
-    if (DebugManager.flags.GTPinAllocateBufferInSharedMemory.get() != -1) {
-        canUseSharedAllocation = !!DebugManager.flags.GTPinAllocateBufferInSharedMemory.get();
+    if (debugManager.flags.GTPinAllocateBufferInSharedMemory.get() != -1) {
+        canUseSharedAllocation = !!debugManager.flags.GTPinAllocateBufferInSharedMemory.get();
     }
     canUseSharedAllocation &= hwInfo.capabilityTable.ftrSvm;
     return canUseSharedAllocation;

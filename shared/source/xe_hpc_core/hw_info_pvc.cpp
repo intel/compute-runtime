@@ -161,8 +161,8 @@ void PVC::setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTi
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->MultiTileArchInfo.IsValid = setupMultiTile;
     gtSysInfo->MultiTileArchInfo.TileCount = 1;
-    if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
-        gtSysInfo->MultiTileArchInfo.TileCount = DebugManager.flags.CreateMultipleSubDevices.get();
+    if (debugManager.flags.CreateMultipleSubDevices.get() > 0) {
+        gtSysInfo->MultiTileArchInfo.TileCount = debugManager.flags.CreateMultipleSubDevices.get();
     }
     gtSysInfo->MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(gtSysInfo->MultiTileArchInfo.TileCount));
 }

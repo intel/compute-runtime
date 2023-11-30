@@ -114,7 +114,7 @@ void WddmResidencyController::removeFromTrimCandidateListIfUsed(WddmAllocation *
 }
 
 void WddmResidencyController::checkTrimCandidateCount() {
-    if (DebugManager.flags.ResidencyDebugEnable.get()) {
+    if (debugManager.flags.ResidencyDebugEnable.get()) {
         [[maybe_unused]] uint32_t sum = 0;
         for (auto trimCandidate : trimCandidateList) {
             if (trimCandidate != nullptr) {
@@ -237,7 +237,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
                 DEBUG_BREAK_IF(evictionStatus != MemoryOperationsStatus::MEMORY_NOT_FOUND);
                 do {
                     result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, true, &bytesToTrim, totalSize);
-                } while (DebugManager.flags.WaitForMemoryRelease.get() && result == false);
+                } while (debugManager.flags.WaitForMemoryRelease.get() && result == false);
                 break;
             }
         }
@@ -275,7 +275,7 @@ void WddmResidencyController::makeNonResidentEvictionAllocations(const Residency
 
 bool WddmResidencyController::isInitialized() const {
     bool requiresTrimCallbacks = OSInterface::requiresSupportForWddmTrimNotification;
-    requiresTrimCallbacks = requiresTrimCallbacks && (false == DebugManager.flags.DoNotRegisterTrimCallback.get());
+    requiresTrimCallbacks = requiresTrimCallbacks && (false == debugManager.flags.DoNotRegisterTrimCallback.get());
     if (requiresTrimCallbacks) {
         return trimCallbackHandle != nullptr;
     }

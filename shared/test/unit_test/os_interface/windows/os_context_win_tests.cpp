@@ -51,7 +51,7 @@ TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackFailThenOsContextCre
 
 TEST_F(OsContextWinTest, givenWddm20WhenRegisterTrimCallbackIsDisabledThenOsContextIsInitialized) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DoNotRegisterTrimCallback.set(true);
+    debugManager.flags.DoNotRegisterTrimCallback.set(true);
     *getRegisterTrimNotificationFailCallFcn() = true;
 
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));

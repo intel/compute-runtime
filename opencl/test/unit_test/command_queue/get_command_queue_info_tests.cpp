@@ -222,7 +222,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGe
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenNonZeroFamilyIdWhenCreatingCommandQueueForRootDeviceWithMultipleSubDevicesThenInvalidValueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     initPlatform();
 
     auto rootDevice = platform()->getClDevice(0);

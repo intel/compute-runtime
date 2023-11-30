@@ -125,7 +125,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
-    if (DebugManager.flags.MakeEachAllocationResident.get() == 2) {
+    if (debugManager.flags.MakeEachAllocationResident.get() == 2) {
         auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
 
         auto allocLock = memoryManager->acquireAllocLock();

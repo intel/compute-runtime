@@ -150,7 +150,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
 template <bool BlockOnFence = false>
 struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
     void setUp() {
-        NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+        NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
         DebugApiLinuxMultiDeviceFixture::setUp();
 

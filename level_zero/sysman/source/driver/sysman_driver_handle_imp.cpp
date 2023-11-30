@@ -102,7 +102,7 @@ ze_result_t SysmanDriverHandleImp::getExtensionProperties(uint32_t *pCount, zes_
 
 ze_result_t SysmanDriverHandleImp::sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
     if (pOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -111,7 +111,7 @@ ze_result_t SysmanDriverHandleImp::sysmanEventsListen(uint32_t timeout, uint32_t
 
 ze_result_t SysmanDriverHandleImp::sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) {
     if (pOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman Driver Not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

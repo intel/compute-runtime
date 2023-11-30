@@ -391,7 +391,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
                            (GetParam() == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
                            (GetParam() == CL_KERNEL_COMPILE_NUM_SUB_GROUPS);
     if (requireOpenCL21) {
-        DebugManager.flags.ForceOCLVersion.set(20);
+        debugManager.flags.ForceOCLVersion.set(20);
         pDevice->initializeCaps();
         pClDevice->initializeCaps();
 
@@ -407,7 +407,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
 
         EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 
-        DebugManager.flags.ForceOCLVersion.set(0);
+        debugManager.flags.ForceOCLVersion.set(0);
         pDevice->initializeCaps();
         pClDevice->initializeCaps();
     }

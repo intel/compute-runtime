@@ -36,7 +36,7 @@ using EnqueueResourceBarrierTestXeHpCoreAndLater = EnqueueHandlerTest;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCommandStreamWithoutKernelAndTimestampPacketEnabledWhenEnqueuedResourceBarrierWithEventThenTimestampAddedToEvent) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableTimestampPacket.set(1);
+    debugManager.flags.EnableTimestampPacket.set(1);
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pClDevice, 0));
     mockCmdQ->commandRequireCacheFlush = true;
@@ -80,7 +80,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCo
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueResourceBarrierTestXeHpCoreAndLater, GivenCommandStreamWithoutKernelAndTimestampPacketDisabledWhenEnqueuedResourceBarrierWithEventThenTimestampNotAddedToEvent) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableTimestampPacket.set(0);
+    debugManager.flags.EnableTimestampPacket.set(0);
     static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver())->timestampPacketWriteEnabled = false;
     std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pClDevice, 0));
     mockCmdQ->commandRequireCacheFlush = true;

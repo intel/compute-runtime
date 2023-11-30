@@ -72,7 +72,7 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     submitCommand.CommandLength = static_cast<UINT>(size);
     submitCommand.BroadcastContextCount = 1;
     submitCommand.BroadcastContext[0] = submitArguments.contextHandle;
-    submitCommand.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
+    submitCommand.Flags.NullRendering = (UINT)debugManager.flags.EnableNullHardware.get();
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
@@ -153,7 +153,7 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     submitCommand.pPrivateDriverData = commandHeader;
     submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
 
-    if (!DebugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.get()) {
+    if (!debugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.get()) {
         submitCommand.PrivateDriverDataSize = MemoryConstants::pageSize;
     }
 

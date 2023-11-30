@@ -23,7 +23,7 @@ class UmStatelessCompression : public AUBFixture,
                                public ::testing::WithParamInterface<bool /*compareCompressedMemory*/> {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+        debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
         compareCompressedMemory = GetParam();
         AUBFixture::setUp(defaultHwInfo.get());
     }
@@ -78,9 +78,9 @@ class UmStatelessCompressionWithBlitter : public MulticontextAubFixture,
                                           public ::testing::WithParamInterface<bool /*compareCompressedMemory*/> {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
-        DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+        debugManager.flags.EnableBlitterOperationsSupport.set(1);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         compareCompressedMemory = GetParam();
 
         MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
@@ -137,9 +137,9 @@ class UmStatelessCompressionWithStatefulAccess : public ProgramFixture,
                                                  public ::testing::WithParamInterface<bool /*compareCompressedMemory*/> {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
-        DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+        debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
         compareCompressedMemory = GetParam();
 

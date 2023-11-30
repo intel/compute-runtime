@@ -143,7 +143,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenDebugModeWhenCertainAllocationTy
     DebugManagerStateRestore restorer;
     auto allocationType = AllocationType::BUFFER;
     auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
-    DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
+    debugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, 0, allocationType, mockDeviceBitfield);
@@ -155,7 +155,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenDebugModeWhenCertainAllocationTy
     allocData.flags.useSystemMemory = false;
     allocationType = AllocationType::WRITE_COMBINED;
     mask |= 1llu << (static_cast<int64_t>(allocationType) - 1);
-    DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
+    debugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
     AllocationProperties properties2(mockRootDeviceIndex, 0, allocationType, mockDeviceBitfield);
     MockMemoryManager::overrideAllocationData(allocData, properties2);
@@ -169,7 +169,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenDebugModeWhenCertainAllocationTy
     allocData.flags.useSystemMemory = false;
     allocationType = AllocationType::IMAGE;
     mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
-    DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
+    debugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
     MockMemoryManager::overrideAllocationData(allocData, properties);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
@@ -807,7 +807,7 @@ TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenDefaultIsUsedThenExpect
 
 TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenOverrideToNonSystemThenExpectNonSystemFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionBufferPlacement.set(0);
+    debugManager.flags.DirectSubmissionBufferPlacement.set(0);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::RING_BUFFER, mockDeviceBitfield);
     MockMemoryManager::overrideAllocationData(allocationData, properties);
@@ -818,7 +818,7 @@ TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenOverrideToNonSystemThen
 
 TEST(MemoryManagerTest, givenDirectBufferPlacementSetWhenOverrideToSystemThenExpectNonFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionBufferPlacement.set(1);
+    debugManager.flags.DirectSubmissionBufferPlacement.set(1);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::RING_BUFFER, mockDeviceBitfield);
     MockMemoryManager::overrideAllocationData(allocationData, properties);
@@ -838,7 +838,7 @@ TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenDefaultIsUsedThenExp
 
 TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToNonSystemThenExpectNonSystemFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionSemaphorePlacement.set(0);
+    debugManager.flags.DirectSubmissionSemaphorePlacement.set(0);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield);
     MockMemoryManager::overrideAllocationData(allocationData, properties);
@@ -849,7 +849,7 @@ TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToNonSystemT
 
 TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToSystemThenExpectNonFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionSemaphorePlacement.set(1);
+    debugManager.flags.DirectSubmissionSemaphorePlacement.set(1);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield);
     MockMemoryManager::overrideAllocationData(allocationData, properties);
@@ -860,7 +860,7 @@ TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToSystemThen
 
 TEST(MemoryManagerTest, givenDirectBufferAddressingWhenOverrideToNo48BitThenExpect48BitFlagFalse) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionBufferAddressing.set(0);
+    debugManager.flags.DirectSubmissionBufferAddressing.set(0);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::RING_BUFFER, mockDeviceBitfield);
     allocationData.flags.resource48Bit = 1;
@@ -871,7 +871,7 @@ TEST(MemoryManagerTest, givenDirectBufferAddressingWhenOverrideToNo48BitThenExpe
 
 TEST(MemoryManagerTest, givenDirectBufferAddressingWhenOverrideTo48BitThenExpect48BitFlagTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionBufferAddressing.set(1);
+    debugManager.flags.DirectSubmissionBufferAddressing.set(1);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::RING_BUFFER, mockDeviceBitfield);
     allocationData.flags.resource48Bit = 0;
@@ -896,7 +896,7 @@ TEST(MemoryManagerTest, givenDirectBufferAddressingDefaultWhenNoOverrideThenExpe
 
 TEST(MemoryManagerTest, givenDirectSemaphoreAddressingWhenOverrideToNo48BitThenExpect48BitFlagFalse) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionSemaphoreAddressing.set(0);
+    debugManager.flags.DirectSubmissionSemaphoreAddressing.set(0);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield);
     allocationData.flags.resource48Bit = 1;
@@ -907,7 +907,7 @@ TEST(MemoryManagerTest, givenDirectSemaphoreAddressingWhenOverrideToNo48BitThenE
 
 TEST(MemoryManagerTest, givenDirectSemaphoreAddressingWhenOverrideTo48BitThenExpect48BitFlagTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionSemaphoreAddressing.set(1);
+    debugManager.flags.DirectSubmissionSemaphoreAddressing.set(1);
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield);
     allocationData.flags.resource48Bit = 0;
@@ -934,7 +934,7 @@ TEST(MemoryManagerTest, givenForceNonSystemMaskWhenAllocationTypeMatchesMaskThen
     DebugManagerStateRestore restorer;
     auto allocationType = AllocationType::BUFFER;
     auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(mask);
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(mask);
 
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::BUFFER, mockDeviceBitfield);
@@ -947,7 +947,7 @@ TEST(MemoryManagerTest, givenForceNonSystemMaskWhenAllocationTypeNotMatchesMaskT
     DebugManagerStateRestore restorer;
     auto allocationType = AllocationType::BUFFER;
     auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(mask);
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(mask);
 
     AllocationData allocationData;
     AllocationProperties properties(mockRootDeviceIndex, 0x1000, AllocationType::COMMAND_BUFFER, mockDeviceBitfield);

@@ -38,7 +38,7 @@ struct DirectSubmissionFixture : public DeviceFixture {
 
 struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
     void setUp() {
-        DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+        debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DirectSubmissionFixture::setUp();
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
         const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,

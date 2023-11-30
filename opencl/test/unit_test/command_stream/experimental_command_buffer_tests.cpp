@@ -25,7 +25,7 @@ using namespace NEO;
 struct ExperimentalCommandBufferTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.EnableExperimentalCommandBuffer.set(1);
+        debugManager.flags.EnableExperimentalCommandBuffer.set(1);
         UltCommandStreamReceiverTest::SetUp();
     }
 

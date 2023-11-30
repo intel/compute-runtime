@@ -548,7 +548,7 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelA
 
 TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfoThenDecreaseAllocationReuseCounter) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ReuseKernelBinaries.set(1);
+    debugManager.flags.ReuseKernelBinaries.set(1);
 
     pProgram->build(pProgram->getDevices(), nullptr);
     auto &kernelAllocMap = pProgram->peekExecutionEnvironment().memoryManager->getKernelAllocationMap();
@@ -568,7 +568,7 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
 
 TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfoAndCounterEqualsZeroThenFreeAllocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ReuseKernelBinaries.set(1);
+    debugManager.flags.ReuseKernelBinaries.set(1);
 
     pProgram->build(pProgram->getDevices(), nullptr);
     auto &kernelAllocMap = pProgram->peekExecutionEnvironment().memoryManager->getKernelAllocationMap();
@@ -1610,7 +1610,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
 
 TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEAndDisableKernelRecompilationThenErrorIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DisableKernelRecompilation.set(true);
+    debugManager.flags.DisableKernelRecompilation.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     SProgramBinaryHeader binHeader;
@@ -1686,7 +1686,7 @@ TEST_F(ProgramWithDebugDataTests, GivenPatchtokensProgramWithDebugSymbolsWhenPac
 
 TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
 
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
@@ -1716,7 +1716,7 @@ TEST_F(ProgramTests, GivenForcedClVersionWhenProgramIsCreatedThenCorrectOclOptio
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
 
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
@@ -1738,7 +1738,7 @@ TEST_F(ProgramTests, whenGetInternalOptionsThenLSCPolicyIsSet) {
 
 HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=7 -cl-load-cache-default=4"));
@@ -1746,8 +1746,8 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBu
 
 HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=1 -cl-load-cache-default=1"));
@@ -1765,14 +1765,14 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
 
     {
 
-        DebugManager.flags.UseBindlessMode.set(0);
+        debugManager.flags.UseBindlessMode.set(0);
         MockProgram programNoBindless(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptionsNoBindless = programNoBindless.getInternalOptions();
         EXPECT_FALSE(CompilerOptions::contains(internalOptionsNoBindless, CompilerOptions::bindlessMode)) << internalOptionsNoBindless;
     }
     {
 
-        DebugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
         MockProgram programBindless(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptionsBindless = programBindless.getInternalOptions();
         EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessMode)) << internalOptionsBindless;
@@ -1782,7 +1782,7 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
 TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
     cl_int retVal = CL_DEVICE_NOT_FOUND;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
         MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
@@ -1800,7 +1800,7 @@ TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterTha
 
 TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
@@ -1814,7 +1814,7 @@ TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuff
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
@@ -1828,7 +1828,7 @@ TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3Typ
 
 TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
@@ -1956,7 +1956,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         program.createdFrom = Program::CreatedFrom::SOURCE;
         program.isGeneratedByIgc = isIgcGenerated;
         program.setAddressingMode(isStatefulAccess);
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
         if (isStatefulAccess && debuyKey == -1 && isIgcGenerated == true) {
             if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
                 expectedResult = CL_BUILD_PROGRAM_FAILURE;
@@ -1972,14 +1972,14 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         programWithBuiltIn.irBinary.reset(new char[16]);
         programWithBuiltIn.irBinarySize = 16;
         programWithBuiltIn.setAddressingMode(true);
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
         EXPECT_EQ(CL_SUCCESS, programWithBuiltIn.build(toClDeviceVector(*pClDevice), nullptr));
     }
 }
 
 TEST_F(ProgramTests, GivenStatelessToStatefulBufferOffsetOptimizationWhenProgramIsCreatedThenBufferOffsetArgIsSet) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
+    debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
     cl_int errorCode = CL_SUCCESS;
     const char programSource[] = "program";
     const char *programPointer = programSource;
@@ -1993,7 +1993,7 @@ TEST_F(ProgramTests, GivenStatelessToStatefulBufferOffsetOptimizationWhenProgram
 
 TEST_F(ProgramTests, givenStatelessToStatefulOptimizationOffWHenProgramIsCreatedThenOptimizationStringIsNotPresent) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
+    debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
     cl_int errorCode = CL_SUCCESS;
     const char programSource[] = "program";
     const char *programPointer = programSource;
@@ -2149,7 +2149,7 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenAppendEnableZebinFlagToBuildOption
 
 TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
     patchtokensProgram.slmMutable->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
@@ -2289,12 +2289,12 @@ TEST_F(ProgramTests, GivenFailureDuringProcessGenBinaryWhenProcessGenBinariesIsC
 class Program32BitTests : public ProgramTests {
   public:
     void SetUp() override {
-        DebugManager.flags.Force32bitAddressing.set(true);
+        debugManager.flags.Force32bitAddressing.set(true);
         ProgramTests::SetUp();
     }
     void TearDown() override {
         ProgramTests::TearDown();
-        DebugManager.flags.Force32bitAddressing.set(false);
+        debugManager.flags.Force32bitAddressing.set(false);
     }
 };
 
@@ -2698,7 +2698,7 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithInvalidValuesTh
 
 TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingProgramThenInternalOptionsWereAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectInternalBuildOptions.set("-abc");
+    debugManager.flags.InjectInternalBuildOptions.set("-abc");
 
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
@@ -2715,7 +2715,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingProgramThenInter
 
 TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingBuiltInProgramThenInternalOptionsAreNotAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectInternalBuildOptions.set("-abc");
+    debugManager.flags.InjectInternalBuildOptions.set("-abc");
 
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
@@ -2733,7 +2733,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingBuiltInProgramTh
 
 TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingProgramThenInternalOptionsWereAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectInternalBuildOptions.set("-abc");
+    debugManager.flags.InjectInternalBuildOptions.set("-abc");
 
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
@@ -2750,7 +2750,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingProgramThenInte
 
 TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingBuiltInProgramThenInternalOptionsAreNotAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectInternalBuildOptions.set("-abc");
+    debugManager.flags.InjectInternalBuildOptions.set("-abc");
 
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
@@ -2768,7 +2768,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingBuiltInProgramT
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsNotPresentThenErrorIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
@@ -2785,7 +2785,7 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsPresentThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
@@ -2814,7 +2814,7 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsPresentThenRebuildWarningIsEnabled) {
     DebugManagerStateRestore dbgRestorer{};
-    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.RebuildPrecompiledKernels.set(true);
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
     Elf::ElfEncoder<Elf::EI_CLASS_64> elfEncoder;
@@ -2841,7 +2841,7 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
@@ -2998,7 +2998,7 @@ using ProgramBinTest = Test<ProgramSimpleFixture>;
 
 TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramThenProcessingTimeIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintProgramBinaryProcessingTime.set(true);
+    debugManager.flags.PrintProgramBinaryProcessingTime.set(true);
     testing::internal::CaptureStdout();
 
     createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
@@ -3458,7 +3458,7 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsChecked
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenForceLargeGrfCompilationModeIsSetThenBuildOptionIsAdded) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLargeGrfCompilationMode.set(true);
+    debugManager.flags.ForceLargeGrfCompilationMode.set(true);
 
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
@@ -3474,7 +3474,7 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceLargeGrfCompilationModeIs
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenForceAutoGrfCompilationModeIsSetThenBuildOptionIsAdded) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceAutoGrfCompilationMode.set(1);
+    debugManager.flags.ForceAutoGrfCompilationMode.set(1);
 
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
@@ -3490,7 +3490,7 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceAutoGrfCompilationModeIsS
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationModeIsSetThenBuildOptionIsAdded) {
     DebugManagerStateRestore stateRestorer;
-    DebugManager.flags.ForceDefaultGrfCompilationMode.set(true);
+    debugManager.flags.ForceDefaultGrfCompilationMode.set(true);
 
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
@@ -3506,7 +3506,7 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationMode
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenForceDefaultGrfCompilationModeIsSetThenLargeGrfOptionIsRemoved) {
     DebugManagerStateRestore stateRestorer;
-    DebugManager.flags.ForceDefaultGrfCompilationMode.set(true);
+    debugManager.flags.ForceDefaultGrfCompilationMode.set(true);
 
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
@@ -3579,7 +3579,7 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
     {
         std::string options = CompilerOptions::enableZebin.str() + " cl_intel_device_side_vme_enable";
         std::string internalOptions = "";
-        DebugManager.flags.DontDisableZebinIfVmeUsed = false;
+        debugManager.flags.DontDisableZebinIfVmeUsed = false;
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
         EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
@@ -3588,7 +3588,7 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
 
         std::string options = CompilerOptions::enableZebin.str() + " cl_intel_device_side_vme_enable";
         std::string internalOptions = "";
-        DebugManager.flags.DontDisableZebinIfVmeUsed = true;
+        debugManager.flags.DontDisableZebinIfVmeUsed = true;
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
         EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
@@ -3596,7 +3596,7 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
     {
         std::string options = "cl_intel_device_side_vme_enable";
         std::string internalOptions = "";
-        DebugManager.flags.DontDisableZebinIfVmeUsed = false;
+        debugManager.flags.DontDisableZebinIfVmeUsed = false;
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
         EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
@@ -3604,7 +3604,7 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
     {
         std::string options = "cl_intel_device_side_vme_enable";
         std::string internalOptions = "";
-        DebugManager.flags.DontDisableZebinIfVmeUsed = true;
+        debugManager.flags.DontDisableZebinIfVmeUsed = true;
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
         EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
@@ -3645,7 +3645,7 @@ TEST(ProgramVmeUsage, givenVmeExtensionsEnabledInSourceCodeWhenDisableZebinIfVme
         {
             std::string options = CompilerOptions::enableZebin.str();
             std::string internalOptions = "";
-            DebugManager.flags.DontDisableZebinIfVmeUsed = false;
+            debugManager.flags.DontDisableZebinIfVmeUsed = false;
             program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
             EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
             EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
@@ -3654,7 +3654,7 @@ TEST(ProgramVmeUsage, givenVmeExtensionsEnabledInSourceCodeWhenDisableZebinIfVme
         {
             std::string options = CompilerOptions::enableZebin.str();
             std::string internalOptions = "";
-            DebugManager.flags.DontDisableZebinIfVmeUsed = true;
+            debugManager.flags.DontDisableZebinIfVmeUsed = true;
             program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
             EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
             EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));

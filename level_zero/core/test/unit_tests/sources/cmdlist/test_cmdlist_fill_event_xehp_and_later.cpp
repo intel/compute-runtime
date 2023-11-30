@@ -43,11 +43,11 @@ struct FillTestInput {
 template <int32_t usePipeControlMultiPacketEventSync, int32_t compactL3FlushEventPacket, uint32_t multiTile>
 struct AppendFillMultiPacketEventFixture : public AppendFillFixture {
     void setUp() {
-        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
-        DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
+        debugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
+        debugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
         if constexpr (multiTile == 1) {
-            DebugManager.flags.CreateMultipleSubDevices.set(2);
-            DebugManager.flags.EnableImplicitScaling.set(1);
+            debugManager.flags.CreateMultipleSubDevices.set(2);
+            debugManager.flags.EnableImplicitScaling.set(1);
         }
         AppendFillFixture::setUp();
 

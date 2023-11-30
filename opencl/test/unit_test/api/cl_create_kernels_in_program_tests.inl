@@ -18,7 +18,7 @@ using namespace NEO;
 
 struct ClCreateKernelsInProgramTests : public ApiTests {
     void SetUp() override {
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
         ApiTests::SetUp();
 

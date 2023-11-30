@@ -53,7 +53,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
 };
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
+    debugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 1u;
     createAndInitWddm(1u);
@@ -61,7 +61,7 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPr
 }
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
+    debugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
     createAndInitWddm(1u);
@@ -70,7 +70,7 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenP
 }
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
+    debugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 0u;
     createAndInitWddm(0u);
@@ -79,7 +79,7 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPr
 }
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
+    debugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
     createAndInitWddm(0u);
@@ -88,7 +88,7 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenP
 }
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 1u;
     createAndInitWddm(1u);
@@ -97,7 +97,7 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptio
 }
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
     createAndInitWddm(0u);
@@ -108,7 +108,7 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptio
 TEST_F(WddmPreemptionTests, whenFlagToOverridePreemptionSurfaceSizeIsSetThenSurfaceSizeIsChanged) {
     DebugManagerStateRestore restore;
     uint32_t expectedValue = 123;
-    DebugManager.flags.OverridePreemptionSurfaceSizeInMb.set(expectedValue);
+    debugManager.flags.OverridePreemptionSurfaceSizeInMb.set(expectedValue);
     createAndInitWddm(0u);
     EXPECT_EQ(expectedValue, hwInfo->gtSystemInfo.CsrSizeInMb);
 }

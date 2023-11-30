@@ -88,7 +88,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenProperValuesSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(0);
+    debugManager.flags.EnableLocalMemory.set(0);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -115,7 +115,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroThenProperValuesSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(0);
+    debugManager.flags.EnableLocalMemory.set(0);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -142,7 +142,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenProperValuesSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -1253,7 +1253,7 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
 
 TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
@@ -1526,9 +1526,9 @@ TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
 
     ::testing::internal::CaptureStderr();
 
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
     xeIoctlHelper->xeShowBindTable();
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();
     std::string expectedOutput = R"(show bind: (<index> <handle> <userptr> <addr> <size>)
    0 x00000001 x0000000000000002 x0000000000000003 x0000000000000004

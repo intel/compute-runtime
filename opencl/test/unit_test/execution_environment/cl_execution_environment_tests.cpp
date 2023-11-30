@@ -36,7 +36,7 @@ TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhen
 
 TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(1);
     auto executionEnvironment = new ExecutionEnvironment();
     std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
     platform->initialize(DeviceFactory::createDevices(*executionEnvironment));

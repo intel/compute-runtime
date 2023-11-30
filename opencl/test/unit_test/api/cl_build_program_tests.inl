@@ -22,7 +22,7 @@ using namespace NEO;
 
 struct ClBuildProgramTests : public ApiTests {
     void SetUp() override {
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         ApiTests::setUp();
     }
     void TearDown() override {
@@ -127,7 +127,7 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
 
 HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
 
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
 
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -170,7 +170,7 @@ HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreating
 
 HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryGeneratedByNgenAsInputWhenCreatingProgramWithSourceThenProgramBuildReturnsSuccess, IsAtLeastXeHpcCore) {
 
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
 
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;

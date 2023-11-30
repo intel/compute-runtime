@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ extern bool tbxFrontdoorMode;
 
 TEST(AubCenter, GivenUseAubStreamAndTbxServerIpDebugVariableSetWhenAubCenterIsCreatedThenServerIpIsModified) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseAubStream.set(true);
-    DebugManager.flags.TbxServer.set("10.10.10.10");
+    debugManager.flags.UseAubStream.set(true);
+    debugManager.flags.TbxServer.set("10.10.10.10");
     VariableBackup<std::string> backup(&aub_stream_stubs::tbxServerIp);
 
     MockExecutionEnvironment executionEnvironment{};
@@ -40,8 +40,8 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerIpDebugVariableSetWhenAubCenterIsCr
 
 TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIsCreatedThenServerIpIsModified) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseAubStream.set(true);
-    DebugManager.flags.TbxPort.set(1234);
+    debugManager.flags.UseAubStream.set(true);
+    debugManager.flags.TbxPort.set(1234);
 
     VariableBackup<uint16_t> backup(&aub_stream_stubs::tbxServerPort);
 
@@ -57,8 +57,8 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIs
 
 TEST(AubCenter, GivenUseAubStreamAndTbxFrontdoorModeDebugVariableSetWhenAubCenterIsCreatedThenFrontdoorModeIsModified) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseAubStream.set(true);
-    DebugManager.flags.TbxFrontdoorMode.set(true);
+    debugManager.flags.UseAubStream.set(true);
+    debugManager.flags.TbxFrontdoorMode.set(true);
 
     VariableBackup<bool> backup(&aub_stream_stubs::tbxFrontdoorMode);
 

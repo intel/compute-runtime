@@ -543,9 +543,9 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) 
 
 TEST_F(MockEventTests, givenDebugVariableWhenStatusIsQueriedThenNoFlushHappens) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SkipFlushingEventsOnGetStatusCalls.set(1);
-    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
-    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+    debugManager.flags.SkipFlushingEventsOnGetStatusCalls.set(1);
+    debugManager.flags.PerformImplicitFlushForNewResource.set(0);
+    debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     csr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -791,7 +791,7 @@ TEST_F(MockEventTests, givenBlockedQueueThenCommandStreamDoesNotChangeWhileEnque
 
 TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedForBlockedThenCallBackIsCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     struct EV : UserEvent {
         EV(Context *ctx) : UserEvent(ctx) {
         }
@@ -839,7 +839,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
 
 TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
@@ -870,7 +870,7 @@ TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsRe
 
 TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1(context);
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
@@ -968,7 +968,7 @@ TEST_F(EventTest, GivenSingleUserEventWhenWaitingForEventsThenSuccessIsReturned)
 
 TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
@@ -989,7 +989,7 @@ TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSucces
 
 TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectExecutionStatus) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     struct HelperClb {
         static void CL_CALLBACK setClbStatus(cl_event e, cl_int status, void *data)
 

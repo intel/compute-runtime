@@ -383,7 +383,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferBlockingThenHeapsAndCommand
 
 HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForSingleDeviceContextWhenCalculatingCSSizeThenExtraPipeControlIsNotAdded) {
     UltClDeviceFactory deviceFactory{1, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0]};
 
@@ -403,7 +403,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForSingleDeviceContextWhenCalcu
 
 HWTEST_F(GetSizeRequiredBufferTest, GivenUserEventForMultiDeviceContextWhenCalculatingCSSizeThenExtraPipeControlIsNotAdded) {
     UltClDeviceFactory deviceFactory{2, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0],
                               deviceFactory.rootDevices[1]};
@@ -424,7 +424,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenUserEventForMultiDeviceContextWhenCalcu
 
 HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForMultiDeviceContextWhenCalculatingCSSizeThenExtraPipeControlIsAdded) {
     UltClDeviceFactory deviceFactory{2, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0],
                               deviceFactory.rootDevices[1]};

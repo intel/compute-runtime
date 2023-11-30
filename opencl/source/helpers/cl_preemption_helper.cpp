@@ -27,7 +27,7 @@ PreemptionMode ClPreemptionHelper::taskPreemptionMode(Device &device, const Mult
         if (devMode > taskMode) {
             devMode = taskMode;
         }
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "devMode = %d, taskMode = %d.\n",
                            static_cast<int>(device.getPreemptionMode()), static_cast<int>(taskMode));
     }
     return devMode;

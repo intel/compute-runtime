@@ -33,7 +33,7 @@ const RootDeviceEnvironment &GmmHelper::getRootDeviceEnvironment() const {
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
-    if (allResourcesUncached || (DebugManager.flags.ForceAllResourcesUncached.get() == true)) {
+    if (allResourcesUncached || (debugManager.flags.ForceAllResourcesUncached.get() == true)) {
         type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 
@@ -43,7 +43,7 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
 }
 
 void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
-    if (DebugManager.flags.ForceStatelessMocsEncryptionBit.get() == 1) {
+    if (debugManager.flags.ForceStatelessMocsEncryptionBit.get() == 1) {
         index |= 1;
     }
 }

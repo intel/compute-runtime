@@ -173,7 +173,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnbloc
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetWhenCreatingDirectSubmissionThenDontEnableMiMemFenceProgramming) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
@@ -273,7 +273,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenCopyCommandBufferIntoRingWhenD
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     FlushStampTracker flushStamp(true);
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -299,7 +299,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
@@ -310,7 +310,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenMetricsDefaultDirectSubmission
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
     pDevice->getExecutionEnvironment()->setMetricsEnabled(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -322,7 +322,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     batchBuffer.disableFlatRingBuffer = true;
 
@@ -335,7 +335,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     batchBuffer.commandBufferAllocation = nullptr;
 
@@ -347,7 +347,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDisabledDirectSubmissionFlatRi
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
@@ -357,7 +357,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     batchBuffer.hasRelaxedOrderingDependencies = true;
 
@@ -369,7 +369,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     batchBuffer.chainedBatchBuffer = reinterpret_cast<GraphicsAllocation *>(0x1234);
 
@@ -381,7 +381,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     static_cast<MemoryAllocation *>(batchBuffer.commandBufferAllocation)->overrideMemoryPool(MemoryPool::LocalMemory);
 
@@ -393,7 +393,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
@@ -412,7 +412,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     regularDirectSubmission.disableMonitorFence = false;
@@ -461,7 +461,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false, regularDirectSubmission.dispatchMonitorFenceRequired(false));
@@ -753,7 +753,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWhenInitializeAndDispatchBufferThenCommandBufferArePrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionPrintBuffers.set(true);
+    debugManager.flags.DirectSubmissionPrintBuffers.set(true);
 
     FlushStampTracker flushStamp(true);
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -999,7 +999,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
     FlushStampTracker flushStamp(true);
 
     for (int32_t debugFlag : {-1, 0, 1, 2}) {
-        DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
+        debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
 
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
         EXPECT_TRUE(directSubmission.initialize(true, true));
@@ -1022,7 +1022,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
     FlushStampTracker flushStamp(true);
 
     for (int32_t debugFlag : {-1, 0, 1, 2}) {
-        DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
+        debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
 
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
         EXPECT_TRUE(directSubmission.initialize(true, true));
@@ -1039,7 +1039,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
 
 struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBufferTest {
     void SetUp() override {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
         DirectSubmissionDispatchBufferTest::SetUp();
     }
 
@@ -1534,7 +1534,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenAllocatingResourcesThenCreate
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatchingStaticSchedulerThenOverrideQueueSizeLimit, IsAtLeastXeHpcCore) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
-    DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.set(123);
+    debugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.set(123);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.initialize(true, false);
@@ -2072,14 +2072,14 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRel
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
         EXPECT_EQ(gfxCoreHelper.isRelaxedOrderingSupported(), directSubmission.isRelaxedOrderingEnabled());
     }
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
 
@@ -2087,7 +2087,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRel
     }
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
 
@@ -2104,8 +2104,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcs
     ultCsr->setupContext(*osContext);
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
-        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(0);
+        debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
 
@@ -2113,8 +2113,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcs
     }
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(-1);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(-1);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
 
@@ -2122,8 +2122,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcs
     }
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
 
@@ -2131,8 +2131,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcs
     }
 
     {
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
 
         MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*ultCsr);
 
@@ -2144,7 +2144,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
@@ -2178,7 +2178,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingDisabledWhenProgrammingEndingCommandsThenDontSetReturnPtrs, IsAtLeastXeHpcCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
+    debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
@@ -2718,7 +2718,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNumClientsWhenAskingIfRelax
     EXPECT_EQ(2u, ultCsr->getNumClients());
     EXPECT_TRUE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
 
-    DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.set(4);
+    debugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.set(4);
 
     EXPECT_EQ(2u, ultCsr->getNumClients());
     EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));

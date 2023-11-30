@@ -18,7 +18,7 @@ template <typename GfxFamily>
 long __stdcall DeviceCallbacks<GfxFamily>::notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
     auto csr = reinterpret_cast<CommandStreamReceiverHw<GfxFamily> *>(csrHandle);
 
-    if (DebugManager.flags.SetCommandStreamReceiver.get() == CSR_HW_WITH_AUB) {
+    if (debugManager.flags.SetCommandStreamReceiver.get() == CSR_HW_WITH_AUB) {
         auto csrWithAub = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>> *>(csr);
         auto aubCsr = static_cast<AUBCommandStreamReceiverHw<GfxFamily> *>(csrWithAub->aubCSR.get());
         if (allocate) {

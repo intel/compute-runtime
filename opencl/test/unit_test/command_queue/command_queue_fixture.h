@@ -95,10 +95,10 @@ struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwF
         hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
 
-        DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-        DebugManager.flags.EnableTimestampPacket.set(1);
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.EnableBlitterOperationsSupport.set(1);
+        debugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         ClDeviceFixture::setUpImpl(&hwInfo);
         cl_device_id device = pClDevice;
         REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());

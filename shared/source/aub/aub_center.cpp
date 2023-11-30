@@ -22,13 +22,13 @@ namespace NEO {
 extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options);
 
 AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
-    if (DebugManager.flags.UseAubStream.get()) {
+    if (debugManager.flags.UseAubStream.get()) {
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
         CommandStreamReceiverType type = csrType;
-        if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
-            type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get());
+        if (debugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
+            type = static_cast<CommandStreamReceiverType>(debugManager.flags.SetCommandStreamReceiver.get());
         }
 
         aubStreamMode = getAubStreamMode(aubFileName, type);
@@ -66,14 +66,14 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();
-    if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
-        this->subCaptureCommon->subCaptureMode = static_cast<AubSubCaptureCommon::SubCaptureMode>(DebugManager.flags.AUBDumpSubCaptureMode.get());
-        this->subCaptureCommon->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get());
-        this->subCaptureCommon->subCaptureFilter.dumpKernelEndIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelEndIdx.get());
-        this->subCaptureCommon->subCaptureFilter.dumpNamedKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterNamedKernelStartIdx.get());
-        this->subCaptureCommon->subCaptureFilter.dumpNamedKernelEndIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterNamedKernelEndIdx.get());
-        if (DebugManager.flags.AUBDumpFilterKernelName.get() != "unk") {
-            this->subCaptureCommon->subCaptureFilter.dumpKernelName = DebugManager.flags.AUBDumpFilterKernelName.get();
+    if (debugManager.flags.AUBDumpSubCaptureMode.get()) {
+        this->subCaptureCommon->subCaptureMode = static_cast<AubSubCaptureCommon::SubCaptureMode>(debugManager.flags.AUBDumpSubCaptureMode.get());
+        this->subCaptureCommon->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(debugManager.flags.AUBDumpFilterKernelStartIdx.get());
+        this->subCaptureCommon->subCaptureFilter.dumpKernelEndIdx = static_cast<uint32_t>(debugManager.flags.AUBDumpFilterKernelEndIdx.get());
+        this->subCaptureCommon->subCaptureFilter.dumpNamedKernelStartIdx = static_cast<uint32_t>(debugManager.flags.AUBDumpFilterNamedKernelStartIdx.get());
+        this->subCaptureCommon->subCaptureFilter.dumpNamedKernelEndIdx = static_cast<uint32_t>(debugManager.flags.AUBDumpFilterNamedKernelEndIdx.get());
+        if (debugManager.flags.AUBDumpFilterKernelName.get() != "unk") {
+            this->subCaptureCommon->subCaptureFilter.dumpKernelName = debugManager.flags.AUBDumpFilterKernelName.get();
         }
     }
 }

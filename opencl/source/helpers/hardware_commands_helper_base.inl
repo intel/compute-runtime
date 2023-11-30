@@ -180,8 +180,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto programmableIDSLMSize = static_cast<uint32_t>(gfxCoreHelper.computeSlmValues(hardwareInfo, slmTotalSize));
 
-    if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        programmableIDSLMSize = static_cast<uint32_t>(DebugManager.flags.OverrideSlmAllocationSize.get());
+    if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
+        programmableIDSLMSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
     }
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
@@ -310,7 +310,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         walkerCmd,
         inlineInterfaceDescriptor);
 
-    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);
         kernel.getPatchInfoDataList().push_back(patchInfoData);
     }

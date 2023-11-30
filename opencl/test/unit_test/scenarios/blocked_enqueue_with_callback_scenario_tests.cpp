@@ -44,7 +44,7 @@ void CL_CALLBACK callback(cl_event event, cl_int status, void *data) {
 }
 
 TEST_F(ScenarioTest, givenAsyncHandlerDisabledAndUserEventBlockingEnqueueAndOutputEventWithCallbackWhenUserEventIsSetCompleteThenCallbackIsExecuted) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
 
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties = 0;
@@ -84,7 +84,7 @@ TEST_F(ScenarioTest, givenAsyncHandlerDisabledAndUserEventBlockingEnqueueAndOutp
 }
 
 TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutputEventWithCallbackWhenUserEventIsSetCompleteThenCallbackIsExecuted) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(true);
 
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties = 0;

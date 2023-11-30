@@ -30,12 +30,12 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
 
     cl_int retVal = CL_SUCCESS;
-    DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
-    DebugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
+    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
     if (testMode == TestMode::AubTestsWithTbx) {
-        DebugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
     } else {
-        DebugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
     }
 
     HardwareInfo localHwInfo = *defaultHwInfo;
@@ -53,8 +53,8 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 
     localHwInfo.capabilityTable.blitterOperationsSupported = true;
-    if (DebugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
-        localHwInfo.capabilityTable.blitterOperationsSupported = !!DebugManager.flags.EnableBlitterOperationsSupport.get();
+    if (debugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
+        localHwInfo.capabilityTable.blitterOperationsSupported = !!debugManager.flags.EnableBlitterOperationsSupport.get();
     }
 
     auto &gfxCoreHelper = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
@@ -83,7 +83,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     auto filename = AUBCommandStreamReceiver::createFullFilePath(localHwInfo, strfilename.str(), rootDeviceIndex);
 
-    DebugManager.flags.AUBDumpCaptureFileName.set(filename);
+    debugManager.flags.AUBDumpCaptureFileName.set(filename);
 
     auto createCommandQueueForEngine = [&](uint32_t tileNumber, size_t engineFamily, size_t engineIndex) {
         cl_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, engineFamily, CL_QUEUE_INDEX_INTEL, engineIndex, 0};
@@ -92,9 +92,9 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         return std::unique_ptr<CommandQueue>(castToObject<CommandQueue>(clQueue));
     };
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
-    DebugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(false);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
+    debugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(false);
 
     platformsImpl->clear();
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -156,7 +156,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 }
 
 void MulticontextAubFixture::tearDown() {
-    auto filename = DebugManager.flags.AUBDumpCaptureFileName.get();
+    auto filename = debugManager.flags.AUBDumpCaptureFileName.get();
 
     std::string tileString = std::to_string(numberOfEnabledTiles) + "tx";
 

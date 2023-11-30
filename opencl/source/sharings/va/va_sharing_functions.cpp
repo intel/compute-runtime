@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,8 @@ bool VASharingFunctions::isVaLibraryAvailable() {
 
 void VASharingFunctions::initFunctions() {
     bool enableVaLibCalls = true;
-    if (DebugManager.flags.EnableVaLibCalls.get() != -1) {
-        enableVaLibCalls = !!DebugManager.flags.EnableVaLibCalls.get();
+    if (debugManager.flags.EnableVaLibCalls.get() != -1) {
+        enableVaLibCalls = !!debugManager.flags.EnableVaLibCalls.get();
     }
 
     if (enableVaLibCalls) {

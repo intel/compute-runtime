@@ -210,7 +210,7 @@ class LoggerApiEnterWrapper {
     LOGGER.logLazyEvaluateArgs(PREDICATE, [&] { LOGGER.LOG_FUNCTION(__VA_ARGS__); })
 
 #define DBG_LOG(PREDICATE, ...) \
-    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::fileLoggerInstance(), NEO::DebugManager.flags.PREDICATE.get(), log, NEO::DebugManager.flags.PREDICATE.get(), __VA_ARGS__)
+    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::fileLoggerInstance(), NEO::debugManager.flags.PREDICATE.get(), log, NEO::debugManager.flags.PREDICATE.get(), __VA_ARGS__)
 
 #define DBG_LOG_INPUTS(...) \
     DBG_LOG_LAZY_EVALUATE_ARGS(NEO::fileLoggerInstance(), NEO::fileLoggerInstance().peekLogApiCalls(), logInputs, __VA_ARGS__)

@@ -90,23 +90,23 @@ bool isBaseDieA0(const HardwareInfo &hwInfo) {
 template <>
 bool ProductHelperHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
     bool baseDieA0 = isBaseDieA0(hwInfo);
-    bool applyWa = ((DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() == 1) || baseDieA0);
-    applyWa &= (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != 0);
+    bool applyWa = ((debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() == 1) || baseDieA0);
+    applyWa &= (debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != 0);
     return applyWa;
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
     bool prefetch = !isBaseDieA0(hwInfo);
-    if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
-        prefetch = !!DebugManager.flags.EnableMemoryPrefetch.get();
+    if (debugManager.flags.EnableMemoryPrefetch.get() != -1) {
+        prefetch = !!debugManager.flags.EnableMemoryPrefetch.get();
     }
     return prefetch;
 }
 template <>
 bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
-        return DebugManager.flags.DoNotReportTile1BscWaActive.get();
+    if (debugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
+        return debugManager.flags.DoNotReportTile1BscWaActive.get();
     }
     return isBaseDieA0(hwInfo);
 }
@@ -140,8 +140,8 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 template <>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     bool tlbFlushRequired = false;
-    if (DebugManager.flags.ForceTlbFlush.get() != -1) {
-        tlbFlushRequired = !!DebugManager.flags.ForceTlbFlush.get();
+    if (debugManager.flags.ForceTlbFlush.get() != -1) {
+        tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();
     }
     return tlbFlushRequired;
 }

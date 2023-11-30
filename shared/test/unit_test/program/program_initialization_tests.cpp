@@ -68,7 +68,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
 
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsUsmDeviceAllocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
     device.injectMemoryManager(new MockMemoryManager());
@@ -219,9 +219,9 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
     initData.resize(64, 7U);
 
     for (auto localMemoryAccessMode : localMemoryAccessModes) {
-        DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(localMemoryAccessMode));
+        debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(localMemoryAccessMode));
         for (auto isLocalMemorySupported : ::testing::Bool()) {
-            DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
+            debugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
             MockDevice device;
             device.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
             MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);

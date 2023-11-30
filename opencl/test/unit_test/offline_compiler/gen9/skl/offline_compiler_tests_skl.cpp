@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ SKLTEST_F(MockOfflineCompilerSklTests, GivenSklAndDisabledViaDebugThenStatelessT
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.deviceName = "skl";
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
+    debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     mockOfflineCompiler.setStatelessToStatefulBufferOffsetFlag();
     std::string internalOptions = mockOfflineCompiler.internalOptions;

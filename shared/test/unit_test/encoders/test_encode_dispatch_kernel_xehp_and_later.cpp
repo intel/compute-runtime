@@ -179,7 +179,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
     uint32_t maxValueToProgram = 0x8;
 
     for (uint32_t valueToProgram = 0x0; valueToProgram < maxValueToProgram; valueToProgram++) {
-        DebugManager.flags.OverrideSlmAllocationSize.set(valueToProgram);
+        debugManager.flags.OverrideSlmAllocationSize.set(valueToProgram);
         cmdContainer->reset();
 
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -467,7 +467,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     dispatchInterface->getSurfaceStateHeapDataResult = bindingTableRaw;
 
     {
-        DebugManager.flags.ForceBtpPrefetchMode.set(-1);
+        debugManager.flags.ForceBtpPrefetchMode.set(-1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
@@ -501,7 +501,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     }
 
     {
-        DebugManager.flags.ForceBtpPrefetchMode.set(0);
+        debugManager.flags.ForceBtpPrefetchMode.set(0);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
@@ -526,7 +526,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     }
 
     {
-        DebugManager.flags.ForceBtpPrefetchMode.set(1);
+        debugManager.flags.ForceBtpPrefetchMode.set(1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
@@ -553,7 +553,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
 HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
+    debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
 
     StreamProperties streamProperties{};
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -693,7 +693,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
     const auto &productHelper = pDevice->getProductHelper();
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
+    debugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {
@@ -721,7 +721,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
     const uint32_t threadGroupCount = 1u;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
+    debugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
 
     EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, pDevice->getHardwareInfo(), threadGroupCount, 1, walkerCmd);
 
@@ -947,7 +947,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToOverrideSimdMessageSizeWhenWalkerIsProgrammedItIsOverwritten) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceSimdMessageSizeInWalker.set(1);
+    debugManager.flags.ForceSimdMessageSizeInWalker.set(1);
 
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockExecutionEnvironment executionEnvironment{};
@@ -1033,7 +1033,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZ
 template <bool flushTaskUsedForImmediate, bool usePrimaryBuffer>
 struct CommandEncodeStatesImplicitScalingFixtureT : public CommandEncodeStatesFixture {
     void setUp() {
-        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.CreateMultipleSubDevices.set(2);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
         mockDeviceBackup = std::make_unique<VariableBackup<bool>>(&MockDevice::createSingleDevice, false);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
@@ -1121,7 +1121,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativ
 
 struct CommandEncodeStatesDynamicImplicitScalingFixture : CommandEncodeStatesImplicitScalingFixture {
     void setUp() {
-        DebugManager.flags.EnableStaticPartitioning.set(0);
+        debugManager.flags.EnableStaticPartitioning.set(0);
         CommandEncodeStatesImplicitScalingFixture::setUp();
     }
 
@@ -1448,7 +1448,7 @@ HWTEST2_F(CommandEncodeStatesTest,
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     bool dpasModeRequired = true;
-    DebugManager.flags.OverrideSystolicPipelineSelect.set(!dpasModeRequired);
+    debugManager.flags.OverrideSystolicPipelineSelect.set(!dpasModeRequired);
     cmdContainer->lastPipelineSelectModeRequiredRef() = false;
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
@@ -1502,7 +1502,7 @@ template <bool flushTaskUsedForImmediate, bool usePrimaryBuffer>
 struct CommandEncodeStatesImplicitScalingPrimaryBufferFixture : public CommandEncodeStatesImplicitScalingFixtureT<flushTaskUsedForImmediate, usePrimaryBuffer> {
     using BaseClass = CommandEncodeStatesImplicitScalingFixtureT<flushTaskUsedForImmediate, usePrimaryBuffer>;
     void setUp() {
-        DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+        debugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
         BaseClass::setUp();
     }
 

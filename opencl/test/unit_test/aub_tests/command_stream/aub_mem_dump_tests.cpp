@@ -218,8 +218,8 @@ TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioNotMatchThenDoNotAlterValue)
 
     uint32_t dbgOffset = 0x1000;
     uint32_t dbgValue = 0xDEAD;
-    DebugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
-    DebugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
+    debugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
+    debugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
 
     uint32_t offset = 0x2000;
     uint32_t value = 0x3000;
@@ -237,8 +237,8 @@ TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioMatchThenAlterValue) {
     uint32_t dbgValue = 0xDEAD;
     MMIOPair dbgMmio = std::make_pair(dbgOffset, dbgValue);
 
-    DebugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
-    DebugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
+    debugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
+    debugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
 
     uint32_t offset = 0x2000;
     uint32_t value = 0x3000;

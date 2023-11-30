@@ -115,7 +115,7 @@ GEN11TEST_F(PreemptionWatermarkGen11, WhenPreambleIsCreatedThenWorkAroundsIsNotP
 typedef PreambleFixture ThreadArbitrationGen11;
 GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotSet) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef Gen11Family::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
@@ -137,7 +137,7 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
 
 GEN11TEST_F(ThreadArbitrationGen11, whenThreadArbitrationPolicyIsProgrammedThenCorrectValuesAreSet) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef Gen11Family::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;

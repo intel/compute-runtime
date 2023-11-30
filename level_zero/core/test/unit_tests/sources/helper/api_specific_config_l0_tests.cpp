@@ -48,7 +48,7 @@ TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAll
 
     EXPECT_TRUE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
 
     EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 }
@@ -58,29 +58,29 @@ TEST(ApiSpecificConfigL0Tests, GivenDebugFlagCombinationsGetCorrectSharedAllocPr
 
     EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
     EXPECT_TRUE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
 
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    debugManager.flags.EnableBOChunkingPrefetch.set(true);
 
     EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 
-    DebugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunking.set(1);
 
     EXPECT_TRUE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 
-    DebugManager.flags.EnableBOChunking.set(2);
+    debugManager.flags.EnableBOChunking.set(2);
 
     EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 
-    DebugManager.flags.EnableBOChunking.set(3);
+    debugManager.flags.EnableBOChunking.set(3);
 
     EXPECT_TRUE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 
-    DebugManager.flags.EnableBOChunking.set(0);
+    debugManager.flags.EnableBOChunking.set(0);
 
     EXPECT_FALSE(ApiSpecificConfig::isSharedAllocPrefetchEnabled());
 }

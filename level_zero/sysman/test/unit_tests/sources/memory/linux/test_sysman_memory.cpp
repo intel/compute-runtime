@@ -19,7 +19,7 @@ constexpr uint32_t memoryHandleComponentCount = 1u;
 class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         SysmanDeviceFixture::SetUp();
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
@@ -33,7 +33,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
 
-        DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
+        debugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());

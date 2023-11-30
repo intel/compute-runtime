@@ -33,8 +33,8 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSu
         commandBufferHeader->NeedsMidBatchPreEmptionSupport = true;
     }
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Starting Wddm ULLS. Placement ring buffer: %d semaphore %d\n",
-                                DebugManager.flags.DirectSubmissionBufferPlacement.get(),
-                                DebugManager.flags.DirectSubmissionSemaphorePlacement.get());
+                                debugManager.flags.DirectSubmissionBufferPlacement.get(),
+                                debugManager.flags.DirectSubmissionSemaphorePlacement.get());
 
     this->completionFenceAllocation = inputParams.completionFenceAllocation;
     UNRECOVERABLE_IF(!this->completionFenceAllocation);

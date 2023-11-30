@@ -19,8 +19,8 @@ namespace NEO {
 extern unsigned int testCaseMaxTimeInMs;
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
-    debugVarSnapshot = DebugManager.flags;
-    injectFcnSnapshot = DebugManager.injectFcn;
+    debugVarSnapshot = debugManager.flags;
+    injectFcnSnapshot = debugManager.injectFcn;
 
     referencedHwInfo = *defaultHwInfo;
     testStart = std::chrono::steady_clock::now();
@@ -36,7 +36,7 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
 
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    EXPECT_EQ(debugVarSnapshot.variableName.getRef(), DebugManager.flags.variableName.getRef());
+    EXPECT_EQ(debugVarSnapshot.variableName.getRef(), debugManager.flags.variableName.getRef());
 
 #include "shared/source/debug_settings/release_variables.inl"
 
@@ -44,7 +44,7 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
 
 #undef DECLARE_DEBUG_VARIABLE
 
-    EXPECT_EQ(injectFcnSnapshot, DebugManager.injectFcn);
+    EXPECT_EQ(injectFcnSnapshot, debugManager.injectFcn);
 
     // Ensure that global state is restored
     UltHwConfig expectedState{};

@@ -12,7 +12,7 @@
 namespace NEO {
 
 void ClDevice::initializeOsSpecificCaps() {
-    if (enabledClVersion >= 30 && DebugManager.flags.ClKhrExternalMemoryExtension.get()) {
+    if (enabledClVersion >= 30 && debugManager.flags.ClKhrExternalMemoryExtension.get()) {
         deviceInfo.externalMemorySharing = CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR;
     }
 }

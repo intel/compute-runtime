@@ -26,8 +26,8 @@ using namespace NEO;
 struct MultiDeviceStorageInfoTest : public ::testing::Test {
     void SetUp() override {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-        DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
-        DebugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.CreateMultipleSubDevices.set(numDevices);
+        debugManager.flags.EnableLocalMemory.set(true);
         memoryManager = static_cast<MockMemoryManager *>(factory.rootDevices[0]->getMemoryManager());
     }
     const uint32_t numDevices = 4u;
@@ -46,7 +46,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceMultiTileAllocPlaceme
     AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
 
     for (uint32_t i = 0; i < 2; i++) {
-        DebugManager.flags.ForceMultiTileAllocPlacement.set(1ull << (static_cast<uint64_t>(allocTypes[i]) - 1));
+        debugManager.flags.ForceMultiTileAllocPlacement.set(1ull << (static_cast<uint64_t>(allocTypes[i]) - 1));
         AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocTypes[i], false, false, singleTileMask};
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_FALSE(storageInfo.cloningOfPageTables);
@@ -91,7 +91,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceSingleTileAllocPlacem
     AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
 
     for (uint32_t i = 0; i < 2; i++) {
-        DebugManager.flags.ForceSingleTileAllocPlacement.set(1ull << (static_cast<uint64_t>(allocTypes[i]) - 1));
+        debugManager.flags.ForceSingleTileAllocPlacement.set(1ull << (static_cast<uint64_t>(allocTypes[i]) - 1));
         AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocTypes[i], false, false, singleTileMask};
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_TRUE(storageInfo.cloningOfPageTables);
@@ -293,8 +293,8 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSVMGPUThenAllMemory
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiStorageGranularityWhenCreatingStorageInfoThenProperGranularityIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MultiStorageGranularity.set(128);
-    DebugManager.flags.MultiStoragePolicy.set(1);
+    debugManager.flags.MultiStorageGranularity.set(128);
+    debugManager.flags.MultiStoragePolicy.set(1);
 
     AllocationProperties properties{mockRootDeviceIndex, false, 10 * MemoryConstants::pageSize64k, AllocationType::SVM_GPU, true, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
@@ -386,7 +386,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenD
     auto proposedTiles = allTilesMask;
     proposedTiles[1] = 0;
 
-    DebugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
+    debugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
 
     AllocationProperties properties{mockRootDeviceIndex, false, 64 * KB * 40, AllocationType::BUFFER, true, allTilesMask};
 
@@ -402,7 +402,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlace
     auto proposedTiles = allTilesMask;
     proposedTiles[0] = 0;
 
-    DebugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
+    debugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
 
     AllocationProperties properties{mockRootDeviceIndex, false, 512 * KB, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
 
@@ -413,7 +413,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlace
 
 TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryOnMultiTileWhenKmdMigrationIsEnabledThenAllTilesAreUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     AllocationProperties properties{mockRootDeviceIndex, false, 512 * KB, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
 
@@ -624,7 +624,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForRingB
 TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageDisabledWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenPreferredBankIsSelected) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
     constexpr uint32_t firstAvailableTileMask = 2u;
 
     memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
@@ -649,7 +649,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageD
 TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForMultiTileEnginesWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenFirstBankIsSelectedOnlyForMultiTileEngines) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
     constexpr uint32_t firstAvailableTileMask = 2u;
 
     memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2M);
@@ -678,7 +678,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
 TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenFirstBankIsSelectedOnlyForMultiTile) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
     constexpr uint32_t firstAvailableTileMask = 2u;
     constexpr uint32_t leastOccupiedTileMask = 4u;
 

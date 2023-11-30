@@ -22,12 +22,12 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
 }
 
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
-    return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
+    return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
 
 bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *releaseHelper) {
-    if (DebugManager.flags.UseBindlessMode.get() != -1) {
-        return DebugManager.flags.UseBindlessMode.get();
+    if (debugManager.flags.UseBindlessMode.get() != -1) {
+        return debugManager.flags.UseBindlessMode.get();
     } else {
         return releaseHelper ? !releaseHelper->isBindlessAddressingDisabled() : false;
     }
@@ -38,7 +38,7 @@ bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
 }
 
 bool ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() {
-    return (NEO::DebugManager.flags.EnableDynamicPostSyncAllocLayout.get() != 0);
+    return (NEO::debugManager.flags.EnableDynamicPostSyncAllocLayout.get() != 0);
 }
 
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
@@ -71,7 +71,7 @@ const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
 }
 
 bool ApiSpecificConfig::isSharedAllocPrefetchEnabled() {
-    return (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
-            (NEO::DebugManager.flags.EnableBOChunkingPrefetch.get() && ((NEO::DebugManager.flags.EnableBOChunking.get()) != -1) && ((NEO::DebugManager.flags.EnableBOChunking.get()) & 0x1)));
+    return (NEO::debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get() ||
+            (NEO::debugManager.flags.EnableBOChunkingPrefetch.get() && ((NEO::debugManager.flags.EnableBOChunking.get()) != -1) && ((NEO::debugManager.flags.EnableBOChunking.get()) & 0x1)));
 }
 } // namespace NEO

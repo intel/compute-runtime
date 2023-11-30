@@ -53,9 +53,9 @@ using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
 HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
           givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected, MatchAny) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
@@ -158,7 +158,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
 
 HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected, MatchAny) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -274,7 +274,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenScratchSpaceIsProgrammedThenPatchInfoIsCollected) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -318,7 +318,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenMediaVfeStateIsProgrammedWithEmptyScratchThenPatchInfoIsNotCollected) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);

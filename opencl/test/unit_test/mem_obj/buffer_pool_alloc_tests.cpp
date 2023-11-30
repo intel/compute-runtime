@@ -50,7 +50,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
     DebugManagerStateRestore restore;
 
     void setUpImpl() {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
         this->deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
         this->device = deviceFactory->rootDevices[rootDeviceIndex];
         this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
@@ -100,37 +100,37 @@ HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOr
     DebugManagerStateRestore restore;
     // Single device context
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     // Multi device context
     context->devices.push_back(nullptr);
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     context->devices.pop_back();
@@ -140,37 +140,37 @@ HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOr
     DebugManagerStateRestore restore;
     // Single device context
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     // Multi device context
     context->devices.push_back(nullptr);
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
         EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
     }
     context->devices.pop_back();
@@ -355,7 +355,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBuffer
             return MockCommandQueue::enqueueWriteBuffer(buffer, blockingWrite, offset, size, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event);
         }
     };
-    DebugManager.flags.CopyHostPtrOnCpu.set(0);
+    debugManager.flags.CopyHostPtrOnCpu.set(0);
 
     auto commandQueue = new MockCommandQueueFailFirstEnqueueWrite();
     context->getSpecialQueue(rootDeviceIndex)->decRefInternal();
@@ -464,7 +464,7 @@ using AggregatedSmallBuffersEnabledTestDoNotRunSetup = AggregatedSmallBuffersTes
 
 TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffersEnabledWhenPoolInitializedThenPerformanceHintsNotProvided) {
     testing::internal::CaptureStdout();
-    DebugManager.flags.PrintDriverDiagnostics.set(1);
+    debugManager.flags.PrintDriverDiagnostics.set(1);
     setUpImpl();
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_FALSE(poolAllocator->bufferPools.empty());
@@ -476,7 +476,7 @@ TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffe
 template <int32_t poolBufferFlag = -1>
 class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
         this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
         auto device = deviceFactory->rootDevices[0];
         cl_device_id devices[] = {device};
@@ -609,7 +609,7 @@ TEST_F(AggregatedSmallBuffersEnabledApiTest, givenBufferFromPoolWhenGetMemObjInf
 
 TEST_F(AggregatedSmallBuffersEnabledApiTest, givenSubBufferNotFromPoolAndAggregatedSmallBuffersEnabledWhenReleaseMemObjectCalledThenItSucceeds) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
+    debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
     size_t size = PoolAllocator::smallBufferThreshold + 1;
 
     cl_mem largeBuffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
@@ -622,7 +622,7 @@ TEST_F(AggregatedSmallBuffersEnabledApiTest, givenSubBufferNotFromPoolAndAggrega
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(subBuffer, nullptr);
 
-    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
+    debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
     retVal = clReleaseMemObject(subBuffer);
     EXPECT_EQ(retVal, CL_SUCCESS);
 

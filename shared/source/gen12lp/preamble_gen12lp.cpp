@@ -107,8 +107,8 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
     if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
     }
-    if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {
-        mediaVfeState->setMaximumNumberOfDualSubslices(DebugManager.flags.MediaVfeStateMaxSubSlices.get());
+    if (debugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {
+        mediaVfeState->setMaximumNumberOfDualSubslices(debugManager.flags.MediaVfeStateMaxSubSlices.get());
     }
 }
 

@@ -25,10 +25,10 @@ using namespace NEO;
 
 struct MemorySynchronizationViaMiSemaphoreWaitTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -55,9 +55,9 @@ XE_HPC_CORETEST_F(MemorySynchronizationViaMiSemaphoreWaitTest, givenMemorySynchr
 
 struct SystemMemoryFenceInDisabledConfigurationTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -93,8 +93,8 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDisabledConfigurationTest, givenNoSystemMem
 
 struct SystemMemoryFenceViaMiMemFenceTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -151,10 +151,10 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaMiMemFenceTest, givenSystemMemoryFenceGene
 
 struct SystemMemoryFenceViaComputeWalkerTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -213,10 +213,10 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaComputeWalkerTest, givenSystemMemoryFenceG
 
 struct SystemMemoryFenceViaKernelInstructionTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -247,10 +247,10 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaKernelInstructionTest, givenSystemMemoryFe
 
 struct SystemMemoryFenceInDefaultConfigurationTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;

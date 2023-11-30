@@ -43,7 +43,7 @@ struct MemoryManagerCommandListCreateNegativeTest : public NEO::MockMemoryManage
 template <int32_t stateBaseAddressTracking>
 struct CommandListCreateNegativeFixture {
     void setUp() {
-        DebugManager.flags.EnableStateBaseAddressTracking.set(stateBaseAddressTracking);
+        debugManager.flags.EnableStateBaseAddressTracking.set(stateBaseAddressTracking);
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -1335,7 +1335,7 @@ HWTEST2_F(CommandListCreateWithBcs,
 
 HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingCommandListUsingLinkedCopyThenFlushTaskModeUsed, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = false;
@@ -1658,7 +1658,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
 
-    NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandQueue->frontEndStateTracking);

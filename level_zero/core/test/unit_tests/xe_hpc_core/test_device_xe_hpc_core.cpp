@@ -50,8 +50,8 @@ HWTEST2_F(DeviceTestXeHpc, WhenGettingImagePropertiesThenPropertiesAreNotSet, Is
 
 HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -74,7 +74,7 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMulti
 
 HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -220,7 +220,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWithLinkedEngineSetWhenCreatingCommandQueueThenOverrideEngineIndex, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     const uint32_t newIndex = 2;
-    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    debugManager.flags.ForceBcsEngineIndex.set(newIndex);
 
     auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
 
@@ -256,7 +256,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWithInvalidIndexSetWhenCreatingCommandQueueThenReturnError, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     const uint32_t newIndex = 999;
-    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    debugManager.flags.ForceBcsEngineIndex.set(newIndex);
 
     auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
 
@@ -282,7 +282,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWithMainEngineSetWhenCreatingCommandQueueThenOverrideEngineIndex, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     const uint32_t newIndex = 0;
-    DebugManager.flags.ForceBcsEngineIndex.set(newIndex);
+    debugManager.flags.ForceBcsEngineIndex.set(newIndex);
 
     auto &engineGroups = static_cast<MockDeviceImp *>(deviceImp)->subDeviceCopyEngineGroups;
 
@@ -471,7 +471,7 @@ HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAr
 
 HWTEST2_F(CommandQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenTwoQueueGroupsAreReturned, IsXeHpcCore) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    debugManager.flags.EnableBlitterOperationsSupport.set(0);
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -488,7 +488,7 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenTwoQueueGro
 class DeviceCopyQueueGroupXeHpcFixture : public DeviceFixture {
   public:
     void setUp() {
-        DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+        debugManager.flags.EnableBlitterOperationsSupport.set(0);
         DeviceFixture::setUp();
     }
     void tearDown() {
@@ -536,7 +536,7 @@ using CommandQueueGroupTest = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportWithBcsVirtualEnginesEnabledThenOneByteFillPatternReturned, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -566,7 +566,7 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportWithBcsVirtualEnginesEnabled
 
 HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportWithBcsVirtualEnginesDisabledThenCorrectFillPatternReturned, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(0);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(0);
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;

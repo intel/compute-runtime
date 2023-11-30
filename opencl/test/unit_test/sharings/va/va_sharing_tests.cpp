@@ -281,7 +281,7 @@ TEST_F(VaSharingTests, givenSupportedFourccFormatWhenIsSupportedPlanarFormatThen
     EXPECT_TRUE(VASurface::isSupportedPlanarFormat(VA_FOURCC_P016));
     EXPECT_TRUE(VASurface::isSupportedPlanarFormat(VA_FOURCC_NV12));
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     EXPECT_TRUE(VASurface::isSupportedPlanarFormat(VA_FOURCC_RGBP));
 }
 
@@ -303,7 +303,7 @@ TEST_F(VaSharingTests, givenSupportedPlanarFormatWhenIsSupportedPackedFormatThen
 
 TEST_F(VaSharingTests, givenValidYUY2SurfaceWhenGetSurfaceDescriptionThenCLSuccessIsReturnedAndDataAreSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_YUY2;
@@ -326,7 +326,7 @@ TEST_F(VaSharingTests, givenValidYUY2SurfaceWhenGetSurfaceDescriptionThenCLSucce
 
 TEST_F(VaSharingTests, givenValidY210SurfaceWhenGetSurfaceDescriptionThenCLSuccessIsReturnedAndDataAreSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_Y210;
@@ -349,7 +349,7 @@ TEST_F(VaSharingTests, givenValidY210SurfaceWhenGetSurfaceDescriptionThenCLSucce
 
 TEST_F(VaSharingTests, givenValidYUY2SurfaceWithInvalidPlaneNumberWhenGetSurfaceDescriptionThenFailIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_YUY2;
@@ -368,7 +368,7 @@ TEST_F(VaSharingTests, givenValidYUY2SurfaceWithInvalidPlaneNumberWhenGetSurface
 
 TEST_F(VaSharingTests, givenValidY210SurfaceWithInvalidPlaneNumberWhenGetSurfaceDescriptionThenFailIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_Y210;
@@ -387,7 +387,7 @@ TEST_F(VaSharingTests, givenValidY210SurfaceWithInvalidPlaneNumberWhenGetSurface
 
 TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenGetSurfaceDescriptionThenCLSuccessIsReturnedAndDataAreSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_NV12;
@@ -533,7 +533,7 @@ TEST_F(VaSharingTests, givenValidPlanarSurfaceWithPlaneSetWhenApplyPlanarOptions
     // RGBP part
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     surfaceInfo.imageFourcc = VA_FOURCC_RGBP;
 
@@ -596,7 +596,7 @@ TEST_F(VaSharingTests, givenValidSurfaceWithPlaneSetWhenApplyPlaneSettingsThenPr
     EXPECT_EQ(surfaceInfo.imgInfo.yOffsetForUVPlane, static_cast<uint32_t>(surfaceInfo.imageOffset / surfaceInfo.imagePitch));
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     surfaceInfo.imageFourcc = VA_FOURCC_RGBP;
 
@@ -648,7 +648,7 @@ TEST_F(VaSharingTests, givenInvalidPlaneInputWhenVaSurfaceIsCreatedThenInvalidVa
 
 TEST_F(VaSharingTests, givenValidPlaneInputWhenVaSurfaceIsCreatedAndDebugFlagEnabledThenCLSuccessIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
     vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[1] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
@@ -1052,7 +1052,7 @@ TEST_F(VaSharingTests, givenNotSupportedFormatWhenCreatingSharedVaSurfaceThenErr
 
 TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
     vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[1] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
@@ -1076,7 +1076,7 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
 
 TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSharedVaSurfaceForPlane1ThenCorrectFormatIsUsedByImageAndGMM) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
     vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[1] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
@@ -1100,7 +1100,7 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
 
 TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSharedVaSurfaceForPlane2ThenCorrectFormatIsUsedByImageAndGMM) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
     vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[1] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
@@ -1124,7 +1124,7 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
 
 TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerAndRGBPWhenVaSurfaceIsCreatedThenCallHandlerWithDrmPrime2ToGetSurfaceFormatsInDescriptor) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
 
     vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
@@ -1177,7 +1177,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerAndRGBPWhenVaSurfaceIs
 
 TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndNV12FormatWhenCreatingSharedVaSurfaceForPlane0ThenCorrectFormatIsUsedByImageAndGMM) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     vaSharing->sharingFunctions.derivedImageFormatBpp = 12;
     vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_NV12;
@@ -1345,7 +1345,7 @@ TEST(VaSurface, givenInvalidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) 
 TEST(VaSurface, givenNotSupportedVaFormatsWhenCheckingIfSupportedThenFalseIsReturned) {
     EXPECT_FALSE(VASurface::isSupportedFourCCTwoPlaneFormat(VA_FOURCC_NV11));
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
     EXPECT_FALSE(VASurface::isSupportedFourCCThreePlaneFormat(VA_FOURCC_NV11));
     EXPECT_EQ(nullptr, VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_NV11));
 }

@@ -80,7 +80,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         default:
             break;
         }
-        if ((traceLocalAllowed && this->localMemoryEnabled) || DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
+        if ((traceLocalAllowed && this->localMemoryEnabled) || debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
             return AubMemDump::AddressSpaceValues::TraceLocal;
         }
         return AubMemDump::AddressSpaceValues::TraceNonlocal;

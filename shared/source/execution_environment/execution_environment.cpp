@@ -59,8 +59,8 @@ bool ExecutionEnvironment::initializeMemoryManager() {
     }
 
     int32_t setCommandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
-    if (DebugManager.flags.SetCommandStreamReceiver.get() >= 0) {
-        setCommandStreamReceiverType = DebugManager.flags.SetCommandStreamReceiver.get();
+    if (debugManager.flags.SetCommandStreamReceiver.get() >= 0) {
+        setCommandStreamReceiverType = debugManager.flags.SetCommandStreamReceiver.get();
     }
 
     switch (setCommandStreamReceiverType) {
@@ -95,7 +95,7 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
         MemoryManager::maxOsContextCount += osContextCount * subDevicesCount + hasRootCsr;
 
-        if (ccsCount > 1 && DebugManager.flags.EngineInstancedSubDevices.get()) {
+        if (ccsCount > 1 && debugManager.flags.EngineInstancedSubDevices.get()) {
             MemoryManager::maxOsContextCount += ccsCount * subDevicesCount;
         }
     }
@@ -105,12 +105,12 @@ DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionCont
     std::lock_guard<std::mutex> lockForInit(initializeDirectSubmissionControllerMutex);
     auto initializeDirectSubmissionController = DirectSubmissionController::isSupported();
 
-    if (DebugManager.flags.SetCommandStreamReceiver.get() > 0) {
+    if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
         initializeDirectSubmissionController = false;
     }
 
-    if (DebugManager.flags.EnableDirectSubmissionController.get() != -1) {
-        initializeDirectSubmissionController = DebugManager.flags.EnableDirectSubmissionController.get();
+    if (debugManager.flags.EnableDirectSubmissionController.get() != -1) {
+        initializeDirectSubmissionController = debugManager.flags.EnableDirectSubmissionController.get();
     }
 
     if (initializeDirectSubmissionController && this->directSubmissionController == nullptr) {
@@ -159,7 +159,7 @@ void ExecutionEnvironment::parseAffinityMask() {
         return;
     }
 
-    const auto &affinityMaskString = DebugManager.flags.ZE_AFFINITY_MASK.get();
+    const auto &affinityMaskString = debugManager.flags.ZE_AFFINITY_MASK.get();
 
     if (affinityMaskString.compare("default") == 0 ||
         affinityMaskString.empty()) {
@@ -231,7 +231,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
                 bool enableSecondLevelEngineInstanced = ((subDevicesCount == 1) &&
                                                          (hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) &&
-                                                         DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get());
+                                                         debugManager.flags.AllowSingleTileEngineInstancedSubDevices.get());
 
                 if (enableSecondLevelEngineInstanced) {
                     UNRECOVERABLE_IF(subEntries.size() != 2);
@@ -321,7 +321,7 @@ void ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const 
 }
 
 void ExecutionEnvironment::parseCcsCountLimitations() {
-    const auto &numberOfCcsString = DebugManager.flags.ZEX_NUMBER_OF_CCS.get();
+    const auto &numberOfCcsString = debugManager.flags.ZEX_NUMBER_OF_CCS.get();
 
     if (numberOfCcsString.compare("default") == 0 ||
         numberOfCcsString.empty()) {
@@ -347,14 +347,14 @@ void ExecutionEnvironment::parseCcsCountLimitations() {
 }
 
 void ExecutionEnvironment::configureNeoEnvironment() {
-    if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
-        DebugManager.flags.UseKmdMigration.setIfDefault(0);
-        DebugManager.flags.SplitBcsSize.setIfDefault(256);
+    if (debugManager.flags.NEO_CAL_ENABLED.get()) {
+        debugManager.flags.UseKmdMigration.setIfDefault(0);
+        debugManager.flags.SplitBcsSize.setIfDefault(256);
     }
 }
 
 bool ExecutionEnvironment::comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2) {
-    const auto pciOrderVar = DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
+    const auto pciOrderVar = debugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
     if (!pciOrderVar) {
         auto isIntegrated1 = rootDeviceEnvironment1->getHardwareInfo()->capabilityTable.isIntegratedDevice;
         auto isIntegrated2 = rootDeviceEnvironment2->getHardwareInfo()->capabilityTable.isIntegratedDevice;

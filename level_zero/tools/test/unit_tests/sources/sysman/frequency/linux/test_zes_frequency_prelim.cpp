@@ -866,7 +866,7 @@ class FreqMultiDeviceFixture : public SysmanMultiDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
         SysmanMultiDeviceFixture::SetUp();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockFrequencySysfsAccess>();

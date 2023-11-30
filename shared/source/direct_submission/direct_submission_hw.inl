@@ -51,20 +51,20 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
-    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
-        this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
+    if (debugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
+        this->disableMonitorFence = debugManager.flags.DirectSubmissionDisableMonitorFence.get();
     }
 
-    if (DebugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
-        this->maxRingBufferCount = DebugManager.flags.DirectSubmissionMaxRingBuffers.get();
+    if (debugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
+        this->maxRingBufferCount = debugManager.flags.DirectSubmissionMaxRingBuffers.get();
     }
 
-    if (DebugManager.flags.DirectSubmissionDisableCacheFlush.get() != -1) {
-        disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
+    if (debugManager.flags.DirectSubmissionDisableCacheFlush.get() != -1) {
+        disableCacheFlush = !!debugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
-    if (DebugManager.flags.DirectSubmissionDetectGpuHang.get() != -1) {
-        detectGpuHang = !!DebugManager.flags.DirectSubmissionDetectGpuHang.get();
+    if (debugManager.flags.DirectSubmissionDetectGpuHang.get() != -1) {
+        detectGpuHang = !!debugManager.flags.DirectSubmissionDetectGpuHang.get();
     }
 
     if (hwInfo->capabilityTable.isIntegratedDevice) {
@@ -73,25 +73,25 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
     }
 
-    if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
+    if (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
         miMemFenceRequired = false;
     }
-    if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() != -1) {
-        sfenceMode = static_cast<DirectSubmissionSfenceMode>(DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
+    if (debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() != -1) {
+        sfenceMode = static_cast<DirectSubmissionSfenceMode>(debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
     }
 
-    if (DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.get() != -1) {
-        this->inputMonitorFenceDispatchRequirement = !!(DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.get());
+    if (debugManager.flags.DirectSubmissionMonitorFenceInputPolicy.get() != -1) {
+        this->inputMonitorFenceDispatchRequirement = !!(debugManager.flags.DirectSubmissionMonitorFenceInputPolicy.get());
     }
 
-    int32_t disableCacheFlushKey = DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.get();
+    int32_t disableCacheFlushKey = debugManager.flags.DirectSubmissionDisableCpuCacheFlush.get();
     if (disableCacheFlushKey != -1) {
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
     }
 
     isDisablePrefetcherRequired = productHelper.isPrefetcherDisablingInDirectSubmissionRequired();
-    if (DebugManager.flags.DirectSubmissionDisablePrefetcher.get() != -1) {
-        isDisablePrefetcherRequired = !!DebugManager.flags.DirectSubmissionDisablePrefetcher.get();
+    if (debugManager.flags.DirectSubmissionDisablePrefetcher.get() != -1) {
+        isDisablePrefetcherRequired = !!debugManager.flags.DirectSubmissionDisablePrefetcher.get();
     }
 
     UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush) && !disableCpuCacheFlush);
@@ -105,12 +105,12 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     this->currentRelaxedOrderingQueueSize = RelaxedOrderingHelper::queueSizeMultiplier;
 
-    if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != -1) {
-        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
+    if (debugManager.flags.DirectSubmissionRelaxedOrdering.get() != -1) {
+        relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
     }
 
     if (EngineHelpers::isBcs(this->osContext.getEngineType()) && relaxedOrderingEnabled) {
-        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
+        relaxedOrderingEnabled = (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
     }
 }
 
@@ -241,8 +241,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&this->rootDeviceEnvironment)};
         EncodeMiArbCheck<GfxFamily>::programWithWa(schedulerCmdStream, std::nullopt, waArgs);
 
-        if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
-            currentRelaxedOrderingQueueSize = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
+        if (debugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
+            currentRelaxedOrderingQueueSize = static_cast<uint32_t>(debugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
         }
 
         this->relaxedOrderingQueueSizeLimitValueVa = schedulerCmdStream.getCurrentGpuAddressPosition() + RelaxedOrderingHelper::getQueueSizeLimitValueOffset<GfxFamily>();
@@ -377,7 +377,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
         allocations.push_back(relaxedOrderingSchedulerAllocation);
     }
 
-    if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
+    if (debugManager.flags.DirectSubmissionPrintBuffers.get()) {
         for (uint32_t ringBufferIndex = 0; ringBufferIndex < RingBufferUse::initialRingBufferCount; ringBufferIndex++) {
             const auto ringBuffer = this->ringBuffers[ringBufferIndex].ringBuffer;
 
@@ -712,7 +712,7 @@ template <typename GfxFamily, typename Dispatcher>
 void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBuffer &batchBuffer, bool dispatchMonitorFence) {
     void *currentPosition = ringCommandStream.getSpace(0);
 
-    if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
+    if (debugManager.flags.DirectSubmissionPrintBuffers.get()) {
         printf("Client buffer:\n");
         printf("Command buffer allocation - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
                batchBuffer.commandBufferAllocation->getGpuAddress(),
@@ -770,7 +770,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         uint32_t expectedQueueSize = batchBuffer.numCsrClients * RelaxedOrderingHelper::queueSizeMultiplier;
         expectedQueueSize = std::min(expectedQueueSize, RelaxedOrderingHelper::maxQueueSize);
 
-        if (expectedQueueSize > this->currentRelaxedOrderingQueueSize && DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() == -1) {
+        if (expectedQueueSize > this->currentRelaxedOrderingQueueSize && debugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() == -1) {
             updateRelaxedOrderingQueueSize(expectedQueueSize);
         }
     }
@@ -933,8 +933,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchB
                MemoryPoolHelper::isSystemMemoryPool(batchBuffer.commandBufferAllocation->getMemoryPool()) &&
                !batchBuffer.hasRelaxedOrderingDependencies;
 
-    if (DebugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
-        ret &= !!DebugManager.flags.DirectSubmissionFlatRingBuffer.get();
+    if (debugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
+        ret &= !!debugManager.flags.DirectSubmissionFlatRingBuffer.get();
     }
 
     return ret;
@@ -1039,8 +1039,8 @@ template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
     auto newResourcesBound = this->osContext.isTlbFlushRequired();
 
-    if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
-        newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();
+    if (debugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
+        newResourcesBound = debugManager.flags.DirectSubmissionNewResourceTlbFlush.get();
     }
 
     return newResourcesBound;
@@ -1131,16 +1131,16 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::createDiagnostic() {
     if (directSubmissionDiagnosticAvailable) {
-        workloadMode = DebugManager.flags.DirectSubmissionEnableDebugBuffer.get();
+        workloadMode = debugManager.flags.DirectSubmissionEnableDebugBuffer.get();
         if (workloadMode > 0) {
-            disableCacheFlush = DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
-            disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
-            uint32_t executions = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.get());
+            disableCacheFlush = debugManager.flags.DirectSubmissionDisableCacheFlush.get();
+            disableMonitorFence = debugManager.flags.DirectSubmissionDisableMonitorFence.get();
+            uint32_t executions = static_cast<uint32_t>(debugManager.flags.DirectSubmissionDiagnosticExecutionCount.get());
             diagnostic = std::make_unique<DirectSubmissionDiagnosticsCollector>(
                 executions,
                 workloadMode == 1,
-                DebugManager.flags.DirectSubmissionBufferPlacement.get(),
-                DebugManager.flags.DirectSubmissionSemaphorePlacement.get(),
+                debugManager.flags.DirectSubmissionBufferPlacement.get(),
+                debugManager.flags.DirectSubmissionSemaphorePlacement.get(),
                 workloadMode,
                 disableCacheFlush,
                 disableMonitorFence);

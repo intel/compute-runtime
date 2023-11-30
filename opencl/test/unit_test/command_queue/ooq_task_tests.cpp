@@ -29,8 +29,8 @@ struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
             std::is_same<TypeParam, EnqueueWriteImageHelper<>>::value) {
             REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         }
-        DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
-        DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+        debugManager.flags.PerformImplicitFlushForNewResource.set(0);
+        debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
         HelloWorldTest<OOQFixtureFactory>::SetUp();
     }
     void TearDown() override {
@@ -331,7 +331,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBar
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
+    debugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
 
     const cl_uint numEventsInWaitList = 0;
     const cl_event *eventWaitList = nullptr;
@@ -351,7 +351,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBar
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
+    debugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
 
     const cl_uint numEventsInWaitList = 0;
     const cl_event *eventWaitList = nullptr;
@@ -374,7 +374,7 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisabledWhenEnquein
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(0);
+    debugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(0);
 
     const cl_uint numEventsInWaitList = 0;
     const cl_event *eventWaitList = nullptr;

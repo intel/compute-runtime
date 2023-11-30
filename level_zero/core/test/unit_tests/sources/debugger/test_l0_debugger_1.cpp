@@ -286,7 +286,7 @@ using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -350,7 +350,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -414,7 +414,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryFillWithDeviceMemoryThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -436,7 +436,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediate
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryFillThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -459,7 +459,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediate
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryFillThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -482,7 +482,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForImmediat
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryFillThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
@@ -517,7 +517,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCo
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularCommandListForAppendMemoryFillThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
@@ -553,7 +553,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularC
 
 HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     size_t size = (sizeof(uint32_t) * 4);
     ze_command_queue_desc_t queueDesc = {};
@@ -576,7 +576,7 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
 
 HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 
     size_t size = (sizeof(uint32_t) * 4);
     ze_command_queue_desc_t queueDesc = {};
@@ -645,9 +645,9 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
-    NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
-    NEO::DebugManager.flags.UseImmediateFlushTask.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
+    NEO::debugManager.flags.UseImmediateFlushTask.set(0);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -697,9 +697,9 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
-    NEO::DebugManager.flags.UseImmediateFlushTask.set(1);
-    NEO::DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.UseImmediateFlushTask.set(1);
+    NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -743,7 +743,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
 }
 struct DebuggerWithGlobalBindlessFixture : public L0DebuggerFixture {
     void setUp() {
-        NEO::DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         L0DebuggerFixture::setUp(false);
 
         auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(),

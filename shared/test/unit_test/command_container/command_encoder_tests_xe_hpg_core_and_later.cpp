@@ -29,7 +29,7 @@ HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppe
     auto rssCmd = FamilyType::cmdInitRenderSurfaceState;
 
     auto l1CacheControl = FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
-    DebugManager.flags.OverrideL1CacheControlInSurfaceState.set(l1CacheControl);
+    debugManager.flags.OverrideL1CacheControlInSurfaceState.set(l1CacheControl);
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = &rssCmd;
@@ -46,12 +46,12 @@ HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppe
     EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CachePolicyL1CacheControl());
 
     l1CacheControl = FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
-    DebugManager.flags.OverrideL1CacheControlInSurfaceState.set(l1CacheControl);
+    debugManager.flags.OverrideL1CacheControlInSurfaceState.set(l1CacheControl);
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_UC), rssCmd.getL1CachePolicyL1CacheControl());

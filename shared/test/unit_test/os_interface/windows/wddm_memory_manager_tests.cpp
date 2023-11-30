@@ -593,7 +593,7 @@ TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGet
 
         DebugManagerStateRestore restorer;
         for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
-            DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
+            debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
             EXPECT_EQ(allocationMethod, memoryManager->getPreferredAllocationMethod(allocationProperties));
         }
     }
@@ -715,7 +715,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreatedAndZerod) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
     auto debugSurface = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
     EXPECT_NE(nullptr, debugSurface);
@@ -729,7 +729,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryWithPropertiesCal
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -829,7 +829,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithStorageInfoWhenAlloca
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithFlagsWhenAllocateGraphicsMemory64kbThenAllocationFlagFlushL3RequiredIsSetCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     class MockGraphicsAllocation : public GraphicsAllocation {
       public:
         using GraphicsAllocation::allocationInfo;
@@ -876,7 +876,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMThen4KBGraphicsAllocationIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -1260,7 +1260,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestr
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     memoryManager->lockResource(allocation);
     EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
@@ -1269,7 +1269,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeed
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     EXPECT_FALSE(allocation->isLocked());
     EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
@@ -1278,7 +1278,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntN
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatNeedsMakeResidentBeforeLockThenRemoveTemporaryResource) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     allocation->needsMakeResidentBeforeLock = true;
     memoryManager->lockResource(allocation);
@@ -1287,7 +1287,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatNeedsMakeR
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     allocation->needsMakeResidentBeforeLock = true;
     EXPECT_FALSE(allocation->isLocked());
@@ -1296,7 +1296,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMa
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingAllocationWithReservedGpuVirtualAddressThenReleaseTheAddress) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     uint64_t gpuAddress = 0x123;
     uint64_t sizeForFree = 0x1234;
@@ -1433,13 +1433,13 @@ TEST_F(WddmMemoryManagerSimpleTest, givenDebugVariableWhenCreatingWddmMemoryMana
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
 
     {
-        DebugManager.flags.EnableMultiStorageResources.set(0);
+        debugManager.flags.EnableMultiStorageResources.set(0);
         MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
         EXPECT_FALSE(memoryManager.supportsMultiStorageResources);
     }
 
     {
-        DebugManager.flags.EnableMultiStorageResources.set(1);
+        debugManager.flags.EnableMultiStorageResources.set(1);
         MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
         EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
     }
@@ -1495,7 +1495,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenIsaTypeAnd32BitFrontWindowWhenFrontWind
 
 HWTEST2_F(WddmMemoryManagerSimpleTest, givenLocalMemoryIsaTypeAnd32BitFrontWindowWhenFrontWindowMemoryAllocatedAndFreedThenFrontWindowHeapAllocatorIsUsed, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
@@ -1557,7 +1557,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenDebugModuleAreaTypeWhenCreatingAllocati
 
 HWTEST2_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     const auto size = MemoryConstants::pageSize64k;
     const auto localMemoryEnabled = true;
 
@@ -1592,7 +1592,7 @@ HWTEST2_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingDebu
 
 TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingMemoryInFrontWindowThenCorrectHeapIsUsedForGpuVa) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     const auto size = MemoryConstants::pageSize64k;
     const auto localMemoryEnabled = true;
 
@@ -1645,7 +1645,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenWddmMemoryManagerIsCreatedThenAlignmentS
 
 TEST_F(WddmMemoryManagerSimpleTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+    debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
 
     std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
         {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
@@ -1659,7 +1659,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     DebugManagerStateRestore restore{};
 
     {
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
             {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
             {MemoryConstants::megaByte, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
@@ -1670,7 +1670,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     }
 
     {
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2M);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2M);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
             {2 * MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
             {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
@@ -1828,7 +1828,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentAndAllocationAsBigAsTheA
     const uint32_t customAlignment = 4 * MemoryConstants::pageSize64k;
     const uint32_t expectedAlignment = customAlignment;
     const uint32_t size = 4 * MemoryConstants::pageSize64k;
-    DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
+    debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
     testAlignment(size, expectedAlignment);
     testAlignment(size + 1, expectedAlignment);
 }
@@ -1837,7 +1837,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentAndAllocationNotAsBigAsT
     const uint32_t customAlignment = 4 * MemoryConstants::pageSize64k;
     const uint32_t expectedAlignment = MemoryConstants::pageSize64k;
     const uint32_t size = 3 * MemoryConstants::pageSize64k;
-    DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
+    debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
     testAlignment(size, expectedAlignment);
 }
 
@@ -1845,7 +1845,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentBiggerThan2MbAndAllocati
     const uint32_t customAlignment = 4 * MemoryConstants::megaByte;
     const uint32_t expectedAlignment = customAlignment;
     const uint32_t size = 4 * MemoryConstants::megaByte;
-    DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
+    debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
     testAlignment(size, expectedAlignment);
     testAlignment(size + 1, expectedAlignment);
 }
@@ -1854,7 +1854,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentBiggerThan2MbAndAllocati
     const uint32_t customAlignment = 4 * MemoryConstants::megaByte;
     const uint32_t expectedAlignment = 2 * MemoryConstants::megaByte;
     const uint32_t size = 4 * MemoryConstants::megaByte - 1;
-    DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
+    debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(customAlignment);
     testAlignment(size, expectedAlignment);
 }
 
@@ -1893,19 +1893,19 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAtLeast2MbAllocationWhenAllocationInDev
     const uint32_t size = 2 * MemoryConstants::megaByte;
 
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
         const uint32_t expectedAlignment = 2 * MemoryConstants::megaByte;
         testAlignment(size, expectedAlignment);
         testAlignment(2 * size, expectedAlignment);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
         const uint32_t expectedAlignment = MemoryConstants::pageSize64k;
         testAlignment(size, expectedAlignment);
         testAlignment(2 * size, expectedAlignment);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
         const uint32_t expectedAlignment = 2 * MemoryConstants::megaByte;
         testAlignment(size, expectedAlignment);
         testAlignment(2 * size, expectedAlignment);
@@ -2304,7 +2304,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryAllocationAndRequestedSizeIs
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCopyDebugSurfaceToMultiTileAllocationThenCallCopyMemoryToAllocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     size_t sourceAllocationSize = MemoryConstants::pageSize;
 
     std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
@@ -3138,7 +3138,7 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, nullptr, AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, wddmAllocation);
     auto gmmHelper = memoryManager->getGmmHelper(wddmAllocation->getRootDeviceIndex());
@@ -3162,7 +3162,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     auto ptr = reinterpret_cast<void *>(0x1000000);
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, ptr, AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, wddmAllocation);
@@ -3383,7 +3383,7 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenIsNTHandleisCalledTh
 TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAddressIsAllocated) {
     DebugManagerStateRestore dbgRestore;
     wddm->init();
-    DebugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<WddmMemoryManager> memoryManager64k(true, false, executionEnvironment);
     if (memoryManager64k.isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -3403,8 +3403,8 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
 HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbPagesWhenAllocationIsCreatedWithSizeSmallerThan64kbThenGraphicsAllocationsHas64kbAlignedUnderlyingSize) {
     DebugManagerStateRestore dbgRestore;
     wddm->init();
-    DebugManager.flags.Enable64kbpages.set(true);
-    DebugManager.flags.EnableCpuCacheForResources.set(0);
+    debugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.EnableCpuCacheForResources.set(0);
     MockWddmMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocationData;
     allocationData.size = 1u;
@@ -3428,7 +3428,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbPagesWhenAllocationIsCreated
 
 TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLockResultAndmapGpuVirtualAddressIsCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.Enable64kbpages.set(true);
     wddm->init();
     MockWddmMemoryManager memoryManager64k(executionEnvironment);
     uint32_t lockCount = wddm->lockResult.called;
@@ -3457,7 +3457,7 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 
     for (bool enable64KBpages : {true, false}) {
         wddm->createAllocationResult.called = 0U;
-        DebugManager.flags.Enable64kbpages.set(enable64KBpages);
+        debugManager.flags.Enable64kbpages.set(enable64KBpages);
         MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, executionEnvironment);
         if (memoryManager.isLimitedGPU(0)) {
             GTEST_SKIP();
@@ -3491,7 +3491,7 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndReq
     wddm->mapGpuVaStatus = true;
     VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
 
-    DebugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, executionEnvironment);
     if (memoryManager.isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -3524,22 +3524,22 @@ TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAs
 
 TEST_F(MockWddmMemoryManagerTest, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsTrueAndDeleterIsNotNullptr) {
     wddm->init();
-    bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
-    DebugManager.flags.EnableDeferredDeleter.set(true);
+    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    debugManager.flags.EnableDeferredDeleter.set(true);
     WddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_TRUE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
+    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     wddm->init();
-    bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
-    DebugManager.flags.EnableDeferredDeleter.set(false);
+    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    debugManager.flags.EnableDeferredDeleter.set(false);
     WddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
+    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThenUseWddmToMap) {
@@ -3982,7 +3982,7 @@ TEST(WddmMemoryManagerTest3, givenDefaultWddmMemoryManagerWhenItIsQueriedForInte
 
 TEST(WddmMemoryManagerTest3, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
     MockExecutionEnvironment executionEnvironment{};
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0, 1));
     auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
@@ -4005,7 +4005,7 @@ TEST(WddmMemoryManagerTest3, givenUsedTagAllocationInWddmMemoryManagerWhenCleanu
 TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddmIsFromCorrectRootDevice) {
     VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(4);
+    debugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     MockExecutionEnvironment executionEnvironment{};
@@ -4022,7 +4022,7 @@ TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenCreateMemoryManagerThenT
     uint32_t numRootDevices = 4u;
     VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     MockExecutionEnvironment executionEnvironment{};
@@ -4040,7 +4040,7 @@ TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenCreateMemoryManagerThenT
 TEST(WddmMemoryManagerTest3, givenNoLocalMemoryOnAnyDeviceWhenIsCpuCopyRequiredIsCalledThenFalseIsReturned) {
     VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(false);
+    debugManager.flags.EnableLocalMemory.set(false);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     MockExecutionEnvironment executionEnvironment{};
@@ -4192,11 +4192,11 @@ TEST(WddmMemoryManagerTest3, givenWmmWhenAsyncDeleterIsEnabledAndWaitForDeletion
     MockExecutionEnvironment executionEnvironment{};
     auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
     wddm->init();
-    bool actualDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
-    DebugManager.flags.EnableDeferredDeleter.set(true);
+    bool actualDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    debugManager.flags.EnableDeferredDeleter.set(true);
     MockWddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
     memoryManager.waitForDeletions();
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
+    debugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
 }

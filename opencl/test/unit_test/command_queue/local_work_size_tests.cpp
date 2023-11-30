@@ -53,7 +53,7 @@ TEST_F(LocalWorkSizeTest, givenDisableEUFusionWhenCreatingWorkSizeInfoThenCorrec
 
 TEST_F(LocalWorkSizeTest, GivenSlmLargerThanLocalThenWarningIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
     ::testing::internal::CaptureStderr();
 
     EXPECT_THROW(WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
@@ -75,7 +75,7 @@ TEST_F(LocalWorkSizeTest, GivenSlmLargerThanLocalThenWarningIsReturned) {
 
 TEST_F(LocalWorkSizeTest, GivenSlmSmallerThanLocalThenWarningIsNotReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
     ::testing::internal::CaptureStderr();
 
     WorkSizeInfo wsInfo(256,                   // maxWorkGroupSize
@@ -96,7 +96,7 @@ TEST_F(LocalWorkSizeTest, GivenSlmSmallerThanLocalThenWarningIsNotReturned) {
 
 TEST_F(LocalWorkSizeTest, whenSettingHasBarriersWithNoFusedDispatchThenMinWorkGroupSizeIsSetCorrectly) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.CFEFusedEUDispatch.set(0);
+    debugManager.flags.CFEFusedEUDispatch.set(0);
 
     WorkSizeInfo wsInfo0(256,                   // maxWorkGroupSize
                          0u,                    // hasBariers
@@ -173,7 +173,7 @@ TEST_F(LocalWorkSizeTest, givenSmallerLocalMemSizeThanSlmTotalSizeThenExceptionI
 
 TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComputeCalledThenLocalGroupComputedCorrectly) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
     // wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, rootDeviceEnvironment, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface, disableEUFusion
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
@@ -276,7 +276,7 @@ TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLo
 
 TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
     WorkSizeInfo wsInfo(256, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
 
     uint32_t workDim = 2;
@@ -390,7 +390,7 @@ TEST_F(LocalWorkSizeTest, given3DimWorkGroupAndSimdEqual32WhenComputeCalledThenL
 
 TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSquaredAlgorithmWhenComputeCalledThenLocalGroupComputed) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
     WorkSizeInfo wsInfo(256, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
     uint32_t workDim = 2;
@@ -405,7 +405,7 @@ TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSquaredAlgorithmWhenComputeCalled
 
 TEST_F(LocalWorkSizeTest, given1DimWorkGroupAndSquaredAlgorithmOnWhenComputeCalledThenSquaredAlgorithmIsNotExecuted) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
     WorkSizeInfo wsInfo(256, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
     uint32_t workDim = 1;
@@ -420,7 +420,7 @@ TEST_F(LocalWorkSizeTest, given1DimWorkGroupAndSquaredAlgorithmOnWhenComputeCall
 
 TEST_F(LocalWorkSizeTest, given2DdispatchWithImagesAndSquaredAlgorithmOnWhenLwsIsComputedThenSquaredAlgorithmIsNotExecuted) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
     WorkSizeInfo wsInfo(256, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, true, false, false);
     uint32_t workDim = 2;
@@ -768,7 +768,7 @@ TEST_F(LocalWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupCom
 
 TEST_F(LocalWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8WhenGwsIs1024ThenLwsIsComputedAsMaxOptimalMultipliedBySimd) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
     WorkSizeInfo wsInfo(1024, 0u, 8, 0u, rootDeviceEnvironment, 56u, 0u, false, false, false);
 
     uint32_t workDim = 2;
@@ -783,7 +783,7 @@ TEST_F(LocalWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8Wh
 
 TEST_F(LocalWorkSizeTest, givenDeviceWith36ThreadsPerSubsliceWhenSimd16KernelIsBeingSubmittedThenWorkgroupContainsOf8HwThreads) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
     WorkSizeInfo wsInfo(256, 0u, 16, 0u, rootDeviceEnvironment, 36u, 0u, false, false, false);
 
     uint32_t workDim = 2;
@@ -798,7 +798,7 @@ TEST_F(LocalWorkSizeTest, givenDeviceWith36ThreadsPerSubsliceWhenSimd16KernelIsB
 
 TEST_F(LocalWorkSizeTest, givenDeviceWith56ThreadsPerSubsliceWhenSimd16KernelIsBeingSubmittedThenWorkgroupContainsOf16HwThreads) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
     WorkSizeInfo wsInfo(256, 0u, 16, 0u, rootDeviceEnvironment, 56u, 0u, false, false, false);
 
     uint32_t workDim = 2;
@@ -887,14 +887,14 @@ HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestE
 
     {
         const bool fusedEuDispatchDisabled = true;
-        DebugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
+        debugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
         WorkSizeInfo workSizeInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
         EXPECT_EQ(nonFusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
     }
 
     {
         const bool fusedEuDispatchDisabled = false;
-        DebugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
+        debugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
         WorkSizeInfo workSizeInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
         EXPECT_EQ(fusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
     }
@@ -909,14 +909,14 @@ HWTEST2_F(LocalWorkSizeTest, givenWorkSizeInfoIsCreatedWithHwInfoThenTestEuFusio
 
     {
         const bool fusedEuDispatchDisabled = true;
-        DebugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
+        debugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
         WorkSizeInfo workSizeInfo(512, 1u, 16, 0u, rootDeviceEnvironment, 36u, 0u, false, false, false);
         EXPECT_EQ(nonFusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
     }
 
     {
         const bool fusedEuDispatchDisabled = false;
-        DebugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
+        debugManager.flags.CFEFusedEUDispatch.set(fusedEuDispatchDisabled);
         WorkSizeInfo workSizeInfo(512, 1u, 16, 0u, rootDeviceEnvironment, 36u, 0u, false, false, false);
         EXPECT_EQ(fusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
     }

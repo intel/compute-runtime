@@ -287,8 +287,8 @@ struct PerformanceHintKernelTest : public PerformanceHintTest,
                                    public ::testing::WithParamInterface<bool /*zero-sized*/> {
 
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(2);
-        DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+        debugManager.flags.CreateMultipleRootDevices.set(2);
+        debugManager.flags.EnableMultiRootDeviceContexts.set(true);
         PerformanceHintTest::SetUp();
         zeroSized = GetParam();
     }

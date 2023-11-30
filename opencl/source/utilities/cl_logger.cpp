@@ -23,7 +23,7 @@ ClFileLogger<debugLevel>::ClFileLogger(FileLogger<debugLevel> &baseLoggerIn, con
 }
 
 ClFileLogger<globalDebugFunctionalityLevel> &getClFileLogger() {
-    static ClFileLogger<globalDebugFunctionalityLevel> clFileLoggerInstance(fileLoggerInstance(), DebugManager.flags);
+    static ClFileLogger<globalDebugFunctionalityLevel> clFileLoggerInstance(fileLoggerInstance(), debugManager.flags);
     return clFileLoggerInstance;
 }
 

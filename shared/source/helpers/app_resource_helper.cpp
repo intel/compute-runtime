@@ -14,7 +14,7 @@
 namespace NEO {
 
 void AppResourceHelper::copyResourceTagStr(char *dst, AllocationType type, size_t size) {
-    if (DebugManager.flags.EnableResourceTags.get()) {
+    if (debugManager.flags.EnableResourceTags.get()) {
         auto tag = getResourceTagStr(type);
         strcpy_s(dst, size, tag);
     }

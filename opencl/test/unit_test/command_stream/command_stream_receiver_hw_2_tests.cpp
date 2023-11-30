@@ -399,7 +399,7 @@ HWTEST_F(BcsTests, whenBlitBufferThenCommandBufferHasProperTaskCount) {
 
 HWTEST_F(BcsTests, givenUpdateTaskCountFromWaitWhenBlitBufferThenCsrHasProperTaskCounts) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

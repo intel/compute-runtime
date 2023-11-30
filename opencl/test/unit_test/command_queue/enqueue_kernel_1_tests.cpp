@@ -536,7 +536,7 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCommandsAreAdded) {
 
 HWTEST_F(EnqueueKernelTest, GivenGpuHangAndBlockingCallWhenEnqueingKernelThenOutOfResourcesIsReported) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -753,7 +753,7 @@ HWTEST_F(EnqueueKernelTest, givenEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedI
 
 HWTEST_F(EnqueueKernelTest, givenGpuHangAndBlockingCallAndEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedInDimensionThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -1409,7 +1409,7 @@ HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelReturnin
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenBlockingCallIsMadeThenEventAssociatedWithCommandHasProperFlushStamp) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1688,8 +1688,8 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithEngineHintsThenEpilogRequiredIs
 
 HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenEnqueingKernelWithoutSharedAllocationsThenMemoryPrefetchIsNotCalled) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
     MockKernelWithInternals mockKernel(*pClDevice);
     size_t gws[3] = {1, 1, 1};
@@ -1702,8 +1702,8 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
 
 HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenEnqueingKernelWithSharedAllocationsThenMemoryPrefetchIsCalled) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     auto ptr = context->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, pCmdQ);
@@ -1769,8 +1769,8 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
     template <typename FamilyType>
     bool verifyLoadRegImm(const GenCmdList::iterator &iterator) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-        uint32_t expectedRegisterOffset = DebugManager.flags.GpuScratchRegWriteRegisterOffset.get();
-        uint32_t expectedRegisterData = DebugManager.flags.GpuScratchRegWriteRegisterData.get();
+        uint32_t expectedRegisterOffset = debugManager.flags.GpuScratchRegWriteRegisterOffset.get();
+        uint32_t expectedRegisterData = debugManager.flags.GpuScratchRegWriteRegisterData.get();
         auto loadRegImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*iterator);
 
         if ((expectedRegisterOffset == loadRegImm->getRegisterOffset()) &&
@@ -1849,7 +1849,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.PauseOnEnqueue.set(1);
+    debugManager.flags.PauseOnEnqueue.set(1);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -1874,7 +1874,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToMinusTwoWhenDispatchWalker
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.PauseOnEnqueue.set(-2);
+    debugManager.flags.PauseOnEnqueue.set(-2);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -1898,8 +1898,8 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
+    debugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -1922,8 +1922,8 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
+    debugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -1946,8 +1946,8 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
+    debugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -1970,7 +1970,7 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnEnqueue.set(0);
 
     pCmdQ->setIsSpecialCommandQueue(true);
 
@@ -1994,9 +1994,9 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenDontI
 }
 
 HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInsertLoadRegisterImmCommandAroundSpecifiedEnqueue) {
-    DebugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
-    DebugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
-    DebugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
+    debugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+    debugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
+    debugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -2019,9 +2019,9 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInse
 }
 
 HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatcMultiplehWalkersThenInsertLoadRegisterImmCommandOnlyOnce) {
-    DebugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
-    DebugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
-    DebugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
+    debugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+    debugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
+    debugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
 
     MockKernelWithInternals mockKernel(*pClDevice);
 
@@ -2047,7 +2047,7 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenEstimatingCommandStream
     multiDispatchInfo.push(dispatchInfo);
 
     auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, nullptr);
-    DebugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+    debugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
 
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, nullptr);
 

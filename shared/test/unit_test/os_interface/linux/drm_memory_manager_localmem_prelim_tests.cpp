@@ -328,7 +328,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationT
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
        whenCreateUnifiedMemoryAllocationWithChunkingThenGemCreateExtAndPreferredLocationAreUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(1);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(1);
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
@@ -620,7 +620,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationW
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrationPolicyWhenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithAllRegions) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
+    debugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
 
     std::vector<MemoryRegion> regionInfo(4);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
@@ -669,7 +669,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationThenKmdMigratedAllocationIsCreated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -712,7 +712,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, MmapFailWhenCreateSharedUnifiedMemoryAllocationThenNullPtrReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -740,7 +740,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, MmapFailWhenCreateSharedUnifiedMem
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationWithDeviceThenKmdMigratedAllocationIsCreated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -787,7 +787,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhenCreatingKmdMigratedAllocationThenApplyVmAdviseAtomicCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -804,7 +804,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
     unifiedMemoryProperties.device = device.get();
 
     for (auto atomicAdvise : {-1, 0, 1, 2}) {
-        DebugManager.flags.SetVmAdviseAtomicAttribute.set(atomicAdvise);
+        debugManager.flags.SetVmAdviseAtomicAttribute.set(atomicAdvise);
 
         auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
         ASSERT_NE(ptr, nullptr);
@@ -833,7 +833,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLocationWhenCreatingKmdMigratedAllocationThenApplyVmAdvisePreferredLocationCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -850,7 +850,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
     unifiedMemoryProperties.device = device.get();
 
     for (auto preferredLocation : {-1, 0, 1, 2}) {
-        DebugManager.flags.SetVmAdvisePreferredLocation.set(preferredLocation);
+        debugManager.flags.SetVmAdvisePreferredLocation.set(preferredLocation);
 
         auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
         ASSERT_NE(ptr, nullptr);
@@ -884,8 +884,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWhenCreatedInLocalMemory1OnlyThenApplyMemoryInstanceAndVmAdvisePreferredLocationCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideMultiStoragePlacement.set(0b10);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.OverrideMultiStoragePlacement.set(0b10);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -937,8 +937,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWh
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersWhenCreatingKmdMigratedSharedAllocationThenDontSetPreferredLocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.CreateContextWithAccessCounters.set(1);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -978,9 +978,9 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersButOverridenWithSetVmAdvisePreferredLocationWhenCreatingKmdMigratedSharedAllocationThenSetPreferredLocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
-    DebugManager.flags.SetVmAdvisePreferredLocation.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.CreateContextWithAccessCounters.set(1);
+    debugManager.flags.SetVmAdvisePreferredLocation.set(1);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -1028,9 +1028,9 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetToGpuWhenCreateUnifiedSharedMemoryWithOverridenMultiStoragePlacementThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.UsmInitialPlacement.set(1);
-    DebugManager.flags.OverrideMultiStoragePlacement.set(0x1);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UsmInitialPlacement.set(1);
+    debugManager.flags.OverrideMultiStoragePlacement.set(0x1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -1071,9 +1071,9 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrationPolicyAndUsmInitialPlacementSetToGpuWhenCreateSharedUnifiedMemoryAllocationOnMultiTileArchitectureThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
-    DebugManager.flags.UsmInitialPlacement.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
+    debugManager.flags.UsmInitialPlacement.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -1194,7 +1194,7 @@ TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenUnifiedMemoryAlloc
 
 TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsUnsetWhenCreatedWithInitialPlacementOnGpuThenCallVmPrefetchCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
+    debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
 
     DeviceBitfield subDevices = 0b11;
     AllocationProperties gpuProperties{0u,
@@ -1219,7 +1219,7 @@ TEST_F(DrmMemoryManagerWithMultipleSubDevicesPrelimTest, givenCreateKmdMigratedS
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSharedUnifiedMemoryAllocationReturnsNullptr) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -1243,7 +1243,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSh
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationFailsThenNullptrReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -1265,7 +1265,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationIsCalledThenKmdMigratedAllocationWithMultipleBOsIsCreated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -1311,8 +1311,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsClearedWhenCreateSharedUnifiedMemoryAllocationIsCalledThenKmdMigratedAllocationWithSingleBOsIsCreated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -1403,7 +1403,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenGemCreateExtFailWhenCreateUni
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoWhenAllocateWithAlignmentThenGemCreateExtIsUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(-1);
+    debugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1431,7 +1431,7 @@ static uint32_t munmapCalledCount = 0u;
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapReturnsUnalignedPointerThenCreateAllocWithAlignmentUnmapTwoUnalignedPart) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(-1);
+    debugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1473,7 +1473,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapReturnsAlignedThenCreateAllocWithAlignmentUnmapOneUnalignedPart) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(-1);
+    debugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1515,7 +1515,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenInvalidCacheRegionWhenMmapReturnsUnalignedPointerThenReleaseUnalignedPartsEarly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(-1);
+    debugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1555,7 +1555,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenInvalidCacheRegionWhenMmapRet
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedMmapOffsetWhenAllocateWithAlignmentThenNullptr) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(-1);
+    debugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1575,7 +1575,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedMmapOffset
 }
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndDisabledMmapBOCreationtWhenAllocateWithAlignmentThenUserptrIsUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(0);
+    debugManager.flags.EnableBOMmapCreate.set(0);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1598,7 +1598,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndDisabledMmapBOCr
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndNotUseObjectMmapPropertyWhenAllocateWithAlignmentThenUserptrIsUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(0);
+    debugManager.flags.EnableBOMmapCreate.set(0);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1622,7 +1622,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndNotUseObjectMmap
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedGemCreateExtWhenAllocateWithAlignmentThenNullptr) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOMmapCreate.set(-1);
+    debugManager.flags.EnableBOMmapCreate.set(-1);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
@@ -1642,7 +1642,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedGemCreateE
 
 HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferAndBufferCompressedThenCreateGmmWithCorrectAuxFlags) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
                                     AllocationType::BUFFER,
@@ -1672,8 +1672,8 @@ HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenGr
 
 HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionWhenGraphicsAllocationCanBeAccessedStatelesslyThenPreferCompressed) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -1962,7 +1962,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithLocalMemo
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagSetWhileCreatingBufferObjectInMemoryRegionThenDebugInformationIsPrinted) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
@@ -1992,8 +1992,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagWhenCreatingSharedUnifiedAllocationThenPrintIoctlResult) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -2123,7 +2123,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSipKernelTypeWhenAllocatingTh
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugVariableSetWhenAllocatingThenForceHeapAlignment) {
-    DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(static_cast<int32_t>(MemoryConstants::megaByte * 2));
+    debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(static_cast<int32_t>(MemoryConstants::megaByte * 2));
 
     const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
     AllocationProperties properties = {rootDeviceIndex, 0x1000, allocType, device->getDeviceBitfield()};
@@ -2655,7 +2655,7 @@ TEST_F(DrmMemoryManagerTestPrelim,
     mock->ioctlExpected.gemMmapOffset = 1;
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     osHandle handle = 1u;
     size_t size = 4096u;
@@ -3035,7 +3035,7 @@ INSTANTIATE_TEST_CASE_P(Drm57Bit,
 
 struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTemplate<DrmMockCustomPrelim> {
     void SetUp() override {
-        DebugManager.flags.UseVmBind.set(1u);
+        debugManager.flags.UseVmBind.set(1u);
         DrmCommandStreamEnhancedTemplate::SetUp();
     }
     void TearDown() override {

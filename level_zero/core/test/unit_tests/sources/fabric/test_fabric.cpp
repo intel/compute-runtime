@@ -219,7 +219,7 @@ TEST_F(FabricVertexFixture, GivenDevicesAreCreatedWhenFabricVertexIsNotSetToDevi
 class FabricVertexFlatDeviceTestFixture : public MultiDeviceFixtureHierarchy,
                                           public ::testing::Test {
     void SetUp() override {
-        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+        NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
         MultiDeviceFixtureHierarchy::setUp();
     }
 
@@ -258,7 +258,7 @@ TEST_F(FabricVertexFlatDeviceTestFixture, GivenFlatHierarchyWhenFabricVerticesGe
 class FabricVertexTestFixture : public MultiDeviceFixture,
                                 public ::testing::Test {
     void SetUp() override {
-        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+        NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
         MultiDeviceFixture::setUp();
     }
 

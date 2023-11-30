@@ -79,13 +79,13 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
     appendClearColor(blitProperties, blitCmd);
 
     uint32_t compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
-    if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
-        compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
+    if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
+        compressionFormat = debugManager.flags.ForceBufferCompressionFormat.get();
     }
 
     auto compressionEnabledField = XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE;
-    if (DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get() != -1) {
-        compressionEnabledField = static_cast<typename XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE>(DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
+    if (debugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get() != -1) {
+        compressionEnabledField = static_cast<typename XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE>(debugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
     }
 
     if (blitProperties.dstAllocation->isCompressionEnabled()) {
@@ -130,18 +130,18 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
-    if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+    if (debugManager.flags.OverrideBlitterMocs.get() == 1) {
         mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     }
 
     blitCmd.setDestinationMOCS(mocs);
     blitCmd.setSourceMOCS(mocs);
 
-    if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
-        if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
+    if (debugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
+        if (debugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
             blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
             blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-        } else if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
+        } else if (debugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
             blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
             blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
         }

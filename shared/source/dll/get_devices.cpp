@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
         returnValue = prepareDeviceEnvironmentImpl(executionEnvironment, osPciPath, rootDeviceIndex);
     }
 
-    if (DebugManager.flags.Force32BitDriverSupport.get() != -1) {
+    if (debugManager.flags.Force32BitDriverSupport.get() != -1) {
         return returnValue;
     }
 

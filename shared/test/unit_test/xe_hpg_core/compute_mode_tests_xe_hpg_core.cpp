@@ -63,8 +63,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     };
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
     for (auto testValue : testValues) {
-        DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(testValue.zPassThreadLimit);
-        DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(testValue.pixelThreadLimit);
+        debugManager.flags.ForceZPassAsyncComputeThreadLimit.set(testValue.zPassThreadLimit);
+        debugManager.flags.ForcePixelAsyncComputeThreadLimit.set(testValue.pixelThreadLimit);
 
         pCsr->streamProperties.stateComputeMode = {};
         pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
@@ -85,8 +85,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
         EXPECT_TRUE(isValueSet(pScmCmd->getMaskBits(), expectedFields));
     }
 
-    DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(-1);
-    DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(-1);
+    debugManager.flags.ForceZPassAsyncComputeThreadLimit.set(-1);
+    debugManager.flags.ForcePixelAsyncComputeThreadLimit.set(-1);
 
     pCsr->streamProperties.stateComputeMode = {};
     pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);

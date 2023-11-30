@@ -94,7 +94,7 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
         EXPECT_EQ((tilingSupported & allowedType), !productHelper.isLinearStoragePreferred(Image::isImage1d(imgDesc), false));
         {
             DebugManagerStateRestore restore;
-            DebugManager.flags.ForceLinearImages.set(true);
+            debugManager.flags.ForceLinearImages.set(true);
             // dont force linear storage + debug flag
             EXPECT_TRUE(productHelper.isLinearStoragePreferred(Image::isImage1d(imgDesc), false));
         }

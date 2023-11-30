@@ -23,8 +23,8 @@ struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
         if (!OSInterface::osEnableLocalMemory) {
             GTEST_SKIP();
         }
-        DebugManager.flags.EnableWalkerPartition.set(1u);
-        DebugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
+        debugManager.flags.EnableWalkerPartition.set(1u);
+        debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
 
         rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 0));
 

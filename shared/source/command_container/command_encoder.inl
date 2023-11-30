@@ -436,7 +436,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
         setBufferAuxParamsForCCS(surfaceState);
     }
 
-    if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
+    if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
         surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
@@ -564,8 +564,8 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
 template <typename Family>
 bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc) {
     auto checkKernelForInlineData = true;
-    if (DebugManager.flags.EnablePassInlineData.get() != -1) {
-        checkKernelForInlineData = !!DebugManager.flags.EnablePassInlineData.get();
+    if (debugManager.flags.EnablePassInlineData.get() != -1) {
+        checkKernelForInlineData = !!debugManager.flags.EnablePassInlineData.get();
     }
     if (checkKernelForInlineData) {
         return kernelDesc.kernelAttributes.flags.passInlineData;
@@ -697,8 +697,8 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
 template <typename Family>
 bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
     auto enableBindingTablePrefetech = isBindingTablePrefetchPreferred();
-    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
-        enableBindingTablePrefetech = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
+    if (debugManager.flags.ForceBtpPrefetchMode.get() != -1) {
+        enableBindingTablePrefetech = static_cast<bool>(debugManager.flags.ForceBtpPrefetchMode.get());
     }
     return enableBindingTablePrefetech;
 }

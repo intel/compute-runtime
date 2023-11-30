@@ -20,7 +20,7 @@ namespace ult {
 
 void MetricIpSamplingFixture::SetUp() {
 
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1;
     MultiDeviceFixture::numSubDevices = 2;

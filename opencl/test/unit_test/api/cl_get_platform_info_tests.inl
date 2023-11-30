@@ -51,13 +51,13 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformProfileWhenGettingPlatformInfoStri
 class ClGetPlatformInfoParameterizedTests : public ClGetPlatformInfoTests,
                                             public ::testing::WithParamInterface<uint32_t> {
     void SetUp() override {
-        DebugManager.flags.ForceOCLVersion.set(GetParam());
+        debugManager.flags.ForceOCLVersion.set(GetParam());
         ClGetPlatformInfoTests::SetUp();
     }
 
     void TearDown() override {
         ClGetPlatformInfoTests::TearDown();
-        DebugManager.flags.ForceOCLVersion.set(0);
+        debugManager.flags.ForceOCLVersion.set(0);
     }
 };
 
@@ -104,7 +104,7 @@ TEST_F(ClGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringT
 class ClGetPlatformInfoOverridePlatformNameTests : public ClGetPlatformInfoTests {
   public:
     void SetUp() override {
-        NEO::DebugManager.flags.OverridePlatformName.set(testPlatformName);
+        NEO::debugManager.flags.OverridePlatformName.set(testPlatformName);
         ClGetPlatformInfoTests::SetUp();
     }
 

@@ -433,7 +433,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
 
 TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhenGmmIsCreatedThenNonLocalOnlyFlagIsNotSetAndNotLockableAndLocalOnlyIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    debugManager.flags.RenderCompressedImagesEnabled.set(1);
     ImageInfo imgInfo = {};
     cl_image_desc desc = {0};
     desc.image_type = CL_MEM_OBJECT_IMAGE1D;

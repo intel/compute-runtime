@@ -41,7 +41,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMa
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenDebugFlagSetWhenGetMaxWorkGroupCountCalledThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.OverrideMaxWorkGroupCount.set(123);
+    debugManager.flags.OverrideMaxWorkGroupCount.set(123);
 
     EXPECT_EQ(123u, getMaxWorkGroupCount());
 }

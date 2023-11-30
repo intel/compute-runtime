@@ -66,7 +66,7 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
 template <bool enabled>
 struct EnqueueHandlerTimestampTest : public EnqueueHandlerTest {
     void SetUp() override {
-        DebugManager.flags.EnableTimestampPacket.set(enabled);
+        debugManager.flags.EnableTimestampPacket.set(enabled);
         EnqueueHandlerTest::SetUp();
     }
 
@@ -256,8 +256,8 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectThrot
 
 HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKernelThenDoImplicitFlush) {
     using CsrType = MockCsrHw2<FamilyType>;
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
-    DebugManager.flags.EnableTimestampPacket.set(1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+    debugManager.flags.EnableTimestampPacket.set(1);
 
     setUpImpl<CsrType>();
     REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
@@ -361,8 +361,8 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKern
 
 HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {
     using CsrType = MockCsrHw2<FamilyType>;
-    DebugManager.flags.EnableTimestampPacket.set(1);
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+    debugManager.flags.EnableTimestampPacket.set(1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
     setUpImpl<CsrType>();
     REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());

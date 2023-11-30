@@ -114,7 +114,7 @@ HWTEST_F(ImageSurfaceStateTests, givenGmmWhenSetAuxParamsForCCSThenAuxiliarySurf
 
 HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsEnabledThenArrayFlagIsSet) {
     DebugManagerStateRestore debugSettingsRestore;
-    DebugManager.flags.Force2dImageAsArray.set(1);
+    debugManager.flags.Force2dImageAsArray.set(1);
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
@@ -138,7 +138,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsEnabledThenArrayFlag
 
 HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsDisabledThenArrayFlagIsNotSet) {
     DebugManagerStateRestore debugSettingsRestore;
-    DebugManager.flags.Force2dImageAsArray.set(0);
+    debugManager.flags.Force2dImageAsArray.set(0);
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
@@ -162,7 +162,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsDisabledThenArrayFla
 
 HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsEnabledThenArrayFlagIsSet) {
     DebugManagerStateRestore debugSettingsRestore;
-    DebugManager.flags.Force2dImageAsArray.set(1);
+    debugManager.flags.Force2dImageAsArray.set(1);
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
@@ -186,7 +186,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsEnabledT
 
 HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabledThenArrayFlagIsNotSet) {
     DebugManagerStateRestore debugSettingsRestore;
-    DebugManager.flags.Force2dImageAsArray.set(0);
+    debugManager.flags.Force2dImageAsArray.set(0);
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
@@ -210,7 +210,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabled
 
 HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlagIsNotSet) {
     DebugManagerStateRestore debugSettingsRestore;
-    DebugManager.flags.Force2dImageAsArray.set(1);
+    debugManager.flags.Force2dImageAsArray.set(1);
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());

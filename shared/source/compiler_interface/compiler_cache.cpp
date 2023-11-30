@@ -66,7 +66,7 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
            << std::hex
            << res;
 
-    if (DebugManager.flags.BinaryCacheTrace.get()) {
+    if (debugManager.flags.BinaryCacheTrace.get()) {
         std::string traceFilePath = config.cacheDir + PATH_SEPARATOR + stream.str() + ".trace";
         std::string inputFilePath = config.cacheDir + PATH_SEPARATOR + stream.str() + ".input";
         std::lock_guard<std::mutex> lock(cacheAccessMtx);

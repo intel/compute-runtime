@@ -820,8 +820,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     }
     unifyExcludeIrFlags();
 
-    if (DebugManager.flags.OverrideRevision.get() != -1) {
-        revisionId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+    if (debugManager.flags.OverrideRevision.get() != -1) {
+        revisionId = static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
     }
 
     if (retVal == OCLOC_SUCCESS) {
@@ -882,8 +882,8 @@ void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     if (!deviceName.empty()) {
         isStatelessToStatefulBufferOffsetSupported = compilerProductHelper->isStatelessToStatefulBufferOffsetSupported();
     }
-    if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
-        isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
+    if (debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
+        isStatelessToStatefulBufferOffsetSupported = debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
     if (isStatelessToStatefulBufferOffsetSupported) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);

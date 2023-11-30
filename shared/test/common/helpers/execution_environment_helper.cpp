@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_
     ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(rootDeviceEnvironments);
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(rootDeviceEnvironments);
+    debugManager.flags.CreateMultipleRootDevices.set(rootDeviceEnvironments);
     hwInfo = nullptr;
     DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();

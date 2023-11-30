@@ -62,8 +62,8 @@ bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
     const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount();
-    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
-        return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
     return enabled;
 }
@@ -104,8 +104,8 @@ uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQue
 
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
-    if (DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
-        return DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
     }
     return 1u;
 }

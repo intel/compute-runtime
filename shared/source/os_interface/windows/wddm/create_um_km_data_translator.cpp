@@ -271,7 +271,7 @@ std::unique_ptr<UmKmDataTranslator> createUmKmDataTranslator(const Gdi &gdi, D3D
 #if !defined(_WIN32)
     requiresWslComputeHelper = true;
 #endif
-    if (requiresWslComputeHelper || NEO::DebugManager.flags.UseUmKmDataTranslator.get()) {
+    if (requiresWslComputeHelper || NEO::debugManager.flags.UseUmKmDataTranslator.get()) {
         auto wpath = queryAdapterDriverStorePath(gdi, adapter);
         std::string path;
         if (strlen(wslComputeHelperLibNameToLoad)) {

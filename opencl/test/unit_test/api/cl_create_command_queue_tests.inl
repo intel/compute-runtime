@@ -86,7 +86,7 @@ HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenComma
 
 HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedAndUpdateTaskCountFromWaitEnabledThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
@@ -104,7 +104,7 @@ HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedAndUpdate
 
 HWTEST_F(ClCreateCommandQueueTest, givenForcedDispatchModeAndOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
 
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;

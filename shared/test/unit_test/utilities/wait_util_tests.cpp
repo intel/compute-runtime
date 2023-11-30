@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ TEST(WaitTest, givenDebugFlagOverridesWhenNoPollAddressProvidedThenPauseDefaultT
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount);
 
     uint32_t count = 10u;
-    DebugManager.flags.WaitLoopCount.set(count);
+    debugManager.flags.WaitLoopCount.set(count);
 
     WaitUtils::init();
     EXPECT_EQ(count, WaitUtils::waitCount);
@@ -77,7 +77,7 @@ TEST(WaitTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsCriteriaThenPaus
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount);
 
     uint32_t count = 0u;
-    DebugManager.flags.WaitLoopCount.set(count);
+    debugManager.flags.WaitLoopCount.set(count);
 
     WaitUtils::init();
     EXPECT_EQ(count, WaitUtils::waitCount);

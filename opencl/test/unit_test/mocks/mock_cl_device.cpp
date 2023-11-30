@@ -26,7 +26,7 @@ MockClDevice::MockClDevice(MockDevice *pMockDevice)
 
 ExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
     auto executionEnvironment = new MockClExecutionEnvironment();
-    auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
+    auto numRootDevices = debugManager.flags.CreateMultipleRootDevices.get() ? debugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
     pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {

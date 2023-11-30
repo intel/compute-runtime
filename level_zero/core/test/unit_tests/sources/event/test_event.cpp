@@ -237,7 +237,7 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithNoTimestampFlagThenHasTimestamp
 
 TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndOverrideTimestampEventsFlagThenHasTimestampEventsReturnsFalse) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideTimestampEvents.set(0);
+    NEO::debugManager.flags.OverrideTimestampEvents.set(0);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -252,7 +252,7 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndOverrideTimesta
 
 TEST_F(EventPoolCreate, givenEventPoolCreatedWithoutTimestampFlagAndOverrideTimestampEventsFlagThenHasTimestampEventsReturnsTrue) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideTimestampEvents.set(1);
+    NEO::debugManager.flags.OverrideTimestampEvents.set(1);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -549,7 +549,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
 using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
 HWTEST_F(EventPoolCreateMultiDevice, givenDebugFlagSetWhenCreatingEventThenUseTsPacketSize) {
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
 
     ASSERT_NE(0u, driverHandle->devices.size());
     auto device = driverHandle->devices[0];
@@ -690,7 +690,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithHostVisibleT
 TEST_F(EventPoolIPCHandleTests,
        GivenRemoteEventPoolHasTwoEventPacketsWhenContextWithSinglePacketOpensIpcEventPoolFromIpcHandleThenDiffrentMaxEventPacketsCauseInvalidArgumentError) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     uint32_t numEvents = 1;
     ze_event_pool_desc_t eventPoolDesc = {
@@ -1440,7 +1440,7 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
 
 HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
+    NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.multiTileCapablePlatform());
 
@@ -1476,7 +1476,7 @@ HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseCont
 
 HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpOrXeHpcCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
+    NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.multiTileCapablePlatform());
 
@@ -1562,7 +1562,7 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndOverrideTimeoutSetAndStateInitialThenHostSynchronizeReturnsNotReady) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.set(100);
+    NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(100);
     std::chrono::high_resolution_clock::time_point waitStartTime, currentTime;
     waitStartTime = std::chrono::high_resolution_clock::now();
     ze_result_t result = event->hostSynchronize(0);
@@ -1832,8 +1832,8 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
 
 struct TimestampEventCreateMultiKernelFixture : public EventFixture<1, 1> {
     void setUp() {
-        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-        DebugManager.flags.SignalAllEventPackets.set(0);
+        debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+        debugManager.flags.SignalAllEventPackets.set(0);
         EventFixture<1, 1>::setUp();
     }
 
@@ -1954,7 +1954,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenpCountLargerThanSupportedWhenC
 
 TEST_F(TimestampEventCreate, givenEventWithStaticPartitionOffThenQueryTimestampExpReturnsUnsupported) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.EnableStaticPartitioning.set(0);
+    NEO::debugManager.flags.EnableStaticPartitioning.set(0);
 
     uint32_t pCount = 0;
     auto result = event->queryTimestampsExp(device, &pCount, nullptr);
@@ -1975,7 +1975,7 @@ using EventQueryTimestampExpWithRootDeviceAndSubDevices = Test<MultiDeviceFixtur
 
 TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytimestampExpWithRootDeviceAndSubDevicesThenReturnsCorrectValuesReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+    NEO::debugManager.flags.SignalAllEventPackets.set(0);
 
     std::unique_ptr<L0::EventPool> eventPool;
     std::unique_ptr<EventImp<uint32_t>> eventRoot;
@@ -2121,7 +2121,7 @@ TEST_F(EventqueryKernelTimestampsExt, givenpCountLargerThanSupportedWhenCallingQ
 
 TEST_F(EventqueryKernelTimestampsExt, givenEventWithStaticPartitionOffThenQueryKernelTimestampsExtReturnsUnsupported) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.EnableStaticPartitioning.set(0);
+    NEO::debugManager.flags.EnableStaticPartitioning.set(0);
 
     event->hasKerneMappedTsCapability = true;
 
@@ -2278,7 +2278,7 @@ HWTEST_F(HostMappedEventTests, givenEventTimestampRefreshIntervalInMilliSecIsSet
 
     const uint32_t refereshIntervalMillisec = 10;
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.set(refereshIntervalMillisec);
+    NEO::debugManager.flags.EventTimestampRefreshIntervalInMilliSec.set(refereshIntervalMillisec);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
@@ -2308,7 +2308,7 @@ HWTEST_F(HostMappedEventTests, givenEventTimestampRefreshIntervalInMilliSecIsSet
 
     const uint32_t refereshIntervalMillisec = 10;
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.set(refereshIntervalMillisec);
+    NEO::debugManager.flags.EventTimestampRefreshIntervalInMilliSec.set(refereshIntervalMillisec);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
@@ -3019,7 +3019,7 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
 }
 
 HWTEST_F(EventSizeTests, givenDebugFlagSetWhenCreatingEventThenUseTsPacketSize) {
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
@@ -3045,7 +3045,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(4);
+        debugManager.flags.OverrideTimestampPacketSize.set(4);
 
         ze_result_t result = ZE_RESULT_SUCCESS;
         eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
@@ -3066,7 +3066,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(8);
+        debugManager.flags.OverrideTimestampPacketSize.set(8);
 
         ze_result_t result = ZE_RESULT_SUCCESS;
         eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
@@ -3087,7 +3087,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(12);
+        debugManager.flags.OverrideTimestampPacketSize.set(12);
         ze_result_t result = ZE_RESULT_SUCCESS;
         EXPECT_ANY_THROW(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
         EXPECT_ANY_THROW(createEvents());
@@ -3096,7 +3096,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
 
 HWTEST_F(EventTests, givenDebugFlagSetWhenCreatingNonTimestampEventsThenPacketsSizeIsQword) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -3505,7 +3505,7 @@ TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndRetur
 }
 
 TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) {
-    DebugManager.flags.SynchronizeEventBeforeReset.set(1);
+    debugManager.flags.SynchronizeEventBeforeReset.set(1);
 
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     event->failOnNextQueryStatus = true;
@@ -3526,7 +3526,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) 
 }
 
 TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBeforeReset) {
-    DebugManager.flags.SynchronizeEventBeforeReset.set(2);
+    debugManager.flags.SynchronizeEventBeforeReset.set(2);
 
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(eventPool.get(), 1u, device);
     *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
@@ -3747,15 +3747,15 @@ TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
 template <int32_t multiTile, int32_t signalRemainingPackets>
 struct EventDynamicPacketUseFixture : public DeviceFixture {
     void setUp() {
-        NEO::DebugManager.flags.UseDynamicEventPacketsCount.set(1);
+        NEO::debugManager.flags.UseDynamicEventPacketsCount.set(1);
         if constexpr (multiTile == 1) {
-            DebugManager.flags.CreateMultipleSubDevices.set(2);
-            DebugManager.flags.EnableImplicitScaling.set(1);
+            debugManager.flags.CreateMultipleSubDevices.set(2);
+            debugManager.flags.EnableImplicitScaling.set(1);
         }
-        NEO::DebugManager.flags.SignalAllEventPackets.set(signalRemainingPackets);
+        NEO::debugManager.flags.SignalAllEventPackets.set(signalRemainingPackets);
         if constexpr (signalRemainingPackets == 1) {
-            NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-            NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
+            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+            NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
         }
         DeviceFixture::setUp();
     }
@@ -4102,7 +4102,7 @@ TEST_F(ImmediateEventAllPacketSignalSinglePacketUseTest, givenSignalAllEventPack
 
 struct LocalMemoryEnabledDeviceFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         DeviceFixture::setUp();
     }
     void tearDown() {

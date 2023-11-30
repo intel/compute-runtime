@@ -103,7 +103,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndUseHostptrDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
+    debugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
     MockContext context;
     auto hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize;
@@ -117,7 +117,7 @@ TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndUseHostptrDis
 
 TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableZeroCopyForBuffers.set(true);
+    debugManager.flags.DisableZeroCopyForBuffers.set(true);
     MockContext context;
     auto hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize;
@@ -132,7 +132,7 @@ TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndDisableZeroCo
 
 TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableZeroCopyForBuffers.set(true);
+    debugManager.flags.DisableZeroCopyForBuffers.set(true);
     MockContext context;
     auto retVal = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_ALLOC_HOST_PTR, MemoryConstants::pageSize, nullptr, retVal));
@@ -150,7 +150,7 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
 
 TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.Force32bitAddressing.set(true);
+    debugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
     auto hostPtr = (void *)alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize;

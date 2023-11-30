@@ -34,7 +34,7 @@ struct AUBReadImage
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, ReadImageParams>>,
       public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.EnableFreeMemory.set(false);
         ImageAubFixture::setUp(enableBlitter);
     }
 

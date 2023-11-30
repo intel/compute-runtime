@@ -212,7 +212,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsN
 
 TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdContainerIsInitializedThenInstructionBaseAddressIsSetToInternalHeap) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 1;
@@ -236,7 +236,7 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
 
 TEST_F(CommandContainerTest, givenForceDefaultHeapSizeWhenCmdContainerIsInitializedThenHeapIsCreatedWithProperSize) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceDefaultHeapSize.set(32); // in KB
+    debugManager.flags.ForceDefaultHeapSize.set(32); // in KB
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 1;
@@ -304,7 +304,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
 
 TEST_F(CommandContainerTest, givenReusableAllocationsAndRemoveUserFenceInCmdlistResetAndDestroyFlagWhenAllocateAndResetThenHandleFenceCompletionIsCalled) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.set(0);
+    debugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.set(0);
 
     AllocationsList allocList;
     auto cmdContainer = std::make_unique<CommandContainer>();
@@ -869,14 +869,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStre
 TEST_F(CommandContainerTest, GivenCmdContainerAndDebugFlagWhenContainerIsInitializedThenStreamSizeEqualsAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(0);
+    debugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(0);
     MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     size_t alignedSize = alignUp<size_t>(cmdContainer.getAlignedCmdBufferSize(), MemoryConstants::pageSize64k);
     EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
 
     auto newSizeInKB = 512;
-    DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(newSizeInKB);
+    debugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(newSizeInKB);
     MyMockCommandContainer cmdContainer2;
     cmdContainer2.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     alignedSize = alignUp<size_t>(cmdContainer.getAlignedCmdBufferSize(), MemoryConstants::pageSize64k);
@@ -1393,7 +1393,7 @@ struct MockHeapHelper : public HeapHelper {
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThenAllocListsNotEmptyAndMadeResident) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1419,7 +1419,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
 
 TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusableAllocationListsThenCreateAlocsForSecondaryCmdBuffer) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1475,7 +1475,7 @@ TEST_F(CommandContainerTest, givenAllocateCommandBufferInHostMemoryCalledThenFor
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSharedHeapsEnabledThenOnlyOneHeapFilled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<CommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1497,8 +1497,8 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithGlobalSshEnabledThenTwoHeapsFilled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
 
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
@@ -1529,7 +1529,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithoutHeapsThenAllocListNotEmpty) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, false, false);
@@ -1544,7 +1544,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAndDestroyCmdContainerThenGlobalAllocListNotEmpty) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     AllocationsList allocList;
     cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, false, false);
@@ -1566,7 +1566,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAnd
 
 TEST_F(CommandContainerTest, givenCmdContainerWithoutGlobalListWhenFillReusableAllocationListsAndDestroyCmdContainerThenImmediateListUnused) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
 
@@ -1582,7 +1582,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWithoutGlobalListWhenFillReusableA
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSpecifiedAmountThenAllocationsCreated) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(10);
+    debugManager.flags.SetAmountOfReusableAllocations.set(10);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;
@@ -1599,7 +1599,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
 TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeAndAlignmentThenReuseAllocationIfAvailable) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     auto cmdContainer = std::make_unique<CommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;
@@ -1623,7 +1623,7 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAndFlagDisabledThenAllocListEmpty) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
     AllocationsList allocList;

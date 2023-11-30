@@ -125,7 +125,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenScratc
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsContextSupportsMultipleDevicesThenScratchSpaceAllocationIsPlacedOnEachSupportedDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2u);
+    debugManager.flags.CreateMultipleSubDevices.set(2u);
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->memoryManager.reset(new MockMemoryManager(false, true, *executionEnvironment));
     uint32_t tileMask = 0b11;
@@ -450,7 +450,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenBiggerPrivateScratchSpaceRequiredThenReplaceAllocation) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     RENDER_SURFACE_STATE surfaceState[6];
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
@@ -478,7 +478,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceControllerWithOnlyPrivateScratchSpaceWhenGettingPatchAddressThenGetCorrectValue) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     RENDER_SURFACE_STATE surfaceState[6];
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
@@ -507,7 +507,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenNotBiggerPrivateScratchSpaceRequiredThenCfeStateIsNotDirty) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     RENDER_SURFACE_STATE surfaceState[4];
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
@@ -535,7 +535,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateWithoutPrivateScratchSpaceWhenDoubleAllocationsScratchSpaceIsUsedThenPrivateScratchAddressIsZero) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     RENDER_SURFACE_STATE surfaceState[4];
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
@@ -556,7 +556,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceControllerWhenDebugKeyForPrivateScratchIsDisabledThenThereAre16Slots) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(0);
+    debugManager.flags.EnablePrivateScratchSlot1.set(0);
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
     auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
@@ -565,7 +565,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceControllerWhenDebugKeyForPrivateScratchIsEnabledThenThereAre32Slots) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
     auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
@@ -575,7 +575,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenDisabledPrivateScratchSpaceWhenSizeForPrivateScratchSpaceIsProvidedThenItIsNotCreated) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(0);
+    debugManager.flags.EnablePrivateScratchSlot1.set(0);
     RENDER_SURFACE_STATE surfaceState[4];
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
@@ -591,7 +591,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenDisab
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenDisabledPrivateScratchSpaceWhenGettingOffsetForSlotThenEachSlotContainsOnlyOneSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(0);
+    debugManager.flags.EnablePrivateScratchSlot1.set(0);
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
     EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), scratchController->getOffsetToSurfaceState(1u));
@@ -747,9 +747,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPlatf
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenCreatingWorkPartitionAllocationThenItsPropertiesAreCorrect) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableStaticPartitioning.set(1);
-    DebugManager.flags.EnableImplicitScaling.set(1);
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableStaticPartitioning.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice &rootDevice = *deviceFactory.rootDevices[0];
     CommandStreamReceiver &csr = rootDevice.getGpgpuCommandStreamReceiver();

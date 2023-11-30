@@ -15,7 +15,7 @@ namespace NEO {
 
 bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devices, bool preCondition) {
     bool apiSupport = ImplicitScaling::apiSupport;
-    int32_t overrideEnableImplicitScaling = DebugManager.flags.EnableImplicitScaling.get();
+    int32_t overrideEnableImplicitScaling = debugManager.flags.EnableImplicitScaling.get();
     if (overrideEnableImplicitScaling != -1) {
         apiSupport = !!overrideEnableImplicitScaling;
         preCondition = apiSupport;
@@ -25,8 +25,8 @@ bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devic
                            preCondition &&
                            apiSupport;
 
-    if (DebugManager.flags.EnableWalkerPartition.get() != -1) {
-        partitionWalker = !!DebugManager.flags.EnableWalkerPartition.get();
+    if (debugManager.flags.EnableWalkerPartition.get() != -1) {
+        partitionWalker = !!debugManager.flags.EnableWalkerPartition.get();
     }
     // we can't do this without local memory
     partitionWalker &= OSInterface::osEnableLocalMemory;
@@ -36,7 +36,7 @@ bool ImplicitScalingHelper::isImplicitScalingEnabled(const DeviceBitfield &devic
 
 bool ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired() {
     auto synchronizeBeforeExecution = false;
-    int overrideSynchronizeBeforeExecution = DebugManager.flags.SynchronizeWalkerInWparidMode.get();
+    int overrideSynchronizeBeforeExecution = debugManager.flags.SynchronizeWalkerInWparidMode.get();
     if (overrideSynchronizeBeforeExecution != -1) {
         synchronizeBeforeExecution = !!overrideSynchronizeBeforeExecution;
     }
@@ -45,7 +45,7 @@ bool ImplicitScalingHelper::isSynchronizeBeforeExecutionRequired() {
 
 bool ImplicitScalingHelper::isSemaphoreProgrammingRequired() {
     auto semaphoreProgrammingRequired = false;
-    int overrideSemaphoreProgrammingRequired = DebugManager.flags.SynchronizeWithSemaphores.get();
+    int overrideSemaphoreProgrammingRequired = debugManager.flags.SynchronizeWithSemaphores.get();
     if (overrideSemaphoreProgrammingRequired != -1) {
         semaphoreProgrammingRequired = !!overrideSemaphoreProgrammingRequired;
     }
@@ -54,7 +54,7 @@ bool ImplicitScalingHelper::isSemaphoreProgrammingRequired() {
 
 bool ImplicitScalingHelper::isCrossTileAtomicRequired(bool defaultCrossTileRequirement) {
     auto crossTileAtomicSynchronization = defaultCrossTileRequirement;
-    int overrideCrossTileAtomicSynchronization = DebugManager.flags.UseCrossAtomicSynchronization.get();
+    int overrideCrossTileAtomicSynchronization = debugManager.flags.UseCrossAtomicSynchronization.get();
     if (overrideCrossTileAtomicSynchronization != -1) {
         crossTileAtomicSynchronization = !!overrideCrossTileAtomicSynchronization;
     }
@@ -63,7 +63,7 @@ bool ImplicitScalingHelper::isCrossTileAtomicRequired(bool defaultCrossTileRequi
 
 bool ImplicitScalingHelper::isAtomicsUsedForSelfCleanup() {
     bool useAtomics = false;
-    int overrideUseAtomics = DebugManager.flags.UseAtomicsForSelfCleanupSection.get();
+    int overrideUseAtomics = debugManager.flags.UseAtomicsForSelfCleanupSection.get();
     if (overrideUseAtomics != -1) {
         useAtomics = !!(overrideUseAtomics);
     }
@@ -76,7 +76,7 @@ bool ImplicitScalingHelper::isSelfCleanupRequired(const WalkerPartition::WalkerP
                                args.synchronizeBeforeExecution ||
                                !args.staticPartitioning);
 
-    int overrideProgramSelfCleanup = DebugManager.flags.ProgramWalkerPartitionSelfCleanup.get();
+    int overrideProgramSelfCleanup = debugManager.flags.ProgramWalkerPartitionSelfCleanup.get();
     if (overrideProgramSelfCleanup != -1) {
         defaultSelfCleanup = !!(overrideProgramSelfCleanup);
     }
@@ -85,7 +85,7 @@ bool ImplicitScalingHelper::isSelfCleanupRequired(const WalkerPartition::WalkerP
 
 bool ImplicitScalingHelper::isWparidRegisterInitializationRequired() {
     bool initWparidRegister = false;
-    int overrideInitWparidRegister = DebugManager.flags.WparidRegisterProgramming.get();
+    int overrideInitWparidRegister = debugManager.flags.WparidRegisterProgramming.get();
     if (overrideInitWparidRegister != -1) {
         initWparidRegister = !!(overrideInitWparidRegister);
     }
@@ -93,7 +93,7 @@ bool ImplicitScalingHelper::isWparidRegisterInitializationRequired() {
 }
 
 bool ImplicitScalingHelper::isPipeControlStallRequired(bool defaultEmitPipeControl) {
-    int overrideUsePipeControl = DebugManager.flags.UsePipeControlAfterPartitionedWalker.get();
+    int overrideUsePipeControl = debugManager.flags.UsePipeControlAfterPartitionedWalker.get();
     if (overrideUsePipeControl != -1) {
         defaultEmitPipeControl = !!(overrideUsePipeControl);
     }
@@ -101,7 +101,7 @@ bool ImplicitScalingHelper::isPipeControlStallRequired(bool defaultEmitPipeContr
 }
 
 bool ImplicitScalingHelper::pipeControlBeforeCleanupAtomicSyncRequired() {
-    int overrideUsePipeControl = DebugManager.flags.ProgramStallCommandForSelfCleanup.get();
+    int overrideUsePipeControl = debugManager.flags.ProgramStallCommandForSelfCleanup.get();
     if (overrideUsePipeControl != -1) {
         return !!(overrideUsePipeControl);
     }

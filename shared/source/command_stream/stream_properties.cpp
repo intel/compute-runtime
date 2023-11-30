@@ -25,16 +25,16 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     setThreadArbitrationProperty(threadArbitrationPolicy);
 
     int32_t zPassAsyncComputeThreadLimit = -1;
-    if (DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get() != -1) {
-        zPassAsyncComputeThreadLimit = DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get();
+    if (debugManager.flags.ForceZPassAsyncComputeThreadLimit.get() != -1) {
+        zPassAsyncComputeThreadLimit = debugManager.flags.ForceZPassAsyncComputeThreadLimit.get();
     }
     if (zPassAsyncComputeThreadLimit != -1 && this->scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
         this->zPassAsyncComputeThreadLimit.set(zPassAsyncComputeThreadLimit);
     }
 
     int32_t pixelAsyncComputeThreadLimit = -1;
-    if (DebugManager.flags.ForcePixelAsyncComputeThreadLimit.get() != -1) {
-        pixelAsyncComputeThreadLimit = DebugManager.flags.ForcePixelAsyncComputeThreadLimit.get();
+    if (debugManager.flags.ForcePixelAsyncComputeThreadLimit.get() != -1) {
+        pixelAsyncComputeThreadLimit = debugManager.flags.ForcePixelAsyncComputeThreadLimit.get();
     }
     if (pixelAsyncComputeThreadLimit != -1 && this->scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
         this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
@@ -109,13 +109,13 @@ void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
 
 void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbitrationPolicy) {
     bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
-                                             (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
+                                             (NEO::debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
                                               (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
     if (setDefaultThreadArbitrationPolicy) {
         threadArbitrationPolicy = this->defaultThreadArbitrationPolicy;
     }
-    if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
+    if (debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        threadArbitrationPolicy = debugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
     if (this->scmPropertiesSupport.threadArbitrationPolicy) {
         this->threadArbitrationPolicy.set(threadArbitrationPolicy);

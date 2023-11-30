@@ -84,7 +84,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSyst
 
 HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhenItIsSetThenPipelineSelectContainsProperBits, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideSystolicPipelineSelect.set(1);
+    debugManager.flags.OverrideSystolicPipelineSelect.set(1);
 
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = false;
@@ -101,7 +101,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhe
 
 HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToFalseWhenItIsSetThenPipelineSelectContainsProperBits, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideSystolicPipelineSelect.set(0);
+    debugManager.flags.OverrideSystolicPipelineSelect.set(0);
 
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;

@@ -159,7 +159,7 @@ ze_result_t IpSamplingMetricGroupBase::getExportData(const uint8_t *pRawData, si
     }
 
     if (*pExportDataSize < expectedExportDataSize) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error:Incorrect Size Passed at %s():%d returning 0x%x\n",
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_INVALID_SIZE);
         return ZE_RESULT_ERROR_INVALID_SIZE;
@@ -238,7 +238,7 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValues(const zet_metric_gro
     const bool calculateCountOnly = *pMetricValueCount == 0;
 
     if (isMultiDeviceCaptureData(rawDataSize, pRawData)) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
                               "INFO: The call is not supported for multiple devices\n"
                               "INFO: Please use zetMetricGroupCalculateMultipleMetricValuesExp instead\n");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

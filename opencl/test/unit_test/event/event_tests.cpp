@@ -800,7 +800,7 @@ TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenGetEventProfilingInfoThenCpuTimestampIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(0);
+    debugManager.flags.EnableDeviceBasedTimestamps.set(0);
     pClDevice->setOSTime(new MockOSTimeWithConstTimestamp());
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
@@ -817,7 +817,7 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenGetEventProfili
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenCalculateStartTimestampThenCorrectTimeIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(0);
+    debugManager.flags.EnableDeviceBasedTimestamps.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
@@ -1535,7 +1535,7 @@ TEST_F(EventTest, givenCmdQueueWithProfilingWhenIsCpuProfilingIsCalledThenTrueIs
 
 TEST(EventCallback, GivenEventWithCallbacksOnWhenPeekingHasCallbacksThenReturnTrue) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     struct ClbFuncTempStruct {
         static void CL_CALLBACK clbFuncT(cl_event, cl_int, void *) {
         }
@@ -1822,7 +1822,7 @@ TEST(EventLockerTests, givenEventWhenEventLockerIsLockedTwiceThenOwnershipIsRele
 
 TEST(EventsDebug, givenEventWhenTrackingOfParentsIsOnThenTrackParents) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.TrackParentEvents.set(true);
+    debugManager.flags.TrackParentEvents.set(true);
     Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
@@ -1841,7 +1841,7 @@ TEST(EventsDebug, givenEventWhenTrackingOfParentsIsOnThenTrackParents) {
 
 TEST(EventsDebug, givenEventWhenTrackingOfParentsIsOffThenDoNotTrackParents) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.TrackParentEvents.set(false);
+    debugManager.flags.TrackParentEvents.set(false);
     Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
@@ -1859,7 +1859,7 @@ TEST(EventsDebug, givenEventWhenTrackingOfParentsIsOffThenDoNotTrackParents) {
 
 TEST(EventTimestampTest, givenTimestampPacketWritesDisabledAndQueueHasTimestampPacketContainerThenCreateTheContainerForEvent) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.EnableTimestampPacket.set(0);
+    debugManager.flags.EnableTimestampPacket.set(0);
 
     MockContext context{};
     MockCommandQueue queue{&context, context.getDevice(0), nullptr, false};
@@ -1886,7 +1886,7 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
     MockEvent<Event> event{&cmdQ, CL_COMMAND_MARKER, 0, 0};
 
     {
-        DebugManager.flags.EnableTimestampWaitForEvents.set(-1);
+        debugManager.flags.EnableTimestampWaitForEvents.set(-1);
         const auto &productHelper = mockDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
         EXPECT_EQ(event.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForEvents());
     }
@@ -1898,27 +1898,27 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForEvents.set(0);
+        debugManager.flags.EnableTimestampWaitForEvents.set(0);
         EXPECT_FALSE(event.isWaitForTimestampsEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForEvents.set(1);
+        debugManager.flags.EnableTimestampWaitForEvents.set(1);
         EXPECT_EQ(event.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForEvents.set(2);
+        debugManager.flags.EnableTimestampWaitForEvents.set(2);
         EXPECT_EQ(event.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForEvents.set(3);
+        debugManager.flags.EnableTimestampWaitForEvents.set(3);
         EXPECT_EQ(event.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForEvents.set(4);
+        debugManager.flags.EnableTimestampWaitForEvents.set(4);
         EXPECT_TRUE(event.isWaitForTimestampsEnabled());
     }
 }

@@ -137,7 +137,7 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfom
 
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -163,7 +163,7 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebug
 
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -189,7 +189,7 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebugg
 
 TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -215,7 +215,7 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingW
 
 TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
@@ -241,7 +241,7 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWi
 
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndZeroProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 

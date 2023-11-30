@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,8 +112,8 @@ std::string AubSubCaptureManager::getToggleFileName() const {
 }
 
 std::string AubSubCaptureManager::getAubCaptureFileName() const {
-    if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
-        return DebugManager.flags.AUBDumpCaptureFileName.get();
+    if (debugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
+        return debugManager.flags.AUBDumpCaptureFileName.get();
     }
     return {};
 }

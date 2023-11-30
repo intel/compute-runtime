@@ -147,7 +147,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
-    if (timestampPacketNode && DebugManager.flags.PrintTimestampPacketUsage.get() == 1) {
+    if (timestampPacketNode && debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
         auto gpuVa = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex]->getGpuAddress();
         printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
     }

@@ -175,7 +175,7 @@ using BuiltInTestsL0 = Test<NEO::DeviceFixture>;
 HWTEST_F(BuiltInTestsL0, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
     pDevice->incRefInternal();
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
     MockDeviceForBuiltinTests testDevice(pDevice);
     testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, pDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
@@ -188,7 +188,7 @@ HWTEST_F(BuiltInTestsL0, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctions
 HWTEST_F(BuiltInTestsL0, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenNativeCodeForBuiltinsIsRequested) {
     pDevice->incRefInternal();
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(false);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(false);
     MockDeviceForBuiltinTests testDevice(pDevice);
     L0::Device *testDevicePtr = &testDevice;
     testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, pDevice->getBuiltIns()));

@@ -49,7 +49,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
 HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           whenCommandListIsExecutedAndOverrideThreadArbitrationPolicyDebugFlagIsSetToZeroThenAgeBasedThreadArbitrationPolicyIsUsed,
           IsGen11HP) {
-    DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
+    debugManager.flags.OverrideThreadArbitrationPolicy.set(0);
 
     size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -80,7 +80,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
 HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           whenCommandListIsExecutedAndOverrideThreadArbitrationPolicyDebugFlagIsSetToOneThenRoundRobinThreadArbitrationPolicyIsUsed,
           IsGen11HP) {
-    DebugManager.flags.OverrideThreadArbitrationPolicy.set(1);
+    debugManager.flags.OverrideThreadArbitrationPolicy.set(1);
 
     size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 

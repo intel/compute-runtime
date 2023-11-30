@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,6 @@
 
 namespace NEO {
 bool isDeferredDeleterEnabled() {
-    return DebugManager.flags.EnableDeferredDeleter.get();
+    return debugManager.flags.EnableDeferredDeleter.get();
 }
 } // namespace NEO

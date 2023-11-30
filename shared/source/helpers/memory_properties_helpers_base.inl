@@ -54,7 +54,7 @@ GraphicsAllocation::UsmInitialPlacement MemoryPropertiesHelper::getUSMInitialPla
     if (memoryProperties.allocFlags.usmInitialPlacementCpu) {
         initialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
     }
-    if (const int32_t debugFlag = DebugManager.flags.UsmInitialPlacement.get(); debugFlag != -1) {
+    if (const int32_t debugFlag = debugManager.flags.UsmInitialPlacement.get(); debugFlag != -1) {
         initialPlacement = debugFlag != 1 ? GraphicsAllocation::UsmInitialPlacement::CPU : GraphicsAllocation::UsmInitialPlacement::GPU;
     }
     return initialPlacement;

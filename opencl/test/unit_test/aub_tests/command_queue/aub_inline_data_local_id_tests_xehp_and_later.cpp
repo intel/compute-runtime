@@ -86,7 +86,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
 struct InlineDataFixture : AubDispatchThreadDataFixture {
     void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnablePassInlineData.set(true);
+        debugManager.flags.EnablePassInlineData.set(true);
 
         initializeKernel3Variables();
         initializeKernel4Variables();
@@ -253,14 +253,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
 struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
     void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+        debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         initializeKernel2Variables();
 
         AubDispatchThreadDataFixture::setUp();
 
         if (kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData) {
-            DebugManager.flags.EnablePassInlineData.set(true);
+            debugManager.flags.EnablePassInlineData.set(true);
         }
 
         setUpKernel2();
@@ -406,7 +406,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
 struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
     void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+        debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         kernelIds |= (1 << 9);
         variables[0].sizeUserMemory = 16 * KB;

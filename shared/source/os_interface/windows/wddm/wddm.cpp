@@ -72,8 +72,8 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
 #if _DEBUG
     forceCheck = true;
 #endif
-    checkDeviceState = (DebugManager.flags.EnableDeviceStateVerification.get() != -1) ? DebugManager.flags.EnableDeviceStateVerification.get() : forceCheck;
-    pagingFenceDelayTime = DebugManager.flags.WddmPagingFenceCpuWaitDelayTime.get();
+    checkDeviceState = (debugManager.flags.EnableDeviceStateVerification.get() != -1) ? debugManager.flags.EnableDeviceStateVerification.get() : forceCheck;
+    pagingFenceDelayTime = debugManager.flags.WddmPagingFenceCpuWaitDelayTime.get();
 }
 
 Wddm::~Wddm() {
@@ -156,11 +156,11 @@ bool Wddm::init() {
 void Wddm::setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHelper) {
     platformSupportsEvictIfNecessary = productHelper.isEvictionIfNecessaryFlagSupported();
     int32_t overridePlatformSupportsEvictIfNecessary =
-        DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.get();
+        debugManager.flags.PlaformSupportEvictIfNecessaryFlag.get();
     if (overridePlatformSupportsEvictIfNecessary != -1) {
         platformSupportsEvictIfNecessary = !!overridePlatformSupportsEvictIfNecessary;
     }
-    forceEvictOnlyIfNecessary = DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.get();
+    forceEvictOnlyIfNecessary = debugManager.flags.ForceEvictOnlyIfNecessaryFlag.get();
 }
 
 bool Wddm::buildTopologyMapping() {
@@ -267,8 +267,8 @@ bool Wddm::queryAdapterInfo() {
             gtSystemInfo->MaxDualSubSlicesSupported = gtSystemInfo->MaxSubSlicesSupported / 2;
         }
 
-        if (DebugManager.flags.ForceDeviceId.get() != "unk") {
-            gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
+        if (debugManager.flags.ForceDeviceId.get() != "unk") {
+            gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(debugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
         SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
@@ -379,7 +379,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     }
 
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter);
-    if (false == umKmDataTranslator->enabled() && !DebugManager.flags.DoNotValidateDriverPath.get()) {
+    if (false == umKmDataTranslator->enabled() && !debugManager.flags.DoNotValidateDriverPath.get()) {
         if (false == validDriverStorePath(osEnvironment, openAdapterData.hAdapter)) {
             return nullptr;
         }
@@ -420,8 +420,8 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
     }
 
     size_t numRootDevices = 0u;
-    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
+    if (debugManager.flags.CreateMultipleRootDevices.get()) {
+        numRootDevices = debugManager.flags.CreateMultipleRootDevices.get();
     }
 
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
@@ -740,7 +740,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         status = getGdi()->createAllocation2(&createAllocation);
 
         if (status != STATUS_SUCCESS) {
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
             DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
@@ -754,7 +754,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
             if (!success) {
                 osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
-                PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
+                PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", __FUNCTION__, success);
                 DEBUG_BREAK_IF(true);
                 return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
@@ -931,13 +931,13 @@ bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {
     contextPriority.hContext = contextHandle;
     contextPriority.Priority = 1;
 
-    if (DebugManager.flags.ForceWddmLowPriorityContextValue.get() != -1) {
-        contextPriority.Priority = static_cast<INT>(DebugManager.flags.ForceWddmLowPriorityContextValue.get());
+    if (debugManager.flags.ForceWddmLowPriorityContextValue.get() != -1) {
+        contextPriority.Priority = static_cast<INT>(debugManager.flags.ForceWddmLowPriorityContextValue.get());
     }
 
     auto status = getGdi()->setSchedulingPriority(&contextPriority);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
                        "\nSet scheduling priority for Wddm context. Status: :%lu, context handle: %u, priority: %d \n",
                        status, contextHandle, contextPriority.Priority);
 
@@ -952,12 +952,12 @@ bool Wddm::createContext(OsContextWin &osContext) {
 
     privateData.ProcessID = NEO::getPid();
     privateData.pHwContextId = &hwContextId;
-    privateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
+    privateData.NoRingFlushes = debugManager.flags.UseNoRingFlushesKmdMode.get();
 
     applyAdditionalContextFlags(privateData, osContext);
 
     createContext.EngineAffinity = 0;
-    createContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());
+    createContext.Flags.NullRendering = static_cast<UINT>(debugManager.flags.EnableNullHardware.get());
     createContext.Flags.HwQueueSupported = wddmInterface->hwQueuesSupported();
 
     if (osContext.getPreemptionMode() >= PreemptionMode::MidBatch) {
@@ -985,7 +985,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     status = getGdi()->createContext(&createContext);
     osContext.setWddmContextHandle(createContext.hContext);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
                        "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
                        status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
 
@@ -1017,7 +1017,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     }
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
 
-    if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
+    if (debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
         printf("%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
     }
 
@@ -1029,7 +1029,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
     if (status) {
         submitArguments.monitorFence->lastSubmittedFence = submitArguments.monitorFence->currentFenceValue;
         submitArguments.monitorFence->currentFenceValue++;
-    } else if (DebugManager.flags.EnableDeviceStateVerificationAfterFailedSubmission.get() == 1) {
+    } else if (debugManager.flags.EnableDeviceStateVerificationAfterFailedSubmission.get() == 1) {
         getDeviceState();
     }
 
@@ -1154,7 +1154,7 @@ bool Wddm::isGpuHangDetected(OsContext &osContext) {
     const auto &monitoredFence = osContextWin->getResidencyController().getMonitoredFence();
     bool hangDetected = monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
 
-    PRINT_DEBUG_STRING(hangDetected && DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+    PRINT_DEBUG_STRING(hangDetected && debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
 
     return hangDetected;
 }
@@ -1320,8 +1320,8 @@ uint32_t Wddm::getRequestedEUCount() const {
 };
 
 void Wddm::createPagingFenceLogger() {
-    if (DebugManager.flags.WddmResidencyLogger.get()) {
-        residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress, DebugManager.flags.WddmResidencyLoggerOutputDirectory.get());
+    if (debugManager.flags.WddmResidencyLogger.get()) {
+        residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress, debugManager.flags.WddmResidencyLoggerOutputDirectory.get());
     }
 }
 

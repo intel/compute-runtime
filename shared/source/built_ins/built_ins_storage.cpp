@@ -180,7 +180,7 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
 
     if (requestedCodeType == BuiltinCode::ECodeType::Any) {
         uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Binary);
-        if (DebugManager.flags.RebuildPrecompiledKernels.get()) {
+        if (debugManager.flags.RebuildPrecompiledKernels.get()) {
             codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Source);
         }
         for (uint32_t e = static_cast<uint32_t>(BuiltinCode::ECodeType::COUNT);

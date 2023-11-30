@@ -55,7 +55,7 @@ void CommandListStatePrefetchXeHpcCore::checkIfDebugFlagSetWhenPrefetchApiCalled
     }
 
     {
-        DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
+        debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
 
         auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -80,7 +80,7 @@ void CommandListStatePrefetchXeHpcCore::checkIfCommandBufferIsExhaustedWhenPrefe
     using MI_BATCH_BUFFER_END = typename XeHpcCoreFamily::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -102,7 +102,7 @@ void CommandListStatePrefetchXeHpcCore::checkIfCommandBufferIsExhaustedWhenPrefe
     useSize -= sizeof(MI_BATCH_BUFFER_END);
     pCommandList->commandContainer.getCommandStream()->getSpace(useSize);
 
-    DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
+    debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
 
     auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);

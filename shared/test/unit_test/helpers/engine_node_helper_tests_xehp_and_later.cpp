@@ -30,7 +30,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenDebugVariableSetWhenAskingForE
     auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
 
     for (int32_t i = 0; i <= 9; i++) {
-        DebugManager.flags.ForceBcsEngineIndex.set(i);
+        debugManager.flags.ForceBcsEngineIndex.set(i);
 
         if (i == 0) {
             EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
@@ -44,7 +44,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenDebugVariableSetWhenAskingForE
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenForceBCSForInternalCopyEngineWhenGetBcsEngineTypeForInternalEngineThenForcedTypeIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceBCSForInternalCopyEngine.set(0u);
+    debugManager.flags.ForceBCSForInternalCopyEngine.set(0u);
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
@@ -53,12 +53,12 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenForceBCSForInternalCopyEngineW
     DeviceBitfield deviceBitfield = 0xff;
 
     {
-        DebugManager.flags.ForceBCSForInternalCopyEngine.set(0u);
+        debugManager.flags.ForceBCSForInternalCopyEngine.set(0u);
         auto engineType = EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, true);
         EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineType);
     }
     {
-        DebugManager.flags.ForceBCSForInternalCopyEngine.set(3u);
+        debugManager.flags.ForceBCSForInternalCopyEngine.set(3u);
         auto engineType = EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, true);
         EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineType);
     }
@@ -66,7 +66,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenForceBCSForInternalCopyEngineW
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngineAssignWhenSelectLinkCopyEngineThenRoundRobinOverAllAvailableLinkedCopyEngines, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
     DeviceBitfield deviceBitfield = 0b10;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -96,8 +96,8 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngineAssignAndMainCopyEngineIncludedWhenSelectLinkCopyEngineThenRoundRobinOverAllAvailableLinkedCopyEnginesAndMainCopyEngine, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.set(0);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.set(0);
     DeviceBitfield deviceBitfield = 0b10;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -137,9 +137,9 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngineAssignAndMainCopyEngineIncludedAndLimitSetWhenSelectLinkCopyEngineThenRoundRobinOverAllAvailableLinkedCopyEnginesAndMainCopyEngine, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.set(0);
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.set(6);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.set(0);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.set(6);
     DeviceBitfield deviceBitfield = 0b10;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -179,8 +179,8 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngineAssignAndLimitSetWhenSelectLinkCopyEngineThenRoundRobinOverAllAvailableLinkedCopyEnginesAndMainCopyEngine, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.set(6);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.set(6);
     DeviceBitfield deviceBitfield = 0b10;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -220,9 +220,9 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngineAssignAndStartOffsetIncludedWhenSelectLinkCopyEngineThenRoundRobinOverAllAvailableLinkedCopyEngines, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.set(2);
-    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.set(5);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.set(2);
+    debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.set(5);
     DeviceBitfield deviceBitfield = 0b10;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();

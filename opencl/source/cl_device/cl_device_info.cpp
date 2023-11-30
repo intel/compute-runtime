@@ -256,7 +256,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        if (DebugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
+        if (debugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
             auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
             param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
         } else {

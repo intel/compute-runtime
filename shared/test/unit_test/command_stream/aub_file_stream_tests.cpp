@@ -40,7 +40,7 @@ using AubFileStreamTests = Test<AubCommandStreamReceiverFixture>;
 
 struct AddPatchInfoCommentsAubTests : AubFileStreamTests {
     void SetUp() override {
-        DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+        debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
         AubFileStreamTests::SetUp();
     }
 
@@ -952,11 +952,11 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices) {
     DebugManagerStateRestore stateRestore;
 
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(1);
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
     EXPECT_EQ(std::string::npos, fullName.find("tx"));
 
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
     EXPECT_NE(std::string::npos, fullName.find("2tx"));
 }
@@ -970,7 +970,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePath
 HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndex) {
     DebugManagerStateRestore stateRestore;
 
-    DebugManager.flags.GenerateAubFilePerProcessId.set(1);
+    debugManager.flags.GenerateAubFilePerProcessId.set(1);
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
     std::stringstream strExtendedFileName;
     strExtendedFileName << "_1_aubfile_PID_" << SysCalls::getProcessId() << ".aub";
@@ -980,8 +980,8 @@ HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubComm
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenCommentWithNonDefaultFlagsAreAdded) {
     DebugManagerStateRestore stateRestore;
 
-    DebugManager.flags.MakeAllBuffersResident.set(1);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("non-default");
+    debugManager.flags.MakeAllBuffersResident.set(1);
+    debugManager.flags.ZE_AFFINITY_MASK.set("non-default");
 
     auto mockAubManager = std::make_unique<MockAubManager>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);

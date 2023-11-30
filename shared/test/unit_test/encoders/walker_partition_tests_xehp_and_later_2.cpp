@@ -362,7 +362,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlComman
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramPipeControlCommandWhenItIsProgrammedWithDebugDoNotFlushThenItIsProperlySetWithoutDcFlush) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DoNotFlushCaches.set(true);
+    debugManager.flags.DoNotFlushCaches.set(true);
     auto expectedUsedSize = sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
     void *pipeControlCAddress = cmdBufferAddress;
     PipeControlArgs args;
@@ -519,7 +519,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisabledMinimalPartition
     walker.setThreadGroupIdZDimension(64u);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetMinimalPartitionSize.set(0);
+    debugManager.flags.SetMinimalPartitionSize.set(0);
 
     bool staticPartitioning = false;
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, false, false, &staticPartitioning);
@@ -580,26 +580,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeH
     walker.setThreadGroupIdYDimension(4u);
     walker.setThreadGroupIdZDimension(2u);
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(-1);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(-1);
     bool staticPartitioning = false;
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, false, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X));
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, false, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y));
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, false, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z));
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, false, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
@@ -615,7 +615,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenInvalidPartitionTypeIsRe
     walker.setThreadGroupIdYDimension(4u);
     walker.setThreadGroupIdZDimension(2u);
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(0);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(0);
     bool staticPartitioning = false;
     EXPECT_ANY_THROW(computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, false, false, &staticPartitioning));
 }
@@ -656,7 +656,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenCustomMinimalPartitionSi
     walker.setThreadGroupIdZDimension(1u);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetMinimalPartitionSize.set(4096);
+    debugManager.flags.SetMinimalPartitionSize.set(4096);
 
     bool staticPartitioning = false;
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 2u, false, false, &staticPartitioning);
@@ -767,7 +767,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPar
     EXPECT_EQ(4u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z));
     staticPartitioning = false;
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, true, false, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
@@ -789,7 +789,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     EXPECT_EQ(2u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 
-    DebugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
+    debugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 2u, true, false, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
@@ -811,7 +811,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenYD
     EXPECT_EQ(2u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
-    DebugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
+    debugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 2u, true, false, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
@@ -833,7 +833,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     EXPECT_EQ(2u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 
-    DebugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
+    debugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 2u, true, false, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);

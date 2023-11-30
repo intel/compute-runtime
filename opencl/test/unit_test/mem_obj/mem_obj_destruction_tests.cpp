@@ -116,7 +116,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
 class MemObjAsyncDestructionTest : public MemObjDestructionTest<> {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableAsyncDestroyAllocations.set(true);
+        debugManager.flags.EnableAsyncDestroyAllocations.set(true);
         MemObjDestructionTest::SetUp();
     }
     void TearDown() override {
@@ -128,7 +128,7 @@ class MemObjAsyncDestructionTest : public MemObjDestructionTest<> {
 class MemObjMulitAllocationAsyncDestructionTest : public MemObjDestructionTest<true> {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableAsyncDestroyAllocations.set(true);
+        debugManager.flags.EnableAsyncDestroyAllocations.set(true);
         MemObjDestructionTest::SetUp();
     }
     void TearDown() override {
@@ -140,7 +140,7 @@ class MemObjMulitAllocationAsyncDestructionTest : public MemObjDestructionTest<t
 class MemObjSyncDestructionTest : public MemObjDestructionTest<> {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableAsyncDestroyAllocations.set(false);
+        debugManager.flags.EnableAsyncDestroyAllocations.set(false);
         MemObjDestructionTest::SetUp();
     }
     void TearDown() override {

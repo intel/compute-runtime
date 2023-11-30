@@ -21,7 +21,7 @@ MultiTileCommandListAppendLaunchKernelFixture::MultiTileCommandListAppendLaunchK
 MultiTileImmediateCommandListAppendLaunchKernelFixture::MultiTileImmediateCommandListAppendLaunchKernelFixture() : backupApiSupport({&NEO::ImplicitScaling::apiSupport, true}), backupLocalMemory({&NEO::OSInterface::osEnableLocalMemory, true}) {}
 
 void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 4u;
@@ -51,7 +51,7 @@ void MultiTileCommandListAppendLaunchKernelFixture::tearDown() {
 }
 
 void MultiTileImmediateCommandListAppendLaunchKernelFixture::setUp() {
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 2u;

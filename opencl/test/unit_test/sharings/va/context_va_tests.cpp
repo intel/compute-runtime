@@ -58,7 +58,7 @@ TEST_F(VAContextTest, GivenVaContextParamWhenCreateContextThenReturnError) {
     cl_platform_id pid[1];
     pid[0] = pPlatform;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableVaLibCalls.set(false); // avoid libva calls on initialization
+    debugManager.flags.EnableVaLibCalls.set(false); // avoid libva calls on initialization
 
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0],
                                                 CL_CONTEXT_VA_API_DISPLAY_INTEL, 0x10000, 0};

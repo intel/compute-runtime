@@ -101,7 +101,7 @@ struct L0DebuggerHwFixture : public L0DebuggerFixture {
 
 struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
     void setUp() {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
         L0DebuggerHwFixture::setUp();
     }
     void tearDown() {
@@ -112,7 +112,7 @@ struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
 
 struct L0DebuggerSingleAddressSpaceFixture : public L0DebuggerHwFixture {
     void setUp() {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
         L0DebuggerHwFixture::setUp();
     }
     void tearDown() {
@@ -123,7 +123,7 @@ struct L0DebuggerSingleAddressSpaceFixture : public L0DebuggerHwFixture {
 
 struct L0DebuggerHwParameterizedFixture : ::testing::TestWithParam<int>, public L0DebuggerHwFixture {
     void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
         L0DebuggerHwFixture::setUp();
     }
     void TearDown() override {

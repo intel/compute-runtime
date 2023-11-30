@@ -22,7 +22,7 @@ using namespace NEO;
 class AubMemoryOperationsHandlerTests : public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.SetCommandStreamReceiver.set(2);
+        debugManager.flags.SetCommandStreamReceiver.set(2);
         residencyHandler = std::unique_ptr<MockAubMemoryOperationsHandler>(new MockAubMemoryOperationsHandler(nullptr));
 
         hardwareInfo = *defaultHwInfo;

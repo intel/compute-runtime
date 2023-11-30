@@ -44,7 +44,7 @@ TEST(DeviceBlitterTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopy
 
 TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInternalCopyEngineIsCalledThenInternalMainCopyEngineIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceBCSForInternalCopyEngine.set(0);
+    debugManager.flags.ForceBCSForInternalCopyEngine.set(0);
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -60,7 +60,7 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInte
 
 TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInternalLinkCopyEngineIsCalledThenInternalLinkCopyEngineOneIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceBCSForInternalCopyEngine.set(1);
+    debugManager.flags.ForceBCSForInternalCopyEngine.set(1);
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -131,7 +131,7 @@ TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledWithUnsupportedBVHLevelsThenN
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledWithMockAllocatorThenDispatchGlobalsArrayAllocationIsLockable) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     auto maxBvhLevel = 3;
     pDevice->initializeRayTracing(maxBvhLevel);
     for (auto i = 0; i < maxBvhLevel; i++) {
@@ -194,7 +194,7 @@ TEST_F(DeviceTest, givenNot48bResourceForRtWhenAllocateRTDispatchGlobalsIsCalled
 HWTEST2_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledAndRTStackAllocationFailsRTDispatchGlobalsIsNotAllocated, IsPVC) {
     DebugManagerStateRestore dbgRestorer;
 
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     pDevice->deviceBitfield = 3;
 
     pDevice->subdevices.push_back(new SubDevice(pDevice->executionEnvironment, 0, *pDevice));
@@ -287,26 +287,26 @@ TEST_F(DeviceGetCapsTest,
        givenImplicitScalingWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
     DebugManagerStateRestore dbgRestorer;
 
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     pDevice->deviceBitfield = 15;
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize == pDevice->getDeviceInfo().globalMemSize);
 
-    DebugManager.flags.EnableWalkerPartition.set(0);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize <= pDevice->getDeviceInfo().globalMemSize);
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    debugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     pDevice->initializeCaps();
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
 
-    DebugManager.flags.EnableWalkerPartition.set(0);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    debugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     pDevice->initializeCaps();
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
 }
@@ -315,12 +315,12 @@ TEST_F(DeviceGetCapsTest,
        givenImplicitScalingTrueWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
     DebugManagerStateRestore dbgRestorer;
 
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     pDevice->deviceBitfield = 15;
 
-    DebugManager.flags.EnableImplicitScaling.set(1);
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize == pDevice->getDeviceInfo().globalMemSize);
 }
@@ -329,12 +329,12 @@ TEST_F(DeviceGetCapsTest,
        givenImplicitScalingFalseWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
     DebugManagerStateRestore dbgRestorer;
 
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     pDevice->deviceBitfield = 15;
 
-    DebugManager.flags.EnableImplicitScaling.set(0);
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.EnableImplicitScaling.set(0);
+    debugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize <= pDevice->getDeviceInfo().globalMemSize);
 }
@@ -342,7 +342,7 @@ TEST_F(DeviceGetCapsTest,
 TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {
     DebugManagerStateRestore dbgRestorer;
     {
-        DebugManager.flags.ForcePreemptionMode.set(-1);
+        debugManager.flags.ForcePreemptionMode.set(-1);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         EXPECT_TRUE(device->getHardwareInfo().capabilityTable.defaultPreemptionMode ==
                     device->getPreemptionMode());
@@ -352,7 +352,7 @@ TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDev
 TEST_F(DeviceGetCapsTest, givenDebugFlagSetWhenCreatingDeviceInfoThenOverrideProfilingTimerResolution) {
     DebugManagerStateRestore dbgRestorer;
 
-    DebugManager.flags.OverrideProfilingTimerResolution.set(123);
+    debugManager.flags.OverrideProfilingTimerResolution.set(123);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
@@ -368,7 +368,7 @@ TEST_F(DeviceGetCapsTest, givenForcePreemptionModeDebugVariableWhenCreateDeviceT
             // force non-default mode
             forceMode = PreemptionMode::ThreadGroup;
         }
-        DebugManager.flags.ForcePreemptionMode.set((int32_t)forceMode);
+        debugManager.flags.ForcePreemptionMode.set((int32_t)forceMode);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
         EXPECT_TRUE(forceMode == device->getPreemptionMode());
@@ -381,7 +381,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedT
         auto builtIns = new MockBuiltins();
         ASSERT_FALSE(MockSipData::called); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-        DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
+        debugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
 
         auto executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -414,7 +414,7 @@ TEST(DeviceGetCapsSimpleTest, givenVariousOclVersionsWhenCapsAreCreatedThenDevic
     DebugManagerStateRestore dbgRestorer;
     int32_t oclVersionsToTest[] = {12, 21, 30};
     for (auto oclVersion : oclVersionsToTest) {
-        DebugManager.flags.ForceOCLVersion.set(oclVersion);
+        debugManager.flags.ForceOCLVersion.set(oclVersion);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
@@ -423,7 +423,7 @@ TEST(DeviceGetCapsSimpleTest, givenVariousOclVersionsWhenCapsAreCreatedThenDevic
 
 TEST(DeviceGetCapsSimpleTest, givenDebugFlagToSetWorkgroupSizeWhenDeviceIsCreatedThenItUsesThatWorkgroupSize) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.OverrideMaxWorkgroupSize.set(16u);
+    debugManager.flags.OverrideMaxWorkgroupSize.set(16u);
 
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
@@ -491,7 +491,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
     auto &capabilityTable = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable;
     std::unique_ptr<MemoryManager> memoryManager;
 
-    DebugManager.flags.Enable64kbpages.set(-1);
+    debugManager.flags.Enable64kbpages.set(-1);
 
     capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = false;
@@ -513,11 +513,11 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
     memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
 
-    DebugManager.flags.Enable64kbpages.set(0); // force false
+    debugManager.flags.Enable64kbpages.set(0); // force false
     memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled(0u));
 
-    DebugManager.flags.Enable64kbpages.set(1); // force true
+    debugManager.flags.Enable64kbpages.set(1); // force true
     memoryManager.reset(new MockMemoryManager(executionEnvironment));
     EXPECT_TRUE(memoryManager->peek64kbPagesEnabled(0u));
 }
@@ -540,8 +540,8 @@ TEST_F(DeviceTests, givenDispatchGlobalsAllocationFailsOnSecondSubDeviceThenRtDi
     };
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(-1);
-    DebugManager.flags.CreateMultipleSubDevices.set(2u);
+    debugManager.flags.EnableWalkerPartition.set(-1);
+    debugManager.flags.CreateMultipleSubDevices.set(2u);
 
     UltDeviceFactory deviceFactory{1, 2};
     ExecutionEnvironment &executionEnvironment = *deviceFactory.rootDevices[0]->executionEnvironment;
@@ -558,8 +558,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedW
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ZEX_NUMBER_OF_CCS.set("0:4,1:1,2:2,3:1");
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:4,1:1,2:2,3:1");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -604,8 +604,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDeviceIsCreatedWithZexNumberOfCss
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ZEX_NUMBER_OF_CCS.set("0:1,1:2");
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:1,1:2");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -634,10 +634,10 @@ HWTEST2_F(DeviceTests, givenDeviceIsCreatedWithAmbiguousZexNumberOfCssEnvVariabl
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     for (const auto &numberOfCcsString : {"default", "", "0"}) {
-        DebugManager.flags.ZEX_NUMBER_OF_CCS.set(numberOfCcsString);
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set(numberOfCcsString);
 
         auto hwInfo = *defaultHwInfo;
 
@@ -665,10 +665,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssAndZeAffinityMaskSe
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("1");
-    DebugManager.flags.ZEX_NUMBER_OF_CCS.set("0:1,1:2");
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
+    debugManager.flags.ZE_AFFINITY_MASK.set("1");
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:1,1:2");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -697,13 +697,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevice
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     uint32_t expectedRootDevices = 4;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0,3,4,1.1,9,15,25");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0,3,4,1.1,9,15,25");
 
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -737,13 +737,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetThenProperSubDev
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     uint32_t expectedRootDevices = 4;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.2,1.2,2.3,3.3,15,25");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.2,1.2,2.3,3.3,15,25");
 
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -777,13 +777,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetWithoutTilesThen
     uint32_t numRootDevices = 4;
     uint32_t numSubDevices = 4;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
     uint32_t expectedRootDevices = 4;
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,15,25");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3,15,25");
 
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -803,8 +803,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableIsLarger
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ZEX_NUMBER_OF_CCS.set("0:13");
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:13");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto hwInfo = *defaultHwInfo;
 
@@ -824,9 +824,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableSetAmbig
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
     for (const auto &numberOfCcsString : {"default", "", "0"}) {
-        DebugManager.flags.ZEX_NUMBER_OF_CCS.set(numberOfCcsString);
+        debugManager.flags.ZEX_NUMBER_OF_CCS.set(numberOfCcsString);
 
         auto hwInfo = *defaultHwInfo;
 
@@ -889,7 +889,7 @@ TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
 
 TEST(FailDeviceTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());
 
     EXPECT_EQ(nullptr, pDevice);
@@ -973,7 +973,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTest, givenHwInfoWhenRequestedComputeUnitsUse
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebugFlagSetWhenAskingForComputeUnitsForScratchThenReturnNewValue) {
     DebugManagerStateRestore restore;
     uint32_t expectedValue = defaultHwInfo->gtSystemInfo.ThreadCount + 11;
-    DebugManager.flags.OverrideNumComputeUnitsForScratch.set(static_cast<int32_t>(expectedValue));
+    debugManager.flags.OverrideNumComputeUnitsForScratch.set(static_cast<int32_t>(expectedValue));
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();

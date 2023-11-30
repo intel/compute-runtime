@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,9 +56,9 @@ TEST_F(DeferredOsContextCreationL0Tests, givenBlitterEngineWhenCreatingOsContext
 
     expectDeferredContextCreation(engineTypeUsageBlitter, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.DeferOsContextInitialization.set(1);
     expectDeferredContextCreation(engineTypeUsageBlitter, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
     expectImmediateContextCreation(engineTypeUsageBlitter, false);
 }

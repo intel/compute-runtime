@@ -270,7 +270,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugVariableToOverrideMOCSWhenStateBaseAddressIsBeingProgrammedThenItContainsDesiredIndex) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.OverrideStatelessMocsIndex.set(1);
+    debugManager.flags.OverrideStatelessMocsIndex.set(1);
     typedef typename FamilyType::PARSE PARSE;
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     enqueueKernel<FamilyType>();
@@ -731,7 +731,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
     };
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -809,7 +809,7 @@ HWTEST_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueingK
     };
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -906,7 +906,7 @@ class MyCmdQ : public MockCommandQueueHw<FamilyType> {
 
 struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     void SetUp() override {
-        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         EnqueueKernelTest::SetUp();
     }
 
@@ -928,7 +928,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     REQUIRE_AUX_RESOLVES(this->getRootDeviceEnvironment());
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
@@ -1024,7 +1024,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
 using BlitAuxKernelTests = ::testing::Test;
 HWTEST_F(BlitAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -1115,9 +1115,9 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
     void SetUp() override {
         ultHwConfigBackup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
 
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-        DebugManager.flags.UpdateTaskCountFromWait.set(1);
-        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.UpdateTaskCountFromWait.set(1);
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
 
         ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
 
@@ -1131,7 +1131,7 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
 };
 
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDependenciesThenUseConditionalBbStarts, IsAtLeastXeHpcCore) {
-    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+    debugManager.flags.OptimizeIoqBarriersHandling.set(0);
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
@@ -1281,7 +1281,7 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
 }
 
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenPipeControlForIoqDependencyResolvingEnabledWhenDispatchingRelaxedOrderingThenThrow, IsAtLeastXeHpcCore) {
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);

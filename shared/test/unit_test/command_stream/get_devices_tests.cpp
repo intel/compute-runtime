@@ -56,7 +56,7 @@ struct PrepareDeviceEnvironmentsTest : ::testing::Test {
 
 TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathWhenCsrIsSetToVariousTypesThenExpectedValuesOfHardwareInfoAreSet) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
 
     if (!deviceAot.deviceAcronyms.empty()) {
         product = deviceAot.deviceAcronyms.front().str();
@@ -72,13 +72,13 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathW
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrType);
         } else {
             csrType = CSR_HW;
-            DebugManager.flags.SetCommandStreamReceiver.set(-1);
+            debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
-        DebugManager.flags.ProductFamilyOverride.set(product);
+        debugManager.flags.ProductFamilyOverride.set(product);
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 
@@ -106,7 +106,7 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathW
 
 TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathForDeprecatedNamesWhenCsrIsSetToVariousTypesThenExpectedValuesOfHardwareInfoAreSet) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
 
     if (deprecatedAcronym.empty()) {
         GTEST_SKIP();
@@ -116,13 +116,13 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathF
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrType);
         } else {
             csrType = CSR_HW;
-            DebugManager.flags.SetCommandStreamReceiver.set(-1);
+            debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
-        DebugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
+        debugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 
@@ -150,7 +150,7 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathF
 
 HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDeprecatedNamesWhenCsrIsSetToVariousTypesThenExpectedValuesOfHardwareInfoAreSet) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
 
     if (deprecatedAcronym.empty()) {
         GTEST_SKIP();
@@ -160,13 +160,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrType);
         } else {
             csrType = CSR_HW;
-            DebugManager.flags.SetCommandStreamReceiver.set(-1);
+            debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
-        DebugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
+        debugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 
@@ -220,7 +220,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
 
 HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsSetToVariousTypesThenExpectedValuesOfHardwareInfoAreSet) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
 
     if (!deviceAot.deviceAcronyms.empty()) {
         product = deviceAot.deviceAcronyms.front().str();
@@ -236,13 +236,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrType);
         } else {
             csrType = CSR_HW;
-            DebugManager.flags.SetCommandStreamReceiver.set(-1);
+            debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
-        DebugManager.flags.ProductFamilyOverride.set(product);
+        debugManager.flags.ProductFamilyOverride.set(product);
         ExecutionEnvironment exeEnv{};
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 
@@ -292,8 +292,8 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseDeprecatedAcronymsToProduc
     }
 
     std::transform(deprecatedAcronym.begin(), deprecatedAcronym.end(), deprecatedAcronym.begin(), ::toupper);
-    DebugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+    debugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
+    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
     MockExecutionEnvironment exeEnv;
     bool ret = prepareDeviceEnvironments(exeEnv);
 
@@ -313,8 +313,8 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagS
     }
     std::transform(product.begin(), product.end(), product.begin(), ::toupper);
 
-    DebugManager.flags.ProductFamilyOverride.set(product);
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+    debugManager.flags.ProductFamilyOverride.set(product);
+    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
 
     MockExecutionEnvironment exeEnv;
     bool ret = prepareDeviceEnvironments(exeEnv);
@@ -325,13 +325,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagS
 
 HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
-    DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
     for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
         CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
         std::string productFamily("unk");
 
-        DebugManager.flags.SetCommandStreamReceiver.set(csrType);
-        DebugManager.flags.ProductFamilyOverride.set(productFamily);
+        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+        debugManager.flags.ProductFamilyOverride.set(productFamily);
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 

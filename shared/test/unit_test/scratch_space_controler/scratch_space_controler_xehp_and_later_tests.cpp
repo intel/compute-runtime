@@ -54,7 +54,7 @@ using ScratchControllerTests = Test<DeviceFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenDirtyScratchAllocationWhenProgramBindlessHeapThenProgramSurfaceStateAtPtrCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -74,7 +74,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenDirtyScratchAllocation
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNotDirtyScratchAllocationWhenProgramBindlessHeapThenProgramSurfaceStateAtPtrIsNotCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNotDirtyScratchAllocat
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNoBindlessSSWhenProgramBindlessHeapThenMakeResidentIsNotCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -118,8 +118,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNoBindlessSSWhenProgra
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchEnabledWhenProgramBindlessHeapSurfaceThenSSHasDoubleSize) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     MockCsrHw2<FamilyType> csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
@@ -140,8 +140,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchEnabledW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchDisabledWhenProgramBindlessHeapSurfaceThenSSHasSingleSize) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    DebugManager.flags.EnablePrivateScratchSlot1.set(0);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(0);
     MockCsrHw2<FamilyType> csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);

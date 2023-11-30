@@ -40,7 +40,7 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     std::stringstream strExtendedFileName;
 
     strExtendedFileName << filename;
-    if (DebugManager.flags.GenerateAubFilePerProcessId.get()) {
+    if (debugManager.flags.GenerateAubFilePerProcessId.get()) {
         strExtendedFileName << "_PID_" << SysCalls::getProcessId();
     }
     strfilename << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
@@ -65,8 +65,8 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
                                                         const DeviceBitfield deviceBitfield) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName, rootDeviceIndex);
-    if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
-        filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
+    if (debugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
+        filePath.assign(debugManager.flags.AUBDumpCaptureFileName.get());
     }
 
     if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {

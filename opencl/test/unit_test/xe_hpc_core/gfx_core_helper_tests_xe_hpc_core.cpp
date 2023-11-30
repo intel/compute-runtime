@@ -64,8 +64,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
 
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    debugManager.flags.EnableLocalMemory.set(true);
     initPlatform();
 
     auto clDevice = platform()->getClDevice(0);
@@ -122,7 +122,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCccsDisabledButDebugVariable
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
@@ -575,7 +575,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenNonBcsEngineIsVerifiedThenRet
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenPipecontrolWaIsProgrammedThenFlushL1Cache) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     uint32_t buffer[64] = {};
     LinearStream cmdStream(buffer, sizeof(buffer));
@@ -596,42 +596,42 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenAskedIfFenc
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
-    DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(-1);
     EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
     EXPECT_FALSE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
     EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
-    DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
     EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-    DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+    debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
     EXPECT_TRUE(gfxCoreHelper.isFenceAllocationRequired(hwInfo));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
     EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
 
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
@@ -653,11 +653,11 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDebugVariableSetWhenConfigure
     auto &productHelper = getHelper<ProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    debugManager.flags.EnableBlitterOperationsSupport.set(0);
     productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
     productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
@@ -711,7 +711,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportI
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
 
     for (int32_t debugFlag : {-1, 0, 1}) {
-        DebugManager.flags.DoNotReportTile1BscWaActive.set(debugFlag);
+        debugManager.flags.DoNotReportTile1BscWaActive.set(debugFlag);
 
         for (uint64_t subDevice = 0; subDevice < 4; subDevice++) {
             for (auto rev : bdRev) {
@@ -755,7 +755,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
     const AllocationProperties allocProperties(0, 1, AllocationType::UNKNOWN, allTilesMask);
 
     for (int32_t debugFlag : {-1, 0, 1}) {
-        DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.set(debugFlag);
+        debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.set(debugFlag);
 
         for (auto rev : bdRev) {
             hwInfo.platform.usRevId = rev;

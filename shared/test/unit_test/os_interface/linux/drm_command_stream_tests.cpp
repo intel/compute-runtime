@@ -39,9 +39,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionValueThenTaskCount
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGettingCompletionValueThenCompletionFenceValueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
-    DebugManager.flags.EnableDirectSubmission.set(1);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
     MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
     csr.setupContext(*osContext);
     EXPECT_EQ(nullptr, csr.completionFenceValuePointer);
@@ -239,7 +239,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDebugFlagSetWhenFlushingTh
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     {
-        DebugManager.flags.ReadBackCommandBufferAllocation.set(1);
+        debugManager.flags.ReadBackCommandBufferAllocation.set(1);
 
         csr->flush(batchBuffer, csr->getResidencyAllocations());
 
@@ -253,7 +253,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDebugFlagSetWhenFlushingTh
     }
 
     {
-        DebugManager.flags.ReadBackCommandBufferAllocation.set(2);
+        debugManager.flags.ReadBackCommandBufferAllocation.set(2);
 
         csr->flush(batchBuffer, csr->getResidencyAllocations());
 
@@ -962,7 +962,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagAndVmBindAvailableSetWhenDrmCsrFlushedThenExpectLatestSentTaskCountStoredAsFlushStamp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -993,7 +993,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagNotSetAndVmBindAvailableSetWhenDrmCsrFlushedThenExpectCommandBufferBoHandleAsFlushStamp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1027,7 +1027,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagAndNoVmBindAvailableSetWhenDrmCsrFlushedThenExpectCommandBufferBoHandleAsFlushStamp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = false;
@@ -1060,7 +1060,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCall) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
         new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
@@ -1082,8 +1082,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutUsedWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCallAndOverrideTimeout) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetKmdWaitTimeout.set(1000);
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    debugManager.flags.SetKmdWaitTimeout.set(1000);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
         new TestedDrmCommandStreamReceiver<FamilyType>(gemCloseWorkerMode::gemCloseWorkerInactive,
@@ -1106,8 +1106,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagSetAndVmBindAvailableAndUseDrmCtxWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
-    DebugManager.flags.EnableUserFenceUseCtxId.set(1);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.EnableUserFenceUseCtxId.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1148,7 +1148,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagSetAndVmBindNotAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCall) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = false;
@@ -1177,7 +1177,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagNotSetAndVmBindAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCall) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1206,9 +1206,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceSetAndUseCtxFlagsNotSetAndVmBindAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithZeroContext) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
-    DebugManager.flags.EnableUserFenceUseCtxId.set(0);
-    DebugManager.flags.SetKmdWaitTimeout.set(1000);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.EnableUserFenceUseCtxId.set(0);
+    debugManager.flags.SetKmdWaitTimeout.set(1000);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1256,7 +1256,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1273,7 +1273,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceNotSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1290,8 +1290,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceNotSetAndOverrideNotifyEnableSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(0);
-    DebugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(1);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(0);
+    debugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1308,8 +1308,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceSetAndOverrideNotifyEnableNotSetWhenDrmCsrIsCreatedThenUseNotifyEnableFlagIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUserFenceForCompletionWait.set(1);
-    DebugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(0);
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
+    debugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(0);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;

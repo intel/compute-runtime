@@ -27,7 +27,7 @@ using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
@@ -44,7 +44,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBuffer
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
 
     for (int32_t debugFlag : {-1, 0, 1}) {
-        DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(debugFlag);
+        debugManager.flags.OverrideBufferSuitableForRenderCompression.set(debugFlag);
 
         for (size_t size : sizesToCheck) {
             if (debugFlag == 1) {
@@ -64,11 +64,11 @@ XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenDebugVariableSetWhenConfigure
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    debugManager.flags.EnableBlitterOperationsSupport.set(0);
     productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
     productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
@@ -155,7 +155,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCheckTimesta
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
@@ -172,7 +172,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabl
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnFalseAndDoNotProgramPipeControl) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
@@ -198,7 +198,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
     constexpr size_t bufferSize = 256u;
     uint8_t buffer[bufferSize];
@@ -237,7 +237,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
     constexpr size_t bufferSize = 256u;
     uint8_t buffer[bufferSize];

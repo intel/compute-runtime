@@ -118,8 +118,8 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
         auto deferCmdQBcsInitialization = hwInfo.featureTable.ftrBcsInfo.count() > 1u;
 
-        if (DebugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
-            deferCmdQBcsInitialization = DebugManager.flags.DeferCmdQBcsInitialization.get();
+        if (debugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
+            deferCmdQBcsInitialization = debugManager.flags.DeferCmdQBcsInitialization.get();
         }
 
         if (!deferCmdQBcsInitialization) {
@@ -179,8 +179,8 @@ void CommandQueue::initializeGpgpu() const {
             auto engineRoundRobinAvailable = productHelper.isAssignEngineRoundRobinSupported() &&
                                              this->isAssignEngineRoundRobinEnabled();
 
-            if (DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
-                engineRoundRobinAvailable = DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get();
+            if (debugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
+                engineRoundRobinAvailable = debugManager.flags.EnableCmdQRoundRobindEngineAssign.get();
             }
 
             auto assignEngineRoundRobin =
@@ -227,8 +227,8 @@ void CommandQueue::initializeGpgpuInternals() const {
 
     if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) && !this->gpgpuEngine->commandStreamReceiver->isUpdateTagFromWaitEnabled()) {
         this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-        if (DebugManager.flags.CsrDispatchMode.get() != 0) {
-            this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get()));
+        if (debugManager.flags.CsrDispatchMode.get() != 0) {
+            this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(static_cast<DispatchMode>(debugManager.flags.CsrDispatchMode.get()));
         }
         this->gpgpuEngine->commandStreamReceiver->enableNTo1SubmissionModel();
     }
@@ -275,7 +275,7 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     case TransferDirection::LocalToLocal: {
         const auto &clGfxCoreHelper = device->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
         preferBcs = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
-        if (auto flag = DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get(); flag != -1) {
+        if (auto flag = debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.get(); flag != -1) {
             preferBcs = static_cast<bool>(flag);
         }
         if (preferBcs) {
@@ -290,8 +290,8 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
 
         auto preferredBCSType = true;
 
-        if (DebugManager.flags.AssignBCSAtEnqueue.get() != -1) {
-            preferredBCSType = DebugManager.flags.AssignBCSAtEnqueue.get();
+        if (debugManager.flags.AssignBCSAtEnqueue.get() != -1) {
+            preferredBCSType = debugManager.flags.AssignBCSAtEnqueue.get();
         }
 
         if (preferredBCSType) {
@@ -308,8 +308,8 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     if (preferBcs) {
         auto assignBCS = true;
 
-        if (DebugManager.flags.AssignBCSAtEnqueue.get() != -1) {
-            assignBCS = DebugManager.flags.AssignBCSAtEnqueue.get();
+        if (debugManager.flags.AssignBCSAtEnqueue.get() != -1) {
+            assignBCS = debugManager.flags.AssignBCSAtEnqueue.get();
         }
 
         if (assignBCS) {
@@ -361,8 +361,8 @@ void CommandQueue::constructBcsEnginesForSplit() {
         return;
     }
 
-    if (DebugManager.flags.SplitBcsMask.get() > 0) {
-        this->splitEngines = DebugManager.flags.SplitBcsMask.get();
+    if (debugManager.flags.SplitBcsMask.get() > 0) {
+        this->splitEngines = debugManager.flags.SplitBcsMask.get();
     }
 
     for (uint32_t i = 0; i < bcsInfoMaskSize; i++) {
@@ -379,11 +379,11 @@ void CommandQueue::constructBcsEnginesForSplit() {
         }
     }
 
-    if (DebugManager.flags.SplitBcsMaskD2H.get() > 0) {
-        this->d2hEngines = DebugManager.flags.SplitBcsMaskD2H.get();
+    if (debugManager.flags.SplitBcsMaskD2H.get() > 0) {
+        this->d2hEngines = debugManager.flags.SplitBcsMaskD2H.get();
     }
-    if (DebugManager.flags.SplitBcsMaskH2D.get() > 0) {
-        this->h2dEngines = DebugManager.flags.SplitBcsMaskH2D.get();
+    if (debugManager.flags.SplitBcsMaskH2D.get() > 0) {
+        this->h2dEngines = debugManager.flags.SplitBcsMaskH2D.get();
     }
 
     this->bcsSplitInitialized = true;
@@ -525,7 +525,7 @@ bool CommandQueue::isQueueBlocked() {
                 taskLevel = getGpgpuCommandStreamReceiver().peekTaskLevel();
             }
 
-            fileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
+            fileLoggerInstance().log(debugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
 
             // close the access to virtual event, driver added only 1 ref count.
             this->virtualEvent->decRefInternal();
@@ -634,7 +634,7 @@ void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionSt
 
     if (outEvent) {
         outEvent->updateCompletionStamp(completionStamp.taskCount, outEvent->peekBcsTaskCountFromCommandQueue(), completionStamp.taskLevel, completionStamp.flushStamp);
-        fileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", outEvent, "taskLevel", outEvent->taskLevel.load());
+        fileLoggerInstance().log(debugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", outEvent, "taskLevel", outEvent->taskLevel.load());
     }
 }
 
@@ -974,14 +974,14 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
 
     auto debugVariableSet = false;
     // Requested by debug variable or allowed by Buffer
-    if (CL_COMMAND_READ_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnReadBuffer.get() != -1) {
-        if (DebugManager.flags.DoCpuCopyOnReadBuffer.get() == 0) {
+    if (CL_COMMAND_READ_BUFFER == commandType && debugManager.flags.DoCpuCopyOnReadBuffer.get() != -1) {
+        if (debugManager.flags.DoCpuCopyOnReadBuffer.get() == 0) {
             return false;
         }
         debugVariableSet = true;
     }
-    if (CL_COMMAND_WRITE_BUFFER == commandType && DebugManager.flags.DoCpuCopyOnWriteBuffer.get() != -1) {
-        if (DebugManager.flags.DoCpuCopyOnWriteBuffer.get() == 0) {
+    if (CL_COMMAND_WRITE_BUFFER == commandType && debugManager.flags.DoCpuCopyOnWriteBuffer.get() != -1) {
+        if (debugManager.flags.DoCpuCopyOnWriteBuffer.get() == 0) {
             return false;
         }
         debugVariableSet = true;
@@ -1025,13 +1025,13 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
 }
 
 bool CommandQueue::queueDependenciesClearRequired() const {
-    return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
+    return isOOQEnabled() || debugManager.flags.OmitTimestampPacketDependencies.get();
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
     bool blitEnqueueAllowed = ((device->getRootDeviceEnvironment().isWddmOnLinux() || device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed()) && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) || this->isCopyOnly;
-    if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
-        blitEnqueueAllowed = DebugManager.flags.EnableBlitterForEnqueueOperations.get();
+    if (debugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
+        blitEnqueueAllowed = debugManager.flags.EnableBlitterForEnqueueOperations.get();
     }
     if (!blitEnqueueAllowed) {
         return false;
@@ -1067,8 +1067,8 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
     auto &productHelper = device->getProductHelper();
     auto blitEnqueueImageAllowed = productHelper.isBlitterForImagesSupported();
 
-    if (DebugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
-        blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForEnqueueImageOperations.get();
+    if (debugManager.flags.EnableBlitterForEnqueueImageOperations.get() != -1) {
+        blitEnqueueImageAllowed = debugManager.flags.EnableBlitterForEnqueueImageOperations.get();
     }
 
     blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
@@ -1137,7 +1137,7 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 break;
             case CL_QUEUE_INDEX_INTEL:
                 selectedQueueIndex = static_cast<cl_uint>(*(currentProperties + 1));
-                auto nodeOrdinal = DebugManager.flags.NodeOrdinal.get();
+                auto nodeOrdinal = debugManager.flags.NodeOrdinal.get();
                 if (nodeOrdinal != -1) {
                     int currentEngineIndex = 0;
                     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
@@ -1165,9 +1165,9 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 const auto &engine = getDevice().getRegularEngineGroups()[selectedQueueFamilyIndex].engines[selectedQueueIndex];
                 auto engineType = engine.getEngineType();
                 auto engineUsage = engine.getEngineUsage();
-                if ((DebugManager.flags.EngineUsageHint.get() != -1) &&
-                    (getDevice().tryGetEngine(engineType, static_cast<EngineUsage>(DebugManager.flags.EngineUsageHint.get())) != nullptr)) {
-                    engineUsage = static_cast<EngineUsage>(DebugManager.flags.EngineUsageHint.get());
+                if ((debugManager.flags.EngineUsageHint.get() != -1) &&
+                    (getDevice().tryGetEngine(engineType, static_cast<EngineUsage>(debugManager.flags.EngineUsageHint.get())) != nullptr)) {
+                    engineUsage = static_cast<EngineUsage>(debugManager.flags.EngineUsageHint.get());
                 }
                 this->overrideEngine(engineType, engineUsage);
                 this->queueCapabilities = getClDevice().getDeviceInfo().queueFamilyProperties[selectedQueueFamilyIndex].capabilities;
@@ -1213,7 +1213,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
 }
 
 void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {
-    if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
+    if (debugManager.flags.AUBDumpSubCaptureMode.get()) {
         auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo.empty() ? "" : multiDispatchInfo.peekMainKernel()->getDescriptor().kernelMetadata.kernelName);
         if (!status.isActive) {
             // make each enqueue blocking when subcapture is not active to split batch buffer
@@ -1249,7 +1249,7 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     enabled &= gfxCoreHelper.isTimestampWaitSupportedForQueues();
     enabled &= !productHelper.isDcFlushAllowed();
 
-    switch (DebugManager.flags.EnableTimestampWaitForQueues.get()) {
+    switch (debugManager.flags.EnableTimestampWaitForQueues.get()) {
     case 0:
         enabled = false;
         break;

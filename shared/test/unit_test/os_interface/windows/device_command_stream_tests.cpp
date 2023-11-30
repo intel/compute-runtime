@@ -48,8 +48,8 @@ class WddmCommandStreamFixture {
 
     void setUp() {
         HardwareInfo *hwInfo = nullptr;
-        DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
-        DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.SetAmountOfReusableAllocations.set(0);
         auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
 
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
@@ -107,7 +107,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
             return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission();
         }
         bool ret = true;
-        if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+        if (debugManager.flags.EnableDirectSubmission.get() == 1) {
             if (!initBlitterDirectSubmission) {
                 directSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(*this);
@@ -151,7 +151,7 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
         gdi = new MockGdi();
         wddm->resetGdi(gdi);
         ASSERT_NE(wddm, nullptr);
-        DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
         auto mockCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 0, 1);
         this->csr = mockCsr;
         memoryManager = new WddmMemoryManager(*executionEnvironment);
@@ -234,7 +234,7 @@ TEST_F(WddmCommandStreamTest, WhenFlushingThenFlushIsSubmitted) {
 
 TEST_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
+    debugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -981,7 +981,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
 using WddmSimpleTest = ::testing::Test;
 
 HWTEST_F(WddmSimpleTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedOn) {
-    DebugManager.flags.CsrDispatchMode.set(0);
+    debugManager.flags.CsrDispatchMode.set(0);
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -1123,7 +1123,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceTh
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
-    DebugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.EnableDirectSubmission.set(1);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
@@ -1148,7 +1148,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
-    DebugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.EnableDirectSubmission.set(1);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
@@ -1177,7 +1177,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
-    DebugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.EnableDirectSubmission.set(1);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
@@ -1212,8 +1212,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
 
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
-    DebugManager.flags.EnableDirectSubmission.set(1);
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+    debugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
@@ -1259,8 +1259,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
 
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
-    DebugManager.flags.EnableDirectSubmission.set(1);
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+    debugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
@@ -1311,7 +1311,7 @@ TEST_F(WddmCommandStreamTest, givenResidencyLoggingAvailableWhenFlushingCommandB
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.WddmResidencyLogger.set(1);
+    debugManager.flags.WddmResidencyLogger.set(1);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;

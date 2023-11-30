@@ -58,8 +58,8 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
         this->dispatchMode = DispatchMode::ImmediateDispatch;
     }
 
-    if (DebugManager.flags.CsrDispatchMode.get()) {
-        this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
+    if (debugManager.flags.CsrDispatchMode.get()) {
+        this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }
 }
 

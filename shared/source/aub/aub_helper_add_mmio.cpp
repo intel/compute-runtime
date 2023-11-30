@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace NEO {
 
 MMIOList AubHelper::getAdditionalMmioList() {
-    return splitMMIORegisters(DebugManager.flags.AubDumpAddMmioRegistersList.get(), ';');
+    return splitMMIORegisters(debugManager.flags.AubDumpAddMmioRegistersList.get(), ';');
 }
 
 MMIOList AubHelper::splitMMIORegisters(const std::string &registers, char delimiter) {

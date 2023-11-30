@@ -40,7 +40,7 @@ TEST(SvmDeviceAllocationTest, givenGivenSvmAllocsManagerWhenObtainOwnershipCalle
 using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
 TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSharedAllocWithOffsetPointerThenResourceIsRemovedProperly) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
     void *cmdQ = reinterpret_cast<void *>(0x12345);
     auto mockPageFaultManager = new MockPageFaultManager();
     memoryManager->pageFaultManager.reset(mockPageFaultManager);
@@ -64,7 +64,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSharedAllocWithOffsetPointerThenReso
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSvmAllocationDeferThenAllocationsCountIsProper) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
@@ -94,7 +94,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSvmAllocationDeferThenAllocationsCou
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSVMAllocIsDeferredThenFreedSubsequently) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
@@ -119,7 +119,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenFreeSVMAllocIsDeferredThenFreedSubsequen
 
 TEST_F(SVMLocalMemoryAllocatorTest, GivenTwoRootDevicesWhenAllocatingSharedMemoryForDevice2ThenAllocationsHappenForRootDeviceIndexOneAndNotZero) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(2, 0));
     auto device = deviceFactory->rootDevices[1];
@@ -241,7 +241,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenMultiplePointerWithOffsetPassedThenPrope
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenKmdMigratedSharedAllocationWhenPrefetchMemoryIsCalledForMultipleActivePartitionsThenPrefetchAllocationToSubDevices) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
@@ -273,8 +273,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenKmdMigratedSharedAllocationWhenPrefetch
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenEnableBOChunkingPrefetchWhenPrefetchMemoryIsCalledThenSetMemPrefetchCalled) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.EnableBOChunkingDevMemPrefetch.set(true);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableBOChunkingDevMemPrefetch.set(true);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];
@@ -301,8 +301,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenEnableBOChunkingPrefetchWhenPrefetchMem
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenSVMAllocsIsCalledThenPrefetchSharedUnifiedMemoryInSvmAllocsManager) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
     auto device = deviceFactory->rootDevices[0];

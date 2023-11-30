@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,14 +13,14 @@ using namespace NEO;
 class DebugManagerStateRestore {
   public:
     DebugManagerStateRestore() {
-        debugVarSnapshot = DebugManager.flags;
-        injectFcnSnapshot = DebugManager.injectFcn;
+        debugVarSnapshot = debugManager.flags;
+        injectFcnSnapshot = debugManager.injectFcn;
     }
     ~DebugManagerStateRestore() {
-        DebugManager.flags = debugVarSnapshot;
-        DebugManager.injectFcn = injectFcnSnapshot;
+        debugManager.flags = debugVarSnapshot;
+        debugManager.injectFcn = injectFcnSnapshot;
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) shrink(DebugManager.flags.variableName.getRef());
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) shrink(debugManager.flags.variableName.getRef());
 #include "shared/source/debug_settings/release_variables.inl"
 
 #include "debug_variables.inl"

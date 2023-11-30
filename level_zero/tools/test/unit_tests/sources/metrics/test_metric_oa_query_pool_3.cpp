@@ -404,7 +404,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenImplicitScalingIsEnabledWhenMetricsA
 TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetCommandListAppendMetricQueryBeginEndIsCalledForSubDeviceThenReturnsSuccess) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();
@@ -495,7 +495,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetComm
 TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetCommandListAppendMetricMemoryBarrierIsCalledForSubDeviceThenReturnsSuccess) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
 

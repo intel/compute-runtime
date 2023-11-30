@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenConstantSurfaceWhenProgrammingSurfaceStateT
 
 GEN12LPTEST_F(BufferTestsTgllp, givenL1ForceEnabledWhenProgrammingSurfaceStateThenUseL1) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceL1Caching.set(1);
+    debugManager.flags.ForceL1Caching.set(1);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context.get(),
@@ -102,7 +102,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenL1ForceEnabledWhenProgrammingSurfaceStateTh
 
 GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyL1ForceDisabledWhenProgrammingSurfaceStateThenUseL3) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceL1Caching.set(0);
+    debugManager.flags.ForceL1Caching.set(0);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context.get(),

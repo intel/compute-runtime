@@ -155,7 +155,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
         isCompressionEnabled = true;
     }
 
-    if (DebugManager.flags.PrintGmmCompressionParams.get()) {
+    if (debugManager.flags.PrintGmmCompressionParams.get()) {
         printf("\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
                resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
     }
@@ -203,7 +203,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
         }
     }
 
-    if (DebugManager.flags.PrintGmmCompressionParams.get()) {
+    if (debugManager.flags.PrintGmmCompressionParams.get()) {
         printf("\nGmm Resource compression params: \n\tFlags.Gpu.CCS: %u\n\tFlags.Gpu.UnifiedAuxSurface: %u\n\tFlags.Info.RenderCompressed: %u",
                resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
     }
@@ -405,11 +405,11 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
 }
 
 void Gmm::applyDebugOverrides() {
-    if (-1 != DebugManager.flags.OverrideGmmResourceUsageField.get()) {
-        resourceParams.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE>(DebugManager.flags.OverrideGmmResourceUsageField.get());
+    if (-1 != debugManager.flags.OverrideGmmResourceUsageField.get()) {
+        resourceParams.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE>(debugManager.flags.OverrideGmmResourceUsageField.get());
     }
 
-    if (true == (DebugManager.flags.ForceAllResourcesUncached.get())) {
+    if (true == (debugManager.flags.ForceAllResourcesUncached.get())) {
         resourceParams.Usage = GMM_RESOURCE_USAGE_SURFACE_UNCACHED;
     }
 }

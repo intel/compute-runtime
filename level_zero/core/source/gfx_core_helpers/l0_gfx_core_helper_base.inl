@@ -16,10 +16,10 @@ namespace L0 {
 
 template <typename Family>
 L0::Event *L0GfxCoreHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const {
-    if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
-        if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
+    if (NEO::debugManager.flags.OverrideTimestampPacketSize.get() != -1) {
+        if (NEO::debugManager.flags.OverrideTimestampPacketSize.get() == 4) {
             return Event::create<uint32_t>(eventPool, desc, device);
-        } else if (NEO::DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
+        } else if (NEO::debugManager.flags.OverrideTimestampPacketSize.get() == 8) {
             return Event::create<uint64_t>(eventPool, desc, device);
         } else {
             UNRECOVERABLE_IF(true);

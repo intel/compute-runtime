@@ -63,7 +63,7 @@ TEST(CompressionSelector, WhenAllowStatelessCompressionIsCalledThenReturnCorrect
     NEO::isStatelessCompressionSupportedForUlts = true;
 
     for (auto enable : {-1, 0, 1}) {
-        DebugManager.flags.EnableStatelessCompression.set(enable);
+        debugManager.flags.EnableStatelessCompression.set(enable);
 
         if (enable > 0) {
             EXPECT_TRUE(CompressionSelector::allowStatelessCompression());

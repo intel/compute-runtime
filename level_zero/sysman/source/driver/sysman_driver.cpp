@@ -29,7 +29,7 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
 
     if (sysmanInitFromCore) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Sysman Initialization already happened via zeInit\n");
         return;
     }
@@ -51,7 +51,7 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
                               executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(sysmanHwDeviceId), rootDeviceIndex);
 
             if (!initStatus) {
-                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                       "OsInterface initialization failed for device : %d\n", rootDeviceIndex);
                 *result = ZE_RESULT_ERROR_UNINITIALIZED;
                 executionEnvironment->decRefInternal();
@@ -63,7 +63,7 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
         globalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
         driverCount = 1;
     } else {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s\n", "No devices found");
         *result = ZE_RESULT_ERROR_UNINITIALIZED;
     }

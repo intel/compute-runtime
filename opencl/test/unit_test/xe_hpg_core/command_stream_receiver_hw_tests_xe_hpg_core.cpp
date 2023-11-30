@@ -19,7 +19,7 @@ class CommandStreamReceiverHwTestXeHpgCore : public ClDeviceFixture,
                                              public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         ClDeviceFixture::setUp();
     }
     void TearDown() override {
@@ -34,13 +34,13 @@ XE_HPG_CORETEST_F(CommandStreamReceiverHwTestXeHpgCore, givenEnableStatelessComp
     DebugManagerStateRestore restore;
     CommandStreamReceiverHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
-    DebugManager.flags.EnableStatelessCompression.set(0);
+    debugManager.flags.EnableStatelessCompression.set(0);
     for (bool auxTranslationRequired : {false, true}) {
         auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
         EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
     }
 
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
     for (bool auxTranslationRequired : {false, true}) {
         auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
         if (auxTranslationRequired) {

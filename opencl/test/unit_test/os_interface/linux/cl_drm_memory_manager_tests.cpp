@@ -70,7 +70,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationTh
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    DebugManager.flags.Force32bitAddressing.set(true);
+    debugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
 
@@ -100,7 +100,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromH
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    DebugManager.flags.Force32bitAddressing.set(true);
+    debugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
 
@@ -160,7 +160,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
             mock->ioctlExpected.gemWait = 1;
             mock->ioctlExpected.gemClose = 1;
 
-            DebugManager.flags.Force32bitAddressing.set(true);
+            debugManager.flags.Force32bitAddressing.set(true);
             MockContext context(pClDevice);
             memoryManager->setForce32BitAllocations(true);
 
@@ -198,7 +198,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
             EXPECT_EQ(alignDown(boAddress, MemoryConstants::pageSize), boAddress);
 
             delete buffer;
-            DebugManager.flags.Force32bitAddressing.set(false);
+            debugManager.flags.Force32bitAddressing.set(false);
         }
     }
 }
@@ -206,7 +206,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
 TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
     mock->ioctlExpected.total = -1;
-    DebugManager.flags.Force32bitAddressing.set(true);
+    debugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
 
@@ -247,7 +247,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAre
 TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
     mock->ioctlExpected.total = -1;
-    DebugManager.flags.Force32bitAddressing.set(true);
+    debugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
 
@@ -868,7 +868,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFa
 
 TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrmIsFromCorrectRootDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(4);
+    debugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     initPlatform();

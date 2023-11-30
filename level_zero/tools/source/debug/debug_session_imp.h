@@ -39,7 +39,7 @@ struct DebugSessionImp : DebugSession {
     };
 
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
-        tileAttachEnabled = NEO::DebugManager.flags.ExperimentalEnableTileAttach.get();
+        tileAttachEnabled = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();
     }
 
     ze_result_t interrupt(ze_device_thread_t thread) override;

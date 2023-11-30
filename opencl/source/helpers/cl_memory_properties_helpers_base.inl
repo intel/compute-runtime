@@ -61,7 +61,7 @@ MemoryProperties ClMemoryPropertiesHelper::createMemoryProperties(cl_mem_flags f
     }
     if (isValueSet(flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
         isValueSet(flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
-        DebugManager.flags.AllowUnrestrictedSize.get()) {
+        debugManager.flags.AllowUnrestrictedSize.get()) {
         memoryProperties.flags.allowUnrestrictedSize = true;
     }
     if (isValueSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {

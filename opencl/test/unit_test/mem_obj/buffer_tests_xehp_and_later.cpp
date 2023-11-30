@@ -53,7 +53,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
     }
 
     {
-        DebugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
+        debugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
         buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
         EXPECT_EQ(compressionFormat, surfaceState.getCompressionFormat());
     }
@@ -61,8 +61,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(1);
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -93,12 +93,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, allocation->getDefaultGmm()));
-    EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), surfaceState.getCompressionFormat());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), surfaceState.getCompressionFormat());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -128,7 +128,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInHos
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -160,7 +160,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationWitho
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL1CachingWhenBufferSurfaceStateIsSetThenItIsCachedInL1) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceL1Caching.set(1u);
+    debugManager.flags.ForceL1Caching.set(1u);
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto flags = CL_MEM_READ_WRITE;
@@ -184,7 +184,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugVariableForcingL1CachingDisabledWhenBufferSurfaceStateIsSetThenItIsCachedInL3) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto flags = CL_MEM_READ_WRITE;

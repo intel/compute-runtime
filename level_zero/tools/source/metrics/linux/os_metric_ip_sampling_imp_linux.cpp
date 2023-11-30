@@ -115,7 +115,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
     }
 
     auto ret = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_ENABLE, 0);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
                        "PRELIM_I915_PERF_IOCTL_ENABLE failed errno = %d | ret = %d \n", errno, ret);
 
     return (ret == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
@@ -124,11 +124,11 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
 
     int disableStatus = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_DISABLE, 0);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
                        "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
 
     int closeStatus = NEO::SysCalls::close(stream);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
                        "close() failed errno = %d | ret = %d \n", errno, closeStatus);
     stream = -1;
 
@@ -138,7 +138,7 @@ ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
 ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {
 
     ssize_t ret = NEO::SysCalls::read(stream, pRawData, *pRawDataSize);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() failed errno = %d | ret = %d \n",
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() failed errno = %d | ret = %d \n",
                        errno, ret);
 
     if (ret >= 0) {
@@ -178,7 +178,7 @@ bool MetricIpSamplingLinuxImp::isNReportsAvailable() {
     pollParams.events = POLLIN;
 
     int32_t pollResult = NEO::SysCalls::poll(&pollParams, 1, 0u);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (pollResult < 0), stderr, "poll() failed errno = %d | pollResult = %d \n",
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (pollResult < 0), stderr, "poll() failed errno = %d | pollResult = %d \n",
                        errno, pollResult);
 
     if (pollResult > 0) {
@@ -215,7 +215,7 @@ ze_result_t MetricIpSamplingLinuxImp::getMetricsTimerResolution(uint64_t &timerR
     if (ret < 0 || gpuTimeStampfrequency == 0) {
         timerResolution = 0;
         result = ZE_RESULT_ERROR_UNKNOWN;
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "getTimestampFrequency() failed errno = %d | ret = %d \n",
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "getTimestampFrequency() failed errno = %d | ret = %d \n",
                            errno, ret);
     } else {
         timerResolution = static_cast<uint64_t>(gpuTimeStampfrequency);

@@ -380,7 +380,7 @@ TEST_F(KernelArgBufferTest, whenSettingAuxTranslationRequiredThenIsAuxTranslatio
 
 TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessToSharedBufferWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
     buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::SHARED_BUFFER);
@@ -402,7 +402,7 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessTo
 
 TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
     buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
@@ -424,7 +424,7 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessTo
 
 TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithNoDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
 
@@ -450,7 +450,7 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccess
     }
 
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     char data[128];
     void *ptr = &data;
@@ -476,7 +476,7 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAcce
     }
 
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     char data[128];
     void *ptr = &data;
@@ -496,7 +496,7 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAcce
 
 TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectStatelessAccessWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
@@ -516,7 +516,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectS
 
 TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectStatelessAccessWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrueForHostMemoryAllocation) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
@@ -553,7 +553,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
 TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectStatelessAccessWhenFillWithKernelObjsForAuxTranslationIsCalledThenSetKernelObjectsForAuxTranslation) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
@@ -597,7 +597,7 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     }
 
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::BUFFER, false},
                                                                       {AllocationType::BUFFER, true},
@@ -641,7 +641,7 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
     void setUp() {
-        DebugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
         KernelArgBufferFixture::setUp();
 
         pBuffer = new MockBuffer();

@@ -61,7 +61,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitFo
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCallExit) {
     uint32_t expectedExitCounter = 13;
 
-    DebugManager.flags.ExitOnSubmissionNumber.set(expectedExitCounter);
+    debugManager.flags.ExitOnSubmissionNumber.set(expectedExitCounter);
 
     csr->initializeTagAllocation();
 
@@ -83,7 +83,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
     }
 
     for (int32_t mode : {0, 1, 2}) {
-        DebugManager.flags.ExitOnSubmissionMode.set(mode);
+        debugManager.flags.ExitOnSubmissionMode.set(mode);
 
         for (auto engineType : {aub_stream::ENGINE_BCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::ENGINE_RCS, device->getRootDeviceEnvironment())}) {
             if (engineType == aub_stream::ENGINE_BCS && !bcsSupported) {
@@ -212,7 +212,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenFlushingThenAvailableSpaceDoesNotCh
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
+    debugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
 
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -743,9 +743,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingExecWhenFlushingThe
 struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTest {
     template <typename GfxFamily>
     void setUpT() {
-        DebugManager.flags.EnableDirectSubmission.set(1u);
-        DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-        DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+        debugManager.flags.EnableDirectSubmission.set(1u);
+        debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
+        debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
@@ -765,9 +765,9 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
 struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDirectSubmissionTest {
     template <typename GfxFamily>
     void setUpT() {
-        DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1u);
-        DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(0u);
-        DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0u);
+        debugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1u);
+        debugManager.flags.DirectSubmissionOverrideRenderSupport.set(0u);
+        debugManager.flags.DirectSubmissionOverrideComputeSupport.set(0u);
 
         DrmCommandStreamDirectSubmissionTest::setUpT<GfxFamily>();
         executionEnvironment->incRefInternal();
@@ -1011,24 +1011,24 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmCsrThenEnableBatching) {
     {
         DebugManagerStateRestore restore;
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
 
         MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::BatchedDispatch, csr1.dispatchMode);
 
-        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
         MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::ImmediateDispatch, csr2.dispatchMode);
     }
 
     {
         DebugManagerStateRestore restore;
-        DebugManager.flags.EnableLocalMemory.set(0);
+        debugManager.flags.EnableLocalMemory.set(0);
 
         MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::ImmediateDispatch, csr1.dispatchMode);
 
-        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
         MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
         EXPECT_EQ(DispatchMode::BatchedDispatch, csr2.dispatchMode);
     }
@@ -1066,7 +1066,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpd
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrintThenProperValuesArePrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintBOsForSubmit.set(true);
+    debugManager.flags.PrintBOsForSubmit.set(true);
 
     MockDrmAllocation allocation1(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
     MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
@@ -1102,7 +1102,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrint
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailureOnMakeResidentForCmdBufferWhenPrintThenErrorIsReturnedAndNothingIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintBOsForSubmit.set(true);
+    debugManager.flags.PrintBOsForSubmit.set(true);
 
     MockDrmAllocation allocation1(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
     MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
@@ -1127,7 +1127,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailureOnMakeResidentForAllocationToResidencyWhenPrintThenErrorIsReturnedAndNothingIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintBOsForSubmit.set(true);
+    debugManager.flags.PrintBOsForSubmit.set(true);
 
     MockDrmAllocation allocation1(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);
     MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::System4KBPages);

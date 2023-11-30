@@ -313,7 +313,7 @@ TEST(DebugSessionLinuxi915Test, WhenEnqueueApiEventCalledThenEventPushed) {
 
 TEST(DebugSessionLinuxi915Test, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, nullptr, 10);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -343,7 +343,7 @@ TEST(DebugSessionLinuxi915Test, GivenLogsEnabledWhenPrintContextVmsCalledThenMap
 
 TEST(DebugSessionLinuxi915Test, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(0);
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, nullptr, 10);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -1007,7 +1007,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessageIsPrintedAndResultSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -1062,7 +1062,7 @@ TEST_F(DebugApiLinuxTest, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerSucceedsThenCorrectMessageIsPrintedAndResultSet) {
     DebugManagerStateRestore restorer;
 
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -1144,7 +1144,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWithFdEqualZeroWhenClosingConnectionT
 
 TEST_F(DebugApiLinuxTest, GivenPrintDebugMessagesWhenDebugSessionClosesConnectionWithErrorThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -1312,7 +1312,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadGpuMemoryThenMemoryIsRead) {
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenCallingReadGpuMemoryThenMemoryIsReadWithMmap) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(true);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(true);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -1336,7 +1336,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenCallingReadGpuMem
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingReadGpuMemoryThenMemoryIsReadWithPread) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -1371,7 +1371,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingReadGpuMe
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenPreadFailsThenErrorReturned) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -1422,7 +1422,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteGpuMemoryThenMemoryIsWritten) {
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenCallingWriteGpuMemoryThenMemoryIsWrittenWithMmap) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(true);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(true);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -1442,7 +1442,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenCallingWriteGpuMe
 }
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingWriteGpuMemoryThenMemoryIsWrittenWithPwrite) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -1474,7 +1474,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingWriteGpuM
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenMmapFailesThenReadOrWriteGpuMemoryFails) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(true);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(true);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -1496,7 +1496,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenMmapFailesThenRea
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenWhenPwriteFailsThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
+    NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.set(false);
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -2330,7 +2330,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientHandleIsInvalidDuringInitia
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializationThenErrorIsPrintedAndReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -2387,7 +2387,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaThen
 
     EXPECT_TRUE(retVal);
 
-    if (DebugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+    if (debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
         EXPECT_EQ(1, handler->mmapCalled);
         EXPECT_EQ(1, handler->munmapCalled);
     } else {
@@ -2425,7 +2425,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaRetu
 
     EXPECT_FALSE(retVal);
 
-    if (DebugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+    if (debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
         EXPECT_EQ(1, handler->mmapCalled);
         EXPECT_EQ(1, handler->munmapCalled);
     } else {
@@ -2451,7 +2451,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaThenGp
 
     session->readStateSaveAreaHeader();
 
-    if (DebugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+    if (debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
         EXPECT_EQ(1, handler->mmapCalled);
         EXPECT_EQ(1, handler->munmapCalled);
     } else {
@@ -3138,7 +3138,7 @@ TEST_F(DebugApiLinuxTest, GivenValidFlagsWhenReadingEventThenEventIsNotProcessed
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndUnhandledEventTypeWhenHandlingEventThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -5014,7 +5014,7 @@ TEST_F(DebugApiLinuxTest, GivenNonClassUuidEventWithoutPayloadWhenHandlingEventT
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndFailingReadUuidEventIoctlWhenHandlingEventThenErrorIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -5120,7 +5120,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamVmThenVmIdIsStore
 
 TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIsHandled) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -5256,7 +5256,7 @@ TEST_F(DebugApiLinuxTest, GivenNoVmIdWhenOrZeroEnginesContextParamEventIsHandled
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidContextIsHandledThenErrorIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -5291,7 +5291,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidConte
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerInfoLogsWhenHandlingContextParamEventWithUnknownParamThenInfoIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -5802,7 +5802,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     engines2->engines[3].lrc_handle = 0;
 
     ::testing::internal::CaptureStdout();
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
 
     session->handleEvent(&engines1->base);
     session->handleEvent(&engines2->base);
@@ -5831,7 +5831,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
 
 TEST_F(DebugApiLinuxTest, givenTileAttachEnabledWhenDeviceDoesNotHaveTilesThenTileSessionsAreNotEnabled) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -7696,7 +7696,7 @@ using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
 
 TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebugSessionInitializedThenEuThreadsAreCreated) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(0);
 
     zet_debug_config_t config = {};
 
@@ -8584,7 +8584,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndRea
 
 struct AffinityMaskMultipleSubdevicesLinux : DebugApiLinuxMultiDeviceFixture {
     void setUp() {
-        DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
+        debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
         MultipleDevicesWithCustomHwInfo::numSubDevices = 4;
         DebugApiLinuxMultiDeviceFixture::setUp();
     }

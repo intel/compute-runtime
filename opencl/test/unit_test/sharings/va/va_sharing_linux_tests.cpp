@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,11 +112,11 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenEnableVaLibCallsThenFunctionsAreA
         return 0;
     };
 
-    EXPECT_EQ(-1, DebugManager.flags.EnableVaLibCalls.get());
+    EXPECT_EQ(-1, debugManager.flags.EnableVaLibCalls.get());
     VASharingFunctionsTested functionsWithDefaultVaLibCalls;
     EXPECT_TRUE(functionsWithDefaultVaLibCalls.wereFunctionsAssigned());
 
-    DebugManager.flags.EnableVaLibCalls.set(1);
+    debugManager.flags.EnableVaLibCalls.set(1);
     VASharingFunctionsTested functionsWithEnabledVaLibCalls;
     EXPECT_TRUE(functionsWithEnabledVaLibCalls.wereFunctionsAssigned());
 }
@@ -182,7 +182,7 @@ TEST(VASharingFunctions, GivenFunctionsWhenLibvaLoadedThenDlcloseIsCalled) {
 
 TEST(VASharingFunctions, givenEnabledExtendedVaFormatsWhenQueryingSupportedFormatsThenAllSupportedFormatsAreStored) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    debugManager.flags.EnableExtendedVaFormats.set(true);
 
     VASharingFunctionsMock sharingFunctions;
 

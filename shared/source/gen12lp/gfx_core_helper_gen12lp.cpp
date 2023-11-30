@@ -27,8 +27,8 @@ inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo
     if (disableEUFusionForKernel)
         fusedEuDispatchEnabled = false;
 
-    if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
-        fusedEuDispatchEnabled = (DebugManager.flags.CFEFusedEUDispatch.get() == 0);
+    if (debugManager.flags.CFEFusedEUDispatch.get() != -1) {
+        fusedEuDispatchEnabled = (debugManager.flags.CFEFusedEUDispatch.get() == 0);
     }
     return fusedEuDispatchEnabled;
 }
@@ -69,8 +69,8 @@ bool GfxCoreHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) c
 
 template <>
 bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
-    if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
-        return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
+    if (debugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
+        return !!debugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
     return false;
 }
@@ -142,10 +142,10 @@ inline void MemorySynchronizationCommands<Family>::setBarrierExtraProperties(voi
 
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
 
-    if (DebugManager.flags.FlushAllCaches.get()) {
+    if (debugManager.flags.FlushAllCaches.get()) {
         pipeControl.setHdcPipelineFlush(true);
     }
-    if (DebugManager.flags.DoNotFlushCaches.get()) {
+    if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setHdcPipelineFlush(false);
     }
 }
@@ -164,7 +164,7 @@ bool GfxCoreHelperHw<Family>::useOnlyGlobalTimestamps() const {
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
-        if (DebugManager.flags.ForceL1Caching.get() != 1) {
+        if (debugManager.flags.ForceL1Caching.get() != 1) {
             l1enabled = false;
         }
 

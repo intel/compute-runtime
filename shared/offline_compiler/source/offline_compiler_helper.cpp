@@ -20,5 +20,5 @@ DebugSettingsManager<debugLevel>::~DebugSettingsManager() {
 };
 
 // Global Debug Settings Manager
-DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager("");
+DebugSettingsManager<globalDebugFunctionalityLevel> debugManager("");
 } // namespace NEO

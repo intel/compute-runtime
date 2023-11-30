@@ -30,7 +30,7 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
                         (imageInfo.imgDesc.imageType == ImageType::Image2DArray ||
                          imageInfo.imgDesc.imageType == ImageType::Image1DArray);
 
-    isImageArray |= (imageInfo.imgDesc.imageType == ImageType::Image2D || imageInfo.imgDesc.imageType == ImageType::Image2DArray) && DebugManager.flags.Force2dImageAsArray.get() == 1;
+    isImageArray |= (imageInfo.imgDesc.imageType == ImageType::Image2D || imageInfo.imgDesc.imageType == ImageType::Image2DArray) && debugManager.flags.Force2dImageAsArray.get() == 1;
 
     renderTargetViewExtent = static_cast<uint32_t>(imageCount);
     minimumArrayElement = 0;

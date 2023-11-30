@@ -25,7 +25,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
   public:
     void SetUp() override {
         DeviceFixture::setUp();
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
         auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
         const auto &src = zebinData->storage;
@@ -287,7 +287,7 @@ TEST_F(ModuleOnlineCompiled, GivenKernelThenCorrectAttributesAreReturned) {
 
 TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLargeGrfCompilationMode.set(true);
+    debugManager.flags.ForceLargeGrfCompilationMode.set(true);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
@@ -318,7 +318,7 @@ TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFl
 
 TEST_F(ModuleTests, givenAutoGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceAutoGrfCompilationMode.set(1);
+    debugManager.flags.ForceAutoGrfCompilationMode.set(1);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
@@ -349,7 +349,7 @@ TEST_F(ModuleTests, givenAutoGrfFlagSetWhenCreatingModuleThenOverrideInternalFla
 
 TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternalFlags) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceDefaultGrfCompilationMode.set(true);
+    debugManager.flags.ForceDefaultGrfCompilationMode.set(true);
 
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];

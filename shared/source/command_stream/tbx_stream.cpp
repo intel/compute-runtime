@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,8 @@ void TbxStream::close() {
 bool TbxStream::init(uint32_t stepping, uint32_t device) {
     socket = TbxSockets::create();
     DEBUG_BREAK_IF(!socket);
-    auto tbxServer = DebugManager.flags.TbxServer.get();
-    auto tbxPort = DebugManager.flags.TbxPort.get();
+    auto tbxServer = debugManager.flags.TbxServer.get();
+    auto tbxPort = debugManager.flags.TbxPort.get();
     return socket->init(tbxServer, tbxPort);
 }
 

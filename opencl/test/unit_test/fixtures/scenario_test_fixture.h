@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class ScenarioTest : public ::testing::Test,
 
   protected:
     void SetUp() override {
-        DebugManager.flags.EnableTimestampPacket.set(false);
+        debugManager.flags.EnableTimestampPacket.set(false);
         PlatformFixture::setUp();
 
         auto pDevice = pPlatform->getClDevice(0);

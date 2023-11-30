@@ -32,7 +32,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenLocalMemo
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterMockSimulatedCsrHwTests, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenLmemIsInitializedAndLmemCfgMmioIsWritten) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
@@ -250,7 +250,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemory
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledAnd4TileConfigWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     setUpImpl<FamilyType>();
     std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     csrSimulatedCommonHw->localMemoryEnabled = true;
@@ -265,7 +265,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemory
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
     setUpImpl<FamilyType>();
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     std::unique_ptr<MockSimulatedCsrHw<FamilyType>> csrSimulatedCommonHw(new MockSimulatedCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     csrSimulatedCommonHw->localMemoryEnabled = true;

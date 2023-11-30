@@ -207,7 +207,7 @@ SWTagBXML::SWTagBXML() {
 
     str = ss.str();
 
-    if (DebugManager.flags.DumpSWTagsBXML.get()) {
+    if (debugManager.flags.DumpSWTagsBXML.get()) {
         FILE *fp = NEO::IoFunctions::fopenPtr("swtagsbxml_dump.xml", "wb");
         if (fp) {
             NEO::IoFunctions::fwritePtr(str.c_str(), sizeof(char), str.size(), fp);

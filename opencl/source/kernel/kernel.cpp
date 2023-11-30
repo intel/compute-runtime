@@ -132,7 +132,7 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
     if ((nullptr != crossThreadData) && isValidOffset(arg.stateless)) {
         auto pp = ptrOffset(crossThreadData, arg.stateless);
         patchWithRequiredSize(pp, arg.pointerSize, ptrToPatchInCrossThreadData);
-        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             PatchInfoData patchInfoData(ptrToPatchInCrossThreadData, 0u, PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(crossThreadData), arg.stateless, PatchInfoAllocationType::IndirectObjectHeap, arg.pointerSize);
             this->patchInfoDataList.push_back(patchInfoData);
         }
@@ -165,7 +165,7 @@ cl_int Kernel::initialize() {
     auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
     auto slmTotalSize = this->getSlmTotalSize();
     if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         return CL_OUT_OF_RESOURCES;
     }
 
@@ -275,8 +275,8 @@ cl_int Kernel::initialize() {
 
     auxTranslationRequired = !program->getIsBuiltIn() && GfxCoreHelper::compressedBuffersSupported(hwInfo) && clGfxCoreHelper.requiresAuxResolves(kernelInfo);
 
-    if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
-        auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
+    if (debugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
+        auxTranslationRequired &= !!debugManager.flags.ForceAuxTranslationEnabled.get();
     }
     if (auxTranslationRequired) {
         program->getContextPtr()->setResolvesRequiredInKernels(true);
@@ -287,8 +287,8 @@ cl_int Kernel::initialize() {
 
     this->setInlineSamplers();
     bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor, program->getCreatedFromBinary());
-    if (DebugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
-        detectIndirectAccessInKernel = DebugManager.flags.DetectIndirectAccessInKernel.get() == 1;
+    if (debugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
+        detectIndirectAccessInKernel = debugManager.flags.DetectIndirectAccessInKernel.get() == 1;
     }
     if (detectIndirectAccessInKernel) {
         this->kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
@@ -585,7 +585,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     switch (paramName) {
     case CL_KERNEL_WORK_GROUP_SIZE:
         maxWorkgroupSize = maxKernelWorkGroupSize;
-        if (DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()) {
+        if (debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()) {
             auto divisionSize = CommonConstants::maximalSimdSize / kernelInfo.getMaxSimdSize();
             maxWorkgroupSize /= divisionSize;
         }
@@ -1178,8 +1178,8 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer) {
     auto performTunning = TunningType::DISABLED;
 
-    if (DebugManager.flags.EnableKernelTunning.get() != -1) {
-        performTunning = static_cast<TunningType>(DebugManager.flags.EnableKernelTunning.get());
+    if (debugManager.flags.EnableKernelTunning.get() != -1) {
+        performTunning = static_cast<TunningType>(debugManager.flags.EnableKernelTunning.get());
     }
 
     if (performTunning == TunningType::SIMPLE) {
@@ -1474,7 +1474,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             auto patchLocation = ptrOffset(crossThreadData, argAsPtr.stateless);
             uint64_t addressToPatch = buffer->setArgStateless(patchLocation, argAsPtr.pointerSize, rootDeviceIndex, !this->isBuiltIn);
 
-            if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+            if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
                 PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()),
                                             PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(crossThreadData),
                                             static_cast<uint64_t>(argAsPtr.stateless),
@@ -2213,8 +2213,8 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
         return false;
     }
 
-    if (DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get() != -1) {
-        return !!DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get();
+    if (debugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get() != -1) {
+        return !!debugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get();
     }
 
     bool cmdQueueRequiresCacheFlush = commandQueue.getRequiresCacheFlushAfterWalker();

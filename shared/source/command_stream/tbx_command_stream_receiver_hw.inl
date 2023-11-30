@@ -51,7 +51,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
 
-    auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
+    auto debugDeviceId = debugManager.flags.OverrideAubDeviceId.get();
     this->aubDeviceId = debugDeviceId == -1
                             ? this->peekHwInfo().capabilityTable.aubDeviceId
                             : static_cast<uint32_t>(debugDeviceId);
@@ -174,8 +174,8 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
     if (withAubDump) {
         auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
         auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex);
-        if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
-            fullName.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
+        if (debugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
+            fullName.assign(debugManager.flags.AUBDumpCaptureFileName.get());
         }
         rootDeviceEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
@@ -615,7 +615,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         return;
     }
 
-    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get() || DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
+    if (debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get() || debugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
         if (!gfxAllocation.isAllocDumpable()) {
             return;
         }

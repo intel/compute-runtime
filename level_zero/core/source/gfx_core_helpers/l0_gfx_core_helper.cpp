@@ -27,40 +27,40 @@ std::unique_ptr<L0GfxCoreHelper> L0GfxCoreHelper::create(GFXCORE_FAMILY gfxCore)
 }
 
 bool L0GfxCoreHelper::enableFrontEndStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (NEO::DebugManager.flags.EnableFrontEndTracking.get() != -1) {
-        return !!NEO::DebugManager.flags.EnableFrontEndTracking.get();
+    if (NEO::debugManager.flags.EnableFrontEndTracking.get() != -1) {
+        return !!NEO::debugManager.flags.EnableFrontEndTracking.get();
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.platformSupportsFrontEndTracking();
 }
 
 bool L0GfxCoreHelper::enablePipelineSelectStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (NEO::DebugManager.flags.EnablePipelineSelectTracking.get() != -1) {
-        return !!NEO::DebugManager.flags.EnablePipelineSelectTracking.get();
+    if (NEO::debugManager.flags.EnablePipelineSelectTracking.get() != -1) {
+        return !!NEO::debugManager.flags.EnablePipelineSelectTracking.get();
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.platformSupportsPipelineSelectTracking();
 }
 
 bool L0GfxCoreHelper::enableStateComputeModeTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (NEO::DebugManager.flags.EnableStateComputeModeTracking.get() != -1) {
-        return !!NEO::DebugManager.flags.EnableStateComputeModeTracking.get();
+    if (NEO::debugManager.flags.EnableStateComputeModeTracking.get() != -1) {
+        return !!NEO::debugManager.flags.EnableStateComputeModeTracking.get();
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.platformSupportsStateComputeModeTracking();
 }
 
 bool L0GfxCoreHelper::enableStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (NEO::DebugManager.flags.EnableStateBaseAddressTracking.get() != -1) {
-        return !!NEO::DebugManager.flags.EnableStateBaseAddressTracking.get();
+    if (NEO::debugManager.flags.EnableStateBaseAddressTracking.get() != -1) {
+        return !!NEO::debugManager.flags.EnableStateBaseAddressTracking.get();
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
 }
 
 bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport) {
-    if (NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
-        return !!NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get();
+    if (NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
+        return !!NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.get();
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     bool platformSupport = l0GfxCoreHelper.platformSupportsCmdListHeapSharing();
@@ -68,36 +68,36 @@ bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnv
 }
 
 bool L0GfxCoreHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.get() != -1) {
-        return !!NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.get();
+    if (NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.get() != -1) {
+        return !!NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.get();
     }
     return true;
 }
 
 bool L0GfxCoreHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::DebugManager.flags.CompactL3FlushEventPacket.get() != -1) {
-        return !!NEO::DebugManager.flags.CompactL3FlushEventPacket.get();
+    if (NEO::debugManager.flags.CompactL3FlushEventPacket.get() != -1) {
+        return !!NEO::debugManager.flags.CompactL3FlushEventPacket.get();
     }
     return true;
 }
 
 bool L0GfxCoreHelper::useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::DebugManager.flags.UseDynamicEventPacketsCount.get() != -1) {
-        return !!NEO::DebugManager.flags.UseDynamicEventPacketsCount.get();
+    if (NEO::debugManager.flags.UseDynamicEventPacketsCount.get() != -1) {
+        return !!NEO::debugManager.flags.UseDynamicEventPacketsCount.get();
     }
     return true;
 }
 
 bool L0GfxCoreHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) {
-    if (NEO::DebugManager.flags.SignalAllEventPackets.get() != -1) {
-        return !!NEO::DebugManager.flags.SignalAllEventPackets.get();
+    if (NEO::debugManager.flags.SignalAllEventPackets.get() != -1) {
+        return !!NEO::debugManager.flags.SignalAllEventPackets.get();
     }
     return true;
 }
 
 NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (NEO::DebugManager.flags.SelectCmdListHeapAddressModel.get() != -1) {
-        return static_cast<NEO::HeapAddressModel>(NEO::DebugManager.flags.SelectCmdListHeapAddressModel.get());
+    if (NEO::debugManager.flags.SelectCmdListHeapAddressModel.get() != -1) {
+        return static_cast<NEO::HeapAddressModel>(NEO::debugManager.flags.SelectCmdListHeapAddressModel.get());
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.getPlatformHeapAddressModel();
@@ -106,15 +106,15 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
 bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary) {
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     bool value = l0GfxCoreHelper.platformSupportsPrimaryBatchBufferCmdList();
-    if (NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
-        value = !!(NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
+    if (NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
+        value = !!(NEO::debugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
     }
     return value && allowPrimary;
 }
 
 bool L0GfxCoreHelper::useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (NEO::DebugManager.flags.UseImmediateFlushTask.get() != -1) {
-        return !!(NEO::DebugManager.flags.UseImmediateFlushTask.get());
+    if (NEO::debugManager.flags.UseImmediateFlushTask.get() != -1) {
+        return !!(NEO::debugManager.flags.UseImmediateFlushTask.get());
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     return l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask();

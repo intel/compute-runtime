@@ -32,7 +32,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 
-    if (DebugManager.flags.CleanStateInPreamble.get()) {
+    if (debugManager.flags.CleanStateInPreamble.get()) {
         auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
         cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
         *cmdBuffer = cmd;
@@ -54,7 +54,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     bool systolicSupport = pipelineSelectArgs.systolicPipelineSelectSupport;
     bool systolicValue = pipelineSelectArgs.systolicPipelineSelectMode;
-    int32_t overrideSystolic = DebugManager.flags.OverrideSystolicPipelineSelect.get();
+    int32_t overrideSystolic = debugManager.flags.OverrideSystolicPipelineSelect.get();
 
     if (overrideSystolic != -1) {
         systolicSupport = true;
@@ -70,7 +70,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     *cmdBuffer = cmd;
 
-    if (DebugManager.flags.CleanStateInPreamble.get()) {
+    if (debugManager.flags.CleanStateInPreamble.get()) {
         PipeControlArgs args = {};
         args.stateCacheInvalidationEnable = true;
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
@@ -85,7 +85,7 @@ size_t PreambleHelper<Family>::getCmdSizeForPipelineSelect(const RootDeviceEnvir
     if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
-    if (DebugManager.flags.CleanStateInPreamble.get()) {
+    if (debugManager.flags.CleanStateInPreamble.get()) {
         size += sizeof(PIPELINE_SELECT);
         size += 2 * MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }

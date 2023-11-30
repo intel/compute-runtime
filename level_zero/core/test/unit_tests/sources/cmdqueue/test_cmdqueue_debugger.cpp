@@ -27,7 +27,7 @@ namespace ult {
 using L0CmdQueueDebuggerTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
 HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaProgrammingExecutedThenProgramSbaWritesToSbaTrackingBufferForNonInternalQueues) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableStateBaseAddressTracking.set(1);
+    debugManager.flags.EnableStateBaseAddressTracking.set(1);
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

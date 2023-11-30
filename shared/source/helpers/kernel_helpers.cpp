@@ -21,8 +21,8 @@ namespace NEO {
 uint32_t KernelHelper::getMaxWorkGroupCount(uint32_t simd, uint32_t availableThreadCount, uint32_t dssCount, uint32_t availableSlmSize,
                                             uint32_t usedSlmSize, uint32_t maxBarrierCount, uint32_t numberOfBarriers, uint32_t workDim,
                                             const size_t *localWorkSize) {
-    if (DebugManager.flags.OverrideMaxWorkGroupCount.get() != -1) {
-        return static_cast<uint32_t>(DebugManager.flags.OverrideMaxWorkGroupCount.get());
+    if (debugManager.flags.OverrideMaxWorkGroupCount.get() != -1) {
+        return static_cast<uint32_t>(debugManager.flags.OverrideMaxWorkGroupCount.get());
     }
 
     UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
@@ -61,18 +61,18 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
     auto totalScratchSize = KernelHelper::getScratchSize(attributes.perThreadScratchSize[0], computeUnitsForScratch);
     auto totalPrivateScratchSize = KernelHelper::getPrivateScratchSize(attributes.perThreadScratchSize[1], computeUnitsForScratch);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
                        "computeUnits for each thread: %u\n", computeUnitsForScratch);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
                        "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",
                        attributes.perHwThreadPrivateMemorySize, totalPrivateMemorySize);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
                        "perHwThreadScratchSize: %u\t totalScratchSize: %lu\n",
                        attributes.perThreadScratchSize[0], totalScratchSize);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
                        "perHwThreadPrivateScratchSize: %u\t totalPrivateScratchSize: %lu\n",
                        attributes.perThreadScratchSize[1], totalPrivateScratchSize);
 

@@ -475,7 +475,7 @@ struct PlatformWithFourDevicesTest : public ::testing::Test {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     }
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(4);
+        debugManager.flags.CreateMultipleSubDevices.set(4);
         initPlatform();
     }
 

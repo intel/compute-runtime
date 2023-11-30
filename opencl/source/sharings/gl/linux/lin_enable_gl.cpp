@@ -76,7 +76,7 @@ void GlSharingBuilderFactory::fillGlobalDispatchTable() {
 }
 
 std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
-    if (DebugManager.flags.AddClGlSharing.get()) {
+    if (debugManager.flags.AddClGlSharing.get()) {
         return "cl_khr_gl_sharing "
                "cl_khr_gl_depth_images "
                "cl_khr_gl_event "
@@ -91,7 +91,7 @@ std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
 }
 
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
-    if (DebugManager.flags.EnableFormatQuery.get() &&
+    if (debugManager.flags.EnableFormatQuery.get() &&
         functionName == "clGetSupportedGLTextureFormatsINTEL") {
         return ((void *)(clGetSupportedGLTextureFormatsINTEL));
     }

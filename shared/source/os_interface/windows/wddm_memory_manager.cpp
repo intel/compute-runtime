@@ -61,11 +61,11 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     }
 
     alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage);
-    if (DebugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
+    if (debugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
         constexpr static float maxWastage2Mb = 0.1f;
         alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2M, false, maxWastage2Mb);
     }
-    const size_t customAlignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+    const size_t customAlignment = static_cast<size_t>(debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
     if (customAlignment > 0) {
         alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
     }
@@ -74,8 +74,8 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
 }
 
 GfxMemoryAllocationMethod WddmMemoryManager::getPreferredAllocationMethod(const AllocationProperties &allocationProperties) const {
-    if (DebugManager.flags.ForcePreferredAllocationMethod.get() != -1) {
-        return static_cast<GfxMemoryAllocationMethod>(DebugManager.flags.ForcePreferredAllocationMethod.get());
+    if (debugManager.flags.ForcePreferredAllocationMethod.get() != -1) {
+        return static_cast<GfxMemoryAllocationMethod>(debugManager.flags.ForcePreferredAllocationMethod.get());
     }
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocationProperties.rootDeviceIndex].get();
     UNRECOVERABLE_IF(!rootDeviceEnvironment);

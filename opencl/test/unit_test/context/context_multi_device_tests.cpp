@@ -93,7 +93,7 @@ TEST(ContextMultiDevice, WhenGettingSubDeviceByIndexFromContextThenCorrectDevice
     VariableBackup<bool> createSingleDeviceBackup{&MockDevice::createSingleDevice, false};
     VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createRootDeviceFuncBackup{&DeviceFactory::createRootDeviceFunc};
 
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     createRootDeviceFuncBackup = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         return std::unique_ptr<Device>(MockDevice::create<MockDevice>(&executionEnvironment, rootDeviceIndex));
     };

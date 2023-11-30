@@ -31,7 +31,7 @@ class GlobalBindlessWddmMemManagerFixture {
 
     void setUp() {
 
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
@@ -94,7 +94,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
 }
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToBindlessBaseAddress) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
     allocData.size = MemoryConstants::pageSize64k;
@@ -120,7 +120,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
 }
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreatedInDevicePoolThenGpuAddressIsSetToBindlessBaseAddress) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
     allocData.size = MemoryConstants::pageSize64k;

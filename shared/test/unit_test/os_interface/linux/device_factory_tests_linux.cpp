@@ -78,8 +78,8 @@ TEST_F(DeviceFactoryLinuxTest, whenDrmIsNotCretedThenPrepareDeviceEnvironmentsFa
 TEST(SortAndFilterDevicesDrmTest, whenSortingAndFilteringDevicesThenMemoryOperationHandlersHaveProperIndices) {
     static const auto numRootDevices = 6;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("1,2,3,4,5");
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("1,2,3,4,5");
 
     VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
     VariableBackup<std::map<std::string, std::vector<std::string>>> directoryFilesMapBackup(&directoryFilesMap);
@@ -120,8 +120,8 @@ TEST(SortAndFilterDevicesDrmTest, whenSortingAndFilteringDevicesThenMemoryOperat
 TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenEmptyEnvironmentIsReturned) {
     static const auto numRootDevices = 6;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("100");
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("100");
 
     VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
     ExecutionEnvironment executionEnvironment{};

@@ -106,7 +106,7 @@ TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootD
     numRootDevicesToEnum = 3u;
     uint32_t requestedNumRootDevices = 2u;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
@@ -127,7 +127,7 @@ TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootD
     numRootDevicesToEnum = 3u;
     uint32_t requestedNumRootDevices = 4u;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
@@ -670,7 +670,7 @@ TEST_F(Wddm20Tests, WhenGettingMaxApplicationAddressThen32Or64BitIsCorrectlyRetu
 
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDebugFlagToFalseWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToFalse) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.UseNoRingFlushesKmdMode.set(false);
+    debugManager.flags.UseNoRingFlushesKmdMode.set(false);
     init();
     auto createContextParams = this->getCreateContextDataFcn();
     auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
@@ -714,7 +714,7 @@ TEST_F(WddmContextSchedulingPriorityTests, givenDebugFlagSetWhenInitializingLowP
 
     constexpr int32_t newPriority = 3;
 
-    DebugManager.flags.ForceWddmLowPriorityContextValue.set(newPriority);
+    debugManager.flags.ForceWddmLowPriorityContextValue.set(newPriority);
 
     initContext(true);
 
@@ -741,7 +741,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenCreateContextCallWhenDrive
 
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToTrue) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.UseNoRingFlushesKmdMode.set(true);
+    debugManager.flags.UseNoRingFlushesKmdMode.set(true);
     init();
     auto createContextParams = this->getCreateContextDataFcn();
     auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
@@ -780,7 +780,7 @@ TEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
 }
 
 TEST(DebugFlagTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThenTrueIsReturned) {
-    EXPECT_TRUE(DebugManager.flags.UseNoRingFlushesKmdMode.get());
+    EXPECT_TRUE(debugManager.flags.UseNoRingFlushesKmdMode.get());
 }
 
 TEST_F(Wddm20Tests, GivenMultipleHandlesWhenMakingResidentThenAllocationListIsCorrect) {
@@ -813,7 +813,7 @@ TEST_F(Wddm20Tests, GivenMultipleHandlesWhenMakingResidentThenBytesToTrimIsCorre
 
 TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNotNeededThenEvictIsCalledWithProperFlagSet) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
+    debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
@@ -1013,7 +1013,7 @@ TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCal
 
 TEST_F(Wddm20Tests, givenTrimCallbackRegistrationIsDisabledInDebugVariableWhenRegisteringCallbackThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DoNotRegisterTrimCallback.set(true);
+    debugManager.flags.DoNotRegisterTrimCallback.set(true);
     WddmResidencyController residencyController{*wddm, 0u};
     EXPECT_EQ(nullptr, wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, residencyController));
 }
@@ -1308,7 +1308,7 @@ TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBig
 
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndFilterDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.FilterDeviceId.set("1234"); // Existing device Id
+    debugManager.flags.FilterDeviceId.set("1234"); // Existing device Id
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
@@ -1429,7 +1429,7 @@ struct WddmResidencyLoggerTest : public WddmTest {
         NEO::IoFunctions::mockVfptrinfCalled = 0;
         NEO::IoFunctions::mockFcloseCalled = 0;
 
-        DebugManager.flags.WddmResidencyLogger.set(true);
+        debugManager.flags.WddmResidencyLogger.set(true);
 
         mockFopenBackup = std::make_unique<VariableBackup<NEO::IoFunctions::fopenFuncPtr>>(&NEO::IoFunctions::fopenPtr);
         NEO::IoFunctions::fopenPtr = &MockWddmResidencyLoggerFunctions::testFopen;
@@ -1614,7 +1614,7 @@ TEST_F(WddmResidencyLoggerTest, givenResidencyLoggingEnabledWhenNonDefaultDirect
     std::string nonDefaultDirectory("c:\\temp\\logs");
     std::string filenameLead("pagingfence_device-0x");
 
-    DebugManager.flags.WddmResidencyLoggerOutputDirectory.set(nonDefaultDirectory);
+    debugManager.flags.WddmResidencyLoggerOutputDirectory.set(nonDefaultDirectory);
 
     wddm->createPagingFenceLogger();
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
@@ -1633,7 +1633,7 @@ TEST_F(WddmResidencyLoggerTest, givenResidencyLoggingEnabledWhenNonDefaultDirect
     std::string nonDefaultDirectory("c:\\temp\\logs\\");
     std::string filenameLead("pagingfence_device-0x");
 
-    DebugManager.flags.WddmResidencyLoggerOutputDirectory.set(nonDefaultDirectory);
+    debugManager.flags.WddmResidencyLoggerOutputDirectory.set(nonDefaultDirectory);
 
     wddm->createPagingFenceLogger();
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
@@ -1718,7 +1718,7 @@ TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsInvalidAdapterBDF
 
 TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperDeviceID) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.ForceDeviceId.set("0x1234");
+    debugManager.flags.ForceDeviceId.set("0x1234");
 
     EXPECT_TRUE(wddm->queryAdapterInfo());
     uint16_t expectedDeviceId = 0x1234u;
@@ -1752,7 +1752,7 @@ TEST_F(WddmTestWithMockGdiDll, givenNonZeroMaxDualSubSlicesSupportedWhenQueryAda
 
 struct WddmPagingFenceTest : public WddmTest {
     void SetUp() override {
-        DebugManager.flags.WddmPagingFenceCpuWaitDelayTime.set(WddmPagingFenceTest::defaultTestDelay);
+        debugManager.flags.WddmPagingFenceCpuWaitDelayTime.set(WddmPagingFenceTest::defaultTestDelay);
         WddmTest::SetUp();
     }
 

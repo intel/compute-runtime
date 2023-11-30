@@ -108,7 +108,7 @@ TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUs
 
 TEST(Debugger, givenTileAttachAndDebuggingEnabledInExecEnvWhenAllocatingIsaThenMultipleBanksAreUsed) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -218,7 +218,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
 
 HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
+    NEO::debugManager.flags.UseBindlessDebugSip.set(1);
 
     auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
@@ -242,7 +242,7 @@ HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenRes
 
 HWTEST_F(L0DebuggerTest, givenUseBindlessDebugSipZeroWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.UseBindlessDebugSip.set(0);
+    NEO::debugManager.flags.UseBindlessDebugSip.set(0);
 
     auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
@@ -283,7 +283,7 @@ using PerContextAddressSpaceL0DebuggerTest = L0DebuggerTest;
 HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThenNonCanonicalAddressesAreStored) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+    NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
 
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
 
@@ -372,7 +372,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammi
 HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+    NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
 
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->singleAddressSpaceSbaTracking = 0;
@@ -467,9 +467,9 @@ HWTEST_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffer
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(1);
+    debugManager.flags.CreateMultipleRootDevices.set(1);
     constexpr auto numSubDevices = 2u;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     auto neoDevice = devices[0].get();
@@ -540,7 +540,7 @@ HWTEST_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffer
 
 struct L0DebuggerSimpleParameterizedTest : public ::testing::TestWithParam<int>, DeviceFixture {
     void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
         DeviceFixture::setUp();
     }
 

@@ -460,7 +460,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(false);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(false);
 
     UserEvent userEvent1(&pCmdQ1->getContext());
 
@@ -531,7 +531,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(true);
 
     for (auto &rootDeviceEnvironment : deviceFactory->rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments) {
         REQUIRE_FULL_BLITTER_OR_SKIP(*rootDeviceEnvironment);
@@ -702,9 +702,9 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenUnflushedQueueAndEventI
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableStaticPartitioning.set(1);
-    DebugManager.flags.EnableImplicitScaling.set(1);
-    DebugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
+    debugManager.flags.EnableStaticPartitioning.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice *device = deviceFactory.rootDevices[0];
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -738,7 +738,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnqueueWithoutArbitrationPolicyWhenPolicyIsAlreadyProgrammedThenReuse) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
@@ -838,7 +838,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
 HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdded) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.FlushAllCaches.set(true);
+    debugManager.flags.FlushAllCaches.set(true);
 
     char buff[sizeof(PIPE_CONTROL) * 3];
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
@@ -871,7 +871,7 @@ HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdd
 HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPipeControlWithCacheFlushThenOverrideRequestAndDisableCacheFlushFlags) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DoNotFlushCaches.set(true);
+    debugManager.flags.DoNotFlushCaches.set(true);
 
     char buff[sizeof(PIPE_CONTROL) * 3];
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
@@ -932,7 +932,7 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(true);
 
         deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
         auto device1 = deviceFactory->rootDevices[0];

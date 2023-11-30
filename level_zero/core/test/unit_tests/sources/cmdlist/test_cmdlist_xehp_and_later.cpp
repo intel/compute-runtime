@@ -36,8 +36,8 @@ namespace ult {
 using CommandListTests = Test<DeviceFixture>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
 
 HWTEST2_F(CommandListTests, givenDebugFlagSetWhenCallingRegisterOffsetThenDontProgramMmio, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -114,9 +114,9 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
@@ -184,8 +184,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListTests, givenPartitionedCommandL
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
@@ -224,8 +224,8 @@ HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-    DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
+    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
 
     Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -300,7 +300,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     Mock<::L0::KernelImp> defaultKernel;
     auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     defaultKernel.module = pMockModule1.get();
@@ -326,7 +326,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
 
     pCommandList->reset();
 
-    DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
+    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
     pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
     pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
 
@@ -349,11 +349,11 @@ struct AppendKernelTestInput {
 template <int32_t compactL3FlushEventPacket, uint32_t multiTile>
 struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFixture {
     void setUp() {
-        DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
-        DebugManager.flags.SignalAllEventPackets.set(0);
+        debugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
+        debugManager.flags.SignalAllEventPackets.set(0);
         if constexpr (multiTile == 1) {
-            DebugManager.flags.CreateMultipleSubDevices.set(2);
-            DebugManager.flags.EnableImplicitScaling.set(1);
+            debugManager.flags.CreateMultipleSubDevices.set(2);
+            debugManager.flags.EnableImplicitScaling.set(1);
             arg.workloadPartition = true;
             arg.expectDcFlush = 2; // DC Flush multi-tile platforms require DC Flush + x-tile sync after implicit scaling COMPUTE_WALKER
             input.packetOffsetMul = 2;
@@ -595,19 +595,19 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushEnabledTest,
 template <uint32_t multiTile, uint32_t limitEventPacketes, uint32_t copyOnly>
 struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     void setUp() {
-        NEO::DebugManager.flags.UseDynamicEventPacketsCount.set(1);
-        NEO::DebugManager.flags.SignalAllEventPackets.set(1);
+        NEO::debugManager.flags.UseDynamicEventPacketsCount.set(1);
+        NEO::debugManager.flags.SignalAllEventPackets.set(1);
 
         if constexpr (limitEventPacketes == 1) {
-            NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(1);
-            NEO::DebugManager.flags.CompactL3FlushEventPacket.set(1);
+            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(1);
+            NEO::debugManager.flags.CompactL3FlushEventPacket.set(1);
         } else {
-            NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
-            NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
+            NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+            NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
         }
         if constexpr (multiTile == 1) {
-            DebugManager.flags.CreateMultipleSubDevices.set(2);
-            DebugManager.flags.EnableImplicitScaling.set(1);
+            debugManager.flags.CreateMultipleSubDevices.set(2);
+            debugManager.flags.EnableImplicitScaling.set(1);
         }
         ModuleFixture::setUp();
 
@@ -1356,7 +1356,7 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsEventW
 
 struct MultiTileCommandListSignalAllocLayoutTest : public MultiTileCommandListSignalAllEventPacketTest {
     void SetUp() override {
-        DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+        debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
         MultiTileCommandListSignalAllEventPacketTest::SetUp();
     }
 };

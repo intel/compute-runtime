@@ -108,7 +108,7 @@ TEST_F(ClCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispat
 
 TEST(clCreateContextFromTypeTest, GivenPlatformWithMultipleDevicesWhenCreatingContextFromTypeThenContextContainsOnlyOneDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
 
     initPlatform();
 

@@ -22,7 +22,7 @@ template <bool multipleSubDevices>
 class DrmMemoryManagerWithSubDevicesPrelimTest : public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(multipleSubDevices ? 2 : 1);
+        debugManager.flags.CreateMultipleSubDevices.set(multipleSubDevices ? 2 : 1);
 
         executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -57,7 +57,7 @@ class DrmMemoryManagerWithSubDevicesPrelimTest : public ::testing::Test {
 class DrmMemoryManagerLocalMemoryPrelimTest : public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(localMemoryEnabled);
+        debugManager.flags.EnableLocalMemory.set(localMemoryEnabled);
 
         executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);

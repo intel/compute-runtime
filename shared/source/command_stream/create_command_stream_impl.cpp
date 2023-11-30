@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
         return nullptr;
     }
     CommandStreamReceiver *commandStreamReceiver = nullptr;
-    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    int32_t csr = debugManager.flags.SetCommandStreamReceiver.get();
     if (csr < 0) {
         csr = CommandStreamReceiverType::CSR_HW;
     }

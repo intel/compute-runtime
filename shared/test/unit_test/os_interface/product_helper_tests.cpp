@@ -57,10 +57,10 @@ TEST(ProductHelperTestCreate, WhenProductHelperCreateIsCalledWithUnknownProductT
 HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
-    DebugManager.flags.EnableHostUsmSupport.set(0);
+    debugManager.flags.EnableHostUsmSupport.set(0);
     EXPECT_EQ(0u, productHelper->getHostMemCapabilities(&pInHwInfo));
 
-    DebugManager.flags.EnableHostUsmSupport.set(1);
+    debugManager.flags.EnableHostUsmSupport.set(1);
     EXPECT_NE(0u, productHelper->getHostMemCapabilities(&pInHwInfo));
 }
 
@@ -70,7 +70,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabili
     EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
 
     for (auto enable : {-1, 0, 1}) {
-        DebugManager.flags.EnableSharedSystemUsmSupport.set(enable);
+        debugManager.flags.EnableSharedSystemUsmSupport.set(enable);
 
         if (enable > 0) {
             auto caps = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
@@ -90,7 +90,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
     DebugManagerStateRestore restore;
 
     for (auto capabilityBitmask : {0, 0b0001, 0b0010, 0b0100, 0b1000, 0b1111}) {
-        DebugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
+        debugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
         std::bitset<4> capabilityBitset(capabilityBitmask);
 
         auto hostMemCapabilities = productHelper->getHostMemCapabilities(&pInHwInfo);
@@ -332,11 +332,11 @@ HWTEST_F(ProductHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned
 HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore{};
 
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(1);
     EXPECT_EQ(LocalMemoryAccessMode::CpuAccessAllowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(3);
     EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
@@ -466,7 +466,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThen
 
 HWTEST2_F(ProductHelperTest, givenProductHelperAndForceTlbFlushNotSetWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned, IsNotPVC) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceTlbFlush.set(0);
+    debugManager.flags.ForceTlbFlush.set(0);
     EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
@@ -485,12 +485,12 @@ HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequired
 
     EXPECT_EQ(expectedDefaultValue, productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(1);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(3);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
     pInHwInfo.capabilityTable.blitterOperationsSupported = false;
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
@@ -527,12 +527,12 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
 
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(1);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(3);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
@@ -632,10 +632,10 @@ HWTEST_F(ProductHelperTest, givenDefaultSettingWhenIsGrfNumReportedIsCalledThenS
 HWTEST_F(ProductHelperTest, givenForceGrfNumProgrammingWithScmFlagSetWhenIsGrfNumReportedWithScmIsQueriedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ForceGrfNumProgrammingWithScm.set(0);
+    debugManager.flags.ForceGrfNumProgrammingWithScm.set(0);
     EXPECT_FALSE(productHelper->isGrfNumReportedWithScm());
 
-    DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
+    debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     EXPECT_TRUE(productHelper->isGrfNumReportedWithScm());
 }
 
@@ -647,10 +647,10 @@ HWTEST_F(ProductHelperTest, givenDefaultSettingWhenIsThreadArbitrationPolicyRepo
 HWTEST_F(ProductHelperTest, givenForceThreadArbitrationPolicyProgrammingWithScmFlagSetWhenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(0);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(0);
     EXPECT_FALSE(productHelper->isThreadArbitrationPolicyReportedWithScm());
 
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
     EXPECT_TRUE(productHelper->isThreadArbitrationPolicyReportedWithScm());
 }
 
@@ -679,23 +679,23 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsImplicitScalingSupportedThe
 HWTEST2_F(ProductHelperTest, givenProductHelperAndDebugFlagWhenGetL1CachePolicyThenReturnCorrectPolicy, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, productHelper->getL1CachePolicy(true));
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, productHelper->getL1CachePolicy(true));
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(3);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(3);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, productHelper->getL1CachePolicy(true));
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, productHelper->getL1CachePolicy(true));
 
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, productHelper->getL1CachePolicy(false));
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, productHelper->getL1CachePolicy(true));
 }
@@ -731,13 +731,13 @@ HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPi
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
 
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(0);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
 
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
@@ -757,13 +757,13 @@ HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPi
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
 
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(0);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 3, csr));
 
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csr));
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));

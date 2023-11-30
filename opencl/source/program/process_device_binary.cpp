@@ -163,7 +163,7 @@ cl_int Program::processGenBinaries(const ClDeviceVector &clDevices, std::unorder
         if (BuildPhase::BinaryProcessing == phaseReached[clDevice->getRootDeviceIndex()]) {
             continue;
         }
-        if (DebugManager.flags.PrintProgramBinaryProcessingTime.get()) {
+        if (debugManager.flags.PrintProgramBinaryProcessingTime.get()) {
             retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary, *clDevice);
         } else {
             retVal = processGenBinary(*clDevice);
@@ -223,11 +223,11 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings, gfxCoreHelper);
 
     if (decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
 
     if (DecodeError::Success != decodeError) {
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return CL_INVALID_BINARY;
     }
 
@@ -252,7 +252,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 
     if (slmNeeded > slmAvailable) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
                            static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return CL_OUT_OF_RESOURCES;
     }
@@ -370,7 +370,7 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
         auto zeInfo = Zebin::getZeInfoFromZebin(refBin, errors, warnings);
         auto decodeError = Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, zeInfo, errors, warnings);
         if (NEO::DecodeError::Success != decodeError) {
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
         }
     };
     std::call_once(metadataGenerationFlags->extractAndDecodeMetadataOnce, extractAndDecodeMetadata);

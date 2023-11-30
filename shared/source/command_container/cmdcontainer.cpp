@@ -58,8 +58,8 @@ CommandContainer::CommandContainer() {
 
     residencyContainer.reserve(startingResidencyContainerSize);
 
-    if (DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get() != -1) {
-        isHandleFenceCompletionRequired = !static_cast<bool>(DebugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get());
+    if (debugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get() != -1) {
+        isHandleFenceCompletionRequired = !static_cast<bool>(debugManager.flags.RemoveUserFenceInCmdlistResetAndDestroy.get());
     }
 }
 
@@ -216,8 +216,8 @@ void CommandContainer::reset() {
 
 size_t CommandContainer::getAlignedCmdBufferSize() const {
     auto totalCommandBufferSize = totalCmdBufferSize;
-    if (DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get() > 0) {
-        totalCommandBufferSize = static_cast<size_t>(DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte;
+    if (debugManager.flags.OverrideCmdListCmdBufferSizeInKb.get() > 0) {
+        totalCommandBufferSize = static_cast<size_t>(debugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte;
         totalCommandBufferSize += cmdBufferReservedSize;
     }
     return alignUp<size_t>(totalCommandBufferSize, defaultCmdBufferAllocationAlignment);

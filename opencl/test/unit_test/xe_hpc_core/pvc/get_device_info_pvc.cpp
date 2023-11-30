@@ -33,7 +33,7 @@ PVCTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInf
 
 PVCTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenEnableUsmConcurrentAccessSupportWhenGetDeviceInfoIsCalledForPVCThenClSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableUsmConcurrentAccessSupport.set(0b1110);
+    debugManager.flags.EnableUsmConcurrentAccessSupport.set(0b1110);
 
     std::vector<TestParams> params = {
         {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL},

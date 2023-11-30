@@ -82,7 +82,7 @@ HWTEST2_F(CommandQueueGroupTest,
 class DeviceCopyQueueGroupGen12LpFixture : public DeviceFixture {
   public:
     void setUp() {
-        DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+        debugManager.flags.EnableBlitterOperationsSupport.set(0);
         DeviceFixture::setUp();
     }
 

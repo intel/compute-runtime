@@ -23,7 +23,7 @@ SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) co
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }
-    return DebugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsrLocal;
+    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsrLocal;
 }
 
 template <>

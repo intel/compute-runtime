@@ -33,7 +33,7 @@ namespace ult {
 
 struct L0DebuggerWindowsFixture {
     void setUp() {
-        DebugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+        debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
@@ -184,7 +184,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledThenModule
 
 TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledAndModuleDestroyNotifyEscapeIsFailedThenErrorMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     testing::internal::CaptureStderr();
     wddm->moduleCreateNotificationPassedParam.ntStatus = STATUS_UNSUCCESSFUL;

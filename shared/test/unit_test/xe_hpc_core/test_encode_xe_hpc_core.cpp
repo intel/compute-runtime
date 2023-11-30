@@ -180,12 +180,12 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
 
         LinearStream linearStream(buffer, sizeof(buffer));
 
-        DebugManager.flags.EnableMemoryPrefetch.set(0);
+        debugManager.flags.EnableMemoryPrefetch.set(0);
         EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(100, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
         EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 100, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(0u, linearStream.getUsed());
 
-        DebugManager.flags.EnableMemoryPrefetch.set(1);
+        debugManager.flags.EnableMemoryPrefetch.set(1);
         EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(sizeof(STATE_PREFETCH), linearStream.getUsed());
         auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
@@ -198,7 +198,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
     MockExecutionEnvironment mockExecutionEnvironment{};
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceCsStallForStatePrefetch.set(1);
+    debugManager.flags.ForceCsStallForStatePrefetch.set(1);
 
     auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0010'1000; // [3:5] - BaseDie != A0
@@ -310,7 +310,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInCo
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -336,7 +336,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComp
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -362,7 +362,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();
@@ -398,7 +398,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEven
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();
@@ -434,7 +434,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();
@@ -513,7 +513,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableWalkerPartition.set(0);
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -528,7 +528,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
     EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
     ASSERT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
 
-    DebugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
     pDevice->numSubDevices = 2;
     EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
@@ -536,7 +536,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
+    debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
@@ -562,7 +562,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAndDimensionsWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
+    debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
@@ -681,7 +681,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdju
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAlogrithmV2IsUsedThenProperThreadGroupDispatchSizeIsChoosen) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2u);
+    debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
@@ -824,7 +824,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     WALKER_TYPE walkerCmd{};
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AdjustThreadGroupDispatchSize.set(0);
+    debugManager.flags.AdjustThreadGroupDispatchSize.set(0);
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -877,7 +877,7 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenPr
 
 XE_HPC_CORETEST_F(XeHpcSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceStatelessL1CachingPolicy.set(0u);
+    debugManager.flags.ForceStatelessL1CachingPolicy.set(0u);
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
     args.setGeneralStateBaseAddress = true;
@@ -889,14 +889,14 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
 
     EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
+    debugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
 
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);

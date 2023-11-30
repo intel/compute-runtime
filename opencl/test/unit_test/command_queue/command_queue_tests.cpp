@@ -159,34 +159,34 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
     MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
     {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(-1);
+        debugManager.flags.EnableTimestampWaitForQueues.set(-1);
         const auto &gfxCoreHelper = mockDevice->getGfxCoreHelper();
         const auto &productHelper = mockDevice->getProductHelper();
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), gfxCoreHelper.isTimestampWaitSupportedForQueues() && !productHelper.isDcFlushAllowed());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+        debugManager.flags.EnableTimestampWaitForQueues.set(0);
         EXPECT_FALSE(cmdQ.isWaitForTimestampsEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+        debugManager.flags.EnableTimestampWaitForQueues.set(1);
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(2);
+        debugManager.flags.EnableTimestampWaitForQueues.set(2);
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(3);
+        debugManager.flags.EnableTimestampWaitForQueues.set(3);
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+        debugManager.flags.EnableTimestampWaitForQueues.set(4);
         EXPECT_TRUE(cmdQ.isWaitForTimestampsEnabled());
     }
 }
@@ -299,8 +299,8 @@ TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenD
 TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsCreatedThenBcsIsTakenFromFirstSubDevice) {
     DebugManagerStateRestore restorer;
     VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
@@ -320,8 +320,8 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
 
 TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngineIsUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
@@ -335,7 +335,7 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
                                   : aub_stream::EngineType::ENGINE_BCS;
 
     for (auto preferInternalBcsEngine : {0, 1}) {
-        DebugManager.flags.PreferInternalBcsEngine.set(preferInternalBcsEngine);
+        debugManager.flags.PreferInternalBcsEngine.set(preferInternalBcsEngine);
         auto engineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
         MockCommandQueue cmdQ(nullptr, device.get(), 0, internalUsage);
         auto &bcsEngine = device->getEngine(expectedEngineType, engineUsage);
@@ -500,7 +500,7 @@ TEST_F(CommandQueueCommandStreamTest, WhenGettingCommandStreamWithNewSizeThenMax
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForCommandStreamThenReturnsAllocationFromReusablePool) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -522,7 +522,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusableList) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     const auto &commandStream = cmdQ->getCS(100);
     auto graphicsAllocation = commandStream.getGraphicsAllocation();
@@ -536,7 +536,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenComm
 
 TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsStoredForReuse) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -661,7 +661,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapThenSizeIsAlignedToC
 
 HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationThenAllocationFromReusablePoolIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -749,7 +749,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenA
 
 TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveWhenQueueIsDestroyedThenIndirectHeapIsNotOnReuseList) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     auto cmdQ = new MockCommandQueue(context.get(), pClDevice, 0, false);
     cmdQ->getIndirectHeap(this->GetParam(), 100);
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
@@ -794,7 +794,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocatedWhenIn
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocationIsNullThenNothingOnReuseList) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
@@ -847,7 +847,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledT
 
 TEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryIsCalledThenHeapIsCreatedWithProperSize) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceDefaultHeapSize.set(64 * MemoryConstants::kiloByte);
+    debugManager.flags.ForceDefaultHeapSize.set(64 * MemoryConstants::kiloByte);
 
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
@@ -903,7 +903,7 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
 
 HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingCommandQueueThenReturnSuccess) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::EngineUsageCount));
+    debugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::EngineUsageCount));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(pDevice.get());
@@ -927,7 +927,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
     DebugManagerStateRestore restore;
     MockExecutionEnvironment executionEnvironment{};
     auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment.rootDeviceEnvironments[0]);
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(pDevice.get());
@@ -961,7 +961,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
     DebugManagerStateRestore restore;
     MockExecutionEnvironment executionEnvironment{};
     auto defaultEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment.rootDeviceEnvironments[0]);
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(defaultEngine));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(defaultEngine));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(pDevice.get());
@@ -978,7 +978,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
     RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
 
     auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, pDevice->getRootDeviceEnvironment());
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
 
     auto pCmdQ = CommandQueue::create(
         &context,
@@ -999,7 +999,7 @@ HWTEST_F(CommandQueueTests, givenPreallocationsPerQueueWhenInitializeGpgpuCalled
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
     auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
 
     EXPECT_EQ(0u, commandStreamReceiver.requestedPreallocationsAmount);
     EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
@@ -1575,7 +1575,7 @@ TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenF
 
 TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestampPacketIsCreated) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(0);
+    debugManager.flags.EnableTimestampPacket.set(0);
 
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -1643,8 +1643,8 @@ TEST(CommandQueue, givenSimpleClCommandWhenCallingBlitEnqueueAllowedThenReturnCo
 
 TEST(CommandQueue, givenImageTransferClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
@@ -1800,7 +1800,7 @@ using CsrSelectionCommandQueueWithQueueFamiliesBlitterTests = CsrSelectionComman
 
 TEST_F(CsrSelectionCommandQueueWithoutBlitterTests, givenBlitterNotPresentWhenSelectingBlitterThenReturnGpgpuCsr) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -1838,7 +1838,7 @@ TEST_F(CsrSelectionCommandQueueWithoutBlitterTests, givenBlitterNotPresentWhenSe
 
 TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentButDisabledWithDebugFlagWhenSelectingBlitterThenReturnGpgpuCsr) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -1876,7 +1876,7 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentButDisabledW
 
 TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLocalCopyBufferCommandWhenSelectingBlitterThenReturnValueBasedOnDebugFlagAndHwPreference) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     auto &clGfxCoreHelper = clDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     const bool hwPreference = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
@@ -1894,17 +1894,17 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLo
     dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
     EXPECT_EQ(&hwPreferenceCsr, &queue->selectCsrForBuiltinOperation(args));
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
     EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &queue->selectCsrForBuiltinOperation(args));
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
     EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
 }
 
 TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndNotLocalToLocalCopyBufferCommandWhenSelectingCsrThenUseBcsRegardlessOfDebugFlag) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     const auto &bcsCsr = *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS);
 
@@ -1920,40 +1920,40 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndNotLocalT
         srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
     }
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
     }
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         EXPECT_EQ(&bcsCsr, &queue->selectCsrForBuiltinOperation(args));
     }
 }
 
 TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenInvalidTransferDirectionWhenSelectingCsrThenThrowError) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -1970,8 +1970,8 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenInvalidTransferDirectionWh
 
 TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndAssignBCSAtEnqueueSetToFalseWhenSelectCsrThenDefaultBcsReturned) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.AssignBCSAtEnqueue.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.AssignBCSAtEnqueue.set(0);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -2028,7 +2028,7 @@ TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelect
 
 TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelectedWithQueueFamiliesButDisabledWithDebugFlagWhenSelectingBlitterThenIgnoreDebugFlagAndSelectBlitter) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -2066,7 +2066,7 @@ TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelect
 
 TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
@@ -2083,7 +2083,7 @@ TEST(CommandQueue, givenMipMappedImageWhenCallingBlitEnqueueImageAllowedThenCorr
 
 TEST(CommandQueue, givenImageWithDifferentImageTypesWhenCallingBlitEnqueueImageAllowedThenCorrectResultIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
 
@@ -2116,7 +2116,7 @@ TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowe
         std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context))};
 
     for (auto blitterEnabled : {0, 1}) {
-        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(blitterEnabled);
+        debugManager.flags.EnableBlitterForEnqueueImageOperations.set(blitterEnabled);
         for (auto isTile64 : {0, 1}) {
             for (const auto &image : images) {
                 auto imageType = image->getImageDesc().image_type;
@@ -2243,7 +2243,7 @@ TEST(CommandQueue, givenSupportForOutEventAndOutEventIsPassedWhenValidatingSuppo
 
 struct CommandQueueWithTimestampPacketTests : ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.EnableTimestampPacket.set(1);
     }
 
     DebugManagerStateRestore restore{};
@@ -2694,8 +2694,8 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DeferOsContextInitialization.set(1);
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+    debugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
     MockExecutionEnvironment mockExecutionEnvironment{};
 
@@ -2706,7 +2706,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_RCS, EngineUsage::Regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
     const auto ccsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute));
     fillProperties(properties, ccsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
@@ -2718,8 +2718,8 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     DebugManagerStateRestore restore{};
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
-    DebugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+    debugManager.flags.DeferOsContextInitialization.set(1);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
 
@@ -2730,7 +2730,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
     const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::RenderCompute));
     fillProperties(properties, rcsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
@@ -2740,9 +2740,9 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
 
 struct CommandQueueCreateWithMultipleRegularContextsTests : public CommandQueueOnSpecificEngineTests {
     void SetUp() override {
-        DebugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
-        DebugManager.flags.EnableMultipleRegularContextForBcs.set(1);
-        DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+        debugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
+        debugManager.flags.EnableMultipleRegularContextForBcs.set(1);
+        debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
         backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -2840,7 +2840,7 @@ HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenDebugFlagSetWh
 }
 
 HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenDebugFlagSetWhenCreatingCmdQueueThenAssignNextRegularBcsContext) {
-    DebugManager.flags.NodeOrdinal.set(-1);
+    debugManager.flags.NodeOrdinal.set(-1);
 
     constexpr uint32_t iterationCount = 3;
 
@@ -3061,7 +3061,7 @@ HWTEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenEnqueuingCopyThenRegisterClient
 
 HWTEST_F(CopyOnlyQueueTests, givenBlitterEnabledWhenCreatingBcsCommandQueueThenReturnSuccess) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
 
     cl_int retVal{};
     auto commandQueue = clCreateCommandQueueWithProperties(context.get(), clDevice.get(), properties, &retVal);

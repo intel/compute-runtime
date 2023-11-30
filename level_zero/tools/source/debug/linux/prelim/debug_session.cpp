@@ -106,7 +106,7 @@ ze_result_t DebugSessionLinuxi915::readGpuMemory(uint64_t vmHandle, char *output
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
 
-    if (NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+    if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
         uint64_t alignedMem = alignDown(gpuVa, MemoryConstants::pageSize);
         uint64_t alignedDiff = gpuVa - alignedMem;
         uint64_t alignedSize = size + alignedDiff;
@@ -169,7 +169,7 @@ ze_result_t DebugSessionLinuxi915::writeGpuMemory(uint64_t vmHandle, const char 
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
     gpuVa = gmmHelper->decanonize(gpuVa);
 
-    if (NEO::DebugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+    if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
         uint64_t alignedMem = alignDown(gpuVa, MemoryConstants::pageSize);
         uint64_t alignedDiff = gpuVa - alignedMem;
         uint64_t alignedSize = size + alignedDiff;
@@ -1705,7 +1705,7 @@ bool DebugSessionLinuxi915::getIsaInfoForAllInstances(NEO::DeviceBitfield device
 }
 
 void DebugSessionLinuxi915::printContextVms() {
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: Context - VM map: ", "");
         for (size_t i = 0; i < clientHandleToConnection[clientHandle]->contextsCreated.size(); i++) {
             PRINT_DEBUGGER_LOG(stdout, "\n Context = %llu : %llu ", (uint64_t)clientHandleToConnection[clientHandle]->contextsCreated[i].handle,

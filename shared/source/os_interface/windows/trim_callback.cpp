@@ -14,7 +14,7 @@
 namespace NEO {
 
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
-    if (DebugManager.flags.DoNotRegisterTrimCallback.get()) {
+    if (debugManager.flags.DoNotRegisterTrimCallback.get()) {
         return nullptr;
     }
     D3DKMT_REGISTERTRIMNOTIFICATION registerTrimNotification;

@@ -35,7 +35,7 @@ PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
 
 PVCTEST_F(PvcProductHelper, whenForceTlbFlushSetAndCheckIsTlbFlushRequiredThenReturnProperValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceTlbFlush.set(1);
+    debugManager.flags.ForceTlbFlush.set(1);
     EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }
 
@@ -197,7 +197,7 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsSkippingStatefulInformati
 
 PVCTEST_F(PvcProductHelper, givenProductHelperAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
 
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;

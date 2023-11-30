@@ -306,13 +306,13 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
 inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &out) {
     switch (token->Token) {
     default: {
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;
     }
     case PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA:
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Ignored kernel-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Ignored kernel-scope Patch Token: %d\n", token->Token);
         break;
     case PATCH_TOKEN_SAMPLER_STATE_ARRAY:
         assignToken(out.tokens.samplerStateArray, token);
@@ -424,7 +424,7 @@ inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &o
     auto &progTok = out.programScopeTokens;
     switch (token->Token) {
     default: {
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;

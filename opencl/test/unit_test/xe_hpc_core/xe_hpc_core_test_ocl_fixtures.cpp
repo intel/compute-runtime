@@ -30,8 +30,8 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpeci
     const uint32_t tileIndex = 2u;
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    debugManager.flags.EnableLocalMemory.set(true);
     initPlatform();
     auto clDevice = platform()->getClDevice(0);
     setupDeviceIdAndRevision(hwInfo, *clDevice);
@@ -57,9 +57,9 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecif
     const uint32_t numDevices = 4u;
     const DeviceBitfield tile0Mask{0x1};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
-    DebugManager.flags.EnableLocalMemory.set(true);
-    DebugManager.flags.OverrideLeastOccupiedBank.set(0u);
+    debugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    debugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.OverrideLeastOccupiedBank.set(0u);
     initPlatform();
 
     auto clDevice = platform()->getClDevice(0);

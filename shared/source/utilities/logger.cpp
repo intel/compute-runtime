@@ -18,7 +18,7 @@
 namespace NEO {
 
 FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
-    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(std::string("igdrcl.log"), DebugManager.flags);
+    static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(std::string("igdrcl.log"), debugManager.flags);
     return fileLoggerInstance;
 }
 

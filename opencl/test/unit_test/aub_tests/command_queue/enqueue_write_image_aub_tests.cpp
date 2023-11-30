@@ -33,7 +33,7 @@ struct AUBWriteImage
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, WriteImageParams>>,
       public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.EnableFreeMemory.set(false);
         ImageAubFixture::setUp(enableBlitter);
     }
 
@@ -191,7 +191,7 @@ struct AUBWriteImage
 
     template <typename FamilyType>
     void testWriteImageMisaligned(size_t offset, size_t size, size_t pixelSize) {
-        DebugManager.flags.ForceLinearImages.set(true);
+        debugManager.flags.ForceLinearImages.set(true);
 
         const size_t testWidth = 14 / pixelSize;
         const size_t testHeight = 4;

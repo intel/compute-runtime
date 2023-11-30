@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using HwInfoOverrideTest = ::testing::Test;
 
 HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenTrueIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.HardwareInfoOverride.set("1x2x3");
+    debugManager.flags.HardwareInfoOverride.set("1x2x3");
 
     MockExecutionEnvironment executionEnvironment{};
 

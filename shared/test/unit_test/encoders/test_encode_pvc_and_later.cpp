@@ -297,7 +297,7 @@ using CommandEncodeStatesXeHpcAndLaterTests = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesXeHpcAndLaterTests, givenDebugFlagSetWhenProgrammingWalkerThenSetFlushingBits, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
+    debugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

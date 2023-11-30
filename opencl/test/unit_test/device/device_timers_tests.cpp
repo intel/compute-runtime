@@ -121,7 +121,7 @@ TEST(MockOSTime, GivenNullWhenSettingOsTimeThenResolutionIsZero) {
 
 TEST(MockOSTime, givenDeviceTimestampBaseNotEnabledWhenGetDeviceAndHostTimerThenCpuTimestampIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(0);
+    debugManager.flags.EnableDeviceBasedTimestamps.set(0);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setOSTime(new MockOSTimeWithConstTimestamp());
 

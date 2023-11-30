@@ -148,8 +148,8 @@ TEST_F(GlSharingTests, givenContextWithSharingWhenClCreateFromGlBufferIsCalledWi
 }
 
 TEST_F(GlSharingTests, givenContextAnd32BitAddressingWhenClCreateFromGlBufferIsCalledThenBufferIsReturned) {
-    auto flagToRestore = DebugManager.flags.Force32bitAddressing.get();
-    DebugManager.flags.Force32bitAddressing.set(true);
+    auto flagToRestore = debugManager.flags.Force32bitAddressing.get();
+    debugManager.flags.Force32bitAddressing.set(true);
 
     auto retVal = CL_SUCCESS;
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
@@ -160,7 +160,7 @@ TEST_F(GlSharingTests, givenContextAnd32BitAddressingWhenClCreateFromGlBufferIsC
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    DebugManager.flags.Force32bitAddressing.set(flagToRestore);
+    debugManager.flags.Force32bitAddressing.set(flagToRestore);
 }
 
 TEST_F(GlSharingTests, givenGlClBufferWhenAskedForCLGLGetInfoThenIdAndTypeIsReturned) {
@@ -380,7 +380,7 @@ TEST_F(GlSharingTests, givenHwCommandQueueWhenAcquireIsCalledWithIncorrectWaitli
 
 TEST_F(GlSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalledWithIncompleteExternallySynchronizedEventThenItIsAddedToAsyncEventsHandler) {
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(true);
 
     auto handler = new MockHandler(false);
     context.getAsyncEventsHandlerUniquePtr().reset(handler);
@@ -437,7 +437,7 @@ TEST_F(GlSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
 
 TEST_F(GlSharingTests, givenDisabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalledWithIncompleteExternallySynchronizedEventThenItIsNotAddedToAsyncEventsHandler) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
 
     auto handler = new MockHandler(false);
     context.getAsyncEventsHandlerUniquePtr().reset(handler);
@@ -470,7 +470,7 @@ TEST_F(GlSharingTests, givenDisabledAsyncEventsHandlerWhenAcquireGlObjectsIsCall
 
 TEST_F(GlSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalledWithIncompleteButNotExternallySynchronizedEventThenItIsNotAddedToAsyncEventsHandler) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
 
     auto handler = new MockHandler(false);
     context.getAsyncEventsHandlerUniquePtr().reset(handler);

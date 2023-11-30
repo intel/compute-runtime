@@ -448,7 +448,7 @@ HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCallingIoctlWithGemExecbufferThe
 
 HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCallingIoctlWithGemExecbufferAndForceNonblockingExecbufferCallsThenShouldBreakOnWouldBlock, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceNonblockingExecbufferCalls.set(1);
+    debugManager.flags.ForceNonblockingExecbufferCalls.set(1);
 
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
@@ -483,7 +483,7 @@ HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCreatingIoctlHelperThenProperFla
 
 HWTEST2_F(IoctlPrelimHelperTests, givenXeHpcWhenCreatingIoctlHelperWithForceNonblockingExecbufferCallsThenProperFlagsAreSetToFileDescriptor, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceNonblockingExecbufferCalls.set(0);
+    debugManager.flags.ForceNonblockingExecbufferCalls.set(0);
 
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
@@ -516,7 +516,7 @@ HWTEST2_F(IoctlPrelimHelperTests, givenNonXeHpcWhenCreatingIoctlHelperThenProper
 TEST_F(IoctlPrelimHelperTests, givenDisabledForceNonblockingExecbufferCallsFlagWhenCreatingIoctlHelperThenExecBufferIsHandledBlocking) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ForceNonblockingExecbufferCalls.set(0);
+    debugManager.flags.ForceNonblockingExecbufferCalls.set(0);
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
 
@@ -537,7 +537,7 @@ TEST_F(IoctlPrelimHelperTests, givenDisabledForceNonblockingExecbufferCallsFlagW
 TEST_F(IoctlPrelimHelperTests, givenEnabledForceNonblockingExecbufferCallsFlagWhenCreatingIoctlHelperThenExecBufferIsHandledNonBlocking) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.ForceNonblockingExecbufferCalls.set(1);
+    debugManager.flags.ForceNonblockingExecbufferCalls.set(1);
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
 
@@ -588,7 +588,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
     EXPECT_EQ(static_cast<uint16_t>(-1), region->memoryClass);
     EXPECT_EQ(0u, region->memoryInstance);
 
-    DebugManager.flags.SetVmAdvisePreferredLocation.set(3);
+    debugManager.flags.SetVmAdvisePreferredLocation.set(3);
     region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::None, 1);
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
     EXPECT_EQ(1u, region->memoryInstance);

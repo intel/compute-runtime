@@ -59,7 +59,7 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
     const IafPortId iafPortId(portId.fabricId, portId.attachId, portId.portNumber);
     ze_result_t result = pIafNlApi->fPortStatusQuery(iafPortId, iafPortState);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf port status query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf port status query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
         return result;
     }
     readIafPortStatus(state, iafPortState);
@@ -73,7 +73,7 @@ ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, ze
 
     result = pIafNlApi->fportProperties(iafPortId, guid, portNumber, maxRxSpeed, maxTxSpeed, rxSpeed, txSpeed);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf port properties query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf port properties query failed for fabricId : %d, attachId : %d, portnumber : %d and returning error:0x%x \n", __FUNCTION__, iafPortId.fabricId, iafPortId.attachId, iafPortId.portNumber, result);
         return result;
     }
     readIafPortSpeed(state.rxSpeed, rxSpeed);
@@ -118,7 +118,7 @@ ze_result_t FabricDeviceAccessNl::getMultiPortThroughput(std::vector<zes_fabric_
 
     ze_result_t result = pIafNlApi->getMultiPortThroughPut(iafPortIdList, iafThroughPutList);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to retrieve throughput, Returning error:0x%x \n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to retrieve throughput, Returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     zes_fabric_port_throughput_t *throughputArray = *pThroughput;
@@ -191,7 +191,7 @@ ze_result_t FabricDeviceAccessNl::getPorts(std::vector<zes_fabric_port_id_t> &po
     pLinuxSysmanImp->getSysfsAccess().getRealPath(iafPath, iafRealPath);
     ze_result_t result = pIafNlApi->getPorts(iafRealPath, iafPorts);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf getPorts query failed to retrieve ports from %s and returning error:0x%x \n", __FUNCTION__, iafRealPath.c_str(), result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Iaf getPorts query failed to retrieve ports from %s and returning error:0x%x \n", __FUNCTION__, iafRealPath.c_str(), result);
         return result;
     }
 

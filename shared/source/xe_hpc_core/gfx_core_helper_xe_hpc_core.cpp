@@ -58,7 +58,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
         }
     }
 
-    if ((DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
+    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
         hwInfo.featureTable.flags.ftrRcsNode) {
         engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::Regular});
     }
@@ -77,8 +77,8 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
                 auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
                 engines.push_back({engineType, EngineUsage::Regular});
                 uint32_t internalIndex = 3;
-                if (DebugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
-                    internalIndex = DebugManager.flags.ForceBCSForInternalCopyEngine.get();
+                if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+                    internalIndex = debugManager.flags.ForceBCSForInternalCopyEngine.get();
                 }
                 if (i == internalIndex) {
                     engines.push_back({engineType, EngineUsage::Internal}); // BCS3 for internal usage
@@ -145,8 +145,8 @@ size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchron
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
-    if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
-        programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
+    if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
+        programGlobalFenceAsMiMemFenceCommandInCommandStream = !!debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
 
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream) {
@@ -164,8 +164,8 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
-    if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
-        programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
+    if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
+        programGlobalFenceAsMiMemFenceCommandInCommandStream = !!debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream) {
         MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
@@ -188,7 +188,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
 
 template <>
 bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
+    if (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         return true;
     }
     return false;
@@ -196,15 +196,15 @@ bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDevice
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    return (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
 }
 
 template <>
 void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {
     if (useL1Cache) {
         surfaceState->setL1CachePolicyL1CacheControl(Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB);
-        if (DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
-            surfaceState->setL1CachePolicyL1CacheControl(static_cast<typename Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY>(DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get()));
+        if (debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
+            surfaceState->setL1CachePolicyL1CacheControl(static_cast<typename Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY>(debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get()));
         }
     }
 }
@@ -216,7 +216,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     }
 
     bool forceLocalMemoryForDirectSubmission = true;
-    switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
+    switch (debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
     case 0:
         forceLocalMemoryForDirectSubmission = false;
         break;
@@ -349,8 +349,8 @@ bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const RootDeviceEnviron
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
-        return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
+    if (debugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
+        return static_cast<uint32_t>(debugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
     auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
@@ -387,7 +387,7 @@ uint64_t GfxCoreHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePoli
     7          2      WB (11)
     */
 
-    if ((DebugManager.flags.ForceAllResourcesUncached.get() == true)) {
+    if ((debugManager.flags.ForceAllResourcesUncached.get() == true)) {
         cacheRegion = CacheRegion::Default;
         cachePolicy = CachePolicy::Uncached;
     }
@@ -398,16 +398,16 @@ uint64_t GfxCoreHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePoli
 
 template <>
 bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
-        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
     return true;
 }
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
-    if (DebugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
-        return DebugManager.flags.SetAmountOfReusableAllocations.get();
+    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
+        return debugManager.flags.SetAmountOfReusableAllocations.get();
     }
     return 1u;
 }

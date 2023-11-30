@@ -115,7 +115,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
     for (auto &pClDevice : context.getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
         if (context.containsMultipleSubDevices(rootDeviceIndex)) {
-            if (DebugManager.flags.EnableMultiTileCompression.get() <= 0) {
+            if (debugManager.flags.EnableMultiTileCompression.get() <= 0) {
                 return false;
             }
 
@@ -134,7 +134,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
         if (properties.flags.compressedHint) {
             return true;
         }
-        int32_t disableCompression = DebugManager.flags.ToggleHintKernelDisableCompression.get();
+        int32_t disableCompression = debugManager.flags.ToggleHintKernelDisableCompression.get();
         if (disableCompression != -1) {
             return !!disableCompression;
         } else {

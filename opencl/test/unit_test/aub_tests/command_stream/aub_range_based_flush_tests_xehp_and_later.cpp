@@ -28,8 +28,8 @@ using namespace NEO;
 struct RangeBasedFlushTest : public KernelAUBFixture<SimpleKernelFixture>, public ::testing::Test {
 
     void SetUp() override {
-        DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
-        DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+        debugManager.flags.PerformImplicitFlushForNewResource.set(0);
+        debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
         KernelAUBFixture<SimpleKernelFixture>::setUp();
     };
 
@@ -58,7 +58,7 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
     using L3_CONTROL = typename FamilyType::L3_CONTROL;
     using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
 
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     char bufferAMemory[bufferSize];
@@ -105,7 +105,7 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
     auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     flags.blocking = true;
 
-    DebugManager.flags.DisableDcFlushInEpilogue.set(true);
+    debugManager.flags.DisableDcFlushInEpilogue.set(true);
     csr.flushTask(l3FlushCmdStream, offset,
                   &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE, 0),
                   &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT, 0),
@@ -200,7 +200,7 @@ HWTEST2_F(RangeBasedFlushTest, givenL3ControlWhenPostSyncIsSetThenExpectPostSync
     auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     flags.blocking = true;
 
-    DebugManager.flags.DisableDcFlushInEpilogue.set(true);
+    debugManager.flags.DisableDcFlushInEpilogue.set(true);
     csr.makeResident(*postSyncBuffer->getGraphicsAllocation(rootDeviceIndex));
     csr.flushTask(l3FlushCmdStream, offset,
                   &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE, 0),

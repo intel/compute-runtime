@@ -21,7 +21,7 @@ using CommandQueueTestDG2 = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledOnDG2ThenReturnedSizeIsZero, IsDG2) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);

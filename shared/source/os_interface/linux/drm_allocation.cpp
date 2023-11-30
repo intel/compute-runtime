@@ -87,7 +87,7 @@ bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocat
     bool success = true;
     auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
 
-    if (this->storageInfo.isChunked && DebugManager.flags.EnableBOChunkingPreferredLocationHint.get() == 1) {
+    if (this->storageInfo.isChunked && debugManager.flags.EnableBOChunkingPreferredLocationHint.get() == 1) {
         prelim_drm_i915_gem_memory_class_instance region{};
         region.memory_class = NEO::PrelimI915::PRELIM_I915_MEMORY_CLASS_DEVICE;
         auto banks = std::bitset<4>(remainingMemoryBanks);
@@ -108,7 +108,7 @@ bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocat
             region.memory_instance = memRegions[i / (this->storageInfo.numOfChunks / memRegions.size())].memoryInstance;
             uint64_t chunkLength = (bufferObjects[0]->peekSize() / this->storageInfo.numOfChunks);
             uint64_t chunkStart = i * chunkLength;
-            printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
+            printDebugString(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
                              "Setting PRELIM_DRM_I915_GEM_VM_ADVISE for BO-%d chunk 0x%lx chunkLength %ld memory_class %d, memory_region %d\n",
                              bufferObjects[0]->peekHandle(),
                              chunkStart,
@@ -209,13 +209,13 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
             auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
             auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
 
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+            PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
                                "prefetching BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x\n",
                                bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region);
 
             success &= ioctlHelper->setVmPrefetch(chunkStart, chunkLength, region, vmId);
 
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+            PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
                                "prefetched BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
                                bo->peekHandle(), vmId, vmHandleId, chunkStart, ptrOffset(chunkStart, chunkLength), chunkLength, region, success);
         }
@@ -308,7 +308,7 @@ bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t s
 
     auto result = ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintBOPrefetchingResult.get(), stdout,
                        "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
                        bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
     return result;
@@ -416,15 +416,15 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
         return false;
     }
 
-    if (DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.get() != -1) {
-        return DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.get();
+    if (debugManager.flags.EnableImplicitMigrationOnFaultableHardware.get() != -1) {
+        return debugManager.flags.EnableImplicitMigrationOnFaultableHardware.get();
     }
 
     switch (this->allocationType) {
     case AllocationType::UNIFIED_SHARED_MEMORY:
         return drm->hasKmdMigrationSupport();
     case AllocationType::BUFFER:
-        return DebugManager.flags.UseKmdMigrationForBuffers.get() > 0;
+        return debugManager.flags.UseKmdMigrationForBuffers.get() > 0;
     default:
         return false;
     }
@@ -489,7 +489,7 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
         for (uint8_t handleId = 0u; handleId < numHandles; handleId++) {
             auto bo = this->getBOs()[handleId];
             auto subDeviceId = handleId;
-            if (DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0) {
+            if (debugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0) {
                 subDeviceId = subDeviceIds[handleId % subDeviceIds.size()];
             }
             for (auto vmHandleId : subDeviceIds) {

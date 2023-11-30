@@ -19,7 +19,7 @@ using TglLpSlm = PreambleFixture;
 
 HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitrationPolicyIsIgnored, IsTGLLP) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef Gen12LpFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<Gen12LpFamily>::getL3Config(pDevice->getHardwareInfo(), true);
@@ -150,7 +150,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
     for (auto &[expectedValue, waDisableFusedThreadScheduling, debugKeyValue] : testParams) {
         waTable.flags.waDisableFusedThreadScheduling = waDisableFusedThreadScheduling;
 
-        DebugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
+        debugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
 
         PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
         EXPECT_EQ(expectedValue, mediaVfeState->getDisableSlice0Subslice2());
@@ -161,7 +161,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenMaxNumberOfDssDebugVariableWhenMediaVfeS
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MediaVfeStateMaxSubSlices.set(2);
+    debugManager.flags.MediaVfeStateMaxSubSlices.set(2);
 
     void *cmdSpace = linearStream.getSpace(sizeof(MEDIA_VFE_STATE));
     auto mediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(cmdSpace);
@@ -192,7 +192,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhen
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.CFEFusedEUDispatch.set(0);
+    debugManager.flags.CFEFusedEUDispatch.set(0);
 
     void *cmdSpace = linearStream.getSpace(sizeof(MEDIA_VFE_STATE));
     auto mediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(cmdSpace);

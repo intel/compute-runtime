@@ -68,7 +68,7 @@ typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskDg2AndLaterTe
 
 HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenPerDssBackedBufferThenThereIsPipeControlPriorToIt, IsDG2) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;

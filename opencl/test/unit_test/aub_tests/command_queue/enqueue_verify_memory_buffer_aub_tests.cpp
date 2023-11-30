@@ -51,7 +51,7 @@ HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSucc
                                   (flags & CL_MEM_COPY_HOST_PTR));
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisableZeroCopyForBuffers.set(true);
+    debugManager.flags.DisableZeroCopyForBuffers.set(true);
 
     std::unique_ptr<uint8_t[]> bufferContent(new uint8_t[testDataSize]);
     std::unique_ptr<uint8_t[]> validContent(new uint8_t[testDataSize]);

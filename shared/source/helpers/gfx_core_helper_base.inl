@@ -34,8 +34,8 @@ const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = Au
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
-    if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
-        return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
+    if (debugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
+        return !!debugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
     return size > KB;
 }
@@ -62,7 +62,7 @@ SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) co
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }
-    return DebugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsr;
+    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsr;
 }
 
 template <typename Family>
@@ -137,8 +137,8 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
     } else {
         state.setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
-    if (DebugManager.flags.OverrideMocsIndexForScratchSpace.get() != -1) {
-        auto mocsIndex = static_cast<uint32_t>(DebugManager.flags.OverrideMocsIndexForScratchSpace.get()) << 1;
+    if (debugManager.flags.OverrideMocsIndexForScratchSpace.get() != -1) {
+        auto mocsIndex = static_cast<uint32_t>(debugManager.flags.OverrideMocsIndexForScratchSpace.get()) << 1;
         state.setMemoryObjectControlState(mocsIndex);
     }
 
@@ -163,9 +163,9 @@ void NEO::GfxCoreHelperHw<GfxFamily>::setL1CachePolicy(bool useL1Cache, typename
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.EnableLocalMemory.get() != -1) {
-        return DebugManager.flags.EnableLocalMemory.get();
-    } else if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
+    if (debugManager.flags.EnableLocalMemory.get() != -1) {
+        return debugManager.flags.EnableLocalMemory.get();
+    } else if (debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
         return true;
     }
 
@@ -180,8 +180,8 @@ bool GfxCoreHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo
 template <typename Family>
 AuxTranslationMode GfxCoreHelperHw<Family>::getAuxTranslationMode(const HardwareInfo &hwInfo) {
     auto mode = GfxCoreHelperHw<Family>::defaultAuxTranslationMode;
-    if (DebugManager.flags.ForceAuxTranslationMode.get() != -1) {
-        mode = static_cast<AuxTranslationMode>(DebugManager.flags.ForceAuxTranslationMode.get());
+    if (debugManager.flags.ForceAuxTranslationMode.get() != -1) {
+        mode = static_cast<AuxTranslationMode>(debugManager.flags.ForceAuxTranslationMode.get());
     }
 
     if (mode == AuxTranslationMode::Blit && !hwInfo.capabilityTable.blitterOperationsSupported) {
@@ -270,7 +270,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
         pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     }
 
-    if (DebugManager.flags.FlushAllCaches.get()) {
+    if (debugManager.flags.FlushAllCaches.get()) {
         pipeControl.setDcFlushEnable(true);
         pipeControl.setRenderTargetCacheFlushEnable(true);
         pipeControl.setInstructionCacheInvalidateEnable(true);
@@ -281,7 +281,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
         pipeControl.setStateCacheInvalidationEnable(true);
         pipeControl.setTlbInvalidate(true);
     }
-    if (DebugManager.flags.DoNotFlushCaches.get()) {
+    if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setDcFlushEnable(false);
         pipeControl.setRenderTargetCacheFlushEnable(false);
         pipeControl.setInstructionCacheInvalidateEnable(false);
@@ -447,15 +447,15 @@ template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                                              size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::CSR_HW) ||
-                             DebugManager.flags.DisableTimestampPacketOptimizations.get();
+                             debugManager.flags.DisableTimestampPacketOptimizations.get();
 
     auto tagAlignment = getTimestampPacketAllocatorAlignment();
 
-    if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
-        if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
+    if (debugManager.flags.OverrideTimestampPacketSize.get() != -1) {
+        if (debugManager.flags.OverrideTimestampPacketSize.get() == 4) {
             using TimestampPackets32T = TimestampPackets<uint32_t, GfxFamily::timestampPacketCount>;
             return std::make_unique<TagAllocator<TimestampPackets32T>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPackets32T), doNotReleaseNodes, deviceBitfield);
-        } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
+        } else if (debugManager.flags.OverrideTimestampPacketSize.get() == 8) {
             using TimestampPackets64T = TimestampPackets<uint64_t, GfxFamily::timestampPacketCount>;
             return std::make_unique<TagAllocator<TimestampPackets64T>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, sizeof(TimestampPackets64T), doNotReleaseNodes, deviceBitfield);
         } else {
@@ -481,10 +481,10 @@ size_t GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSize() const {
 
 template <typename GfxFamily>
 size_t GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
-    if (DebugManager.flags.OverrideTimestampPacketSize.get() != -1) {
-        if (DebugManager.flags.OverrideTimestampPacketSize.get() == 4) {
+    if (debugManager.flags.OverrideTimestampPacketSize.get() != -1) {
+        if (debugManager.flags.OverrideTimestampPacketSize.get() == 4) {
             return TimestampPackets<uint32_t, GfxFamily::timestampPacketCount>::getSinglePacketSize();
-        } else if (DebugManager.flags.OverrideTimestampPacketSize.get() == 8) {
+        } else if (debugManager.flags.OverrideTimestampPacketSize.get() == 8) {
             return TimestampPackets<uint64_t, GfxFamily::timestampPacketCount>::getSinglePacketSize();
         } else {
             UNRECOVERABLE_IF(true);
@@ -651,16 +651,16 @@ uint64_t GfxCoreHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CacheP
 
 template <typename gfxProduct>
 bool GfxCoreHelperHw<gfxProduct>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
-        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
     return false;
 }
 
 template <typename gfxProduct>
 uint32_t GfxCoreHelperHw<gfxProduct>::getAmountOfAllocationsToFill() const {
-    if (DebugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
-        return DebugManager.flags.SetAmountOfReusableAllocations.get();
+    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
+        return debugManager.flags.SetAmountOfReusableAllocations.get();
     }
     return 0u;
 }

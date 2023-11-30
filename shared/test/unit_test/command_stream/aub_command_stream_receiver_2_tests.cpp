@@ -41,7 +41,7 @@ using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
 
 struct FlatBatchBufferHelperAubTests : AubCommandStreamReceiverTests {
     void SetUp() override {
-        DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+        debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
         AubCommandStreamReceiverTests::SetUp();
     }
 
@@ -166,7 +166,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenRemoveP
 }
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucStartMessageIsCalledThenBatchBufferAddressIsStoredInPatchInfoCollection) {
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -182,8 +182,8 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucS
 }
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInBatchedDispatchModeThenNewCombinedBatchBufferIsCreated) {
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-    DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -345,8 +345,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
@@ -383,8 +383,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
@@ -407,8 +407,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
@@ -430,7 +430,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
@@ -657,7 +657,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoDbgDeviceIdFlagWhenAubCsrIsCreate
 
 HWTEST_F(AubCommandStreamReceiverTests, givenDbgDeviceIdFlagIsSetWhenAubCsrIsCreatedThenUseDebugDeviceId) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
+    debugManager.flags.OverrideAubDeviceId.set(9); // this is Hsw, not used
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     EXPECT_EQ(9u, aubCsr->aubDeviceId);
 }
@@ -874,7 +874,7 @@ using InjectMmmioTest = Test<DeviceFixture>;
 
 HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AubDumpAddMmioRegistersList.set("");
+    debugManager.flags.AubDumpAddMmioRegistersList.set("");
 
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);
@@ -891,7 +891,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWhenInitAdditionalMmioCall
     MMIOPair mmioPair(0xdead, 0xbeef);
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
+    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);
@@ -908,7 +908,7 @@ HWTEST_F(InjectMmmioTest, givenLongSequenceOfAddMmioRegistersListSetWhenInitAddi
     std::string registers("1;1;2;2;3;3");
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
+    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);
@@ -926,7 +926,7 @@ HWTEST_F(InjectMmmioTest, givenSequenceWithIncompletePairOfAddMmioRegistersListS
     MMIOPair mmioPair1(0x2, 0x2);
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
+    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);
@@ -945,7 +945,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithSemicolonAtTheEndWhenI
     MMIOPair mmioPair(0xdead, 0xbeef);
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
+    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);
@@ -962,7 +962,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithInvalidValueWhenInitAd
     std::string registers("0xdead;invalid");
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
+    debugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);

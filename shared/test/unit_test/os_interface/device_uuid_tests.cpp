@@ -26,7 +26,7 @@ struct MultipleDeviceBdfUuidTest : public ::testing::Test {
     std::unique_ptr<UltDeviceFactory> createDevices(PhysicalDevicePciBusInfo &pciBusInfo, uint32_t numSubDevices, MockExecutionEnvironment *executionEnvironment) {
         std::unique_ptr<MockDriverModel> mockDriverModel = std::make_unique<MockDriverModel>();
         mockDriverModel->pciBusInfo = pciBusInfo;
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         executionEnvironment->parseAffinityMask();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface);
         executionEnvironment->memoryManager.reset(new MockMemoryManagerOsAgnosticContext(*executionEnvironment));
@@ -45,7 +45,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffinityMaskT
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2,0.3");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2,0.3");
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, 4, mockExecutionEnvironment.release());
 
@@ -98,7 +98,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDevic
     std::array<uint8_t, 16> uuid;
     const uint32_t numSubDevices = 2;
     uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
-    DebugManager.flags.ZE_AFFINITY_MASK.set("default");
+    debugManager.flags.ZE_AFFINITY_MASK.set("default");
     PhysicalDevicePciBusInfo pciBusInfo(0x54ad, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, numSubDevices, mockExecutionEnvironment.release());
 
@@ -137,7 +137,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetrievingDevic
     std::array<uint8_t, 16> uuid;
     const uint32_t numSubDevices = 1;
     uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
-    DebugManager.flags.ZE_AFFINITY_MASK.set("default");
+    debugManager.flags.ZE_AFFINITY_MASK.set("default");
     PhysicalDevicePciBusInfo pciBusInfo(0x54ad, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, numSubDevices, mockExecutionEnvironment.release());
 
@@ -185,7 +185,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhenRetrievi
 
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0");
     deviceFactory = createDevices(pciBusInfo, 2, mockExecutionEnvironment.release());
 
     uint16_t vendorId = 0x8086; // Intel
@@ -213,7 +213,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0");
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, 4, mockExecutionEnvironment.release());
 
@@ -248,7 +248,7 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.3");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.3");
     uint32_t subDeviceIndex = 3;
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, 4, mockExecutionEnvironment.release());
@@ -321,7 +321,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDev
     RAIIProductHelperFactory<MockProductHelperHwUuidEnablementTest<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
     raii.mockProductHelper->returnStatus = true;
 
-    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
+    debugManager.flags.EnableChipsetUniqueUUID.set(1);
     std::array<uint8_t, 16> uuid, expectedUuid;
     uuid.fill(0u);
     expectedUuid.fill(255u);
@@ -345,7 +345,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDe
     RAIIProductHelperFactory<MockProductHelperHwUuidEnablementTest<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
     raii.mockProductHelper->returnStatus = true;
 
-    DebugManager.flags.EnableChipsetUniqueUUID.set(0);
+    debugManager.flags.EnableChipsetUniqueUUID.set(0);
     std::array<uint8_t, 16> uuid, expectedUuid;
     uuid.fill(0u);
     expectedUuid.fill(255u);
@@ -364,7 +364,7 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsTrueWhenDevice
     RAIIProductHelperFactory<MockProductHelperHwUuidEnablementTest<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
     raii.mockProductHelper->returnStatus = false;
 
-    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
+    debugManager.flags.EnableChipsetUniqueUUID.set(1);
     std::array<uint8_t, 16> uuid;
     uuid.fill(0u);
 

@@ -40,8 +40,8 @@ void MockKernel::getResidency(std::vector<Surface *> &dst) {
     Kernel::getResidency(dst);
 }
 bool MockKernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
-    if (DebugManager.flags.EnableCacheFlushAfterWalker.get() != -1) {
-        return !!DebugManager.flags.EnableCacheFlushAfterWalker.get();
+    if (debugManager.flags.EnableCacheFlushAfterWalker.get() != -1) {
+        return !!debugManager.flags.EnableCacheFlushAfterWalker.get();
     }
 
     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
         MemoryManagementFixture::setUp();
 
         isOsAgnosticMemoryManager = GetParam();
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;
@@ -70,8 +70,8 @@ class MemoryAllocatorMultiDeviceAndMultiTileFixture : public MemoryManagementFix
         MemoryManagementFixture::setUp();
 
         isOsAgnosticMemoryManager = GetParam();
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-        DebugManager.flags.CreateMultipleRootDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numSubDevices);
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;

@@ -40,8 +40,8 @@ bool PreemptionHelper::allowMidThreadPreemption(const PreemptionFlags &flags) {
 }
 
 PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags) {
-    if (DebugManager.flags.ForceKernelPreemptionMode.get() != -1) {
-        return static_cast<PreemptionMode>(DebugManager.flags.ForceKernelPreemptionMode.get());
+    if (debugManager.flags.ForceKernelPreemptionMode.get() != -1) {
+        return static_cast<PreemptionMode>(debugManager.flags.ForceKernelPreemptionMode.get());
     }
     if (devicePreemptionMode == PreemptionMode::Disabled) {
         return PreemptionMode::Disabled;
@@ -76,9 +76,9 @@ void PreemptionHelper::adjustDefaultPreemptionMode(RuntimeCapabilityTable &devic
 }
 
 PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hwInfo) {
-    return DebugManager.flags.ForcePreemptionMode.get() == -1
+    return debugManager.flags.ForcePreemptionMode.get() == -1
                ? hwInfo.capabilityTable.defaultPreemptionMode
-               : static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get());
+               : static_cast<PreemptionMode>(debugManager.flags.ForcePreemptionMode.get());
 }
 
 PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor) {

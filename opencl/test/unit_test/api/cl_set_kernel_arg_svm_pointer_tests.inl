@@ -336,7 +336,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKer
         ++mockSvmManager->allocationsCounter;
 
         DebugManagerStateRestore stateRestorer;
-        DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+        debugManager.flags.EnableSharedSystemUsmSupport.set(1);
         mockSvmManager->freeSVMAlloc(nextPtrSvm);
         // same values but no svmData - called
         retVal = clSetKernelArgSVMPointer(

@@ -248,7 +248,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapAllocatedFrom
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
@@ -1085,7 +1085,7 @@ HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsZeroThenExpectLocalIdsInUseIsFal
 
 TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSupportFlushThenExpectNoCacheAllocationForFlush) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(-1);
     hardwareInfo.capabilityTable.supportCacheFlushAfterWalker = false;
 
     StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
@@ -1198,7 +1198,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsImplicitArgsTests, givenPreXeHpPlatf
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsAndRuntimeLocalIdsGenerationWhenSendingIndirectStateThenLocalIdsAreGeneratedAndCorrectlyProgrammedInCrossThreadData) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(0);
+    debugManager.flags.EnableHwGenerationLocalIds.set(0);
 
     workgroupDimOrder[0] = 2;
     workgroupDimOrder[1] = 1;
@@ -1230,7 +1230,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsAndHwLocalIdsGenerationWhenSendingIndirectStateThenLocalIdsAreGeneratedAndCorrectlyProgrammedInCrossThreadData) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     workgroupDimOrder[0] = 2;
     workgroupDimOrder[1] = 1;
@@ -1333,7 +1333,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 

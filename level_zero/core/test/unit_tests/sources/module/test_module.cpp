@@ -114,7 +114,7 @@ struct ModuleKernelIsaAllocationsFixture : public ModuleFixture {
 
     void setUp() {
         this->dbgRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableLocalMemory.set(localMemEnabled);
+        debugManager.flags.EnableLocalMemory.set(localMemEnabled);
         ModuleFixture::setUp();
 
         ModuleBuildLog *moduleBuildLog = nullptr;
@@ -2726,7 +2726,7 @@ using ContextModuleCreateTest = Test<DeviceFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -2761,7 +2761,7 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
     }
 
     ze_result_t createFromNativeBinary(const char *input, size_t inputSize) override {
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         wasCreateFromNativeBinaryCalled = true;
         return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize);
     }
@@ -2774,7 +2774,7 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
@@ -2797,7 +2797,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleHasSymbolSupportBooleans) {
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
@@ -2821,7 +2821,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
@@ -2844,7 +2844,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryThenModuleRecompilationWarningIsIssued) {
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
     auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
     bool forceRecompilation = true;
@@ -2879,7 +2879,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryAndWarningSuppressionIsPresentThenModuleRecompilationWarningIsNotIssued) {
     DebugManagerStateRestore dgbRestorer;
-    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
     auto additionalSections = {ZebinTestData::appendElfAdditionalSection::SPIRV};
     bool forceRecompilation = true;
@@ -3224,7 +3224,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(1);
+    debugManager.flags.DisableStatelessToStatefulOptimization.set(1);
 
     MockModuleTranslationUnit moduleTu(this->device);
     moduleTu.processUnpackedBinaryCallBase = false;
@@ -3257,7 +3257,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
 
 HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
@@ -3272,7 +3272,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptions
 
 HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebinElfDumped) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DumpZEBin.set(1);
+    debugManager.flags.DumpZEBin.set(1);
 
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
@@ -3319,8 +3319,8 @@ HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebin
 
 HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);
@@ -3428,7 +3428,7 @@ using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;
 
@@ -3475,7 +3475,7 @@ TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionI
 
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
     ASSERT_NE(nullptr, module);
 
@@ -3515,7 +3515,7 @@ TEST_F(ModuleTest, givenEnableLibraryCompileThenIsGlobalSymbolExportEnabledTrue)
 
 TEST_F(ModuleTest, givenInternalOptionsWhenBuildFlagsIsNullPtrAndBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
     ASSERT_NE(nullptr, module);
 
@@ -3529,7 +3529,7 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBuildFlagsIsNullPtrAndBindlessEnabled
 
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNotPassed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseBindlessMode.set(0);
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
     ASSERT_NE(nullptr, module);
 
@@ -3616,7 +3616,7 @@ TEST_F(ModuleTest, givenSrcProfileFlagsWithoutFlagValueInSrcNamesWhenMovingBuild
 
 TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingUserModuleThenInternalOptionsAreAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectInternalBuildOptions.set(" -abc");
+    debugManager.flags.InjectInternalBuildOptions.set(" -abc");
 
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -3638,7 +3638,7 @@ TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingUserModuleThenInte
 
 TEST_F(ModuleTest, GivenInjectApiBuildOptionsWhenBuildingUserModuleThenApiOptionsAreAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectApiBuildOptions.set(" -abc");
+    debugManager.flags.InjectApiBuildOptions.set(" -abc");
 
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -3660,7 +3660,7 @@ TEST_F(ModuleTest, GivenInjectApiBuildOptionsWhenBuildingUserModuleThenApiOption
 
 TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingBuiltinModuleThenInternalOptionsAreNotAppended) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.InjectInternalBuildOptions.set(" -abc");
+    debugManager.flags.InjectInternalBuildOptions.set(" -abc");
 
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -3718,7 +3718,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
 
     void setUp() {
         this->dbgRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableLocalMemory.set(localMemEnabled);
+        debugManager.flags.EnableLocalMemory.set(localMemEnabled);
 
         DeviceFixture::setUp();
 
@@ -4005,7 +4005,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
         MockModuleImp module(device, nullptr, moduleType);
         module.translationUnit = std::make_unique<MyMockModuleTU>(device);
         module.translationUnit->isGeneratedByIgc = isIgcGenerated;
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
         module.setAddressingMode(isStateful);
 
         if (isStateful && debugKey == -1 && isIgcGenerated == true) {
@@ -4320,7 +4320,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingBuiltinMo
 
 TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhenCreatingKernelThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
 
@@ -4367,7 +4367,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
 
 TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivateAndScratchUsageIsPrinted) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
 
@@ -4632,7 +4632,7 @@ HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpd
 using ModuleKernelImmDatasTest = Test<ModuleFixture>;
 TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateMemoryThenReturnInformativeErrorToTheCaller) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
     const auto &src = zebinData->storage;

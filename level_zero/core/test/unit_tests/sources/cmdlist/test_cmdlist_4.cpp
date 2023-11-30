@@ -184,7 +184,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimes
 
 HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     const ze_command_queue_desc_t queueDesc = {};
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -227,7 +227,7 @@ HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmedia
 
 HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionDisabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 
     const ze_command_queue_desc_t queueDesc = {};
 
@@ -272,7 +272,7 @@ HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionDisabledForCopyImmedi
 
 HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendMemoryCopyRegionReturnsSuccess) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -312,7 +312,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenImmediateCommandListIsI
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenFlushTaskSubmissionDisabledWhenCommandListIsInititalizedThenFlushTaskIsSetToFalse) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
@@ -324,7 +324,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenFlushTaskSubmissionDisa
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelThenSuccessIsReturned) {
     Mock<::L0::KernelImp> kernel;
 
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -341,8 +341,8 @@ using CommandListAppendLaunchKernelResetKernelCount = Test<DeviceFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
 
-    NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
-    NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+    NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
+    NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
 
     Mock<::L0::KernelImp> kernel;
     ze_command_queue_desc_t queueDesc = {};
@@ -381,7 +381,7 @@ HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOpera
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendPageFaultThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     size_t size = 0x100000001;
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
@@ -399,8 +399,8 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendPageFaultThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
-    NEO::DebugManager.flags.UseBindlessMode.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.UseBindlessMode.set(1);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
                                                                                                                              neoDevice->getNumGenericSubDevices() > 1,
@@ -423,7 +423,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrIm
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendEventResetThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -455,7 +455,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendEventResetWithTimestampThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -487,7 +487,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendEventResetWithTimestampThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -519,7 +519,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendSignalEventThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -551,7 +551,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendSignalEventWithTimestampThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -583,7 +583,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendSignalEventWithTimestampThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -615,7 +615,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendWaitOnEventWithTimestampThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -648,7 +648,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendBarrierWithEventThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -680,7 +680,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendBarrierWithTimestampEventThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -712,7 +712,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateWhenAppendBarrierWithoutEventThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -723,7 +723,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendBarrierWithEventThenSuccessIsReturned) {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -1308,7 +1308,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenImmediateCommandListWhenMemory
 
 HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPointerWhenFindIsCalledThenRegisterHappens, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceHostPointerImport.set(1);
+    debugManager.flags.ForceHostPointerImport.set(1);
     void *testPtr = heapPointer;
 
     auto gfxAllocation = hostDriverHandle->findHostPointerAllocation(testPtr, 0x10u, device->getRootDeviceIndex());
@@ -1324,7 +1324,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
 
     ze_result_t returnValue;
     {
-        DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+        debugManager.flags.EnableStateBaseAddressTracking.set(0);
 
         std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1334,7 +1334,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
         EXPECT_EQ(NEO::HeapSize::defaultHeapSize, sshSize);
     }
     {
-        DebugManager.flags.EnableStateBaseAddressTracking.set(1);
+        debugManager.flags.EnableStateBaseAddressTracking.set(1);
 
         std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);

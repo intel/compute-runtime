@@ -56,7 +56,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
 
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.EnableAsyncEventsHandler.set(false);
+        debugManager.flags.EnableAsyncEventsHandler.set(false);
         handler.reset(new MockHandler());
         context = makeReleaseable<MockContext>();
 
@@ -246,7 +246,7 @@ TEST_F(AsyncEventsHandlerTests, WhenHandlerIsRegisteredThenThreadIsCreated) {
 }
 
 TEST_F(AsyncEventsHandlerTests, WhenProcessingAsynchronouslyThenBothThreadsCompelete) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(true);
 
     event1->setTaskStamp(CompletionStamp::notReady, CompletionStamp::notReady + 1);
     event2->setTaskStamp(CompletionStamp::notReady, CompletionStamp::notReady + 1);
@@ -286,7 +286,7 @@ TEST_F(AsyncEventsHandlerTests, WhenThreadIsDestructedThenGetThreadReturnsNull) 
 }
 
 TEST_F(AsyncEventsHandlerTests, givenReadyEventWhenCallbackIsAddedThenDontOpenThread) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(true);
     auto myHandler = new MockHandler(true);
     context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
     event1->setTaskStamp(0, 0);
@@ -298,7 +298,7 @@ TEST_F(AsyncEventsHandlerTests, givenReadyEventWhenCallbackIsAddedThenDontOpenTh
 }
 
 TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegister) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(true);
     auto myHandler = new MockHandler(true);
     context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
 

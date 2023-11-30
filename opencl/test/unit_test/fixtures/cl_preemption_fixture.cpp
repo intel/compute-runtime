@@ -62,7 +62,7 @@ void DevicePreemptionTests::TearDown() {
 
 void ThreadGroupPreemptionEnqueueKernelTest::SetUp() {
     dbgRestore.reset(new DebugManagerStateRestore());
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
 
     globalHwInfo = defaultHwInfo.get();
     originalPreemptionMode = globalHwInfo->capabilityTable.defaultPreemptionMode;
@@ -80,7 +80,7 @@ void ThreadGroupPreemptionEnqueueKernelTest::TearDown() {
 
 void MidThreadPreemptionEnqueueKernelTest::SetUp() {
     dbgRestore.reset(new DebugManagerStateRestore());
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
 
     globalHwInfo = defaultHwInfo.get();
     originalPreemptionMode = globalHwInfo->capabilityTable.defaultPreemptionMode;

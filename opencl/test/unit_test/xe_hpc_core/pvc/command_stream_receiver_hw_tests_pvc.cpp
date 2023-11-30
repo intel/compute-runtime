@@ -43,7 +43,7 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitration
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    DebugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+    debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
 
     EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
@@ -106,7 +106,7 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
 
 struct PVcBcsTests : public UltCommandStreamReceiverTest {
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.EnableLocalMemory.set(true);
         UltCommandStreamReceiverTest::SetUp();
         context = std::make_unique<MockContext>(pClDevice);
     }
@@ -122,7 +122,7 @@ struct PVcBcsTests : public UltCommandStreamReceiverTest {
 };
 
 PVCTEST_F(PVcBcsTests, givenCompressibleBuffersWhenStatefulCompressionIsEnabledThenProgramBlitterWithStatefulCompressionSettings) {
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     using MEM_COPY = typename FamilyType::MEM_COPY;
     char buff[1024] = {0};
@@ -179,7 +179,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnable
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
     platformsImpl->clear();
     EXPECT_EQ(platform(), nullptr);
 
@@ -188,7 +188,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnable
     EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
     EXPECT_EQ(bltCmd->getDestinationCompressible(), MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
     EXPECT_EQ(bltCmd->getSourceCompressible(), MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
-    EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
 }
 
 PVCTEST_F(PVcBcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferDoesntUseStatelessCompressedSettings) {
@@ -208,7 +208,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnable
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
     platformsImpl->clear();
     EXPECT_EQ(platform(), nullptr);
 

@@ -305,8 +305,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
     }
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.set(true);
-    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+    debugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.set(true);
+    debugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto dstHostPtr = alignedMalloc(256, 64);
 

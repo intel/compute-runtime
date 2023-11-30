@@ -168,7 +168,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
   public:
     void setUp() {
-        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
+        debugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
         setUpImpl();
     }
 
@@ -438,7 +438,7 @@ TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFai
 
     DebugManagerStateRestore restorer;
     for (auto &allocationInUSMShared : ::testing::Bool()) {
-        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(allocationInUSMShared);
+        debugManager.flags.GTPinAllocateBufferInSharedMemory.set(allocationInUSMShared);
         InjectedFunction allocBufferFunc = [this](size_t failureIndex) {
             resource_handle_t res;
             cl_context ctxt = (cl_context)((Context *)pContext);
@@ -2148,8 +2148,8 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 class GTPinFixtureWithLocalMemory : public GTPinFixture {
   public:
     void setUp() {
-        DebugManager.flags.EnableLocalMemory.set(true);
-        DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
+        debugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
         GTPinFixture::setUpImpl();
     }
     void tearDown() {
@@ -2161,7 +2161,7 @@ class GTPinFixtureWithLocalMemory : public GTPinFixture {
 using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
 
 TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
-    DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
+    debugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
     if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
@@ -2249,7 +2249,7 @@ TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuffe
 
 TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedInSingleStorageThenAllocateBufferWithoutCpuAllocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
@@ -2433,7 +2433,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
 
     DebugManagerStateRestore restorer;
     for (auto &allocateDualStorageUSM : ::testing::Bool()) {
-        DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(allocateDualStorageUSM);
+        debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(allocateDualStorageUSM);
         isGTPinInitialized = false;
         if (allocateDualStorageUSM) {
             memoryManager->pageFaultManager = std::make_unique<MockResidentTestsPageFaultManager>();

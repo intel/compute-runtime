@@ -870,7 +870,7 @@ TEST(D3D11, givenD3D11BuilderAndExtensionEnableFalseWhenGettingExtensionsThenCor
 
 TEST(D3DSharingFactory, givenEnabledFormatQueryAndFactoryWithD3DSharingsWhenGettingExtensionFunctionAddressThenFormatQueryFunctionsAreReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableFormatQuery.set(true);
+    debugManager.flags.EnableFormatQuery.set(true);
     SharingFactoryMock sharingFactory;
 
     auto function = sharingFactory.getExtensionFunctionAddress("clGetSupportedDX9MediaSurfaceFormatsINTEL");

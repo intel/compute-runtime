@@ -1280,7 +1280,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenDispatchTraitsImplicitArgsAndExplicit
     kernelTokens.header = &kernelHeader;
 
     DebugManagerStateRestore dbgRestorer;
-    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     iOpenCL::SPatchDataParameterBuffer localWorkSize[3] = {};
     iOpenCL::SPatchDataParameterBuffer localWorkSize2[3] = {};
@@ -1443,7 +1443,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenNonBindlessModeWhenPopulatingKernelDe
     kernelTokens.header = &kernelHeader;
 
     DebugManagerStateRestore dbgRestorer;
-    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     NEO::KernelDescriptor kernelDescriptor;
 
@@ -1532,7 +1532,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenUpdateCrossThreadDataSizeAndNoCrossTh
     kernelTokens.header = &kernelHeader;
 
     DebugManagerStateRestore dbgRestorer;
-    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
     NEO::KernelDescriptor kernelDescriptor;
 
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
@@ -1546,7 +1546,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenUpdateCrossThreadDataSizeFalseWhenPop
     kernelTokens.header = &kernelHeader;
 
     DebugManagerStateRestore dbgRestorer;
-    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(false);
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(false);
 
     NEO::KernelDescriptor kernelDescriptor;
 

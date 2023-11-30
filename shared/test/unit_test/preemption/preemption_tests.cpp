@@ -30,7 +30,7 @@ class ThreadGroupPreemptionTests : public DevicePreemptionTests {
   public:
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
+        debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
         preemptionMode = PreemptionMode::ThreadGroup;
         DevicePreemptionTests::SetUp();
     }
@@ -41,7 +41,7 @@ class MidThreadPreemptionTests : public DevicePreemptionTests {
   public:
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+        debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
         preemptionMode = PreemptionMode::MidThread;
         DevicePreemptionTests::SetUp();
     }
@@ -205,7 +205,7 @@ TEST_F(MidThreadPreemptionTests, GivenTaskPreemptionAllowDeviceSupportsPreemptio
 }
 
 TEST_F(ThreadGroupPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsThreadGroupThenExpectDebugKeyMidThreadValue) {
-    DebugManager.flags.ForceKernelPreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+    debugManager.flags.ForceKernelPreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
 
     EXPECT_EQ(PreemptionMode::ThreadGroup, device->getPreemptionMode());
 
@@ -215,7 +215,7 @@ TEST_F(ThreadGroupPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsT
 }
 
 TEST_F(MidThreadPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsMidThreadThenExpectDebugKeyMidBatchValue) {
-    DebugManager.flags.ForceKernelPreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidBatch));
+    debugManager.flags.ForceKernelPreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidBatch));
 
     EXPECT_EQ(PreemptionMode::MidThread, device->getPreemptionMode());
 

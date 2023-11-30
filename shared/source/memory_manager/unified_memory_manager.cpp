@@ -214,8 +214,8 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport)
     : memoryManager(memoryManager), multiOsContextSupport(multiOsContextSupport) {
     this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled();
-    if (DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
-        this->usmDeviceAllocationsCacheEnabled = !!DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
+    if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
+        this->usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
     }
     if (this->usmDeviceAllocationsCacheEnabled) {
         this->initUsmDeviceAllocationsCache();
@@ -387,8 +387,8 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
 
     auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported(rootDeviceIndex);
 
-    if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
-        supportDualStorageSharedMemory = !!DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
+    if (debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
+        supportDualStorageSharedMemory = !!debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
     }
 
     if (supportDualStorageSharedMemory) {
@@ -841,7 +841,7 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
     // and if KMD migration is set, as current target is to use
     // chunking only with KMD migration
     bool isChunkingNeededForDeviceAllocations = false;
-    if (NEO::DebugManager.flags.EnableBOChunkingDevMemPrefetch.get() &&
+    if (NEO::debugManager.flags.EnableBOChunkingDevMemPrefetch.get() &&
         memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
         (svmData.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY)) {
         isChunkingNeededForDeviceAllocations = true;

@@ -733,7 +733,7 @@ HWTEST_F(EnqueueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSu
 
 HWTEST_F(EnqueueWriteBufferRectHw, givenHostPtrIsFromMappedBufferWhenWriteBufferRectIsCalledThenReuseGraphicsAllocation) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DisableZeroCopyForBuffers.set(1);
+    debugManager.flags.DisableZeroCopyForBuffers.set(1);
 
     MockCommandQueueHw<FamilyType> queue(context.get(), device.get(), nullptr);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCache
 
 TEST(DrmCacheInfoTest, givenDebugFlagSetWhenCallingSetUpCacheInfoThenCacheInfoIsCreatedWithoutValues) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ClosEnabled.set(0);
+    debugManager.flags.ClosEnabled.set(0);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
@@ -120,7 +120,7 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenSpecificNumCacheWaysIsRequestedThenRese
     constexpr uint16_t maxNumCacheWays = 32;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ClosNumCacheWays.set(maxNumCacheWays / 2);
+    debugManager.flags.ClosNumCacheWays.set(maxNumCacheWays / 2);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 

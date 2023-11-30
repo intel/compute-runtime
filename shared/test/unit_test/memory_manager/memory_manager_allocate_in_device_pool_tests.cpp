@@ -330,7 +330,7 @@ TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedTh
     AllocationProperties allocPropertiesBufferCompressed(mockRootDeviceIndex, 1, AllocationType::BUFFER, mockDeviceBitfield);
     allocPropertiesBufferCompressed.flags.preferCompressed = true;
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     auto allocationBuffer = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBuffer, nullptr);
     auto allocationBufferCompressed = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBufferCompressed, nullptr);
     EXPECT_EQ(nullptr, allocationBuffer->getDefaultGmm());
@@ -339,7 +339,7 @@ TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedTh
     memoryManager.freeGraphicsMemory(allocationBuffer);
     memoryManager.freeGraphicsMemory(allocationBufferCompressed);
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     allocationBuffer = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBuffer, nullptr);
     allocationBufferCompressed = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBufferCompressed, nullptr);
     EXPECT_EQ(nullptr, allocationBuffer->getDefaultGmm());
@@ -591,7 +591,7 @@ TEST(MemoryAllocationTest, givenMultiTileVisiblityAndUncachedWhenAskedForFlagsTh
 
 TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocationIsCreatedThenItHasLocalMemoryPool) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     MemoryAllocation allocation(mockRootDeviceIndex, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
                                 0x1000, 0, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
@@ -600,7 +600,7 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
 
 TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocationIsOverridenThenItHasLocalMemoryPool) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     MemoryAllocation allocation(mockRootDeviceIndex, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
                                 0x1000, 0, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
@@ -635,7 +635,7 @@ TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledTh
 HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingKernelIsaThenLocalMemoryPoolIsUsed) {
     auto hwInfo = *defaultHwInfo;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
     hwInfo.featureTable.flags.ftrLocalMemory = true;
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
@@ -773,7 +773,7 @@ TEST(MemoryManagerTest, givenExternalAllocationTypeWhenIsAllocatedInDevicePoolTh
 struct MemoryManagerDirectSubmissionImplicitScalingTest : public ::testing::Test {
 
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
         auto allTilesMask = executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask();
 
@@ -833,7 +833,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenSemaphoreBuffer
 }
 
 HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageDisabledWhenAllocatingMemoryForRingOrSemaphoreBufferThenAllocateInSystemMemory, IsXeHpcCore) {
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
     for (auto &multiTile : ::testing::Bool()) {
         for (auto &allocationType : {AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
             allocationProperties->allocationType = allocationType;
@@ -851,7 +851,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
 }
 
 HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForMultiTileEsWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelectedOnlyForMultiTileEngines, IsXeHpcCore) {
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
     for (auto &multiTile : ::testing::Bool()) {
         for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
             allocationProperties->allocationType = allocationType;

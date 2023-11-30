@@ -278,7 +278,7 @@ class DispatchInfoBuilder {
                 pushSplit(dispatchInfo, target);
             } else {
                 target.push(dispatchInfo);
-                PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout,
                                    "DIM:%u\tGWS:(%zu, %zu, %zu)\tELWS:(%zu, %zu, %zu)\tOffset:(%zu, %zu, %zu)\tAGWS:(%zu, %zu, %zu)\tLWS:(%zu, %zu, %zu)\tTWGS:(%zu, %zu, %zu)\tNWGS:(%zu, %zu, %zu)\tSWGS:(%zu, %zu, %zu)\n",
                                    dispatchInfo.getDim(),
                                    dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z,

@@ -114,7 +114,7 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeThenCo
 
 TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAskedForGlobalMemSizeThenAdjustedGlobalMemSizeIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(100u);
+    debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(100u);
     uint64_t globalMemSize100percent = 0u;
 
     auto hwInfo = *defaultHwInfo;
@@ -130,7 +130,7 @@ TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAsk
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(globalMemSize100percent, 0u);
 
-    DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(50u);
+    debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(50u);
     uint64_t globalMemSize50percent = 0u;
 
     hwInfo = *defaultHwInfo;
@@ -151,7 +151,7 @@ TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAsk
 
 TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUsedWithZeroThenNoFineGrainSupport) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceFineGrainedSVMSupport.set(0);
+    debugManager.flags.ForceFineGrainedSVMSupport.set(0);
     cl_device_svm_capabilities svmCaps;
 
     auto hwInfo = *defaultHwInfo;
@@ -176,7 +176,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
 
 TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUsedWithOneThenThereIsFineGrainSupport) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceFineGrainedSVMSupport.set(1);
+    debugManager.flags.ForceFineGrainedSVMSupport.set(1);
     cl_device_svm_capabilities svmCaps;
 
     auto hwInfo = *defaultHwInfo;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,7 +105,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
 
 template <>
 bool CommandStreamReceiverHw<Family>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
-    bool flag = DebugManager.flags.ForceCsrReprogramming.get();
+    bool flag = debugManager.flags.ForceCsrReprogramming.get();
     auto &productHelper = this->getProductHelper();
     if (productHelper.isInitialFlagsProgrammingRequired()) {
         if (!dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {

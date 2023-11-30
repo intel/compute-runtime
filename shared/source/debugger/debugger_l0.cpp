@@ -39,8 +39,8 @@ void DebuggerL0::initialize() {
 
     initSbaTrackingMode();
 
-    if (NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get() != -1) {
-        setSingleAddressSpaceSbaTracking(NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get());
+    if (NEO::debugManager.flags.DebuggerForceSbaTrackingMode.get() != -1) {
+        setSingleAddressSpaceSbaTracking(NEO::debugManager.flags.DebuggerForceSbaTrackingMode.get());
     }
 
     auto &engines = device->getMemoryManager()->getRegisteredEngines(device->getRootDeviceIndex());

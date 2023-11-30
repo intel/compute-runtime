@@ -69,7 +69,7 @@ void Drm::overrideBindSupport(bool &useVmBind) {
     if (disableBindDefaultInTests) {
         useVmBind = false;
     }
-    if (DebugManager.flags.UseVmBind.get() == 1) {
+    if (debugManager.flags.UseVmBind.get() == 1) {
         useVmBind = true;
     }
 }

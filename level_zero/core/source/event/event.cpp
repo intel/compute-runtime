@@ -215,8 +215,8 @@ void EventPool::setupDescriptorFlags(const ze_event_pool_desc_t *desc) {
 }
 
 bool EventPool::isEventPoolTimestampFlagSet() const {
-    if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
-        auto timestampOverride = !!NEO::DebugManager.flags.OverrideTimestampEvents.get();
+    if (NEO::debugManager.flags.OverrideTimestampEvents.get() != -1) {
+        auto timestampOverride = !!NEO::debugManager.flags.OverrideTimestampEvents.get();
         return timestampOverride;
     }
     if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
@@ -280,7 +280,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 
     eventPool->initializeSizeParameters(numDevices, deviceHandlesUsed, *driver, neoDevice->getRootDeviceEnvironment());
     if (eventPool->getEventMaxPackets() != poolData.maxEventPackets) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(),
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(),
                            stderr,
                            "IPC handle max event packets %u does not match context devices max event packet %u\n",
                            poolData.maxEventPackets, eventPool->getEventMaxPackets());

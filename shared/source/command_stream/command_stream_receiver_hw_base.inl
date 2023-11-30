@@ -71,15 +71,15 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 
     resetKmdNotifyHelper(new KmdNotifyHelper(&hwInfo.capabilityTable.kmdNotifyProperties));
 
-    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get() || DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+    if (debugManager.flags.FlattenBatchBufferForAUBDump.get() || debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     }
     defaultSshSize = HeapSize::getDefaultHeapSize(EncodeStates<GfxFamily>::getSshHeapSize());
     canUse4GbHeaps = are4GbHeapsAvailable();
 
     timestampPacketWriteEnabled = gfxCoreHelper.timestampPacketWriteSupported();
-    if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
-        timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
+    if (debugManager.flags.EnableTimestampPacket.get() != -1) {
+        timestampPacketWriteEnabled = !!debugManager.flags.EnableTimestampPacket.get();
     }
 
     createScratchSpaceController();
@@ -110,7 +110,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
                                                                  bool hasRelaxedOrderingDependencies) {
     if (directSubmissionEnabled) {
         uint64_t startAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
-        if (DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
+        if (debugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
             startAddress = 0;
         }
 
@@ -147,7 +147,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUF
     if (secondary) {
         cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
     }
-    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+    if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         flatBatchBufferHelper->registerBatchBufferStartAddress(reinterpret_cast<uint64_t>(commandBufferMemory), startAddress);
     }
     *commandBufferMemory = cmd;
@@ -164,7 +164,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
         size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
     }
     if (!this->isPreambleSent) {
-        if (DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
+        if (debugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
             size += PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize();
         }
     }
@@ -357,12 +357,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
 
     auto levelClosed = false;
-    bool implicitFlush = dispatchFlags.implicitFlush || dispatchFlags.blocking || DebugManager.flags.ForceImplicitFlush.get();
+    bool implicitFlush = dispatchFlags.implicitFlush || dispatchFlags.blocking || debugManager.flags.ForceImplicitFlush.get();
     void *currentPipeControlForNooping = nullptr;
     void *epiloguePipeControlLocation = nullptr;
     PipeControlArgs args;
 
-    if (DebugManager.flags.ForceCsrFlushing.get()) {
+    if (debugManager.flags.ForceCsrFlushing.get()) {
         flushBatchedSubmissions();
     }
 
@@ -412,7 +412,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             args);
 
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
-        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
                                                                   PatchInfoAllocationType::TagAddress,
                                                                   commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
@@ -427,7 +427,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
     this->latestSentTaskCount = taskCount + 1;
 
-    if (DebugManager.flags.ForceSLML3Config.get()) {
+    if (debugManager.flags.ForceSLML3Config.get()) {
         dispatchFlags.useSLM = true;
     }
 
@@ -555,7 +555,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
     }
 
-    if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
+    if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
         forcePipeControl(commandStreamCSR);
     }
 
@@ -614,7 +614,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             // Add MI_BATCH_BUFFER_START to chain from CSR -> Task
             auto pBBS = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
             addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask), false);
-            if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+            if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
                 flatBatchBufferHelper->registerCommandChunk(commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
                                                             reinterpret_cast<uint64_t>(commandStreamTask.getCpuBase()),
                                                             commandStreamStartTask,
@@ -688,8 +688,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             }
         }
 
-        if (DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
-            if ((taskCount + 1) % DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
+        if (debugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
+            if ((taskCount + 1) % debugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
                 implicitFlush = true;
             }
         }
@@ -788,7 +788,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             currentPipeControlForNooping = primaryCmdBuffer->pipeControlThatMayBeErasedLocation;
             epiloguePipeControlLocation = primaryCmdBuffer->epiloguePipeControlLocation;
 
-            if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+            if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
                 flatBatchBufferHelper->registerCommandChunk(primaryCmdBuffer->batchBuffer, sizeof(MI_BATCH_BUFFER_START));
             }
 
@@ -796,7 +796,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
                 // noop pipe control
                 if (currentPipeControlForNooping) {
-                    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+                    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
                         flatBatchBufferHelper->removePipeControlData(pipeControlLocationSize, currentPipeControlForNooping, peekRootDeviceEnvironment());
                     }
                     memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
@@ -819,7 +819,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                     addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer, false);
                 }
 
-                if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+                if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
                     flatBatchBufferHelper->registerCommandChunk(nextCommandBuffer->batchBuffer, sizeof(MI_BATCH_BUFFER_START));
                 }
 
@@ -839,7 +839,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             if (getDcFlushRequired(epiloguePipeControlLocation)) {
                 lastPipeControlArgs.dcFlushEnable = true;
 
-                if (DebugManager.flags.DisableDcFlushInEpilogue.get()) {
+                if (debugManager.flags.DisableDcFlushInEpilogue.get()) {
                     lastPipeControlArgs.dcFlushEnable = false;
                 }
 
@@ -943,7 +943,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
         size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 
-    if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
+    if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
         size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 
@@ -1040,7 +1040,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
             maxFrontEndThreads, streamProperties);
         auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
 
-        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->collectScratchSpacePatchInfo(getScratchPatchAddress(), commandOffset, csr);
         }
         setMediaVFEStateDirty(false);
@@ -1101,7 +1101,7 @@ uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
 
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
-    return DebugManager.flags.ForceCsrReprogramming.get();
+    return debugManager.flags.ForceCsrReprogramming.get();
 }
 
 template <typename GfxFamily>
@@ -1114,7 +1114,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::unregisterDirectSubmissionFromCo
 
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const {
-    return directSubmissionRelaxedOrderingEnabled() && (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() == 1) &&
+    return directSubmissionRelaxedOrderingEnabled() && (debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() == 1) &&
            (blitPropertiesContainer.size() == 1) && !hasStallingCmds;
 }
 
@@ -1124,7 +1124,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     auto lock = obtainUniqueOwnership();
     bool blitterDirectSubmission = this->isBlitterDirectSubmissionEnabled();
-    auto debugPauseEnabled = PauseOnGpuProperties::featureEnabled(DebugManager.flags.PauseOnBlitCopy.get());
+    auto debugPauseEnabled = PauseOnGpuProperties::featureEnabled(debugManager.flags.PauseOnBlitCopy.get());
     auto &rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex];
 
     const bool updateTag = !isUpdateTagFromWaitEnabled() || blocking;
@@ -1142,7 +1142,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     this->initializeResources();
     this->initDirectSubmission();
 
-    if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+    if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
                                                                   DebugPauseState::waitingForUserStartConfirmation,
                                                                   DebugPauseState::hasUserStartConfirmation, *rootDeviceEnvironment.get());
@@ -1227,7 +1227,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
     }
-    if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+    if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
                                                                   DebugPauseState::waitingForUserEndConfirmation,
                                                                   DebugPauseState::hasUserEndConfirmation, *rootDeviceEnvironment.get());
@@ -1397,7 +1397,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
     auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
     enabled &= this->isAnyDirectSubmissionEnabled();
 
-    switch (DebugManager.flags.UpdateTaskCountFromWait.get()) {
+    switch (debugManager.flags.UpdateTaskCountFromWait.get()) {
     case 0:
         enabled = false;
         break;
@@ -1531,12 +1531,12 @@ std::unique_ptr<TagAllocatorBase> CommandStreamReceiverHw<GfxFamily>::createMult
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::postInitFlagsSetup() {
     useNewResourceImplicitFlush = checkPlatformSupportsNewResourceImplicitFlush();
-    int32_t overrideNewResourceImplicitFlush = DebugManager.flags.PerformImplicitFlushForNewResource.get();
+    int32_t overrideNewResourceImplicitFlush = debugManager.flags.PerformImplicitFlushForNewResource.get();
     if (overrideNewResourceImplicitFlush != -1) {
         useNewResourceImplicitFlush = overrideNewResourceImplicitFlush == 0 ? false : true;
     }
     useGpuIdleImplicitFlush = checkPlatformSupportsGpuIdleImplicitFlush();
-    int32_t overrideGpuIdleImplicitFlush = DebugManager.flags.PerformImplicitFlushForIdleGpu.get();
+    int32_t overrideGpuIdleImplicitFlush = debugManager.flags.PerformImplicitFlushForIdleGpu.get();
     if (overrideGpuIdleImplicitFlush != -1) {
         useGpuIdleImplicitFlush = overrideGpuIdleImplicitFlush == 0 ? false : true;
     }
@@ -1873,7 +1873,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
 
     EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(csrCommandStream, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
 
-    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, generalStateBaseAddress,
                                         device.getDeviceInfo().imageSupport);
     }

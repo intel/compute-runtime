@@ -34,8 +34,8 @@
 namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
-    if (NEO::DebugManager.flags.SplitBcsSize.get() != -1) {
-        this->minimalSizeForBcsSplit = NEO::DebugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
+    if (NEO::debugManager.flags.SplitBcsSize.get() != -1) {
+        this->minimalSizeForBcsSplit = NEO::debugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
     }
 }
 
@@ -169,10 +169,10 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         if (!internalUsage) {
             auto &productHelper = device->getProductHelper();
             commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper);
-            if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
-                commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
+            if (NEO::debugManager.flags.EnableFlushTaskSubmission.get() != -1) {
+                commandList->isFlushTaskSubmissionEnabled = !!NEO::debugManager.flags.EnableFlushTaskSubmission.get();
             }
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Flush Task for Immediate command list : %s\n", commandList->isFlushTaskSubmissionEnabled ? "Enabled" : "Disabled");
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Flush Task for Immediate command list : %s\n", commandList->isFlushTaskSubmissionEnabled ? "Enabled" : "Disabled");
 
             auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
             bool enabledCmdListSharing = !NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && commandList->isFlushTaskSubmissionEnabled;
@@ -182,7 +182,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         csr->initDirectSubmission();
         returnValue = commandList->initialize(device, engineGroupType, 0);
 
-        if ((desc->flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
+        if ((desc->flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
             commandList->enableInOrderExecution();
         }
 

@@ -14,7 +14,7 @@
 BDWTEST_F(SbaTest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasNotBindingSurfaceStateProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
 
     STATE_BASE_ADDRESS stateBaseAddress = {};
     STATE_BASE_ADDRESS stateBaseAddressReference = {};

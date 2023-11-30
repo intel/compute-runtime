@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ inline bool pauseModeAllowed(int32_t debugFlagValue, TaskCountType taskCount, Pa
         return false;
     }
 
-    if ((DebugManager.flags.PauseOnGpuMode.get() != PauseMode::BeforeAndAfterWorkload) && (DebugManager.flags.PauseOnGpuMode.get() != pauseMode)) {
+    if ((debugManager.flags.PauseOnGpuMode.get() != PauseMode::BeforeAndAfterWorkload) && (debugManager.flags.PauseOnGpuMode.get() != pauseMode)) {
         // mode not allowed
         return false;
     }

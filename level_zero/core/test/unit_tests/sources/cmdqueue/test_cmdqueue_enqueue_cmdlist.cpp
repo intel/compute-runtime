@@ -31,7 +31,7 @@ namespace ult {
 
 struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
     void setUp() {
-        DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+        debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
         DeviceFixture::setUp();
 
@@ -70,8 +70,8 @@ using CommandQueueExecuteCommandLists = Test<CommandQueueExecuteCommandListsFixt
 
 struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFixture {
     void setUp() {
-        DebugManager.flags.EnableWalkerPartition.set(1);
-        DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+        debugManager.flags.EnableWalkerPartition.set(1);
+        debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
         numRootDevices = 1u;
         MultiDeviceFixture::setUp();
@@ -557,7 +557,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
 
 struct CommandQueueExecuteCommandListsImplicitScalingDisabled : CommandQueueExecuteCommandLists {
     void SetUp() override {
-        DebugManager.flags.EnableImplicitScaling.set(0);
+        debugManager.flags.EnableImplicitScaling.set(0);
         CommandQueueExecuteCommandLists::SetUp();
     }
     DebugManagerStateRestore restorer{};
@@ -958,8 +958,8 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
 
 struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.EnableSWTags.set(true);
-        DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+        debugManager.flags.EnableSWTags.set(true);
+        debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
@@ -1194,7 +1194,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     using PARSE = typename FamilyType::PARSE;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));

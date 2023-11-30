@@ -244,7 +244,7 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
             auto event = castToObjectOrAbort<Event>(eventWaitList[id]);
             event->updateExecutionStatus();
             if ((event->peekExecutionStatus() > CL_COMPLETE) && (event->isExternallySynchronized())) {
-                if (DebugManager.flags.EnableAsyncEventsHandler.get()) {
+                if (debugManager.flags.EnableAsyncEventsHandler.get()) {
                     event->getContext()->getAsyncEventsHandler().registerEvent(event);
                 }
             }

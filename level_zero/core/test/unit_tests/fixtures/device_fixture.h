@@ -141,7 +141,7 @@ struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
 
 struct ImplicitScalingRootDevice : public SingleRootMultiSubDeviceFixture {
     void setUp() {
-        DebugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableImplicitScaling.set(1);
         SingleRootMultiSubDeviceFixture::setUp();
     }
 };

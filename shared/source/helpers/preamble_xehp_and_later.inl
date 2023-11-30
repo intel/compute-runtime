@@ -55,14 +55,14 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
     appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
 
-    if (DebugManager.flags.CFEMaximumNumberOfThreads.get() != -1) {
-        cmd.setMaximumNumberOfThreads(DebugManager.flags.CFEMaximumNumberOfThreads.get());
+    if (debugManager.flags.CFEMaximumNumberOfThreads.get() != -1) {
+        cmd.setMaximumNumberOfThreads(debugManager.flags.CFEMaximumNumberOfThreads.get());
     }
-    if (DebugManager.flags.CFEOverDispatchControl.get() != -1) {
-        cmd.setOverDispatchControl(static_cast<typename CFE_STATE::OVER_DISPATCH_CONTROL>(DebugManager.flags.CFEOverDispatchControl.get()));
+    if (debugManager.flags.CFEOverDispatchControl.get() != -1) {
+        cmd.setOverDispatchControl(static_cast<typename CFE_STATE::OVER_DISPATCH_CONTROL>(debugManager.flags.CFEOverDispatchControl.get()));
     }
-    if (DebugManager.flags.CFELargeGRFThreadAdjustDisable.get() != -1) {
-        cmd.setLargeGRFThreadAdjustDisable(DebugManager.flags.CFELargeGRFThreadAdjustDisable.get());
+    if (debugManager.flags.CFELargeGRFThreadAdjustDisable.get() != -1) {
+        cmd.setLargeGRFThreadAdjustDisable(debugManager.flags.CFELargeGRFThreadAdjustDisable.get());
     }
 
     *cfeState = cmd;

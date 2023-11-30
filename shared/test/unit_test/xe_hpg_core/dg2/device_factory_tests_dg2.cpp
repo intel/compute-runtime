@@ -29,7 +29,7 @@ DG2TEST_F(Dg2DeviceFactoryTest, givenOverrideHwIpVersionWhenPrepareDeviceEnviron
         {AOT::DG2_G10_A1, REV_ID_A1}};
 
     for (const auto &[config, revisionID] : dg2G10Configs) {
-        DebugManager.flags.OverrideHwIpVersion.set(config);
+        debugManager.flags.OverrideHwIpVersion.set(config);
 
         bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
         EXPECT_TRUE(success);
@@ -47,9 +47,9 @@ DG2TEST_F(Dg2DeviceFactoryTest, givenOverrideHwIpVersionAndDeviceIdWhenPrepareDe
         {AOT::DG2_G10_A0, REV_ID_A0},
         {AOT::DG2_G10_A1, REV_ID_A1}};
 
-    DebugManager.flags.ForceDeviceId.set("0x1234");
+    debugManager.flags.ForceDeviceId.set("0x1234");
     for (const auto &[config, revisionID] : dg2G10Configs) {
-        DebugManager.flags.OverrideHwIpVersion.set(config);
+        debugManager.flags.OverrideHwIpVersion.set(config);
 
         bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
         EXPECT_TRUE(success);

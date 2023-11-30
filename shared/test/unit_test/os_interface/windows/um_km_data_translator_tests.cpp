@@ -206,7 +206,7 @@ TEST(UmKmDataTranslator, whenUsingDefaultTranslatorThenTranslationIsDisabled) {
 TEST(UmKmDataTranslator, givenToggledDebugKeyWhenCreatingDefaultTranslatorThenTranslationIsEnabled) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
     NEO::wslComputeHelperLibNameToLoad = "";
     NEO::Gdi gdi;
     auto handle = validHandle;
@@ -219,7 +219,7 @@ TEST(UmKmDataTranslator, givenToggledDebugKeyWhenCreatingDefaultTranslatorThenTr
 TEST(UmKmDataTranslator, givenToggledDebugKeyAndNotExistingLibWhenCreatingDefaultTranslatorThenTranslationIsDisabled) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
     NEO::wslComputeHelperLibNameToLoad = "dummyLib";
     NEO::Gdi gdi;
     auto handle = validHandle;
@@ -232,7 +232,7 @@ TEST(UmKmDataTranslator, givenToggledDebugKeyAndNotExistingLibWhenCreatingDefaul
 TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslComputeHelper) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
     NEO::wslComputeHelperLibNameToLoad = "";
     NEO::Gdi gdi;
     auto handle = validHandle;
@@ -276,7 +276,7 @@ TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslC
 TEST(WslUmKmDataTranslator, whenOpeningExistingHandleThenResourceInfoIsCopiedBasedOnTranslationResult) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
     NEO::wslComputeHelperLibNameToLoad = "";
     NEO::Gdi gdi;
     auto handle = validHandle;
@@ -304,7 +304,7 @@ TEST(WslUmKmDataTranslator, whenOpeningExistingHandleThenResourceInfoIsCopiedBas
 TEST(WslUmKmDataTranslator, whenTranslatingGraphicsPartitionThenResultIsBasedOnWslComputeHelperVersion) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::debugManager.flags.UseUmKmDataTranslator.set(true);
     NEO::wslComputeHelperLibNameToLoad = "";
     NEO::Gdi gdi;
     auto handle = validHandle;

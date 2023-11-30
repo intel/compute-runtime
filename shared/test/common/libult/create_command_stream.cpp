@@ -58,7 +58,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     }
 
     if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
-        uint32_t numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() != 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
+        uint32_t numRootDevices = debugManager.flags.CreateMultipleRootDevices.get() != 0 ? debugManager.flags.CreateMultipleRootDevices.get() : 1u;
         UltDeviceFactory::prepareDeviceEnvironments(executionEnvironment, numRootDevices);
         retVal = ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult;
     } else {
@@ -80,7 +80,7 @@ bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::s
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     }
     if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
-        uint32_t numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() != 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
+        uint32_t numRootDevices = debugManager.flags.CreateMultipleRootDevices.get() != 0 ? debugManager.flags.CreateMultipleRootDevices.get() : 1u;
         UltDeviceFactory::prepareDeviceEnvironments(executionEnvironment, numRootDevices);
         retVal = ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult;
     } else {

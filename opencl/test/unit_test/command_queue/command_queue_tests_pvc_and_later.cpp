@@ -27,7 +27,7 @@ using CommandQueuePvcAndLaterTests = ::testing::Test;
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenGetBcsCommandStreamReceiverIsCalledThenReturnProperCsrs, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -56,7 +56,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenGetBcsCommand
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCopyThenRegisterAllCsrs, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -131,7 +131,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCo
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQueueThenUseCorrectEngine, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -166,8 +166,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQue
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWhenCreateCommandQueueThenBcsCountIsZero, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(1u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -187,8 +187,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWh
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenContainsMultipleBcsEngines, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -213,10 +213,10 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenConstructBcsEnginesForSplitThenConta
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenBidirectionalMasksWhenConstructBcsEnginesForSplitThenMasksSet, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b10100010);
-    DebugManager.flags.SplitBcsMaskH2D.set(0b101010);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    debugManager.flags.SplitBcsMaskD2H.set(0b10100010);
+    debugManager.flags.SplitBcsMaskH2D.set(0b101010);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -239,10 +239,10 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenBidirectionalMasksWhenConstructBcsE
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEnginesForSplitThenContainsGivenBcsEngines, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
     std::bitset<bcsInfoMaskSize> bcsMask = 0b100110101;
-    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
-    DebugManager.flags.SplitBcsMask.set(static_cast<int>(bcsMask.to_ulong()));
+    debugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    debugManager.flags.SplitBcsMask.set(static_cast<int>(bcsMask.to_ulong()));
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -271,8 +271,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenSplitBcsMaskWhenConstructBcsEngines
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenReturnProperEngine, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -297,8 +297,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenSelectCsrForHostPtrAllocationThenRet
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSetTaskCountsToZero, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(1u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -354,8 +354,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, whenPrepareHostPtrSurfaceForSplitThenSet
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationDisabledWhenCreateCommandQueueThenBcsIsInitialized, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQBcsInitialization.set(0u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQBcsInitialization.set(0u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -375,7 +375,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationDisabledW
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQueueIsCreatedThenMainBcsCanBeUsedAgain, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -410,8 +410,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::Cooperative));
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::Cooperative));
 
     MockExecutionEnvironment mockExecutionEnvironment{};
 
@@ -444,8 +444,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationEnabledWhenCreateCommandQueueThenGpgpuIsNullptr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQGpgpuInitialization.set(1u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQGpgpuInitialization.set(1u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
@@ -463,8 +463,8 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationEnabled
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationDisabledWhenCreateCommandQueueThenGpgpuIsnotNullptr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
-    DebugManager.flags.DeferCmdQGpgpuInitialization.set(0u);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.DeferCmdQGpgpuInitialization.set(0u);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
@@ -482,7 +482,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationDisable
 
 struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableCopyEngineSelector.set(1);
+        debugManager.flags.EnableCopyEngineSelector.set(1);
         HardwareInfo hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
         hwInfo.featureTable.ftrBcsInfo = maxNBitValue(bcsInfoMaskSize);
@@ -525,7 +525,7 @@ struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesWhenSelectingCsrThenSelectProperBcs, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -574,7 +574,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesWhe
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithForceBcsEngineIndexWhenSelectingCsrThenSelectProperBcs, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -586,7 +586,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithForceBcsEngineIn
 
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS5;
     constexpr auto linkBcsIndex = 5;
-    DebugManager.flags.ForceBcsEngineIndex.set(linkBcsIndex);
+    debugManager.flags.ForceBcsEngineIndex.set(linkBcsIndex);
     auto queue = createQueue(nullptr);
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
@@ -623,7 +623,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithForceBcsEngineIn
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesAndForceBcsIndexIsUsedWhenSelectingCsrThenUseBcsFromQueueFamilies, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -635,7 +635,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesAnd
 
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
     constexpr auto linkBcsIndex = 5;
-    DebugManager.flags.ForceBcsEngineIndex.set(2); // this should be ignored, because of queue families
+    debugManager.flags.ForceBcsEngineIndex.set(2); // this should be ignored, because of queue families
     auto queue = createQueueWithLinkBcsSelectedWithQueueFamilies(linkBcsIndex);
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
@@ -673,7 +673,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesAnd
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenOneBcsEngineInQueueWhenSelectingCsrThenTheBcs, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -720,7 +720,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenOneBcsEngineInQueueWhenSelectin
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelectingCsrForLocalToLocalOperationThenSelectProperGpGpuCsr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -762,7 +762,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelectingCsrForNonLocalToLocalOperationThenSelectProperBcsCsr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
@@ -804,10 +804,10 @@ HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDR
         GTEST_SKIP();
     }
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(1);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;

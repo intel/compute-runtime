@@ -50,15 +50,15 @@ TEST(ApiSpecificConfigOclTests, WhenCheckingIfDynamicPostSyncAllocLayoutEnabledT
 
     EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
 
     EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
 }
 
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmGpuAllocationThenPreferCompressedBuffer) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
@@ -70,8 +70,8 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmG
 
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrintfSurfaceThenPreferCompressedBuffer) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,

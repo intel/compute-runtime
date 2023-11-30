@@ -319,7 +319,7 @@ TEST(MemObjHelper, givenInvalidFlagsWhenValidatingExtraPropertiesThenFalseIsRetu
 
 TEST(MemObjHelper, givenMultipleSubDevicesWhenDefaultContextIsUsedThenResourcesAreNotSuitableForCompression) {
     DebugManagerStateRestore debugRestore;
-    DebugManager.flags.CreateMultipleSubDevices.set(4u);
+    debugManager.flags.CreateMultipleSubDevices.set(4u);
     initPlatform();
     MockContext context(platform()->getClDevice(0));
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_ONLY, 0u, 0, &context.getDevice(0)->getDevice());
@@ -351,7 +351,7 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresReso
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresResolveAndForceHintDisableCompressionThenResourceNotSuitableForCompression) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ToggleHintKernelDisableCompression.set(0);
+    debugManager.flags.ToggleHintKernelDisableCompression.set(0);
 
     MemoryProperties memoryProperties;
     MockContext context;
@@ -364,7 +364,7 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextNotRequiresReso
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolveAndForceHintEnableCompressionThenResourceSuitableForCompression) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ToggleHintKernelDisableCompression.set(1);
+    debugManager.flags.ToggleHintKernelDisableCompression.set(1);
 
     MemoryProperties memoryProperties;
     MockContext context;
@@ -383,7 +383,7 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
     for (auto ftrRenderCompressedBuffers : ::testing::Bool()) {
         renderCompressedBuffersCapability = ftrRenderCompressedBuffers;
         for (auto enableMultiTileCompressionValue : enableMultiTileCompressionValues) {
-            DebugManager.flags.EnableMultiTileCompression.set(enableMultiTileCompressionValue);
+            debugManager.flags.EnableMultiTileCompression.set(enableMultiTileCompressionValue);
 
             MockSpecializedContext context;
             auto &device = context.getDevice(0)->getDevice();
@@ -408,7 +408,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
     DebugManagerStateRestore debugRestore;
     VariableBackup<bool> renderCompressedBuffersCapability{&defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers, true};
     VariableBackup<unsigned short> hardwareStepping{&defaultHwInfo->platform.usRevId};
-    DebugManager.flags.EnableMultiTileCompression.set(1);
+    debugManager.flags.EnableMultiTileCompression.set(1);
 
     uint32_t numsSubDevices[] = {0, 2};
     cl_mem_flags flagsValues[] = {0, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, CL_MEM_COMPRESSED_HINT_INTEL,

@@ -58,7 +58,7 @@ TEST(OsLibraryTest, GivenDisableDeepBindFlagWhenOpeningLibraryThenRtldDeepBindFl
     VariableBackup<int> dlOpenFlagsBackup{&NEO::SysCalls::dlOpenFlags, 0};
     VariableBackup<bool> dlOpenCalledBackup{&NEO::SysCalls::dlOpenCalled, false};
 
-    DebugManager.flags.DisableDeepBind.set(1);
+    debugManager.flags.DisableDeepBind.set(1);
     auto lib = std::make_unique<Linux::OsLibrary>("_abc.so", nullptr);
     EXPECT_TRUE(NEO::SysCalls::dlOpenCalled);
     EXPECT_EQ(0, NEO::SysCalls::dlOpenFlags & RTLD_DEEPBIND);

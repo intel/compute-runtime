@@ -62,7 +62,7 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, givenSetDebugFlagWhenPreambleCfeStateIsPr
 
     DebugManagerStateRestore dbgRestore;
 
-    DebugManager.flags.CFEComputeOverdispatchDisable.set(expectedValue1);
+    debugManager.flags.CFEComputeOverdispatchDisable.set(expectedValue1);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);

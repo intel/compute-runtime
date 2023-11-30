@@ -37,7 +37,7 @@ ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
     }
 
     if (globalOsSysmanDriver == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Os Sysman driver not initialized\n");
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -129,7 +129,7 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
     if ((pipeFd[1] != -1) && (prevRegisteredEvents != deviceEventsMap[pSysmanDevice])) {
         uint8_t value = 0x00;
         if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "%s", "Write to Pipe failed\n");
         }
     }
@@ -263,7 +263,7 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
                 // Example of DEVPATH: /devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0
                 const auto loc = bdf.find("/devices");
                 if (loc == std::string::npos) {
-                    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                           "%s", "Invalid device path\n");
                     continue;
                 }
@@ -271,7 +271,7 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
                 bdf = bdf.substr(loc);
                 mapOfDevIndexToDevPath.insert({devIndex, bdf});
             } else {
-                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                       "%s", "Failed to get real path of device\n");
             }
         }
@@ -328,7 +328,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
     std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {};
 
     if (pUdevLib == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "libudev library instantiation failed\n");
         return retval;
     }
@@ -341,7 +341,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
 
     eventsMutex.lock();
     if (NEO::SysCalls::pipe(pipeFd) < 0) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Creation of pipe failed\n");
     }
 

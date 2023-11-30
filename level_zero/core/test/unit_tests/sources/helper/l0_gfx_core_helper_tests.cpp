@@ -51,10 +51,10 @@ HWTEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForImageCompressionS
 
     EXPECT_FALSE(l0GfxCoreHelper.imageCompressionSupported(*NEO::defaultHwInfo));
 
-    NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    NEO::debugManager.flags.RenderCompressedImagesEnabled.set(1);
     EXPECT_TRUE(l0GfxCoreHelper.imageCompressionSupported(*NEO::defaultHwInfo));
 
-    NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+    NEO::debugManager.flags.RenderCompressedImagesEnabled.set(0);
     EXPECT_FALSE(l0GfxCoreHelper.imageCompressionSupported(*NEO::defaultHwInfo));
 }
 
@@ -74,11 +74,11 @@ HWTEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForUsmCompressionSup
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     EXPECT_FALSE(l0GfxCoreHelper.usmCompressionSupported(hwInfo));
 
-    NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     EXPECT_TRUE(l0GfxCoreHelper.usmCompressionSupported(hwInfo));
 
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     EXPECT_FALSE(l0GfxCoreHelper.usmCompressionSupported(hwInfo));
 }
 
@@ -733,8 +733,8 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPac
 template <int32_t usePipeControlMultiPacketEventSync, int32_t compactL3FlushEventPacket>
 struct L0GfxCoreHelperMultiPacketEventFixture {
     void setUp() {
-        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
-        DebugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
+        debugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
+        debugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
     }
 
     void tearDown() {
@@ -822,19 +822,19 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
 
-    DebugManager.flags.SelectCmdListHeapAddressModel.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 
-    DebugManager.flags.SelectCmdListHeapAddressModel.set(1);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(1);
 
     EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 
-    DebugManager.flags.SelectCmdListHeapAddressModel.set(2);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(2);
 
     EXPECT_EQ(NEO::HeapAddressModel::GlobalBindless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 
-    DebugManager.flags.SelectCmdListHeapAddressModel.set(3);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(3);
 
     EXPECT_EQ(NEO::HeapAddressModel::GlobalBindful, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 }
@@ -844,11 +844,11 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
     MockExecutionEnvironment executionEnvironment;
     const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
 
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
 
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
     EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true));
 }
@@ -858,7 +858,7 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
     MockExecutionEnvironment executionEnvironment;
     const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
 
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
     EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, false));
 }
@@ -891,11 +891,11 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
     MockExecutionEnvironment executionEnvironment;
     const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
 
-    DebugManager.flags.UseImmediateFlushTask.set(0);
+    debugManager.flags.UseImmediateFlushTask.set(0);
 
     EXPECT_FALSE(L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment));
 
-    DebugManager.flags.UseImmediateFlushTask.set(1);
+    debugManager.flags.UseImmediateFlushTask.set(1);
 
     EXPECT_TRUE(L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment));
 }

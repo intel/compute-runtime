@@ -45,7 +45,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenKernelArgumen
 
 XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
@@ -69,7 +69,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenCheckAuxTrans
 
 XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};

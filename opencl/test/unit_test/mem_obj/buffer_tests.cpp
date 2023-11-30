@@ -571,7 +571,7 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAlloca
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuDisabledThenAllocationIsWrittenByEnqueueWriteBuffer) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CopyHostPtrOnCpu.set(0);
+    debugManager.flags.CopyHostPtrOnCpu.set(0);
     ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
     auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
@@ -738,7 +738,7 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
 
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
@@ -749,7 +749,7 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_FALSE(graphicsAllocation->isCompressionEnabled());
@@ -1276,7 +1276,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopyWhenAskedForStorageThenHostPtrIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     {
-        DebugManager.flags.Force32bitAddressing.set(true);
+        debugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
 
         auto size = MemoryConstants::pageSize;
@@ -1298,14 +1298,14 @@ TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopy
         EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMemoryTransfer());
 
         delete buffer;
-        DebugManager.flags.Force32bitAddressing.set(false);
+        debugManager.flags.Force32bitAddressing.set(false);
     }
 }
 
 TEST(Buffers64on32Tests, given32BitBufferCreatedWithAllocHostPtrFlagThatIsZeroCopyWhenAskedForStorageThenStorageIsEqualToMemoryStorage) {
     DebugManagerStateRestore dbgRestorer;
     {
-        DebugManager.flags.Force32bitAddressing.set(true);
+        debugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
         auto size = MemoryConstants::pageSize;
         auto retVal = CL_SUCCESS;
@@ -1323,14 +1323,14 @@ TEST(Buffers64on32Tests, given32BitBufferCreatedWithAllocHostPtrFlagThatIsZeroCo
         EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMemoryTransfer());
 
         delete buffer;
-        DebugManager.flags.Force32bitAddressing.set(false);
+        debugManager.flags.Force32bitAddressing.set(false);
     }
 }
 
 TEST(Buffers64on32Tests, given32BitBufferThatIsCreatedWithUseHostPtrButIsNotZeroCopyThenProperPointersAreReturned) {
     DebugManagerStateRestore dbgRestorer;
     {
-        DebugManager.flags.Force32bitAddressing.set(true);
+        debugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
 
         auto size = MemoryConstants::pageSize;
@@ -1352,7 +1352,7 @@ TEST(Buffers64on32Tests, given32BitBufferThatIsCreatedWithUseHostPtrButIsNotZero
         EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMemoryTransfer());
 
         delete buffer;
-        DebugManager.flags.Force32bitAddressing.set(false);
+        debugManager.flags.Force32bitAddressing.set(false);
         alignedFree(ptr);
     }
 }
@@ -1399,7 +1399,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BufferSetSurfaceTests, givenBufferSetSurfaceThatMemo
 
 HWTEST_F(BufferSetSurfaceTests, givenDebugVariableToDisableCachingForStatefulBufferThenL3CacheShouldBeOff) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
+    debugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
 
     auto size = MemoryConstants::pageSize;
     auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
@@ -1414,7 +1414,7 @@ HWTEST_F(BufferSetSurfaceTests, givenDebugVariableToDisableCachingForStatefulBuf
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
 
     alignedFree(ptr);
-    DebugManager.flags.DisableCachingForStatefulBufferAccess.set(false);
+    debugManager.flags.DisableCachingForStatefulBufferAccess.set(false);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToCachelineThenL3CacheShouldBeOff) {
@@ -1540,7 +1540,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNullThenNull
 HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitWhenSetArgStatefulIsCalledThenSurfaceBaseAddressIsPopulatedWithGpuAddress) {
     DebugManagerStateRestore dbgRestorer;
     {
-        DebugManager.flags.Force32bitAddressing.set(true);
+        debugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
         auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
         auto size = MemoryConstants::pageSize;
@@ -1568,7 +1568,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
 
         delete buffer;
         alignedFree(ptr);
-        DebugManager.flags.Force32bitAddressing.set(false);
+        debugManager.flags.Force32bitAddressing.set(false);
     }
 }
 
@@ -1606,7 +1606,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
 
     delete buffer;
     alignedFree(ptr);
-    DebugManager.flags.Force32bitAddressing.set(false);
+    debugManager.flags.Force32bitAddressing.set(false);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisabledIsCalledThenL3CacheShouldBeOffAndSizeIsAlignedTo512) {
@@ -1816,7 +1816,7 @@ using BufferCreateTests = testing::Test;
 
 HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
 
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
     auto memoryManager = new MockMemoryManager(true, *executionEnvironment);
@@ -1862,7 +1862,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     {
         // uses implicit scaling -> cpu copy disallowed
         DebugManagerStateRestore subTestRestorer;
-        DebugManager.flags.EnableWalkerPartition.set(1);
+        debugManager.flags.EnableWalkerPartition.set(1);
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
@@ -1876,7 +1876,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     {
         // debug flag disabled -> cpu copy disallowed
         DebugManagerStateRestore subTestRestorer;
-        DebugManager.flags.CopyHostPtrOnCpu.set(0);
+        debugManager.flags.CopyHostPtrOnCpu.set(0);
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
@@ -1890,7 +1890,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     {
         // debug flag enabled -> cpu copy forced
         DebugManagerStateRestore subTestRestorer;
-        DebugManager.flags.CopyHostPtrOnCpu.set(1);
+        debugManager.flags.CopyHostPtrOnCpu.set(1);
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
@@ -1904,7 +1904,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     {
         // local memory cpu access disallowed -> cpu copy disallowed
         DebugManagerStateRestore subTestRestorer;
-        DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+        debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;
@@ -1931,8 +1931,8 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     {
         // compressed buffer, not in local memory -> locked pointer not used
         DebugManagerStateRestore subTestRestorer;
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-        DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
 
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
@@ -2280,7 +2280,7 @@ TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCr
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     ultHwConfig.forceOsAgnosticMemoryManager = false;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeAllBuffersResident.set(true);
+    debugManager.flags.MakeAllBuffersResident.set(true);
 
     initPlatform();
     auto device = platform()->getClDevice(0u);

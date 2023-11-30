@@ -80,7 +80,7 @@ HWTEST_F(ClMemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIs
 TEST_F(ClMemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitAllocationsIsMade) {
     DebugManagerStateRestore dbgRestorer;
     if constexpr (is64bit) {
-        DebugManager.flags.Force32bitAddressing.set(true);
+        debugManager.flags.Force32bitAddressing.set(true);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
         MockKernelWithInternals kernel(*device);
@@ -107,7 +107,7 @@ TEST_F(ClMemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32Bi
 
         delete printfHandler;
 
-        DebugManager.flags.Force32bitAddressing.set(false);
+        debugManager.flags.Force32bitAddressing.set(false);
     }
 }
 
@@ -319,7 +319,7 @@ TEST(ClMemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesW
 
 TEST(ClMemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -354,7 +354,7 @@ TEST(ClMemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValue
 
 TEST(ClOsAgnosticMemoryManager, givenUseExternalAllocatorForSshAndDshWhenMemoryManagerCreatedThenExternalHeapIsNotallowed) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
 
     MockExecutionEnvironment executionEnvironment{};
     MockMemoryManager memoryManager(false, false, executionEnvironment);

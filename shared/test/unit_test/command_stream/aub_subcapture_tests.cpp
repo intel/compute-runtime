@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,7 +266,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureActiveStatesAreDet
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenGetSubCaptureFileNameIsCalledAndAubCaptureFileNameIsSpecifiedThenItReturnsTheSpecifiedFileName) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
+    debugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
 
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
     EXPECT_STREQ("aubcapture_file_name.aub", aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
@@ -299,7 +299,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndBothToggleAndAubCaptureFileNamesAreSpecifiedThenToggleNameTakesPrecedence) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
+    debugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
 
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 

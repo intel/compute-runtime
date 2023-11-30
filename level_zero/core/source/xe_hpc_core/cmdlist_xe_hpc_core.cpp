@@ -29,7 +29,7 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
+    if (NEO::debugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
         this->performMemoryPrefetch = true;
         auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
         if (prefetchManager) {
@@ -37,7 +37,7 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
         }
     }
 
-    if (NEO::DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {
+    if (NEO::debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {
         return ZE_RESULT_SUCCESS;
     }
 

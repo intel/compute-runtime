@@ -228,7 +228,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
 
 TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCreated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.BinaryCacheTrace.set(true);
+    debugManager.flags.BinaryCacheTrace.set(true);
 
     static struct VerifyData {
         bool matched;
@@ -291,7 +291,7 @@ TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetThenTraceFilesAreCrea
 
 TEST(CompilerCacheTests, GivenBinaryCacheWhenDebugFlagIsSetAndOpenFailesThenNoCloseOccurs) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.BinaryCacheTrace.set(true);
+    debugManager.flags.BinaryCacheTrace.set(true);
 
     VariableBackup<decltype(IoFunctions::mockFopenReturned)> retValBkp(&IoFunctions::mockFopenReturned, reinterpret_cast<FILE *>(0x0));
 

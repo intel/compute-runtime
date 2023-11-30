@@ -88,7 +88,7 @@ void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_
 }
 
 void MetricMultiDeviceFixture::setUp() {
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::setUp();
 

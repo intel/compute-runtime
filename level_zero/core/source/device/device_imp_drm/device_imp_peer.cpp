@@ -64,7 +64,7 @@ ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latenc
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                        "Connection detected between device %d and peer device %d: latency %d hops, bandwidth %d GBPS\n",
                        this->getRootDeviceIndex(), pPeerDevice->getRootDeviceIndex(), latency, bandwidth);
 

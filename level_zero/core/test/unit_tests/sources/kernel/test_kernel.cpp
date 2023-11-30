@@ -659,7 +659,7 @@ TEST_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThenSuc
 TEST_F(SetKernelArg, givenDisableSystemPointerKernelArgumentIsEnabledWhenBufferArgumentisNotAllocatedByRuntimeThenErrorIsReturned) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableSystemPointerKernelArgument.set(1);
+    NEO::debugManager.flags.DisableSystemPointerKernelArgument.set(1);
     createKernel();
 
     uint64_t hostAddress = 0x1234;
@@ -1299,8 +1299,8 @@ using KernelIndirectPropertiesFromIGCTests = KernelImmutableDataTests;
 
 TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicAndNoHasIndirectStatelessAccessThenHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
-    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DetectIndirectAccessInKernel.set(1);
 
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
@@ -1328,8 +1328,8 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
 
 TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledAndPtrPassedByValueWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicAndNoHasIndirectStatelessAccessThenHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
-    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DetectIndirectAccessInKernel.set(1);
 
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
@@ -1364,8 +1364,8 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
 
 TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledWhenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
-    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DetectIndirectAccessInKernel.set(1);
 
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
@@ -1451,7 +1451,7 @@ class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
         using KernelImp::kernelHasIndirectAccess;
     };
     void SetUp() override {
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         ModuleFixture::setUp();
 
         ze_kernel_desc_t kernelDesc = {};
@@ -1688,7 +1688,7 @@ TEST_F(KernelPropertiesTests, whenCallingGetIndirectAccessAfterSetIndirectAccess
 }
 TEST_F(KernelPropertiesTests, givenValidKernelWithIndirectAccessFlagsAndDisableIndirectAccessSetToZeroThenFlagsAreSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
     EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
@@ -1735,7 +1735,7 @@ using KernelIndirectPropertiesTests = KernelPropertiesTests;
 
 TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = true;
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
@@ -1757,7 +1757,7 @@ TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThat
 
 TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessButWithDisableIndirectAccessSetThenIndirectAccessIsNotSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(1);
+    NEO::debugManager.flags.DisableIndirectAccess.set(1);
     kernel->kernelHasIndirectAccess = true;
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
@@ -1779,7 +1779,7 @@ TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThat
 
 TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatHasIndirectAccessAndDisableIndirectAccessNotSetThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = true;
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
@@ -1801,7 +1801,7 @@ TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThat
 
 TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = false;
 
     UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
@@ -1928,8 +1928,8 @@ using KernelIsaTests = Test<KernelIsaFixture>;
 
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
     this->createModuleFromMockBinary(ModuleType::User);
 
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
@@ -1945,8 +1945,8 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
 
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowedCpuAccessThenDontUseBcsForTransfer) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
     this->createModuleFromMockBinary(ModuleType::User);
 
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
@@ -1957,8 +1957,8 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
 
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallowedCpuAccessAndDisabledBlitterThenFallbackToCpuCopy) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
     this->createModuleFromMockBinary(ModuleType::User);
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
@@ -3295,7 +3295,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
     hwInfo.featureTable.ftrBcsInfo.set(0);
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,8 @@ struct MultiTileFixture : public ::testing::Test {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         ultHwConfig.useHwCsr = true;
         ultHwConfig.forceOsAgnosticMemoryManager = false;
-        DebugManager.flags.CreateMultipleSubDevices.set(requiredDeviceCount);
-        DebugManager.flags.DeferOsContextInitialization.set(0);
+        debugManager.flags.CreateMultipleSubDevices.set(requiredDeviceCount);
+        debugManager.flags.DeferOsContextInitialization.set(0);
         platformsImpl->clear();
         constructPlatform();
         initPlatform();

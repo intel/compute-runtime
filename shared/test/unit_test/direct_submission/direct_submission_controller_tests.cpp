@@ -18,7 +18,7 @@ namespace NEO {
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerTimeoutWhenCreateObjectThenTimeoutIsEqualWithDebugFlag) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionControllerTimeout.set(14);
+    debugManager.flags.DirectSubmissionControllerTimeout.set(14);
 
     DirectSubmissionControllerMock controller;
 
@@ -27,7 +27,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerTimeoutWhen
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllertimeoutDivisorWhenCreateObjectThentimeoutDivisorIsEqualWithDebugFlag) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionControllerDivisor.set(4);
+    debugManager.flags.DirectSubmissionControllerDivisor.set(4);
 
     DirectSubmissionControllerMock controller;
 
@@ -126,8 +126,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStarted
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorDisabledWhenIncreaseTimeoutEnabledThenTimeoutIsIncreased) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
-    DebugManager.flags.DirectSubmissionControllerDivisor.set(1);
+    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
+    debugManager.flags.DirectSubmissionControllerDivisor.set(1);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -283,7 +283,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsFromDifferentSubdevicesThenTimeoutIsAdjusted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionControllerDivisor.set(4);
+    debugManager.flags.DirectSubmissionControllerDivisor.set(4);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -402,7 +402,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmissionControllerDivisorSetWhenRegisterCsrsThenTimeoutIsAdjusted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionControllerDivisor.set(5);
+    debugManager.flags.DirectSubmissionControllerDivisor.set(5);
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

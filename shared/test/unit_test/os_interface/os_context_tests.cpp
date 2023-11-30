@@ -146,10 +146,10 @@ TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextTh
 
     expectDeferredContextCreation(engineTypeUsageRegular, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.DeferOsContextInitialization.set(1);
     expectDeferredContextCreation(engineTypeUsageRegular, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
     expectImmediateContextCreation(engineTypeUsageRegular, false);
 }
 
@@ -158,10 +158,10 @@ TEST_F(DeferredOsContextCreationTests, givenDefaultEngineWhenCreatingOsContextTh
 
     expectImmediateContextCreation(engineTypeUsageRegular, true);
 
-    DebugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.DeferOsContextInitialization.set(1);
     expectImmediateContextCreation(engineTypeUsageRegular, true);
 
-    DebugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
     expectImmediateContextCreation(engineTypeUsageRegular, true);
 }
 
@@ -170,10 +170,10 @@ TEST_F(DeferredOsContextCreationTests, givenInternalEngineWhenCreatingOsContextT
 
     expectImmediateContextCreation(engineTypeUsageInternal, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.DeferOsContextInitialization.set(1);
     expectImmediateContextCreation(engineTypeUsageInternal, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
     expectImmediateContextCreation(engineTypeUsageInternal, false);
 }
 
@@ -182,10 +182,10 @@ TEST_F(DeferredOsContextCreationTests, givenBlitterEngineWhenCreatingOsContextTh
 
     expectImmediateContextCreation(engineTypeUsageBlitter, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.DeferOsContextInitialization.set(1);
     expectImmediateContextCreation(engineTypeUsageBlitter, false);
 
-    DebugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
     expectImmediateContextCreation(engineTypeUsageBlitter, false);
 }
 
@@ -237,8 +237,8 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
 
 TEST_F(DeferredOsContextCreationTests, givenPrintOsContextInitializationsIsSetWhenOsContextItIsInitializedThenInfoIsLoggedToStdout) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DeferOsContextInitialization.set(1);
-    DebugManager.flags.PrintOsContextInitializations.set(1);
+    debugManager.flags.DeferOsContextInitialization.set(1);
+    debugManager.flags.PrintOsContextInitializations.set(1);
     testing::internal::CaptureStdout();
 
     auto osContext = createOsContext(engineTypeUsageRegular, false);

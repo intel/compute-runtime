@@ -41,7 +41,7 @@ namespace NEO {
 RootDeviceEnvironment::RootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {
     hwInfo = std::make_unique<HardwareInfo>();
 
-    if (DebugManager.flags.EnableSWTags.get()) {
+    if (debugManager.flags.EnableSWTags.get()) {
         tagsManager = std::make_unique<SWTagsManager>();
     }
 }
@@ -183,7 +183,7 @@ void RootDeviceEnvironment::initReleaseHelper() {
 }
 
 void RootDeviceEnvironment::initAilConfigurationHelper() {
-    if (ailConfiguration == nullptr && DebugManager.flags.EnableAIL.get()) {
+    if (ailConfiguration == nullptr && debugManager.flags.EnableAIL.get()) {
         ailConfiguration = AILConfiguration::create(this->getHardwareInfo()->platform.eProductFamily);
     }
 }
@@ -220,7 +220,7 @@ void RootDeviceEnvironment::setRcsExposure() {
     if (releaseHelper) {
         if (releaseHelper->isRcsExposureDisabled()) {
             hwInfo->featureTable.flags.ftrRcsNode = false;
-            if ((DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
+            if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) || (debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS))) {
                 hwInfo->featureTable.flags.ftrRcsNode = true;
             }
         }

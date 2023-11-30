@@ -14,8 +14,8 @@ namespace NEO {
 CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT] = {};
 
 uint32_t CompilerProductHelper::getHwIpVersion(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.OverrideHwIpVersion.get() != -1) {
-        return DebugManager.flags.OverrideHwIpVersion.get();
+    if (debugManager.flags.OverrideHwIpVersion.get() != -1) {
+        return debugManager.flags.OverrideHwIpVersion.get();
     }
     return getProductConfigFromHwInfo(hwInfo);
 }

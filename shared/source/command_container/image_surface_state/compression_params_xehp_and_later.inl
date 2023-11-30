@@ -25,8 +25,8 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
         }
 
         if (imageFromBuffer) {
-            if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
-                compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
+            if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
+                compressionFormat = debugManager.flags.ForceBufferCompressionFormat.get();
             }
             appendParamsForImageFromBuffer(surfaceState);
         }

@@ -46,12 +46,12 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
             if (!defaultHwInfo->featureTable.flags.ftrLocalMemory) {
                 GTEST_SKIP();
             }
-            DebugManager.flags.EnableLocalMemory.set(true);
+            debugManager.flags.EnableLocalMemory.set(true);
         }
 
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
-        DebugManager.flags.RenderCompressedImagesEnabled.set(true);
-        DebugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+        debugManager.flags.RenderCompressedImagesEnabled.set(true);
+        debugManager.flags.EnableFreeMemory.set(false);
 
         MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, true);
 
@@ -617,8 +617,8 @@ template <uint32_t numTiles, bool testLocalMemory>
 template <typename FamilyType>
 void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl() {
     DebugManagerStateRestore restore;
-    DebugManager.flags.LimitBlitterMaxWidth.set(8);
-    DebugManager.flags.LimitBlitterMaxHeight.set(8);
+    debugManager.flags.LimitBlitterMaxWidth.set(8);
+    debugManager.flags.LimitBlitterMaxHeight.set(8);
 
     auto srcMemory = std::make_unique<uint8_t[]>(bufferSize);
     auto destMemory = std::make_unique<uint8_t[]>(bufferSize);

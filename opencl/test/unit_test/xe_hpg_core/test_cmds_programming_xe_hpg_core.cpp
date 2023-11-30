@@ -33,7 +33,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL3ToL1DebugFlagWhenStatele
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(1u);
+    debugManager.flags.ForceL1Caching.set(1u);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
@@ -147,9 +147,9 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.DecompressInL3ForImage2dFromBuffer.set(-1);
+        debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(-1);
         uint32_t forcedCompressionFormat = 3;
-        DebugManager.flags.ForceBufferCompressionFormat.set(forcedCompressionFormat);
+        debugManager.flags.ForceBufferCompressionFormat.set(forcedCompressionFormat);
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
@@ -161,7 +161,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.DecompressInL3ForImage2dFromBuffer.set(1);
+        debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(1);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
@@ -174,7 +174,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.DecompressInL3ForImage2dFromBuffer.set(0);
+        debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(0);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
@@ -220,7 +220,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     for (auto &decompressInL3 : ::testing::Bool()) {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
+        debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
@@ -265,7 +265,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     for (auto &decompressInL3 : ::testing::Bool()) {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
+        debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
@@ -311,7 +311,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     for (auto &decompressInL3 : ::testing::Bool()) {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
+        debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
@@ -350,7 +350,7 @@ HWTEST2_F(PreambleCfeState, givenXehpEnabledFusedEuAndDisableFusedDispatchFromKe
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.CFEFusedEUDispatch.set(0);
+    debugManager.flags.CFEFusedEUDispatch.set(0);
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();

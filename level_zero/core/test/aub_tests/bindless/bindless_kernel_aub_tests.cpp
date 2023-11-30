@@ -25,8 +25,8 @@ namespace ult {
 struct L0BindlessAub : Test<AUBFixtureL0> {
 
     void SetUp() override {
-        DebugManager.flags.UseBindlessMode.set(1);
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
         AUBFixtureL0::setUp();
     }
     void TearDown() override {
@@ -67,7 +67,7 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
 
-    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            1,

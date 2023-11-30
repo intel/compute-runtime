@@ -60,7 +60,7 @@ ze_result_t FabricPortHandleContext::fabricPortGet(uint32_t *pCount, zes_fabric_
 
 ze_result_t FabricPortHandleContext::fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) {
     if (!numPorts) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid number of ports \n", __FUNCTION__);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid number of ports \n", __FUNCTION__);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

@@ -399,7 +399,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -494,7 +494,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 

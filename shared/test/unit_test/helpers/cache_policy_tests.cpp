@@ -36,7 +36,7 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThe
 
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
     const char *expectedStr = "-cl-store-cache-default=7 -cl-load-cache-default=4";
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
@@ -45,8 +45,8 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1Cac
 
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndForceAllResourcesUncachedWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
 
     const char *expectedStr = "-cl-store-cache-default=1 -cl-load-cache-default=1";
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
@@ -56,19 +56,19 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndForceAllResourcesUncachedWh
 HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenDebugFlagSetAndGetL1CachePolicyThenReturnCorrectValue, MatchAny) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 0u);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 0u);
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 2u);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 2u);
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(3);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(3);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 3u);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 3u);
 
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 4u);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 4u);
 }

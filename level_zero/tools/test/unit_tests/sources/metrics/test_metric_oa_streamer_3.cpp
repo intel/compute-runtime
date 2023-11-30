@@ -19,7 +19,7 @@ using MetricStreamerMultiDeviceTest = Test<MetricStreamerMultiDeviceFixture>;
 TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetCommandListAppendMetricStreamerMarkerIsCalledForSubDeviceThenReturnsSuccess) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();

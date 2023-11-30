@@ -21,7 +21,7 @@ void MemManagerFixture::FrontWindowMemManagerMock::forceLimitedRangeAllocator(ui
 
 void MemManagerFixture::setUp() {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     DeviceFixture::setUp();
     memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
 }

@@ -98,9 +98,9 @@ TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsT
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
 
     constexpr uint32_t numThreads = 32;
     std::atomic_uint32_t barrier = numThreads;

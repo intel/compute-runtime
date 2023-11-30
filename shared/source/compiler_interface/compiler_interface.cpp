@@ -398,7 +398,7 @@ bool CompilerInterface::initialize(std::unique_ptr<CompilerCache> &&cache, bool 
     bool igcAvailable = this->loadIgc();
     bool compilerVersionCorrect = true;
 
-    if (!DebugManager.flags.ZebinIgnoreIcbeVersion.get()) {
+    if (!debugManager.flags.ZebinIgnoreIcbeVersion.get()) {
         compilerVersionCorrect = verifyIcbeVersion();
     }
 
@@ -466,7 +466,7 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
         return nullptr;
     }
     const HardwareInfo *hwInfo = &device.getHardwareInfo();
-    auto productFamily = DebugManager.flags.ForceCompilerUsePlatform.get();
+    auto productFamily = debugManager.flags.ForceCompilerUsePlatform.get();
     if (productFamily != "unk") {
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
@@ -517,7 +517,7 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcT
 template <template <CIF::Version_t> class EntryPointT>
 void checkIcbeVersion(CIF::CIFMain *main, const char *libName, bool &ret) {
     if (false == main->IsCompatible<EntryPointT>()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
         ret = false;
         return;

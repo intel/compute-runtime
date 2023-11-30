@@ -101,7 +101,7 @@ typedef CreateImageTest CreateImageNoHostPtr;
 
 TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -152,7 +152,7 @@ TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGett
 
 TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -203,7 +203,7 @@ TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
 TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -254,7 +254,7 @@ TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
 TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -305,7 +305,7 @@ TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -356,7 +356,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -407,7 +407,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenG
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -458,7 +458,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWh
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGreaterThanRowPitchTimesHeightWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -626,7 +626,7 @@ TEST_P(CreateImageNoHostPtr, GivenMissingPitchWhenImageIsCreatedThenConstructorF
 
 TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProperties) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     auto context = std::make_unique<MockContext>();
     auto image = createImageWithFlags(flags, context.get());
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -803,7 +803,7 @@ TEST_P(CreateImageHostPtr, GivenFailedAllocationInjectionWhenCheckingAllocationT
 
 TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     InjectedFunction method = [this](size_t failureIndex) {
         // System under test
@@ -1245,7 +1245,7 @@ TEST(ImageTest, givenImageWhenAskedForMcsInfoThenDefaultValuesAreReturned) {
 
 TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
@@ -1292,7 +1292,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorre
 
 TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
@@ -1770,7 +1770,7 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
         0};
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

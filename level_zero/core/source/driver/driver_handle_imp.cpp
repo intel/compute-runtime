@@ -111,8 +111,8 @@ ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
 ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
     uint32_t versionBuild = static_cast<uint32_t>(strtoul(NEO_VERSION_BUILD, NULL, 10));
     properties->driverVersion = DriverHandleImp::initialDriverVersionValue + versionBuild;
-    if (NEO::DebugManager.flags.OverrideDriverVersion.get() > -1) {
-        properties->driverVersion = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideDriverVersion.get());
+    if (NEO::debugManager.flags.OverrideDriverVersion.get() > -1) {
+        properties->driverVersion = static_cast<uint32_t>(NEO::debugManager.flags.OverrideDriverVersion.get());
     }
 
     uint64_t uniqueId = (properties->driverVersion) | (uuidTimestamp & 0xFFFFFFFF00000000);
@@ -231,7 +231,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         auto osInterface = device->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
         if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::Disabled) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Debug mode is not enabled in the system.\n");
             return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
@@ -257,7 +257,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 
-    if (NEO::DebugManager.flags.EnableHostPointerImport.get() != 0) {
+    if (NEO::debugManager.flags.EnableHostPointerImport.get() != 0) {
         createHostPointerManager();
     }
 
@@ -297,7 +297,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
 }
 
 ze_result_t DriverHandleImp::parseAffinityMaskCombined(uint32_t *pCount, ze_device_handle_t *phDevices) {
-    const auto &affinityMaskString = NEO::DebugManager.flags.ZE_AFFINITY_MASK.get();
+    const auto &affinityMaskString = NEO::debugManager.flags.ZE_AFFINITY_MASK.get();
 
     uint32_t totalNumDevices = 0u;
     for (auto &device : this->devices) {
@@ -378,7 +378,7 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
         exposeSubDevices = true;
     }
 
-    const auto &affinityMaskString = NEO::DebugManager.flags.ZE_AFFINITY_MASK.get();
+    const auto &affinityMaskString = NEO::debugManager.flags.ZE_AFFINITY_MASK.get();
 
     bool affinitySet = true;
     if (affinityMaskString.compare("default") == 0 ||
@@ -546,7 +546,7 @@ NEO::GraphicsAllocation *DriverHandleImp::findHostPointerAllocation(void *ptr, s
             return nullptr;
         }
 
-        if (NEO::DebugManager.flags.ForceHostPointerImport.get() == 1) {
+        if (NEO::debugManager.flags.ForceHostPointerImport.get() == 1) {
             importExternalPointer(ptr, size);
             return hostPointerManager->getHostPointerAllocation(ptr)->hostPtrAllocations.getGraphicsAllocation(rootDeviceIndex);
         }

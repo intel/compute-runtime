@@ -33,8 +33,8 @@ struct BlitXeHpgCoreTests : public ::testing::Test {
             GTEST_SKIP();
         }
 
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
-        DebugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+        debugManager.flags.EnableLocalMemory.set(true);
         HardwareInfo hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
 
@@ -84,7 +84,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideBlitterMocs.set(0u);
+    debugManager.flags.OverrideBlitterMocs.set(0u);
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
@@ -236,7 +236,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     auto bufferInLocalPool = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 2048, nullptr, retVal));
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getMemoryPool()));
 
-    DebugManager.flags.OverrideBlitterTargetMemory.set(0u);
+    debugManager.flags.OverrideBlitterTargetMemory.set(0u);
     {
         auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
@@ -253,7 +253,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
         EXPECT_EQ(bltCmd->getDestinationTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
-    DebugManager.flags.OverrideBlitterTargetMemory.set(1u);
+    debugManager.flags.OverrideBlitterTargetMemory.set(1u);
     {
         auto offset = csr->commandStream.getUsed();
         auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
@@ -272,7 +272,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
         EXPECT_EQ(bltCmd->getSourceTargetMemory(), XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
     }
 
-    DebugManager.flags.OverrideBlitterTargetMemory.set(2u);
+    debugManager.flags.OverrideBlitterTargetMemory.set(2u);
     {
         auto offset = csr->commandStream.getUsed();
         auto blitProperties = BlitProperties::constructPropertiesForCopy(bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
@@ -460,7 +460,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThe
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     uint32_t compressionFormat = 3;
-    DebugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
+    debugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
     MockContext context(clDevice.get());

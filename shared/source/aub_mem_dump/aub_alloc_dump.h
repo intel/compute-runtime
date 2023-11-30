@@ -47,8 +47,8 @@ inline bool isWritableImage(GraphicsAllocation &gfxAllocation) {
 }
 
 inline DumpFormat getDumpFormat(GraphicsAllocation &gfxAllocation) {
-    auto dumpBufferFormat = DebugManager.flags.AUBDumpBufferFormat.get();
-    auto dumpImageFormat = DebugManager.flags.AUBDumpImageFormat.get();
+    auto dumpBufferFormat = debugManager.flags.AUBDumpBufferFormat.get();
+    auto dumpImageFormat = debugManager.flags.AUBDumpImageFormat.get();
     auto isDumpableBuffer = isWritableBuffer(gfxAllocation);
     auto isDumpableImage = isWritableImage(gfxAllocation);
     auto dumpFormat = DumpFormat::NONE;

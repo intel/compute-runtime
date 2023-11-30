@@ -44,12 +44,12 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
 
         if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == false) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The System Power Balance is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The System Power Balance is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         result = pSysFsAccess->read(systemPowerBalance, sysPwrBalanceReading);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, systemPowerBalance.c_str(), getErrorCode(result));
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, systemPowerBalance.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         if (sysPwrBalanceReading >= minSysPowerBalanceReading && sysPwrBalanceReading <= defaultSysPowerBalanceReading) {
@@ -65,7 +65,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
 
         result = pSysFsAccess->read(mediaFreqFactor, mediaFactorReading);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mediaFreqFactor.c_str(), getErrorCode(result));
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mediaFreqFactor.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         multiplier = (mediaFactorReading * mediaScaleReading); // Value retrieved from media_freq_factor file is in U(fixed point decimal) format convert it into decimal by multiplication with scale factor
@@ -76,7 +76,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         } else if (multiplier == 0) {
             *pFactor = minPerformanceFactor;
         } else {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiplier for MEDIA is not matching with given presets and returning UNKNOWN ERROR \n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiplier for MEDIA is not matching with given presets and returning UNKNOWN ERROR \n", __FUNCTION__);
             result = ZE_RESULT_ERROR_UNKNOWN;
         }
         break;
@@ -84,12 +84,12 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
 
         if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == false) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Base Frequency Factor is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Base Frequency Factor is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         result = pSysFsAccess->read(baseFreqFactor, baseFactorReading);
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, baseFreqFactor.c_str(), getErrorCode(result));
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, baseFreqFactor.c_str(), getErrorCode(result));
             return getErrorCode(result);
         }
         multiplier = (baseFactorReading * baseScaleReading); // Value retrieved from base_freq_factor file is in U(fixed point decimal) format convert it into decimal by multiplication with scale factor
@@ -98,13 +98,13 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         } else if (multiplier > 1 && multiplier <= 2) {
             *pFactor = (2 - multiplier) * halfOfMaxPerformanceFactor;
         } else {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiplier for COMPUTE is not matching with given presets and returning UNKNOWN ERROR\n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): multiplier for COMPUTE is not matching with given presets and returning UNKNOWN ERROR\n", __FUNCTION__);
             result = ZE_RESULT_ERROR_UNKNOWN;
         }
         break;
 
     default:
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE as osPerformanceGetConfig is not supported\n", __FUNCTION__);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE as osPerformanceGetConfig is not supported\n", __FUNCTION__);
         break;
     }
 
@@ -122,7 +122,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
 
         if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == false) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The System Power Balance is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The System Power Balance is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         if (pFactor <= halfOfMaxPerformanceFactor) {
@@ -149,7 +149,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
 
         if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == false) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Base Frequency Factor is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Base Frequency Factor is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
         if (pFactor < halfOfMaxPerformanceFactor) {
@@ -163,7 +163,7 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
         break;
 
     default:
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE as osPerformanceSetConfig is not supported\n", __FUNCTION__);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE as osPerformanceSetConfig is not supported\n", __FUNCTION__);
         break;
     }
 
@@ -183,11 +183,11 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
 
         if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == false) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false as System Power Balance is not Available\n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false as System Power Balance is not Available\n", __FUNCTION__);
             return false;
         }
         if (pSysFsAccess->canRead(systemPowerBalance) != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false SysfsAccess->canRead() failed for %s\n", __FUNCTION__, systemPowerBalance.c_str());
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false SysfsAccess->canRead() failed for %s\n", __FUNCTION__, systemPowerBalance.c_str());
             return false;
         }
         break;
@@ -195,7 +195,7 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
 
         if (pSysFsAccess->canRead(mediaFreqFactor) != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_MEDIA returns false as SysfsAccess->canRead() failed for %s\n", __FUNCTION__, mediaFreqFactor.c_str());
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_MEDIA returns false as SysfsAccess->canRead() failed for %s\n", __FUNCTION__, mediaFreqFactor.c_str());
             return false;
         }
         if (getMediaFrequencyScaleFactor() != ZE_RESULT_SUCCESS) {
@@ -206,11 +206,11 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
 
         if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == false) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false as Base Frequency is not Available\n", __FUNCTION__);
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false as Base Frequency is not Available\n", __FUNCTION__);
             return false;
         }
         if (pSysFsAccess->canRead(baseFreqFactor) != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false as SysfsAccess->canRead() failed for %s\n", __FUNCTION__, baseFreqFactor.c_str());
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false as SysfsAccess->canRead() failed for %s\n", __FUNCTION__, baseFreqFactor.c_str());
             return false;
         }
         if (getBaseFrequencyScaleFactor() != ZE_RESULT_SUCCESS) {

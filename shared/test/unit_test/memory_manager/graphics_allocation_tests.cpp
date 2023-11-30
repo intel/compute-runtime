@@ -211,10 +211,10 @@ TEST(GraphicsAllocationTest, givenNumMemoryBanksWhenGettingNumHandlesForKmdShare
     EXPECT_EQ(1u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(1));
     EXPECT_EQ(2u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(2));
 
-    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
+    debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
     EXPECT_EQ(1u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(2));
 
-    DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(1);
+    debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(1);
     EXPECT_EQ(2u, GraphicsAllocation::getNumHandlesForKmdSharedAllocation(2));
 }
 

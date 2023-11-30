@@ -21,7 +21,7 @@ namespace L0 {
 namespace ult {
 struct DeviceWddmExtensionTest : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableChipsetUniqueUUID.set(0);
+        debugManager.flags.EnableChipsetUniqueUUID.set(0);
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->incRefInternal();

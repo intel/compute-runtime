@@ -728,7 +728,7 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
                 ret = IoctlHelper::ioctl(DrmIoctl::GemExecbuffer2, &exec);
                 xeLog("r=0x%x batch=0x%lx\n", ret, exec.address);
 
-                if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+                if (debugManager.flags.PrintCompletionFenceUsage.get()) {
                     std::cout << "Completion fence submitted."
                               << " GPU address: " << std::hex << completionGpuAddress << std::dec
                               << ", value: " << counterValue << std::endl;
@@ -1131,7 +1131,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 }
 
 void IoctlHelperXe::xeShowBindTable() {
-    if (DebugManager.flags.PrintDebugMessages.get()) {
+    if (debugManager.flags.PrintDebugMessages.get()) {
         std::unique_lock<std::mutex> lock(xeLock);
         xeLog("show bind: (<index> <handle> <userptr> <addr> <size>)\n", "");
         for (unsigned int i = 0; i < bindInfo.size(); i++) {

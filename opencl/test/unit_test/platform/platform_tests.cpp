@@ -135,7 +135,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenGettingExtensionsStringThenSubgroups
 
 TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGetSipKernel) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
 
     auto builtIns = new MockBuiltins();
     auto executionEnvironment = pPlatform->peekExecutionEnvironment();
@@ -151,7 +151,7 @@ TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGet
 
 TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitializingPlatformThenDoNotCallGetSipKernel) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
 
     auto builtIns = new MockBuiltins();
     auto executionEnvironment = pPlatform->peekExecutionEnvironment();
@@ -167,7 +167,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitiali
 
 TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsNotCalled) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetCommandStreamReceiver.set(0);
+    debugManager.flags.SetCommandStreamReceiver.set(0);
     MockPlatformWithMockExecutionEnvironment platform;
 
     bool ret = platform.initializeWithNewDevices();
@@ -178,7 +178,7 @@ TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCente
 
 TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsCalled) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
     MockPlatformWithMockExecutionEnvironment platform;
@@ -453,7 +453,7 @@ TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCrea
     DebugManagerStateRestore restorer;
     const size_t numRootDevices = 5u;
 
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     auto executionEnvironment = new ExecutionEnvironment();
 
     for (auto i = 0u; i < numRootDevices; i++) {

@@ -24,8 +24,8 @@ LocalMemoryUsageBankSelector::LocalMemoryUsageBankSelector(uint32_t banksCount) 
 }
 
 uint32_t LocalMemoryUsageBankSelector::getLeastOccupiedBank(DeviceBitfield deviceBitfield) {
-    if (DebugManager.flags.OverrideLeastOccupiedBank.get() != -1) {
-        return static_cast<uint32_t>(DebugManager.flags.OverrideLeastOccupiedBank.get());
+    if (debugManager.flags.OverrideLeastOccupiedBank.get() != -1) {
+        return static_cast<uint32_t>(debugManager.flags.OverrideLeastOccupiedBank.get());
     }
     uint32_t leastOccupiedBank = 0u;
     uint64_t smallestViableMemorySize = std::numeric_limits<uint64_t>::max();

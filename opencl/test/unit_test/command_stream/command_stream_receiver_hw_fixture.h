@@ -16,7 +16,7 @@
 using namespace NEO;
 struct BcsTests : public Test<ClDeviceFixture> {
     void SetUp() override {
-        DebugManager.flags.ForceDummyBlitWa.set(-1);
+        debugManager.flags.ForceDummyBlitWa.set(-1);
         Test<ClDeviceFixture>::SetUp();
         context = std::make_unique<MockContext>(pClDevice);
     }

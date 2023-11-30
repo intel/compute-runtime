@@ -48,12 +48,12 @@ static constexpr cl_device_fp_atomic_capabilities_ext defaultFpAtomicCapabilitie
 void ClDevice::setupFp64Flags() {
     auto &hwInfo = getHardwareInfo();
 
-    if (DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
+    if (debugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
         deviceInfo.doubleFpConfig = defaultFpFlags;
         deviceInfo.nativeVectorWidthDouble = 1;
         deviceInfo.preferredVectorWidthDouble = 1;
-    } else if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
+    } else if (debugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             deviceInfo.doubleFpConfig = defaultFpFlags;
             deviceInfo.nativeVectorWidthDouble = 1;
@@ -92,8 +92,8 @@ void ClDevice::initializeCaps() {
 
     driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
-    if (DebugManager.flags.OverrideDeviceName.get() != "unk") {
-        name.assign(DebugManager.flags.OverrideDeviceName.get().c_str());
+    if (debugManager.flags.OverrideDeviceName.get() != "unk") {
+        name.assign(debugManager.flags.OverrideDeviceName.get().c_str());
     } else {
         name = getClDeviceName();
         if (driverInfo) {
@@ -115,12 +115,12 @@ void ClDevice::initializeCaps() {
     deviceInfo.profile = profile.c_str();
     enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
     ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
-    if (DebugManager.flags.ForceOCLVersion.get() != 0) {
-        enabledClVersion = DebugManager.flags.ForceOCLVersion.get();
+    if (debugManager.flags.ForceOCLVersion.get() != 0) {
+        enabledClVersion = debugManager.flags.ForceOCLVersion.get();
         ocl21FeaturesEnabled = (enabledClVersion == 21);
     }
-    if (DebugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
-        ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
+    if (debugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
+        ocl21FeaturesEnabled = debugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     switch (enabledClVersion) {
     case 30:
@@ -152,7 +152,7 @@ void ClDevice::initializeCaps() {
 
     if (ocl21FeaturesEnabled) {
 
-        auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
+        auto simdSizeUsed = debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                                 ? CommonConstants::maximalSimdSize
                                 : gfxCoreHelper.getMinimalSIMDSize();
 
@@ -179,15 +179,15 @@ void ClDevice::initializeCaps() {
         deviceInfo.doubleFpAtomicCapabilities = deviceInfo.doubleFpConfig != 0u ? baseFP64AtomicCapabilities | optionalFP64AtomicCapabilities : 0;
     }
 
-    if (DebugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
+    if (debugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
         deviceInfo.nv12Extension = true;
     }
-    if (DebugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
+    if (debugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         deviceInfo.packedYuvExtension = true;
     }
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
-    if (DebugManager.flags.EnableIntelVme.get() != -1) {
-        supportsVme = !!DebugManager.flags.EnableIntelVme.get();
+    if (debugManager.flags.EnableIntelVme.get() != -1) {
+        supportsVme = !!debugManager.flags.EnableIntelVme.get();
     }
 
     if (supportsVme) {
@@ -222,8 +222,8 @@ void ClDevice::initializeCaps() {
     }
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
-    if (DebugManager.flags.EnableIntelAdvancedVme.get() != -1) {
-        supportsAdvancedVme = !!DebugManager.flags.EnableIntelAdvancedVme.get();
+    if (debugManager.flags.EnableIntelAdvancedVme.get() != -1) {
+        supportsAdvancedVme = !!debugManager.flags.EnableIntelAdvancedVme.get();
     }
     if (supportsAdvancedVme) {
         exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_check_intel");
@@ -303,9 +303,9 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.halfFpConfig = defaultFpFlags;
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", sharedDeviceInfo.computeUnitsUsedForScratch);
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", sharedDeviceInfo.computeUnitsUsedForScratch);
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
                        systemInfo.EUCount,
                        systemInfo.ThreadCount,
                        systemInfo.MaxEuPerSubSlice,
@@ -354,8 +354,8 @@ void ClDevice::initializeCaps() {
     deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
     if (hwInfo.capabilityTable.ftrSvm) {
         auto reportFineGrained = hwInfo.capabilityTable.ftrSvm * hwInfo.capabilityTable.ftrSupportsCoherency;
-        if (DebugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
-            reportFineGrained = !!DebugManager.flags.ForceFineGrainedSVMSupport.get();
+        if (debugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
+            reportFineGrained = !!debugManager.flags.ForceFineGrainedSVMSupport.get();
         }
         if (reportFineGrained) {
             deviceInfo.svmCapabilities |= static_cast<cl_device_svm_capabilities>(CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS);

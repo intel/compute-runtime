@@ -212,19 +212,19 @@ TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableCompute
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeNDIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    DebugManager.flags.EnableComputeWorkSizeND.set(true);
+    bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
+    debugManager.flags.EnableComputeWorkSizeND.set(true);
     DispatchInfo emptyDispatchInfo;
     provideLocalWorkGroupSizeHints(nullptr, emptyDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
+    debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeNDIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     DispatchInfo emptyDispatchInfo;
     provideLocalWorkGroupSizeHints(nullptr, emptyDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
+    debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
@@ -235,16 +235,16 @@ TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableCompute
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     DispatchInfo emptyDispatchInfo;
     provideLocalWorkGroupSizeHints(nullptr, emptyDispatchInfo);
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     DispatchInfo emptyDispatchInfo;
     provideLocalWorkGroupSizeHints(nullptr, emptyDispatchInfo);
 }
@@ -258,23 +258,23 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeNDIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    DebugManager.flags.EnableComputeWorkSizeND.set(true);
+    bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
+    debugManager.flags.EnableComputeWorkSizeND.set(true);
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
+    debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeNDIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, invalidDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
+    debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
@@ -287,8 +287,8 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
@@ -297,8 +297,8 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
@@ -315,8 +315,8 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
@@ -325,8 +325,8 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(pDevice, mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
@@ -354,7 +354,7 @@ TEST_F(PerformanceHintTest, GivenNonZeroCopyImageAndContextWhenCreateImageThenCo
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticValueWhenContextIsCreatedThenItHasHintLevelSetToThatValue) {
     DebugManagerStateRestore dbgRestore;
     auto hintLevel = 1;
-    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+    debugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
@@ -371,7 +371,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticValueWhenContextIsCreatedT
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintIsCalledThenDriverProvidedOutputOnCout) {
     DebugManagerStateRestore dbgRestore;
     auto hintLevel = 255;
-    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+    debugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
@@ -396,7 +396,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintI
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenActionForHintOccursThenNothingIsProvidedToCout) {
     DebugManagerStateRestore dbgRestore;
     auto hintLevel = 8;
-    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+    debugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
@@ -421,7 +421,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenAction
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenContextIsBeingCreatedThenPropertiesPassedToContextAreOverwritten) {
     DebugManagerStateRestore dbgRestore;
     auto hintLevel = 1;
-    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+    debugManager.flags.PrintDriverDiagnostics.set(hintLevel);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     cl_device_id clDevice = pDevice;
@@ -439,7 +439,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenConte
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallFillWithKernelObjsForAuxTranslationOnMemObjectThenContextProvidesProperHint) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.PrintDriverDiagnostics.set(1);
+    debugManager.flags.PrintDriverDiagnostics.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
@@ -474,7 +474,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     }
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.PrintDriverDiagnostics.set(1);
+    debugManager.flags.PrintDriverDiagnostics.set(1);
 
     MockKernelWithInternals mockKernel(*device, context);
     char data[128];
@@ -505,8 +505,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallFillWithKernelObjsForAuxTranslationOnUnifiedMemoryThenContextProvidesProperHint) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.PrintDriverDiagnostics.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.PrintDriverDiagnostics.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
@@ -538,8 +538,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     }
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.PrintDriverDiagnostics.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.PrintDriverDiagnostics.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
@@ -578,7 +578,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     }
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.PrintDriverDiagnostics.set(1);
+    debugManager.flags.PrintDriverDiagnostics.set(1);
 
     MockKernelWithInternals mockKernel(*device, context);
     char data[128];
@@ -659,7 +659,7 @@ TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNull
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCallFillWithKernelObjsForAuxTranslationOnUnifiedMemoryThenDontReportAnyHint) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableStatelessCompression.set(1);
+    debugManager.flags.EnableStatelessCompression.set(1);
 
     auto pDevice = castToObject<ClDevice>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
@@ -709,7 +709,7 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
 
 TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); // pool buffer will not provide performance hints
+    debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); // pool buffer will not provide performance hints
     cl_int retVal;
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
@@ -953,7 +953,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::Bool());
 
 TEST(PerformanceHintsDebugVariables, givenDefaultDebugManagerWhenPrintDriverDiagnosticsIsCalledThenMinusOneIsReturned) {
-    EXPECT_EQ(-1, DebugManager.flags.PrintDriverDiagnostics.get());
+    EXPECT_EQ(-1, debugManager.flags.PrintDriverDiagnostics.get());
 }
 
 TEST(PerformanceHintsTransferTest, givenCommandTypeAndMemoryTransferRequiredWhenAskingForHintThenReturnCorrectValue) {

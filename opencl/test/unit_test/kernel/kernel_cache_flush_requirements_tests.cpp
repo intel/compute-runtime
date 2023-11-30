@@ -48,7 +48,7 @@ TEST_F(KernelWithCacheFlushTests, givenDeviceWhichDoesntRequireCacheFlushWhenChe
 TEST_F(KernelWithCacheFlushTests, givenQueueWhichDoesntRequireCacheFlushWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     initializePlatform();
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
     auto device = pPlatform->getClDevice(0);
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
@@ -62,8 +62,8 @@ TEST_F(KernelWithCacheFlushTests, givenQueueWhichDoesntRequireCacheFlushWhenChec
 TEST_F(KernelWithCacheFlushTests, givenCacheFlushForAllQueuesDisabledWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     initializePlatform();
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
-    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(0);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(0);
     auto device = pPlatform->getClDevice(0);
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
@@ -77,7 +77,7 @@ TEST_F(KernelWithCacheFlushTests, givenCacheFlushForAllQueuesDisabledWhenCheckIf
 HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushForMultiEngineEnabledWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     initializePlatform();
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
     auto device = pPlatform->getClDevice(0);
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
@@ -94,9 +94,9 @@ HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushForMultiEngineEnabledWhenChec
 
 HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushForSingleDeviceProgramWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(1);
     initializePlatform();
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
     auto device = pPlatform->getClDevice(0);
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
@@ -113,9 +113,9 @@ HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushForSingleDeviceProgramWhenChe
 
 HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushForDefaultTypeContextWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
     uint32_t numDevices = 2;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numDevices);
     initializePlatform();
     auto device = pPlatform->getClDevice(0);
 
@@ -132,9 +132,9 @@ HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushForDefaultTypeContextWhenChec
 }
 HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushWithNullGlobalSurfaceWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
     uint32_t numDevices = 2;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numDevices);
     initializePlatform();
     auto device = pPlatform->getClDevice(0);
 
@@ -152,9 +152,9 @@ HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushWithNullGlobalSurfaceWhenChec
 }
 HWTEST_F(KernelWithCacheFlushTests, givenCacheFlushWithGlobalSurfaceWhenCheckIfKernelRequireFlushThenReturnedTrue) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
     uint32_t numDevices = 2;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numDevices);
     initializePlatform();
     auto device = pPlatform->getClDevice(0);
 

@@ -556,7 +556,7 @@ HWTEST2_F(CommandListAppend, givenCommandListAnd2DWhbufferenMemoryCopyRegionCall
 
 HWTEST2_F(CommandListAppend, givenImmediateCommandListWithFlushTaskEnabledWhenAppendingMemoryCopyRegionThenSuccessIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     MockCommandListHw<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
@@ -1315,7 +1315,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     uint64_t size = 1024;
 
@@ -1372,7 +1372,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -1382,7 +1382,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsSharedHeapsWhenImmediateCmdLis
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
 
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
@@ -1405,7 +1405,7 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -1415,7 +1415,7 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
 
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);

@@ -90,7 +90,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             executionEnvironment->incRefInternal();
 
             NEO::EnvironmentVariableReader envReader;
-            if (NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+            if (NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
                 const auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
                 const auto dbgMode = NEO::getDebuggingMode(programDebugging);
                 executionEnvironment->setDebuggingMode(dbgMode);
@@ -241,8 +241,8 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
             break;
         }
 
-        if (DebugManager.flags.LimitAmountOfReturnedDevices.get()) {
-            numDev = std::min(static_cast<cl_uint>(DebugManager.flags.LimitAmountOfReturnedDevices.get()), numDev);
+        if (debugManager.flags.LimitAmountOfReturnedDevices.get()) {
+            numDev = std::min(static_cast<cl_uint>(debugManager.flags.LimitAmountOfReturnedDevices.get()), numDev);
         }
 
         if (deviceType == CL_DEVICE_TYPE_ALL) {
@@ -694,8 +694,8 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   size_t size,
                                   void *hostPtr,
                                   cl_int *errcodeRet) {
-    if (DebugManager.flags.ForceExtendedBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
+    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get());
     }
 
     TRACING_ENTER(ClCreateBuffer, &context, &flags, &size, &hostPtr, &errcodeRet);
@@ -723,8 +723,8 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                                                 size_t size,
                                                 void *hostPtr,
                                                 cl_int *errcodeRet) {
-    if (DebugManager.flags.ForceExtendedBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
+    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get());
     }
 
     DBG_LOG_INPUTS("cl_context", context,
@@ -750,8 +750,8 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
                                                      size_t size,
                                                      void *hostPtr,
                                                      cl_int *errcodeRet) {
-    if (DebugManager.flags.ForceExtendedBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
+    if (debugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedBufferSize.get());
     }
 
     DBG_LOG_INPUTS("cl_context", context,
@@ -2105,7 +2105,7 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
         TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
-        if (DebugManager.flags.SkipFlushingEventsOnGetStatusCalls.get()) {
+        if (debugManager.flags.SkipFlushingEventsOnGetStatusCalls.get()) {
             flushEvents = false;
         }
         if (flushEvents) {
@@ -3540,7 +3540,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     auto slmTotalSize = pKernel->getSlmTotalSize();
 
     if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         retVal = CL_OUT_OF_RESOURCES;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
@@ -3871,8 +3871,8 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    if (DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    if (debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
     Context *neoContext = nullptr;
@@ -3912,8 +3912,8 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    if (DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    if (debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
     Context *neoContext = nullptr;
@@ -3960,8 +3960,8 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    if (DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    if (debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
     Context *neoContext = nullptr;
@@ -4220,7 +4220,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
             pEvent->setCmdType(CL_COMMAND_MIGRATEMEM_INTEL);
         }
 
-        if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
+        if (NEO::debugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
             auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
             UNRECOVERABLE_IF(pSvmAllocMgr == nullptr);
 
@@ -4573,7 +4573,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
     }
 
     auto pDevice = pContext->getDevice(0);
-    bool allowUnrestrictedSize = (flags & CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) || DebugManager.flags.AllowUnrestrictedSize.get();
+    bool allowUnrestrictedSize = (flags & CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) || debugManager.flags.AllowUnrestrictedSize.get();
 
     if ((size == 0) ||
         (!allowUnrestrictedSize && (size > pDevice->getSharedDeviceInfo().maxMemAllocSize))) {
@@ -4594,8 +4594,8 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
 
     if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
         bool supportsFineGrained = hwInfo.capabilityTable.ftrSupportsCoherency;
-        if (DebugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
-            supportsFineGrained = !!DebugManager.flags.ForceFineGrainedSVMSupport.get();
+        if (debugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
+            supportsFineGrained = !!debugManager.flags.ForceFineGrainedSVMSupport.get();
         }
         if (!supportsFineGrained) {
             TRACING_EXIT(ClSvmAlloc, &pAlloc);
@@ -5075,7 +5075,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL: {
-        if (NEO::DebugManager.flags.DisableIndirectAccess.get() != 1 && pMultiDeviceKernel->getHasIndirectAccess() == true) {
+        if (NEO::debugManager.flags.DisableIndirectAccess.get() != 1 && pMultiDeviceKernel->getHasIndirectAccess() == true) {
             auto propertyValue = *reinterpret_cast<const cl_bool *>(paramValue);
             pMultiDeviceKernel->setUnifiedMemoryProperty(paramName, propertyValue);
         }

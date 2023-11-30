@@ -25,11 +25,11 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
     command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
 
-    if (DebugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
-        command->setComputeOverdispatchDisable(DebugManager.flags.CFEComputeOverdispatchDisable.get());
+    if (debugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
+        command->setComputeOverdispatchDisable(debugManager.flags.CFEComputeOverdispatchDisable.get());
     }
-    if (DebugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
-        command->setSingleSliceDispatchCcsMode(DebugManager.flags.CFESingleSliceDispatchCCSMode.get());
+    if (debugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
+        command->setSingleSliceDispatchCcsMode(debugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
 
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
@@ -39,8 +39,8 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
     }
 
     command->setNumberOfWalkers(1);
-    if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
-        command->setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());
+    if (debugManager.flags.CFENumberOfWalkers.get() != -1) {
+        command->setNumberOfWalkers(debugManager.flags.CFENumberOfWalkers.get());
     }
 }
 

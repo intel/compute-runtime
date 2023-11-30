@@ -233,8 +233,8 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
   protected:
     void setUp(ClDevice *device, Context *context) {
         ProgramFixture::setUp();
-        DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
+        debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
         createProgramFromBinary(
             context,
@@ -272,8 +272,8 @@ class StatelessCopyKernelFixture : public ProgramFixture {
   protected:
     void setUp(ClDevice *device, Context *context) {
         ProgramFixture::setUp();
-        DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
+        debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
         createProgramFromBinary(
             context,
@@ -312,8 +312,8 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
   protected:
     void setUp(ClDevice *device, Context *context) {
         ProgramFixture::setUp();
-        DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
+        debugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
         createProgramFromBinary(
             context,
@@ -358,7 +358,7 @@ class BindlessKernelFixture : public ProgramFixture {
     }
 
     void createKernel(const std::string &programName, const std::string &kernelName) {
-        DebugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
         createProgramFromBinary(
             contextCl,
             contextCl->getDevices(),

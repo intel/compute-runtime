@@ -63,7 +63,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
 HWTEST_F(PrepareDeviceEnvironmentsTests, Given32bitApplicationWhenDebugKeyIsSetThenSupportIsReported) {
     NEO::ExecutionEnvironment executionEnvironment;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.Force32BitDriverSupport.set(true);
+    debugManager.flags.Force32BitDriverSupport.set(true);
     EXPECT_TRUE(NEO::prepareDeviceEnvironments(executionEnvironment));
 }
 } // namespace NEO

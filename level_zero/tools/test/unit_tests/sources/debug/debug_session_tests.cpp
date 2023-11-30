@@ -2107,7 +2107,7 @@ TEST_F(MultiTileDebugSessionTest, givenTwoDevicesInRequestsWhenSendingInterrupts
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenSendingInterruptsThenInterruptIsSentWithCorrectDeviceIndex) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -3338,7 +3338,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptsWhenSendInterruptsCalledThenNoInt
 
 TEST(DebugSessionTest, GivenRootDeviceAndTileAttachWhenDebugSessionIsCreatedThenThreadsAreNotCreated) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3355,7 +3355,7 @@ TEST(DebugSessionTest, GivenRootDeviceAndTileAttachWhenDebugSessionIsCreatedThen
 
 TEST_F(MultiTileDebugSessionTest, GivenSubDeviceAndTileAttachWhenRootDeviceDebugSessionCreateFailsThenTileAttachFails) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     if (!hwInfo.capabilityTable.l0DebuggerSupported) {
         GTEST_SKIP();
@@ -3381,7 +3381,7 @@ TEST_F(MultiTileDebugSessionTest, GivenSubDeviceAndTileAttachWhenRootDeviceDebug
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugPropertiesThenDebugAttachIsSetForRootAndSubdevices) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     if (!hwInfo.capabilityTable.l0DebuggerSupported) {
         GTEST_SKIP();
@@ -3419,7 +3419,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugProperti
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToRootDeviceThenTileAttachIsDisabledAndSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3442,7 +3442,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToRootDevic
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevicesThenDebugSessionForRootIsCreatedAndTileSessionsAreReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3504,7 +3504,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenAttachingToTileDevic
 
 TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenTileAttachFailsDuringDebugSessionCreateThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3530,7 +3530,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenTileAttachFailsDurin
 
 TEST_F(MultiTileDebugSessionTest, givenAttachedTileDeviceWhenAttachingToRootDeviceThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3560,7 +3560,7 @@ TEST_F(MultiTileDebugSessionTest, givenAttachedTileDeviceWhenAttachingToRootDevi
 
 TEST_F(MultiTileDebugSessionTest, givenAttachedRootDeviceWhenAttachingToTiletDeviceThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -3619,7 +3619,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileSessionAndStoppedThreadWhenGettingNot
 
 struct AffinityMaskForSingleSubDevice : MultipleDevicesWithCustomHwInfo {
     void setUp() {
-        DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
         MultipleDevicesWithCustomHwInfo::numSubDevices = 2;
         MultipleDevicesWithCustomHwInfo::setUp();
     }

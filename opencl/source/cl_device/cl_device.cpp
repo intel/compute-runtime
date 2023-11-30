@@ -185,8 +185,8 @@ DeviceBitfield ClDevice::getDeviceBitfield() const {
 }
 
 bool ClDevice::arePipesSupported() const {
-    if (DebugManager.flags.ForcePipeSupport.get() != -1) {
-        return DebugManager.flags.ForcePipeSupport.get();
+    if (debugManager.flags.ForcePipeSupport.get() != -1) {
+        return debugManager.flags.ForcePipeSupport.get();
     }
     return device.getHardwareInfo().capabilityTable.supportsPipes;
 }

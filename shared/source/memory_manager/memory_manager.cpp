@@ -63,7 +63,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
         externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
         this->localMemorySupported.push_back(gfxCoreHelper.getEnableLocalMemory(*hwInfo));
-        this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get());
+        this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!debugManager.flags.Enable64kbpages.get());
 
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
 
@@ -79,8 +79,8 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         prefetchManager = PrefetchManager::create();
     }
 
-    if (DebugManager.flags.EnableMultiStorageResources.get() != -1) {
-        supportsMultiStorageResources = !!DebugManager.flags.EnableMultiStorageResources.get();
+    if (debugManager.flags.EnableMultiStorageResources.get() != -1) {
+        supportsMultiStorageResources = !!debugManager.flags.EnableMultiStorageResources.get();
     }
 }
 
@@ -849,8 +849,8 @@ void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
 }
 
 bool MemoryManager::isHostPointerTrackingEnabled(uint32_t rootDeviceIndex) {
-    if (DebugManager.flags.EnableHostPtrTracking.get() != -1) {
-        return !!DebugManager.flags.EnableHostPtrTracking.get();
+    if (debugManager.flags.EnableHostPtrTracking.get() != -1) {
+        return !!debugManager.flags.EnableHostPtrTracking.get();
     }
     return (peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
 }
@@ -908,22 +908,22 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
 }
 
 void MemoryManager::overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties) {
-    if (DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+    if (debugManager.flags.ForceSystemMemoryPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
-        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceSystemMemoryPlacement.get()) {
             allocationData.flags.useSystemMemory = true;
         }
     }
 
-    if (DebugManager.flags.ForceNonSystemMemoryPlacement.get()) {
+    if (debugManager.flags.ForceNonSystemMemoryPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
-        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceNonSystemMemoryPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceNonSystemMemoryPlacement.get()) {
             allocationData.flags.useSystemMemory = false;
         }
     }
 
-    int32_t directRingPlacement = DebugManager.flags.DirectSubmissionBufferPlacement.get();
-    int32_t directRingAddressing = DebugManager.flags.DirectSubmissionBufferAddressing.get();
+    int32_t directRingPlacement = debugManager.flags.DirectSubmissionBufferPlacement.get();
+    int32_t directRingAddressing = debugManager.flags.DirectSubmissionBufferAddressing.get();
     if (properties.allocationType == AllocationType::RING_BUFFER) {
         if (directRingPlacement != -1) {
             if (directRingPlacement == 0) {
@@ -943,8 +943,8 @@ void MemoryManager::overrideAllocationData(AllocationData &allocationData, const
             }
         }
     }
-    int32_t directSemaphorePlacement = DebugManager.flags.DirectSubmissionSemaphorePlacement.get();
-    int32_t directSemaphoreAddressing = DebugManager.flags.DirectSubmissionSemaphoreAddressing.get();
+    int32_t directSemaphorePlacement = debugManager.flags.DirectSubmissionSemaphorePlacement.get();
+    int32_t directSemaphoreAddressing = debugManager.flags.DirectSubmissionSemaphoreAddressing.get();
     if (properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
         if (directSemaphorePlacement != -1) {
             if (directSemaphorePlacement == 0) {
@@ -992,8 +992,8 @@ bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
 bool MemoryManager::isKernelBinaryReuseEnabled() {
     auto reuseBinaries = false;
 
-    if (DebugManager.flags.ReuseKernelBinaries.get() != -1) {
-        reuseBinaries = DebugManager.flags.ReuseKernelBinaries.get();
+    if (debugManager.flags.ReuseKernelBinaries.get() != -1) {
+        reuseBinaries = debugManager.flags.ReuseKernelBinaries.get();
     }
 
     return reuseBinaries;

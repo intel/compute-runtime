@@ -41,7 +41,7 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenS
 
 TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithSlmSizeExceedingLocalMemorySizeWhenExecutingKernelThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};

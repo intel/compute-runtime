@@ -41,8 +41,8 @@ bool GfxCoreHelperHw<GfxFamily>::isEngineTypeRemappingToHwSpecificRequired() con
 
 template <typename Family>
 size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
-    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
-        return 512 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
+    if (debugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
+        return 512 + (MemoryConstants::pageSize * debugManager.flags.ForceExtendedKernelIsaSize.get());
     }
     return 512;
 }

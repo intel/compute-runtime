@@ -26,7 +26,7 @@ struct TimestampPacketTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        DebugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.EnableTimestampPacket.set(1);
 
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);

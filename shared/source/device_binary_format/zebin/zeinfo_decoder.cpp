@@ -566,7 +566,7 @@ DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlP
         generateDSH(dst);
     }
 
-    if (NEO::DebugManager.flags.ZebinAppendElws.get()) {
+    if (NEO::debugManager.flags.ZebinAppendElws.get()) {
         dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0] = dst.kernelAttributes.crossThreadDataSize;
         dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[1] = dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0] + 4;
         dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[2] = dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[1] + 4;

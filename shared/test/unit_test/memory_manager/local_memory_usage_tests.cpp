@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ TEST(localMemoryUsageTest, givenOverrideLeastOccupiedBankDebugFlagWhenGetLeastOc
     EXPECT_EQ(0u, bankIndex);
 
     uint32_t forcedBankIndex = 64u;
-    DebugManager.flags.OverrideLeastOccupiedBank.set(static_cast<int32_t>(forcedBankIndex));
+    debugManager.flags.OverrideLeastOccupiedBank.set(static_cast<int32_t>(forcedBankIndex));
     bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     EXPECT_EQ(forcedBankIndex, bankIndex);
 }

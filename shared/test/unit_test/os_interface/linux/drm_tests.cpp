@@ -864,7 +864,7 @@ TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingConte
 
 TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptureExpectedOutput) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintIoctlEntries.set(true);
+    debugManager.flags.PrintIoctlEntries.set(true);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -874,7 +874,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptur
     testing::internal::CaptureStdout(); // start capturing
 
     int ret = drm.getTimestampFrequency(frequency);
-    DebugManager.flags.PrintIoctlEntries.set(false);
+    debugManager.flags.PrintIoctlEntries.set(false);
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
@@ -886,7 +886,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptur
 
 TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCaptureExpectedOutput) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintIoctlEntries.set(false);
+    debugManager.flags.PrintIoctlEntries.set(false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -907,7 +907,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCap
 
 TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCaptureExpectedOutput) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintIoctlEntries.set(true);
+    debugManager.flags.PrintIoctlEntries.set(true);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -917,7 +917,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCapt
     testing::internal::CaptureStdout(); // start capturing
 
     int ret = drm.getOaTimestampFrequency(frequency);
-    DebugManager.flags.PrintIoctlEntries.set(false);
+    debugManager.flags.PrintIoctlEntries.set(false);
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
@@ -976,7 +976,7 @@ TEST(DrmTest, whenImmediateVmBindExtIsEnabledThenUseVmBindImmediate) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     for (auto enableImmediateBind : {false, true}) {
-        DebugManager.flags.EnableImmediateVmBindExt.set(enableImmediateBind);
+        debugManager.flags.EnableImmediateVmBindExt.set(enableImmediateBind);
         EXPECT_EQ(enableImmediateBind, drm.useVMBindImmediate());
     }
 }
@@ -1305,13 +1305,13 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
         EXPECT_FALSE(drmDefault.completionFenceSupport());
     }
 
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
     DrmMock drmEnabled{*executionEnvironment->rootDeviceEnvironments[0]};
     drmEnabled.callBaseIsVmBindAvailable = true;
     EXPECT_TRUE(drmEnabled.completionFenceSupport());
 
-    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(0);
     DrmMock drmDisabled{*executionEnvironment->rootDeviceEnvironments[0]};
     drmDisabled.callBaseIsVmBindAvailable = true;
     EXPECT_FALSE(drmDisabled.completionFenceSupport());

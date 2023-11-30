@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace ULT {
 
 struct IntelTracingMtTest : public Test<PlatformFixture> {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
+        debugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
         Test<PlatformFixture>::SetUp();
         testedClDevice = pPlatform->getClDevice(rootDeviceIndex);
     }

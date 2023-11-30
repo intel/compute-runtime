@@ -347,7 +347,7 @@ DG2TEST_F(ProductHelperTestDg2, givenInvalidReleaseInIpVersionWhenRefreshRelease
 
 DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenTrueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
     auto hwInfo = *defaultHwInfo;
 
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
@@ -365,7 +365,7 @@ DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelin
 
 DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenTrueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     auto hwInfo = *defaultHwInfo;
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
@@ -382,7 +382,7 @@ DG2TEST_F(ProductHelperTestDg2, givenProgramExtendedPipeControlPriorToNonPipelin
 
 DG2TEST_F(ProductHelperTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCommandDisabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
 
     auto hwInfo = *defaultHwInfo;
     for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
@@ -489,7 +489,7 @@ DG2TEST_F(ProductHelperTestDg2, givenNonG10G11OrG12Dg2WhenProductHelperWithMulti
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
 
     {
         const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);

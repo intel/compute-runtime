@@ -31,7 +31,7 @@ using DirectSubmissionTest = Test<DirectSubmissionFixture>;
 
 HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledSetThenExpectNoCpuCacheFlush) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(1);
+    debugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(1);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
@@ -50,7 +50,7 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCac
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
@@ -576,7 +576,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchEndingSectionThe
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     size_t expectedSize = directSubmission.getSizeStartSection() +
@@ -591,7 +591,7 @@ HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionEnableDebugBufferModeOneWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.workloadMode = 1;
 
@@ -605,7 +605,7 @@ HWTEST_F(DirectSubmissionTest,
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionEnableDebugBufferModeTwoWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -633,7 +633,7 @@ HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDisableMonitorFenceWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.disableMonitorFence = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
@@ -795,7 +795,7 @@ HWTEST_F(DirectSubmissionTest, givenDebugFlagSetWhenProgrammingEndingCommandThen
     cmdStream.replaceGraphicsAllocation(&mockAllocation);
 
     for (int32_t value : {-1, 0, 1}) {
-        DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(value);
+        debugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(value);
 
         auto currectBbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(cmdStream.getSpace(0));
         uint64_t expectedGpuVa = cmdStream.getGraphicsAllocation()->getGpuAddress() + cmdStream.getUsed();
@@ -822,9 +822,9 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    debugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -856,9 +856,9 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    debugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -898,8 +898,8 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -935,10 +935,10 @@ HWTEST_F(DirectSubmissionTest,
 
     uint32_t execCount = 5u;
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
-    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(static_cast<int32_t>(execCount));
+    debugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    debugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(static_cast<int32_t>(execCount));
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -1040,10 +1040,10 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
-    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(5);
+    debugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
+    debugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    debugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(5);
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -1106,8 +1106,8 @@ HWTEST_F(DirectSubmissionTest,
     uint32_t executions = 2;
     int32_t workloadMode = 1;
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(workloadMode);
-    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(static_cast<int32_t>(executions));
+    debugManager.flags.DirectSubmissionEnableDebugBuffer.set(workloadMode);
+    debugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(static_cast<int32_t>(executions));
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -1124,11 +1124,11 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.diagnostic = std::make_unique<MockDirectSubmissionDiagnosticsCollector>(
         executions,
         true,
-        DebugManager.flags.DirectSubmissionBufferPlacement.get(),
-        DebugManager.flags.DirectSubmissionSemaphorePlacement.get(),
+        debugManager.flags.DirectSubmissionBufferPlacement.get(),
+        debugManager.flags.DirectSubmissionSemaphorePlacement.get(),
         workloadMode,
-        DebugManager.flags.DirectSubmissionDisableCacheFlush.get(),
-        DebugManager.flags.DirectSubmissionDisableMonitorFence.get());
+        debugManager.flags.DirectSubmissionDisableCacheFlush.get(),
+        debugManager.flags.DirectSubmissionDisableMonitorFence.get());
     EXPECT_EQ(2u, NEO::IoFunctions::mockFopenCalled);
     // dtor: 1 call general delta, 2 calls storing execution, ctor: preamble 1 call
     EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
@@ -1180,7 +1180,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DirectSubmissionTest,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionTest, givenDebugFlagSetWhenDispatchingPrefetcherThenSetCorrectValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForcePreParserEnabledForMiArbCheck.set(1);
+    debugManager.flags.ForcePreParserEnabledForMiArbCheck.set(1);
 
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using Dispatcher = BlitterDispatcher<FamilyType>;
@@ -1203,7 +1203,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionTest, givenDebugFlagSetWhenDispatch
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionTest, givenDisablePrefetcherDebugFlagDisabledWhenDispatchingPrefetcherThenSetCorrectValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisablePrefetcher.set(0);
+    debugManager.flags.DirectSubmissionDisablePrefetcher.set(0);
 
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using Dispatcher = BlitterDispatcher<FamilyType>;

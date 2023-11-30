@@ -75,7 +75,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
         const bool isConstantSurface = args.allocation && args.allocation->getAllocationType() == AllocationType::CONSTANT_SURFACE;
         bool useL1 = args.isReadOnly || isConstantSurface;
 
-        if (DebugManager.flags.ForceL1Caching.get() != 1) {
+        if (debugManager.flags.ForceL1Caching.get() != 1) {
             useL1 = false;
         }
 

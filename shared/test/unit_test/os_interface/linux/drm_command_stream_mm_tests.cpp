@@ -39,7 +39,7 @@ struct DrmCommandStreamMemExecTest : public DrmCommandStreamEnhancedTemplate<Drm
 
 HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableForcePin.set(true);
+    debugManager.flags.EnableForcePin.set(true);
 
     MockExecutionEnvironment executionEnvironment;
     auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -59,7 +59,7 @@ HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
 
 HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableForcePin.set(false);
+    debugManager.flags.EnableForcePin.set(false);
 
     MockExecutionEnvironment executionEnvironment;
     auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);

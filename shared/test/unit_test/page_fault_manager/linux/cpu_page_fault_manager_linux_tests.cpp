@@ -40,8 +40,8 @@ struct MockOperationsInterface : public MockMemoryOperationsHandler {
 
 TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionAndUSMEvictWaEnabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmission.set(true);
-    DebugManager.flags.USMEvictAfterMigration.set(true);
+    debugManager.flags.EnableDirectSubmission.set(true);
+    debugManager.flags.USMEvictAfterMigration.set(true);
 
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -56,8 +56,8 @@ TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionAndUSMEvictWaEnabledWhenE
 
 TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionEnabledAndUSMEvictWaDisabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsNotCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmission.set(true);
-    DebugManager.flags.USMEvictAfterMigration.set(false);
+    debugManager.flags.EnableDirectSubmission.set(true);
+    debugManager.flags.USMEvictAfterMigration.set(false);
 
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -72,8 +72,8 @@ TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionEnabledAndUSMEvictWaDisab
 
 TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionAndUSMEvictWaDisabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsNotCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmission.set(false);
-    DebugManager.flags.USMEvictAfterMigration.set(false);
+    debugManager.flags.EnableDirectSubmission.set(false);
+    debugManager.flags.USMEvictAfterMigration.set(false);
 
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -88,8 +88,8 @@ TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionAndUSMEvictWaDisabledWhen
 
 TEST_F(PageFaultManagerLinuxTest, givenDirectSubmissionDisabledAndUSMEvictWaEnabledWhenEvitMemoryAfterCopyThenMemoryOperationsHandlerEvictMethodIsNotCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmission.set(false);
-    DebugManager.flags.USMEvictAfterMigration.set(true);
+    debugManager.flags.EnableDirectSubmission.set(false);
+    debugManager.flags.USMEvictAfterMigration.set(true);
 
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

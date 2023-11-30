@@ -197,7 +197,7 @@ TEST_F(DebugApiTest, givenStateSaveAreaHeaderUnavailableWhenGettingDebugProperti
 
 TEST_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(0);
 
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;
@@ -437,7 +437,7 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
 
 TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenCreatingSessionThenNullptrReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(0);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -455,7 +455,7 @@ TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenCreatingSessionThe
 
 TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenDebugAttachCalledThenErrorReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(0);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -497,7 +497,7 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCor
 
 TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCalledThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_AFFINITY_MASK", "0.1"}};

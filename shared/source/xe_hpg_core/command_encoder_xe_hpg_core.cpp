@@ -86,9 +86,9 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptor
     } else {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);
     }
-    if (DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
+    if (debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
         auto toProgram =
-            static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
+            static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
         pInterfaceDescriptor->setPreferredSlmAllocationSize(toProgram);
     }
 }
@@ -105,9 +105,9 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescri
         }
     }
 
-    if (DebugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
+    if (debugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
         interfaceDescriptor.setThreadGroupDispatchSize(
-            static_cast<INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(DebugManager.flags.ForceThreadGroupDispatchSize.get()));
+            static_cast<INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(debugManager.flags.ForceThreadGroupDispatchSize.get()));
     }
 }
 
@@ -126,7 +126,7 @@ template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     bool l3PrefetchDisable = releaseHelper->isPrefetchDisablingRequired();
-    int32_t overrideL3PrefetchDisable = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
+    int32_t overrideL3PrefetchDisable = debugManager.flags.ForceL3PrefetchForComputeWalker.get();
     if (overrideL3PrefetchDisable != -1) {
         l3PrefetchDisable = !overrideL3PrefetchDisable;
     }
@@ -179,7 +179,7 @@ template <>
 void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState) {
     const auto ccsMode = R_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
     if (ccsMode == surfaceState->getAuxiliarySurfaceMode() && R_SURFACE_STATE::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D == surfaceState->getSurfaceType()) {
-        if (DebugManager.flags.DecompressInL3ForImage2dFromBuffer.get() != 0) {
+        if (debugManager.flags.DecompressInL3ForImage2dFromBuffer.get() != 0) {
             surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
             surfaceState->setDecompressInL3(R_SURFACE_STATE::DECOMPRESS_IN_L3_ENABLE);
             surfaceState->setMemoryCompressionEnable(1);

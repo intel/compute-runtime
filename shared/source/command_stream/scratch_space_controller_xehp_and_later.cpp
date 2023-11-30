@@ -29,8 +29,8 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
     auto &gfxCoreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
-    if (DebugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
-        privateScratchSpaceSupported = !!DebugManager.flags.EnablePrivateScratchSlot1.get();
+    if (debugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
+        privateScratchSpaceSupported = !!debugManager.flags.EnablePrivateScratchSlot1.get();
     }
     if (privateScratchSpaceSupported) {
         ScratchSpaceControllerXeHPAndLater::stateSlotsCount *= 2;

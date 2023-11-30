@@ -28,7 +28,7 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
 }
 void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, TaskCountType taskCount) {
     if (allocationUsage == REUSABLE_ALLOCATION) {
-        if (DebugManager.flags.DisableResourceRecycling.get()) {
+        if (debugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());
             return;
         }

@@ -15,7 +15,7 @@ using namespace NEO;
 class ThreadGroupPreemptionTests : public DevicePreemptionTests {
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
+        debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
         preemptionMode = PreemptionMode::ThreadGroup;
         DevicePreemptionTests::SetUp();
     }
@@ -25,7 +25,7 @@ class MidThreadPreemptionTests : public DevicePreemptionTests {
   public:
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+        debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
         preemptionMode = PreemptionMode::MidThread;
         DevicePreemptionTests::SetUp();
     }

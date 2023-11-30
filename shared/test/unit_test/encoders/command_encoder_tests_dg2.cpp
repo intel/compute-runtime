@@ -76,7 +76,7 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
     const auto &productHelper = pDevice->getProductHelper();
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
+    debugManager.flags.ForceThreadGroupDispatchSize.set(forceThreadGroupDispatchSize);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {

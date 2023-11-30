@@ -13,8 +13,8 @@
 namespace NEO {
 
 inline const std::string getGdiName() {
-    if (DebugManager.flags.OverrideGdiPath.get() != "unk") {
-        return DebugManager.flags.OverrideGdiPath.get();
+    if (debugManager.flags.OverrideGdiPath.get() != "unk") {
+        return debugManager.flags.OverrideGdiPath.get();
     } else {
         return Os::gdiDllName;
     }

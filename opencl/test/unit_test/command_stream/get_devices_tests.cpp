@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,8 @@ TEST(MultiDeviceTests, givenCreateMultipleRootDevicesAndLimitAmountOfReturnedDev
     ultHwConfig.forceOsAgnosticMemoryManager = false;
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
-    DebugManager.flags.LimitAmountOfReturnedDevices.set(1);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
+    debugManager.flags.LimitAmountOfReturnedDevices.set(1);
     cl_uint numDevices = 0;
 
     auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);

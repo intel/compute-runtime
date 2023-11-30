@@ -170,10 +170,10 @@ class DebugSettingsManager {
     static const char *settingsDumpFileName;
 };
 
-extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
+extern DebugSettingsManager<globalDebugFunctionalityLevel> debugManager;
 
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
-    NEO::DebugManager.logLazyEvaluateArgs([&] {                    \
+    NEO::debugManager.logLazyEvaluateArgs([&] {                    \
         char temp[4000];                                           \
         snprintf_s(temp, sizeof(temp), sizeof(temp), __VA_ARGS__); \
         temp[sizeof(temp) - 1] = '\0';                             \
@@ -181,29 +181,29 @@ extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
     });
 
 #define PRINT_DEBUGGER_LOG(OUT, ...)                                                                                  \
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE) { \
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_TO_FILE) { \
         PRINT_DEBUGGER_LOG_TO_FILE(__VA_ARGS__)                                                                       \
     } else {                                                                                                          \
         NEO::printDebugString(true, OUT, __VA_ARGS__);                                                                \
     }
 
 #define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) { \
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) { \
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                   \
     }
 
 #define PRINT_DEBUGGER_THREAD_LOG(STR, ...)                                                                          \
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_THREADS) { \
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_THREADS) { \
         PRINT_DEBUGGER_LOG(stdout, "\nTHREAD INFO: " STR, __VA_ARGS__)                                               \
     }
 
 #define PRINT_DEBUGGER_ERROR_LOG(STR, ...)                                                                         \
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR) { \
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR) { \
         PRINT_DEBUGGER_LOG(stderr, "\nERROR: " STR, __VA_ARGS__)                                                   \
     }
 
 #define PRINT_DEBUGGER_MEM_ACCESS_LOG(STR, ...)                                                                  \
-    if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) { \
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) { \
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                  \
     }
 

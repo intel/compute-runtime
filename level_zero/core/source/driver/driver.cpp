@@ -53,7 +53,7 @@ void DriverImp::initialize(ze_result_t *result) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
-    if (!NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+    if (!NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
         const auto dbgMode = NEO::getDebuggingMode(envVariables.programDebugging);
         executionEnvironment->setDebuggingMode(dbgMode);
     }

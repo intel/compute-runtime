@@ -151,7 +151,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
 TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetMetricStreamerOpenIsCalledThenReturnsSuccess) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
 
     auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
     zet_device_handle_t metricDeviceHandle = deviceImp.subDevices[0]->toHandle();

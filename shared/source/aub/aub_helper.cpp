@@ -43,8 +43,8 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
 }
 
 uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {
-    if (DebugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
-        return DebugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
+    if (debugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
+        return debugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }
     return getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }

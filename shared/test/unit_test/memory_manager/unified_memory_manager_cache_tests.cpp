@@ -89,7 +89,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationCacheDefaultWhenCheckingIfEnab
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     auto device = deviceFactory->rootDevices[0];
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
-    ASSERT_EQ(DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get(), -1);
+    ASSERT_EQ(debugManager.flags.ExperimentalEnableDeviceAllocationCache.get(), -1);
     EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
 }
 
@@ -103,7 +103,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingDeviceA
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto device = deviceFactory->rootDevices[0];
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
@@ -150,7 +150,7 @@ TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocat
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto device = deviceFactory->rootDevices[0];
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
@@ -201,7 +201,7 @@ TEST(SvmDeviceAllocationCacheTest, givenMultipleAllocationsWhenAllocatingAfterFr
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto device = deviceFactory->rootDevices[0];
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
@@ -276,7 +276,7 @@ struct SvmDeviceAllocationCacheTestDataType {
 TEST(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentFlagsWhenAllocatingAfterFreeThenReturnCorrectAllocation) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(2, 2));
     DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto rootDevice = deviceFactory->rootDevices[0];
     auto secondRootDevice = deviceFactory->rootDevices[1];
     auto subDevice1 = deviceFactory->subDevices[0];
@@ -348,7 +348,7 @@ TEST(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCache
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     DebugManagerStateRestore restore;
-    DebugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto device = deviceFactory->rootDevices[0];
     device->injectMemoryManager(new MockMemoryManagerWithCapacity(*device->getExecutionEnvironment()));
     MockMemoryManagerWithCapacity *memoryManager = static_cast<MockMemoryManagerWithCapacity *>(device->getMemoryManager());

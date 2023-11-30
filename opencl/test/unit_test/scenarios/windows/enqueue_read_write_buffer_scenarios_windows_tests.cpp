@@ -29,7 +29,7 @@ struct EnqueueBufferWindowsTest : public ClHardwareParse,
     }
 
     void SetUp() override {
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
         executionEnvironment = getClExecutionEnvironmentImpl(hwInfo, 1);
     }
 

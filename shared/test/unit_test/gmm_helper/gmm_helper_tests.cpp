@@ -549,7 +549,7 @@ TEST_F(GmmHelperTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabi
 
 TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingResourceThenPrintCompressionParams) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintGmmCompressionParams.set(true);
+    debugManager.flags.PrintGmmCompressionParams.set(true);
 
     testing::internal::CaptureStdout();
 
@@ -572,7 +572,7 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingResourceThenPrintCompression
 
 TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingImageResourceThenPrintCompressionParams) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintGmmCompressionParams.set(true);
+    debugManager.flags.PrintGmmCompressionParams.set(true);
 
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = ImageType::Image3D;
@@ -728,7 +728,7 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
 
 TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenReturnUncached) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
@@ -770,7 +770,7 @@ TEST(GmmTest, givenUsageTypeWhenAskingIfUncachableThenReturnCorrectValue) {
 
 TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisableCachingForHeaps.set(true);
+    debugManager.flags.DisableCachingForHeaps.set(true);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
@@ -783,7 +783,7 @@ TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncache
 
 TEST(GmmTest, givenConstSurfaceWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(false);
+    debugManager.flags.ForceL1Caching.set(false);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
@@ -800,7 +800,7 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
     constexpr int64_t bufferMask = 1 << (static_cast<int64_t>(AllocationType::BUFFER) - 1);
     constexpr int64_t imageMask = 1 << (static_cast<int64_t>(AllocationType::IMAGE) - 1);
 
-    DebugManager.flags.ForceUncachedGmmUsageType.set(bufferMask | imageMask);
+    debugManager.flags.ForceUncachedGmmUsageType.set(bufferMask | imageMask);
 
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
               CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER, false, productHelper));
@@ -814,7 +814,7 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
 
 TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
+    debugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     for (auto allocType : {AllocationType::BUFFER,
@@ -835,7 +835,7 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
 
 TEST_F(GmmHelperTests, whenGmmIsCreatedAndForceAllResourcesUncachedIsSetThenResourceUsageIsSetToUncachedSurface) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceAllResourcesUncached = true;
+    debugManager.flags.ForceAllResourcesUncached = true;
 
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
@@ -999,7 +999,7 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
     EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
 
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
@@ -1125,7 +1125,7 @@ TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetA
 
 HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQueryingThenSetAppropriateFlags) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    debugManager.flags.RenderCompressedImagesEnabled.set(1);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
@@ -1136,7 +1136,7 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQ
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
     EXPECT_TRUE(queryGmm->isCompressionEnabled);
 
-    DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+    debugManager.flags.RenderCompressedImagesEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
     queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
@@ -1229,7 +1229,7 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
     Gmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     gmm.resourceParams = {};
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = false;
 
     gmm.applyAuxFlagsForBuffer(true);
@@ -1240,7 +1240,7 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
 
     gmm.resourceParams = {};
     gmm.isCompressionEnabled = false;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
 
     gmm.applyAuxFlagsForBuffer(true);
@@ -1336,7 +1336,7 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithLocalOnlyRequiredW
     DebugManagerStateRestore restorer;
 
     for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::CSR_HW); csrMode < static_cast<int32_t>(CommandStreamReceiverType::CSR_TYPES_NUM); csrMode++) {
-        DebugManager.flags.SetCommandStreamReceiver.set(csrMode);
+        debugManager.flags.SetCommandStreamReceiver.set(csrMode);
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
         EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
         EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
@@ -1367,7 +1367,7 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithoutLocalOnlyRequir
 
 TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationIsNotLockableThenNotLockableAndLocalOnlyFlagsAreSetAndNonLocalOnlyIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     StorageInfo storageInfo{};
     storageInfo.isLockable = false;
     storageInfo.systemMemoryPlacement = false;
@@ -1384,7 +1384,7 @@ TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationI
 
 TEST_F(GmmHelperTests, givenCompressionSupportedWhenAllocationIsLockableThenGmmHasNoCompression) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     StorageInfo storageInfo{};
     storageInfo.isLockable = true;
     storageInfo.systemMemoryPlacement = false;
@@ -1403,7 +1403,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllo
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::CSR_HW); csrMode < static_cast<int32_t>(CommandStreamReceiverType::CSR_TYPES_NUM); csrMode++) {
-        DebugManager.flags.SetCommandStreamReceiver.set(csrMode);
+        debugManager.flags.SetCommandStreamReceiver.set(csrMode);
         StorageInfo storageInfo{};
         storageInfo.memoryBanks.set(1);
         storageInfo.systemMemoryPlacement = false;

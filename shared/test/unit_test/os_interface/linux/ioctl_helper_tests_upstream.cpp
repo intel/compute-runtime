@@ -78,7 +78,7 @@ struct MockIoctlHelperUpstream : IoctlHelperUpstream {
 
 TEST(IoctlHelperUpstreamTest, whenInitializeIsCalledThenDetectExtSetPatSupportFunctionIsCalled) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableGemCreateExtSetPat.set(false);
+    debugManager.flags.DisableGemCreateExtSetPat.set(false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -102,7 +102,7 @@ TEST(IoctlHelperUpstreamTest, whenInitializeIsCalledThenDetectExtSetPatSupportFu
     EXPECT_EQ(3u, mockIoctlHelper.detectExtSetPatSupportIoctlCallCount); // only create
     EXPECT_FALSE(mockIoctlHelper.isSetPatSupported);
 
-    DebugManager.flags.DisableGemCreateExtSetPat.set(true);
+    debugManager.flags.DisableGemCreateExtSetPat.set(true);
     mockIoctlHelper.initialize();
     EXPECT_EQ(3u, mockIoctlHelper.detectExtSetPatSupportCallCount);
     EXPECT_EQ(3u, mockIoctlHelper.detectExtSetPatSupportIoctlCallCount); // no ioctl calls
@@ -343,7 +343,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
     testing::internal::CaptureStdout();
 
     uint32_t handle = 0;
@@ -399,13 +399,13 @@ TEST(IoctlHelperTestsUpstream, givenInvalidPatIndexWhenCreateGemExtThenSetPatExt
 
 TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtWithDebugFlagThenPrintDebugInfoWithExtSetPat) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableGemCreateExtSetPat.set(false);
+    debugManager.flags.DisableGemCreateExtSetPat.set(false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperUpstream mockIoctlHelper{*drm};
 
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
     testing::internal::CaptureStdout();
 
     uint32_t handle = 0;
@@ -422,13 +422,13 @@ TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtWithDebugFlag
 
 TEST(IoctlHelperUpstreamTest, whenDetectExtSetPatSupportIsCalledWithDebugFlagThenPrintCorrectDebugInfo) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableGemCreateExtSetPat.set(false);
+    debugManager.flags.DisableGemCreateExtSetPat.set(false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperUpstream mockIoctlHelper{*drm};
 
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
     testing::internal::CaptureStdout();
     mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
     mockIoctlHelper.detectExtSetPatSupport();
@@ -503,7 +503,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmPrefetchThenReturnTrue) {
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenDirectSubmissionEnabledThenNoFlagsAdded) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DirectSubmissionDrmContext.set(1);
+    debugManager.flags.DirectSubmissionDrmContext.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);

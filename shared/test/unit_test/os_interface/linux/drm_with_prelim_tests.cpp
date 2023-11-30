@@ -152,8 +152,8 @@ TEST_F(IoctlHelperPrelimFixture, givenAtomicAccessModeHostWhenCallGetAtomicAcces
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGetNumOfChunks) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOChunkingLogs.set(true);
-    DebugManager.flags.NumberOfBOChunks.set(2);
+    debugManager.flags.PrintBOChunkingLogs.set(true);
+    debugManager.flags.NumberOfBOChunks.set(2);
     size_t allocSize = 2 * MemoryConstants::pageSize64k;
 
     testing::internal::CaptureStdout();
@@ -170,8 +170,8 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGet
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllocTooSmallThenExceptionThrown) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOChunkingLogs.set(false);
-    DebugManager.flags.NumberOfBOChunks.set(2);
+    debugManager.flags.PrintBOChunkingLogs.set(false);
+    debugManager.flags.NumberOfBOChunks.set(2);
     size_t allocSize = MemoryConstants::pageSize64k;
 
     auto ioctlHelper = drm->getIoctlHelper();
@@ -183,7 +183,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllo
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
@@ -293,8 +293,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseForChunkingFailsThenDontUpdateMemAdviceFlags) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     drm->ioctlCallsCount = 0;
     drm->ioctlRetVal = -1;
@@ -370,8 +370,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithSystemPre
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingPreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferChunks) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
@@ -402,8 +402,8 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingP
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingButWithoutEnableBOChunkingPreferredLocationHintCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(0);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(0);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
@@ -436,8 +436,8 @@ TEST_F(IoctlHelperPrelimFixture,
        givenDrmAllocationWhenSetMemAdviseWithChunkingPreferredLocationIsCalledWithFailureThenReturnFalse) {
     drm->ioctlRetVal = -1;
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
@@ -529,9 +529,9 @@ TEST_F(IoctlHelperPrelimFixture,
        givenDrmAllocationWithChunkingAndsetMemPrefetchCalledSuccessIsReturned) {
     SubDeviceIdsVec subDeviceIds{0, 1};
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunkingPrefetch.set(true);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
@@ -558,9 +558,9 @@ TEST_F(IoctlHelperPrelimFixture,
        givenDrmAllocationWithChunkingAndsetMemPrefetchWithIoctlFailureThenFailureReturned) {
     SubDeviceIdsVec subDeviceIds{0, 1};
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.EnableBOChunkingPrefetch.set(true);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
@@ -591,19 +591,19 @@ TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCrea
     bool isDirectSubmissionRequested{};
     uint32_t ioctlVal = (1u << 31);
 
-    DebugManager.flags.DirectSubmissionDrmContext.set(-1);
+    debugManager.flags.DirectSubmissionDrmContext.set(-1);
     drm->receivedContextCreateFlags = 0;
     isDirectSubmissionRequested = true;
     drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
     EXPECT_EQ(ioctlVal, drm->receivedContextCreateFlags);
 
-    DebugManager.flags.DirectSubmissionDrmContext.set(0);
+    debugManager.flags.DirectSubmissionDrmContext.set(0);
     drm->receivedContextCreateFlags = 0;
     isDirectSubmissionRequested = true;
     drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
     EXPECT_EQ(0u, drm->receivedContextCreateFlags);
 
-    DebugManager.flags.DirectSubmissionDrmContext.set(1);
+    debugManager.flags.DirectSubmissionDrmContext.set(1);
     drm->receivedContextCreateFlags = 0;
     isDirectSubmissionRequested = false;
     drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
@@ -765,9 +765,9 @@ TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextIsCalledThenIoctlIsCalledOn
     constexpr bool isDirectSubmissionRequested = false;
 
     for (auto &cooperativeContextRequested : {-1, 0, 1}) {
-        DebugManager.flags.ForceRunAloneContext.set(cooperativeContextRequested);
+        debugManager.flags.ForceRunAloneContext.set(cooperativeContextRequested);
         for (auto &accessCountersRequested : {-1, 0, 1}) {
-            DebugManager.flags.CreateContextWithAccessCounters.set(accessCountersRequested);
+            debugManager.flags.CreateContextWithAccessCounters.set(accessCountersRequested);
             for (auto vmId = 0u; vmId < 3; vmId++) {
                 drm->ioctlCallsCount = 0u;
                 drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
@@ -906,13 +906,13 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnIni
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     testing::internal::CaptureStderr();
     drm->returnInvalidHwIpVersionLength = true;
     drm->ioctlHelper->setupIpVersion();
 
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();
     std::string expectedOutput = "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n";
 
@@ -921,13 +921,13 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnIni
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlatformQueryIsSupportedThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     testing::internal::CaptureStderr();
     drm->failRetHwIpVersion = true;
     drm->ioctlHelper->setupIpVersion();
 
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();

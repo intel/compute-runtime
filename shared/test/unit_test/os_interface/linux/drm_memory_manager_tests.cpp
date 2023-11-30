@@ -186,7 +186,7 @@ TEST_F(DrmMemoryManagerTest, whenCallingHasPageFaultsEnabledThenReturnCorrectVal
     EXPECT_FALSE(memoryManager->hasPageFaultsEnabled(*device));
 
     for (auto debugFlag : {-1, 0, 1}) {
-        DebugManager.flags.EnableRecoverablePageFaults.set(debugFlag);
+        debugManager.flags.EnableRecoverablePageFaults.set(debugFlag);
         if (debugFlag == 1) {
             EXPECT_TRUE(memoryManager->hasPageFaultsEnabled(*device));
         } else {
@@ -197,7 +197,7 @@ TEST_F(DrmMemoryManagerTest, whenCallingHasPageFaultsEnabledThenReturnCorrectVal
 
 TEST_F(DrmMemoryManagerTest, givenEnableDirectSubmissionWhenCreateDrmMemoryManagerThenGemCloseWorkerInactive) {
     DebugManagerStateRestore dbgState;
-    DebugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.EnableDirectSubmission.set(1);
 
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
 
@@ -210,13 +210,13 @@ TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenS
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
 
     {
-        DebugManager.flags.EnableMultiStorageResources.set(0);
+        debugManager.flags.EnableMultiStorageResources.set(0);
         TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
         EXPECT_FALSE(memoryManager.supportsMultiStorageResources);
     }
 
     {
-        DebugManager.flags.EnableMultiStorageResources.set(1);
+        debugManager.flags.EnableMultiStorageResources.set(1);
         TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
         EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
     }
@@ -225,14 +225,14 @@ TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenS
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCheckForKmdMigrationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     {
-        DebugManager.flags.UseKmdMigration.set(1);
+        debugManager.flags.UseKmdMigration.set(1);
 
         auto retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
 
         EXPECT_TRUE(retVal);
     }
     {
-        DebugManager.flags.UseKmdMigration.set(0);
+        debugManager.flags.UseKmdMigration.set(0);
 
         auto retVal = memoryManager->isKmdMigrationAvailable(rootDeviceIndex);
 
@@ -341,7 +341,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDebugVar
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseHighAlignmentForHeapExtended.set(0);
+    debugManager.flags.UseHighAlignmentForHeapExtended.set(0);
 
     auto size = 8 * MemoryConstants::gigaByte;
 
@@ -382,7 +382,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDebugVar
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseHighAlignmentForHeapExtended.set(0);
+    debugManager.flags.UseHighAlignmentForHeapExtended.set(0);
 
     auto size = 16 * MemoryConstants::megaByte;
 
@@ -1024,7 +1024,7 @@ TEST_F(DrmMemoryManagerTest, WhenUnreferenceIsCalledThenCallSucceeds) {
 
 TEST_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndAllocUserptrIsCalledThenBufferObjectIsCreatedAndDebugInformationIsPrinted) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -1033,7 +1033,7 @@ TEST_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndAllocUserptrI
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
 
-    DebugManager.flags.PrintBOCreateDestroyResult.set(false);
+    debugManager.flags.PrintBOCreateDestroyResult.set(false);
     std::string output = testing::internal::GetCapturedStdout();
     size_t idx = output.find("Created new BO with GEM_USERPTR, handle: BO-");
     size_t expectedValue = 0;
@@ -1938,7 +1938,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternal32Bit
 
 TEST_F(DrmMemoryManagerTest, GivenExhaustedInternalHeapWhenAllocate32BitIsCalledThenNullIsReturned) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.Force32bitAddressing.set(true);
+    debugManager.flags.Force32bitAddressing.set(true);
     memoryManager->setForce32BitAllocations(true);
 
     size_t size = MemoryConstants::pageSize64k;
@@ -1952,7 +1952,7 @@ TEST_F(DrmMemoryManagerTest, GivenExhaustedInternalHeapWhenAllocate32BitIsCalled
 
 TEST_F(DrmMemoryManagerTest, givenSetForceUserptrAlignmentWhenGetUserptrAlignmentThenForcedValueIsReturned) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.ForceUserptrAlignment.set(123456);
+    debugManager.flags.ForceUserptrAlignment.set(123456);
 
     EXPECT_EQ(123456 * MemoryConstants::kiloByte, memoryManager->getUserptrAlignment());
 }
@@ -2784,7 +2784,7 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
 
 TEST_F(DrmMemoryManagerBasic, givenDisabledGemCloseWorkerWhenMemoryManagerIsCreatedThenNoGemCloseWorker) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.EnableGemCloseWorker.set(0u);
+    debugManager.flags.EnableGemCloseWorker.set(0u);
 
     TestedDrmMemoryManager memoryManager(true, true, true, executionEnvironment);
 
@@ -2793,7 +2793,7 @@ TEST_F(DrmMemoryManagerBasic, givenDisabledGemCloseWorkerWhenMemoryManagerIsCrea
 
 TEST_F(DrmMemoryManagerBasic, givenEnabledGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.EnableGemCloseWorker.set(1u);
+    debugManager.flags.EnableGemCloseWorker.set(1u);
 
     TestedDrmMemoryManager memoryManager(true, true, true, executionEnvironment);
 
@@ -2808,7 +2808,7 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultGemCloseWorkerWhenMemoryManagerIsCreat
 
 TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.EnableDeferredDeleter.set(true);
+    debugManager.flags.EnableDeferredDeleter.set(true);
     DrmMemoryManager memoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
@@ -2817,7 +2817,7 @@ TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCre
 
 TEST_F(DrmMemoryManagerBasic, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.EnableDeferredDeleter.set(false);
+    debugManager.flags.EnableDeferredDeleter.set(false);
     DrmMemoryManager memoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
@@ -3522,7 +3522,7 @@ TEST_F(DrmMemoryManagerBasic, givenSpecificAddressSpaceWhenInitializingMemoryMan
 
 TEST_F(DrmMemoryManagerBasic, givenDisabledHostPtrTrackingWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithNotAlignedPtrIsPassedThenAllocationIsCreated) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHostPtrTracking.set(false);
+    debugManager.flags.EnableHostPtrTracking.set(false);
 
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
@@ -3838,7 +3838,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     osHandle handle = 1u;
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
 
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
     testing::internal::CaptureStdout();
     auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, allocation);
@@ -4631,7 +4631,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemory
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAffinityMaskDeviceWithBitfieldIndex1SetWhenAllocatingDebugSurfaceThenSingleAllocationWithOneBoIsCreated) {
-    NEO::DebugManager.flags.CreateMultipleSubDevices.set(2);
+    NEO::debugManager.flags.CreateMultipleSubDevices.set(2);
 
     AffinityMaskHelper affinityMask;
     affinityMask.enableGenericSubDevice(1);
@@ -4680,7 +4680,7 @@ TEST_F(DrmMemoryManagerTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelector
 
 TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeIsNotDoingAnything) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DoNotFreeResources.set(true);
+    debugManager.flags.DoNotFreeResources.set(true);
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     size_t sizeIn = 1024llu;
     uint64_t gpuAddress = 0x1337llu;
@@ -4690,7 +4690,7 @@ TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeI
 
 TEST_F(DrmMemoryManagerTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+    debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
 
     std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
         {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
@@ -4704,7 +4704,7 @@ TEST_F(DrmMemoryManagerTest, givenCustomAlignmentWhenWddmMemoryManagerIsCreatedT
     DebugManagerStateRestore restore{};
 
     {
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
             {MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
             {MemoryConstants::megaByte, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB},
@@ -4715,7 +4715,7 @@ TEST_F(DrmMemoryManagerTest, givenCustomAlignmentWhenWddmMemoryManagerIsCreatedT
     }
 
     {
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2M);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2M);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
             {2 * MemoryConstants::pageSize2M, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
             {MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB},
@@ -5088,7 +5088,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
 
 TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOsToThisSubDevice) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
+    debugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
 
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     SubDeviceIdsVec subDeviceIds{0};
@@ -5122,7 +5122,7 @@ TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMig
 
 TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithSubDevicesThenPrefetchBOsToTheseSubDevices) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
+    debugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
 
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     SubDeviceIdsVec subDeviceIds{0, 1};
@@ -5233,7 +5233,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBuffe
 
 TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForBuffersWhenCallingBindBoOnBufferAllocationThenAllocationShouldPageFaultAndExplicitResidencyIsNotRequired) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(true);
+    debugManager.flags.EnableRecoverablePageFaults.set(true);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -5251,7 +5251,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForB
     allocation.bufferObjects[0] = &bo;
 
     for (auto useKmdMigrationForBuffers : {-1, 0, 1}) {
-        DebugManager.flags.UseKmdMigrationForBuffers.set(useKmdMigrationForBuffers);
+        debugManager.flags.UseKmdMigrationForBuffers.set(useKmdMigrationForBuffers);
 
         std::vector<BufferObject *> bufferObjects;
         allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
@@ -5319,7 +5319,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseKmdMigrationForBuffersWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferWithSeveralMemoryBanksThenCreateGemObjectWithMultipleRegions) {
-    DebugManager.flags.UseKmdMigrationForBuffers.set(1);
+    debugManager.flags.UseKmdMigrationForBuffers.set(1);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -5339,7 +5339,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseKmdMi
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseKmdMigrationForBuffersWhenGraphicsAllocationInPhysicalLocalMemoryIsAllocatedForBufferWithSeveralMemoryBanksThenCreateGemObjectWithMultipleRegions) {
-    DebugManager.flags.UseKmdMigrationForBuffers.set(1);
+    debugManager.flags.UseKmdMigrationForBuffers.set(1);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -5360,7 +5360,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseKmdMi
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUAllocationInPhysicalLocalMemoryIsAllocatedWithNoCacheRegionThenFailureReturned) {
-    DebugManager.flags.UseKmdMigrationForBuffers.set(1);
+    debugManager.flags.UseKmdMigrationForBuffers.set(1);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -5578,7 +5578,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
        givenDeviceMemoryAllocationWithChunkingModeSetToDeviceAndChunkingSizeNotAlignedThenChunkingIsNotUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NumberOfBOChunks.set(64);
+    debugManager.flags.NumberOfBOChunks.set(64);
 
     VariableBackup<bool> backupChunkingCallParent{&mock->getChunkingAvailableCall.callParent, false};
     VariableBackup<bool> backupChunkingReturnValue{&mock->getChunkingAvailableCall.returnValue, true};
@@ -6049,7 +6049,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
     MemoryManager::AllocationStatus allocationStatus;
 
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6058,7 +6058,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6067,7 +6067,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6088,7 +6088,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
     MemoryManager::AllocationStatus allocationStatus;
 
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6097,7 +6097,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6106,7 +6106,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6132,7 +6132,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenExtendedHeapPreferredAnd2M
     MemoryManager::AllocationStatus allocationStatus;
 
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(-1);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6142,7 +6142,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenExtendedHeapPreferredAnd2M
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6151,7 +6151,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenExtendedHeapPreferredAnd2M
         memoryManager->freeGraphicsMemory(allocation);
     }
     {
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6173,7 +6173,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
 
     {
         // size==2MB, use 2MB heap
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::megaByte);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::megaByte);
         allocationData.size = 2 * MemoryConstants::megaByte;
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
@@ -6186,7 +6186,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
 
     {
         // size > 2MB, use 2MB heap
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(16 * MemoryConstants::megaByte);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(16 * MemoryConstants::megaByte);
         allocationData.size = 16 * MemoryConstants::megaByte;
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
@@ -6199,7 +6199,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
 
     {
         // size < 2MB, use 64KB heap
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(8 * MemoryConstants::pageSize64k);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(8 * MemoryConstants::pageSize64k);
         allocationData.size = 8 * MemoryConstants::pageSize64k;
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
@@ -6223,8 +6223,8 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
 
     {
         // Too small allocation, fallback to 2MB heap
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6235,8 +6235,8 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
 
     {
         // Too small allocation, fallback to 2MB heap
-        DebugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
-        DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
+        debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+        debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(32 * MemoryConstants::megaByte);
         auto memoryManager = createMemoryManager();
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
         ASSERT_NE(nullptr, allocation);
@@ -6560,7 +6560,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDebugVar
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseHighAlignmentForHeapExtended.set(0);
+    debugManager.flags.UseHighAlignmentForHeapExtended.set(0);
 
     auto size = 16 * MemoryConstants::megaByte;
 
@@ -6743,7 +6743,7 @@ TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeWhenCheckingAllocation
 
 TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeAndDebugFlagOverridingWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {
     DebugManagerStateRestore dbgState;
-    DebugManager.flags.UseDrmCompletionFenceForAllAllocations.set(1);
+    debugManager.flags.UseDrmCompletionFenceForAllAllocations.set(1);
 
     AllocationType invalidAllocations[] = {
         AllocationType::BUFFER_HOST_MEMORY,
@@ -6926,7 +6926,7 @@ TEST_F(DrmMemoryManagerTest, givenSingleSubDevicesBitfieldWhenAllocatingSbaTrack
 
 TEST_F(DrmMemoryManagerTest, givenMakeBosResidentErrorWhenRegisteringMemoryAllocationThenErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeEachAllocationResident.set(1);
+    debugManager.flags.MakeEachAllocationResident.set(1);
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.vmIdToCreate = 1;
     drm.createVirtualMemoryAddressSpace(1);
@@ -6940,7 +6940,7 @@ TEST_F(DrmMemoryManagerTest, givenMakeBosResidentErrorWhenRegisteringMemoryAlloc
 
 TEST_F(DrmMemoryManagerTest, givenMakeBosResidentSuccessWhenRegisteringMemoryAllocationThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeEachAllocationResident.set(1);
+    debugManager.flags.MakeEachAllocationResident.set(1);
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(0));
     drm.vmIdToCreate = 1;
     drm.createVirtualMemoryAddressSpace(1);
@@ -7061,7 +7061,7 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuAndDisabledHeapExtende
     mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateHostAllocationsInHeapExtendedHost.set(false);
+    debugManager.flags.AllocateHostAllocationsInHeapExtendedHost.set(false);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -7088,7 +7088,7 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingSharedUS
     mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
+    debugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -7128,7 +7128,7 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingShare
     mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
+    debugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, false);
     SysCalls::mmapCapturedExtendedPointers.clear();
@@ -7167,7 +7167,7 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocating48bResou
     mockGfxPartition->initHeap(HeapIndex::HEAP_EXTENDED_HOST, maxNBitValue(48) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
+    debugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.set(true);
     VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
     VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
     SysCalls::mmapCapturedExtendedPointers.clear();

@@ -106,8 +106,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto slmSize = static_cast<uint32_t>(
         gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
 
-    if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
-        slmSize = static_cast<uint32_t>(DebugManager.flags.OverrideSlmAllocationSize.get());
+    if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
+        slmSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
     }
     idd.setSharedLocalMemorySize(slmSize);
 
@@ -278,7 +278,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         container.setDirtyStateForAllHeaps(false);
     }
 
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
@@ -322,7 +322,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
 
-    if (DebugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {
+    if (debugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {
         postSync.setDataportPipelineFlush(true);
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
@@ -331,7 +331,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, *args.device, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, walkerCmd);
-    if (DebugManager.flags.PrintKernelDispatchParameters.get()) {
+    if (debugManager.flags.PrintKernelDispatchParameters.get()) {
         fprintf(stdout, "kernel, %s, numGrf, %d, simdSize, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
                 kernelDescriptor.kernelMetadata.kernelName.c_str(),
                 kernelDescriptor.kernelAttributes.numGrfRequired,
@@ -384,7 +384,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
 
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
         args.additionalCommands->push_back(commandBuffer);
 
@@ -404,8 +404,8 @@ inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCm
         postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     }
 
-    if (DebugManager.flags.OverridePostSyncMocs.get() != -1) {
-        postSyncData.setMocs(DebugManager.flags.OverridePostSyncMocs.get());
+    if (debugManager.flags.OverridePostSyncMocs.get() != -1) {
+        postSyncData.setMocs(debugManager.flags.OverridePostSyncMocs.get());
     }
 }
 
@@ -420,8 +420,8 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
         return true;
     }
     bool hwGenerationOfLocalIdsEnabled = true;
-    if (DebugManager.flags.EnableHwGenerationLocalIds.get() != -1) {
-        hwGenerationOfLocalIdsEnabled = !!DebugManager.flags.EnableHwGenerationLocalIds.get();
+    if (debugManager.flags.EnableHwGenerationLocalIds.get() != -1) {
+        hwGenerationOfLocalIdsEnabled = !!debugManager.flags.EnableHwGenerationLocalIds.get();
     }
     if (hwGenerationOfLocalIdsEnabled) {
         if (activeChannels == 0) {
@@ -521,8 +521,8 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 
     walkerCmd.setMessageSimd(walkerCmd.getSimdSize());
 
-    if (DebugManager.flags.ForceSimdMessageSizeInWalker.get() != -1) {
-        walkerCmd.setMessageSimd(DebugManager.flags.ForceSimdMessageSizeInWalker.get());
+    if (debugManager.flags.ForceSimdMessageSizeInWalker.get() != -1) {
+        walkerCmd.setMessageSimd(debugManager.flags.ForceSimdMessageSizeInWalker.get());
     }
 
     // 1) cross-thread inline data will be put into R1, but if kernel uses local ids, then cross-thread should be put further back
@@ -686,7 +686,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     }
 
     if (surfaceState->getMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) &&
-        DebugManager.flags.ForceL1Caching.get() != 0) {
+        debugManager.flags.ForceL1Caching.get() != 0) {
         setConstCachePolicy = true;
     }
 
@@ -700,16 +700,16 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
         compressionFormat = args.gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
 
-        if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
-            compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
+        if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
+            compressionFormat = debugManager.flags.ForceBufferCompressionFormat.get();
         }
     }
 
-    if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
+    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
         if (args.allocation && !MemoryPoolHelper::isSystemMemoryPool(args.allocation->getMemoryPool())) {
             setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
             setBufferAuxParamsForCCS(surfaceState);
-            compressionFormat = DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();
+            compressionFormat = debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();
         }
     }
 

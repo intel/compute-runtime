@@ -35,7 +35,7 @@ WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
         return WaitParams{};
     }
 
-    if (DebugManager.flags.PowerSavingMode.get() || throttle == QueueThrottle::LOW) {
+    if (debugManager.flags.PowerSavingMode.get() || throttle == QueueThrottle::LOW) {
         return WaitParams{false, true, 1};
     }
 

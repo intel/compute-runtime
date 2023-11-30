@@ -32,7 +32,7 @@ TEST(DrmQueryTest, givenDirectSubmissionActiveWhenCreateDrmContextThenProperFlag
 
 TEST(DrmQueryTest, givenDirectSubmissionDisabledAndDirectSubmissionDrmContextSetWhenCreateDrmContextThenProperFlagIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDrmContext.set(1);
+    debugManager.flags.DirectSubmissionDrmContext.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -44,7 +44,7 @@ TEST(DrmQueryTest, givenDirectSubmissionDisabledAndDirectSubmissionDrmContextSet
 
 TEST(DrmQueryTest, givenDirectSubmissionActiveAndDirectSubmissionDrmContextSetZeroWhenCreateDrmContextThenProperFlagIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionDrmContext.set(0);
+    debugManager.flags.DirectSubmissionDrmContext.set(0);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -78,14 +78,14 @@ TEST(DrmQueryTest, givenForceRunAloneContextFlagSetWhenCreateDrmContextThenRunAl
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     {
-        DebugManager.flags.ForceRunAloneContext.set(0);
+        debugManager.flags.ForceRunAloneContext.set(0);
         drm.createDrmContext(0, false, false);
 
         auto extSetparam = drm.receivedContextCreateSetParam;
         EXPECT_NE(static_cast<uint64_t>(DrmPrelimHelper::getRunAloneContextParam()), extSetparam.param.param);
     }
     {
-        DebugManager.flags.ForceRunAloneContext.set(1);
+        debugManager.flags.ForceRunAloneContext.set(1);
         drm.createDrmContext(0, false, false);
 
         auto extSetparam = drm.receivedContextCreateSetParam;
@@ -102,7 +102,7 @@ TEST(DrmQueryTest, givenForceRunAloneContextFlagSetWhenCreateDrmContextThenRunAl
 
 TEST(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCreatedThenProgramAccessCountersWithDefaultGranularity) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    debugManager.flags.CreateContextWithAccessCounters.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -141,13 +141,13 @@ TEST(DrmQueryTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
 
 TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThenProgramAccessCountersWithSpecifiedTriggeringThreshold) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    debugManager.flags.CreateContextWithAccessCounters.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     for (uint16_t threshold : {0, 1, 1024, 65535}) {
-        DebugManager.flags.AccessCountersTrigger.set(threshold);
+        debugManager.flags.AccessCountersTrigger.set(threshold);
 
         auto ret = drm.createDrmContext(0, false, false);
         EXPECT_EQ(0, ret);
@@ -175,13 +175,13 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
 
 TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThenProgramAccessCountersWithSpecifiedGranularity) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    debugManager.flags.CreateContextWithAccessCounters.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     for (uint8_t granularity : DrmPrelimHelper::getContextAcgValues()) {
-        DebugManager.flags.AccessCountersGranularity.set(granularity);
+        debugManager.flags.AccessCountersGranularity.set(granularity);
 
         auto ret = drm.createDrmContext(0, false, false);
         EXPECT_EQ(0, ret);
@@ -294,8 +294,8 @@ struct BufferObjectMock : public BufferObject {
 
 TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemoryThenProperFlagIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableScratchPages.set(1);
-    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+    debugManager.flags.DisableScratchPages.set(1);
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -308,7 +308,7 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
 
 TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -322,8 +322,8 @@ TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesF
 
 TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableScratchPages.set(1);
-    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+    debugManager.flags.DisableScratchPages.set(1);
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -337,8 +337,8 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenC
 
 TEST(DrmBufferObjectTestPrelim, givenLocalMemoryDisabledWhenCreateDrmVirtualMemoryThenVmRegionExtensionIsNotPassed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(0);
-    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(1u);
+    debugManager.flags.EnableLocalMemory.set(0);
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(1u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -351,8 +351,8 @@ TEST(DrmBufferObjectTestPrelim, givenLocalMemoryDisabledWhenCreateDrmVirtualMemo
 
 TEST(DrmBufferObjectTestPrelim, givenLocalMemoryEnabledWhenCreateDrmVirtualMemoryThenVmRegionExtensionIsPassed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(1);
-    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(1u);
+    debugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(1u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     HardwareInfo testHwInfo = *defaultHwInfo;
@@ -461,7 +461,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThen
 
 TEST(DrmBufferObjectTestPrelim, givenNoActiveDirectSubmissionAndForceUseImmediateExtensionWhenBindingThenImmediateFlagIsSetAndExtensionListIsNotNull) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableImmediateVmBindExt.set(1);
+    debugManager.flags.EnableImmediateVmBindExt.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

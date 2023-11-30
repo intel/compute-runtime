@@ -46,8 +46,8 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
         gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
-    if (DebugManager.flags.EnableGemCloseWorker.get() != -1) {
-        gemCloseWorkerOperationMode = DebugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
+    if (debugManager.flags.EnableGemCloseWorker.get() != -1) {
+        gemCloseWorkerOperationMode = debugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
@@ -60,23 +60,23 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
         this->dispatchMode = DispatchMode::ImmediateDispatch;
     }
 
-    if (DebugManager.flags.CsrDispatchMode.get()) {
-        this->dispatchMode = static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get());
+    if (debugManager.flags.CsrDispatchMode.get()) {
+        this->dispatchMode = static_cast<DispatchMode>(debugManager.flags.CsrDispatchMode.get());
     }
-    int overrideUserFenceForCompletionWait = DebugManager.flags.EnableUserFenceForCompletionWait.get();
+    int overrideUserFenceForCompletionWait = debugManager.flags.EnableUserFenceForCompletionWait.get();
     if (overrideUserFenceForCompletionWait != -1) {
         useUserFenceWait = !!(overrideUserFenceForCompletionWait);
     }
-    int overrideUserFenceUseCtxId = DebugManager.flags.EnableUserFenceUseCtxId.get();
+    int overrideUserFenceUseCtxId = debugManager.flags.EnableUserFenceUseCtxId.get();
     if (overrideUserFenceUseCtxId != -1) {
         useContextForUserFenceWait = !!(overrideUserFenceUseCtxId);
     }
     useNotifyEnableForPostSync = useUserFenceWait;
-    int overrideUseNotifyEnableForPostSync = DebugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.get();
+    int overrideUseNotifyEnableForPostSync = debugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.get();
     if (overrideUseNotifyEnableForPostSync != -1) {
         useNotifyEnableForPostSync = !!(overrideUseNotifyEnableForPostSync);
     }
-    kmdWaitTimeout = DebugManager.flags.SetKmdWaitTimeout.get();
+    kmdWaitTimeout = debugManager.flags.SetKmdWaitTimeout.get();
 }
 
 template <typename GfxFamily>
@@ -88,14 +88,14 @@ inline DrmCommandStreamReceiver<GfxFamily>::~DrmCommandStreamReceiver() {
 
 template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    if (DebugManager.flags.ExitOnSubmissionNumber.get() != -1) {
-        bool enabled = (this->taskCount >= static_cast<TaskCountType>(DebugManager.flags.ExitOnSubmissionNumber.get()));
+    if (debugManager.flags.ExitOnSubmissionNumber.get() != -1) {
+        bool enabled = (this->taskCount >= static_cast<TaskCountType>(debugManager.flags.ExitOnSubmissionNumber.get()));
 
-        if (DebugManager.flags.ExitOnSubmissionMode.get() == 1 && !EngineHelpers::isComputeEngine(this->osContext->getEngineType())) {
+        if (debugManager.flags.ExitOnSubmissionMode.get() == 1 && !EngineHelpers::isComputeEngine(this->osContext->getEngineType())) {
             enabled = false;
         }
 
-        if (DebugManager.flags.ExitOnSubmissionMode.get() == 2 && !EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        if (debugManager.flags.ExitOnSubmissionMode.get() == 2 && !EngineHelpers::isBcs(this->osContext->getEngineType())) {
             enabled = false;
         }
 
@@ -166,7 +166,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         this->flushStamp->setStamp(bb->peekHandle());
     }
 
-    auto readBackMode = DebugManager.flags.ReadBackCommandBufferAllocation.get();
+    auto readBackMode = debugManager.flags.ReadBackCommandBufferAllocation.get();
     bool readBackAllowed = ((batchBuffer.commandBufferAllocation->isAllocatedInLocalMemoryPool() && readBackMode == 1) || readBackMode == 2);
 
     if (readBackAllowed) {
@@ -190,7 +190,7 @@ void DrmCommandStreamReceiver<GfxFamily>::readBackAllocation(void *source) {
 
 template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation) {
-    if (DebugManager.flags.PrintBOsForSubmit.get()) {
+    if (debugManager.flags.PrintBOsForSubmit.get()) {
         std::vector<BufferObject *> bosForSubmit;
         for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
             if (osContext->getDeviceBitfield().test(drmIterator)) {
@@ -342,8 +342,8 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
     uint32_t contextIndex = 0;
     for (auto tileIterator = 0u; tileIterator < this->osContext->getDeviceBitfield().size(); tileIterator++) {
         if (this->osContext->getDeviceBitfield().test(tileIterator)) {
-            if (DebugManager.flags.ForceExecutionTile.get() != -1 && this->osContext->getDeviceBitfield().count() > 1) {
-                tileIterator = contextIndex = DebugManager.flags.ForceExecutionTile.get();
+            if (debugManager.flags.ForceExecutionTile.get() != -1 && this->osContext->getDeviceBitfield().count() > 1) {
+                tileIterator = contextIndex = debugManager.flags.ForceExecutionTile.get();
             }
 
             auto processResidencySuccess = this->processResidency(allocationsForResidency, tileIterator);
@@ -351,7 +351,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
                 return processResidencySuccess;
             }
 
-            if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
+            if (debugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
                 printf("%u: Drm Submission of contextIndex: %u, with context id %u\n", SysCalls::getProcessId(), contextIndex, drmContextIds[contextIndex]);
             }
 
@@ -362,7 +362,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 
             contextIndex++;
 
-            if (DebugManager.flags.EnableWalkerPartition.get() == 0) {
+            if (debugManager.flags.EnableWalkerPartition.get() == 0) {
                 return SubmissionStatus::SUCCESS;
             }
         }

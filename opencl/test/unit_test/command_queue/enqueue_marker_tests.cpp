@@ -110,7 +110,7 @@ TEST_F(MarkerTest, WhenEnqueingMarkerThenEventIsReturned) {
 
 HWTEST_F(MarkerTest, GivenGpuHangAndBlockingCallWhenEnqueingMarkerThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -285,7 +285,7 @@ HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitFor
 struct MarkerWithProfilingTest : public MarkerTest {
     void SetUp() override {
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableTimestampPacket.set(0);
+        debugManager.flags.EnableTimestampPacket.set(0);
         MarkerTest::SetUp();
     }
 

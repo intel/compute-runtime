@@ -68,7 +68,7 @@ HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenDispatchKernelThenWa
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDebugFlagSetWhenProgrammingWalkerThenSetFlushingBits) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
+    debugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -92,7 +92,7 @@ using CommandEncodeStatesUncachedMocsTests = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUncachedMocsAndDirtyHeapsThenCorrectMocsIsSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -119,7 +119,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUnc
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUncachedMocsAndNonDirtyHeapsThenCorrectMocsIsSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -146,7 +146,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithUnc
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNonUncachedMocsAndDirtyHeapsThenSbaIsNotProgrammed) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -174,7 +174,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNonUncachedMocsAndNonDirtyHeapsThenSbaIsNotProgrammed) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -197,7 +197,7 @@ HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNon
 
 HWTEST_F(CommandEncodeStatesUncachedMocsTests, whenEncodingDispatchKernelWithNonUncachedMocsAndNonDirtyHeapsAndSlmSizeThenSbaIsNotProgrammed) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -522,7 +522,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     dispatchInterface->getSurfaceStateHeapDataResult = const_cast<uint8_t *>(bindingTableRaw);
 
     {
-        DebugManager.flags.ForceBtpPrefetchMode.set(-1);
+        debugManager.flags.ForceBtpPrefetchMode.set(-1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
@@ -555,7 +555,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     }
 
     {
-        DebugManager.flags.ForceBtpPrefetchMode.set(0);
+        debugManager.flags.ForceBtpPrefetchMode.set(0);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
@@ -583,7 +583,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     }
 
     {
-        DebugManager.flags.ForceBtpPrefetchMode.set(1);
+        debugManager.flags.ForceBtpPrefetchMode.set(1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
@@ -904,7 +904,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextID
 
 HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToNeverWhenEncodingWalkerThenCommandsToPatchAreNotPresent) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PauseOnEnqueue.set(-1);
+    debugManager.flags.PauseOnEnqueue.set(-1);
 
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -920,7 +920,7 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToNeverWhenEncodingWalke
 
 HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToAlwaysWhenEncodingWalkerThenCommandsToPatchAreFilled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PauseOnEnqueue.set(-2);
+    debugManager.flags.PauseOnEnqueue.set(-2);
 
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -1044,7 +1044,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintKernelDispatchParameters.set(true);
+    debugManager.flags.PrintKernelDispatchParameters.set(true);
     testing::internal::CaptureStdout(); // start capturing
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
@@ -1296,7 +1296,7 @@ HWTEST_F(WalkerThreadTest, givenDefaultDebugFlagWhenKernelDescriptorInlineDataEn
 
 HWTEST_F(WalkerThreadTest, givenDebugFlagDisabledWhenKernelDescriptorInlineDataEnabledThenReturnInlineNotRequired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(0);
+    debugManager.flags.EnablePassInlineData.set(0);
 
     NEO::KernelDescriptor kernelDesc;
     kernelDesc.kernelAttributes.flags.passInlineData = true;
@@ -1306,7 +1306,7 @@ HWTEST_F(WalkerThreadTest, givenDebugFlagDisabledWhenKernelDescriptorInlineDataE
 
 HWTEST_F(WalkerThreadTest, givenDebugFlagEnabledWhenKernelDescriptorInlineDataEnabledThenReturnInlineRequired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(1);
+    debugManager.flags.EnablePassInlineData.set(1);
 
     NEO::KernelDescriptor kernelDesc;
     kernelDesc.kernelAttributes.flags.passInlineData = true;
@@ -1316,7 +1316,7 @@ HWTEST_F(WalkerThreadTest, givenDebugFlagEnabledWhenKernelDescriptorInlineDataEn
 
 HWTEST_F(WalkerThreadTest, givenDebugFlagEnabledWhenKernelDescriptorInlineDataDisabledThenReturnInlineNotRequired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(1);
+    debugManager.flags.EnablePassInlineData.set(1);
 
     NEO::KernelDescriptor kernelDesc;
     kernelDesc.kernelAttributes.flags.passInlineData = false;
@@ -1352,8 +1352,8 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
@@ -1387,7 +1387,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindles
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER = typename FamilyType::WALKER_TYPE;
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);

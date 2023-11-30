@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ struct MockImage : public ImageHw<T> {
 
 HWTEST2_F(PvcAndLaterImageTests, givenNoImagesSupportLocalMemoryEnabledAndCopyHostPtrWhenCreatingLinearImageThenMemoryIsTransferredOverCpu, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
     auto eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     VariableBackup<bool> supportsImagesBackup{&defaultHwInfo->capabilityTable.supportsImages, false};
     VariableBackup<ImageCreateFunc> createImageFunctionBackup{&imageFactory[eRenderCoreFamily].createImageFunction};

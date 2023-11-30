@@ -49,7 +49,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
         for (auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = testInput.revisionId;
-            DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
+            debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
                 testInput.programGlobalFenceAsPostSyncOperationInComputeWalker);
 
             postSyncData.setSystemMemoryFenceRequest(false);

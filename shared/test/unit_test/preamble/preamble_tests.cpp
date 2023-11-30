@@ -141,7 +141,7 @@ HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNum
     const HardwareInfo &hwInfo = *defaultHwInfo;
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.MaxHwThreadsPercent.set(80);
+    debugManager.flags.MaxHwThreadsPercent.set(80);
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = int(hwInfo.gtSystemInfo.EUCount * threadsPerEU * 80 / 100.0f);
@@ -152,7 +152,7 @@ HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMax
     const HardwareInfo &hwInfo = *defaultHwInfo;
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.MinHwThreadsUnoccupied.set(2);
+    debugManager.flags.MinHwThreadsUnoccupied.set(2);
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU - 2;
@@ -213,7 +213,7 @@ HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemapho
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     DebugManagerStateRestore debugManagerStateRestore;
     uint32_t newDelay = 10u;
-    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(newDelay);
+    debugManager.flags.ForceSemaphoreDelayBetweenWaits.set(newDelay);
 
     auto bufferSize = PreambleHelper<FamilyType>::getSemaphoreDelayCommandSize();
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), bufferSize);
@@ -237,7 +237,7 @@ HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemapho
 HWTEST_F(PreambleTest, givenNotSetForceSemaphoreDelayBetweenWaitsWhenProgramSemaphoreDelayThenSemaWaitPollRegisterIsNotProgrammed) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);
+    debugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);
 
     auto bufferSize = PreambleHelper<FamilyType>::getSemaphoreDelayCommandSize();
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), bufferSize);
@@ -257,7 +257,7 @@ HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsC
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.CleanStateInPreamble.set(true);
+    debugManager.flags.CleanStateInPreamble.set(true);
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 

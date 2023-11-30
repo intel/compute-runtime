@@ -103,7 +103,7 @@ TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItI
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     ultHwConfig.forceOsAgnosticMemoryManager = false;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeAllBuffersResident.set(true);
+    debugManager.flags.MakeAllBuffersResident.set(true);
 
     initPlatform();
     auto device = platform()->getClDevice(0u);

@@ -23,7 +23,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     Drm *pOriginalDrm = nullptr;
 
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         SysmanDeviceFixture::SetUp();
         pDrm = new MockMemoryNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperUpstream>(*pDrm));
@@ -40,7 +40,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
 
-        DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
+        debugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());

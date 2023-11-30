@@ -12,9 +12,9 @@ namespace NEO {
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
-    if ((DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
-        (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
-        (DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
+    if ((debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
+        (debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
+        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
         return false;
     }
     return true;
@@ -51,8 +51,8 @@ bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupTy
 template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                                           const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const {
-    if ((DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
-        (DebugManager.flags.OverrideMaxWorkGroupCount.get() != -1)) {
+    if ((debugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
+        (debugManager.flags.OverrideMaxWorkGroupCount.get() != -1)) {
         return maxWorkGroupCount;
     }
     if (!isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment)) {
@@ -80,8 +80,8 @@ bool GfxCoreHelperHw<Family>::isEngineTypeRemappingToHwSpecificRequired() const 
 
 template <typename Family>
 size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
-    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
-        return 0xE00 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
+    if (debugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
+        return 0xE00 + (MemoryConstants::pageSize * debugManager.flags.ForceExtendedKernelIsaSize.get());
     }
     return 0xE00;
 }

@@ -158,7 +158,7 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfAdapterLuidFai
     platformsImpl->clear();
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 

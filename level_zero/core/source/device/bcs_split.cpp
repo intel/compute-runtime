@@ -32,8 +32,8 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         return true;
     }
 
-    if (NEO::DebugManager.flags.SplitBcsMask.get() > 0) {
-        this->engines = NEO::DebugManager.flags.SplitBcsMask.get();
+    if (NEO::debugManager.flags.SplitBcsMask.get() > 0) {
+        this->engines = NEO::debugManager.flags.SplitBcsMask.get();
     }
 
     StackVec<NEO::CommandStreamReceiver *, 4u> csrs;
@@ -66,11 +66,11 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         this->cmdQs.push_back(commandQueue);
     }
 
-    if (NEO::DebugManager.flags.SplitBcsMaskH2D.get() > 0) {
-        this->h2dEngines = NEO::DebugManager.flags.SplitBcsMaskH2D.get();
+    if (NEO::debugManager.flags.SplitBcsMaskH2D.get() > 0) {
+        this->h2dEngines = NEO::debugManager.flags.SplitBcsMaskH2D.get();
     }
-    if (NEO::DebugManager.flags.SplitBcsMaskD2H.get() > 0) {
-        this->d2hEngines = NEO::DebugManager.flags.SplitBcsMaskD2H.get();
+    if (NEO::debugManager.flags.SplitBcsMaskD2H.get() > 0) {
+        this->d2hEngines = NEO::debugManager.flags.SplitBcsMaskD2H.get();
     }
 
     uint32_t cmdQIndex = 0u;

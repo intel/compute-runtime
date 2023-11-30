@@ -23,7 +23,7 @@ TEST(clGetPlatformIDsMultiPlatformTest, whenCreateDevicesWithDifferentProductFam
     }
     DebugManagerStateRestore restorer;
     const size_t numRootDevices = 2u;
-    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createFuncBackup{&DeviceFactory::createRootDeviceFunc};
     DeviceFactory::createRootDeviceFunc = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         auto device = std::unique_ptr<Device>(Device::create<RootDevice>(&executionEnvironment, rootDeviceIndex));

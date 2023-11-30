@@ -60,12 +60,12 @@ TokenizedString tokenize(ConstStringRef src, char sperator) {
 
 void applyAdditionalInternalOptions(std::string &internalOptions) {
     size_t pos;
-    if (DebugManager.flags.ForceLargeGrfCompilationMode.get()) {
+    if (debugManager.flags.ForceLargeGrfCompilationMode.get()) {
         pos = internalOptions.find(CompilerOptions::largeGrf.data());
         if (pos == std::string::npos) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::largeGrf);
         }
-    } else if (DebugManager.flags.ForceDefaultGrfCompilationMode.get()) {
+    } else if (debugManager.flags.ForceDefaultGrfCompilationMode.get()) {
         pos = internalOptions.find(CompilerOptions::defaultGrf.data());
         if (pos == std::string::npos) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::defaultGrf.data());
@@ -79,7 +79,7 @@ void applyAdditionalInternalOptions(std::string &internalOptions) {
 
 void applyAdditionalApiOptions(std::string &apiOptions) {
     size_t pos;
-    if (DebugManager.flags.ForceAutoGrfCompilationMode.get() == 1) {
+    if (debugManager.flags.ForceAutoGrfCompilationMode.get() == 1) {
         pos = apiOptions.find(CompilerOptions::autoGrf.data());
         if (pos == std::string::npos) {
             CompilerOptions::concatenateAppend(apiOptions, CompilerOptions::autoGrf);

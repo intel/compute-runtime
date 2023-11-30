@@ -188,7 +188,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGtpinInfoTokenThenKernelInfoIsPro
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
@@ -209,7 +209,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingMode
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseBindlessMode.set(0);
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
@@ -231,7 +231,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithGlobalObjectArgWhenAddressingMode
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithImageObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
@@ -252,7 +252,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithImageObjectArgWhenAddressingModeI
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithImageObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseBindlessMode.set(0);
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
@@ -274,7 +274,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithImageObjectArgWhenAddressingModeI
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingModeIsBindlessThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
@@ -303,7 +303,7 @@ TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingM
 
 TEST(KernelInfoFromPatchTokens, GivenKernelWithStatelessObjectArgWhenAddressingModeIsBindfulThenBindlessOffsetIsSetProperly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseBindlessMode.set(0);
     std::vector<uint8_t> storage;
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
 

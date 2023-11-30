@@ -522,7 +522,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
     dst.kernelAttributes.flags.requiresImplicitArgs = src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset != nullptr;
 
-    if (DebugManager.flags.UpdateCrossThreadDataSize.get()) {
+    if (debugManager.flags.UpdateCrossThreadDataSize.get()) {
         dst.updateCrossThreadDataSize();
     }
 

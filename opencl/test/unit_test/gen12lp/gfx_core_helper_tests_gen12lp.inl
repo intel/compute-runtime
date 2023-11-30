@@ -264,7 +264,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIs
 
     for (auto &[expectedResult, wa, debugKey] : testParams) {
         waTable.flags.waDisableFusedThreadScheduling = wa;
-        DebugManager.flags.CFEFusedEUDispatch.set(debugKey);
+        debugManager.flags.CFEFusedEUDispatch.set(debugKey);
         EXPECT_EQ(expectedResult, gfxCoreHelper.isFusedEuDispatchEnabled(hardwareInfo, false));
     }
 }
@@ -361,7 +361,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesA
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceL1Caching.set(1);
+    debugManager.flags.ForceL1Caching.set(1);
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
@@ -378,7 +378,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThe
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.ForceL1Caching.set(0);
+    debugManager.flags.ForceL1Caching.set(0);
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
@@ -394,7 +394,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsTh
 
 GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequiredWhenCpuAccessIsDisallowedThenSystemMemoryIsRequested) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
 
     const AllocationType allocationTypesToUseSystemMemory[] = {
         AllocationType::COMMAND_BUFFER,

@@ -67,7 +67,7 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 using CommandListExecuteImmediate = Test<DeviceFixture>;
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseImmediateFlushTask.set(0);
+    debugManager.flags.UseImmediateFlushTask.set(0);
 
     auto &productHelper = device->getProductHelper();
 
@@ -131,8 +131,8 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset, IsAtLeastSkl) {
     std::unique_ptr<L0::CommandList> commandList;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.EnableBOChunkingPrefetch.set(true);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
@@ -146,8 +146,8 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset2, IsAtLeastSkl) {
     std::unique_ptr<L0::CommandList> commandList;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(false);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.EnableBOChunkingPrefetch.set(false);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
@@ -161,8 +161,8 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset3, IsAtLeastSkl) {
     std::unique_ptr<L0::CommandList> commandList;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+    debugManager.flags.EnableBOChunkingPrefetch.set(true);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
@@ -176,8 +176,8 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
 HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset4, IsAtLeastSkl) {
     std::unique_ptr<L0::CommandList> commandList;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(false);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+    debugManager.flags.EnableBOChunkingPrefetch.set(false);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));

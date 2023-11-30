@@ -44,7 +44,7 @@ struct HostPointerManagerFixure {
 
 struct ForceDisabledHostPointerManagerFixure : public HostPointerManagerFixure {
     void setUp() {
-        DebugManager.flags.EnableHostPointerImport.set(0);
+        debugManager.flags.EnableHostPointerImport.set(0);
 
         HostPointerManagerFixure::setUp();
     }
@@ -56,7 +56,7 @@ struct ForceDisabledHostPointerManagerFixure : public HostPointerManagerFixure {
 
 struct ForceEnabledHostPointerManagerFixure : public HostPointerManagerFixure {
     void setUp() {
-        DebugManager.flags.EnableHostPointerImport.set(1);
+        debugManager.flags.EnableHostPointerImport.set(1);
 
         HostPointerManagerFixure::setUp();
     }

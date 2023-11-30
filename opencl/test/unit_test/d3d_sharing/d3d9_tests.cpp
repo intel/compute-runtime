@@ -99,7 +99,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         mockSharingFcns = new MockD3DSharingFunctions<D3D9>();
         context->setSharingFunctions(mockSharingFcns);
         cmdQ = new MockCommandQueue(context, context->getDevice(0), 0, false);
-        DebugManager.injectFcn = reinterpret_cast<void *>(&mockSharingFcns->mockGetDxgiDesc);
+        debugManager.injectFcn = reinterpret_cast<void *>(&mockSharingFcns->mockGetDxgiDesc);
 
         surfaceInfo.resource = reinterpret_cast<IDirect3DSurface9 *>(&dummyD3DSurface);
 

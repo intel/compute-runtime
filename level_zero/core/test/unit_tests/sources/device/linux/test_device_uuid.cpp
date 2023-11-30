@@ -23,7 +23,7 @@ struct TestDeviceUuid : public ::testing::Test {
 
 TEST_F(TestDeviceUuid, GivenEnableChipsetUniqueUuidIsSetWhenOsInterfaceIsNotSetThenUuidOfFallbackPathIsReceived) {
 
-    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
+    debugManager.flags.EnableChipsetUniqueUUID.set(1);
     auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));

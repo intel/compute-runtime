@@ -13,7 +13,7 @@
 namespace NEO {
 bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
     bool preferredCompression = false;
-    int32_t compressionEnabled = DebugManager.flags.EnableUsmCompression.get();
+    int32_t compressionEnabled = debugManager.flags.EnableUsmCompression.get();
     if (compressionEnabled == 1) {
         if ((properties.allocationType == AllocationType::SVM_GPU) ||
             (properties.flags.isUSMDeviceAllocation)) {

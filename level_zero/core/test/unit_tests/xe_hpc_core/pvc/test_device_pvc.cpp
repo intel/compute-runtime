@@ -41,7 +41,7 @@ PVCTEST_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImpli
     auto &productHelper = getHelper<NEO::ProductHelper>();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;

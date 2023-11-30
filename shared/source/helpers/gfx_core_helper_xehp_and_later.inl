@@ -21,8 +21,8 @@ namespace NEO {
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
-        return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
+    if (debugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
+        return static_cast<uint32_t>(debugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
@@ -70,7 +70,7 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
         }
     }
 
-    if ((DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
+    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
         hwInfo.featureTable.flags.ftrRcsNode) {
         engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
     }
@@ -103,7 +103,7 @@ EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::Engin
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
-        if (DebugManager.flags.ForceL1Caching.get() == 0) {
+        if (debugManager.flags.ForceL1Caching.get() == 0) {
             if (l1enabled) {
                 return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
             }
@@ -135,8 +135,8 @@ template <typename GfxFamily>
 aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
     aub_stream::MMIOList mmioList;
 
-    if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        auto format = static_cast<uint32_t>(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
+        auto format = static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
 
         UNRECOVERABLE_IF(format > 0x1F);
 
@@ -154,7 +154,7 @@ aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const Hardware
 template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
+    if (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         return hwInfo.featureTable.flags.ftrLocalMemory;
     }
     return false;
@@ -177,8 +177,8 @@ inline bool GfxCoreHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NE
 template <typename GfxFamily>
 inline bool GfxCoreHelperHw<GfxFamily>::preferInternalBcsEngine() const {
     auto preferInternalBcsEngine = true;
-    if (DebugManager.flags.PreferInternalBcsEngine.get() != -1) {
-        preferInternalBcsEngine = static_cast<bool>(DebugManager.flags.PreferInternalBcsEngine.get());
+    if (debugManager.flags.PreferInternalBcsEngine.get() != -1) {
+        preferInternalBcsEngine = static_cast<bool>(debugManager.flags.PreferInternalBcsEngine.get());
     }
 
     return preferInternalBcsEngine;

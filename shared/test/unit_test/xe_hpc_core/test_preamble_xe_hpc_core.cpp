@@ -21,7 +21,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenXeHpcCoreAndSetDebugFlagWhenPreambleCfe
     DebugManagerStateRestore dbgRestore;
     uint32_t expectedValue = 1u;
 
-    DebugManager.flags.CFEComputeDispatchAllWalkerEnable.set(expectedValue);
+    debugManager.flags.CFEComputeDispatchAllWalkerEnable.set(expectedValue);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
@@ -92,12 +92,12 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenSetDebugFlagWhenPreambleCfeStateIsProgr
 
     DebugManagerStateRestore dbgRestore;
 
-    DebugManager.flags.CFEFusedEUDispatch.set(expectedValue1);
-    DebugManager.flags.CFEOverDispatchControl.set(expectedValue1);
-    DebugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
-    DebugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
-    DebugManager.flags.CFENumberOfWalkers.set(expectedValue2);
-    DebugManager.flags.CFEMaximumNumberOfThreads.set(expectedValue2);
+    debugManager.flags.CFEFusedEUDispatch.set(expectedValue1);
+    debugManager.flags.CFEOverDispatchControl.set(expectedValue1);
+    debugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
+    debugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
+    debugManager.flags.CFENumberOfWalkers.set(expectedValue2);
+    debugManager.flags.CFEMaximumNumberOfThreads.set(expectedValue2);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);

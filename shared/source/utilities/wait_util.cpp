@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace WaitUtils {
 uint32_t waitCount = defaultWaitCount;
 
 void init() {
-    int32_t overrideWaitCount = DebugManager.flags.WaitLoopCount.get();
+    int32_t overrideWaitCount = debugManager.flags.WaitLoopCount.get();
     if (overrideWaitCount != -1) {
         waitCount = static_cast<uint32_t>(overrideWaitCount);
     }

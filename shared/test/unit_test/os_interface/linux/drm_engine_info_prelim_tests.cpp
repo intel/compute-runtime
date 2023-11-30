@@ -239,7 +239,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingS
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainCopyEngineWhenBindingSingleTileDrmContextThenContextParamEngineIsSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
@@ -289,7 +289,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBindingSingleTileDrmContextThenContextParamEngineIsSet) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
@@ -372,7 +372,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingM
 
 HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancing, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
@@ -401,8 +401,8 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
 
 HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancingLimitedToMaxCount, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
-    DebugManager.flags.LimitEngineCountForVirtualBcs.set(3);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+    debugManager.flags.LimitEngineCountForVirtualBcs.set(3);
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
@@ -431,7 +431,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
 
 HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContextThenDisableLoadBalancing, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForBcs.set(0);
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(0);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
@@ -522,7 +522,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
 
 TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancingOnlyBelowDebugVar) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.LimitEngineCountForVirtualCcs.set(2);
+    debugManager.flags.LimitEngineCountForVirtualCcs.set(2);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -588,7 +588,7 @@ TEST(DrmTest, givenDisabledCcsSupportWhenQueryingThenResetHwInfoParams) {
 
 TEST(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBalancing) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseDrmVirtualEnginesForCcs.set(0);
+    debugManager.flags.UseDrmVirtualEnginesForCcs.set(0);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

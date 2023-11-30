@@ -24,12 +24,12 @@ struct XeHpgCoreStatelessCompressionInSBA : public KernelAUBFixture<StatelessCop
                                             public ::testing::Test,
                                             public ::testing::WithParamInterface<uint32_t /*EngineType*/> {
     void SetUp() override {
-        DebugManager.flags.EnableStatelessCompression.set(1);
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
-        DebugManager.flags.RenderCompressedImagesEnabled.set(true);
-        DebugManager.flags.EnableLocalMemory.set(true);
-        DebugManager.flags.NodeOrdinal.set(GetParam());
-        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.EnableStatelessCompression.set(1);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+        debugManager.flags.RenderCompressedImagesEnabled.set(true);
+        debugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.NodeOrdinal.set(GetParam());
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         KernelAUBFixture<StatelessCopyKernelFixture>::setUp();
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
@@ -257,12 +257,12 @@ struct XeHpgCoreUmStatelessCompressionInSBA : public KernelAUBFixture<StatelessK
                                               public ::testing::Test,
                                               public ::testing::WithParamInterface<uint32_t /*EngineType*/> {
     void SetUp() override {
-        DebugManager.flags.EnableStatelessCompression.set(1);
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
-        DebugManager.flags.RenderCompressedImagesEnabled.set(true);
-        DebugManager.flags.EnableLocalMemory.set(true);
-        DebugManager.flags.NodeOrdinal.set(GetParam());
-        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.EnableStatelessCompression.set(1);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+        debugManager.flags.RenderCompressedImagesEnabled.set(true);
+        debugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.NodeOrdinal.set(GetParam());
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::setUp();
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
@@ -484,9 +484,9 @@ struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextAubFixture
                                                    public StatelessCopyKernelFixture,
                                                    public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableStatelessCompression.set(1);
-        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
-        DebugManager.flags.EnableBlitterOperationsSupport.set(true);
+        debugManager.flags.EnableStatelessCompression.set(1);
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+        debugManager.flags.EnableBlitterOperationsSupport.set(true);
         MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
         StatelessCopyKernelFixture::setUp(tileDevices[0], context.get());
         if (!tileDevices[0]->getHardwareInfo().featureTable.flags.ftrLocalMemory) {

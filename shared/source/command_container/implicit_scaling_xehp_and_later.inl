@@ -132,8 +132,8 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                             args,
                                                                                             hwInfo);
     } else {
-        if (DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
-            partitionCount = DebugManager.flags.ExperimentalSetWalkerPartitionCount.get();
+        if (debugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
+            partitionCount = debugManager.flags.ExperimentalSetWalkerPartitionCount.get();
             if (partitionCount == 1u) {
                 walkerCmd.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
             }

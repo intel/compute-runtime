@@ -79,8 +79,8 @@ void GlSharingBuilderFactory::fillGlobalDispatchTable() {
 std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
     auto isGlSharingEnabled = GLSharingFunctionsWindows::isGlSharingEnabled();
 
-    if (DebugManager.flags.AddClGlSharing.get() != -1) {
-        isGlSharingEnabled = DebugManager.flags.AddClGlSharing.get();
+    if (debugManager.flags.AddClGlSharing.get() != -1) {
+        isGlSharingEnabled = debugManager.flags.AddClGlSharing.get();
     }
 
     if (isGlSharingEnabled) {
@@ -94,7 +94,7 @@ std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
 }
 
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
-    if (DebugManager.flags.EnableFormatQuery.get() &&
+    if (debugManager.flags.EnableFormatQuery.get() &&
         functionName == "clGetSupportedGLTextureFormatsINTEL") {
         return ((void *)(clGetSupportedGLTextureFormatsINTEL));
     }

@@ -76,13 +76,13 @@ struct BlitEnqueueTests : public ::testing::Test {
             GTEST_SKIP();
         }
 
-        DebugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
-        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.EnableLocalMemory.set(1);
 
         device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 

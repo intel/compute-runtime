@@ -38,7 +38,7 @@ XE_HPC_CORETEST_F(DirectSubmissionTestXeHpcCore, givenXeHpcCoreWhenDispatchDisab
 
 XE_HPC_CORETEST_F(DirectSubmissionTestXeHpcCore, givenXeHpcCoreAndDisablePrefetcherDebugFlagEnabledWhenDispatchDisablePrefetcherIsCalledThenPrefetcherIsDisabled) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisablePrefetcher.set(1);
+    debugManager.flags.DirectSubmissionDisablePrefetcher.set(1);
 
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using Dispatcher = BlitterDispatcher<FamilyType>;

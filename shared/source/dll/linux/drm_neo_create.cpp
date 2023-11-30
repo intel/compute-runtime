@@ -37,7 +37,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         return nullptr;
     }
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    if (!DeviceFactory::isAllowedDeviceId(hwInfo->platform.usDeviceID, DebugManager.flags.FilterDeviceId.get())) {
+    if (!DeviceFactory::isAllowedDeviceId(hwInfo->platform.usDeviceID, debugManager.flags.FilterDeviceId.get())) {
         return nullptr;
     }
 
@@ -58,7 +58,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         }
         hwInfo->capabilityTable.deviceName = deviceName;
     } else {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
                          "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", hwInfo->platform.usDeviceID, hwInfo->platform.usRevId);
         return nullptr;
     }
@@ -67,12 +67,12 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     int hasExecSoftPin = 0;
     ret = drm->getExecSoftPin(hasExecSoftPin);
     if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query Soft Pin parameter!\n");
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query Soft Pin parameter!\n");
         return nullptr;
     }
 
     if (!hasExecSoftPin) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
                          "FATAL: Device doesn't support Soft-Pin but this is required.\n");
         return nullptr;
     }
@@ -80,17 +80,17 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     // Activate the Turbo Boost Frequency feature
     ret = drm->enableTurboBoost();
     if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
     if (!drm->queryMemoryInfo()) {
         drm->setPerContextVMRequired(true);
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
     }
 
     if (!drm->queryEngineInfo()) {
         drm->setPerContextVMRequired(true);
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
     drm->checkContextDebugSupport();
@@ -104,7 +104,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
             if (drm->isVmBindAvailable()) {
                 drm->setPerContextVMRequired(true);
             } else {
-                printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
+                printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
             }
         }
     }
@@ -114,7 +114,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     if (!drm->isPerContextVMRequired()) {
         if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
+            printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }
     }
 
@@ -124,8 +124,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 }
 
 void Drm::overrideBindSupport(bool &useVmBind) {
-    if (DebugManager.flags.UseVmBind.get() != -1) {
-        useVmBind = DebugManager.flags.UseVmBind.get();
+    if (debugManager.flags.UseVmBind.get() != -1) {
+        useVmBind = debugManager.flags.UseVmBind.get();
     }
 }
 

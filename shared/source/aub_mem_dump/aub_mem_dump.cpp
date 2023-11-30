@@ -178,11 +178,11 @@ void LrcaHelper::initialize(void *pLRCIn) const {
 }
 
 void AubStream::writeMMIO(uint32_t offset, uint32_t value) {
-    auto dbgOffset = NEO::DebugManager.flags.AubDumpOverrideMmioRegister.get();
+    auto dbgOffset = NEO::debugManager.flags.AubDumpOverrideMmioRegister.get();
     if (dbgOffset > 0) {
         if (offset == static_cast<uint32_t>(dbgOffset)) {
             offset = static_cast<uint32_t>(dbgOffset);
-            value = static_cast<uint32_t>(NEO::DebugManager.flags.AubDumpOverrideMmioRegisterValue.get());
+            value = static_cast<uint32_t>(NEO::debugManager.flags.AubDumpOverrideMmioRegisterValue.get());
         }
     }
     writeMMIOImpl(offset, value);

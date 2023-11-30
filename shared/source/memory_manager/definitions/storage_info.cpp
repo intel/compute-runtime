@@ -118,12 +118,12 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         auto colouringPolicy = properties.colouringPolicy;
         auto granularity = properties.colouringGranularity;
 
-        if (DebugManager.flags.MultiStoragePolicy.get() != -1) {
-            colouringPolicy = static_cast<ColouringPolicy>(DebugManager.flags.MultiStoragePolicy.get());
+        if (debugManager.flags.MultiStoragePolicy.get() != -1) {
+            colouringPolicy = static_cast<ColouringPolicy>(debugManager.flags.MultiStoragePolicy.get());
         }
 
-        if (DebugManager.flags.MultiStorageGranularity.get() != -1) {
-            granularity = DebugManager.flags.MultiStorageGranularity.get() * MemoryConstants::kiloByte;
+        if (debugManager.flags.MultiStorageGranularity.get() != -1) {
+            granularity = debugManager.flags.MultiStorageGranularity.get() * MemoryConstants::kiloByte;
         }
 
         DEBUG_BREAK_IF(colouringPolicy == ColouringPolicy::DeviceCountBased && granularity != MemoryConstants::pageSize64k);
@@ -136,8 +136,8 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.multiStorage = true;
             storageInfo.colouringPolicy = colouringPolicy;
             storageInfo.colouringGranularity = granularity;
-            if (DebugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
-                storageInfo.memoryBanks = DebugManager.flags.OverrideMultiStoragePlacement.get();
+            if (debugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
+                storageInfo.memoryBanks = debugManager.flags.OverrideMultiStoragePlacement.get();
             }
         }
         if (properties.flags.readOnlyMultiStorage) {
@@ -155,8 +155,8 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     }
     case AllocationType::UNIFIED_SHARED_MEMORY:
         storageInfo.memoryBanks = allTilesValue;
-        if (DebugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
-            storageInfo.memoryBanks = DebugManager.flags.OverrideMultiStoragePlacement.get();
+        if (debugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
+            storageInfo.memoryBanks = debugManager.flags.OverrideMultiStoragePlacement.get();
         }
         break;
     default:
@@ -164,7 +164,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     }
 
     bool forceLocalMemoryForDirectSubmission = true;
-    switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
+    switch (debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
     case 0:
         forceLocalMemoryForDirectSubmission = false;
         break;
@@ -191,17 +191,17 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             UNRECOVERABLE_IF(storageInfo.memoryBanks.none());
         }
     }
-    if (DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+    if (debugManager.flags.ForceMultiTileAllocPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
-        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceMultiTileAllocPlacement.get()) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
             storageInfo.tileInstanced = true;
         }
     }
-    if (DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+    if (debugManager.flags.ForceSingleTileAllocPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
-        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceSingleTileAllocPlacement.get()) {
             storageInfo.cloningOfPageTables = true;
             storageInfo.memoryBanks = preferredTile;
             storageInfo.tileInstanced = false;

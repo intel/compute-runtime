@@ -27,7 +27,7 @@ using namespace NEO;
 
 struct EnqueueFixtureXeHpcCore : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableMemoryPrefetch.set(1);
+        debugManager.flags.EnableMemoryPrefetch.set(1);
 
         clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), mockRootDeviceIndex));
         context = std::make_unique<MockContext>(clDevice.get());
@@ -169,7 +169,7 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
         // debug flag == 1
 
         commandsOffset = commandStream.getUsed();
-        DebugManager.flags.ForceL3PrefetchForComputeWalker.set(1);
+        debugManager.flags.ForceL3PrefetchForComputeWalker.set(1);
 
         HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
                                                                               heap, heap, heap, dispatchInfo, walkerArgs);
@@ -188,7 +188,7 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
         // debug flag == 0
 
         commandsOffset = commandStream.getUsed();
-        DebugManager.flags.ForceL3PrefetchForComputeWalker.set(0);
+        debugManager.flags.ForceL3PrefetchForComputeWalker.set(0);
 
         HardwareInterface<FamilyType>::template programWalker<COMPUTE_WALKER>(commandStream, *mockKernel->mockKernel, *commandQueue,
                                                                               heap, heap, heap, dispatchInfo, walkerArgs);

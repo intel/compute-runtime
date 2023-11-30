@@ -230,7 +230,7 @@ struct DeviceTimestampPacketTests : public ::testing::Test, DeviceFixture {
     ExecutionEnvironment *executionEnvironment{nullptr};
 
     void SetUp() override {
-        DebugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.EnableTimestampPacket.set(1);
         DeviceFixture::setUp();
         executionEnvironment = pDevice->executionEnvironment;
     }
@@ -261,7 +261,7 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenU
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(4);
+        debugManager.flags.OverrideTimestampPacketSize.set(4);
 
         CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
         csr.setupContext(osContext);
@@ -273,7 +273,7 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenU
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(8);
+        debugManager.flags.OverrideTimestampPacketSize.set(8);
 
         CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
         csr.setupContext(osContext);
@@ -285,18 +285,18 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenU
     }
 
     {
-        DebugManager.flags.OverrideTimestampPacketSize.set(-1);
+        debugManager.flags.OverrideTimestampPacketSize.set(-1);
         CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
         csr.setupContext(osContext);
 
-        DebugManager.flags.OverrideTimestampPacketSize.set(12);
+        debugManager.flags.OverrideTimestampPacketSize.set(12);
         EXPECT_ANY_THROW(csr.getTimestampPacketAllocator());
     }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTimestampPacketTests, givenInvalidDebugFlagSetWhenCreatingCsrThenExceptionIsThrown) {
     OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
-    DebugManager.flags.OverrideTimestampPacketSize.set(12);
+    debugManager.flags.OverrideTimestampPacketSize.set(12);
 
     EXPECT_ANY_THROW(CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield()));
 }
@@ -317,7 +317,7 @@ HWTEST_F(DeviceTimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenG
 
 HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisableTimestampPacketOptimizations.set(true);
+    debugManager.flags.DisableTimestampPacketOptimizations.set(true);
     OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
 
     CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());

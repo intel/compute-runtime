@@ -99,7 +99,7 @@ TEST(L0DeviceTest, GivenCreatedDeviceHandleWhenCallingdeviceReinitThenNewDeviceH
 TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPageFaultCmdListImmediateWithInitializedCmdQIsCreated) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+    NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
@@ -119,9 +119,9 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
 TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
-    DebugManager.flags.EnableImplicitScaling.set(1u);
-    DebugManager.flags.CreateMultipleSubDevices.set(2u);
+    NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1u);
+    debugManager.flags.CreateMultipleSubDevices.set(2u);
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
@@ -144,8 +144,8 @@ TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddD
     constexpr uint32_t numMaskedSubDevices = 2;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
 
     auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -655,7 +655,7 @@ TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToPhysicalIdsThenSubsli
 
 struct DeviceTest : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
         execEnv = neoDevice->getExecutionEnvironment();
         execEnv->incRefInternal();
@@ -690,7 +690,7 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateManagedMemoryFromHostPtr
 }
 
 TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenValidExternalHostPtrAllocationIsCreated) {
-    DebugManager.flags.EnableHostPtrTracking.set(0);
+    debugManager.flags.EnableHostPtrTracking.set(0);
     constexpr auto dataSize = 1024u;
     auto data = std::make_unique<int[]>(dataSize);
 
@@ -1160,7 +1160,7 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDriverInfoIsNotEmptyThenDev
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDebugVariableOverrideDeviceNameIsSpecifiedThenDeviceNameIsTakenFromDebugVariable) {
     DebugManagerStateRestore restore;
     const std::string testDeviceName = "test device name";
-    DebugManager.flags.OverrideDeviceName.set(testDeviceName);
+    debugManager.flags.OverrideDeviceName.set(testDeviceName);
 
     auto deviceImp = static_cast<DeviceImp *>(device);
     ze_device_properties_t deviceProperties{};
@@ -1236,7 +1236,7 @@ TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubs
 
 TEST_F(DeviceTest, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnMaxSubslicesSupported) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DebugApiUsed.set(1);
+    debugManager.flags.DebugApiUsed.set(1);
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
 
@@ -1280,7 +1280,7 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
 TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {
     DebugManagerStateRestore restore;
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, neoDevice->getRootDeviceEnvironment());
-    DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
+    debugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
     auto deviceImp = static_cast<MockDeviceImp *>(device);
     ze_command_queue_desc_t desc = {};
@@ -1324,7 +1324,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]);
 
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, neoDevice->getRootDeviceEnvironment());
-    DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
+    debugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
     auto deviceImp = static_cast<MockDeviceImp *>(device);
     ze_command_queue_desc_t desc = {};
@@ -1359,7 +1359,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
 TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenDescOrdinalIsNotModified) {
     DebugManagerStateRestore restore;
     int nodeOrdinal = -1;
-    DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
+    debugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
     auto deviceImp = static_cast<MockDeviceImp *>(device);
     ze_command_queue_desc_t desc = {};
@@ -1521,7 +1521,7 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesS
 
 struct GlobalTimestampTest : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
     }
 
@@ -1596,7 +1596,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithDeviceProperties_1
 
 TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecondTimerSetThenTimerResolutionInCyclesPerSecondsIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseCyclesPerSecondTimer.set(1u);
+    debugManager.flags.UseCyclesPerSecondTimer.set(1u);
 
     neoDevice->setOSTime(new FalseGpuCpuTime());
     NEO::DeviceVector devices;
@@ -1672,7 +1672,7 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseRetu
 
 TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetWhenGetGlobalTimestampIsCalledThenOutputStringIsAsExpected) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintGlobalTimestampInNs.set(true);
+    debugManager.flags.PrintGlobalTimestampInNs.set(true);
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
@@ -1713,7 +1713,7 @@ TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetAnd64bitTimestampWhenGetGlobalT
     capabilityTable.timestampValidBits = 64;
     capabilityTable.kernelTimestampValidBits = 64;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintGlobalTimestampInNs.set(true);
+    debugManager.flags.PrintGlobalTimestampInNs.set(true);
 
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
@@ -1855,7 +1855,7 @@ TEST_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWhenPnextIsNonNullAnd
 
 struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         HardwareInfo nonFp64Device = *defaultHwInfo;
         nonFp64Device.capabilityTable.ftrSupportsFP64 = false;
         nonFp64Device.capabilityTable.ftrSupports64BitMath = false;
@@ -1885,7 +1885,7 @@ TEST_F(DeviceHasNoDoubleFp64Test, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnable
     EXPECT_EQ(0u, kernelProperties.fp64flags);
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.OverrideDefaultFP64Settings.set(1);
+    debugManager.flags.OverrideDefaultFP64Settings.set(1);
 
     device->getKernelProperties(&kernelProperties);
     EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
@@ -1950,7 +1950,7 @@ TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenFp64EmulationEnabledAndDeviceSu
 
 struct DeviceHasFp64Test : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         HardwareInfo fp64DeviceInfo = *defaultHwInfo;
         fp64DeviceInfo.capabilityTable.ftrSupportsFP64 = true;
         fp64DeviceInfo.capabilityTable.ftrSupports64BitMath = true;
@@ -1998,7 +1998,7 @@ TEST_F(DeviceHasFp64Test, givenDeviceWithFp64ThenReportCorrectFp64Flags) {
 
 struct DeviceHasFp64ButNoBitMathTest : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         HardwareInfo fp64DeviceInfo = *defaultHwInfo;
         fp64DeviceInfo.capabilityTable.ftrSupportsFP64 = true;
         fp64DeviceInfo.capabilityTable.ftrSupports64BitMath = false;
@@ -2104,16 +2104,16 @@ struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 
     bool hasPageFaultsEnabled(const NEO::Device &neoDevice) override {
-        if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
-            return DebugManager.flags.EnableRecoverablePageFaults.get();
+        if (debugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+            return debugManager.flags.EnableRecoverablePageFaults.get();
         }
 
         return false;
     }
 
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override {
-        if (DebugManager.flags.UseKmdMigration.get() != -1) {
-            return DebugManager.flags.UseKmdMigration.get();
+        if (debugManager.flags.UseKmdMigration.get() != -1) {
+            return debugManager.flags.UseKmdMigration.get();
         }
 
         return false;
@@ -2124,8 +2124,8 @@ template <int32_t enablePartitionWalker>
 struct MultipleDevicesFixture : public ::testing::Test {
     void SetUp() override {
 
-        DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
@@ -2347,9 +2347,9 @@ TEST_F(MultipleDevicesTest, whenCallingsetAtomicAccessAttributeForSystemAccessSh
     L0::Device *device0 = driverHandle->devices[0];
     auto &hwInfo = device0->getNEODevice()->getHardwareInfo();
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.EnableRecoverablePageFaults.set(true);
-    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(true);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.EnableRecoverablePageFaults.set(true);
+    debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(true);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -2547,8 +2547,8 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
 using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PWithoutRecoverablePageFaultsThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(0);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(0);
+    debugManager.flags.UseKmdMigration.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2563,8 +2563,8 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
 using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PWithoutKmdMigrationThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(1);
-    DebugManager.flags.UseKmdMigration.set(0);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    debugManager.flags.UseKmdMigration.set(0);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2580,8 +2580,8 @@ using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportThenBasicSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2597,9 +2597,9 @@ using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportAndEnableCrossP2PSharedAccessKeyThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2615,8 +2615,8 @@ using MemoryAccessPropertieP2PAccess1Atomic1 = MultipleDevicesP2PFixture<1, 1, 0
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportThenBasicSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2630,9 +2630,9 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportAndEnableCrossP2PSharedAccessKeyThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableRecoverablePageFaults.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(1);
+    debugManager.flags.EnableRecoverablePageFaults.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2781,7 +2781,7 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFa
 
 TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsValueBasingOnDebugVariable) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2789,7 +2789,7 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFa
     ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_FALSE(canAccess);
-    DebugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
     res = device0->canAccessPeer(device1->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_TRUE(canAccess);
@@ -3280,7 +3280,7 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
 
 struct MultipleDevicesAffinityTest : MultipleDevicesFixture<-1> {
     void SetUp() override {
-        DebugManager.flags.ZE_AFFINITY_MASK.set("0.1,1.0");
+        debugManager.flags.ZE_AFFINITY_MASK.set("0.1,1.0");
         MultipleDevicesFixture<-1>::SetUp();
     }
 
@@ -4133,9 +4133,9 @@ TEST_F(zeDeviceSystemBarrierTest, whenCallingSystemBarrierThenReturnErrorUnsuppo
 template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker, int32_t enableImplicitScaling>
 struct MultiSubDeviceFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.CreateMultipleSubDevices.set(2);
-        DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
-        DebugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
+        debugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, osLocalMemory);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, apiSupport);
 
@@ -4461,7 +4461,7 @@ TEST_F(P2pBandwidthPropertiesTest, GivenFabricVerticesAreNotAvailableForDevicesW
 TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenFlagsOfDevicePropertiesIsCorrect) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
     MultiDeviceFixtureHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
@@ -4494,7 +4494,7 @@ TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenFlagsOfDe
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenFlagsOfDevicePropertiesIsCorrect) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
@@ -4527,7 +4527,7 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenF
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenGetRootDeviceDoesNotReturnNullptr) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
@@ -4555,7 +4555,7 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenG
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskWithoutSubDevicesThenGetRootDeviceReturnsNullptr) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2,3");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.numSubDevices = 0;
     multiDeviceFixture.setUp();
@@ -4582,7 +4582,7 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskWitho
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithoutDevicesArrayThenGetDeviceFails) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
@@ -4600,7 +4600,7 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithoutDevice
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithInvalidAffinityThenGetDeviceFails) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("90");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("90");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
@@ -4639,7 +4639,7 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetThenGetRootDe
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetAndDefaultAffinityThenFlagsOfDevicePropertiesIsCorrect) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
@@ -4728,7 +4728,7 @@ TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenFlagsOfDeviceProp
 TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenGetRootDeviceReturnsNullptr) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
     MultiDeviceFixtureHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
@@ -4780,7 +4780,7 @@ TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenGetRootDeviceRetu
 TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetWithMaskThenGetRootDeviceIsNotNullForSubDevices) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
     MultiDeviceFixture multiDeviceFixture{};
     multiDeviceFixture.setUp();
     multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
@@ -4870,7 +4870,7 @@ TEST_F(DeviceTest, GivenValidDeviceWhenQueryingKernelTimestampsProptertiesThenCo
 
 struct RTASDeviceTest : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
         execEnv = neoDevice->getExecutionEnvironment();
         execEnv->incRefInternal();

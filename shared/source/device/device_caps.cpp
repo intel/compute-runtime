@@ -46,11 +46,11 @@ void Device::initializeCaps() {
     auto releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
 
     bool ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
-    if (DebugManager.flags.ForceOCLVersion.get() != 0) {
-        ocl21FeaturesEnabled = (DebugManager.flags.ForceOCLVersion.get() == 21);
+    if (debugManager.flags.ForceOCLVersion.get() != 0) {
+        ocl21FeaturesEnabled = (debugManager.flags.ForceOCLVersion.get() == 21);
     }
-    if (DebugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
-        ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
+    if (debugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
+        ocl21FeaturesEnabled = debugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     if (ocl21FeaturesEnabled) {
         addressing32bitAllowed = false;
@@ -75,7 +75,7 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = getGlobalMemorySize(allSubDevicesMask);
     deviceInfo.maxMemAllocSize = getGlobalMemorySize(singleSubDeviceMask); // Allocation can be placed only on one SubDevice
 
-    if (DebugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
+    if (debugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * GB * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;
@@ -108,8 +108,8 @@ void Device::initializeCaps() {
     deviceInfo.maxMemAllocSize = std::min<std::uint64_t>(driverModelMaxMemAlloc, deviceInfo.maxMemAllocSize);
 
     deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
-    if (DebugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
-        deviceInfo.profilingTimerResolution = static_cast<double>(DebugManager.flags.OverrideProfilingTimerResolution.get());
+    if (debugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
+        deviceInfo.profilingTimerResolution = static_cast<double>(debugManager.flags.OverrideProfilingTimerResolution.get());
         deviceInfo.outProfilingTimerClock = static_cast<size_t>(1000000000.0 / deviceInfo.profilingTimerResolution);
     } else {
         deviceInfo.outProfilingTimerClock = static_cast<size_t>(getProfilingTimerClock());
@@ -122,7 +122,7 @@ void Device::initializeCaps() {
 
     deviceInfo.maxNumEUsPerSubSlice = 0;
     deviceInfo.numThreadsPerEU = 0;
-    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
+    auto simdSizeUsed = debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                             ? CommonConstants::maximalSimdSize
                             : gfxCoreHelper.getMinimalSIMDSize();
 
@@ -147,8 +147,8 @@ void Device::initializeCaps() {
     maxWS = Math::prevPowerOfTwo(maxWS);
     deviceInfo.maxWorkGroupSize = gfxCoreHelper.overrideMaxWorkGroupSize(maxWS);
 
-    if (DebugManager.flags.OverrideMaxWorkgroupSize.get() != -1) {
-        deviceInfo.maxWorkGroupSize = DebugManager.flags.OverrideMaxWorkgroupSize.get();
+    if (debugManager.flags.OverrideMaxWorkgroupSize.get() != -1) {
+        deviceInfo.maxWorkGroupSize = debugManager.flags.OverrideMaxWorkgroupSize.get();
     }
 
     deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
@@ -160,8 +160,8 @@ void Device::initializeCaps() {
     deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);
 
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
-    if (DebugManager.flags.OverrideSlmSize.get() != -1) {
-        deviceInfo.localMemSize = DebugManager.flags.OverrideSlmSize.get() * KB;
+    if (debugManager.flags.OverrideSlmSize.get() != -1) {
+        deviceInfo.localMemSize = debugManager.flags.OverrideSlmSize.get() * KB;
     }
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;

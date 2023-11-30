@@ -18,8 +18,8 @@ bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceE
     const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
 
     auto failBuildProgram = compilerProductHelper.failBuildProgramWithStatefulAccessPreference();
-    if (NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get() != -1) {
-        failBuildProgram = static_cast<bool>(NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get());
+    if (NEO::debugManager.flags.FailBuildProgramWithStatefulAccess.get() != -1) {
+        failBuildProgram = static_cast<bool>(NEO::debugManager.flags.FailBuildProgramWithStatefulAccess.get());
     }
 
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();

@@ -250,7 +250,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryDisabledWhenSimulatedCsrGe
 
 HWTEST_F(CommandStreamSimulatedTests, givenAUBDumpForceAllToLocalMemoryWhenSimulatedCsrGetAddressSpaceIsCalledWithDifferentHintsThenTraceLocalIsReturned) {
     DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     ExecutionEnvironment executionEnvironment;

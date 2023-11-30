@@ -42,7 +42,7 @@ void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64
     drmExecObject.offset = gpuAddress;
     drmExecObject.flags = EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS;
 
-    if (DebugManager.flags.UseAsyncDrmExec.get() == 1) {
+    if (debugManager.flags.UseAsyncDrmExec.get() == 1) {
         drmExecObject.flags |= static_cast<decltype(drmExecObject.flags)>(EXEC_OBJECT_ASYNC);
     }
 

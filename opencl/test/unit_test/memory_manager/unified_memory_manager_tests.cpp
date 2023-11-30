@@ -275,7 +275,7 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
 TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateSharedUnifiedMemoryAllocationReturnsNullAndDoesNotChangeAllocsMap) {
     MockCommandQueue cmdQ;
     DebugManagerStateRestore restore;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
     FailMemoryManager failMemoryManager(executionEnvironment);
     svmManager->memoryManager = &failMemoryManager;
 
@@ -311,7 +311,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     MockCommandQueue cmdQ;
     MockContext mockContext;
     DebugManagerStateRestore restore;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
     auto device = mockContext.getDevice(0u);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfields);
@@ -344,7 +344,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
 TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemoryAndRegisteredPageFaultHandlerThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {
     MockCommandQueue cmdQ;
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfields);
     auto allocationSize = 4096u;
@@ -373,7 +373,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
 
 TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIsAllocatedThenOneStorageIsProduced) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
     MockContext mockContext;
     auto device = mockContext.getDevice(0u);
@@ -547,7 +547,7 @@ struct UnifiedMemoryManagerPropertiesTest : public ::testing::Test {
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
@@ -584,7 +584,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
@@ -606,8 +606,8 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContextFlagFalseThenLowestSubDevicePassedToMemoryManager) {
     MockCommandQueue cmdQ;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
-    DebugManager.flags.OverrideLeastOccupiedBank.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.OverrideLeastOccupiedBank.set(1);
 
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
@@ -678,7 +678,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithTwoBitsSetWhenMultiOsContextFlagT
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithSingleBitsSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(1);
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
@@ -872,7 +872,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultiDeviceBit
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultiDeviceBitSetWhenMultiOsContextFlagFalseThenLowestSubdeviceIsPassedToMemoryManager) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideLeastOccupiedBank.set(1);
+    debugManager.flags.OverrideLeastOccupiedBank.set(1);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xE)}};
@@ -1129,8 +1129,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForT
 
 TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTransferCallsThenCPUPathIsChoosen) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(false);
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+    debugManager.flags.EnableLocalMemory.set(false);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -1209,7 +1209,7 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTrans
 
 TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemoryWhenPointerIsUsedAsTranfserParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(0);
+    debugManager.flags.EnableLocalMemory.set(0);
 
     MockContext mockContext;
     cl_context clContext = &mockContext;
@@ -1252,7 +1252,7 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemor
 
 TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhenPointerIsUsedAsTransferParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
 
     MockContext mockContext;
     cl_context clContext = &mockContext;
@@ -1436,7 +1436,7 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCp
 
 TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocationIsCreatedThenAllocationTypeIsBufferCompressed) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     cl_int retVal = CL_SUCCESS;
     MockContext mockContext;
@@ -1445,7 +1445,7 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
     auto allocationsManager = mockContext.getSVMAllocsManager();
 
     for (auto enable : {-1, 0, 1}) {
-        DebugManager.flags.EnableStatelessCompression.set(enable);
+        debugManager.flags.EnableStatelessCompression.set(enable);
 
         auto deviceMemAllocPtr = clDeviceMemAllocINTEL(&mockContext, device, nullptr, 2048, 0, &retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);

@@ -55,7 +55,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> pmtMapOriginal;
 
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
 
         SysmanDeviceFixture::SetUp();
 
@@ -101,7 +101,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     }
 
     void setLocalSupportedAndReinit(bool supported) {
-        DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
+        debugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
@@ -813,7 +813,7 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
     L0::Sysman::SysmanDevice *device = nullptr;
 
     void SetUp() override {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         SysmanMultiDeviceFixture::SetUp();
 
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
@@ -835,7 +835,7 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
     }
 
     void setLocalSupportedAndReinit(bool supported) {
-        DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
+        debugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());

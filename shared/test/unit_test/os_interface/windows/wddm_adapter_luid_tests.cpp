@@ -54,7 +54,7 @@ TEST_F(WddmFixtureLuid, givenDoNotValidateDriverPathWhenCreatingHwDeviceThenDriv
     wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
     EXPECT_EQ(nullptr, wddm->hwDeviceId);
 
-    DebugManager.flags.DoNotValidateDriverPath.set(1);
+    debugManager.flags.DoNotValidateDriverPath.set(1);
 
     wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
     EXPECT_NE(nullptr, wddm->hwDeviceId);

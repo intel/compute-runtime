@@ -180,12 +180,12 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndForceSemaphoreDelayBe
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     DebugManagerStateRestore debugManagerStateRestore;
 
-    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);
+    debugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);
     commandStreamReceiver.isPreambleSent = false;
 
     auto preambleNotSentAndSemaphoreDelayNotReprogrammed = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
-    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(0);
+    debugManager.flags.ForceSemaphoreDelayBetweenWaits.set(0);
     commandStreamReceiver.isPreambleSent = false;
 
     auto preambleNotSentAndSemaphoreDelayReprogrammed = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
@@ -234,7 +234,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenNoBlitterOverrideWhenBlitterSupporte
 
 HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableWhenBlitterNotSupportedThenExpectTrueReturned) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
+    debugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -250,7 +250,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableWhenBlitterNotS
 
 HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableAndNoStartWhenBlitterNotSupportedThenExpectTrueReturnedStartOnInitSetToTrue) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(2);
+    debugManager.flags.DirectSubmissionOverrideBlitterSupport.set(2);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -266,7 +266,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableAndNoStartWhenB
 
 HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideDisableWhenBlitterSupportedThenExpectFalseReturned) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(0);
+    debugManager.flags.DirectSubmissionOverrideBlitterSupport.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -310,7 +310,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenNoRenderOverrideWhenRenderSupportedT
 
 HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableWhenRenderNotSupportedThenExpectTrueReturned) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(1);
+    debugManager.flags.DirectSubmissionOverrideRenderSupport.set(1);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -326,7 +326,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableWhenRenderNotSup
 
 HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableAndNoStartWhenRenderNotSupportedThenExpectTrueReturnedAndStartOnInitSetFalse) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(2);
+    debugManager.flags.DirectSubmissionOverrideRenderSupport.set(2);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -342,7 +342,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableAndNoStartWhenRe
 
 HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideDisableWhenRenderSupportedThenExpectFalseReturned) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(0);
+    debugManager.flags.DirectSubmissionOverrideRenderSupport.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -386,7 +386,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenNoComputeOverrideWhenComputeSupporte
 
 HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableWhenComputeNotSupportedThenExpectTrueReturned) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(1);
+    debugManager.flags.DirectSubmissionOverrideComputeSupport.set(1);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -402,7 +402,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableWhenComputeNotS
 
 HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableAndNoStartWhenComputeNotSupportedThenExpectTrueReturnedAndStartOnInitSetToFalse) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(2);
+    debugManager.flags.DirectSubmissionOverrideComputeSupport.set(2);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -418,7 +418,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableAndNoStartWhenC
 
 HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideDisableWhenComputeSupportedThenExpectFalseReturned) {
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0);
+    debugManager.flags.DirectSubmissionOverrideComputeSupport.set(0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto osContext = static_cast<MockOsContext *>(commandStreamReceiver.osContext);
 
@@ -543,7 +543,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDefaultGpuIdleImplicitFlushWhenNoDebu
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableNewResourceImplicitFlushThenExpectFlagSetFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
+    debugManager.flags.PerformImplicitFlushForNewResource.set(0);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver->setupContext(*osContext);
@@ -553,7 +553,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableNewResourceImplicitFlushTh
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableNewResourceImplicitFlushThenExpectFlagSetTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PerformImplicitFlushForNewResource.set(1);
+    debugManager.flags.PerformImplicitFlushForNewResource.set(1);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver->setupContext(*osContext);
@@ -563,7 +563,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableNewResourceImplicitFlushThe
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableGpuIdleImplicitFlushThenExpectFlagSetFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+    debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver->setupContext(*osContext);
@@ -573,7 +573,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableGpuIdleImplicitFlushThenEx
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableGpuIdleImplicitFlushThenExpectFlagSetTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(1);
+    debugManager.flags.PerformImplicitFlushForIdleGpu.set(1);
 
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     commandStreamReceiver->setupContext(*osContext);
@@ -671,7 +671,7 @@ HWTEST_F(BcsTests, WhenGetNumberOfBlitsForCopyPerRowIsCalledThenCorrectValuesAre
 }
 
 HWTEST_F(BcsTests, whenAskingForCmdSizeForMiFlushDwWithMemoryWriteThenReturnCorrectValue) {
-    DebugManager.flags.ForceDummyBlitWa.set(0);
+    debugManager.flags.ForceDummyBlitWa.set(0);
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t waSize = MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs);
     size_t totalSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -1033,9 +1033,9 @@ struct RelaxedOrderingBcsTests : public BcsTests {
         ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
         ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
 
-        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
-        DebugManager.flags.UpdateTaskCountFromWait.set(2);
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+        debugManager.flags.UpdateTaskCountFromWait.set(2);
         BcsTests::SetUp();
     }
 
@@ -1123,10 +1123,10 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramProgr
     EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, true));
     EXPECT_TRUE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
 
-    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(-1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(-1);
     EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
 
-    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
     blitPropertiesContainer.push_back(blitProperties);
     EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
 
@@ -1164,7 +1164,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
     EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
     EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
-    DebugManager.flags.UpdateTaskCountFromWait.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(0);
 
     // blocking
     flushBcsTask(&csr, blitProperties, true, *pDevice);
@@ -1172,7 +1172,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
     EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
     // Disabled UpdateTaskCountFromWait
-    DebugManager.flags.UpdateTaskCountFromWait.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(0);
     blitProperties = generateBlitProperties(csr, clBuffer.get());
     flushBcsTask(&csr, blitProperties, false, *pDevice);
     EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
@@ -1498,7 +1498,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForWriteReadBufferRect) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
+    debugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
@@ -1600,7 +1600,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForCopyBufferRect) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
+    debugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();

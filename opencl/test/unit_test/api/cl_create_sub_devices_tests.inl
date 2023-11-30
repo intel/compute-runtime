@@ -27,7 +27,7 @@ struct ClCreateSubDevicesTests : ::testing::Test {
     cl_device_id outDevices[4];
 
     void setup(int numberOfDevices) {
-        DebugManager.flags.CreateMultipleSubDevices.set(numberOfDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numberOfDevices);
         mockDeviceCreateSingleDeviceBackup = (numberOfDevices == 1);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         outDevicesCount = numberOfDevices;
@@ -372,7 +372,7 @@ TEST_F(ClCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoV
 }
 
 TEST_F(ClCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
-    DebugManager.flags.EngineInstancedSubDevices.set(false);
+    debugManager.flags.EngineInstancedSubDevices.set(false);
     setup(1);
 
     clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE,

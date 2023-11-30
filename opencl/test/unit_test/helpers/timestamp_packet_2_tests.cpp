@@ -276,7 +276,7 @@ HWTEST_F(TimestampPacketTests, givenMultiTileConfigWhenProgrammingNonStallingBar
 }
 
 HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
-    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+    debugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -401,7 +401,7 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
 
 HWTEST_F(TimestampPacketTests, givenKernelWhichDoesntRequireFlushWhenEnqueueingKernelThenOneNodeIsCreated) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(false);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(false);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
 

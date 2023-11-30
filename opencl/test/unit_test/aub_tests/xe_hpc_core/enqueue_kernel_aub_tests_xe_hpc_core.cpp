@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStateless
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenPrefetchEnabledWhenEnqueuedKernelThenDataIsCorrect) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableMemoryPrefetch.set(1);
+    debugManager.flags.EnableMemoryPrefetch.set(1);
 
     constexpr size_t bufferSize = MemoryConstants::pageSize;
 

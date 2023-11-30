@@ -693,8 +693,8 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
 
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeNDIsTrueWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    DebugManager.flags.EnableComputeWorkSizeND.set(true);
+    bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
+    debugManager.flags.EnableComputeWorkSizeND.set(true);
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -703,13 +703,13 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
     EXPECT_TRUE(containsHint(expectedHint, userData));
-    DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
+    debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeNDIsFalseWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    bool isWorkGroupSizeEnabled = debugManager.flags.EnableComputeWorkSizeND.get();
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -719,7 +719,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
 
     EXPECT_TRUE(containsHint(expectedHint, userData));
-    DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
+    debugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeSquaredIsDefaultWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
@@ -738,8 +738,8 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeSquaredIsTrueWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -754,8 +754,8 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeSquaredIsFalseWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    debugManager.flags.EnableComputeWorkSizeND.set(false);
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -800,7 +800,7 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
 TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
     size_t preferredWorkGroupSize[3];
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
-    if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
+    if (debugManager.flags.EnableComputeWorkSizeND.get()) {
         auto &rootDeviceEnvironment = pPlatform->getClDevice(0)->getRootDeviceEnvironment();
         WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
         computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, 2);

@@ -125,7 +125,7 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
     auto pDevice = pContext->getDevice(0);
     bool allowCreateBuffersWithUnrestrictedSize = isValueSet(flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
                                                   isValueSet(flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
-                                                  DebugManager.flags.AllowUnrestrictedSize.get();
+                                                  debugManager.flags.AllowUnrestrictedSize.get();
 
     if (size == 0 || (size > pDevice->getDevice().getDeviceInfo().maxMemAllocSize && !allowCreateBuffersWithUnrestrictedSize)) {
         retVal = CL_INVALID_BUFFER_SIZE;
@@ -210,8 +210,8 @@ bool inline copyHostPointer(Buffer *buffer,
                                 isCompressionEnabled == false &&
                                 productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
                                 isLockable;
-        if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
-            copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
+        if (debugManager.flags.CopyHostPtrOnCpu.get() != -1) {
+            copyOnCpuAllowed = debugManager.flags.CopyHostPtrOnCpu.get() == 1;
         }
         if (auto lockedPointer = copyOnCpuAllowed ? device.getMemoryManager()->lockResource(memory) : nullptr) {
             memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
@@ -371,7 +371,7 @@ Buffer *Buffer::create(Context *context,
                 }
             }
 
-            if (DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+            if (debugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
                 allocationInfo.zeroCopyAllowed = false;
                 allocationInfo.allocateMemory = true;
             }
@@ -399,7 +399,7 @@ Buffer *Buffer::create(Context *context,
             }
         }
 
-        if (DebugManager.flags.DisableZeroCopyForBuffers.get()) {
+        if (debugManager.flags.DisableZeroCopyForBuffers.get()) {
             allocationInfo.zeroCopyAllowed = false;
         }
 
@@ -547,7 +547,7 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    if (DebugManager.flags.MakeAllBuffersResident.get()) {
+    if (debugManager.flags.MakeAllBuffersResident.get()) {
         for (size_t deviceNum = 0u; deviceNum < context->getNumDevices(); deviceNum++) {
             auto device = context->getDevice(deviceNum);
             auto graphicsAllocation = pBuffer->getGraphicsAllocation(device->getRootDeviceIndex());

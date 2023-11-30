@@ -28,8 +28,8 @@ template <typename GfxFamily, typename Dispatcher>
 DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubmissionInputParams &inputParams)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(inputParams) {
 
-    if (DebugManager.flags.OverrideUserFenceStartValue.get() != -1) {
-        this->completionFenceValue = static_cast<decltype(completionFenceValue)>(DebugManager.flags.OverrideUserFenceStartValue.get());
+    if (debugManager.flags.OverrideUserFenceStartValue.get() != -1) {
+        this->completionFenceValue = static_cast<decltype(completionFenceValue)>(debugManager.flags.OverrideUserFenceStartValue.get());
     }
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
@@ -46,8 +46,8 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
     drm.setDirectSubmissionActive(true);
 
     auto usePciBarrier = !this->hwInfo->capabilityTable.isIntegratedDevice;
-    if (DebugManager.flags.DirectSubmissionPCIBarrier.get() != -1) {
-        usePciBarrier = DebugManager.flags.DirectSubmissionPCIBarrier.get();
+    if (debugManager.flags.DirectSubmissionPCIBarrier.get() != -1) {
+        usePciBarrier = debugManager.flags.DirectSubmissionPCIBarrier.get();
     }
 
     if (usePciBarrier) {
@@ -56,7 +56,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
             this->pciBarrierPtr = ptr;
         }
     }
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Using PCI barrier ptr: %p\n", this->pciBarrierPtr);
     if (this->pciBarrierPtr) {
         this->miMemFenceRequired = false;
     }
@@ -74,7 +74,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
                 this->completionFenceSupported = true;
             }
 
-            if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+            if (debugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence for DirectSubmission:"
                           << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset)
                           << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset)
@@ -200,8 +200,8 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(Residen
         this->currentTagData.tagValue++;
 
         bool updateCompletionFences = true;
-        if (DebugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
-            updateCompletionFences = !DebugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
+        if (debugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
+            updateCompletionFences = !debugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
         }
 
         if (updateCompletionFences) {

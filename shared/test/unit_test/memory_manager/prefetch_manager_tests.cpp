@@ -50,7 +50,7 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
 
 TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingMigrateAllocationsToGpuThenPrefetchMemoryForValidSVMAllocPtrs) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};

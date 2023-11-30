@@ -70,10 +70,10 @@ struct BcsBufferTests : public ::testing::Test {
             GTEST_SKIP();
         }
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        DebugManager.flags.EnableTimestampPacket.set(1);
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+        debugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+        debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         auto hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
         device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -106,7 +106,7 @@ struct BcsBufferTests : public ::testing::Test {
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrAndCpuCopyDisabledWhenCreatingThenUseBlitOperation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CopyHostPtrOnCpu.set(0);
+    debugManager.flags.CopyHostPtrOnCpu.set(0);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
 
     static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[0] = true;
@@ -119,7 +119,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrAnd
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithNotDefaultRootDeviceIndexAndBcsCsrAndCpuCopyDisabledWhenCreatingThenUseBlitOperation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CopyHostPtrOnCpu.set(0);
+    debugManager.flags.CopyHostPtrOnCpu.set(0);
     auto rootDeviceIndex = 1u;
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -166,7 +166,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
         GTEST_SKIP();
     }
 
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     auto mockCmdQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     auto bcsEngine = mockCmdQueue->bcsEngines[0];
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
@@ -180,7 +180,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {1, 2, 1};
 
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     mockCmdQueue->clearBcsEngines();
     mockCmdQueue->clearBcsStates();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -196,7 +196,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                         MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     mockCmdQueue->clearBcsEngines();
     mockCmdQueue->clearBcsStates();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -212,7 +212,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                         MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     mockCmdQueue->bcsEngines[0] = bcsEngine;
     mockCmdQueue->clearBcsStates();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -229,7 +229,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
                                         MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
     commandQueue->enqueueSVMMemcpy(CL_TRUE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
 
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
     mockCmdQueue->bcsEngines[0] = bcsEngine;
     mockCmdQueue->clearBcsStates();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -248,7 +248,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     EXPECT_EQ(7u, bcsCsr->blitBufferCalled);
 
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     mockCmdQueue->bcsEngines[0] = bcsEngine;
     mockCmdQueue->clearBcsStates();
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -274,7 +274,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetWhenDispatchingBlitCommandsThenPrintDispatchDetails) {
-    DebugManager.flags.PrintBlitDispatchDetails.set(true);
+    debugManager.flags.PrintBlitDispatchDetails.set(true);
 
     uint32_t maxBlitWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
     uint32_t copySize = maxBlitWidth + 5;
@@ -618,7 +618,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllBcsEnginesReadyWhenWaitingForEventThe
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBufferThenStoreMapAllocationInDispatchParameters) {
-    DebugManager.flags.DisableZeroCopyForBuffers.set(true);
+    debugManager.flags.DisableZeroCopyForBuffers.set(true);
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     uint8_t hostPtr[64] = {};
 
@@ -812,7 +812,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenStallingCommandsOnNextFlushWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
-    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+    debugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -1374,7 +1374,7 @@ struct BcsSvmTests : public BcsBufferTests {
 };
 
 HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenProperValuesAreSet) {
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
 
     for (auto srcPtr : allocation) {
         for (auto dstPtr : allocation) {
@@ -1467,7 +1467,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetToOneWhenEnqueueingCopyLocal
     const bool preferBlitterHw = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
     uint32_t expectedBlitBufferCalled = 0;
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
     EXPECT_EQ(expectedBlitBufferCalled, bcsCsr->blitBufferCalled);
     commandQueue->enqueueCopyBuffer(&srcMemObj, &dstMemObj, 0, 1, 1, 0, nullptr, nullptr);
     if (preferBlitterHw) {
@@ -1475,12 +1475,12 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetToOneWhenEnqueueingCopyLocal
     }
     EXPECT_EQ(expectedBlitBufferCalled, bcsCsr->blitBufferCalled);
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
     EXPECT_EQ(expectedBlitBufferCalled, bcsCsr->blitBufferCalled);
     commandQueue->enqueueCopyBuffer(&srcMemObj, &dstMemObj, 0, 1, 1, 0, nullptr, nullptr);
     EXPECT_EQ(expectedBlitBufferCalled, bcsCsr->blitBufferCalled);
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
     EXPECT_EQ(expectedBlitBufferCalled, bcsCsr->blitBufferCalled);
     commandQueue->enqueueCopyBuffer(&srcMemObj, &dstMemObj, 0, 1, 1, 0, nullptr, nullptr);
     expectedBlitBufferCalled++;
@@ -1506,17 +1506,17 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsQueueWhenEnqueueingCopyBufferToBuffer
     srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
     dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
     queue.enqueueCopyBuffer(&srcMemObj, &dstMemObj, 0, 1, 1, 0, nullptr, nullptr);
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(0);
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
     queue.enqueueCopyBuffer(&srcMemObj, &dstMemObj, 0, 1, 1, 0, nullptr, nullptr);
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 
-    DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
+    debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
     queue.enqueueCopyBuffer(&srcMemObj, &dstMemObj, 0, 1, 1, 0, nullptr, nullptr);
     EXPECT_EQ(3u, bcsCsr->blitBufferCalled);

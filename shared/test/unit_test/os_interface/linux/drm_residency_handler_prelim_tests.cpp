@@ -63,8 +63,8 @@ template <uint32_t numRootDevices>
 struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
   public:
     void setUp(bool setPerContextVms) {
-        DebugManager.flags.DeferOsContextInitialization.set(0);
-        DebugManager.flags.CreateMultipleSubDevices.set(2u);
+        debugManager.flags.DeferOsContextInitialization.set(0);
+        debugManager.flags.CreateMultipleSubDevices.set(2u);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
         executionEnvironment = new ExecutionEnvironment;
@@ -186,8 +186,8 @@ template <uint32_t numRootDevices>
 struct DrmMemoryOperationsHandlerBindFixture2 : public ::testing::Test {
   public:
     void setUp(bool setPerContextVms) {
-        DebugManager.flags.DeferOsContextInitialization.set(0);
-        DebugManager.flags.CreateMultipleSubDevices.set(2u);
+        debugManager.flags.DeferOsContextInitialization.set(0);
+        debugManager.flags.CreateMultipleSubDevices.set(2u);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
         executionEnvironment = new ExecutionEnvironment;
@@ -333,7 +333,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenObjectAlwaysResidentAndNotUsedWh
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeEachAllocationResidentWhenCreateAllocationThenVmBindIsCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeEachAllocationResident.set(1);
+    debugManager.flags.MakeEachAllocationResident.set(1);
 
     EXPECT_EQ(mock->context.vmBindCalled, 0u);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -351,7 +351,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeEachAllocationResidentWhen
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeEachAllocationResidentWhenMergeWithResidencyContainerThenVmBindIsCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeEachAllocationResident.set(2);
+    debugManager.flags.MakeEachAllocationResident.set(2);
 
     EXPECT_EQ(mock->context.vmBindCalled, 0u);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -564,8 +564,8 @@ TEST_F(DrmMemoryOperationsHandlerBindTest,
         }
     };
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableBOChunking.set(3);
-    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+    debugManager.flags.EnableBOChunking.set(3);
+    debugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
 
     auto size = 4096u;
     BufferObjects bos;
@@ -719,7 +719,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenNoVmBindSupportInDrmWhenCheckFor
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndNoMultiTileWhenCheckForSupportThenDefaultResidencyHandlerIsReturned) {
-    DebugManager.flags.CreateMultipleSubDevices.set(1u);
+    debugManager.flags.CreateMultipleSubDevices.set(1u);
     mock->bindAvailable = false;
 
     auto handler = DrmMemoryOperationsHandler::create(*mock, 0u, false);
@@ -748,7 +748,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDisabledVmBindWhenCreateDrmHandl
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenPinBOThenVmBindToAllVMsIsCalledInsteadOfExec) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
     BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
@@ -762,7 +762,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenValidateHostptrThenOnlyBindToSingleVMIsCalled) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
     BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
@@ -776,7 +776,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenValidateHostptrThenBindToGivenVm) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
     BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
@@ -792,7 +792,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenValidateMultipleBOsAndFirstBindFailsThenOnlyOneBindCalledAndErrorReturned) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
     mock->context.vmBindReturn = -1;
 
@@ -995,7 +995,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindWithPerContextVms, givenVmBindMultipleRoo
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenVmBindIsCalledInsteadOfExec) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
     device->getDefaultEngine().osContext->setDirectSubmissionActive();
 
@@ -1010,7 +1010,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenV
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionAndValidateHostptrWhenPinBOThenVmBindIsCalledInsteadOfExec) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
     device->getDefaultEngine().osContext->setDirectSubmissionActive();
 
@@ -1029,7 +1029,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOThenAllo
         using BufferObject::bindInfo;
         using BufferObject::BufferObject;
     };
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
     BufferObject pinBB(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
@@ -1047,7 +1047,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOAndVmBin
         using BufferObject::bindInfo;
         using BufferObject::BufferObject;
     };
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
     mock->context.vmBindReturn = -1;
 
@@ -1062,7 +1062,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOAndVmBin
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenCsrTagAllocatorsWhenDestructingCsrThenAllInternalAllocationsAreUnbound) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
@@ -1082,7 +1082,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenCsrTagAllocatorsWhenDestructin
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhenVmBindCalledThenSetPatIndexExtension) {
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
@@ -1107,7 +1107,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
             continue;
         }
 
-        DebugManager.flags.ClosEnabled.set(debugFlag);
+        debugManager.flags.ClosEnabled.set(debugFlag);
 
         mock->context.receivedVmBindPatIndex.reset();
         mock->context.receivedVmUnbindPatIndex.reset();
@@ -1142,8 +1142,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugFlagSetWhenGetPatIndexCalledThenAbort) {
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.ForceAllResourcesUncached.set(1);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ForceAllResourcesUncached.set(1);
     mock->bindAvailable = true;
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
@@ -1167,8 +1167,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBindCalledThenSetCorrectPatIndexExtension) {
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.ForceAllResourcesUncached.set(1);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ForceAllResourcesUncached.set(1);
     mock->bindAvailable = true;
 
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
@@ -1197,9 +1197,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndex) {
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.ClosEnabled.set(1);
-    DebugManager.flags.OverridePatIndex.set(1);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ClosEnabled.set(1);
+    debugManager.flags.OverridePatIndex.set(1);
 
     mock->bindAvailable = true;
 
@@ -1225,11 +1225,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForDeviceMem) {
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.ClosEnabled.set(1);
-    DebugManager.flags.OverridePatIndex.set(1);
-    DebugManager.flags.OverridePatIndexForDeviceMemory.set(2);
-    DebugManager.flags.OverridePatIndexForSystemMemory.set(3);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ClosEnabled.set(1);
+    debugManager.flags.OverridePatIndex.set(1);
+    debugManager.flags.OverridePatIndexForDeviceMemory.set(2);
+    debugManager.flags.OverridePatIndexForSystemMemory.set(3);
 
     mock->bindAvailable = true;
     mock->vmBindPatIndexProgrammingSupported = true;
@@ -1256,11 +1256,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndexForSystemMem) {
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.ClosEnabled.set(1);
-    DebugManager.flags.OverridePatIndex.set(1);
-    DebugManager.flags.OverridePatIndexForDeviceMemory.set(2);
-    DebugManager.flags.OverridePatIndexForSystemMemory.set(3);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ClosEnabled.set(1);
+    debugManager.flags.OverridePatIndex.set(1);
+    debugManager.flags.OverridePatIndexForDeviceMemory.set(2);
+    debugManager.flags.OverridePatIndexForSystemMemory.set(3);
 
     mock->bindAvailable = true;
     mock->vmBindPatIndexProgrammingSupported = true;
@@ -1287,8 +1287,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCachedInCacheRegionWhenVmBindIsCalledThenSetPatIndexCorrespondingToRequestedRegion) {
-    DebugManager.flags.UseVmBind.set(1);
-    DebugManager.flags.ClosEnabled.set(1);
+    debugManager.flags.UseVmBind.set(1);
+    debugManager.flags.ClosEnabled.set(1);
     mock->bindAvailable = true;
 
     auto csr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 1);
@@ -1351,7 +1351,7 @@ TEST(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexT
 
 TEST(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatIndexThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceAllResourcesUncached.set(1);
+    debugManager.flags.ForceAllResourcesUncached.set(1);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -1379,7 +1379,7 @@ TEST(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatInd
 
 TEST(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenBindAvailableIsInitializedOnce) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1397,7 +1397,7 @@ TEST(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQuer
 
 TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenSupportIsOverriden) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1419,7 +1419,7 @@ extern bool disableBindDefaultInTests;
 
 TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailableInDrmWhenQueryingIsVmBindAvailableThenBindIsAvailableWhenSupported) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseVmBind.set(-1);
+    debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1437,7 +1437,7 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailable
 
 TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableFailedThenBindIsNot) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseVmBind.set(-1);
+    debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1454,7 +1454,7 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVm
 
 TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultWhenQueryingIsVmBindAvailableSuccedAndReportNoBindAvailableInDrmThenBindIsNotAvailable) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseVmBind.set(-1);
+    debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1485,7 +1485,7 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndNoDebugKeyThenFalseIsRet
 
 TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDefaultDebugVariableThenTrueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1504,8 +1504,8 @@ TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDefaultDebugVariableTh
 
 TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDisableDebugVariableThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunking.set(0);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableBOChunking.set(0);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1524,7 +1524,7 @@ TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndDisableDebugVariableTh
 
 TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeySetAndNoSupportAvailableThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableSetPair.set(1);
+    debugManager.flags.EnableSetPair.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1541,7 +1541,7 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeySetAndNoSupportA
 
 TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeyNotSetThenNoSupportIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableSetPair.set(0);
+    debugManager.flags.EnableSetPair.set(0);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.context.setPairQueryValue = 0;
@@ -1557,8 +1557,8 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeyNotSetThenNoSupp
 
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailableThenBothExpectedValueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseVmBind.set(-1);
-    DebugManager.flags.EnableSetPair.set(1);
+    debugManager.flags.UseVmBind.set(-1);
+    debugManager.flags.EnableSetPair.set(1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1588,7 +1588,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailable
 
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailableThenExpectedValueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableSetPair.set(1);
+    debugManager.flags.EnableSetPair.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1605,7 +1605,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndSupportAvailabl
 
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableSetPair.set(1);
+    debugManager.flags.EnableSetPair.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1622,7 +1622,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndFailureInQueryT
 
 TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableWithDebugKeySetToZeroThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableSetPair.set(0);
+    debugManager.flags.EnableSetPair.set(0);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1639,8 +1639,8 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableWithDebugKeySetToZ
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndSupportAvailableThenExpectedValueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1657,8 +1657,8 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndSupportAvailab
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisabledThenReturnFalse) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.UseKmdMigration.set(0);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.UseKmdMigration.set(0);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1675,10 +1675,10 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisab
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndChangingMinimalSizeForChunkingAndSupportAvailableThenExpectedValuesAreReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
     const uint64_t minimalSizeForChunking = 65536;
-    DebugManager.flags.MinimalAllocationSizeForChunking.set(minimalSizeForChunking);
+    debugManager.flags.MinimalAllocationSizeForChunking.set(minimalSizeForChunking);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1697,8 +1697,8 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndChangingMinima
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndFailureInQueryThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunking.set(1);
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1715,7 +1715,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndFailureInQuery
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableWithDebugKeySetToZeroThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBOChunking.set(0);
+    debugManager.flags.EnableBOChunking.set(0);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

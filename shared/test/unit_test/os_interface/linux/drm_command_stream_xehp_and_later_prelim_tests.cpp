@@ -53,7 +53,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBuff
 
 struct DrmCommandStreamEnhancedTestDrmPrelim : public DrmCommandStreamEnhancedTemplate<DrmMockCustomPrelim> {
     void SetUp() override {
-        DebugManager.flags.UseVmBind.set(1u);
+        debugManager.flags.UseVmBind.set(1u);
         DrmCommandStreamEnhancedTemplate::SetUp();
     }
     void TearDown() override {
@@ -68,7 +68,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenEnableImmediateVm
     if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
         GTEST_SKIP();
     }
-    DebugManager.flags.EnableImmediateVmBindExt.set(1);
+    debugManager.flags.EnableImmediateVmBindExt.set(1);
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
@@ -332,7 +332,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         csr->setupContext(*osContext);
 
         memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive,
-                                             DebugManager.flags.EnableForcePin.get(),
+                                             debugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
@@ -369,7 +369,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamForceTileTest, givenForceExecutionTileThenCor
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceExecutionTile.set(expectedHandleId);
+    debugManager.flags.ForceExecutionTile.set(expectedHandleId);
 
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -384,7 +384,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
+    debugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
 
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -434,7 +434,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), DeviceBitfield(0b11)));
         osContext->ensureContextInitialized();
 
-        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive, DebugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
+        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive, debugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
     }
 
@@ -509,8 +509,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecutionTileIsSetAndEnableWalkerPartitionIsSetButCsrhasOneOsContextThenTileIsNotForced) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceExecutionTile.set(1);
-    DebugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.ForceExecutionTile.set(1);
+    debugManager.flags.EnableWalkerPartition.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
@@ -558,8 +558,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecutionTileIsSetAndEnableWalkerPartitionIsSetThenExecIsCalledWithGoodArguments) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceExecutionTile.set(1);
-    DebugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.ForceExecutionTile.set(1);
+    debugManager.flags.EnableWalkerPartition.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
@@ -601,7 +601,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledImplicitScalingWhenFlushingThenUseOnlyOneContext) {
     DebugManagerStateRestore debugRestore{};
-    DebugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableWalkerPartition.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;

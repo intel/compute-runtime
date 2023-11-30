@@ -67,7 +67,7 @@ TEST_F(OclocFclFacadeTest, GivenFailingCreationOfFclMainWhenPreparingFclThenFail
 
 TEST_F(OclocFclFacadeTest, GivenIncompatibleFclInterfacesWhenPreparingFclThenFailureIsReported) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.isFclInterfaceCompatibleReturnValue = false;

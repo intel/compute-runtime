@@ -54,8 +54,8 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     walkerCmd->setSimdSize(getSimdConfig<WalkerType>(simd));
     walkerCmd->setMessageSimd(walkerCmd->getSimdSize());
 
-    if (DebugManager.flags.ForceSimdMessageSizeInWalker.get() != -1) {
-        walkerCmd->setMessageSimd(DebugManager.flags.ForceSimdMessageSizeInWalker.get());
+    if (debugManager.flags.ForceSimdMessageSizeInWalker.get() != -1) {
+        walkerCmd->setMessageSimd(debugManager.flags.ForceSimdMessageSizeInWalker.get());
     }
 
     walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
@@ -112,7 +112,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
 
     EncodeDispatchKernel<GfxFamily>::template adjustTimestampPacket<WalkerType>(*walkerCmd, hwInfo);
 
-    if (DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
+    if (debugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
         postSyncData.setOperation(GfxFamily::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);
         auto contextEndAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
         postSyncData.setDestinationAddress(contextEndAddress);
@@ -124,8 +124,8 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
     }
 
     if constexpr (std::is_same_v<WalkerType, typename GfxFamily::COMPUTE_WALKER>) {
-        if (DebugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
-            walkerCmd->setSystolicModeEnable((DebugManager.flags.OverrideSystolicInComputeWalker.get()));
+        if (debugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
+            walkerCmd->setSystolicModeEnable((debugManager.flags.OverrideSystolicInComputeWalker.get()));
         }
     }
 }

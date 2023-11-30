@@ -1323,7 +1323,7 @@ void CmdListLargeGrfFixture::testBody() {
 
 template <typename FamilyType>
 void TbxImmediateCommandListFixture::setUpT() {
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ModuleImmutableDataFixture::setUp();
 

@@ -92,7 +92,7 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
     std::string loadLibraryError;
     auto lib = std::unique_ptr<OsLibrary>(OsLibrary::load(libName, &loadLibraryError));
     if (lib == nullptr) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
         DEBUG_BREAK_IF(true); // could not load library
         return false;
     }
@@ -108,7 +108,7 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
 
     std::vector<CIF::InterfaceId_t> interfacesToIgnore{IGC::OclGenBinaryBase::GetInterfaceId()};
     if (false == main->IsCompatible<EntryPointT>(&interfacesToIgnore)) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Installed Compiler Library %s is incompatible\n", libName);
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
         return false;
     }

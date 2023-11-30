@@ -260,7 +260,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
     std::vector<int> myPidFds;
     ze_result_t result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
         return result;
     }
@@ -278,7 +278,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
             if (force) {
                 pProcfsAccess->kill(pid);
             } else {
-                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device in use by another process, returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -411,27 +411,27 @@ ze_result_t LinuxSysmanImp::resizeVfBar(uint8_t size) {
 
     auto fdConfig = NEO::FileDescriptor(pciConfigNode.c_str(), O_RDWR);
     if (fdConfig < 0) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "Config node open failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     std::unique_ptr<uint8_t[]> configMemory = std::make_unique<uint8_t[]>(PCI_CFG_SPACE_EXP_SIZE);
     memset(configMemory.get(), 0, PCI_CFG_SPACE_EXP_SIZE);
     if (this->preadFunction(fdConfig, configMemory.get(), PCI_CFG_SPACE_EXP_SIZE, 0) < 0) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "Read to get config space failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     auto reBarCapPos = L0::LinuxPciImp::getRebarCapabilityPos(configMemory.get(), true);
     if (!reBarCapPos) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "VF BAR capability not found\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     auto barSizePos = reBarCapPos + PCI_REBAR_CTRL + 1; // position of VF(0) BAR SIZE.
     if (this->pwriteFunction(fdConfig, &size, 0x01, barSizePos) < 0) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "Write to change VF bar size failed\n");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -474,10 +474,10 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
 
     if (isMemoryDiagnostics) {
         int32_t delayDurationForPPR = 6; // Sleep for 6 minutes to allow PPR to complete.
-        if (NEO::DebugManager.flags.DebugSetMemoryDiagnosticsDelay.get() != -1) {
-            delayDurationForPPR = NEO::DebugManager.flags.DebugSetMemoryDiagnosticsDelay.get();
+        if (NEO::debugManager.flags.DebugSetMemoryDiagnosticsDelay.get() != -1) {
+            delayDurationForPPR = NEO::debugManager.flags.DebugSetMemoryDiagnosticsDelay.get();
         }
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "Delay of %d mins introduced to allow HBM IFR to complete\n", delayDurationForPPR);
         NEO::sleep(std::chrono::seconds(delayDurationForPPR * 60));
     } else {
@@ -496,21 +496,21 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     // WA to adjust VF bar size to 2GB. The default VF bar size is 8GB and for 63VFs, 504GB need to be allocated which is failing on SBR.
     // When configured VF bar size to 2GB, an allocation of 126GB is successful. This WA resizes VF0 bar to 2GB. Once pcie port driver
     // issue is resolved, this WA may not be necessary. Description for 0xb is explained at function definition - resizeVfVar.
-    if (NEO::DebugManager.flags.VfBarResourceAllocationWa.get()) {
+    if (NEO::debugManager.flags.VfBarResourceAllocationWa.get()) {
         if (ZE_RESULT_SUCCESS != (result = resizeVfBar(0xb))) {
             return result;
         }
 
         result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                                   "Card Bus remove after resizing VF bar failed\n");
             return result;
         }
 
         result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
         if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                                   "Rescanning root port failed after resizing VF bar failed\n");
             return result;
         }

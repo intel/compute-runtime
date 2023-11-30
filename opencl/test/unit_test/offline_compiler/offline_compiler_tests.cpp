@@ -256,7 +256,7 @@ TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandTh
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pMultiCommand);
     EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
 }
 TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
     nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
@@ -281,7 +281,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
 
     EXPECT_EQ(nullptr, pMultiCommand);
     EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
 
     deleteFileWithArgs();
 }
@@ -2275,7 +2275,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     delete pOfflineCompiler;
 }
 TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsReturned) {
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -2289,7 +2289,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
     delete pOfflineCompiler;
 }
 
@@ -2614,7 +2614,7 @@ TEST(OfflineCompilerTest, GivenUnsupportedDeviceWhenInitHardwareInfoThenInvalidD
 TEST(OfflineCompilerTest, givenStatelessToStatefulOptimizationEnabledWhenDebugSettingsAreParsedThenOptimizationStringIsPresent) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
+    debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
 
     mockOfflineCompiler.parseDebugSettings();
 
@@ -2626,7 +2626,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefulOptimizationEnabledWhenDebugSe
 TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugSettingsAreParsedThenOptimizationStringIsSetToDefault) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(-1);
+    debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(-1);
 
     mockOfflineCompiler.parseDebugSettings();
 
@@ -3981,7 +3981,7 @@ TEST(OfflineCompilerTest, givenHexadecimalRevisionIdWhenCompilerIsInitializedThe
 
 TEST(OfflineCompilerTest, givenDebugVariableSetWhenInitializingThenOverrideRevision) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.OverrideRevision.set(123);
+    debugManager.flags.OverrideRevision.set(123);
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
@@ -4330,7 +4330,7 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefulBufferOffsetFl
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     {
-        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
+        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
         mockOfflineCompiler.initHardwareInfo(gEnvironment->devicePrefix.c_str());
         mockOfflineCompiler.setStatelessToStatefulBufferOffsetFlag();
         std::string internalOptions = mockOfflineCompiler.internalOptions;
@@ -4338,7 +4338,7 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefulBufferOffsetFl
         EXPECT_EQ(std::string::npos, found);
     }
     {
-        DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
+        debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
         mockOfflineCompiler.initHardwareInfo(gEnvironment->devicePrefix.c_str());
         mockOfflineCompiler.setStatelessToStatefulBufferOffsetFlag();
         std::string internalOptions = mockOfflineCompiler.internalOptions;

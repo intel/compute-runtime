@@ -26,7 +26,7 @@ using namespace NEO;
 
 struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(4);
+        debugManager.flags.CreateMultipleSubDevices.set(4);
         MemoryAllocatorFixture::setUp();
     }
 

@@ -87,8 +87,8 @@ bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType) {
     bool useVirtualEnginesForBcs = engineType == aub_stream::EngineType::ENGINE_BCS ||
                                    engineType == aub_stream::EngineType::ENGINE_BCS1;
 
-    if (DebugManager.flags.UseDrmVirtualEnginesForBcs.get() != -1) {
-        useVirtualEnginesForBcs = !!DebugManager.flags.UseDrmVirtualEnginesForBcs.get();
+    if (debugManager.flags.UseDrmVirtualEnginesForBcs.get() != -1) {
+        useVirtualEnginesForBcs = !!debugManager.flags.UseDrmVirtualEnginesForBcs.get();
     }
 
     return useVirtualEnginesForBcs;
@@ -97,8 +97,8 @@ bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType) {
 aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    if (DebugManager.flags.ForceBcsEngineIndex.get() != -1) {
-        auto index = DebugManager.flags.ForceBcsEngineIndex.get();
+    if (debugManager.flags.ForceBcsEngineIndex.get() != -1) {
+        auto index = debugManager.flags.ForceBcsEngineIndex.get();
         UNRECOVERABLE_IF(index > 8);
 
         return (index == 0) ? aub_stream::EngineType::ENGINE_BCS
@@ -110,17 +110,17 @@ aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceE
     }
 
     if (internalUsage) {
-        if (DebugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
-            return DebugManager.flags.ForceBCSForInternalCopyEngine.get() == 0 ? aub_stream::EngineType::ENGINE_BCS
-                                                                               : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + DebugManager.flags.ForceBCSForInternalCopyEngine.get() - 1);
+        if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+            return debugManager.flags.ForceBCSForInternalCopyEngine.get() == 0 ? aub_stream::EngineType::ENGINE_BCS
+                                                                               : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + debugManager.flags.ForceBCSForInternalCopyEngine.get() - 1);
         }
         return aub_stream::ENGINE_BCS3;
     }
 
     auto enableSelector = productHelper.isCopyEngineSelectorEnabled(hwInfo);
 
-    if (DebugManager.flags.EnableCopyEngineSelector.get() != -1) {
-        enableSelector = DebugManager.flags.EnableCopyEngineSelector.get();
+    if (debugManager.flags.EnableCopyEngineSelector.get() != -1) {
+        enableSelector = debugManager.flags.EnableCopyEngineSelector.get();
     }
 
     if (enableSelector) {
@@ -192,8 +192,8 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto enableCmdQRoundRobindBcsEngineAssign = false;
 
-    if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {
-        enableCmdQRoundRobindBcsEngineAssign = DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get();
+    if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {
+        enableCmdQRoundRobindBcsEngineAssign = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get();
     }
 
     if (enableCmdQRoundRobindBcsEngineAssign) {
@@ -203,8 +203,8 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
         auto engineOffset = 0u;
         auto mainCE = false;
 
-        if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get() != -1) {
-            engineOffset = DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get();
+        if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get() != -1) {
+            engineOffset = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get();
             mainCE = engineOffset == 0;
         }
 
@@ -212,8 +212,8 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
             bcsRoundRobinLimit++;
         }
 
-        if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get() != -1) {
-            bcsRoundRobinLimit = DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get();
+        if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get() != -1) {
+            bcsRoundRobinLimit = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get();
         }
 
         do {

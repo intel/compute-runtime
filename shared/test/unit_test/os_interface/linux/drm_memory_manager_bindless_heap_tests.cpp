@@ -23,7 +23,7 @@ namespace NEO {
 struct GlobalBindlessDrmMemManagerFixture : public DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     GlobalBindlessDrmMemManagerFixture() : DrmMemoryManagerFixtureWithoutQuietIoctlExpectation(1, 0) {}
     void setUp() {
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(true);
     }
     void tearDown() {
@@ -50,7 +50,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
 }
 
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToBindlessBaseAddress) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
     allocData.size = MemoryConstants::pageSize64k;
@@ -70,7 +70,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
 }
 
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreatedInDevicePoolThenGpuAddressIsSetToBindlessBaseAddress) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
     allocData.type = AllocationType::LINEAR_STREAM;
     allocData.size = MemoryConstants::pageSize64k;

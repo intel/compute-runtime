@@ -68,7 +68,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGe
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
     EXPECT_EQ(2 * sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
@@ -128,7 +128,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
 
     for (auto &testInput : testInputs) {
         hardwareInfo.platform.usRevId = testInput.revisionId;
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(
             testInput.programGlobalFenceAsMiMemFenceCommandInCommandStream);
 
         LinearStream commandStream(buffer, 128);

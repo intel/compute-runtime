@@ -291,7 +291,7 @@ TEST_F(MetricIpSamplingTimestampTest, GivenEnumerationIsSuccessfulWhenReadingMet
     EXPECT_NE(globalTimestamp, 0UL);
     EXPECT_NE(metricTimestamp, 0UL);
 
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
     globalTimestamp = 0;
     metricTimestamp = 0;
 

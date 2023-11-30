@@ -149,8 +149,8 @@ HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRIn
 
 HWTEST_F(CommandStreamReceiverTest, givenFlagsDisabledWhenCallFillReusableAllocationsListThenDoNotAllocateCommandBuffer) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
-    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
@@ -163,8 +163,8 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagsDisabledWhenCallFillReusableAlloca
 
 HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
-    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
@@ -180,8 +180,8 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFil
 
 HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForInternalHeapsWhenCallFillReusableAllocationsListThenAllocateInternalHeapAndMakeItResident) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
-    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(1);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
@@ -223,7 +223,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUnsetPreallocationsPerQueueWhenRequestP
 
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueEqualZeroWhenRequestPreallocationCalledThenDoNotAllocateCommandBuffer) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0);
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
@@ -234,7 +234,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueEqualZeroWhenRequ
 
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreallocationCalledThenAllocateCommandBufferIfNeeded) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
@@ -257,7 +257,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreall
 
 HWTEST_F(CommandStreamReceiverTest, givenPreallocationsPerQueueWhenRequestPreallocationCalledButAllocationFailedThenRequestIsIgnored) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
+    debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(1);
     EXPECT_TRUE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
 
@@ -413,7 +413,7 @@ HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTa
 
 HWTEST_F(CommandStreamReceiverTest, givenDisableGpuHangDetectionFlagWhenCheckingGpuHangThenDriverModelIsNotCalledAndFalseIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DisableGpuHangDetection.set(true);
+    debugManager.flags.DisableGpuHangDetection.set(true);
 
     auto driverModelMock = std::make_unique<MockDriverModel>();
     driverModelMock->isGpuHangDetectedToReturn = true;
@@ -778,7 +778,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmittingBatchBufferAndFlushF
 
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -804,7 +804,7 @@ HWTEST_F(CommandStreamReceiverTest, givenOverrideCsrAllocationSizeWhenCreatingCo
     DebugManagerStateRestore restore;
 
     int32_t overrideSize = 10 * MemoryConstants::pageSize;
-    DebugManager.flags.OverrideCsrAllocationSize.set(overrideSize);
+    debugManager.flags.OverrideCsrAllocationSize.set(overrideSize);
 
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -825,11 +825,11 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCallingGetMemo
 HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThenEnableTimestampPacketWriteMode) {
     DebugManagerStateRestore restore;
 
-    DebugManager.flags.EnableTimestampPacket.set(true);
+    debugManager.flags.EnableTimestampPacket.set(true);
     CommandStreamReceiverHw<FamilyType> csr1(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_TRUE(csr1.peekTimestampPacketWriteEnabled());
 
-    DebugManager.flags.EnableTimestampPacket.set(false);
+    debugManager.flags.EnableTimestampPacket.set(false);
     CommandStreamReceiverHw<FamilyType> csr2(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_FALSE(csr2.peekTimestampPacketWriteEnabled());
 }
@@ -874,22 +874,22 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCou
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     {
-        DebugManager.flags.UpdateTaskCountFromWait.set(0);
+        debugManager.flags.UpdateTaskCountFromWait.set(0);
         EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
     }
 
     {
-        DebugManager.flags.UpdateTaskCountFromWait.set(1);
+        debugManager.flags.UpdateTaskCountFromWait.set(1);
         EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), csr.isDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.UpdateTaskCountFromWait.set(2);
+        debugManager.flags.UpdateTaskCountFromWait.set(2);
         EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), csr.isAnyDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.UpdateTaskCountFromWait.set(3);
+        debugManager.flags.UpdateTaskCountFromWait.set(3);
         EXPECT_TRUE(csr.isUpdateTagFromWaitEnabled());
     }
 }
@@ -912,7 +912,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabl
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDeviceEnvironmentWhenCheckIfEnabledThenCanBeEnabledOnlyWithDirectSubmission) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
     TearDown();
     SetUp();
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -932,7 +932,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitInMultiRootDevic
 
 struct InitDirectSubmissionFixture {
     void setUp() {
-        DebugManager.flags.EnableDirectSubmission.set(1);
+        debugManager.flags.EnableDirectSubmission.set(1);
         executionEnvironment = new MockExecutionEnvironment();
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -952,7 +952,7 @@ using InitDirectSubmissionTest = Test<InitDirectSubmissionFixture>;
 
 HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenInitDirectSubmissionThenCsrIsRegistered) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmissionController.set(1);
+    debugManager.flags.EnableDirectSubmissionController.set(1);
 
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
@@ -985,7 +985,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenIni
 
 HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerDisabledWhenInitDirectSubmissionThenControllerIsNotCreatedAndCsrIsNotRegistered) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmissionController.set(0);
+    debugManager.flags.EnableDirectSubmissionController.set(0);
 
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
@@ -1010,7 +1010,7 @@ HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerDisabledWhenIn
 
 HWTEST_F(InitDirectSubmissionTest, givenSetCsrFlagSetWhenInitDirectSubmissionThenControllerIsNotCreatedAndCsrIsNotRegistered) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
@@ -1349,9 +1349,9 @@ HWTEST_F(InitDirectSubmissionTest, givenNonDefaultContextContextWhenDirectSubmis
 }
 
 HWTEST_F(InitDirectSubmissionTest, GivenBlitterOverrideEnabledWhenBlitterIsNonDefaultContextThenExpectDirectSubmissionStarted) {
-    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-    DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+    debugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
+    debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
 
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
@@ -1631,7 +1631,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingA
 
 TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingNewAllocationAndVerbosityEnabledThenProvidePrintOfNewAllocationType) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProvideVerboseImplicitFlush.set(true);
+    debugManager.flags.ProvideVerboseImplicitFlush.set(true);
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
@@ -1653,7 +1653,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingN
 
 TEST(CommandStreamReceiverSimpleTest, givenPrintfTagAllocationAddressFlagEnabledWhenCreatingTagAllocationThenPrintItsAddress) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintTagAllocationAddress.set(true);
+    debugManager.flags.PrintTagAllocationAddress.set(true);
     DeviceBitfield deviceBitfield(1);
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0,
                                                                   EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})));
@@ -2082,7 +2082,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 
 TEST_F(CommandStreamReceiverTest, givenForceCommandBufferAlignmentWhenEnsureCommandBufferAllocationThenItHasProperAlignment) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceCommandBufferAlignment.set(2048);
+    debugManager.flags.ForceCommandBufferAlignment.set(2048);
 
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
@@ -2131,8 +2131,8 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsFo
 
 HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndEarlyPreallocatedAllocationInReuseListWhenCallingEnsureCommandBufferAllocationThenObtainAllocationFromInternalAllocationStorage) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
-    DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(0);
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
 
     commandStreamReceiver->fillReusableAllocationsList();
@@ -2170,7 +2170,7 @@ HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAdd
 
 HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     {
         UltDeviceFactory deviceFactory{1, 2};
@@ -2181,14 +2181,14 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableSt
         EXPECT_EQ(gpuVa, device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocationGpuAddress());
     }
     {
-        DebugManager.flags.EnableStaticPartitioning.set(0);
+        debugManager.flags.EnableStaticPartitioning.set(0);
         UltDeviceFactory deviceFactory{1, 2};
         MockDevice &device = *deviceFactory.rootDevices[0];
         EXPECT_FALSE(device.getGpgpuCommandStreamReceiver().isStaticWorkPartitioningEnabled());
         EXPECT_EQ(0u, device.getGpgpuCommandStreamReceiver().getWorkPartitionAllocationGpuAddress());
     }
     {
-        DebugManager.flags.EnableStaticPartitioning.set(1);
+        debugManager.flags.EnableStaticPartitioning.set(1);
         UltDeviceFactory deviceFactory{1, 2};
         MockDevice &device = *deviceFactory.rootDevices[0];
         EXPECT_TRUE(device.getGpgpuCommandStreamReceiver().isStaticWorkPartitioningEnabled());
@@ -2202,7 +2202,7 @@ HWTEST_F(CommandStreamReceiverTest, whenCreatingWorkPartitionAllocationThenIniti
     MockExecutionEnvironment mockExecutionEnvironment{};
     REQUIRE_BLITTER_OR_SKIP(*mockExecutionEnvironment.rootDeviceEnvironments[0].get());
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableStaticPartitioning.set(0);
+    debugManager.flags.EnableStaticPartitioning.set(0);
 
     constexpr size_t subDeviceCount = 3;
     UltDeviceFactory deviceFactory{1, subDeviceCount};
@@ -2239,7 +2239,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFailingMemoryManagerWhenCreatingWorkPar
     };
 
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableStaticPartitioning.set(0);
+    debugManager.flags.EnableStaticPartitioning.set(0);
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice &rootDevice = *deviceFactory.rootDevices[0];
     UltCommandStreamReceiver<FamilyType> &csr = rootDevice.getUltCommandStreamReceiver<FamilyType>();
@@ -2248,7 +2248,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFailingMemoryManagerWhenCreatingWorkPar
     executionEnvironment.memoryManager = std::make_unique<FailingMemoryManager>(executionEnvironment);
 
     csr.staticWorkPartitioningEnabled = true;
-    DebugManager.flags.EnableStaticPartitioning.set(1);
+    debugManager.flags.EnableStaticPartitioning.set(1);
     EXPECT_FALSE(csr.createWorkPartitionAllocation(rootDevice));
     EXPECT_EQ(nullptr, csr.getWorkPartitionAllocation());
 }
@@ -2367,7 +2367,7 @@ TEST_F(CommandStreamReceiverPageTableManagerTest, givenNonExisitingPageTableMana
 
 TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWorkPartitionAllocationThenFallbackToCpuCopy) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     UltDeviceFactory deviceFactory{1, 2};
     MockDevice &device = *deviceFactory.rootDevices[0];
@@ -2376,7 +2376,7 @@ TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWork
     auto commandStreamReceiver = device.getDefaultEngine().commandStreamReceiver;
     memoryManager->freeGraphicsMemory(commandStreamReceiver->getWorkPartitionAllocation());
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    debugManager.flags.EnableBlitterOperationsSupport.set(0);
     memoryManager->copyMemoryToAllocationBanksCalled = 0u;
     memoryManager->copyMemoryToAllocationBanksParamsPassed.clear();
     auto retVal = commandStreamReceiver->createWorkPartitionAllocation(device);
@@ -2393,7 +2393,7 @@ TEST(CreateWorkPartitionAllocationTest, givenDisabledBlitterWhenInitializingWork
 
 TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkPartitionAllocationThenDontCopyOnCpu) {
     DebugManagerStateRestore restore{};
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.EnableImplicitScaling.set(1);
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
 
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -2415,7 +2415,7 @@ TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkP
 
 HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEnabledThenPrintTagValueForAllPartitions) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.LogWaitingForCompletion.set(true);
+    debugManager.flags.LogWaitingForCompletion.set(true);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.activePartitions = 2;
@@ -3167,7 +3167,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsTest, givenFlushingCommandStre
     std::tie(isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization) = GetParam();
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
+    debugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -3406,7 +3406,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
 
     pDevice->initializeRayTracing(8);
 
@@ -4478,7 +4478,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfaceStateEnabledWhenSizeForPrivateScratchSpaceIsMisalignedThenAlignItNextPow2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnablePrivateScratchSlot1.set(1);
+    debugManager.flags.EnablePrivateScratchSlot1.set(1);
     RENDER_SURFACE_STATE surfaceState[4];
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());

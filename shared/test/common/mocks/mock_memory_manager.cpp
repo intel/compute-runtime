@@ -197,15 +197,15 @@ void MockMemoryManager::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uin
 }
 
 bool MockMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
-    if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
-        return !!DebugManager.flags.EnableRecoverablePageFaults.get();
+    if (debugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+        return !!debugManager.flags.EnableRecoverablePageFaults.get();
     }
     return false;
 }
 
 bool MockMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
-    if (DebugManager.flags.UseKmdMigration.get() != -1) {
-        return !!DebugManager.flags.UseKmdMigration.get();
+    if (debugManager.flags.UseKmdMigration.get() != -1) {
+        return !!debugManager.flags.UseKmdMigration.get();
     }
     return false;
 }

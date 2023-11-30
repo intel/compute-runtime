@@ -13,7 +13,7 @@ using namespace NEO;
 
 struct ClRetainReleaseDeviceTests : Test<PlatformFixture> {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
+        debugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
         Test<PlatformFixture>::SetUp();
     }
     DebugManagerStateRestore restorer;

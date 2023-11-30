@@ -22,7 +22,7 @@ bool initWddmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, RootDeviceEnv
         return false;
     }
 
-    const bool isCsrHwWithAub = DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_HW_WITH_AUB;
+    const bool isCsrHwWithAub = debugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_HW_WITH_AUB;
     rootDeviceEnv->memoryOperationsInterface = WddmMemoryOperationsHandler::create(wddm, rootDeviceEnv, isCsrHwWithAub);
 
     return true;

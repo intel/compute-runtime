@@ -65,11 +65,11 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
-    if (NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
-    bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    bool relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
     if (hostDesc->pNext) {
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(hostDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
@@ -90,7 +90,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
 
     StructuresLookupTable lookupTable = {};
 
-    lookupTable.relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    lookupTable.relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
     auto parseResult = prepareL0StructuresLookupTable(lookupTable, hostDesc->pNext);
 
     if (parseResult != ZE_RESULT_SUCCESS) {
@@ -194,8 +194,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) {
-    if (NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
     auto device = Device::fromHandle(hDevice);
@@ -205,7 +205,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 
     StructuresLookupTable lookupTable = {};
 
-    lookupTable.relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    lookupTable.relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
     auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceDesc->pNext);
 
     if (parseResult != ZE_RESULT_SUCCESS) {
@@ -285,8 +285,8 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
-    if (NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
-        size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
     auto device = Device::fromHandle(this->devices.begin()->second);
@@ -297,7 +297,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 
     StructuresLookupTable lookupTable = {};
 
-    lookupTable.relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
+    lookupTable.relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
     auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceDesc->pNext);
 
     if (parseResult != ZE_RESULT_SUCCESS) {

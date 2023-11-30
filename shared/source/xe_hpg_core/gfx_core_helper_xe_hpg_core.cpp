@@ -35,8 +35,8 @@ inline bool GfxCoreHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo
     if (disableEUFusionForKernel)
         fusedEuDispatchEnabled = false;
 
-    if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
-        fusedEuDispatchEnabled = (DebugManager.flags.CFEFusedEUDispatch.get() == 0);
+    if (debugManager.flags.CFEFusedEUDispatch.get() != -1) {
+        fusedEuDispatchEnabled = (debugManager.flags.CFEFusedEUDispatch.get() == 0);
     }
     return fusedEuDispatchEnabled;
 }
@@ -65,8 +65,8 @@ template <>
 void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {
     if (useL1Cache) {
         surfaceState->setL1CachePolicyL1CacheControl(Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB);
-        if (DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
-            surfaceState->setL1CachePolicyL1CacheControl(static_cast<typename Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY>(DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get()));
+        if (debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
+            surfaceState->setL1CachePolicyL1CacheControl(static_cast<typename Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY>(debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get()));
         }
     }
 }
@@ -76,8 +76,8 @@ bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo,
 
     bool forceOverrideMemoryBankIndex = false;
 
-    if (DebugManager.flags.ForceMemoryBankIndexOverride.get() != -1) {
-        forceOverrideMemoryBankIndex = static_cast<bool>(DebugManager.flags.ForceMemoryBankIndexOverride.get());
+    if (debugManager.flags.ForceMemoryBankIndexOverride.get() != -1) {
+        forceOverrideMemoryBankIndex = static_cast<bool>(debugManager.flags.ForceMemoryBankIndexOverride.get());
     }
     return forceOverrideMemoryBankIndex;
 }
@@ -96,8 +96,8 @@ void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirec
 
 template <>
 bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
-    if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
-        return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
+    if (debugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
+        return !!debugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
 
     if (CompressionSelector::allowStatelessCompression()) {
@@ -122,8 +122,8 @@ uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, u
 
 template <>
 bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
-    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
-        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
 
     return this->isLocalMemoryEnabled(hwInfo) && !productHelper.isUnlockingLockedPtrNecessary(hwInfo);

@@ -166,8 +166,8 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         this->platformInfo->name = preferredPlatformName;
     }
 
-    if (DebugManager.flags.OverridePlatformName.get() != "unk") {
-        this->platformInfo->name.assign(DebugManager.flags.OverridePlatformName.get().c_str());
+    if (debugManager.flags.OverridePlatformName.get() != "unk") {
+        this->platformInfo->name.assign(debugManager.flags.OverridePlatformName.get().c_str());
     }
 
     switch (this->clDevices[0]->getEnabledClVersion()) {
@@ -186,7 +186,7 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     }
 
     this->fillGlobalDispatchTable();
-    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleSubDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
+    DEBUG_BREAK_IF(debugManager.flags.CreateMultipleSubDevices.get() > 1 && !this->clDevices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
 }

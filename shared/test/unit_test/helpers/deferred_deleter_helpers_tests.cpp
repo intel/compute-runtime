@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,12 +16,12 @@ using namespace NEO;
 
 TEST(deferredDeleterHelper, DeferredDeleterIsDisabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeferredDeleter.set(false);
+    debugManager.flags.EnableDeferredDeleter.set(false);
     EXPECT_FALSE(isDeferredDeleterEnabled());
 }
 TEST(deferredDeleterHelper, DeferredDeleterIsEnabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDeferredDeleter.set(true);
+    debugManager.flags.EnableDeferredDeleter.set(true);
     EXPECT_TRUE(isDeferredDeleterEnabled());
 }
 

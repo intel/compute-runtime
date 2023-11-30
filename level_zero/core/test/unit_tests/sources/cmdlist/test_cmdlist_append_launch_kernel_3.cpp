@@ -57,7 +57,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
 
     for (auto debugKey : {-1, 0, 1}) {
         DebugManagerStateRestore restore;
-        DebugManager.flags.ForceBtpPrefetchMode.set(debugKey);
+        debugManager.flags.ForceBtpPrefetchMode.set(debugKey);
 
         createKernel();
 
@@ -555,7 +555,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeKernelWhenAppendLaunchC
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllowedWhenAppendLaunchCooperativeKernelIsCalledThenCommandListTypeIsProperlySet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     createKernel();
     kernel->setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -584,7 +584,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllow
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsAndAllowMixingWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -614,7 +614,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskUnrecoverableIsCalled, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     createKernel();
 
@@ -689,7 +689,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
     };
 
     void SetUp() override {
-        NEO::DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
+        NEO::debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
 
         CommandListAppendLaunchKernel::SetUp();
         createKernel();
@@ -889,7 +889,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnF
 }
 
 HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxedOrdering, IsAtLeastXeHpCore) {
-    NEO::DebugManager.flags.ForceInOrderImmediateCmdListExecution.set(-1);
+    NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.set(-1);
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
@@ -903,7 +903,7 @@ HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxe
 }
 
 HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderEventWhenAddedToWaitListThenReturnError, IsAtLeastSkl) {
-    DebugManager.flags.ForceInOrderEvents.set(1);
+    debugManager.flags.ForceInOrderEvents.set(1);
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1029,7 +1029,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
-    NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
+    NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1186,7 +1186,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    DebugManager.flags.ProgramUserInterruptOnResolvedDependency.set(1);
+    debugManager.flags.ProgramUserInterruptOnResolvedDependency.set(1);
 
     auto eventPool = createEvents<FamilyType>(2, false);
     auto eventHandle = events[0]->toHandle();
@@ -1438,7 +1438,7 @@ HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmed
     EXPECT_EQ(Event::CounterBasedMode::InitiallyDisabled, events[1]->counterBasedMode);
     EXPECT_FALSE(events[1]->isCounterBased());
 
-    DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
+    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::ImplicitlyEnabled, events[0]->counterBasedMode);
@@ -1592,7 +1592,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgram
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEventThenSwitchToCounterBased, IsAtLeastXeHpCore) {
-    DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
+    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto copyOnlyCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
@@ -1679,7 +1679,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
 }
 
 HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEventThenReturnError, IsAtLeastXeHpCore) {
-    DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
+    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->inOrderExecInfo.reset();
@@ -1829,7 +1829,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
 HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxedOrderingThenProgramAllDependencies, IsAtLeastXeHpCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -2165,7 +2165,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalkerSignallingAllowedThenReturnTrue, IsAtLeastXeHpcCore) {
-    DebugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->signalScope = 0;
 
@@ -2196,8 +2196,8 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         std::vector<size_t> flushData; // start_offset
     };
 
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    DebugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -2309,8 +2309,8 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
         uint32_t flushCount = 0;
     };
 
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    DebugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(0);
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(0);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -3991,8 +3991,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEve
 
 struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
     void SetUp() override {
-        NEO::DebugManager.flags.CreateMultipleSubDevices.set(2);
-        NEO::DebugManager.flags.EnableImplicitScaling.set(1);
+        NEO::debugManager.flags.CreateMultipleSubDevices.set(2);
+        NEO::debugManager.flags.EnableImplicitScaling.set(1);
 
         InOrderCmdListTests::SetUp();
     }
@@ -4332,8 +4332,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 
 struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
     void SetUp() override {
-        NEO::DebugManager.flags.SplitBcsCopy.set(1);
-        NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+        NEO::debugManager.flags.SplitBcsCopy.set(1);
+        NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
         hwInfoBackup = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -4622,7 +4622,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 }
 
 HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEventThenSwitchToCounterBased, IsAtLeastXeHpcCore) {
-    DebugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
+    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
 
     auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
 
@@ -4958,7 +4958,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenEx
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
-    DebugManager.flags.EnableInOrderRegularCmdListPatching.set(0);
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(0);
 
     ze_command_queue_desc_t desc = {};
 
@@ -5450,7 +5450,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+    debugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
 
     ze_group_count_t groupCount{128, 1, 1};
 
@@ -5512,7 +5512,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+    debugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
 
     ze_group_count_t groupCount{128, 1, 1};
 

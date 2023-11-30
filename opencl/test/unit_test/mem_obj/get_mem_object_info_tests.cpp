@@ -369,7 +369,7 @@ class GetMemObjectInfoLocalMemory : public GetMemObjectInfo {
   public:
     void SetUp() override {
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         GetMemObjectInfo::SetUp();
 
         delete BufferDefaults::context;

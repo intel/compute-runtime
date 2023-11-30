@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@ namespace ult {
 
 std::unique_ptr<NEO::UltDeviceFactory> PciSpeedInfoTest::createDevices(uint32_t numSubDevices, const NEO::PhysicalDevicePciSpeedInfo &pciSpeedInfo) {
 
-    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    DebugManager.flags.EnableChipsetUniqueUUID.set(0);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.EnableChipsetUniqueUUID.set(0);
     NEO::ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface);
     executionEnvironment->memoryManager.reset(new MockMemoryManagerOsAgnosticContext(*executionEnvironment));

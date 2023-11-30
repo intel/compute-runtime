@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ std::string SharingFactory::getExtensions(DriverInfo *driverInfo) {
         sharingAvailable = true;
     }
 
-    if (DebugManager.flags.EnableFormatQuery.get() && sharingAvailable) {
+    if (debugManager.flags.EnableFormatQuery.get() && sharingAvailable) {
         res += Extensions::sharingFormatQuery;
     }
 

@@ -122,7 +122,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenDisabledPreemptionAndDisab
 template <typename GfxFamily>
 void SourceLevelDebuggerPreambleTest<GfxFamily>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest() {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t withoutDebugging = PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*mockDevice);

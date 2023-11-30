@@ -48,7 +48,7 @@ Event::Event(
       cmdQueue(cmdQueue),
       cmdType(cmdType),
       taskCount(taskCount) {
-    if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
+    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyCreation(this);
     }
     flushStamp.reset(new FlushStampTracker(true));
@@ -90,7 +90,7 @@ Event::Event(
 }
 
 Event::~Event() {
-    if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
+    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyDestruction(this);
     }
 
@@ -308,11 +308,11 @@ void Event::setSubmitTimeStamp() {
 }
 
 uint64_t Event::getProfilingInfoData(const ProfilingInfo &profilingInfo) const {
-    if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+    if (debugManager.flags.ReturnRawGpuTimestamps.get()) {
         return profilingInfo.gpuTimeStamp;
     }
 
-    if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+    if (debugManager.flags.EnableDeviceBasedTimestamps.get()) {
         return profilingInfo.gpuTimeInNs;
     }
     return profilingInfo.cpuTimeInNs;
@@ -323,7 +323,7 @@ bool Event::calcProfilingData() {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
             const auto timestamps = timestampPacketContainer->peekNodes();
 
-            if (DebugManager.flags.PrintTimestampPacketContents.get()) {
+            if (debugManager.flags.PrintTimestampPacketContents.get()) {
 
                 for (auto i = 0u; i < timestamps.size(); i++) {
                     std::cout << "Timestamp " << i << ", "
@@ -404,7 +404,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     completeTimeStamp.gpuTimeInNs = startTimeStamp.gpuTimeInNs + cpuCompleteDuration;
     completeTimeStamp.gpuTimeStamp = startTimeStamp.gpuTimeStamp + gpuCompleteDuration;
 
-    if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+    if (debugManager.flags.ReturnRawGpuTimestamps.get()) {
         startTimeStamp.gpuTimeStamp = contextStartTS;
         endTimeStamp.gpuTimeStamp = contextEndTS;
         completeTimeStamp.gpuTimeStamp = *contextCompleteTS;
@@ -515,7 +515,7 @@ void Event::addChild(Event &childEvent) {
     childEvent.incRefInternal();
     childEventsToNotify.pushRefFrontOne(childEvent);
     DBG_LOG(EventsDebugEnable, "addChild: Parent event:", this, "child:", &childEvent);
-    if (DebugManager.flags.TrackParentEvents.get()) {
+    if (debugManager.flags.TrackParentEvents.get()) {
         childEvent.parentEvents.push_back(this);
     }
     if (executionStatus == CL_COMPLETE) {
@@ -595,7 +595,7 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
             break;
         }
     }
-    if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
+    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();
     }
 }
@@ -735,7 +735,7 @@ bool Event::isWaitForTimestampsEnabled() const {
     enabled &= productHelper.isTimestampWaitSupportedForEvents();
     enabled &= !cmdQueue->getDevice().getRootDeviceEnvironment().isWddmOnLinux();
 
-    switch (DebugManager.flags.EnableTimestampWaitForEvents.get()) {
+    switch (debugManager.flags.EnableTimestampWaitForEvents.get()) {
     case 0:
         enabled = false;
         break;
@@ -837,7 +837,7 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
         executeCallbacks(status);
     }
 
-    if (peekHasCallbacks() && !isUserEvent() && DebugManager.flags.EnableAsyncEventsHandler.get()) {
+    if (peekHasCallbacks() && !isUserEvent() && debugManager.flags.EnableAsyncEventsHandler.get()) {
         ctx->getAsyncEventsHandler().registerEvent(this);
     }
 

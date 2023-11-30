@@ -734,7 +734,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationOnGfxAllocationW
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingDependenciesThenPutAllNodesToDeferredList) {
-    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
 
     auto gfxAllocation = createGfxAllocation(1, true);
     setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
@@ -750,7 +750,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingDependenciesForBlockedEnqueueThenPutAllNodesToDeferredList) {
-    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
 
     auto gfxAllocation = createGfxAllocation(1, true);
     setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
@@ -779,7 +779,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenCacheFlushRequiredWhenHandlingD
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenTerminatedLatestEnqueuedTaskWhenHandlingDependenciesForBlockedEnqueueThenDoNotPutAllNodesToDeferredListAndSetTimestampData) {
-    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
 
     auto gfxAllocation = createGfxAllocation(1, true);
     setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
@@ -805,7 +805,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenTerminatedLatestEnqueuedTaskWhe
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenTerminatedTaskWhenHandlingDependenciesForBlockedEnqueueThenDoNotPutAllNodesToDeferredListAndDoNotSetTimestampData) {
-    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
 
     auto gfxAllocation = createGfxAllocation(1, true);
     setMockKernelArgs(std::array<GraphicsAllocation *, 1>{{gfxAllocation}});
@@ -950,7 +950,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenDis
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
 
-    DebugManager.flags.PauseOnBlitCopy.set(1);
+    debugManager.flags.PauseOnBlitCopy.set(1);
 
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -977,7 +977,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenGpuHangOnFlushBcsTa
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
 
-    DebugManager.flags.PauseOnBlitCopy.set(1);
+    debugManager.flags.PauseOnBlitCopy.set(1);
 
     const auto result = commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, result);
@@ -994,7 +994,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetToMinus
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
 
-    DebugManager.flags.PauseOnBlitCopy.set(-2);
+    debugManager.flags.PauseOnBlitCopy.set(-2);
 
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -1024,8 +1024,8 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToBefor
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
 
-    DebugManager.flags.PauseOnBlitCopy.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
+    debugManager.flags.PauseOnBlitCopy.set(0);
+    debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
 
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
 
@@ -1054,8 +1054,8 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToAfter
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
 
-    DebugManager.flags.PauseOnBlitCopy.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
+    debugManager.flags.PauseOnBlitCopy.set(0);
+    debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
 
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
 
@@ -1084,8 +1084,8 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToBefor
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
 
-    DebugManager.flags.PauseOnBlitCopy.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
+    debugManager.flags.PauseOnBlitCopy.set(0);
+    debugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
 
     commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
 
@@ -1104,7 +1104,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenPauseModeSetToBefor
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenCreatingCsrThenCreateDebugThread) {
-    DebugManager.flags.PauseOnBlitCopy.set(1);
+    debugManager.flags.PauseOnBlitCopy.set(1);
 
     auto localDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
@@ -1165,7 +1165,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenNonBlockedQueueWhenBlitEnqueuedTh
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangAndBlockingCallAndNonBlockedQueueWhenBlitEnqueuedThenOutOfResourcesIsReturned) {
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     auto buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
@@ -1241,10 +1241,10 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangOnFlushBcsTaskAndBlockedQu
 HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValue) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
 
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
     EXPECT_FALSE(mockCommandQueue->isCacheFlushForBcsRequired());
 
-    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
     EXPECT_TRUE(mockCommandQueue->isCacheFlushForBcsRequired());
 }
 
@@ -1310,8 +1310,8 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBufferDumpingEnabledWhenEnque
     buffer->forceDisallowCPUCopy = true;
     int hostPtr = 0;
 
-    DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
-    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+    debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
+    debugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
 
@@ -1327,7 +1327,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBufferDumpingEnabledWhenEnque
 
     {
         // Non-BCS enqueue
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
         commandQueue->enqueueReadBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
 

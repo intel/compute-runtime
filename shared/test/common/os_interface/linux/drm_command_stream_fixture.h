@@ -38,7 +38,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     void setUpT() {
 
         // make sure this is disabled, we don't want to test this now
-        DebugManager.flags.EnableForcePin.set(false);
+        debugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -63,7 +63,7 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         mock->ioctlCallsCount = 0u;
         memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive,
-                                             DebugManager.flags.EnableForcePin.get(),
+                                             debugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
@@ -121,7 +121,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         executionEnvironment->initGmm();
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
         // make sure this is disabled, we don't want to test this now
-        DebugManager.flags.EnableForcePin.set(false);
+        debugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmType(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
@@ -131,7 +131,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
         ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                  DebugManager.flags.EnableForcePin.get(),
+                                  debugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
@@ -202,7 +202,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         executionEnvironment->initGmm();
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
         // make sure this is disabled, we don't want to test this now
-        DebugManager.flags.EnableForcePin.set(false);
+        debugManager.flags.EnableForcePin.set(false);
 
         mock = new T(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
@@ -212,7 +212,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         csr = new TestedDrmCommandStreamReceiverWithFailingExec<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
         ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                  DebugManager.flags.EnableForcePin.get(),
+                                  debugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);

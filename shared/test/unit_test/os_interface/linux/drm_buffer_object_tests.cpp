@@ -143,7 +143,7 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
 TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueThenDebugInformationAboutBOIsPrinted) {
     mock->ioctlExpected.total = 1;
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintExecutionBuffer.set(true);
+    debugManager.flags.PrintExecutionBuffer.set(true);
 
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
     std::unique_ptr<BufferObject> bo(new TestedBufferObject(rootDeviceIndex, this->mock.get()));
@@ -170,7 +170,7 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
 TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCalledOnBOThenDebugInfromationIsPrinted) {
     mock->ioctlExpected.total = 1;
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     testing::internal::CaptureStdout();
     bool result = bo->close();
@@ -185,7 +185,7 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
 TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCalledButHandleIsSharedThenDebugInfromationIsPrintedThatCloseIsSkipped) {
     mock->ioctlExpected.total = 1;
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
     {
         MockBufferObjectHandleWrapper sharedBoHandleWrapper = bo->acquireSharedOwnershipOfBoHandle();
@@ -214,7 +214,7 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
 TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundInStdStream) {
     mock->ioctlExpected.total = 1;
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintExecutionBuffer.set(true);
+    debugManager.flags.PrintExecutionBuffer.set(true);
     ExecObject execObjectsStorage = {};
 
     testing::internal::CaptureStdout();
@@ -466,7 +466,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     };
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintBOBindingResult.set(true);
+    debugManager.flags.PrintBOBindingResult.set(true);
 
     auto executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
@@ -524,7 +524,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     };
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintBOBindingResult.set(true);
+    debugManager.flags.PrintBOBindingResult.set(true);
 
     auto executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
@@ -741,7 +741,7 @@ TEST_F(DrmBufferObjectTest, givenBoMarkedForCaptureWhenFillingExecObjectThenCapt
 TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSet) {
     MockExecObject execObject{};
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseAsyncDrmExec.set(1);
+    debugManager.flags.UseAsyncDrmExec.set(1);
 
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(0x45000);

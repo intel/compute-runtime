@@ -63,14 +63,14 @@ TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorF
 
 TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshDisabledThenMinimalAddressEqualBeginingOfExternalHeap) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
     memManager.reset(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_EXTERNAL), memManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL) + GfxPartition::heapGranularity);
 }
 
 TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshDisabledThenExternalHeapDoesntHaveFrontWindowPool) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
     memManager.reset(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW), 0u);
 }

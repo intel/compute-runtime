@@ -63,7 +63,7 @@ class ImageHostPtrTransferTests : public testing::Test {
 
 TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     createImageAndSetTestParams<Image3dDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
@@ -87,7 +87,7 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferToHostPtr
 
 TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     createImageAndSetTestParams<Image3dDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
@@ -111,7 +111,7 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferFromHostP
 
 TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     createImageAndSetTestParams<Image2dArrayDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
@@ -135,7 +135,7 @@ TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferToHo
 
 TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     createImageAndSetTestParams<Image2dArrayDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);

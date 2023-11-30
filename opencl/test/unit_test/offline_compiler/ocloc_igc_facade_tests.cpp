@@ -67,7 +67,7 @@ TEST_F(OclocIgcFacadeTest, GivenFailingCreationOfIgcMainWhenPreparingIgcThenFail
 
 TEST_F(OclocIgcFacadeTest, GivenIncompatibleIgcInterfacesWhenPreparingIgcThenFailureIsReported) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     MockOclocIgcFacade mockIgcFacade{&mockArgHelper};
     mockIgcFacade.isIgcInterfaceCompatibleReturnValue = false;

@@ -148,7 +148,7 @@ TEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImageWit
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_height = 1;
-    DebugManager.flags.ForceLinearImages.set(true);
+    debugManager.flags.ForceLinearImages.set(true);
 
     auto image = clCreateImageWithPropertiesINTEL(
         &mockContext,

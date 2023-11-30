@@ -14,7 +14,7 @@ namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isForceToStatelessRequired() const {
-    if (DebugManager.flags.DisableForceToStateless.get()) {
+    if (debugManager.flags.DisableForceToStateless.get()) {
         return false;
     }
     return true;

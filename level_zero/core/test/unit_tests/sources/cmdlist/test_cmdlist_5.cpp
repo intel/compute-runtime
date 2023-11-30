@@ -702,8 +702,8 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
-    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.SignalAllEventPackets.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -752,8 +752,8 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
-    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.SignalAllEventPackets.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -796,7 +796,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
 HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeThenMiFlushAndSemWaitAreAdded) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_command_queue_desc_t desc = {};
@@ -830,7 +830,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWhenAddEventsToCmdListThenProgramSemaphoresOnlyForIncompletedEvents, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
+    NEO::debugManager.flags.SignalAllEventPackets.set(0);
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_command_queue_desc_t desc = {};
@@ -869,7 +869,7 @@ struct CmdContainerMock : public CommandContainer {
 
 HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenCreateSecondaryCmdBufferInSystemMemory) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -889,7 +889,7 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionComm
 
 HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     device->getNEODevice()->getExecutionEnvironment()->setMetricsEnabled(true);
     ze_command_queue_desc_t desc = {};
@@ -909,7 +909,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
     ze_command_queue_desc_t desc = {};
@@ -937,7 +937,7 @@ HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhe
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
     ze_command_queue_desc_t desc = {};
@@ -958,7 +958,7 @@ HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhe
 
 HWTEST_F(CommandListCreate, givenDirectSubmissionFlatRingBufferFlagDisabledImmediateCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0u);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0u);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -974,7 +974,7 @@ HWTEST_F(CommandListCreate, givenDirectSubmissionFlatRingBufferFlagDisabledImmed
 
 HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -987,7 +987,7 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileCommandListWhenIniti
 using CommandListCreateImplicitScaling = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<1u, 1u>>;
 HWTEST_F(CommandListCreateImplicitScaling, givenImmediateCopyOnlyDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -1002,7 +1002,7 @@ HWTEST_F(CommandListCreateImplicitScaling, givenImmediateCopyOnlyDirectSubmissio
 
 HWTEST_F(CommandListCreate, givenCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -1074,7 +1074,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateComm
 
 HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnlyImmediateCommandListCreatedThenFlushTaskSubmissionIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -1448,8 +1448,8 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 struct CommandListPrivateHeapsBindlessSshFixture : public CommandListPrivateHeapsFixture {
     void setUp() {
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-        DebugManager.flags.UseBindlessMode.set(true);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        debugManager.flags.UseBindlessMode.set(true);
         CommandListPrivateHeapsFixture::setUp();
     }
 

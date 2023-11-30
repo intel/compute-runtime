@@ -49,7 +49,7 @@ void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEn
     }
     if (slmTotalSize > 0) {
         if (localMemSize < slmTotalSize) {
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         }
         UNRECOVERABLE_IF(localMemSize < slmTotalSize);
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);

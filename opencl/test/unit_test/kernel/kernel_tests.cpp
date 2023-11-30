@@ -340,7 +340,7 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPreferredWorkGro
 
 TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhenGettingPreferredWorkGroupSizeMultipleThenCorectValueIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.CFEFusedEUDispatch.set(0);
+    debugManager.flags.CFEFusedEUDispatch.set(0);
 
     KernelInfo kernelInfo = {};
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
@@ -1560,7 +1560,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryDevicePropertyAndDisableIndirectAccessNotSetThenKernelControlIsChanged) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(0);
+    debugManager.flags.DisableIndirectAccess.set(0);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1576,7 +1576,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryDevicePropertyAndDisableIndirectAccessSetThenKernelControlIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(1);
+    debugManager.flags.DisableIndirectAccess.set(1);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1588,7 +1588,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryDevicePropertyAndDisableIndirectAccessNotSetAndNoIndirectAccessInKernelThenKernelControlIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(0);
+    debugManager.flags.DisableIndirectAccess.set(0);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1614,7 +1614,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryHostPropertyAndDisableIndirectAccessNotSetThenKernelControlIsChanged) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(0);
+    debugManager.flags.DisableIndirectAccess.set(0);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1630,7 +1630,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryHostPropertyAndDisableIndirectAccessSetThenKernelControlIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(1);
+    debugManager.flags.DisableIndirectAccess.set(1);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1642,7 +1642,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryHostPropertyAndDisableIndirectAccessNotSetAndNoIndirectAccessInKernelThenKernelControlIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(0);
+    debugManager.flags.DisableIndirectAccess.set(0);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1668,7 +1668,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemorySharedPropertyAndDisableIndirectAccessNotSetThenKernelControlIsChanged) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(0);
+    debugManager.flags.DisableIndirectAccess.set(0);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1684,7 +1684,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemorySharedPropertyAndDisableIndirectAccessSetThenKernelControlIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(1);
+    debugManager.flags.DisableIndirectAccess.set(1);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1696,7 +1696,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemorySharedPropertyAndDisableIndirectAccessNotSetAndNoIndirectAccessInKernelThenKernelControlIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableIndirectAccess.set(0);
+    debugManager.flags.DisableIndirectAccess.set(0);
 
     REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -1722,7 +1722,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndHasIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
@@ -1750,7 +1750,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicNorIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
@@ -1778,7 +1778,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
 
 HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
@@ -1812,7 +1812,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndDetectIndirect
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicNorHasIndirectStatelessAccessAndDetectIndirectAccessInKernelDisabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(0);
+    debugManager.flags.DetectIndirectAccessInKernel.set(0);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
@@ -1840,7 +1840,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = true;
@@ -1868,7 +1868,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndDetectIndirectAcc
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
@@ -1896,7 +1896,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndDetectIndirectAc
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+    debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
@@ -1945,7 +1945,7 @@ TEST(KernelConfigTests, givenTwoKernelConfigsWhenCompareThenResultsAreCorrect) {
 HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenKernelConfigDataIsTracked) {
     using TimestampPacketType = typename FamilyType::TimestampPacketType;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableKernelTunning.set(2u);
+    debugManager.flags.EnableKernelTunning.set(2u);
 
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -2036,7 +2036,7 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
 
 HWTEST_F(KernelResidencyTest, givenSimpleKernelTunningAndNoAtomicsWhenPerformTunningThenSingleSubdeviceIsPreferred) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableKernelTunning.set(1u);
+    debugManager.flags.EnableKernelTunning.set(1u);
 
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     MockKernelWithInternals mockKernel(*this->pClDevice);
@@ -2559,7 +2559,7 @@ TEST(KernelTest, WhenSettingKernelArgThenBuiltinDispatchInfoBuilderIsUsed) {
 
 HWTEST_F(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMaxWorkgroupSizeIsSimdSizeDependant) {
     DebugManagerStateRestore dbgStateRestore;
-    DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
+    debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
@@ -2615,7 +2615,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 
 TEST(KernelTest, givenBuiltInProgramWhenCallingInitializeThenAuxTranslationRequiredIsFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     KernelInfo info{};
 
     ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
@@ -2634,7 +2634,7 @@ TEST(KernelTest, givenBuiltInProgramWhenCallingInitializeThenAuxTranslationRequi
 
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceAuxTranslationEnabled.set(1);
+    debugManager.flags.ForceAuxTranslationEnabled.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &capabilityTable = hwInfo->capabilityTable;
@@ -2662,18 +2662,18 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
     EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
-    DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
+    debugManager.flags.ForceAuxTranslationEnabled.set(-1);
     kernel.mockKernel->initialize();
     EXPECT_EQ(clGfxCoreHelper.requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
-    DebugManager.flags.ForceAuxTranslationEnabled.set(0);
+    debugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
     EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
 }
 
 TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInContext) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceAuxTranslationEnabled.set(1);
+    debugManager.flags.ForceAuxTranslationEnabled.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
@@ -2699,7 +2699,7 @@ TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInCon
 
 TEST(KernelTest, WhenAuxTranslationIsNotRequiredThenKernelDoesNotSetRequiredResolvesInContext) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceAuxTranslationEnabled.set(0);
+    debugManager.flags.ForceAuxTranslationEnabled.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
@@ -2718,7 +2718,7 @@ TEST(KernelTest, WhenAuxTranslationIsNotRequiredThenKernelDoesNotSetRequiredReso
 
 TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkKernelForAuxTranslation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
 
@@ -2853,7 +2853,7 @@ TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateSc
 
 TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledWhenPatchWithImplicitSurfaceCalledThenPatchInfoDataIsCollected) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     MockKernelWithInternals kernel(*device);
@@ -2877,7 +2877,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollecitonEnabledAndArgumentWithInvalid
 
 TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledAndValidArgumentWhenPatchWithImplicitSurfaceCalledThenPatchInfoDataIsCollected) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     MockKernelWithInternals kernel(*device);
@@ -3138,7 +3138,7 @@ TEST_F(KernelCreateTest, whenInitFailedThenReturnNull) {
 
 TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializingKernelThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     ::testing::internal::CaptureStderr();
 

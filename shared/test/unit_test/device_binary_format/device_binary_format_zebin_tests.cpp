@@ -120,7 +120,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTarget
 
 TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinaryThenEachTimeZebinIsDumpedToFile) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DumpZEBin.set(true);
+    debugManager.flags.DumpZEBin.set(true);
 
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;

@@ -174,7 +174,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
 
     for (int32_t value : {-1, 0, 1}) {
-        DebugManager.flags.ForcePreParserEnabledForMiArbCheck.set(value);
+        debugManager.flags.ForcePreParserEnabledForMiArbCheck.set(value);
 
         MI_ARB_CHECK buffer[2] = {};
         LinearStream linearStream(buffer, sizeof(buffer));
@@ -221,7 +221,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
     {
         DebugManagerStateRestore restorer{};
         auto expectedMocs = 9u;
-        DebugManager.flags.OverridePostSyncMocs.set(expectedMocs);
+        debugManager.flags.OverridePostSyncMocs.set(expectedMocs);
         WALKER_TYPE walkerCmd{};
         EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
@@ -267,7 +267,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGettin
 }
 
 HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsAtLeastGen12lp) {
-    EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
+    EXPECT_FALSE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -283,8 +283,8 @@ HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStatePar
 HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtLeastGen12lp) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
-    EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
+    debugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
+    EXPECT_TRUE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 

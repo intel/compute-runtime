@@ -41,7 +41,7 @@ TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment)
 
     if (auto ail = rootDeviceEnvironment.getAILConfigurationHelper(); nullptr != ail) {
         targetDevice.applyValidationWorkaround = ail->useLegacyValidationLogic();
-    } else if (DebugManager.flags.DoNotUseProductConfigForValidationWa.get()) {
+    } else if (debugManager.flags.DoNotUseProductConfigForValidationWa.get()) {
         targetDevice.applyValidationWorkaround = true;
     }
     return targetDevice;

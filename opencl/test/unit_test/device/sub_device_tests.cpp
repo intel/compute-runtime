@@ -39,7 +39,7 @@ TEST(SubDevicesTest, givenDefaultConfigWhenCreateRootDeviceThenItDoesntContainSu
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItsSubdevicesHaveProperRootIdSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
@@ -55,7 +55,7 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThenItContainsSubDevices) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
@@ -70,7 +70,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
     DebugManagerStateRestore restorer;
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     initPlatform();
     auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
@@ -105,7 +105,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesAndSubDevicesAsDevicesIsSetWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     initPlatform();
     platform()->peekExecutionEnvironment()->setExposeSubDevicesAsDevices(1);
@@ -141,7 +141,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesAndSubDevicesAsDevicesIsSetWhenSub
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     device->incRefInternal();
@@ -169,7 +169,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreC
 
 TEST(SubDevicesTest, givenClDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     device->getExecutionEnvironment()->setExposeSubDevicesAsDevices(false);
@@ -198,7 +198,7 @@ TEST(SubDevicesTest, givenClDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAr
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWholeDeviceIsDestroyed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
@@ -210,7 +210,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWhole
 TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCreatedThenEachHasUniqueDeviceIndex) {
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(2);
+    debugManager.flags.CreateMultipleRootDevices.set(2);
 
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
@@ -221,7 +221,7 @@ TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCre
 
 TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenOsContextIsCreatedThenItsBitfieldBasesOnSubDevicesCount) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(2u, device->getNumSubDevices());
@@ -232,7 +232,7 @@ TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenOsContextIsCreatedThenItsB
 
 TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnSubDeviceId) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
@@ -248,7 +248,7 @@ TEST(SubDevicesTest, givenSubDeviceWhenOsContextIsCreatedThenItsBitfieldBasesOnS
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrectSubDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(2u, device->getNumSubDevices());
@@ -259,7 +259,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenGettingDeviceByIdThenGetCorrec
 
 TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevice) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(2u, device->getNumSubDevices());
@@ -290,7 +290,7 @@ TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDevic
 
 TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCreatesSpecialEngine) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     auto executionEnvironment = new MockExecutionEnvironment;
@@ -304,9 +304,9 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
 
 TEST(SubDevicesTest, givenRootDeviceWithSubDevicesAndLocalMemoryWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(1);
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.HBMSizePerTileInGigabytes.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.HBMSizePerTileInGigabytes.set(1);
 
     const uint32_t numSubDevices = 2u;
     UltDeviceFactory deviceFactory{1, numSubDevices};
@@ -325,8 +325,8 @@ TEST(SubDevicesTest, givenRootDeviceWithSubDevicesAndLocalMemoryWhenGettingGloba
 
 TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWithoutLocalMemoryWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableLocalMemory.set(0);
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableLocalMemory.set(0);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
 
     const uint32_t numSubDevices = 2u;
     UltDeviceFactory deviceFactory{1, numSubDevices};
@@ -364,7 +364,7 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
 
 struct EngineInstancedDeviceTests : public ::testing::Test {
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
-        DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
         auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -464,8 +464,8 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetAndMoreThanOneCcsWhenCreatin
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
-    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -588,7 +588,7 @@ TEST_F(EngineInstancedDeviceTests, givenDebugFlagSetWhenCreatingRootDeviceWithGe
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -640,7 +640,7 @@ TEST_F(EngineInstancedDeviceTests, givenMultipleSubDevicesWhenCallingGetSubDevic
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -695,7 +695,7 @@ TEST_F(EngineInstancedDeviceTests, givenMultipleClSubDevicesWhenCallingGetSubDev
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -722,8 +722,8 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFi
                                                    {false, false, false, false},
                                                    {false, false, true, true}};
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0.0, 0.0.1, 0.0.2, 0.2.2, 0.2.3, 0.1.5");
+    debugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0.0, 0.0.1, 0.0.2, 0.2.2, 0.2.3, 0.1.5");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -770,8 +770,8 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenC
     constexpr uint32_t create2ndLevelAsEngineInstanced[2] = {false, true};
     constexpr uint32_t engineInstanced2ndLevelEngineIndex = 1;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.1.1");
+    debugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.1.1");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -824,7 +824,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle3rdLevelDeviceOnlyW
     constexpr uint32_t genericDeviceIndex = 1;
     constexpr uint32_t engineInstancedEngineIndex = 1;
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1.1");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.1.1");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -853,7 +853,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSingle2rdLevelDeviceOnlyW
     constexpr uint32_t genericDeviceIndex = 0;
     constexpr uint32_t engineInstancedEngineIndex = 1;
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0.1, 0.9");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0.1, 0.9");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -880,10 +880,10 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
-    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.4");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.4");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -900,10 +900,10 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 1;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
-    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -920,7 +920,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDe
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -937,7 +937,7 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskWhenCreatingClSubDevicesThen
     constexpr uint32_t genericDevicesCount = 3;
     constexpr uint32_t ccsCount = 1;
 
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -953,12 +953,12 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskWhenCreatingClSubDevicesThen
 HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
 
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
     }
@@ -984,7 +984,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenCreatingProgr
     constexpr uint32_t genericDevicesCount = 2;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.EngineInstancedSubDevices.set(true);
+    debugManager.flags.EngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1026,7 +1026,7 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     constexpr uint32_t ccsCount = 4;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
+    debugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1072,8 +1072,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     constexpr uint32_t ccsCount = 4;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
-    DebugManager.flags.CmdQRoundRobindEngineAssignBitfield.set(0b1101);
+    debugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
+    debugManager.flags.CmdQRoundRobindEngineAssignBitfield.set(0b1101);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1122,8 +1122,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     constexpr uint32_t ccsCount = 4;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
-    DebugManager.flags.CmdQRoundRobindEngineAssignNTo1.set(3);
+    debugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
+    debugManager.flags.CmdQRoundRobindEngineAssignNTo1.set(3);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1169,9 +1169,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     constexpr uint32_t ccsCount = 4;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
-    DebugManager.flags.CmdQRoundRobindEngineAssignNTo1.set(3);
-    DebugManager.flags.CmdQRoundRobindEngineAssignBitfield.set(0b1101);
+    debugManager.flags.EnableCmdQRoundRobindEngineAssign.set(1);
+    debugManager.flags.CmdQRoundRobindEngineAssignNTo1.set(3);
+    debugManager.flags.CmdQRoundRobindEngineAssignBitfield.set(0b1101);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1220,7 +1220,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     constexpr uint32_t ccsCount = 4;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
+    debugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -1265,7 +1265,7 @@ TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) 
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenBindlessHeapHelperCreatedThenSubDeviceReturnRootDeviceMember) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
@@ -1275,7 +1275,7 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenBindlessHeapHelperC
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagsEnabledWhenDevicesAreCreatedThenRootOsContextContainsAllSubDeviceBitfields) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
@@ -1287,7 +1287,7 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagsEnabledWhenDevicesAreCrea
 
 TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetToOneWhenCreateRootDeviceThenDontCreateSubDevices) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(1);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     initPlatform();

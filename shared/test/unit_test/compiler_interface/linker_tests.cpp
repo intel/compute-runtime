@@ -799,8 +799,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledT
     instructionsSegments.push_back({&instructionSegment[64], 64u});
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     linker.resolveBuiltins(pDevice, unresolvedExternals, instructionsSegments);
 
@@ -837,8 +837,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalsWhenLinkThenSubDeviceIDSymbolsAreC
     instructionsSegments.push_back({&instructionSegment[64], 64u});
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
 
     linker.link(
         globalVar, globalConst, exportedFunc, {},

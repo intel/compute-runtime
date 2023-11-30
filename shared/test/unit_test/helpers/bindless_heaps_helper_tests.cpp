@@ -20,23 +20,23 @@ using namespace NEO;
 
 TEST(BindlessHeapsHelper, givenExternalAllocatorFlagAndBindlessModeEnabledWhenCreatingRootDevicesThenBindlessHeapsHelperCreated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     EXPECT_NE(deviceFactory->rootDevices[0]->getBindlessHeapsHelper(), nullptr);
 }
 
 TEST(BindlessHeapsHelper, givenExternalAllocatorFlagEnabledAndBindlessModeDisabledWhenCreatingRootDevicesThenBindlessHeapsHelperIsNotCreated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseBindlessMode.set(0);
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     EXPECT_EQ(deviceFactory->rootDevices[0]->getBindlessHeapsHelper(), nullptr);
 }
 
 TEST(BindlessHeapsHelper, givenExternalAllocatorFlagDisabledWhenCreatingRootDevicesThenBindlesHeapHelperIsNotCreated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     EXPECT_EQ(deviceFactory->rootDevices[0]->getBindlessHeapsHelper(), nullptr);
 }
@@ -45,7 +45,7 @@ class BindlessHeapsHelperFixture {
   public:
     void setUp() {
 
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         memManager = std::make_unique<MockMemoryManager>();
     }
     void tearDown() {}
@@ -235,7 +235,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDs
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIsCalledThenSSinHeapInfoShouldBePlacedInReuseVector) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
     MockBindlesHeapsHelper *bindlessHeapHelperPtr = bindlessHeapHelper.get();
     memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
@@ -268,7 +268,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIs
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingBindlessSlotTwiceThenNewSlotIsNotAllocatedAndTrueIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
     memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
@@ -285,7 +285,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingBindlessSl
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenItShouldNotBeReusedIfThresholdNotReached) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
     MockBindlesHeapsHelper *bindlessHeapHelperPtr = bindlessHeapHelper.get();
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
@@ -311,7 +311,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenIt
 
 TEST_F(BindlessHeapsHelperTests, givenDeviceWhenBindlessHeapHelperInitializedThenCorrectDeviceBitFieldIsUsed) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     DeviceBitfield deviceBitfield = 7;
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, deviceBitfield);
     EXPECT_EQ(reinterpret_cast<MockMemoryManager *>(getMemoryManager())->recentlyPassedDeviceBitfield, deviceBitfield);

@@ -27,20 +27,20 @@ namespace NEO {
 
 bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionEnvironment &executionEnvironment) {
     auto numRootDevices = 1u;
-    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
+    if (debugManager.flags.CreateMultipleRootDevices.get()) {
+        numRootDevices = debugManager.flags.CreateMultipleRootDevices.get();
     }
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
 
-    auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
+    auto productFamily = debugManager.flags.ProductFamilyOverride.get();
 
     auto configStr = productFamily;
     auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     ProductConfigHelper::adjustDeviceName(configStr);
     uint32_t productConfig = productConfigHelper->getProductConfigFromDeviceName(configStr);
 
-    if (DebugManager.flags.OverrideHwIpVersion.get() != -1 && productConfigHelper->isSupportedProductConfig(DebugManager.flags.OverrideHwIpVersion.get())) {
-        productConfig = DebugManager.flags.OverrideHwIpVersion.get();
+    if (debugManager.flags.OverrideHwIpVersion.get() != -1 && productConfigHelper->isSupportedProductConfig(debugManager.flags.OverrideHwIpVersion.get())) {
+        productConfig = debugManager.flags.OverrideHwIpVersion.get();
     }
 
     const HardwareInfo *hwInfoConst = getDefaultHwInfo();
@@ -53,7 +53,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     }
     std::string hwInfoConfigStr;
     uint64_t hwInfoConfig = 0x0;
-    DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
+    debugManager.getHardwareInfoOverride(hwInfoConfigStr);
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
@@ -66,12 +66,12 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
 
-        if (DebugManager.flags.OverrideRevision.get() != -1) {
-            hardwareInfo->platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+        if (debugManager.flags.OverrideRevision.get() != -1) {
+            hardwareInfo->platform.usRevId = static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
         }
 
-        if (DebugManager.flags.ForceDeviceId.get() != "unk") {
-            hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
+        if (debugManager.flags.ForceDeviceId.get() != "unk") {
+            hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(debugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
         const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
@@ -83,7 +83,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         if (productConfigFound) {
             compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
-            if (DebugManager.flags.ForceDeviceId.get() == "unk") {
+            if (debugManager.flags.ForceDeviceId.get() == "unk") {
                 hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
             }
         }
@@ -98,14 +98,14 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         rootDeviceEnvironment.setRcsExposure();
 
-        if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-            hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+        if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+            hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
         }
 
         [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
         DEBUG_BREAK_IF(!result);
 
-        auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
+        auto csrType = debugManager.flags.SetCommandStreamReceiver.get();
         if (csrType > 0) {
             auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
             auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
@@ -124,7 +124,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 }
 
 bool DeviceFactory::isHwModeSelected() {
-    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    int32_t csr = debugManager.flags.SetCommandStreamReceiver.get();
     switch (csr) {
     case CSR_AUB:
     case CSR_TBX:
@@ -141,14 +141,14 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
         return false;
     }
 
-    if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+    if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
-            maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+            maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
     }
 
-    if (DebugManager.flags.OverrideRevision.get() != -1) {
+    if (debugManager.flags.OverrideRevision.get() != -1) {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
-            static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+            static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
     }
 
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();

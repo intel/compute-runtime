@@ -129,7 +129,7 @@ struct UltCommandStreamReceiverTest
     template <typename GfxFamily>
     void configureCSRtoNonDirtyState(bool isL1CacheEnabled) {
         bool slmUsed = false;
-        if (DebugManager.flags.ForceSLML3Config.get()) {
+        if (debugManager.flags.ForceSLML3Config.get()) {
             slmUsed = true;
         }
 

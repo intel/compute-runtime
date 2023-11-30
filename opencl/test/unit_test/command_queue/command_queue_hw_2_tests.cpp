@@ -298,18 +298,18 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
     DebugManagerStateRestore restorer;
     auto *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     {
-        DebugManager.flags.SplitBcsCopy.set(1);
+        debugManager.flags.SplitBcsCopy.set(1);
         EXPECT_TRUE(cmdQHw->getDevice().isBcsSplitSupported());
     }
     {
-        DebugManager.flags.SplitBcsCopy.set(0);
+        debugManager.flags.SplitBcsCopy.set(0);
         EXPECT_FALSE(cmdQHw->getDevice().isBcsSplitSupported());
     }
 }
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlitNeededThenReturnProperValue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
     auto *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useBlitSplit = true;
@@ -332,14 +332,14 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
     {
-        DebugManager.flags.SplitBcsCopy.set(0);
+        debugManager.flags.SplitBcsCopy.set(0);
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
     {
-        DebugManager.flags.SplitBcsCopy.set(-1);
+        debugManager.flags.SplitBcsCopy.set(-1);
         ultHwConfig.useBlitSplit = false;
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
@@ -350,8 +350,8 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsSizeSetWhenCheckIsSplitEnqueueBlitNeededThenReturnProperValue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.SplitBcsSize.set(100);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.SplitBcsSize.set(100);
     auto *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useBlitSplit = true;
@@ -379,11 +379,11 @@ Context *BcsSplitBufferTraits::context = nullptr;
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenEnqueueBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
 
@@ -432,11 +432,11 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenEnqueueB
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskWhenEnqueueReadThenEnqueueBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b10);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.SplitBcsMaskD2H.set(0b10);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
 
@@ -485,11 +485,11 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskWhenEnqueueReadTh
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskGreaterThanAvailableEnginesWhenEnqueueReadThenEnqueueBlitSplitAcrossAvailableEngines) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b101010);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.SplitBcsMaskD2H.set(0b101010);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
 
@@ -538,10 +538,10 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskGreaterThanAvaila
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteThenEnqueueBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
 
@@ -590,9 +590,9 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteThenEnqueue
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteH2HThenEnqueueBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
 
@@ -641,10 +641,10 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteH2HThenEnqu
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequestedStallingCommandThenEnqueueMarkerBeforeBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -695,9 +695,9 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitCopyAndSplitCopyThenSplitWaitCorrectly) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -742,7 +742,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitC
     EXPECT_EQ(cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->peekTaskCount(), 2u);
     EXPECT_TRUE(cmdQHw->splitBarrierRequired);
 
-    DebugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
 
     EXPECT_EQ(CL_SUCCESS, cmdQHw->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 16 * MemoryConstants::megaByte, ptr, nullptr, 0, nullptr, nullptr));
 
@@ -758,10 +758,10 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitC
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenDoNotEnqueueMarkerBeforeBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -809,11 +809,11 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenDoNotEnq
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequestedStallingCommandThenDoNotEnqueueMarkerBeforeBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -864,10 +864,10 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithNoRequestedStallingCommandButSplitBarrierRequiredThenEnqueueMarkerBeforeBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -918,10 +918,10 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithNoReques
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBlockingReadThenEnqueueBlitSplit) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -969,11 +969,11 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBlockingReadThen
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithEventThenEnqueueBlitSplitAndAddBothTimestampsToEvent) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SplitBcsCopy.set(1);
-    DebugManager.flags.SplitBcsMaskD2H.set(0b1010);
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.SplitBcsMaskD2H.set(0b1010);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
@@ -1087,8 +1087,8 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterFlushedK
     auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     size_t offset = 0;
@@ -1119,9 +1119,9 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandTh
         GTEST_SKIP();
     }
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
@@ -1177,9 +1177,9 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
         GTEST_SKIP();
     }
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     MockKernel *kernel = mockKernelWithInternals.mockKernel;
@@ -1263,9 +1263,9 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
         GTEST_SKIP();
     }
     DebugManagerStateRestore restore{};
-    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
-    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     UserEvent userEvent;
     cl_event userEventWaitlist[] = {&userEvent};

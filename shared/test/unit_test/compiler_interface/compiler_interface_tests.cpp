@@ -921,7 +921,7 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
     auto dbgProdFamily = defaultHwInfo->platform.eProductFamily;
     std::string dbgPlatformString(hardwarePrefix[dbgProdFamily]);
     const GT_SYSTEM_INFO dbgSystemInfo = hardwareInfoTable[dbgProdFamily]->gtSystemInfo;
-    DebugManager.flags.ForceCompilerUsePlatform.set(dbgPlatformString);
+    debugManager.flags.ForceCompilerUsePlatform.set(dbgPlatformString);
 
     auto device = this->pDevice;
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.eProductFamily = IGFX_UNKNOWN;
@@ -1269,9 +1269,9 @@ struct MockCompilerInterfaceWithUnknownInterfaceCIFMain : MockCompilerInterface 
 
 TEST(TestCompilerInterface, givenNullCompilerCacheAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1283,9 +1283,9 @@ TEST(TestCompilerInterface, givenNullCompilerCacheAndFlagZebinIgnoreIcbeVersionD
 
 TEST(TestCompilerInterface, givenRequiredFclAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1298,9 +1298,9 @@ TEST(TestCompilerInterface, givenRequiredFclAndFlagZebinIgnoreIcbeVersionDisable
 
 TEST(TestCompilerInterface, givenNotRequiredFclAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1313,9 +1313,9 @@ TEST(TestCompilerInterface, givenNotRequiredFclAndFlagZebinIgnoreIcbeVersionDisa
 
 TEST(TestCompilerInterface, givenNotRequiredFclAndFclLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1328,9 +1328,9 @@ TEST(TestCompilerInterface, givenNotRequiredFclAndFclLoadFaildAndFlagZebinIgnore
 
 TEST(TestCompilerInterface, givenRequiredFclAndFclLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1343,9 +1343,9 @@ TEST(TestCompilerInterface, givenRequiredFclAndFclLoadFaildAndFlagZebinIgnoreIcb
 
 TEST(TestCompilerInterface, givenRequiredFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1358,9 +1358,9 @@ TEST(TestCompilerInterface, givenRequiredFclAndIgcLoadFaildAndFlagZebinIgnoreIcb
 
 TEST(TestCompilerInterface, givenNotRequiredFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1373,9 +1373,9 @@ TEST(TestCompilerInterface, givenNotRequiredFclAndIgcLoadFaildAndFlagZebinIgnore
 
 TEST(TestCompilerInterface, givenNotRequiredFclAndFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1388,9 +1388,9 @@ TEST(TestCompilerInterface, givenNotRequiredFclAndFclAndIgcLoadFaildAndFlagZebin
 
 TEST(TestCompilerInterface, givenRequiredFclAndFclAndIgcLoadFaildAndFlagZebinIgnoreIcbeVersionDisabledWhenVerifyIcbeVersionReturnFalseThenInitializationNotSuccess) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
 
     MockCompilerInterfaceWithUnknownInterfaceCIFMain ci;
 
@@ -1403,9 +1403,9 @@ TEST(TestCompilerInterface, givenRequiredFclAndFclAndIgcLoadFaildAndFlagZebinIgn
 
 TEST(TestCompilerInterface, givenZebinIgnoreIcbeVersionFlagWhenVerifyIcbeVersionFailThenInitializationReturnProperValues) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(1);
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(1);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(1);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(1);
 
     auto mockCompilerInterface = std::make_unique<MockCompilerInterfaceWithUnknownInterfaceCIFMain>();
 
@@ -1415,7 +1415,7 @@ TEST(TestCompilerInterface, givenZebinIgnoreIcbeVersionFlagWhenVerifyIcbeVersion
     std::string stderrString = testing::internal::GetCapturedStderr();
     EXPECT_TRUE(stderrString.empty());
 
-    DebugManager.flags.ZebinIgnoreIcbeVersion.set(0);
+    debugManager.flags.ZebinIgnoreIcbeVersion.set(0);
     testing::internal::CaptureStderr();
     initializationOfCompilerInterfaceSuccessed = mockCompilerInterface->initialize(std::make_unique<CompilerCache>(CompilerCacheConfig{}), true);
     EXPECT_FALSE(initializationOfCompilerInterfaceSuccessed);
@@ -1427,8 +1427,8 @@ TEST(TestCompilerInterface, givenUnknownInterfaceForIgcAndFclWhenCheckIcbeVersio
     auto dummy = std::make_unique<UnknownInterfaceCIFMain>();
     auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(1);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(1);
 
     std::string dummyString = "dummy";
     std::string expectedError = "Installed Compiler Library " + dummyString + " is incompatible\n";
@@ -1459,8 +1459,8 @@ TEST(TestCompilerInterface, givenUnknownInterfaceForIgcAndFclWhenCheckIcbeVersio
 
 TEST(TestCompilerInterface, givenUnknownInterfaceAndFclMainWhenverifyIcbeVersionThenPrintProperDebugMessage) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(1);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(1);
 
     auto dummy = new UnknownInterfaceCIFMain();
     auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
@@ -1478,8 +1478,8 @@ TEST(TestCompilerInterface, givenUnknownInterfaceAndFclMainWhenverifyIcbeVersion
 
 TEST(TestCompilerInterface, givenUnknownInterfaceAndIgcMainWhenverifyIcbeVersionThenPrintProperDebugMessage) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(1);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(1);
 
     auto dummy = new UnknownInterfaceCIFMain();
     auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
@@ -1496,8 +1496,8 @@ TEST(TestCompilerInterface, givenUnknownInterfaceAndIgcMainWhenverifyIcbeVersion
 
 TEST(TestCompilerInterface, givenUnknownInterfaceAndFclMainAndIgcMainWhenVerifyIcbeVersionThenPrintProperDebugMessage) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(1);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(1);
 
     auto dummyIgc = new UnknownInterfaceCIFMain();
     auto dummyFcl = new UnknownInterfaceCIFMain();
@@ -1515,8 +1515,8 @@ TEST(TestCompilerInterface, givenUnknownInterfaceAndFclMainAndIgcMainWhenVerifyI
 
 TEST(TestCompilerInterface, givenInvalidIcbeVersionWhenAddOptionDisableZebinThenFalseIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
 
     auto dummyInValid = new UnknownInterfaceCIFMain();
     auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
@@ -1530,8 +1530,8 @@ TEST(TestCompilerInterface, givenInvalidIcbeVersionWhenAddOptionDisableZebinThen
 
 TEST(TestCompilerInterface, givenOptionsWhenCallAddOptionDisableZebinThenProperValueIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
 
     auto dummyValid = new MockCIFMain();
     auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
@@ -1548,8 +1548,8 @@ TEST(TestCompilerInterface, givenOptionsWhenCallAddOptionDisableZebinThenProperV
 
 TEST(TestCompilerInterface, givenOptionsWhenCallDisableZebinThenProperOptionsAreSet) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableDebugBreak.set(0);
-    DebugManager.flags.PrintDebugMessages.set(0);
+    debugManager.flags.EnableDebugBreak.set(0);
+    debugManager.flags.PrintDebugMessages.set(0);
 
     auto dummyValid = new MockCIFMain();
     auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();

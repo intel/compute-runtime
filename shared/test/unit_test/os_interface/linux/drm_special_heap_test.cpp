@@ -26,7 +26,7 @@ class DrmMemManagerFixture {
 
     void setUp() {
         DebugManagerStateRestore dbgRestorer;
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());

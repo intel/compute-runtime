@@ -33,10 +33,10 @@ struct CompressionXeHPAndLater : public AUBFixture,
         REQUIRE_64BIT_OR_SKIP();
 
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
-        DebugManager.flags.RenderCompressedImagesEnabled.set(true);
-        DebugManager.flags.EnableLocalMemory.set(useLocalMemory);
-        DebugManager.flags.NodeOrdinal.set(GetParam());
+        debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+        debugManager.flags.RenderCompressedImagesEnabled.set(true);
+        debugManager.flags.EnableLocalMemory.set(useLocalMemory);
+        debugManager.flags.NodeOrdinal.set(GetParam());
 
         AUBFixture::setUp(defaultHwInfo.get());
 

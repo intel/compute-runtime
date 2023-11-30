@@ -214,8 +214,8 @@ bool Context::createImpl(const cl_context_properties *properties,
         numProperties++;
     }
 
-    if (DebugManager.flags.PrintDriverDiagnostics.get() != -1) {
-        driverDiagnosticsUsed = DebugManager.flags.PrintDriverDiagnostics.get();
+    if (debugManager.flags.PrintDriverDiagnostics.get() != -1) {
+        driverDiagnosticsUsed = debugManager.flags.PrintDriverDiagnostics.get();
     }
     if (driverDiagnosticsUsed >= 0) {
         driverDiagnostics.reset(new DriverDiagnostics((cl_diagnostics_verbose_level)driverDiagnosticsUsed));
@@ -236,7 +236,7 @@ bool Context::createImpl(const cl_context_properties *properties,
     }
 
     this->driverDiagnostics = driverDiagnostics.release();
-    if (rootDeviceIndices.size() > 1 && containsDeviceWithSubdevices && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
+    if (rootDeviceIndices.size() > 1 && containsDeviceWithSubdevices && !debugManager.flags.EnableMultiRootDeviceContexts.get()) {
         DEBUG_BREAK_IF("No support for context with multiple devices with subdevices");
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
         return false;
@@ -495,9 +495,9 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
         isSupportedForSingleDeviceContexts = productHelper.isBufferPoolAllocatorSupported();
     }
 
-    if (DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
-        isSupportedForSingleDeviceContexts = DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() >= 1;
-        isSupportedForAllContexts = DebugManager.flags.ExperimentalSmallBufferPoolAllocator.get() >= 2;
+    if (debugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {
+        isSupportedForSingleDeviceContexts = debugManager.flags.ExperimentalSmallBufferPoolAllocator.get() >= 1;
+        isSupportedForAllContexts = debugManager.flags.ExperimentalSmallBufferPoolAllocator.get() >= 2;
     }
 
     return isSupportedForAllContexts ||

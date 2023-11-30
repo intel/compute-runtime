@@ -30,7 +30,7 @@ struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
 
 TEST_F(InternalAllocationStorageTest, givenDebugFlagThatDisablesAllocationReuseWhenStoreReusableAllocationIsCalledThenAllocationIsReleased) {
     DebugManagerStateRestore stateRestorer;
-    DebugManager.flags.DisableResourceRecycling.set(true);
+    debugManager.flags.DisableResourceRecycling.set(true);
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 

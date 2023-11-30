@@ -41,7 +41,7 @@ struct DeviceFactoryTests : ::testing::Test {
 TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {
     ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
-    DebugManager.flags.OverrideHwIpVersion.set(config);
+    debugManager.flags.OverrideHwIpVersion.set(config);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
@@ -52,7 +52,7 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenReleaseHelperContainsCorrectIpVersion) {
     ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
-    DebugManager.flags.OverrideHwIpVersion.set(config);
+    debugManager.flags.OverrideHwIpVersion.set(config);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
@@ -73,8 +73,8 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
 TEST_F(DeviceFactoryTests, givenHwIpVersionAndDeviceIdOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenCorrectValueIsSet) {
     ExecutionEnvironment executionEnvironment{};
     auto config = defaultHwInfo.get()->ipVersion.value;
-    DebugManager.flags.OverrideHwIpVersion.set(config);
-    DebugManager.flags.ForceDeviceId.set("0x1234");
+    debugManager.flags.OverrideHwIpVersion.set(config);
+    debugManager.flags.ForceDeviceId.set("0x1234");
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
@@ -87,7 +87,7 @@ TEST_F(DeviceFactoryTests, givenProductFamilyOverrideWhenPrepareDeviceEnvironmen
         GTEST_SKIP();
     }
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    DebugManager.flags.ProductFamilyOverride.set(productAcronym);
+    debugManager.flags.ProductFamilyOverride.set(productAcronym);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
@@ -99,8 +99,8 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionAndProductFamilyOverrideWhenPrepareDe
         GTEST_SKIP();
     }
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    DebugManager.flags.OverrideHwIpVersion.set(0x1234u);
-    DebugManager.flags.ProductFamilyOverride.set(productAcronym);
+    debugManager.flags.OverrideHwIpVersion.set(0x1234u);
+    debugManager.flags.ProductFamilyOverride.set(productAcronym);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_TRUE(success);
@@ -124,7 +124,7 @@ TEST_F(DeviceFactoryTests, givenDisabledRcsWhenPrepareDeviceEnvironmentsCalledTh
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsForAtLeastOneDeviceThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(3);
+    debugManager.flags.CreateMultipleRootDevices.set(3);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 3u);
 
     EXPECT_EQ(3u, executionEnvironment.rootDeviceEnvironments.size());
@@ -153,7 +153,7 @@ TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesSucceedsFo
 
 TEST_F(DeviceFactoryTests, givenMultipleDevicesWhenInitializeResourcesFailsForAllDevicesThenFailureIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleRootDevices.set(3);
+    debugManager.flags.CreateMultipleRootDevices.set(3);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 3u);
 
     EXPECT_EQ(3u, executionEnvironment.rootDeviceEnvironments.size());

@@ -396,7 +396,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     this->kernelWithAssertAppended = false;
     this->handlePostSubmissionState();
 
-    if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
         this->device->getNEODevice()->debugExecutionCounter++;
     }
 
@@ -415,7 +415,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrd
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const {
-    if (!NEO::DebugManager.flags.SkipInOrderNonWalkerSignalingAllowed.get()) {
+    if (!NEO::debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.get()) {
         return false;
     }
     return this->isInOrderNonWalkerSignalingRequired(Event::fromHandle(signalEvent));
@@ -459,7 +459,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result) {
     bool nonWalkerSignalingHasRelaxedOrdering = false;
 
-    if (NEO::DebugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() != 0) {
+    if (NEO::debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() != 0) {
         nonWalkerSignalingHasRelaxedOrdering = isRelaxedOrderingDispatchAllowed(1);
     }
 
@@ -915,7 +915,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
-            if (signalEvent && (NEO::DebugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {
+            if (signalEvent && (NEO::debugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {
                 signalEvent->setLatestUsedCmdQueue(this->cmdQImmediate);
             }
             inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, kernelOperation);
@@ -936,7 +936,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    if (NEO::DebugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
+    if (NEO::debugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
         return true;
     }
 
@@ -1019,8 +1019,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
 
     if (numWaitEvents > 0) {
         uint32_t numEventsThreshold = 5;
-        if (NEO::DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get() != -1) {
-            numEventsThreshold = static_cast<uint32_t>(NEO::DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get());
+        if (NEO::debugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get() != -1) {
+            numEventsThreshold = static_cast<uint32_t>(NEO::debugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get());
         }
 
         bool waitOnHost = !this->dependenciesPresent && (numWaitEvents < numEventsThreshold);
@@ -1180,8 +1180,8 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
         break;
     case HOST_NON_USM_TO_DEVICE_USM:
         retVal = 4 * MemoryConstants::megaByte;
-        if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
-            retVal = NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
+        if (NEO::debugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
+            retVal = NEO::debugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
         }
         break;
     case HOST_NON_USM_TO_SHARED_USM:
@@ -1213,8 +1213,8 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
         break;
     case DEVICE_USM_TO_HOST_NON_USM:
         retVal = 1 * MemoryConstants::kiloByte;
-        if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
-            retVal = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
+        if (NEO::debugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
+            retVal = NEO::debugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
         }
         break;
     case SHARED_USM_TO_HOST_USM:

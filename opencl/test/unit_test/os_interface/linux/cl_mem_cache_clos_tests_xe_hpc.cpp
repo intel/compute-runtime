@@ -87,7 +87,7 @@ XE_HPC_CORETEST_F(BuffersWithClMemCacheClosTests, givenDrmBufferWhenItIsCreatedW
 
 XE_HPC_CORETEST_F(BuffersWithClMemCacheClosTests, givenDrmBuffersWhenTheyAreCreatedWithDifferentCacheClosRegionsThenSetCorrectCacheRegionsInBufferObjects) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ClosEnabled.set(1);
+    debugManager.flags.ClosEnabled.set(1);
 
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     cl_int retVal = CL_INVALID_VALUE;

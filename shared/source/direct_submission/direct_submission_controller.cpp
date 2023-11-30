@@ -18,14 +18,14 @@
 namespace NEO {
 
 DirectSubmissionController::DirectSubmissionController() {
-    if (DebugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
-        timeout = std::chrono::microseconds{DebugManager.flags.DirectSubmissionControllerTimeout.get()};
+    if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
+        timeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerTimeout.get()};
     }
-    if (DebugManager.flags.DirectSubmissionControllerDivisor.get() != -1) {
-        timeoutDivisor = DebugManager.flags.DirectSubmissionControllerDivisor.get();
+    if (debugManager.flags.DirectSubmissionControllerDivisor.get() != -1) {
+        timeoutDivisor = debugManager.flags.DirectSubmissionControllerDivisor.get();
     }
-    if (DebugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
-        maxTimeout = std::chrono::microseconds{DebugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
+    if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
+        maxTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
     }
 
     directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));

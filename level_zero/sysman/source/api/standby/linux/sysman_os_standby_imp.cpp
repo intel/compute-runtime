@@ -27,7 +27,7 @@ bool LinuxStandbyImp::isStandbySupported(void) {
     if (ZE_RESULT_SUCCESS == rel) {
         return true;
     } else {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "error@<%s> <can't read file %s> <error: 0x%x>\n", __func__, standbyModeFile.c_str(), rel);
         return false;
     }
@@ -46,7 +46,7 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, standbyModeFile.c_str(), result);
         return result;
     }
@@ -56,7 +56,7 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
         mode = ZES_STANDBY_PROMO_MODE_NEVER;
     } else {
         result = ZE_RESULT_ERROR_UNKNOWN;
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "error@<%s> <unknown or internal error occured> <currentMode: %d & result: 0x%x>\n", __func__, currentMode, result);
     }
     return result;
@@ -77,7 +77,7 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
 
     if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "error@<%s> <Unsupported feature> <result: 0x%x>\n", __func__, result);
     }
     return result;

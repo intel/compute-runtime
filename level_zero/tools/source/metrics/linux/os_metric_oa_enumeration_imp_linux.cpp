@@ -108,7 +108,7 @@ ze_result_t MetricOALinuxImp::getMetricsTimerResolution(uint64_t &timerResolutio
     if (ret < 0 || timestampFrequency == 0) {
         timerResolution = 0;
         result = ZE_RESULT_ERROR_UNKNOWN;
-        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "getOATimestampFrequenc() failed errno = %d | ret = %d \n",
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "getOATimestampFrequenc() failed errno = %d | ret = %d \n",
                            errno, ret);
     } else {
         timerResolution = static_cast<uint64_t>(timestampFrequency);

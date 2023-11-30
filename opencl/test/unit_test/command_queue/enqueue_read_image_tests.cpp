@@ -904,7 +904,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageWithMapAlloc
 
 HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageBlockingWhenAUBDumpAllocsOnEnqueueReadOnlyIsOnThenImageShouldBeSetDumpable) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
+    debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
 
     std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
     srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -921,7 +921,7 @@ HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageBlockingWhenAUBDumpAllocsOnE
 
 HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageNonBlockingWhenAUBDumpAllocsOnEnqueueReadOnlyIsOnThenImageShouldntBeSetDumpable) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
+    debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
 
     std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
     srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());

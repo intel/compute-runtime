@@ -271,7 +271,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 TEST_F(MemoryExportImportImplicitScalingTest,
        whenCallingOpenIpcHandleWithIpcHandleAndSharedMemoryTypeThenInvalidArgumentIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableImplicitScaling.set(0u);
+    debugManager.flags.EnableImplicitScaling.set(0u);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -307,7 +307,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 TEST_F(MemoryExportImportImplicitScalingTest,
        whenCallingOpenIpcHandleWithIpcHandleAndHostMemoryTypeThenInvalidArgumentIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableImplicitScaling.set(0u);
+    debugManager.flags.EnableImplicitScaling.set(0u);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -556,7 +556,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
     // Compressed hint
     {
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
         ze_external_memory_import_win32_handle_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
@@ -571,13 +571,13 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
         context->freeMem(ptr);
 
         deviceDesc.pNext = nullptr;
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
     }
 
     // Compressed hint
     {
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-        NEO::DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        NEO::debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
 
         ze_external_memory_import_win32_handle_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
@@ -592,8 +592,8 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
         context->freeMem(ptr);
 
         deviceDesc.pNext = nullptr;
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
-        NEO::DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(-1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+        NEO::debugManager.flags.OverrideBufferSuitableForRenderCompression.set(-1);
     }
 
     // Compressed hint without debug flag
@@ -611,12 +611,12 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
         context->freeMem(ptr);
 
         deviceDesc.pNext = nullptr;
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
     }
 
     // Uncompressed hint
     {
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
         ze_external_memory_import_win32_handle_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
@@ -631,12 +631,12 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
         context->freeMem(ptr);
 
         deviceDesc.pNext = nullptr;
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
     }
 
     // Debug flag == 0
     {
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(0);
 
         auto allocation = allocDeviceMem(2048);
 
@@ -644,12 +644,12 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
         context->freeMem(ptr);
 
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(-1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
     }
 
     // Size restriction
     {
-        NEO::DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
         auto allocation = allocDeviceMem(1);
 
@@ -762,7 +762,7 @@ TEST_F(MemoryTest, givenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCr
 
     constexpr auto bufferSize = 16;
     auto pageSizeNumber = 2;
-    NEO::DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    NEO::debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
     auto extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -782,7 +782,7 @@ TEST_F(MemoryTest, givenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCr
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     pageSizeNumber = 4;
-    NEO::DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    NEO::debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
     extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     hostDesc = {};
@@ -799,7 +799,7 @@ TEST_F(MemoryTest, givenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCr
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     pageSizeNumber = 8;
-    NEO::DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    NEO::debugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
     extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     deviceDesc = {};
@@ -937,7 +937,7 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUseHostPtrFlagThenExternalHostP
 
 TEST_F(MemoryTest, givenNoSupportForDualStorageSharedMemoryWhenAllocatingSharedMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -1096,7 +1096,7 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInsufficientCapability
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(false);
+    debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(false);
 
     struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
         MockProductHelperAtomic() = default;
@@ -1444,8 +1444,8 @@ TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingSharedMemoryAsRayTracin
 
 TEST_F(MemoryTest, givenKmdMigrationsAndProductWith48bForRTWhenAllocatingSharedMemoryAsRayTracingThenAllocationAddressIsIn48Bits) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -2505,7 +2505,7 @@ TEST_F(MemoryRelaxedSizeTests,
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToHostAllocWithLargerThanAllowedSizeAndDebugFlagThenAllocationIsMade) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    debugManager.flags.AllowUnrestrictedSize.set(1);
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2619,7 +2619,7 @@ TEST_F(MemoryRelaxedSizeTests,
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    debugManager.flags.AllowUnrestrictedSize.set(1);
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2853,7 +2853,7 @@ TEST_F(MemoryRelaxedSizeTests,
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    debugManager.flags.AllowUnrestrictedSize.set(1);
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2937,8 +2937,8 @@ TEST_F(MemoryRelaxedSizeTests,
 
 struct ContextMemoryTests : public MemoryRelaxedSizeTests {
     void SetUp() override {
-        DebugManager.flags.AllowUnrestrictedSize.set(true);
-        DebugManager.flags.CreateMultipleSubDevices.set(4);
+        debugManager.flags.AllowUnrestrictedSize.set(true);
+        debugManager.flags.CreateMultipleSubDevices.set(4);
 
         MemoryRelaxedSizeTests::SetUp();
 
@@ -3796,7 +3796,7 @@ TEST_F(MultipleDevicePeerAllocationFailTest,
 struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     void createModuleFromMockBinary(L0::Device *device, ModuleType type = ModuleType::User) {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
         const auto &src = zebinData->storage;
         ze_module_desc_t moduleDesc = {};
@@ -3811,9 +3811,9 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 
     void SetUp() override {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
@@ -4691,7 +4691,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
 struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
     void SetUp() override {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableImplicitScaling.set(1);
 
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
@@ -5038,7 +5038,7 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     auto memoryManager = new NEO::MockMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     NEO::Device *neoDevice0 = NEO::Device::create<RootDevice>(executionEnvironment, 0u);
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.CreateMultipleSubDevices.set(4);
     NEO::Device *neoDevice1 = NEO::Device::create<RootDevice>(executionEnvironment, 1u);
 
     NEO::DeviceVector devices;
@@ -5543,7 +5543,7 @@ struct ContextMultiDeviceMock : public L0::ContextImp {
 struct SharedAllocMultiDeviceTests : public ::testing::Test {
     void SetUp() override {
 
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
         driverHandle = std::make_unique<DriverHandleImp>();
@@ -5618,8 +5618,8 @@ template <int32_t enableWalkerPartition>
 struct MemAllocMultiSubDeviceTests : public ::testing::Test {
     void SetUp() override {
 
-        DebugManager.flags.EnableWalkerPartition.set(enableWalkerPartition);
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.EnableWalkerPartition.set(enableWalkerPartition);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
         driverHandle = std::make_unique<DriverHandleImp>();
@@ -5752,7 +5752,7 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
     void SetUp() override {
         DebugManagerStateRestore restorer;
 
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
 
         std::vector<std::unique_ptr<NEO::Device>> devices;

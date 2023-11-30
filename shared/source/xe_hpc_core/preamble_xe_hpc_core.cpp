@@ -31,20 +31,20 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
         command->setComputeDispatchAllWalkerEnable(true);
     }
 
-    if (DebugManager.flags.CFEComputeDispatchAllWalkerEnable.get() != -1) {
-        command->setComputeDispatchAllWalkerEnable(DebugManager.flags.CFEComputeDispatchAllWalkerEnable.get());
+    if (debugManager.flags.CFEComputeDispatchAllWalkerEnable.get() != -1) {
+        command->setComputeDispatchAllWalkerEnable(debugManager.flags.CFEComputeDispatchAllWalkerEnable.get());
     }
 
-    if (DebugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
-        command->setComputeOverdispatchDisable(DebugManager.flags.CFEComputeOverdispatchDisable.get());
+    if (debugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
+        command->setComputeOverdispatchDisable(debugManager.flags.CFEComputeOverdispatchDisable.get());
     }
-    if (DebugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
-        command->setSingleSliceDispatchCcsMode(DebugManager.flags.CFESingleSliceDispatchCCSMode.get());
+    if (debugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
+        command->setSingleSliceDispatchCcsMode(debugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
 
     command->setNumberOfWalkers(1);
-    if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
-        command->setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());
+    if (debugManager.flags.CFENumberOfWalkers.get() != -1) {
+        command->setNumberOfWalkers(debugManager.flags.CFENumberOfWalkers.get());
     }
 }
 

@@ -303,9 +303,9 @@ inline void logExit(NTSTATUS status, Param param) {
 }
 
 void init() {
-    enabledLogging = DebugManager.flags.LogGdiCalls.get();
+    enabledLogging = debugManager.flags.LogGdiCalls.get();
     if (enabledLogging) {
-        if (DebugManager.flags.LogGdiCallsToFile.get()) {
+        if (debugManager.flags.LogGdiCallsToFile.get()) {
             output = IoFunctions::fopenPtr("gdi.log", "rw");
         } else {
             output = stdout;
@@ -315,7 +315,7 @@ void init() {
 
 void close() {
     if (enabledLogging) {
-        if (DebugManager.flags.LogGdiCallsToFile.get()) {
+        if (debugManager.flags.LogGdiCallsToFile.get()) {
             IoFunctions::fclosePtr(output);
         }
         enabledLogging = false;

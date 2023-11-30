@@ -55,7 +55,7 @@ struct MultitileMulticontextTests : public MulticontextAubFixture, public ::test
         tileOnlyBuffers.resize(tileDevices.size());
         for (uint32_t tile = 0; tile < tileDevices.size(); tile++) {
             for (uint32_t tileEngine = 0; tileEngine < commandQueues[tile].size(); tileEngine++) {
-                DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+                debugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
                 auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 0, 0,
                                                                                          &context->getDevice(0)->getDevice());
                 auto regularBuffer = Buffer::create(
@@ -63,7 +63,7 @@ struct MultitileMulticontextTests : public MulticontextAubFixture, public ::test
                 auto tileOnlyProperties = ClMemoryPropertiesHelper::createMemoryProperties(
                     flags, 0, 0, context->getDevice(0)->getDevice().getNearestGenericSubDevice(tile));
                 auto tileOnlyBuffer = Buffer::create(context.get(), tileOnlyProperties, flags, 0, bufferSize, initPattern, retVal);
-                DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
+                debugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
                 regularBuffer->forceDisallowCPUCopy = true;
                 tileOnlyBuffer->forceDisallowCPUCopy = true;
                 regularBuffers[tile].push_back(std::unique_ptr<Buffer>(regularBuffer));
@@ -225,7 +225,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesSingleContextTest, givenFourTilesAndSingle
 
 struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextTest, SimpleKernelFixture {
     void SetUp() override {
-        DebugManager.flags.EnableWalkerPartition.set(1u);
+        debugManager.flags.EnableWalkerPartition.set(1u);
         kernelIds |= (1 << 5);
         kernelIds |= (1 << 8);
 
@@ -265,7 +265,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
 
 struct DynamicWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTilesTests {
     void SetUp() override {
-        DebugManager.flags.EnableStaticPartitioning.set(0);
+        debugManager.flags.EnableStaticPartitioning.set(0);
         EnqueueWithWalkerPartitionFourTilesTests::SetUp();
     }
     DebugManagerStateRestore restore{};
@@ -358,8 +358,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPar
 
 struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTilesTests {
     void SetUp() override {
-        DebugManager.flags.EnableStaticPartitioning.set(1);
-        DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+        debugManager.flags.EnableStaticPartitioning.set(1);
+        debugManager.flags.EnableBlitterOperationsSupport.set(1);
         EnqueueWithWalkerPartitionFourTilesTests::SetUp();
     }
 

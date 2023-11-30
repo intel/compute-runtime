@@ -249,7 +249,7 @@ void SipKernel::selectSipClassType(std::string &fileName, const GfxCoreHelper &g
 }
 
 bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext *context) {
-    std::string fileName = DebugManager.flags.LoadBinarySipFromFile.get();
+    std::string fileName = debugManager.flags.LoadBinarySipFromFile.get();
     SipKernel::selectSipClassType(fileName, device.getGfxCoreHelper());
 
     switch (SipKernel::classType) {

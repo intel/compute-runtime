@@ -65,7 +65,7 @@ void MemorySynchronizationCommands<Family>::addSingleBarrier(LinearStream &comma
 
     cmd.setDcFlushEnable(true);
 
-    if (DebugManager.flags.DoNotFlushCaches.get()) {
+    if (debugManager.flags.DoNotFlushCaches.get()) {
         cmd.setDcFlushEnable(false);
     }
 

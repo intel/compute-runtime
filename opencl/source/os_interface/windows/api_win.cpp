@@ -336,8 +336,8 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
         return retVal;
     }
 
-    if (DebugManager.injectFcn) {
-        sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D10>::GetDxgiDescFcn)DebugManager.injectFcn;
+    if (debugManager.injectFcn) {
+        sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D10>::GetDxgiDescFcn)debugManager.injectFcn;
     }
 
     switch (d3dDeviceSource) {
@@ -551,8 +551,8 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
         return retVal;
     }
 
-    if (DebugManager.injectFcn) {
-        sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D11>::GetDxgiDescFcn)DebugManager.injectFcn;
+    if (debugManager.injectFcn) {
+        sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D11>::GetDxgiDescFcn)debugManager.injectFcn;
     }
 
     switch (d3dDeviceSource) {

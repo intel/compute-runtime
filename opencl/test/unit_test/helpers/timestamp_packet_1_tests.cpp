@@ -630,9 +630,9 @@ HWTEST_F(TimestampPacketTests, givenWaitlistWithTimestampPacketWhenEnqueueingThe
 
 HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThenEventHasCorrectTimestampsToCheckForCompletion) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForEvents.set(1);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForEvents.set(1);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -705,8 +705,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
 
 HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishWithoutEnqueueThenDoNotWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -726,8 +726,8 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishWithou
 
 HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -757,8 +757,8 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenWa
 
 HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinishThenDontWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -785,8 +785,8 @@ HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinish
 
 HWTEST_F(TimestampPacketTests, givenOOQAndWithoutEventWhenEnqueueCalledThenMoveCurrentNodeToDeferredContainer) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -819,8 +819,8 @@ HWTEST_F(TimestampPacketTests, givenOOQAndWithoutEventWhenEnqueueCalledThenMoveC
 
 HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -860,8 +860,8 @@ HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
 
 HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearDeferredNodes) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -932,8 +932,8 @@ HWTEST_F(TimestampPacketTests, givenNewSubmissionWhileWaitingThenDontReleaseDefe
     };
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -978,8 +978,8 @@ HWTEST_F(TimestampPacketTests, givenNewBcsSubmissionWhileWaitingThenDontReleaseD
     };
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(0);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -1032,8 +1032,8 @@ extern std::function<void()> setupPauseAddress;
 
 HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCallWaitUtils) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
@@ -1094,7 +1094,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingToO
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockingThenTrackOwnershipUntilQueueIsCompleted) {
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -1510,7 +1510,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsIfPreviousOperationIsBlitThenStillProgramSemaphores) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WALKER = typename FamilyType::WALKER_TYPE;
@@ -1556,8 +1556,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsAndSingleIOQWhenEnqueueKernelThenDoNotProgramSemaphoresButProgramPipeControlBeforeGpgpuWalker) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -1617,8 +1617,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
 
 HWTEST2_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsAndSingleIOQWhenEnqueueKernelThenDoNotProgramSemaphoresButProgramPipeControlWithProperFlagsBeforeGpgpuWalker, IsXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -1797,7 +1797,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.OmitTimestampPacketDependencies.set(true);
+    debugManager.flags.OmitTimestampPacketDependencies.set(true);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;

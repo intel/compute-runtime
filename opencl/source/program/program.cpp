@@ -73,7 +73,7 @@ std::string Program::getInternalOptions() const {
     auto &hwInfo = pClDevice->getHardwareInfo();
     const auto &compilerProductHelper = pClDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
-    auto disableStatelessToStatefulOptimization = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
+    auto disableStatelessToStatefulOptimization = debugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     if ((isBuiltIn && is32bit) || forceToStatelessRequired || disableStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
@@ -84,8 +84,8 @@ std::string Program::getInternalOptions() const {
     }
 
     auto enableStatelessToStatefulWithOffset = pClDevice->getGfxCoreHelper().isStatelessToStatefulWithOffsetSupported();
-    if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
-        enableStatelessToStatefulWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
+    if (debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
+        enableStatelessToStatefulWithOffset = debugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
 
     if (enableStatelessToStatefulWithOffset) {
@@ -179,13 +179,13 @@ cl_int Program::createProgramFromBinary(
         auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
                                                            decodeErrors, decodeWarnings);
         if (decodeWarnings.empty() == false) {
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
         }
 
         bool singleDeviceBinaryEmpty = singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty();
-        if (singleDeviceBinaryEmpty || (singleDeviceBinary.deviceBinary.empty() && DebugManager.flags.DisableKernelRecompilation.get())) {
+        if (singleDeviceBinaryEmpty || (singleDeviceBinary.deviceBinary.empty() && debugManager.flags.DisableKernelRecompilation.get())) {
             retVal = CL_INVALID_BINARY;
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         } else {
             retVal = CL_SUCCESS;
             this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
@@ -203,7 +203,7 @@ cl_int Program::createProgramFromBinary(
 
             auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
             bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
-            rebuild |= DebugManager.flags.RebuildPrecompiledKernels.get();
+            rebuild |= debugManager.flags.RebuildPrecompiledKernels.get();
 
             if (rebuild && 0u == this->irBinarySize) {
                 return CL_INVALID_BINARY;
@@ -489,7 +489,7 @@ void Program::disableZebinIfVmeEnabled(std::string &options, std::string &intern
         return false;
     };
 
-    if (DebugManager.flags.DontDisableZebinIfVmeUsed.get() == true) {
+    if (debugManager.flags.DontDisableZebinIfVmeUsed.get() == true) {
         return;
     }
 

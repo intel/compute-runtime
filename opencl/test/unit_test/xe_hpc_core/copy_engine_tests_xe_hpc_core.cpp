@@ -31,8 +31,8 @@ struct BlitXeHpcCoreTests : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
-        DebugManager.flags.EnableLocalMemory.set(true);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+        debugManager.flags.EnableLocalMemory.set(true);
         HardwareInfo hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
 
@@ -164,7 +164,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsPro
 
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideBlitterMocs.set(0u);
+    debugManager.flags.OverrideBlitterMocs.set(0u);
     using MEM_COPY = typename FamilyType::MEM_COPY;
     MockGraphicsAllocation clearColorAlloc;
 
@@ -295,9 +295,9 @@ XE_HPC_CORETEST_F(XeHpcCoreCopyEngineTests, givenDebugFlagSetWhenCheckingBcsCach
     auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
     auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
 
-    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
     EXPECT_FALSE(commandQueueHw->isCacheFlushForBcsRequired());
 
-    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
     EXPECT_TRUE(commandQueueHw->isCacheFlushForBcsRequired());
 }

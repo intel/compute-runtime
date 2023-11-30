@@ -1135,7 +1135,7 @@ struct IntelClCreateSubDevicesTracingTest : public IntelTracingTest {
     void SetUp() override {
         IntelTracingTest::setUp();
 
-        DebugManager.flags.CreateMultipleSubDevices.set(deviceCount);
+        debugManager.flags.CreateMultipleSubDevices.set(deviceCount);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
         status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);

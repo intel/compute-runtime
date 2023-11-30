@@ -20,7 +20,7 @@ struct AUBCopyImage
       public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>>,
       public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.EnableFreeMemory.set(false);
         ImageAubFixture::setUp(enableBlitter);
     }
 

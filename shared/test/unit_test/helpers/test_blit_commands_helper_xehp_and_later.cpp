@@ -106,7 +106,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
 
     uint32_t newCompressionFormat = 1;
-    DebugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->isCompressionEnabled = true;
@@ -123,7 +123,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBuffer
     DebugManagerStateRestore dbgRestore;
     uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     ;
-    DebugManager.flags.OverrideBlitterMocs.set(1);
+    debugManager.flags.OverrideBlitterMocs.set(1);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
@@ -136,7 +136,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBuffer
 HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFillBufferThenUseSystemMem, BlitPlatforms) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.OverrideBlitterTargetMemory.set(0);
+    debugManager.flags.OverrideBlitterTargetMemory.set(0);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
@@ -150,7 +150,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFi
 HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFillBufferThenUseLocalMem, BlitPlatforms) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.OverrideBlitterTargetMemory.set(1);
+    debugManager.flags.OverrideBlitterTargetMemory.set(1);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
@@ -164,7 +164,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFil
 HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFillBufferThenUseDefaultMem, BlitPlatforms) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.OverrideBlitterTargetMemory.set(2);
+    debugManager.flags.OverrideBlitterTargetMemory.set(2);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
@@ -184,7 +184,7 @@ HWTEST2_F(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValues
                                               static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed)};
 
     for (auto localMemoryAccessModeOverride : testedLocalMemoryAccessModes) {
-        DebugManager.flags.ForceLocalMemoryAccessMode.set(localMemoryAccessModeOverride);
+        debugManager.flags.ForceLocalMemoryAccessMode.set(localMemoryAccessModeOverride);
 
         bool isBlitSizeOverridden = (localMemoryAccessModeOverride == static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
 
@@ -390,7 +390,7 @@ HWTEST2_F(BlitTests, givenEnabledGlobalCacheInvalidationWhenProgrammingGlobalSeq
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.GlobalSequencerFlushOnCopyEngine.set(true);
+    debugManager.flags.GlobalSequencerFlushOnCopyEngine.set(true);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -416,7 +416,7 @@ HWTEST2_F(BlitTests, givenEnabledGlobalCacheInvalidationWhenProgrammingGlobalSeq
 HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSequencerFlushThenCommandsAreProgrammed, IsXeHPOrAbove) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.GlobalSequencerFlushOnCopyEngine.set(false);
+    debugManager.flags.GlobalSequencerFlushOnCopyEngine.set(false);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -435,7 +435,7 @@ HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTru
 
 HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsCalledThenCmdDetailsArePrintedToStdOutput, IsXeHPOrAbove) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PrintImageBlitBlockCopyCmdDetails.set(true);
+    debugManager.flags.PrintImageBlitBlockCopyCmdDetails.set(true);
 
     uint32_t streamBuffer[100]{};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -514,7 +514,7 @@ class TestDummyBlitMockProductHelper : public ProductHelperHw<gfxProduct> {
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenColorBltProgrammedCorrectly, IsXeHPOrAbove) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceDummyBlitWa.set(-1);
+    debugManager.flags.ForceDummyBlitWa.set(-1);
 
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
 
@@ -569,7 +569,7 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenColorBltPr
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenColorBltProgrammedCorrectly, IsXeHPOrAbove) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceDummyBlitWa.set(1);
+    debugManager.flags.ForceDummyBlitWa.set(1);
 
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
 
@@ -619,7 +619,7 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenColorBltPr
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditionalCommandsAreNotProgrammed, IsXeHPOrAbove) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceDummyBlitWa.set(-1);
+    debugManager.flags.ForceDummyBlitWa.set(-1);
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
 
     RAIIProductHelperFactory<TestDummyBlitMockProductHelper<productFamily>> raii{
@@ -657,7 +657,7 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditio
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaDisabledThenAdditionalCommandsAreNotProgrammed, IsXeHPOrAbove) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceDummyBlitWa.set(0);
+    debugManager.flags.ForceDummyBlitWa.set(0);
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
 
     uint32_t streamBuffer[100] = {};

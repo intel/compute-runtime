@@ -168,7 +168,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
 struct MemoryExportImportObtainFdTest : public ::testing::Test {
     void SetUp() override {
         DebugManagerStateRestore restorer;
-        DebugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableImplicitScaling.set(1);
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);

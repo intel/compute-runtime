@@ -14,8 +14,8 @@ namespace HeapSize {
 
 size_t getDefaultHeapSize(size_t defaultValue) {
     auto defaultSize = defaultValue;
-    if (DebugManager.flags.ForceDefaultHeapSize.get() != -1) {
-        defaultSize = DebugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;
+    if (debugManager.flags.ForceDefaultHeapSize.get() != -1) {
+        defaultSize = debugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;
     }
     return defaultSize;
 }

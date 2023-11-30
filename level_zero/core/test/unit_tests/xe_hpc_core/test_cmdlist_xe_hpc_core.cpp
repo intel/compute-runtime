@@ -24,7 +24,7 @@ namespace ult {
 
 struct LocalMemoryModuleFixture : public ModuleFixture {
     void setUp() {
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         ModuleFixture::setUp();
     }
     DebugManagerStateRestore restore;
@@ -93,7 +93,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenUnifiedSharedMemoryWhenPrefetc
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenUnifiedSharedMemoryWhenPrefetchApiAndDebuKeyDisabledIsCalledThenRequestMemoryPrefetchIsNotPerformed, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(0);
+    debugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(0);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -119,9 +119,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenUnifiedSharedMemoryWhenPrefetc
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(false);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.EnableBOChunkingPrefetch.set(false);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -155,9 +155,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMigratedSharedAllocationsAndNoEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsNotCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(false);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(false);
+    debugManager.flags.EnableBOChunkingPrefetch.set(false);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -191,9 +191,9 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMig
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.EnableBOChunkingPrefetch.set(true);
-    DebugManager.flags.EnableBOChunking.set(1);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.EnableBOChunkingPrefetch.set(true);
+    debugManager.flags.EnableBOChunking.set(1);
 
     size_t size = 10;
     size_t alignment = 1u;
@@ -227,8 +227,8 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenEx
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListImmediateWithFlushTaskThenMemoryPrefetchIsCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(true);
-    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -285,7 +285,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenAppendAllocationForPrefetch, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->prefetchManager.reset(new MockPrefetchManager());
@@ -316,7 +316,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedDeviceMemoryThenDontAppendAllocationForPrefetch, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->prefetchManager.reset(new MockPrefetchManager());
@@ -346,7 +346,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedHostMemoryThenDontAppendAllocationForPrefetch, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->prefetchManager.reset(new MockPrefetchManager());
@@ -380,7 +380,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     EXPECT_EQ(0b0001u, neoDevice->deviceBitfield.to_ulong());
 
@@ -431,7 +431,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     neoDevice->deviceBitfield = 0b0010;
 
@@ -484,7 +484,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     neoDevice->deviceBitfield = 0b1000;
 
@@ -555,7 +555,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseKmdMigration.set(1);
+    debugManager.flags.UseKmdMigration.set(1);
 
     neoDevice->deviceBitfield = 0b001;
 
@@ -1169,7 +1169,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalA
 
 HWTEST2_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(2);
+    debugManager.flags.SetAmountOfReusableAllocations.set(2);
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -1208,7 +1208,7 @@ struct AppendKernelXeHpcTestInput {
 template <int32_t usePipeControlMultiPacketEventSync>
 struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModuleFixture {
     void setUp() {
-        DebugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
+        debugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
         LocalMemoryModuleFixture::setUp();
 
         input.driver = driverHandle.get();

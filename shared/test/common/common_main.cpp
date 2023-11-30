@@ -262,20 +262,20 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--generate_random_inputs", argv[i])) {
             generateRandomInput = true;
         } else if (!strcmp("--read-config", argv[i]) && (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
-            if (DebugManager.registryReadAvailable()) {
-                DebugManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
-                DebugManager.injectSettingsFromReader();
+            if (debugManager.registryReadAvailable()) {
+                debugManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
+                debugManager.injectSettingsFromReader();
             }
         } else if (!strcmp("--dump_buffer_format", argv[i]) && testMode == TestMode::AubTests) {
             ++i;
             std::string dumpBufferFormat(argv[i]);
             std::transform(dumpBufferFormat.begin(), dumpBufferFormat.end(), dumpBufferFormat.begin(), ::toupper);
-            DebugManager.flags.AUBDumpBufferFormat.set(dumpBufferFormat);
+            debugManager.flags.AUBDumpBufferFormat.set(dumpBufferFormat);
         } else if (!strcmp("--dump_image_format", argv[i]) && testMode == TestMode::AubTests) {
             ++i;
             std::string dumpImageFormat(argv[i]);
             std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
-            DebugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
+            debugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
         }
     }
 

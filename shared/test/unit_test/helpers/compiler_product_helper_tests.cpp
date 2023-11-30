@@ -45,10 +45,10 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStateless
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
 
-    DebugManager.flags.DisableForceToStateless.set(false);
+    debugManager.flags.DisableForceToStateless.set(false);
     EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
 
-    DebugManager.flags.DisableForceToStateless.set(true);
+    debugManager.flags.DisableForceToStateless.set(true);
     EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 
@@ -194,7 +194,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolic
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     const char *expectedStr = "-cl-store-cache-default=7 -cl-load-cache-default=4";
@@ -204,8 +204,8 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolic
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForceAllResourcesUncachedWhenGetCachingPolicyOptionsThenReturnUncachedPolicyOption, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
-    DebugManager.flags.ForceAllResourcesUncached.set(true);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
+    debugManager.flags.ForceAllResourcesUncached.set(true);
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     const char *expectedStr = "-cl-store-cache-default=1 -cl-load-cache-default=1";
@@ -215,7 +215,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForc
 
 HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(5);
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(5);
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     EXPECT_EQ(nullptr, compilerProductHelper.getCachingPolicyOptions(false));
@@ -272,7 +272,7 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersion30ThenReportsClKhrE
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ClKhrExternalMemoryExtension.set(0);
+    debugManager.flags.ClKhrExternalMemoryExtension.set(0);
 
     hwInfo.capabilityTable.clVersionSupport = 30;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
@@ -305,7 +305,7 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     uint32_t config = 0x1234;
-    DebugManager.flags.OverrideHwIpVersion.set(config);
+    debugManager.flags.OverrideHwIpVersion.set(config);
     hwInfo.ipVersion.value = 0x5678;
     EXPECT_EQ(compilerProductHelper.getHwIpVersion(hwInfo), config);
 }

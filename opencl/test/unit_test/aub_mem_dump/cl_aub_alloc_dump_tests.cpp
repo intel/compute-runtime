@@ -69,7 +69,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
 
 HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubDumpBufferFormatIsSetToBinThenBufferShouldBeDumpedInBinFormat) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+    debugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     MockContext context;
     size_t bufferSize = 10;
@@ -102,7 +102,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
 
 HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubDumpBufferFormatIsSetToTreThenBufferShouldBeDumpedInTreFormat) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpBufferFormat.set("TRE");
+    debugManager.flags.AUBDumpBufferFormat.set("TRE");
 
     MockContext context(pClDevice);
     size_t bufferSize = 10;
@@ -144,7 +144,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
 
 HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDumpImageFormatIsSetToBmpThenImageShouldBeDumpedInBmpFormat) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpImageFormat.set("BMP");
+    debugManager.flags.AUBDumpImageFormat.set("BMP");
 
     MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&context));
@@ -187,7 +187,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
 
 HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDumpImageFormatIsSetToTreThenImageShouldBeDumpedInTreFormat) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpImageFormat.set("TRE");
+    debugManager.flags.AUBDumpImageFormat.set("TRE");
 
     MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
@@ -228,7 +228,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
 
 HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCalledAndAubDumpImageFormatIsSetToTreThenImageShouldBeDumpedInTreFormat) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpImageFormat.set("TRE");
+    debugManager.flags.AUBDumpImageFormat.set("TRE");
 
     MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
@@ -247,7 +247,7 @@ HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCall
 
 HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCalledAndAubDumpImageFormatIsSetToTreThenImageDumpIsNotSupported) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AUBDumpImageFormat.set("TRE");
+    debugManager.flags.AUBDumpImageFormat.set("TRE");
 
     MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));

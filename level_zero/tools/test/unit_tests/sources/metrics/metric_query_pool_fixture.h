@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class MultiDeviceMetricQueryPoolTest : public MetricMultiDeviceFixture,
 class MultiDeviceMetricQueryPoolAffinityMaskTest : public MultiDeviceMetricQueryPoolTest {
 
     void SetUp() override {
-        DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
         MultiDeviceMetricQueryPoolTest::SetUp();
     }
 

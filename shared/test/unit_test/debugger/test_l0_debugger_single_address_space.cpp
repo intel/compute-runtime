@@ -21,7 +21,7 @@ namespace NEO {
 
 struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
     void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
         Test<NEO::DeviceFixture>::SetUp();
     }
 
@@ -34,7 +34,7 @@ struct SingleAddressSpaceFixture : public Test<NEO::DeviceFixture> {
 
 struct L0DebuggerBBlevelParameterizedTest : ::testing::TestWithParam<bool>, public NEO::DeviceFixture {
     void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
         DeviceFixture::setUp();
     }
     void TearDown() override {
@@ -45,11 +45,11 @@ struct L0DebuggerBBlevelParameterizedTest : ::testing::TestWithParam<bool>, publ
 
 HWTEST_F(SingleAddressSpaceFixture, givenDebugFlagForceSbaTrackingModeSetWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+    NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     EXPECT_TRUE(debugger->singleAddressSpaceSbaTracking);
 
-    NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+    NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
     debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     EXPECT_FALSE(debugger->singleAddressSpaceSbaTracking);
 }

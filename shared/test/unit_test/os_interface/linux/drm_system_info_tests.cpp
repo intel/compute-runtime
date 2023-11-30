@@ -80,7 +80,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     ::testing::internal::CaptureStderr();
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     int ret = drm.setupHardwareInfo(&device, false);
     EXPECT_EQ(ret, 0);
@@ -192,12 +192,12 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     ::testing::internal::CaptureStdout();
     ::testing::internal::CaptureStderr();
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     drm.failQueryDeviceBlob = true;
 
     int ret = drm.setupHardwareInfo(&device, false);
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 

@@ -140,7 +140,7 @@ HWTEST2_F(AILTests, givenPreGen12AndAndProcessNameIsNotResolveWhenApplyWithDavin
 
 HWTEST_F(AILTests, GivenPlatformHasNoAilAvailableWhenAilIsEnabledThenAilInitializationReturnsTrue) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.EnableAIL.set(true);
+    NEO::debugManager.flags.EnableAIL.set(true);
 
     HardwareInfo hwInfo{};
     hwInfo.platform.eProductFamily = productFamily;

@@ -25,7 +25,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     auto kernel = dispatchInfo.getKernel();
 
     if (kernel != nullptr) {
-        if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
+        if (debugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
@@ -35,7 +35,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             if (dispatchInfo.getDim() == 1) {
                 computeWorkgroupSize1D(maxWorkGroupSize, workGroupSize, workItems, simd);
-            } else if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && dispatchInfo.getDim() == 2) {
+            } else if (debugManager.flags.EnableComputeWorkSizeSquared.get() && dispatchInfo.getDim() == 2) {
                 computeWorkgroupSizeSquared(maxWorkGroupSize, workGroupSize, workItems, simd, dispatchInfo.getDim());
             } else {
                 computeWorkgroupSize2D(maxWorkGroupSize, workGroupSize, workItems, simd);

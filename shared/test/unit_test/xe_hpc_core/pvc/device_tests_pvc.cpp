@@ -27,7 +27,7 @@ PVCTEST_F(DeviceTestsPvc, WhenDeviceIsCreatedThenOnlyOneCcsEngineIsExposed) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
     auto hwInfo = *defaultHwInfo;
 
     hwInfo.featureTable.flags.ftrCCSNode = 1;
@@ -49,7 +49,7 @@ PVCTEST_F(DeviceTestsPvc, WhenDeviceIsCreatedThenOnlyOneCcsEngineIsExposed) {
 struct MemoryManagerDirectSubmissionImplicitScalingPvcTest : public ::testing::Test {
 
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
         auto allTilesMask = executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask();
 
@@ -73,7 +73,7 @@ struct MemoryManagerDirectSubmissionImplicitScalingPvcTest : public ::testing::T
 };
 
 PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected) {
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
@@ -110,7 +110,7 @@ PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmis
 }
 
 PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmissionForceLocalMemoryStorageDefaultModeWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected) {
-    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(-1);
+    debugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(-1);
 
     HardwareInfo hwInfo = *defaultHwInfo;
 

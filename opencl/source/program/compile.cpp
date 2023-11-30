@@ -123,8 +123,8 @@ cl_int Program::compile(
         appendAdditionalExtensions(extensions, options, internalOptions);
         CompilerOptions::concatenateAppend(internalOptions, extensions);
 
-        if (!this->getIsBuiltIn() && NEO::DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
-            NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
+        if (!this->getIsBuiltIn() && NEO::debugManager.flags.InjectInternalBuildOptions.get() != "unk") {
+            NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::debugManager.flags.InjectInternalBuildOptions.get());
         }
 
         inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(compileData.data()), compileData.size());

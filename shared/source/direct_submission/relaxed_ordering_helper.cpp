@@ -19,8 +19,8 @@ bool isRelaxedOrderingDispatchAllowed(const CommandStreamReceiver &csr, uint32_t
     }
 
     uint32_t minimalNumberOfClients = 2;
-    if (DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get() != -1) {
-        minimalNumberOfClients = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get());
+    if (debugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get() != -1) {
+        minimalNumberOfClients = static_cast<uint32_t>(debugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get());
     }
 
     return (csr.directSubmissionRelaxedOrderingEnabled() && csr.getNumClients() >= minimalNumberOfClients);

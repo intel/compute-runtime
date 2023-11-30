@@ -23,9 +23,9 @@ class SystemMemFenceViaMiMemFence : public AUBFixture,
                                     public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
         AUBFixture::setUp(defaultHwInfo.get());
     }
     void TearDown() override {
@@ -69,9 +69,9 @@ class SystemMemFenceViaComputeWalker : public AUBFixture,
                                        public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
         AUBFixture::setUp(defaultHwInfo.get());
     }
     void TearDown() override {
@@ -115,12 +115,12 @@ class SystemMemFenceWithBlitter : public MulticontextAubFixture,
                                   public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
 
-        DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.EnableBlitterOperationsSupport.set(1);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
         MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
     }
@@ -166,9 +166,9 @@ class SystemMemFenceViaKernel : public ProgramFixture,
                                 public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
-        DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
+        debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
+        debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
+        debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
 
         ProgramFixture::setUp();
         MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);

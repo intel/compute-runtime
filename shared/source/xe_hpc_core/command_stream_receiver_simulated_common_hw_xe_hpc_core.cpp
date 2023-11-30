@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ using Family = XeHpcCoreFamily;
 
 template <>
 bool CommandStreamReceiverSimulatedCommonHw<Family>::expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length) {
-    auto format = static_cast<uint32_t>(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+    auto format = static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
     UNRECOVERABLE_IF(format > 0x1F);
 
     uint32_t value = (format << 3); // [3:7] compression_format

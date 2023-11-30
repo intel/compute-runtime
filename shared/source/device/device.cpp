@@ -41,8 +41,8 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
 
-    if (DebugManager.flags.NumberOfRegularContextsPerEngine.get() > 1) {
-        this->numberOfRegularContextsPerEngine = static_cast<uint32_t>(DebugManager.flags.NumberOfRegularContextsPerEngine.get());
+    if (debugManager.flags.NumberOfRegularContextsPerEngine.get() > 1) {
+        this->numberOfRegularContextsPerEngine = static_cast<uint32_t>(debugManager.flags.NumberOfRegularContextsPerEngine.get());
     }
 }
 
@@ -96,10 +96,10 @@ bool Device::genericSubDevicesAllowed() {
 }
 
 bool Device::engineInstancedSubDevicesAllowed() {
-    bool notAllowed = !DebugManager.flags.EngineInstancedSubDevices.get();
+    bool notAllowed = !debugManager.flags.EngineInstancedSubDevices.get();
     notAllowed |= engineInstanced;
     notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
-    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
+    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!debugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
 
     if (notAllowed) {
         return false;
@@ -256,14 +256,14 @@ bool Device::createDeviceImpl() {
 
     executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddressess);
 
-    if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
+    if (debugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
         for (auto &engine : allEngines) {
             auto csr = engine.commandStreamReceiver;
             csr->setExperimentalCmdBuffer(std::make_unique<ExperimentalCommandBuffer>(csr, getDeviceInfo().profilingTimerResolution));
         }
     }
 
-    if (DebugManager.flags.EnableSWTags.get() && !getRootDeviceEnvironment().tagsManager->isInitialized()) {
+    if (debugManager.flags.EnableSWTags.get() && !getRootDeviceEnvironment().tagsManager->isInitialized()) {
         getRootDeviceEnvironment().tagsManager->initialize(*this);
     }
 
@@ -276,7 +276,7 @@ bool Device::createDeviceImpl() {
             return true;
         }
 
-        if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
+        if (debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
             if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
 
                 auto deviceIndex = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
@@ -321,7 +321,7 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         return;
     }
 
-    if (EngineHelper::isCopyOnlyEngineType(engineGroupType) && DebugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
+    if (EngineHelper::isCopyOnlyEngineType(engineGroupType) && debugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
         return;
     }
 
@@ -438,8 +438,8 @@ bool Device::isBcsSplitSupported() {
     auto bcsSplit = productHelper.isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
                     Device::isBlitSplitEnabled();
 
-    if (DebugManager.flags.SplitBcsCopy.get() != -1) {
-        bcsSplit = DebugManager.flags.SplitBcsCopy.get();
+    if (debugManager.flags.SplitBcsCopy.get() != -1) {
+        bcsSplit = debugManager.flags.SplitBcsCopy.get();
     }
 
     return bcsSplit;
@@ -469,8 +469,8 @@ Debugger *Device::getDebugger() const {
 
 bool Device::areSharedSystemAllocationsAllowed() const {
     auto sharedSystemAllocationsSupport = static_cast<bool>(getHardwareInfo().capabilityTable.sharedSystemMemCapabilities);
-    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
-        sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
+    if (debugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        sharedSystemAllocationsSupport = debugManager.flags.EnableSharedSystemUsmSupport.get();
     }
     return sharedSystemAllocationsSupport;
 }
@@ -493,7 +493,7 @@ EngineControl *Device::tryGetEngine(aub_stream::EngineType engineType, EngineUsa
         }
     }
 
-    if (DebugManager.flags.OverrideInvalidEngineWithDefault.get()) {
+    if (debugManager.flags.OverrideInvalidEngineWithDefault.get()) {
         return &allEngines[0];
     }
     return nullptr;
@@ -515,7 +515,7 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
     auto retVal = getOSTime()->getGpuCpuTime(&timeStamp);
     if (retVal) {
         *hostTimestamp = timeStamp.cpuTimeinNS;
-        if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+        if (debugManager.flags.EnableDeviceBasedTimestamps.get()) {
             auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
             *deviceTimestamp = getGfxCoreHelper().getGpuTimeStampInNS(timeStamp.gpuTimeStamp, resolution);
         } else
@@ -580,7 +580,7 @@ uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
     double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
     globalMemorySize = static_cast<uint64_t>(static_cast<double>(globalMemorySize) * percentOfGlobalMemoryAvailable);
 
-    if (DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() == -1 &&
+    if (debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() == -1 &&
         !getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())) {
         const uint64_t internalResourcesSize = 450 * MemoryConstants::megaByte;
         globalMemorySize = std::max(static_cast<uint64_t>(0), globalMemorySize - internalResourcesSize);
@@ -590,8 +590,8 @@ uint64_t Device::getGlobalMemorySize(uint32_t deviceBitfield) const {
 }
 
 double Device::getPercentOfGlobalMemoryAvailable() const {
-    if (DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() != -1) {
-        return 0.01 * static_cast<double>(DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get());
+    if (debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get() != -1) {
+        return 0.01 * static_cast<double>(debugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.get());
     }
     return getMemoryManager()->getPercentOfGlobalMemoryAvailable(this->getRootDeviceIndex());
 }
@@ -653,8 +653,8 @@ EngineControl *Device::getInternalCopyEngine() {
 
     auto expectedEngine = aub_stream::ENGINE_BCS;
 
-    if (DebugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
-        expectedEngine = EngineHelpers::mapBcsIndexToEngineType(DebugManager.flags.ForceBCSForInternalCopyEngine.get(), true);
+    if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+        expectedEngine = EngineHelpers::mapBcsIndexToEngineType(debugManager.flags.ForceBCSForInternalCopyEngine.get(), true);
     }
 
     for (auto &engine : allEngines) {
@@ -736,16 +736,16 @@ void Device::initializeEngineRoundRobinControls() {
 
     uint32_t queuesPerEngine = 1u;
 
-    if (DebugManager.flags.CmdQRoundRobindEngineAssignNTo1.get() != -1) {
-        queuesPerEngine = DebugManager.flags.CmdQRoundRobindEngineAssignNTo1.get();
+    if (debugManager.flags.CmdQRoundRobindEngineAssignNTo1.get() != -1) {
+        queuesPerEngine = debugManager.flags.CmdQRoundRobindEngineAssignNTo1.get();
     }
 
     this->queuesPerEngineCount = queuesPerEngine;
 
     std::bitset<8> availableEngines = std::numeric_limits<uint8_t>::max();
 
-    if (DebugManager.flags.CmdQRoundRobindEngineAssignBitfield.get() != -1) {
-        availableEngines = DebugManager.flags.CmdQRoundRobindEngineAssignBitfield.get();
+    if (debugManager.flags.CmdQRoundRobindEngineAssignBitfield.get() != -1) {
+        availableEngines = debugManager.flags.CmdQRoundRobindEngineAssignBitfield.get();
     }
 
     this->availableEnginesForCommandQueueusRoundRobin = availableEngines;
@@ -992,7 +992,7 @@ bool Device::isMultiRegularContextSelectionAllowed(aub_stream::EngineType engine
         return false;
     }
 
-    if (engineType == aub_stream::EngineType::ENGINE_BCS && DebugManager.flags.EnableMultipleRegularContextForBcs.get() == 1) {
+    if (engineType == aub_stream::EngineType::ENGINE_BCS && debugManager.flags.EnableMultipleRegularContextForBcs.get() == 1) {
         return true;
     }
 

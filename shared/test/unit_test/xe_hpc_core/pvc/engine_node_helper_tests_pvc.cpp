@@ -48,7 +48,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledWithoutSelectorE
 PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrectBcsEngineIsReturned) {
     using namespace aub_stream;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto pHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
@@ -77,7 +77,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, WhenGetBcsEngineTypeIsCalledForPVCThenCorrec
 PVCTEST_F(EngineNodeHelperPvcTests, givenPvcBaseDieA0AndTile1WhenGettingBcsEngineTypeThenDoNotUseBcs1) {
     using namespace aub_stream;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    debugManager.flags.EnableCopyEngineSelector.set(1);
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto pHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
@@ -112,7 +112,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledButDebugVariableSetWhenGetG
     auto productHelper = ProductHelper::create(hwInfo.platform.eProductFamily);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
     for (uint32_t stepping : {REVISION_A0, REVISION_B}) {
         hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(stepping, hwInfo);

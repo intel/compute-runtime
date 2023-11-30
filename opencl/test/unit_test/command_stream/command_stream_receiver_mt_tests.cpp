@@ -34,7 +34,7 @@ struct CommandStreamReceiverMtTest : public ClDeviceFixture,
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenSettingFlagProgressThenFunctionAsksTwiceForConfirmation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnEnqueue.set(0);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -89,8 +89,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenSettingFlagProgre
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadBeforeWalkerOnlyWhenSettingFlagProgressThenFunctionAsksOnceForConfirmation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(0);
+    debugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnGpuMode.set(0);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -132,8 +132,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadBeforeWalkerOnlyWhenS
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadAfterWalkerOnlyWhenSettingFlagProgressThenFunctionAsksOnceForConfirmation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
-    DebugManager.flags.PauseOnGpuMode.set(1);
+    debugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnGpuMode.set(1);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -175,7 +175,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadAfterWalkerOnlyWhenSe
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSettingFlagProgressThenFunctionAsksMultipleTimesForConfirmation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(-2);
+    debugManager.flags.PauseOnEnqueue.set(-2);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -207,7 +207,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
                 EXPECT_TRUE(DebugPauseState::waitingForUserEndConfirmation == *mockCSR->debugPauseStateAddress);
             }
             confirmationCounter++;
-            DebugManager.flags.PauseOnEnqueue.set(-1);
+            debugManager.flags.PauseOnEnqueue.set(-1);
         }
     };
 
@@ -262,7 +262,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSettingFlagProgressThenFunctionAsksMultipleTimesForConfirmation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnBlitCopy.set(-2);
+    debugManager.flags.PauseOnBlitCopy.set(-2);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -294,7 +294,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
                 EXPECT_TRUE(DebugPauseState::waitingForUserEndConfirmation == *mockCSR->debugPauseStateAddress);
             }
             confirmationCounter++;
-            DebugManager.flags.PauseOnBlitCopy.set(-1);
+            debugManager.flags.PauseOnBlitCopy.set(-1);
         }
     };
 
@@ -349,7 +349,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtFirstStageThenFunctionEndsCorrectly) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnEnqueue.set(0);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -376,7 +376,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtFirs
 
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtSecondStageThenFunctionEndsCorrectly) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.PauseOnEnqueue.set(0);
+    debugManager.flags.PauseOnEnqueue.set(0);
     testing::internal::CaptureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

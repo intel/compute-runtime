@@ -30,7 +30,7 @@ using namespace NEO;
 
 struct RawBinarySipFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.LoadBinarySipFromFile.set("dummy_file.bin");
+        debugManager.flags.LoadBinarySipFromFile.set("dummy_file.bin");
 
         backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, false);
         backupSipClassType = std::make_unique<VariableBackup<SipClassType>>(&SipKernel::classType);
@@ -397,7 +397,7 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
 
 TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
+    NEO::debugManager.flags.UseBindlessDebugSip.set(1);
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);

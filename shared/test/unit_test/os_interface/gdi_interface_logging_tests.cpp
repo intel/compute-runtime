@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,8 @@ struct GdiInterfaceLoggingBaseFixture {
 struct GdiInterfaceLoggingNoInitFixture : public GdiInterfaceLoggingBaseFixture {
     void setUp() {
         GdiInterfaceLoggingBaseFixture::setUp();
-        openFile = DebugManager.flags.LogGdiCallsToFile.get();
-        DebugManager.flags.LogGdiCalls.set(true);
+        openFile = debugManager.flags.LogGdiCallsToFile.get();
+        debugManager.flags.LogGdiCalls.set(true);
         mockVfptrinfUseStdioFunctionBackup = std::make_unique<VariableBackup<bool>>(&NEO::IoFunctions::mockVfptrinfUseStdioFunction, !openFile);
     }
 
@@ -81,7 +81,7 @@ struct GdiInterfaceLoggingFixture : public GdiInterfaceLoggingNoInitFixture {
 
 struct GdiInterfaceLoggingToFileFixture : public GdiInterfaceLoggingFixture {
     void setUp() {
-        DebugManager.flags.LogGdiCallsToFile.set(true);
+        debugManager.flags.LogGdiCallsToFile.set(true);
         GdiInterfaceLoggingFixture::setUp();
     }
 

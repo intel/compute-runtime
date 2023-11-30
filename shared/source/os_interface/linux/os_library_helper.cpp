@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 namespace NEO {
 namespace Linux {
 void adjustLibraryFlags(int &dlopenFlag) {
-    if (DebugManager.flags.DisableDeepBind.get()) {
+    if (debugManager.flags.DisableDeepBind.get()) {
         dlopenFlag &= ~RTLD_DEEPBIND;
     }
 }

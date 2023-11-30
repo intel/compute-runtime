@@ -88,7 +88,7 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupMultiTileInfoBaseThenGtSy
     EXPECT_EQ(1u, gtSystemInfo.MultiTileArchInfo.TileCount);
     EXPECT_EQ(static_cast<uint8_t>(maxNBitValue(1u)), gtSystemInfo.MultiTileArchInfo.TileMask);
 
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     PVC::setupHardwareInfoMultiTileBase(&hwInfo, true);
     EXPECT_TRUE(gtSystemInfo.MultiTileArchInfo.IsValid);
     EXPECT_EQ(2u, gtSystemInfo.MultiTileArchInfo.TileCount);

@@ -36,7 +36,7 @@ struct VeryLargeTag : public BaseTag {
 
 struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableSWTags.set(true);
+        debugManager.flags.EnableSWTags.set(true);
         DeviceFixture::setUp();
 
         tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
@@ -202,8 +202,8 @@ HWTEST_F(SoftwareTagsManagerTests, givenSoftwareManagerWithMaxHeapReachedWhenTag
 
 TEST(SoftwareTagsManagerMultiDeviceTests, givenEnableSWTagsAndCreateMultipleSubDevicesWhenDeviceCreatedThenSWTagsManagerIsInitializedOnlyOnce) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableSWTags.set(true);
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableSWTags.set(true);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     // This test checks if UNRECOVERABLE_IF(...) was not called
@@ -257,7 +257,7 @@ TEST(SoftwareTagsTests, whenGetOffsetNoopIDCalledThenCorrectValueIsReturned) {
 
 TEST(SoftwareTagsBXMLTests, givenDumpSWTagsBXMLWhenConstructingBXMLThenAFileIsDumped) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DumpSWTagsBXML.set(true);
+    debugManager.flags.DumpSWTagsBXML.set(true);
 
     uint32_t mockFopenCalledBefore = IoFunctions::mockFopenCalled;
     uint32_t mockFwriteCalledBefore = IoFunctions::mockFwriteCalled;

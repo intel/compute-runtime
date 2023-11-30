@@ -252,7 +252,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
 
 TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMessageWithErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::findFirstFileAResult = INVALID_HANDLE_VALUE;
     const size_t cacheSize = MemoryConstants::megaByte - 2u;
@@ -297,7 +297,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
 TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigWhenLockFailsThenErrorIsPrintedAndFunctionExits) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = FALSE;
@@ -329,7 +329,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
 TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigWhenSetFilePointerFailsThenErrorIsPrintedAndFileIsUnlockedAndClosed) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = TRUE;
@@ -364,7 +364,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
 TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigWhenReadFileFailsThenErrorIsPrintedAndFileIsUnlockedAndClosed) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
     SysCalls::lockFileExResult = TRUE;
@@ -443,7 +443,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
 
 TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigFailsThenPrintErrorMessageAndEarlyReturn) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     const size_t readCacheDirSize = 840 * MemoryConstants::kiloByte;
     SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
@@ -517,7 +517,7 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreate
 
 TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenGetTempFileNameFailsThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::getTempFileNameAResult = 0u;
 
@@ -540,7 +540,7 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenGetTem
 
 TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreateFileFailsThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::getTempFileNameAResult = 6u;
     SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
@@ -564,7 +564,7 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenCreate
 
 TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteFileFailsThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::getTempFileNameAResult = 6u;
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
@@ -589,7 +589,7 @@ TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteF
 
 TEST_F(CompilerCacheWindowsTest, givenCreateUniqueTempFileAndWriteDataWhenWriteFileBytesWrittenMismatchesThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::getTempFileNameAResult = 6u;
     SysCalls::createFileAResults[0] = reinterpret_cast<HANDLE>(0x1234);
@@ -700,7 +700,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenCacheAlreadyExistsThenDoNot
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
     SysCalls::writeFileResult = FALSE;
@@ -742,7 +742,7 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteToConfigFileFailsThenE
 
 TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenWriteFileBytesWrittenMismatchesThenErrorIsPrinted) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     SysCalls::getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
 

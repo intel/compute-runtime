@@ -45,7 +45,7 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
         executionEnvironment.incRefInternal();
 
         executionEnvironment.memoryManager = std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                                DebugManager.flags.EnableForcePin.get(),
+                                                                                debugManager.flags.EnableForcePin.get(),
                                                                                 true,
                                                                                 executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(&executionEnvironment, 0u));
@@ -157,7 +157,7 @@ HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsRet
 
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportWhenCreateDrmDirectSubmissionThenTagAllocationIsSetAsCompletionFenceAllocation) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
 
@@ -177,7 +177,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportWhenCreateDrmDirect
 
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportWhenGettingCompletionFencePointerThenCompletionFenceValueAddressIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
 
@@ -192,8 +192,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenDebugFlagSetWhenInitializingThenOverrideF
 
     TaskCountType fenceStartValue = 1234;
 
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
-    DebugManager.flags.OverrideUserFenceStartValue.set(static_cast<int32_t>(fenceStartValue));
+    debugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.OverrideUserFenceStartValue.set(static_cast<int32_t>(fenceStartValue));
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
 
@@ -205,7 +205,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDebugFlagSetWhenInitializingThenOverrideF
 
 HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenGettingCompletionFencePointerThenNullptrIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(0);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
 
@@ -223,7 +223,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionThenP
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionPCIBarrier.set(1);
+    debugManager.flags.DirectSubmissionPCIBarrier.set(1);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
@@ -243,7 +243,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionAndMm
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionPCIBarrier.set(1);
+    debugManager.flags.DirectSubmissionPCIBarrier.set(1);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     VariableBackup<bool> backup(&SysCalls::failMmap, true);
 
@@ -265,7 +265,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierDisabledWhenCreateDirectSubmiss
     }
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionPCIBarrier.set(0);
+    debugManager.flags.DirectSubmissionPCIBarrier.set(0);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
@@ -280,7 +280,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierDisabledWhenCreateDirectSubmiss
 
 HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDirectSubmissionThenCompletionFenceAllocationIsNotSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(0);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
 
@@ -297,7 +297,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDire
 
 HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAllocationWhenDestroyingThenNoWaitForUserFenceIsCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(0);
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
 
@@ -314,7 +314,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAll
 
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotCompletedWhenDestroyingThenWaitForUserFenceIsCalled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
@@ -332,7 +332,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
 
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndHangingContextWhenDestroyingThenWaitForUserFenceIsCalledWithSmallTimeout) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
@@ -355,7 +355,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndHangingContextWh
 
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotCompletedWhenWaitOnSpecificAddressesPerOsContext) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
     memset(commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(), 0, commandStreamReceiver.getTagAllocation()->getUnderlyingBufferSize());
@@ -409,7 +409,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
         MockGraphicsAllocation workPartitionAllocation{};
         commandStreamReceiver.workPartitionAllocation = &workPartitionAllocation;
         {
-            DebugManager.flags.EnableImplicitScaling.set(1);
+            debugManager.flags.EnableImplicitScaling.set(1);
             MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
             directSubmission.completionFenceValue = expectedCompletionValueToWait;
         }
@@ -429,7 +429,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThe
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     drmDirectSubmission.completionFenceAllocation = nullptr;
@@ -456,7 +456,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportAndExecFailureWhe
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    debugManager.flags.EnableDrmCompletionFence.set(0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     drmDirectSubmission.completionFenceAllocation = nullptr;
@@ -479,7 +479,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndExecFailureWhenS
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -505,7 +505,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -544,7 +544,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -583,7 +583,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    debugManager.flags.EnableDrmCompletionFence.set(1);
 
     auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -686,7 +686,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDi
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
+    debugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -713,7 +713,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBuffer
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
+    debugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -742,7 +742,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoNewResourceBoundWhenDispatchCommandBuff
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
+    debugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -769,7 +769,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushZeroAn
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(0);
+    debugManager.flags.DirectSubmissionNewResourceTlbFlush.set(0);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -900,7 +900,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenHandleSwitchRingBu
 }
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaEnabledAndRingNotStartedThenCompletionFenceIsNotUpdated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableRingSwitchTagUpdateWa.set(1);
+    debugManager.flags.EnableRingSwitchTagUpdateWa.set(1);
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     auto prevCompletionFenceVal = 1u;
     auto prevRingBufferIndex = 0u;
@@ -915,7 +915,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 }
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaEnabledAndRingStartedThenCompletionFenceIsUpdated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableRingSwitchTagUpdateWa.set(1);
+    debugManager.flags.EnableRingSwitchTagUpdateWa.set(1);
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     auto prevCompletionFenceVal = 1u;
     auto prevRingBufferIndex = 0u;
@@ -931,7 +931,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTa
 }
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenEnableRingSwitchTagUpdateWaDisabledThenCompletionFenceIsUpdated) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableRingSwitchTagUpdateWa.set(0);
+    debugManager.flags.EnableRingSwitchTagUpdateWa.set(0);
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     auto prevCompletionFenceVal = 1u;
     auto prevRingBufferIndex = 0u;
@@ -954,7 +954,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(0);
+    debugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_FALSE(drmDirectSubmission.inputMonitorFenceDispatchRequirement);
@@ -1012,7 +1012,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(1);
+    debugManager.flags.DirectSubmissionMonitorFenceInputPolicy.set(1);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(drmDirectSubmission.inputMonitorFenceDispatchRequirement);

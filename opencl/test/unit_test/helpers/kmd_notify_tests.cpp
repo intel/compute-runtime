@@ -479,7 +479,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcL
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetThenKmdNotifyMechanismIsUsedAndReturnsShortestWaitingTimePossible) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PowerSavingMode.set(1u);
+    debugManager.flags.PowerSavingMode.set(1u);
     hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
@@ -502,7 +502,7 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsReque
 
 TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAndNoFlushStampProvidedWhenParametersAreObtainedThenFalseIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.PowerSavingMode.set(1u);
+    debugManager.flags.PowerSavingMode.set(1u);
     hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;

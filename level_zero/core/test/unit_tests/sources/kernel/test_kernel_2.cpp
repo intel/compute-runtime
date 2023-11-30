@@ -99,7 +99,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
 
-    NEO::DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    NEO::debugManager.flags.EnableComputeWorkSizeND.set(false);
 
     Mock<Module> module(device, nullptr);
     module.getMaxGroupSizeResult = 8;
@@ -121,7 +121,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
 
-    NEO::DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    NEO::debugManager.flags.EnableComputeWorkSizeND.set(false);
 
     Mock<Module> module(device, nullptr);
     module.getMaxGroupSizeResult = 8;
@@ -234,7 +234,7 @@ TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) 
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
 
-    NEO::DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    NEO::debugManager.flags.EnableComputeWorkSizeND.set(false);
 
     Mock<Module> module(device, nullptr);
 
@@ -288,7 +288,7 @@ TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) 
 
 TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggestingGroupSizeThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     WhiteBox<KernelImmutableData> funcInfo = {};
     NEO::KernelDescriptor descriptor;

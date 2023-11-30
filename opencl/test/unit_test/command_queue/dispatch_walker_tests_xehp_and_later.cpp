@@ -248,7 +248,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferent
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugFlagWhenItIsSetThenMessageSimdIsOverwritten) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceSimdMessageSizeInWalker.set(1);
+    debugManager.flags.ForceSimdMessageSizeInWalker.set(1);
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
     *computeWalker = FamilyType::cmdInitGpgpuWalker;
@@ -497,7 +497,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    DebugManager.flags.EnableTimestampPacket.set(true);
+    debugManager.flags.EnableTimestampPacket.set(true);
 
     auto testDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext testContext(testDevice.get());
@@ -528,8 +528,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenMocsValueIsOverwrittenThenPostSyncContainsProperSetting) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     auto mocsValue = 8u;
-    DebugManager.flags.EnableTimestampPacket.set(true);
-    DebugManager.flags.OverridePostSyncMocs.set(mocsValue);
+    debugManager.flags.EnableTimestampPacket.set(true);
+    debugManager.flags.OverridePostSyncMocs.set(mocsValue);
 
     auto testDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext testContext(testDevice.get());
@@ -578,7 +578,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
-    DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
+    debugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -601,7 +601,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenSystolicIsProgrammed) {
-    DebugManager.flags.OverrideSystolicInComputeWalker.set(true);
+    debugManager.flags.OverrideSystolicInComputeWalker.set(true);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -622,7 +622,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto &commandStream = cmdQ->getCS(1024);
@@ -685,8 +685,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    DebugManager.flags.EnablePassInlineData.set(true);
-    DebugManager.flags.EnableHwGenerationLocalIds.set(0);
+    debugManager.flags.EnablePassInlineData.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(0);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto &commandStream = cmdQ->getCS(1024);
@@ -783,8 +783,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    DebugManager.flags.EnablePassInlineData.set(true);
-    DebugManager.flags.EnableHwGenerationLocalIds.set(false);
+    debugManager.flags.EnablePassInlineData.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -850,8 +850,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    DebugManager.flags.EnablePassInlineData.set(true);
-    DebugManager.flags.EnableHwGenerationLocalIds.set(false);
+    debugManager.flags.EnablePassInlineData.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -893,8 +893,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    DebugManager.flags.EnablePassInlineData.set(true);
-    DebugManager.flags.EnableHwGenerationLocalIds.set(false);
+    debugManager.flags.EnablePassInlineData.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     IndirectHeap &ih = cmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 2048);
@@ -940,7 +940,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAllChannelsActiveWithWorkDimOneDimensionThenHwGenerationIsEnabledWithOverwrittenWalkOrder) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
-    DebugManager.flags.EnableHwGenerationLocalIds.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(true);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -979,8 +979,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    DebugManager.flags.EnablePassInlineData.set(true);
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnablePassInlineData.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -1032,8 +1032,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    DebugManager.flags.EnablePassInlineData.set(true);
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnablePassInlineData.set(true);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -1080,7 +1080,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsRequiredWhenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
     UltClDeviceFactory deviceFactory{1, 2};
     MockClDevice *device = deviceFactory.rootDevices[0];
@@ -1107,7 +1107,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
+    debugManager.flags.SynchronizeWalkerInWparidMode.set(0);
     testArgs.staticPartitioning = false;
     testArgs.synchronizeBeforeExecution = false;
     csr.staticWorkPartitioningEnabled = false;
@@ -1121,7 +1121,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
+    debugManager.flags.SynchronizeWalkerInWparidMode.set(1);
     testArgs.synchronizeBeforeExecution = true;
     testArgs.staticPartitioning = false;
     csr.staticWorkPartitioningEnabled = false;
@@ -1138,7 +1138,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsNotRequiredWhenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
     UltClDeviceFactory deviceFactory{1, 2};
     MockClDevice *device = deviceFactory.rootDevices[0];
@@ -1165,7 +1165,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
+    debugManager.flags.SynchronizeWalkerInWparidMode.set(0);
     testArgs.staticPartitioning = false;
     testArgs.synchronizeBeforeExecution = false;
     csr.staticWorkPartitioningEnabled = false;
@@ -1179,7 +1179,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
+    debugManager.flags.SynchronizeWalkerInWparidMode.set(1);
     testArgs.synchronizeBeforeExecution = true;
     testArgs.staticPartitioning = false;
     csr.staticWorkPartitioningEnabled = false;
@@ -1196,7 +1196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPartitionIsDisabledThenSizeIsProperlyEstimated) {
-    DebugManager.flags.EnableWalkerPartition.set(0u);
+    debugManager.flags.EnableWalkerPartition.set(0u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) ? 2 : 1;
@@ -1214,7 +1214,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeControlPrecedingPostSyncCommandIsDisabledAndLocalMemoryIsEnabledThenSizeIsProperlyEstimated) {
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1231,7 +1231,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsRequiredWhenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1262,7 +1262,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsNotRequiredWhenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1297,7 +1297,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
         GTEST_SKIP();
     }
 
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
@@ -1315,8 +1315,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
         GTEST_SKIP();
     }
 
-    DebugManager.flags.EnableWalkerPartition.set(1u);
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.SynchronizeWalkerInWparidMode.set(1);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
@@ -1334,7 +1334,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
         GTEST_SKIP();
     }
 
-    DebugManager.flags.EnableWalkerPartition.set(0u);
+    debugManager.flags.EnableWalkerPartition.set(0u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
@@ -1352,7 +1352,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCre
         GTEST_SKIP();
     }
 
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {128, 1, 1};
@@ -1371,9 +1371,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
-    DebugManager.flags.EnableWalkerPartition.set(1u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {1, 1, 1};
@@ -1387,13 +1387,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     ASSERT_NE(nullptr, computeWalker);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, computeWalker->getPartitionType());
     EXPECT_EQ(1u, computeWalker->getPartitionSize());
-    EXPECT_EQ(expectedPartitionCount, static_cast<unsigned int>(DebugManager.flags.ExperimentalSetWalkerPartitionCount.get()));
+    EXPECT_EQ(expectedPartitionCount, static_cast<unsigned int>(debugManager.flags.ExperimentalSetWalkerPartitionCount.get()));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesToPartitionCountOneThenProgramProperParameters) {
-    DebugManager.flags.EnableWalkerPartition.set(1u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(1u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.ExperimentalSetWalkerPartitionCount.set(1u);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {1, 1, 1};
@@ -1409,9 +1409,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoLocalMemorySupportThenDoNotPartition) {
-    DebugManager.flags.EnableWalkerPartition.set(1u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
     VariableBackup<bool> backup(&OSInterface::osEnableLocalMemory, false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1431,9 +1431,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsB
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
-    DebugManager.flags.EnableWalkerPartition.set(1u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
 
     cl_event userEvent = clCreateUserEvent(context.get(), nullptr);
 
@@ -1476,7 +1476,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.EnableWalkerPartition.set(1u);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {128, 1, 1};
@@ -1496,9 +1496,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
 
 struct XeHPAndLaterDispatchWalkerBasicTestDynamicPartition : public XeHPAndLaterDispatchWalkerBasicTest {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(2);
-        DebugManager.flags.EnableStaticPartitioning.set(0);
-        DebugManager.flags.EnableWalkerPartition.set(1u);
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.EnableStaticPartitioning.set(0);
+        debugManager.flags.EnableWalkerPartition.set(1u);
 
         XeHPAndLaterDispatchWalkerBasicTest::SetUp();
     }
@@ -1532,9 +1532,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
 
 struct XeHPAndLaterDispatchWalkerBasicTestStaticPartition : public XeHPAndLaterDispatchWalkerBasicTest {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(2);
-        DebugManager.flags.EnableStaticPartitioning.set(1);
-        DebugManager.flags.EnableWalkerPartition.set(1u);
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.EnableStaticPartitioning.set(1);
+        debugManager.flags.EnableWalkerPartition.set(1u);
 
         XeHPAndLaterDispatchWalkerBasicTest::SetUp();
     }
@@ -1644,7 +1644,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDefaultLocalIdsGenerationW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingOneDimParametersThenReturnFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 1;
     uint32_t simd = 8;
@@ -1664,7 +1664,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingTwoDimParametersThenReturnFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 2;
     uint32_t simd = 8;
@@ -1683,7 +1683,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatNeedsToBeFollowedWithCompatibleDimSizesArePassedThenRuntimeGenerationIsNotRequired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1698,7 +1698,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatNeedsToBeFoll
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenLocalWorkgroupSizeGreaterThen1024ThenRuntimeMustGenerateLocalIds) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1728,7 +1728,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenLocalWorkgroupSizeGreaterT
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatDoesntNeedToBeFollowedWhenIncompatibleDimSizesArePassedThenRuntimeGenerationIsReuqired) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1791,7 +1791,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenWalkOrderThatDoesntNeedToB
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDisabledLocalIdsGenerationWhenPassingFittingThreeDimParametersThenReturnTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(0);
+    debugManager.flags.EnableHwGenerationLocalIds.set(0);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1806,7 +1806,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDisabledLocalIdsGeneration
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingFittingThreeDimParametersThenReturnFalseAndProperWalkOrder) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1853,7 +1853,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingInvalidLwsTwoDimParametersThenReturnTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 2;
     uint32_t simd = 8;
@@ -1868,7 +1868,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationWhenPassingInvalidLwsThreeDimParametersThenReturnTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1886,7 +1886,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenSimdSize1TWhenCheckToGeneratHwIdsThenReturnedFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHwGenerationLocalIds.set(1);
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     uint32_t workDim = 3;
     uint32_t simd = 8;
@@ -1904,7 +1904,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenSimdSize1TWhenCheckToGener
 
 struct XeHPAndLaterDispatchWalkerTestMultiTileDevice : public XeHPAndLaterDispatchWalkerBasicTest {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(2u);
+        debugManager.flags.CreateMultipleSubDevices.set(2u);
 
         XeHPAndLaterDispatchWalkerBasicTest::SetUp();
     }

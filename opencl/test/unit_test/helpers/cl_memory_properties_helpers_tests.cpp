@@ -540,7 +540,7 @@ TEST_F(MemoryPropertiesHelperTests, givenUsmInitialPlacementSetWhenCallingHasIni
     MemoryProperties memoryProperties{};
 
     for (auto intialPlacement : {-1, 0, 1}) {
-        DebugManager.flags.UsmInitialPlacement.set(intialPlacement);
+        debugManager.flags.UsmInitialPlacement.set(intialPlacement);
         if (intialPlacement == 1) {
             EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::GPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
         } else {

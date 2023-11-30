@@ -135,7 +135,7 @@ HWTEST_F(ClEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitFor
     MockCommandQueueHw<FamilyType> commandQueueHw(pContext, pDevice, nullptr);
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+    debugManager.flags.EnableTimestampWaitForQueues.set(4);
     commandQueueHw.setOoqEnabled();
 
     MockEvent<Event> event(&commandQueueHw, CL_COMMAND_READ_BUFFER, 0, 0);
@@ -157,9 +157,9 @@ HWTEST_F(ClEnqueueWaitForEventsTests, givenOoqWhenWaitingForEventThenCallWaitFor
 
 struct ClEnqueueWaitForTimestampsTests : public ClEnqueueWaitForEventsTests {
     void SetUp() override {
-        DebugManager.flags.EnableTimestampWaitForQueues.set(4);
-        DebugManager.flags.EnableTimestampWaitForEvents.set(4);
-        DebugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.EnableTimestampWaitForQueues.set(4);
+        debugManager.flags.EnableTimestampWaitForEvents.set(4);
+        debugManager.flags.EnableTimestampPacket.set(1);
 
         ClEnqueueWaitForEventsTests::SetUp();
     }

@@ -31,9 +31,9 @@ using namespace NEO;
 
 struct DrmCommandStreamMultiTileMemExecFixture {
     void setUp() {
-        DebugManager.flags.CreateMultipleSubDevices.set(2u);
-        DebugManager.flags.EnableImplicitScaling.set(1);
-        DebugManager.flags.EnableForcePin.set(false);
+        debugManager.flags.CreateMultipleSubDevices.set(2u);
+        debugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableForcePin.set(false);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
 
         executionEnvironment = new MockExecutionEnvironment();
@@ -46,7 +46,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0, false);
 
         memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
-                                             DebugManager.flags.EnableForcePin.get(),
+                                             debugManager.flags.EnableForcePin.get(),
                                              true,
                                              *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

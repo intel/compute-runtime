@@ -89,7 +89,7 @@ HWTEST_F(CreateImage3DTest, WhenCreatingImageThenPropertiesAreSetCorrectly) {
 }
 
 HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropertiesAreSetCorrectly) {
-    bool defaultTiling = DebugManager.flags.ForceLinearImages.get();
+    bool defaultTiling = debugManager.flags.ForceLinearImages.get();
     imageDesc.image_height = 1;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
@@ -115,7 +115,7 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
 
     delete image;
 
-    DebugManager.flags.ForceLinearImages.set(!defaultTiling);
+    debugManager.flags.ForceLinearImages.set(!defaultTiling);
 
     // query again
     surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -139,5 +139,5 @@ HWTEST_F(CreateImage3DTest, GivenTiledOrForcedLinearWhenCreatingImageThenPropert
     EXPECT_EQ(image->getQPitch(), imgInfo.qPitch);
 
     delete image;
-    DebugManager.flags.ForceLinearImages.set(defaultTiling);
+    debugManager.flags.ForceLinearImages.set(defaultTiling);
 }

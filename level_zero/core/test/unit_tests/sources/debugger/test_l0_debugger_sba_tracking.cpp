@@ -22,7 +22,7 @@ namespace ult {
 
 struct PerContextAddressSpaceFixture : public Test<DeviceFixture> {
     void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
         Test<DeviceFixture>::SetUp();
     }
 
@@ -179,7 +179,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
 
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     testing::internal::CaptureStdout();
 
@@ -215,7 +215,7 @@ using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
 HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     EXPECT_EQ(nullptr, device->getL0Debugger());
     testing::internal::CaptureStdout();
@@ -247,7 +247,7 @@ HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQue
 
 HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(0);
 
     EXPECT_NE(nullptr, device->getL0Debugger());
     testing::internal::CaptureStdout();
@@ -282,8 +282,8 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     size_t usedSpaceBefore = 0;
     ze_result_t returnValue;
@@ -317,7 +317,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
 
     commandList->destroy();
 
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
     commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
     commandList = CommandList::fromHandle(commandListHandle);
 
@@ -398,7 +398,7 @@ INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::tes
 
 struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
     void SetUp() override {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
         Test<L0DebuggerHwFixture>::SetUp();
     }
 

@@ -101,8 +101,8 @@ TGLLPTEST_F(TgllpHwInfo, givenBoolWhenCallTgllpHardwareInfoSetupThenFeatureTable
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFamilyWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubCenterIsInitializedCorrectly) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ProductFamilyOverride.set("tgllp");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ProductFamilyOverride.set("tgllp");
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 
@@ -127,10 +127,10 @@ TGLLPTEST_F(TgllpHwInfo, givenProductHelperStringThenAfterSetupResultingVmeIsDis
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAddressSpaceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubManagerIsInitializedWithCorrectGpuAddressSpace) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.UseAubStream.set(1);
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ProductFamilyOverride.set("tgllp");
-    DebugManager.flags.OverrideGpuAddressSpace.set(48);
+    debugManager.flags.UseAubStream.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ProductFamilyOverride.set("tgllp");
+    debugManager.flags.OverrideGpuAddressSpace.set(48);
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 
@@ -146,9 +146,9 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAd
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
-    DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
-    DebugManager.flags.ProductFamilyOverride.set("tgllp");
+    debugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.ProductFamilyOverride.set("tgllp");
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, requiredDeviceCount);
 

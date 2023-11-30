@@ -109,7 +109,7 @@ TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageI
     StorageInfo storageInfo = {};
     auto input = GetParam();
 
-    DebugManager.flags.EnableResourceTags.set(true);
+    debugManager.flags.EnableResourceTags.set(true);
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, input.type,
                                           sizeof(storageInfo.resourceTag));
     EXPECT_STREQ(storageInfo.resourceTag, input.str);

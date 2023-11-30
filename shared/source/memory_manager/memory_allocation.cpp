@@ -12,7 +12,7 @@
 namespace NEO {
 
 void MemoryAllocation::overrideMemoryPool(MemoryPool pool) {
-    if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
+    if (debugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
         this->memoryPool = MemoryPool::LocalMemory;
         return;
     }

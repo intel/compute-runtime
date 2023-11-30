@@ -141,7 +141,7 @@ TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQueryTopology) {
-    DebugManager.flags.UseNewQueryTopoIoctl.set(false);
+    debugManager.flags.UseNewQueryTopoIoctl.set(false);
     createDrm(2);
 
     DrmQueryTopologyData topologyData = {};
@@ -274,7 +274,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrec
 }
 
 TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappingsThenMappingStoredForIndexZeroOnly) {
-    DebugManager.flags.UseNewQueryTopoIoctl.set(false);
+    debugManager.flags.UseNewQueryTopoIoctl.set(false);
     createDrm(2);
 
     DrmQueryTopologyData topologyData = {};
@@ -354,7 +354,7 @@ TEST(DrmQueryTest, WhenQueryPageFaultSupportFailsThenReturnFalse) {
 
 TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaultableHardwareThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.UseKmdMigration.set(true);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -394,7 +394,7 @@ TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledOnNonFault
 
 TEST(DrmQueryTest, givenEnableImplicitMigrationOnFaultableHardwareWhenShouldAllocationFaultIsCalledThenReturnTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.set(true);
+    debugManager.flags.EnableImplicitMigrationOnFaultableHardware.set(true);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -415,7 +415,7 @@ TEST(DrmQueryTest, givenUseKmdMigrationSetWhenCallingHasKmdMigrationSupportThenR
     drm.pageFaultSupported = true;
 
     for (auto useKmdMigration : {-1, 0, 1}) {
-        DebugManager.flags.UseKmdMigration.set(useKmdMigration);
+        debugManager.flags.UseKmdMigration.set(useKmdMigration);
         if (useKmdMigration == -1) {
             auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
             EXPECT_EQ(productHelper.isKmdMigrationSupported(), drm.hasKmdMigrationSupport());

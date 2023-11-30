@@ -112,7 +112,7 @@ TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosti
 
 TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenReturnNull) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.UseAubStream.set(false);
+    debugManager.flags.UseAubStream.set(false);
 
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
@@ -165,7 +165,7 @@ TEST(RootDeviceEnvironment, givenDefaultHardwareInfoWhenPrepareDeviceEnvironment
 
 TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRcsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
@@ -178,7 +178,7 @@ TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsRc
 
 TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCccsWhenPrepareDeviceEnvironmentsThenFtrRcsNodeIsTrue) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+    debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
@@ -191,7 +191,7 @@ TEST(RootDeviceEnvironment, givenHardwareInfoAndDebugVariableNodeOrdinalEqualsCc
 
 TEST(RootDeviceEnvironment, givenEnableAILFlagSetToFalseWhenInitializingAILConfigurationThenSkipInitializingIt) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableAIL.set(false);
+    debugManager.flags.EnableAIL.set(false);
 
     MockExecutionEnvironment executionEnvironment;
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
@@ -212,7 +212,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 
 TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenInitializeDirectSubmissionControllerThenNotNull) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmissionController.set(1);
+    debugManager.flags.EnableDirectSubmissionController.set(1);
 
     MockExecutionEnvironment executionEnvironment{};
     auto controller = executionEnvironment.initializeDirectSubmissionController();
@@ -222,7 +222,7 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenInitializ
 
 TEST(ExecutionEnvironment, givenSetCsrFlagSetWhenInitializeDirectSubmissionControllerThenNull) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(1);
 
     MockExecutionEnvironment executionEnvironment{};
     auto controller = executionEnvironment.initializeDirectSubmissionController();
@@ -232,7 +232,7 @@ TEST(ExecutionEnvironment, givenSetCsrFlagSetWhenInitializeDirectSubmissionContr
 
 TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenInitializeDirectSubmissionControllerThenNull) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmissionController.set(0);
+    debugManager.flags.EnableDirectSubmissionController.set(0);
 
     MockExecutionEnvironment executionEnvironment{};
     auto controller = executionEnvironment.initializeDirectSubmissionController();
@@ -247,7 +247,7 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
-    EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());
+    EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());
 
 #include "shared/source/debug_settings/release_variables.inl"
 
@@ -256,7 +256,7 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 #undef DECLARE_DEBUG_VARIABLE
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NEO_CAL_ENABLED.set(1);
+    debugManager.flags.NEO_CAL_ENABLED.set(1);
     ExecutionEnvironment exeEnv;
 
 #undef DECLARE_DEBUG_VARIABLE
@@ -264,20 +264,20 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
     {                                                                                  \
         if constexpr (std::is_same_v<bool, dataType>) {                                \
             if (strcmp(#variableName, "NEO_CAL_ENABLED") == 0) {                       \
-                EXPECT_TRUE(DebugManager.flags.variableName.getRef());                 \
+                EXPECT_TRUE(debugManager.flags.variableName.getRef());                 \
             } else {                                                                   \
-                EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());     \
+                EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());     \
             }                                                                          \
         } else {                                                                       \
             if constexpr (std::is_same_v<int32_t, dataType>) {                         \
                 auto it = config.find(#variableName);                                  \
                 if (it != config.end()) {                                              \
-                    EXPECT_EQ(it->second, DebugManager.flags.variableName.getRef());   \
+                    EXPECT_EQ(it->second, debugManager.flags.variableName.getRef());   \
                 } else {                                                               \
-                    EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef()); \
+                    EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef()); \
                 }                                                                      \
             } else {                                                                   \
-                EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());     \
+                EXPECT_EQ(defaultValue, debugManager.flags.variableName.getRef());     \
             }                                                                          \
         }                                                                              \
     }
@@ -292,11 +292,11 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecutionEnvironmentThenRespectAppSetting) {
     constexpr int32_t appCommandBufferAlignment = 12345;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NEO_CAL_ENABLED.set(1);
-    DebugManager.flags.ForceCommandBufferAlignment.set(appCommandBufferAlignment);
+    debugManager.flags.NEO_CAL_ENABLED.set(1);
+    debugManager.flags.ForceCommandBufferAlignment.set(appCommandBufferAlignment);
     ExecutionEnvironment exeEnv;
 
-    EXPECT_EQ(DebugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
+    EXPECT_EQ(debugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
@@ -431,7 +431,7 @@ TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvail
 
 TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.SetCommandStreamReceiver.set(10);
+    debugManager.flags.SetCommandStreamReceiver.set(10);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
@@ -446,7 +446,7 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     uint32_t expectedOsContextCountForCcs = 0u;
 
     {
-        DebugManager.flags.EngineInstancedSubDevices.set(false);
+        debugManager.flags.EngineInstancedSubDevices.set(false);
         MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
 
         for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
@@ -468,7 +468,7 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     }
 
     {
-        DebugManager.flags.EngineInstancedSubDevices.set(true);
+        debugManager.flags.EngineInstancedSubDevices.set(true);
         MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
 
         EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);
@@ -537,7 +537,7 @@ void ExecutionEnvironmentSortTests::SetUp() {
     executionEnvironment.rootDeviceEnvironments[3]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true; // {0,1,2,1}
 }
 TEST_F(ExecutionEnvironmentSortTests, givenEnabledPciIdDeviceOrderFlagWhenSortingDevicesThenRootDeviceEnvironmentsAreSortedByPciId) {
-    DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(1);
+    debugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(1);
 
     NEO::PhysicalDevicePciBusInfo expectedBusInfos[numRootDevices] = {{0, 0, 2, 0}, {0, 0, 2, 1}, {0, 1, 2, 1}, {0, 1, 3, 0}, {3, 1, 2, 0}, {3, 1, 2, 1}};
 
@@ -553,7 +553,7 @@ TEST_F(ExecutionEnvironmentSortTests, givenEnabledPciIdDeviceOrderFlagWhenSortin
 }
 
 TEST_F(ExecutionEnvironmentSortTests, givenDisabledPciIdDeviceOrderFlagWhenSortingDevicesThenRootDeviceEnvironmentsAreSortedByTypeThenByPciOrder) {
-    DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(0);
+    debugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.set(0);
     NEO::PhysicalDevicePciBusInfo expectedBusInfos[numRootDevices] = {{0, 0, 2, 1}, {0, 1, 3, 0}, {3, 1, 2, 0}, {3, 1, 2, 1}, {0, 0, 2, 0}, {0, 1, 2, 1}};
 
     executionEnvironment.sortNeoDevices();

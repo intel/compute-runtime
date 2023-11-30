@@ -37,17 +37,17 @@ namespace L0 {
 CommandQueueAllocatorFn commandQueueFactory[IGFX_MAX_PRODUCT] = {};
 
 bool CommandQueue::frontEndTrackingEnabled() const {
-    return NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->frontEndStateTracking;
+    return NEO::debugManager.flags.AllowPatchingVfeStateInCommandLists.get() || this->frontEndStateTracking;
 }
 
 CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
     : desc(*desc), device(device), csr(csr) {
-    int overrideCmdQueueSyncMode = NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.get();
+    int overrideCmdQueueSyncMode = NEO::debugManager.flags.OverrideCmdQueueSynchronousMode.get();
     if (overrideCmdQueueSyncMode != -1) {
         this->desc.mode = static_cast<ze_command_queue_mode_t>(overrideCmdQueueSyncMode);
     }
 
-    int overrideUseKmdWaitFunction = NEO::DebugManager.flags.OverrideUseKmdWaitFunction.get();
+    int overrideUseKmdWaitFunction = NEO::debugManager.flags.OverrideUseKmdWaitFunction.get();
     if (overrideUseKmdWaitFunction != -1) {
         useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
@@ -213,7 +213,7 @@ void CommandQueueImp::postSyncOperations(bool hangDetected) {
     printKernelsPrintfOutput(hangDetected);
     checkAssert();
 
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::debugManager.flags.DebuggerLogBitmask.get()) {
         device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());
     }
 
@@ -327,8 +327,8 @@ void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls un
     NEO::Device *neoDevice = this->device->getNEODevice();
     auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
     auto submitAsPack = this->device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
-    if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
-        submitAsPack = !!NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
+    if (NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
+        submitAsPack = !!NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
     }
 
     if (submitAsPack) {

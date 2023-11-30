@@ -403,7 +403,7 @@ TEST(Context, givenContextWithMultipleSubDevicesWhenGettingDeviceBitfieldForAllo
 TEST(MultiDeviceContextTest, givenContextWithTwoDifferentSubDevicesFromDifferentRootDevicesWhenGettingDeviceBitfieldForAllocationThenSeparatedDeviceBitfieldsAreReturned) {
     DebugManagerStateRestore restorer;
 
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
     UltClDeviceFactory deviceFactory{2, 2};
     cl_int retVal;
     cl_device_id devices[]{deviceFactory.subDevices[1], deviceFactory.subDevices[2]};
@@ -546,8 +546,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenLocalMemoryAllocationWhenB
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(true);
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+    debugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -578,8 +578,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLo
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(true);
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+    debugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

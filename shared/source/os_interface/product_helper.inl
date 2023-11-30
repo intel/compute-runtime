@@ -55,7 +55,7 @@ template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
     using SAMPLER_STATE = typename HwMapper<gfxProduct>::GfxFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
-    if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
+    if (debugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
 }
@@ -63,8 +63,8 @@ void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwa
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     bool tlbFlushRequired = true;
-    if (DebugManager.flags.ForceTlbFlush.get() != -1) {
-        tlbFlushRequired = !!DebugManager.flags.ForceTlbFlush.get();
+    if (debugManager.flags.ForceTlbFlush.get() != -1) {
+        tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();
     }
     return tlbFlushRequired;
 }
@@ -79,8 +79,8 @@ template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) const {
     hwInfo->capabilityTable.blitterOperationsSupported = obtainBlitterPreference(*hwInfo);
 
-    if (DebugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
-        hwInfo->capabilityTable.blitterOperationsSupported = !!DebugManager.flags.EnableBlitterOperationsSupport.get();
+    if (debugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
+        hwInfo->capabilityTable.blitterOperationsSupported = !!debugManager.flags.EnableBlitterOperationsSupport.get();
     }
 }
 
@@ -115,8 +115,8 @@ template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) const {
     bool supported = getHostMemCapabilitiesSupported(hwInfo);
 
-    if (DebugManager.flags.EnableHostUsmSupport.get() != -1) {
-        supported = !!DebugManager.flags.EnableHostUsmSupport.get();
+    if (debugManager.flags.EnableHostUsmSupport.get() != -1) {
+        supported = !!debugManager.flags.EnableHostUsmSupport.get();
     }
 
     uint64_t capabilities = getHostMemCapabilitiesValue();
@@ -132,8 +132,8 @@ template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const {
     bool supported = false;
 
-    if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
-        supported = !!DebugManager.flags.EnableSharedSystemUsmSupport.get();
+    if (debugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
+        supported = !!debugManager.flags.EnableSharedSystemUsmSupport.get();
     }
 
     return (supported ? (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS) : 0);
@@ -143,8 +143,8 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) const {
     auto supported = false;
 
-    if (DebugManager.flags.EnableUsmConcurrentAccessSupport.get() > 0) {
-        auto capabilityBitset = std::bitset<4>(DebugManager.flags.EnableUsmConcurrentAccessSupport.get());
+    if (debugManager.flags.EnableUsmConcurrentAccessSupport.get() > 0) {
+        auto capabilityBitset = std::bitset<4>(debugManager.flags.EnableUsmConcurrentAccessSupport.get());
         supported = capabilityBitset.test(static_cast<uint32_t>(capability));
     }
 
@@ -274,11 +274,11 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMo
 
 template <PRODUCT_FAMILY gfxProduct>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    switch (static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get())) {
+    switch (static_cast<LocalMemoryAccessMode>(debugManager.flags.ForceLocalMemoryAccessMode.get())) {
     case LocalMemoryAccessMode::Default:
     case LocalMemoryAccessMode::CpuAccessAllowed:
     case LocalMemoryAccessMode::CpuAccessDisallowed:
-        return static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get());
+        return static_cast<LocalMemoryAccessMode>(debugManager.flags.ForceLocalMemoryAccessMode.get());
     }
     return getDefaultLocalMemoryAccessMode(hwInfo);
 }
@@ -300,8 +300,8 @@ std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipeli
         isBasicWARequired = releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired();
     }
     auto isExtendedWARequired = false;
-    if (DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
-        isExtendedWARequired = DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
+    if (debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        isExtendedWARequired = debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
     }
     return {isBasicWARequired, isExtendedWARequired};
 }
@@ -451,16 +451,16 @@ bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwIn
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isGrfNumReportedWithScm() const {
-    if (DebugManager.flags.ForceGrfNumProgrammingWithScm.get() != -1) {
-        return DebugManager.flags.ForceGrfNumProgrammingWithScm.get();
+    if (debugManager.flags.ForceGrfNumProgrammingWithScm.get() != -1) {
+        return debugManager.flags.ForceGrfNumProgrammingWithScm.get();
     }
     return ProductHelperHw<gfxProduct>::getScmPropertyLargeGrfModeSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isThreadArbitrationPolicyReportedWithScm() const {
-    if (DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get() != -1) {
-        return DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get();
+    if (debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get() != -1) {
+        return debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get();
     }
     return ProductHelperHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport();
 }
@@ -477,24 +477,24 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != -1) {
-        return DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get();
+    if (debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != -1) {
+        return debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get();
     }
     return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
-        return !!DebugManager.flags.EnableMemoryPrefetch.get();
+    if (debugManager.flags.EnableMemoryPrefetch.get() != -1) {
+        return !!debugManager.flags.EnableMemoryPrefetch.get();
     }
     return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
-    if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
-        return DebugManager.flags.DoNotReportTile1BscWaActive.get();
+    if (debugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
+        return debugManager.flags.DoNotReportTile1BscWaActive.get();
     }
     return false;
 }
@@ -576,8 +576,8 @@ bool ProductHelperHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
     constexpr bool enabled = false;
-    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
-        return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
     return enabled;
 }
@@ -774,7 +774,7 @@ bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const {
-    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isImage1d) {
+    if (debugManager.flags.ForceLinearImages.get() || forceLinearStorage || isImage1d) {
         return true;
     }
     return false;
@@ -797,8 +797,8 @@ uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQue
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
-    if (DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
-        return DebugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
     }
     return 0u;
 }

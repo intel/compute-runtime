@@ -91,7 +91,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
     }
 
-    if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
+    if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
         neoDevice->debugExecutionCounter++;
     }
 
@@ -605,7 +605,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
 
     if (ctx.isDirectSubmissionEnabled) {
         linearStreamSizeEstimate += NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
-        if (NEO::DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1) {
+        if (NEO::debugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1) {
             linearStreamSizeEstimate += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_REG);
         }
     } else {
@@ -617,7 +617,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
         linearStreamSizeEstimate += csrHw->getCmdSizeForActivePartitionConfig();
     }
 
-    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+    if (NEO::debugManager.flags.EnableSWTags.get()) {
         linearStreamSizeEstimate += NEO::SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
         ctx.globalInit = true;
     }
@@ -798,7 +798,7 @@ void CommandQueueHw<gfxCoreFamily>::getGlobalStatelessHeapAndMakeItResident() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &cmdStream) {
-    if (NEO::DebugManager.flags.EnableSWTags.get()) {
+    if (NEO::debugManager.flags.EnableSWTags.get()) {
         NEO::Device *neoDevice = this->device->getNEODevice();
         NEO::SWTagsManager *tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();
         UNRECOVERABLE_IF(tagsManager == nullptr);
@@ -871,7 +871,7 @@ void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePre
     CommandListRequiredStateChange &cmdListRequired) {
 
     if (cmdListRequired.flags.preemptionDirty) {
-        if (NEO::DebugManager.flags.EnableSWTags.get()) {
+        if (NEO::debugManager.flags.EnableSWTags.get()) {
             NEO::Device *neoDevice = this->device->getNEODevice();
             neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
                 cmdStream,
@@ -1146,7 +1146,7 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
     if (ctx.isDirectSubmissionEnabled) {
         auto offset = ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase()) + innerCommandStream.getUsed();
         uint64_t startAddress = outerCommandStream.getGraphicsAllocation()->getGpuAddress() + offset;
-        if (NEO::DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
+        if (NEO::debugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
             startAddress = 0;
         }
 
@@ -1157,7 +1157,7 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    if (ctx.isNEODebuggerActive(this->device) || NEO::DebugManager.flags.EnableSWTags.get()) {
+    if (ctx.isNEODebuggerActive(this->device) || NEO::debugManager.flags.EnableSWTags.get()) {
         cleanLeftoverMemory(outerCommandStream, innerCommandStream);
     } else if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);

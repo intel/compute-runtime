@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,8 @@
 namespace NEO {
 
 void AubHelper::setTbxConfiguration() {
-    aub_stream::setTbxServerIp(DebugManager.flags.TbxServer.get());
-    aub_stream::setTbxServerPort(DebugManager.flags.TbxPort.get());
-    aub_stream::setTbxFrontdoorMode(DebugManager.flags.TbxFrontdoorMode.get());
+    aub_stream::setTbxServerIp(debugManager.flags.TbxServer.get());
+    aub_stream::setTbxServerPort(debugManager.flags.TbxPort.get());
+    aub_stream::setTbxFrontdoorMode(debugManager.flags.TbxFrontdoorMode.get());
 }
 } // namespace NEO

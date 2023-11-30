@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,7 +246,7 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
 
 TEST(SharingFactoryTests, givenDisabledFormatQueryAndFactoryWithSharingWhenAskedForExtensionThenFormatQueryExtensionIsNotReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableFormatQuery.set(false);
+    debugManager.flags.EnableFormatQuery.set(false);
 
     SharingFactoryStateRestore stateRestore;
     stateRestore.clearCurrentState();
@@ -258,7 +258,7 @@ TEST(SharingFactoryTests, givenDisabledFormatQueryAndFactoryWithSharingWhenAsked
 
 TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithSharingWhenAskedForExtensionThenFormatQueryExtensionIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableFormatQuery.set(true);
+    debugManager.flags.EnableFormatQuery.set(true);
 
     SharingFactoryStateRestore stateRestore;
     stateRestore.clearCurrentState();
@@ -270,7 +270,7 @@ TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithSharingWhenAskedF
 
 TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithNoSharingsWhenAskedForExtensionThenNoExtensionIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableFormatQuery.set(true);
+    debugManager.flags.EnableFormatQuery.set(true);
 
     SharingFactoryStateRestore sharingFactory;
 

@@ -124,8 +124,8 @@ bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInf
 }
 
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
-    return DebugManager.flags.NodeOrdinal.get() == -1
+    return debugManager.flags.NodeOrdinal.get() == -1
                ? hwInfo.capabilityTable.defaultEngineType
-               : static_cast<aub_stream::EngineType>(DebugManager.flags.NodeOrdinal.get());
+               : static_cast<aub_stream::EngineType>(debugManager.flags.NodeOrdinal.get());
 }
 } // namespace NEO

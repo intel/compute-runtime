@@ -687,7 +687,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
           givenEventWaitOnHostWhenAppendLaunchKernelWithEventWaitListThenHostSynchronize, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EventWaitOnHost.set(1);
+    NEO::debugManager.flags.EventWaitOnHost.set(1);
 
     constexpr uint32_t scratchPerThreadSize = 0x200;
     constexpr uint32_t privateScratchPerThreadSize = 0x100;
@@ -927,7 +927,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
 
-    NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
     auto &cmdStream = *commandList->getCmdContainer().getCommandStream();
     auto &cmdBuffers = commandList->getCmdContainer().getCmdBufferAllocations();
@@ -1341,7 +1341,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     auto &productHelper = device->getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
 
-    NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandQueue->frontEndStateTracking);
@@ -1896,8 +1896,8 @@ HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataT
 
 struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     void setUp() {
-        DebugManager.flags.ExperimentalCopyThroughLock.set(1);
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.ExperimentalCopyThroughLock.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
         DeviceFixture::setUp();
 
         nonUsmHostPtr = new char[sz];
@@ -2140,8 +2140,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
 
 struct LocalMemoryMultiSubDeviceFixture : public SingleRootMultiSubDeviceFixture {
     void setUp() {
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableImplicitScaling.set(1);
         SingleRootMultiSubDeviceFixture::setUp();
     }
     DebugManagerStateRestore restore;
@@ -2181,7 +2181,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCreatingThenC
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrViaEnvVariableWhenPreferCopyThroughLockPointerCalledThenTrueIsReturned, IsAtLeastSkl) {
-    DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = false;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -2279,10 +2279,10 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebug
     EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
     EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
 
-    DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(5 * MemoryConstants::megaByte);
+    debugManager.flags.ExperimentalH2DCpuCopyThreshold.set(5 * MemoryConstants::megaByte);
     EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
 
-    DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(6 * MemoryConstants::megaByte);
+    debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(6 * MemoryConstants::megaByte);
     EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
 }
 
@@ -2320,7 +2320,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllocationsAreLocked, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = false;
@@ -2349,7 +2349,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllo
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmToDeviceUsmThenOnlyDeviceAllocationIsLocked, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = false;
@@ -2664,7 +2664,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPt
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
-    DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
+    debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -2674,7 +2674,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSiz
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
-    DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(3 * MemoryConstants::megaByte);
+    debugManager.flags.ExperimentalH2DCpuCopyThreshold.set(3 * MemoryConstants::megaByte);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -2752,7 +2752,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
     EXPECT_EQ(cmdList.appendBarrierCalled, 0u);
     EXPECT_EQ(cmdList.synchronizeEventListCalled, 1u);
 
-    DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.set(numEvents - 1);
+    debugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.set(numEvents - 1);
 
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false, false);
     EXPECT_EQ(cmdList.appendBarrierCalled, 1u);

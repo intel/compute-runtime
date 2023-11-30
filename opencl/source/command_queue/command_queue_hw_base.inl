@@ -34,21 +34,21 @@
 namespace NEO {
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead, bool notifyBcsCsr) {
-    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+    if (debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
         buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead, notifyBcsCsr);
         buffer->forceDisallowCPUCopy = blockingRead;
     }
 }
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead, bool notifyBcsCsr) {
-    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+    if (debugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
         image->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead, notifyBcsCsr);
     }
 }
 
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueSVMMemcpy(GraphicsAllocation *gfxAllocation, bool blockingCopy, bool notifyBcsCsr) {
-    if (DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
+    if (debugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
         gfxAllocation->setAllocDumpable(blockingCopy, notifyBcsCsr);
     }
 }
@@ -134,8 +134,8 @@ bool CommandQueueHw<Family>::forceStateless(size_t size) {
 
 template <typename Family>
 bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
-    if (DebugManager.flags.ForceCacheFlushForBcs.get() != -1) {
-        return !!DebugManager.flags.ForceCacheFlushForBcs.get();
+    if (debugManager.flags.ForceCacheFlushForBcs.get() != -1) {
+        return !!debugManager.flags.ForceCacheFlushForBcs.get();
     }
     return true;
 }
@@ -212,7 +212,7 @@ bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, 
                     (latestSentEnqueueType != EnqueueProperties::Operation::None) &&
                     (isCacheFlushForBcsRequired() || !(getGpgpuCommandStreamReceiver().getDispatchMode() == DispatchMode::ImmediateDispatch || getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed()));
 
-    if (DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 1) {
+    if (debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 1) {
         required = true;
     }
 

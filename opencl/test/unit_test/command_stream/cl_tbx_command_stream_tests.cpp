@@ -24,8 +24,8 @@ using namespace NEO;
 using ClTbxCommandStreamTests = Test<ClDeviceFixture>;
 HWTEST_F(ClTbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCorrectly) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     MockContext context(pClDevice);
 

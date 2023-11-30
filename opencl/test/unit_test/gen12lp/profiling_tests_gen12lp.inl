@@ -125,7 +125,7 @@ int MyOSTime::instanceNum = 0;
 
 GEN12LPTEST_F(ProfilingTestsGen12LP, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturnedGen12Lp) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ReturnRawGpuTimestamps.set(1);
+    debugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MyOSTime::instanceNum = 0;
     device->setOSTime(new MyOSTime());

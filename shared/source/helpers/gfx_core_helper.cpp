@@ -33,21 +33,21 @@ std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCor
 }
 
 bool GfxCoreHelper::compressedBuffersSupported(const HardwareInfo &hwInfo) {
-    if (DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
-        return !!DebugManager.flags.RenderCompressedBuffersEnabled.get();
+    if (debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
+        return !!debugManager.flags.RenderCompressedBuffersEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
 bool GfxCoreHelper::compressedImagesSupported(const HardwareInfo &hwInfo) {
-    if (DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
-        return !!DebugManager.flags.RenderCompressedImagesEnabled.get();
+    if (debugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
+        return !!debugManager.flags.RenderCompressedImagesEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedImages;
 }
 
 bool GfxCoreHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
-    int32_t dbgFlag = DebugManager.flags.EnableCacheFlushAfterWalker.get();
+    int32_t dbgFlag = debugManager.flags.EnableCacheFlushAfterWalker.get();
     if (dbgFlag == 1) {
         return true;
     } else if (dbgFlag == 0) {
@@ -60,18 +60,18 @@ uint32_t GfxCoreHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     auto maxHwThreadsCapable = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
     auto maxHwThreadsReturned = maxHwThreadsCapable;
-    if (DebugManager.flags.MaxHwThreadsPercent.get() != 0) {
-        maxHwThreadsReturned = int(maxHwThreadsCapable * (DebugManager.flags.MaxHwThreadsPercent.get() / 100.0f));
+    if (debugManager.flags.MaxHwThreadsPercent.get() != 0) {
+        maxHwThreadsReturned = int(maxHwThreadsCapable * (debugManager.flags.MaxHwThreadsPercent.get() / 100.0f));
     }
-    if (DebugManager.flags.MinHwThreadsUnoccupied.get() != 0) {
-        maxHwThreadsReturned = std::min(maxHwThreadsReturned, maxHwThreadsCapable - DebugManager.flags.MinHwThreadsUnoccupied.get());
+    if (debugManager.flags.MinHwThreadsUnoccupied.get() != 0) {
+        maxHwThreadsReturned = std::min(maxHwThreadsReturned, maxHwThreadsCapable - debugManager.flags.MinHwThreadsUnoccupied.get());
     }
     return maxHwThreadsReturned;
 }
 
 uint32_t GfxCoreHelper::getSubDevicesCount(const HardwareInfo *pHwInfo) {
-    if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
-        return DebugManager.flags.CreateMultipleSubDevices.get();
+    if (debugManager.flags.CreateMultipleSubDevices.get() > 0) {
+        return debugManager.flags.CreateMultipleSubDevices.get();
     } else if (pHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid && pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 0u) {
         return pHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount;
     } else {

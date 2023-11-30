@@ -39,7 +39,7 @@ TEST(GdiInterface, givenGdiOverridePathWhenGdiInterfaceIsCalledThenOverridePathI
     DebugManagerStateRestore dbgRestorer;
 
     Os::gdiDllName = "surely_not_exists_.dll";
-    DebugManager.flags.OverrideGdiPath.set(oldName);
+    debugManager.flags.OverrideGdiPath.set(oldName);
 
     NEO::Gdi gdi;
     EXPECT_TRUE(gdi.isInitialized());
@@ -62,8 +62,8 @@ TEST(GdiInterface, GivenGdiLoggingSupportWhenLoggingEnabledAndLoggingToFileUsedT
     VariableBackup<uint32_t> mockVfptrinfCalledBackup(&NEO::IoFunctions::mockVfptrinfCalled, 0);
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.LogGdiCalls.set(true);
-    DebugManager.flags.LogGdiCallsToFile.set(true);
+    debugManager.flags.LogGdiCalls.set(true);
+    debugManager.flags.LogGdiCallsToFile.set(true);
 
     std::unique_ptr<Gdi> gdi = std::make_unique<Gdi>();
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
@@ -86,8 +86,8 @@ TEST(GdiInterface, GivenGdiLoggingSupportWhenLoggingEnabledAndLoggingToFileNotUs
     VariableBackup<uint32_t> mockVfptrinfCalledBackup(&NEO::IoFunctions::mockVfptrinfCalled, 0);
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.LogGdiCalls.set(true);
-    DebugManager.flags.LogGdiCallsToFile.set(false);
+    debugManager.flags.LogGdiCalls.set(true);
+    debugManager.flags.LogGdiCallsToFile.set(false);
 
     testing::internal::CaptureStdout();
 

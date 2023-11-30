@@ -3693,7 +3693,7 @@ kernels:
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenZebinAppendElwsThenInjectsElwsArg) {
     DebugManagerStateRestore dbgRestore;
-    NEO::DebugManager.flags.ZebinAppendElws.set(true);
+    NEO::debugManager.flags.ZebinAppendElws.set(true);
 
     ConstStringRef zeinfo = R"===(
 kernels:

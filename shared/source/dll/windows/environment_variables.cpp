@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
 uint32_t getEnvironmentVariable(const char *name, char *outBuffer, uint32_t outBufferSize) {
-    if (NEO::DebugManager.registryReadAvailable() == false) {
+    if (NEO::debugManager.registryReadAvailable() == false) {
         return 0;
     }
     return GetEnvironmentVariableA(name, outBuffer, outBufferSize);

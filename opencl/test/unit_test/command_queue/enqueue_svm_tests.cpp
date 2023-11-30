@@ -61,7 +61,7 @@ struct EnqueueSvmTest : public ClDeviceFixture,
 
     std::pair<ReleaseableObjectPtr<Buffer>, void *> createBufferAndMapItOnGpu() {
         DebugManagerStateRestore restore{};
-        DebugManager.flags.DisableZeroCopyForBuffers.set(1);
+        debugManager.flags.DisableZeroCopyForBuffers.set(1);
 
         BufferDefaults::context = this->context;
         ReleaseableObjectPtr<Buffer> buffer = clUniquePtr(BufferHelper<>::create());
@@ -104,7 +104,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenMappingSvmThenSuccessIsReturned) {
 
 HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenMappingSvmThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -177,7 +177,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmThenSuccessIsReturned) {
 
 HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenUnmappingSvmThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -210,7 +210,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmWithEventsThenSuccessIsRe
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     ASSERT_EQ(1U, this->context->getSVMAllocsManager()->getNumAllocs());
     void *svmPtrs[] = {ptrSVM};
     retVal = this->pCmdQ->enqueueSVMFree(
@@ -228,7 +228,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmThenSuccessIsReturned) {
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     void *svmPtrs[] = {ptrSVM};
     bool callbackWasCalled = false;
     struct ClbHelper {
@@ -258,7 +258,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackThenSuccessIsRe
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackAndEventThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     void *svmPtrs[] = {ptrSVM};
     bool callbackWasCalled = false;
     struct ClbHelper {
@@ -292,7 +292,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackAndEventThenSuc
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithBlockingThenSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     void *svmPtrs[] = {ptrSVM};
     UserEvent uEvent;
     cl_event eventWaitList[] = {&uEvent};
@@ -310,8 +310,8 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithBlockingThenSuccessIsRe
 
 HWTEST_F(EnqueueSvmTest, GivenEventAndGpuHangAndBlockingCallAndValidParamsWhenFreeingSvmWithBlockingThenEventIsNotDeletedAndOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -345,8 +345,8 @@ HWTEST_F(EnqueueSvmTest, GivenEventAndGpuHangAndBlockingCallAndValidParamsWhenFr
 
 HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFreeingSvmWithBlockingThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -376,7 +376,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFreeingSvm
 
 TEST_F(EnqueueSvmTest, GivenNullDstPtrWhenCopyingMemoryThenInvalidVaueErrorIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    debugManager.flags.EnableAsyncEventsHandler.set(false);
     void *pDstSVM = nullptr;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -807,7 +807,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFillingMemoryWithBlockingThenSuccessI
 
 HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFillingMemoryThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -1027,7 +1027,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenMigratingMemoryThenSuccessIsReturned)
 
 HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenMigratingMemoryThenOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -1076,7 +1076,7 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
     SVMAllocsManager::SvmAllocationProperties svmAllocationProperties;
 
     for (auto isLocalMemorySupported : ::testing::Bool()) {
-        DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
+        debugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
         auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         auto mockContext = std::make_unique<MockContext>(mockDevice.get());
 
@@ -1098,7 +1098,7 @@ struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
 
         ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice, true);
@@ -1399,7 +1399,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThe
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndGpuHangAndBlockingCallWhenUnmappingThenReturnOutOfResources) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -1468,7 +1468,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpuHangForUnmapWhenUnmapingThenOutOfResourcesIsReturnedFromUnmap) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
@@ -1598,7 +1598,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndEnabledLocalMemoryWhenMappedSvmRegionIsWritableThenUnmapReturnsOutOfResources) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+    debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     queue.waitForAllEnginesReturnValue = WaitStatus::Ready;

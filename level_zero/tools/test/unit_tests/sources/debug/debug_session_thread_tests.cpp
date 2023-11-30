@@ -512,7 +512,7 @@ TEST(DebugSession, givenDifferentThreadsWhenGettingPerThreadScratchOffsetThenCor
 
 TEST(DebugSession, GivenLogsEnabledWhenPrintBitmaskCalledThenBitmaskIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
     ::testing::internal::CaptureStdout();
 
@@ -528,7 +528,7 @@ TEST(DebugSession, GivenLogsEnabledWhenPrintBitmaskCalledThenBitmaskIsPrinted) {
 
 TEST(DebugSession, GivenLogsDisabledWhenPrintBitmaskCalledThenBitmaskIsNotPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
+    NEO::debugManager.flags.DebuggerLogBitmask.set(0);
 
     ::testing::internal::CaptureStdout();
 
@@ -671,7 +671,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSub
 
 struct AffinityMaskMultipleSubdevices : MultipleDevicesWithCustomHwInfo {
     void setUp() {
-        DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
+        debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
         MultipleDevicesWithCustomHwInfo::numSubDevices = 4;
         MultipleDevicesWithCustomHwInfo::setUp();
     }

@@ -898,7 +898,7 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
     }
 
     {
-        NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+        NEO::debugManager.flags.RenderCompressedImagesEnabled.set(1);
 
         ze_external_memory_import_win32_handle_t compressionHint = {};
         compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
@@ -918,7 +918,7 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
     }
 
     {
-        NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+        NEO::debugManager.flags.RenderCompressedImagesEnabled.set(1);
 
         Image *imagePtr = nullptr;
         auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
@@ -930,7 +930,7 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
     }
 
     {
-        NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+        NEO::debugManager.flags.RenderCompressedImagesEnabled.set(0);
 
         Image *imagePtr = nullptr;
         auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);

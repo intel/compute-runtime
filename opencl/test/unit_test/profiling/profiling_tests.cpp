@@ -576,7 +576,7 @@ using EventProfilingTests = ProfilingTests;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ReturnRawGpuTimestamps.set(1);
+    debugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MyOSTime::instanceNum = 0;
     device->setOSTime(new MyOSTime());
@@ -673,7 +673,7 @@ TEST_F(EventProfilingTests, givenSubmitTimeMuchGreaterThanQueueTimeWhenCalculati
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ReturnRawGpuTimestamps.set(1);
+    debugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MyOSTime::instanceNum = 0;
     device->setOSTime(new MyOSTime());
@@ -1201,7 +1201,7 @@ struct MockTimestampContainer : public TimestampPacketContainer {
 
 struct ProfilingTimestampPacketsTest : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.ReturnRawGpuTimestamps.set(true);
+        debugManager.flags.ReturnRawGpuTimestamps.set(true);
         cmdQ->setProfilingEnabled();
         ev->timestampPacketContainer = std::make_unique<MockTimestampContainer>();
     }
@@ -1315,7 +1315,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
 
 TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintTimestampPacketContents.set(true);
+    debugManager.flags.PrintTimestampPacketContents.set(true);
     testing::internal::CaptureStdout();
 
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());

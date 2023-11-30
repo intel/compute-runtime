@@ -29,8 +29,8 @@ UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevice
     VariableBackup<decltype(DeviceFactory::createRootDeviceFunc)> createRootDeviceFuncBackup{&DeviceFactory::createRootDeviceFunc};
     VariableBackup<decltype(DeviceFactory::createMemoryManagerFunc)> createMemoryManagerFuncBackup{&DeviceFactory::createMemoryManagerFunc};
 
-    DebugManager.flags.CreateMultipleRootDevices.set(rootDevicesCount);
-    DebugManager.flags.CreateMultipleSubDevices.set(subDevicesCount);
+    debugManager.flags.CreateMultipleRootDevices.set(rootDevicesCount);
+    debugManager.flags.CreateMultipleSubDevices.set(subDevicesCount);
     createRootDeviceFuncBackup = [](ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) -> std::unique_ptr<Device> {
         return std::unique_ptr<Device>(MockDevice::create<MockDevice>(&executionEnvironment, rootDeviceIndex));
     };

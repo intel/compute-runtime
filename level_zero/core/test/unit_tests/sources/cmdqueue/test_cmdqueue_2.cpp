@@ -115,7 +115,7 @@ using AubCsrTest = Test<AubCsrFixture>;
 
 HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteCommandListsThenPollForCompletionIsCalled) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+    NEO::debugManager.flags.OverrideUseKmdWaitFunction.set(1);
 
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     ze_result_t returnValue;
@@ -289,7 +289,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenGpuHangWhenCallingSynchronizeThenErro
 
 HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledAndGpuHangWhenCallingSynchronizeThenErrorIsPropagated) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+    NEO::debugManager.flags.OverrideUseKmdWaitFunction.set(1);
 
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
                                                                                           device->getNEODevice()->getDeviceBitfield()));
@@ -318,7 +318,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledAndGpuHangWhenCal
 
 HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+    NEO::debugManager.flags.OverrideUseKmdWaitFunction.set(1);
 
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
                                                                                           device->getNEODevice()->getDeviceBitfield()));
@@ -478,8 +478,8 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     using PARSE = typename FamilyType::PARSE;
 
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    NEO::debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     size_t expectedSize = sizeof(MI_BATCH_BUFFER_START);
     if (neoDevice->getDefaultEngine().commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
@@ -674,7 +674,7 @@ struct CommandQueueInitTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
         auto executionEnvironment = new NEO::MockExecutionEnvironment(defaultHwInfo.get(), true, numRootDevices);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -747,8 +747,8 @@ TEST_F(CommandQueueInitTests, whenDestroyCommandQueueThenStoreCommandBuffersAsRe
 struct DeviceWithDualStorage : Test<DeviceFixture> {
     void SetUp() override {
 
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
         DeviceFixture::setUp();
     }
     void TearDown() override {

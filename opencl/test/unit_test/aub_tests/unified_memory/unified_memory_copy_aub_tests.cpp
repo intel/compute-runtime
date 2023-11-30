@@ -19,7 +19,7 @@ class UnifiedMemoryCopyAubTest : public UnifiedMemoryAubFixture,
     std::vector<char> srcValues, dstValues;
 
     void SetUp() override {
-        DebugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.EnableFreeMemory.set(false);
         UnifiedMemoryAubFixture::setUp();
 
         srcMemoryType = std::get<0>(GetParam());

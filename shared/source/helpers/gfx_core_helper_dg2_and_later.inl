@@ -21,12 +21,12 @@ inline void MemorySynchronizationCommands<GfxFamily>::setBarrierExtraProperties(
     pipeControl.setWorkloadPartitionIdOffsetEnable(args.workloadPartitionOffset);
     pipeControl.setAmfsFlushEnable(args.amfsFlushEnable);
 
-    if (DebugManager.flags.FlushAllCaches.get()) {
+    if (debugManager.flags.FlushAllCaches.get()) {
         pipeControl.setHdcPipelineFlush(true);
         pipeControl.setUnTypedDataPortCacheFlush(true);
         pipeControl.setCompressionControlSurfaceCcsFlush(true);
     }
-    if (DebugManager.flags.DoNotFlushCaches.get()) {
+    if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setHdcPipelineFlush(false);
         pipeControl.setUnTypedDataPortCacheFlush(false);
         pipeControl.setCompressionControlSurfaceCcsFlush(false);

@@ -103,7 +103,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
 
 TEST(KernelInfoTest, givenReuseKernelBinariesWhenCreateKernelAllocationThenReuseAllocationFromMap) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ReuseKernelBinaries.set(1);
+    debugManager.flags.ReuseKernelBinaries.set(1);
 
     auto factory = UltDeviceFactory{1, 0};
     auto device = factory.rootDevices[0];

@@ -67,8 +67,8 @@ uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) {
 
     auto tileIndex = Math::log2(memoryBank);
     tileIndex = gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper) ? 0 : tileIndex;
-    if (DebugManager.flags.OverrideDrmRegion.get() != -1) {
-        tileIndex = DebugManager.flags.OverrideDrmRegion.get();
+    if (debugManager.flags.OverrideDrmRegion.get() != -1) {
+        tileIndex = debugManager.flags.OverrideDrmRegion.get();
     }
     return tileIndex;
 }
@@ -95,7 +95,7 @@ const MemoryRegion &MemoryInfo::getMemoryRegion(uint32_t memoryBank) {
 }
 
 size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) {
-    if (DebugManager.flags.PrintMemoryRegionSizes.get()) {
+    if (debugManager.flags.PrintMemoryRegionSizes.get()) {
         printRegionSizes();
     }
     return getMemoryRegion(memoryBank).probedSize;
@@ -115,7 +115,7 @@ int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocS
     MemRegionsVec region = {regionClassAndInstance};
     std::optional<uint32_t> vmId;
     if (!this->drm.isPerContextVMRequired()) {
-        if (memoryBanks != 0 && DebugManager.flags.EnablePrivateBO.get()) {
+        if (memoryBanks != 0 && debugManager.flags.EnablePrivateBO.get()) {
             auto tileIndex = getTileIndex(memoryBanks);
             vmId = this->drm.getVirtualMemoryAddressSpace(tileIndex);
         }

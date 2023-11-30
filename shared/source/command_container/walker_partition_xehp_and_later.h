@@ -91,8 +91,8 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
     size_t workgroupCount = 0u;
     bool disablePartitionForPartitionCountOne{};
 
-    if (NEO::DebugManager.flags.ExperimentalSetWalkerPartitionType.get() != -1) {
-        requestedPartitionType = static_cast<PARTITION_TYPE>(NEO::DebugManager.flags.ExperimentalSetWalkerPartitionType.get());
+    if (NEO::debugManager.flags.ExperimentalSetWalkerPartitionType.get() != -1) {
+        requestedPartitionType = static_cast<PARTITION_TYPE>(NEO::debugManager.flags.ExperimentalSetWalkerPartitionType.get());
     }
 
     if (requestedPartitionType.has_value()) {
@@ -115,8 +115,8 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
         const size_t maxDimension = std::max({groupCount.z, groupCount.y, groupCount.x});
 
         auto goWithMaxAlgorithm = !preferStaticPartitioning;
-        if (NEO::DebugManager.flags.WalkerPartitionPreferHighestDimension.get() != -1) {
-            goWithMaxAlgorithm = !!!NEO::DebugManager.flags.WalkerPartitionPreferHighestDimension.get();
+        if (NEO::debugManager.flags.WalkerPartitionPreferHighestDimension.get() != -1) {
+            goWithMaxAlgorithm = !!!NEO::debugManager.flags.WalkerPartitionPreferHighestDimension.get();
         }
 
         // compute misaligned %, accept imbalance below threshold in favor of Z/Y/X distribution.
@@ -161,10 +161,10 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
     // Dynamic partitioning - compute optimal partition count
     size_t partitionCount = std::min(static_cast<size_t>(16u), workgroupCount);
     partitionCount = Math::prevPowerOfTwo(partitionCount);
-    if (NEO::DebugManager.flags.SetMinimalPartitionSize.get() != 0) {
-        const auto workgroupPerPartitionThreshold = NEO::DebugManager.flags.SetMinimalPartitionSize.get() == -1
+    if (NEO::debugManager.flags.SetMinimalPartitionSize.get() != 0) {
+        const auto workgroupPerPartitionThreshold = NEO::debugManager.flags.SetMinimalPartitionSize.get() == -1
                                                         ? 512u
-                                                        : static_cast<unsigned>(NEO::DebugManager.flags.SetMinimalPartitionSize.get());
+                                                        : static_cast<unsigned>(NEO::debugManager.flags.SetMinimalPartitionSize.get());
         preferredMinimalPartitionCount = std::max(2u, preferredMinimalPartitionCount);
 
         while (partitionCount > preferredMinimalPartitionCount) {

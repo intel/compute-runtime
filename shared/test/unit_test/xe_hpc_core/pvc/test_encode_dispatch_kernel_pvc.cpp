@@ -177,7 +177,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenDefaultSettingForFenceAsPostSyncOperationInC
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
+    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();

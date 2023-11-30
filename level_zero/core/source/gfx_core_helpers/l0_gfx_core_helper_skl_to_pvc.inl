@@ -14,8 +14,8 @@ namespace L0 {
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
-    if (NEO::DebugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
-        return !!NEO::DebugManager.flags.RenderCompressedImagesEnabled.get();
+    if (NEO::debugManager.flags.RenderCompressedImagesEnabled.get() != -1) {
+        return !!NEO::debugManager.flags.RenderCompressedImagesEnabled.get();
     }
 
     return false;
@@ -23,8 +23,8 @@ bool L0GfxCoreHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInf
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
-    if (NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
-        return !!NEO::DebugManager.flags.RenderCompressedBuffersEnabled.get();
+    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
+        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
     }
 
     return false;

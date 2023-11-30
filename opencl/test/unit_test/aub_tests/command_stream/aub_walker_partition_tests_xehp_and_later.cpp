@@ -48,7 +48,7 @@ struct DispatchParamters {
 struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> {
     void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
-        DebugManager.flags.EnableTimestampPacket.set(1);
+        debugManager.flags.EnableTimestampPacket.set(1);
         kernelIds |= (1 << 5);
         KernelAUBFixture<SimpleKernelFixture>::setUp();
 
@@ -117,7 +117,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
         int notExpectedValue[] = {1, 1, 1, 1};
 
-        for (auto partitionId = 0; partitionId < DebugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
+        for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
             expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
             postSyncAddress += 16; // next post sync needs to be right after the previous one
         }
@@ -202,9 +202,9 @@ struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
             };
         }
 
-        DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(partitionCount);
-        DebugManager.flags.ExperimentalSetWalkerPartitionType.set(partitionType);
-        DebugManager.flags.EnableWalkerPartition.set(1u);
+        debugManager.flags.ExperimentalSetWalkerPartitionCount.set(partitionCount);
+        debugManager.flags.ExperimentalSetWalkerPartitionType.set(partitionType);
+        debugManager.flags.EnableWalkerPartition.set(1u);
     }
     void TearDown() override {
         AubWalkerPartitionFixture::tearDown();
@@ -220,8 +220,8 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
 
         workingDimensions = 1;
 
-        DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(0);
-        DebugManager.flags.ExperimentalSetWalkerPartitionType.set(0);
+        debugManager.flags.ExperimentalSetWalkerPartitionCount.set(0);
+        debugManager.flags.ExperimentalSetWalkerPartitionType.set(0);
 
         commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, false, device->getDeviceBitfield());
         auto memoryManager = this->device->getMemoryManager();
@@ -589,11 +589,11 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
     void setUp() {
         if (enableNesting) {
             // turn on Batch Buffer nesting
-            DebugManager.flags.AubDumpAddMmioRegistersList.set(
+            debugManager.flags.AubDumpAddMmioRegistersList.set(
                 "0x1A09C;0x10001000");
         } else {
             // turn off Batch Buffer nesting
-            DebugManager.flags.AubDumpAddMmioRegistersList.set(
+            debugManager.flags.AubDumpAddMmioRegistersList.set(
                 "0x1A09C;0x10000000");
         }
         AUBFixture::setUp(nullptr);
@@ -612,8 +612,8 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
         thirdLevelBatchStream = std::make_unique<LinearStream>(thirdLevelBatch);
     };
     void tearDown() {
-        DebugManager.flags.AubDumpAddMmioRegistersList.getRef() = "unk";
-        DebugManager.flags.AubDumpAddMmioRegistersList.getRef().shrink_to_fit();
+        debugManager.flags.AubDumpAddMmioRegistersList.getRef() = "unk";
+        debugManager.flags.AubDumpAddMmioRegistersList.getRef().shrink_to_fit();
 
         auto memoryManager = this->device->getMemoryManager();
         memoryManager->freeGraphicsMemory(thirdLevelBatch);
@@ -1209,9 +1209,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWparidTests, whenPartitionCountSetAndPartitionId
 
     int32_t partitionCount = 4;
 
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(partitionType);
-    DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(partitionCount);
-    DebugManager.flags.EnableWalkerPartition.set(1u);
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(partitionType);
+    debugManager.flags.ExperimentalSetWalkerPartitionCount.set(partitionCount);
+    debugManager.flags.EnableWalkerPartition.set(1u);
 
     auto retVal = pCmdQ->enqueueKernel(
         kernels[5].get(),

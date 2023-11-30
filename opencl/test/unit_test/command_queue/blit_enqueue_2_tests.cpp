@@ -38,7 +38,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = true;
@@ -72,7 +72,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenProfilingEn
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = true;
@@ -107,7 +107,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhe
     int hostPtr = 0;
 
     {
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
         cl_event clEvent;
         commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
@@ -121,7 +121,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhe
         clReleaseEvent(clEvent);
     }
     {
-        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
         cl_event clEvent;
         commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
@@ -140,7 +140,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -174,9 +174,9 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
-    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
-    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.PerformImplicitFlushForNewResource.set(0);
+    debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -212,9 +212,9 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenImmediateDi
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
-    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
-    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.PerformImplicitFlushForNewResource.set(0);
+    debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -250,7 +250,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -272,12 +272,12 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredAndDebugFlagSetWhenDoingBcsCopyAfterBarrierThenSubmitToGpgpu) {
-    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+    debugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -302,7 +302,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -329,7 +329,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = true;
@@ -357,7 +357,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+    debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
@@ -428,29 +428,29 @@ HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagsToForceCsrLockAndNonBlo
     mockCommandQueue->setQueueBlocked = false;
     int hostPtr = 0;
     {
-        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
-        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
+        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
         mockCsr->recursiveLockCounter = 0u;
         mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
     }
     {
-        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
-        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(-1);
+        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         mockCsr->recursiveLockCounter = 0u;
         mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
     }
     {
-        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
         mockCsr->recursiveLockCounter = 0u;
         mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(0u, mockCsr->recursiveLockCounter);
     }
     {
-        DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
+        debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+        debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         mockCsr->recursiveLockCounter = 0u;
         mockCommandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(1u, mockCsr->recursiveLockCounter);
@@ -466,7 +466,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlocked
     buffer->forceDisallowCPUCopy = true;
     int hostPtr = 0;
 
-    DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+    debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
 
     mockCsr->recursiveLockCounter = 0u;
     mockCommandQueue->setQueueBlocked = true;
@@ -483,7 +483,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlocked
     buffer->forceDisallowCPUCopy = true;
     int hostPtr = 0;
 
-    DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
+    debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
 
     mockCsr->recursiveLockCounter = 0u;
     mockCommandQueue->setQueueBlocked = true;
@@ -495,8 +495,8 @@ HWTEST_TEMPLATED_F(BlitEnqueueForceFlagsTests, givenFlagToForceCsrLockAndBlocked
 using BlitCopyTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -517,8 +517,8 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 }
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowedCpuAccessThenDontUseBcsForTransfer) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -535,8 +535,8 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 }
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallowedCpuAccessAndDisabledBlitterThenFallbackToCpuCopy) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
 
@@ -555,8 +555,8 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 }
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalConstantsAreExportedThenUseBlitter) {
-    DebugManager.flags.EnableLocalMemory.set(1);
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
 
     char constantData[128] = {};
     ProgramInfo programInfo;
@@ -582,8 +582,8 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
 }
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenSubstituteKernelHeapIsCalledThenUseBcsForTransfer) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 
@@ -608,8 +608,8 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
 }
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenLinkerRequiresPatchingOfInstructionSegmentsThenUseBcsForTransfer) {
-    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 

@@ -115,8 +115,8 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
 
 HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
     MockExecutionEnvironment executionEnvironment{};
@@ -164,7 +164,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
     }
 
     for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
-        DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
+        debugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
         properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
         if (scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
             EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
@@ -174,7 +174,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
     }
 
     for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
-        DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
+        debugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
         properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
         if (scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
             EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
@@ -184,7 +184,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
     }
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-        DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
+        debugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
         properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
         if (scmPropertiesSupport.threadArbitrationPolicy) {
             EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
@@ -476,7 +476,7 @@ TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeM
     EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
     EXPECT_EQ(requestedThreadArbitration, scmProperties.threadArbitrationPolicy.value);
 
-    DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
+    debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
     threadArbitration = ThreadArbitrationPolicy::NotPresent;
     scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     if (defaultThreadArbitrationPolicy == requestedThreadArbitration) {

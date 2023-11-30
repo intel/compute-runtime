@@ -79,7 +79,7 @@ struct DebuggerAubFixture : AUBFixtureL0 {
 
 struct DebuggerSingleAddressSpaceAubFixture : public DebuggerAubFixture {
     void setUp() {
-        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(1);
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
         DebuggerAubFixture::setUp();
     }
     void tearDown() {
@@ -96,7 +96,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
     const uint32_t expectedSizes[] = {bufferSize, 1, 1};
 
-    NEO::DebugManager.flags.UpdateCrossThreadDataSize.set(true);
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
                                                                            1,

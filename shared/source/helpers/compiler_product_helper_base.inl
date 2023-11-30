@@ -81,8 +81,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_intel_split_work_group_barrier ";
 
     auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
-    if (DebugManager.flags.OverrideDefaultFP64Settings.get() != -1) {
-        supportsFp64 = DebugManager.flags.OverrideDefaultFP64Settings.get();
+    if (debugManager.flags.OverrideDefaultFP64Settings.get() != -1) {
+        supportsFp64 = debugManager.flags.OverrideDefaultFP64Settings.get();
     }
     if (supportsFp64) {
         extensions += "cl_khr_fp64 ";
@@ -94,12 +94,12 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
 
     auto enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
     auto ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
-    if (DebugManager.flags.ForceOCLVersion.get() != 0) {
-        enabledClVersion = DebugManager.flags.ForceOCLVersion.get();
+    if (debugManager.flags.ForceOCLVersion.get() != 0) {
+        enabledClVersion = debugManager.flags.ForceOCLVersion.get();
         ocl21FeaturesEnabled = (enabledClVersion == 21);
     }
-    if (DebugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
-        ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
+    if (debugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
+        ocl21FeaturesEnabled = debugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     if (ocl21FeaturesEnabled) {
 
@@ -120,20 +120,20 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_ext_float_atomics ";
     }
 
-    if (enabledClVersion >= 30 && DebugManager.flags.ClKhrExternalMemoryExtension.get()) {
+    if (enabledClVersion >= 30 && debugManager.flags.ClKhrExternalMemoryExtension.get()) {
         extensions += "cl_khr_external_memory ";
     }
 
-    if (DebugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
+    if (debugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
         extensions += "cl_intel_planar_yuv ";
     }
-    if (DebugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
+    if (debugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         extensions += "cl_intel_packed_yuv ";
     }
 
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
-    if (DebugManager.flags.EnableIntelVme.get() != -1) {
-        supportsVme = !!DebugManager.flags.EnableIntelVme.get();
+    if (debugManager.flags.EnableIntelVme.get() != -1) {
+        supportsVme = !!debugManager.flags.EnableIntelVme.get();
     }
 
     if (supportsVme) {
@@ -144,8 +144,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     }
 
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
-    if (DebugManager.flags.EnableIntelAdvancedVme.get() != -1) {
-        supportsAdvancedVme = !!DebugManager.flags.EnableIntelAdvancedVme.get();
+    if (debugManager.flags.EnableIntelAdvancedVme.get() != -1) {
+        supportsAdvancedVme = !!debugManager.flags.EnableIntelAdvancedVme.get();
     }
     if (supportsAdvancedVme) {
         extensions += "cl_intel_advanced_motion_estimation ";

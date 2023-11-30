@@ -26,11 +26,11 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return isStatelessCompressionSupportedForUlts;
 }
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
-    return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
+    return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
 bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *) {
-    if (DebugManager.flags.UseBindlessMode.get() != -1) {
-        return DebugManager.flags.UseBindlessMode.get();
+    if (debugManager.flags.UseBindlessMode.get() != -1) {
+        return debugManager.flags.UseBindlessMode.get();
     } else {
         return false;
     }
@@ -41,7 +41,7 @@ bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
 }
 
 bool ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() {
-    return (NEO::DebugManager.flags.EnableDynamicPostSyncAllocLayout.get() == 1);
+    return (NEO::debugManager.flags.EnableDynamicPostSyncAllocLayout.get() == 1);
 }
 
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {

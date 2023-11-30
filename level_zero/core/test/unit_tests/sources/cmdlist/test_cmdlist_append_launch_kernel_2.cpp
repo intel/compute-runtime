@@ -31,7 +31,7 @@ namespace ult {
 struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
     void SetUp() override {
 
-        NEO::DebugManager.flags.EnableSWTags.set(true);
+        NEO::debugManager.flags.EnableSWTags.set(true);
         ModuleFixture::setUp();
     }
 
@@ -41,8 +41,8 @@ struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
 struct CommandListDualStorage : public Test<ModuleFixture> {
     void SetUp() override {
 
-        DebugManager.flags.EnableLocalMemory.set(1);
-        DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+        debugManager.flags.EnableLocalMemory.set(1);
+        debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
         ModuleFixture::setUp();
     }
     void TearDown() override {
@@ -838,7 +838,7 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThr
 
 HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenChosenThreadArbitrationPolicyIsUsed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
+    debugManager.flags.OverrideThreadArbitrationPolicy.set(0);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
@@ -1185,7 +1185,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAp
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithPrivateScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     execEnv->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
@@ -1226,7 +1226,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelW
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     execEnv->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
@@ -1336,7 +1336,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMemorySizeWhenAppendLaunchKernelWithParamsIsCalledThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned, IsAtLeastSkl) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     Mock<::L0::KernelImp> kernel;
     std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
@@ -1448,7 +1448,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
 }
 HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
@@ -1474,7 +1474,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     EXPECT_EQ(nonDefaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 
     // another kernel with no policy preference, this time with debug toggle set - update policy back to default value
-    DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
+    debugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
     pCommandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 }
@@ -1514,7 +1514,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
@@ -1597,7 +1597,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
           givenRegularCommandListWhenSynchronizationRequiredThenExpectJumpingBbStartCommandToSecondary, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+    debugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
 
     ze_group_count_t groupCount{128, 1, 1};
 

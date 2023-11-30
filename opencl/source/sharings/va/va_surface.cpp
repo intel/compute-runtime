@@ -108,7 +108,7 @@ VAStatus VASurface::getSurfaceDescription(SharedSurfaceInfo &surfaceInfo, VAShar
 }
 
 void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane, cl_mem_flags flags, bool supportOcl21) {
-    bool isRGBPFormat = DebugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
+    bool isRGBPFormat = debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
 
     if (plane == 0) {
         sharedSurfaceInfo.imgInfo.plane = GMM_PLANE_Y;
@@ -126,7 +126,7 @@ void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint
 
     auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &sharedSurfaceInfo.gmmImgFormat, supportOcl21); // vaImage.format.fourcc == VA_FOURCC_NV12
 
-    if (DebugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP) {
+    if (debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP) {
         sharedSurfaceInfo.channelType = CL_UNORM_INT8;
         gmmSurfaceFormat = VASurface::getExtendedSurfaceFormatInfo(sharedSurfaceInfo.imageFourcc);
     } else if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_P010 || sharedSurfaceInfo.imageFourcc == VA_FOURCC_P016) {
@@ -137,7 +137,7 @@ void VASurface::applyPlanarOptions(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint
 }
 
 void VASurface::applyPlaneSettings(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint plane) {
-    bool isRGBPFormat = DebugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
+    bool isRGBPFormat = debugManager.flags.EnableExtendedVaFormats.get() && sharedSurfaceInfo.imageFourcc == VA_FOURCC_RGBP;
 
     sharedSurfaceInfo.imgInfo.slicePitch = 0u;
     sharedSurfaceInfo.imgInfo.yOffset = 0;
@@ -260,7 +260,7 @@ bool VASurface::validate(cl_mem_flags flags, cl_uint plane) {
     default:
         return false;
     }
-    if (plane > 1 && !DebugManager.flags.EnableExtendedVaFormats.get()) {
+    if (plane > 1 && !debugManager.flags.EnableExtendedVaFormats.get()) {
         return false;
     }
     return true;
@@ -342,7 +342,7 @@ bool VASurface::isSupportedFourCCTwoPlaneFormat(int fourcc) {
 }
 
 bool VASurface::isSupportedFourCCThreePlaneFormat(int fourcc) {
-    if (DebugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_RGBP) {
+    if (debugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_RGBP) {
         return true;
     }
     return false;

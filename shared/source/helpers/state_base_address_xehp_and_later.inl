@@ -65,7 +65,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 
     auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
 
-    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), productHelper);
+    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, debugManager.flags.DisableCachingForHeaps.get(), productHelper);
     auto heapMocsValue = args.gmmHelper->getMOCS(heapResourceUsage);
 
     args.stateBaseAddressCmd->setSurfaceStateMemoryObjectControlState(heapMocsValue);
@@ -75,19 +75,19 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
 
     bool enableMultiGpuAtomics = args.isMultiOsContextCapable;
-    if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
+    if (debugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
         enableMultiGpuAtomics = args.useGlobalAtomics && (args.isMultiOsContextCapable || args.areMultipleSubDevicesInContext);
     }
     args.stateBaseAddressCmd->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!enableMultiGpuAtomics);
 
     args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!args.isMultiOsContextCapable);
 
-    if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-        args.stateBaseAddressCmd->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!!DebugManager.flags.ForceMultiGpuAtomics.get());
+    if (debugManager.flags.ForceMultiGpuAtomics.get() != -1) {
+        args.stateBaseAddressCmd->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!!debugManager.flags.ForceMultiGpuAtomics.get());
     }
 
-    if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-        args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
+    if (debugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
+        args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!!debugManager.flags.ForceMultiGpuPartialWrites.get());
     }
 
     if (args.memoryCompressionState != MemoryCompressionState::NotApplicable) {
@@ -95,7 +95,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     }
 
     bool l3MocsEnabled = (args.stateBaseAddressCmd->getStatelessDataPortAccessMemoryObjectControlState() >> 1) == (args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-    bool constMocsAllowed = (l3MocsEnabled && (DebugManager.flags.ForceL1Caching.get() != 0));
+    bool constMocsAllowed = (l3MocsEnabled && (debugManager.flags.ForceL1Caching.get() != 0));
 
     if (constMocsAllowed) {
         auto constMocsIndex = args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
@@ -116,7 +116,7 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
     cmd.setBindingTablePoolBaseAddress(baseAddress);
     cmd.setBindingTablePoolBufferSize(sizeInPages);
     cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
-    if (DebugManager.flags.DisableCachingForHeaps.get()) {
+    if (debugManager.flags.DisableCachingForHeaps.get()) {
         cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED));
     }
 
@@ -133,9 +133,9 @@ void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddres
     auto cachePolicy = args.isDebuggerActive ? args.l1CachePolicyDebuggerActive : args.l1CachePolicy;
     args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(cachePolicy));
 
-    if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&
-        DebugManager.flags.ForceAllResourcesUncached.get() == false) {
-        args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(DebugManager.flags.ForceStatelessL1CachingPolicy.get()));
+    if (debugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&
+        debugManager.flags.ForceAllResourcesUncached.get() == false) {
+        args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(debugManager.flags.ForceStatelessL1CachingPolicy.get()));
     }
 }
 

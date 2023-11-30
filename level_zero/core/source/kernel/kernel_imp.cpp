@@ -311,7 +311,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 
     const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
     if (auto maxGroupSize = module->getMaxGroupSize(kernelDescriptor); itemsInGroup > maxGroupSize) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Requested work-group size (%lu) exceeds maximum value (%u) for the kernel \"%s\" \n",
                               itemsInGroup, maxGroupSize, kernelDescriptor.kernelMetadata.kernelName.c_str());
         DEBUG_BREAK_IF(true);
@@ -324,7 +324,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     for (uint32_t i = 0u; i < 3u; i++) {
         if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
             kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->groupSize[i]) {
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Invalid group size {%d, %d, %d} specified, requiredWorkGroupSize = {%d, %d, %d}\n",
                                   this->groupSize[0], this->groupSize[1], this->groupSize[2],
                                   kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0],
@@ -402,7 +402,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         return ZE_RESULT_SUCCESS;
     }
 
-    if (NEO::DebugManager.flags.EnableComputeWorkSizeND.get()) {
+    if (NEO::debugManager.flags.EnableComputeWorkSizeND.get()) {
         auto usesImages = kernelDescriptor.kernelAttributes.flags.usesImages;
         auto neoDevice = module->getDevice()->getNEODevice();
         const auto &deviceInfo = neoDevice->getDeviceInfo();
@@ -413,7 +413,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
             const auto device = static_cast<DeviceImp *>(module->getDevice());
             const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
             driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
-            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
 
@@ -424,7 +424,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     } else {
         if (1U == dim) {
             NEO::computeWorkgroupSize1D(maxWorkGroupSize, retGroupSize, workItems, simd);
-        } else if (NEO::DebugManager.flags.EnableComputeWorkSizeSquared.get() && (2U == dim)) {
+        } else if (NEO::debugManager.flags.EnableComputeWorkSizeSquared.get() && (2U == dim)) {
             NEO::computeWorkgroupSizeSquared(maxWorkGroupSize, retGroupSize, workItems, simd, dim);
         } else {
             NEO::computeWorkgroupSize2D(maxWorkGroupSize, retGroupSize, workItems, simd);
@@ -477,7 +477,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {
-    if (NEO::DebugManager.flags.DisableIndirectAccess.get() == 1) {
+    if (NEO::debugManager.flags.DisableIndirectAccess.get() == 1) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -722,7 +722,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     }
 
     if (allocData == nullptr) {
-        if (NEO::DebugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
+        if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
             const auto &argAsPtr = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
             auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
@@ -1059,8 +1059,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                               kernelImmData->getResidencyContainer().end());
     ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
     bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor, moduleImp->isPrecompiled());
-    if (NEO::DebugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
-        detectIndirectAccessInKernel = NEO::DebugManager.flags.DetectIndirectAccessInKernel.get() == 1;
+    if (NEO::debugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
+        detectIndirectAccessInKernel = NEO::debugManager.flags.DetectIndirectAccessInKernel.get() == 1;
     }
     if (detectIndirectAccessInKernel) {
         kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||

@@ -146,10 +146,10 @@ HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvide
     ASSERT_EQ(BlitterConstants::maxBlitWidth, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironment()));
     ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), false));
 
-    DebugManager.flags.LimitBlitterMaxWidth.set(50);
+    debugManager.flags.LimitBlitterMaxWidth.set(50);
     EXPECT_EQ(50u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironment()));
 
-    DebugManager.flags.LimitBlitterMaxHeight.set(60);
+    debugManager.flags.LimitBlitterMaxHeight.set(60);
     EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), false));
 }
 
@@ -168,14 +168,14 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
 
     EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
-    DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
     EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
-    DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
     waArgs.isWaRequired = true;
     EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
-    DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
     EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 }
 
@@ -216,7 +216,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     memset(streamBuffer, 0, sizeof(streamBuffer));
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
-    DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
     waArgs.isWaRequired = true;
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
@@ -228,7 +228,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     memset(streamBuffer, 0, sizeof(streamBuffer));
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
-    DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
     waArgs.isWaRequired = true;
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
@@ -240,7 +240,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     memset(streamBuffer, 0, sizeof(streamBuffer));
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
-    DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
     waArgs.isWaRequired = true;
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 

@@ -114,7 +114,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
     uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    DebugManager.flags.OverrideBlitterMocs.set(1);
+    debugManager.flags.OverrideBlitterMocs.set(1);
 
     uint32_t pattern = 1;
     uint32_t streamBuffer[100] = {};
@@ -138,7 +138,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
 HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMemWhenAppendBlitCommandsForVillBufferThenCompresionDisabled, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
 
     uint32_t pattern = 1;
     uint32_t streamBuffer[100] = {};
@@ -170,7 +170,7 @@ HWTEST2_F(BlitTests, whenGetMaxBlitHeightOverrideThenReturnProperValue, IsPVC) {
 HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMemWhenAppendBlitCommandsForVillBufferThenCompresionEnabled, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
 
     uint32_t pattern = 1;
     uint32_t streamBuffer[100] = {};
@@ -188,7 +188,7 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMem
     {
         auto blitCmd = genCmdCast<MEM_SET *>(*itor);
         EXPECT_EQ(blitCmd->getDestinationCompressible(), MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-        EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), blitCmd->getCompressionFormat40());
+        EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), blitCmd->getCompressionFormat40());
     }
 }
 

@@ -120,7 +120,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThe
     DebugManagerStateRestore restorer;
 
     uint32_t bufferCompressionFormat = 3;
-    DebugManager.flags.ForceBufferCompressionFormat.set(bufferCompressionFormat);
+    debugManager.flags.ForceBufferCompressionFormat.set(bufferCompressionFormat);
 
     MockContext context;
     cl_int retVal = CL_SUCCESS;

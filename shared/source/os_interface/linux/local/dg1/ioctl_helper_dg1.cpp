@@ -51,7 +51,7 @@ int IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInsta
     ret = IoctlHelper::ioctl(DrmIoctl::DG1GemCreateExt, &createExt);
 
     handle = createExt.handle;
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
+    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     return ret;
 }
 

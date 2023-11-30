@@ -16,8 +16,8 @@ bool CompressionSelector::allowStatelessCompression() {
     if (!NEO::ApiSpecificConfig::isStatelessCompressionSupported()) {
         return false;
     }
-    if (DebugManager.flags.EnableStatelessCompression.get() != -1) {
-        return static_cast<bool>(DebugManager.flags.EnableStatelessCompression.get());
+    if (debugManager.flags.EnableStatelessCompression.get() != -1) {
+        return static_cast<bool>(debugManager.flags.EnableStatelessCompression.get());
     }
     return false;
 }

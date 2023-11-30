@@ -103,7 +103,7 @@ TEST_F(ClCreateContextTests, givenMultipleSubDevicesFromDifferentRootDevicesWhen
 
 TEST_F(ClCreateContextTests, givenDisabledMultipleRootDeviceSupportWhenCreatingContextThenOutOfHostMemoryErrorIsReturned) {
     UltClDeviceFactory deviceFactory{2, 2};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(false);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(false);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_EQ(nullptr, context);
@@ -139,7 +139,7 @@ TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenRootDe
 
 TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenMaxRootDeviceIndexIsProperlyFilled) {
     UltClDeviceFactory deviceFactory{3, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_NE(nullptr, context);
@@ -153,7 +153,7 @@ TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenMaxRoo
 
 TEST_F(ClCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenSpecialQueueIsProperlyFilled) {
     UltClDeviceFactory deviceFactory{3, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
     auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_NE(nullptr, context);

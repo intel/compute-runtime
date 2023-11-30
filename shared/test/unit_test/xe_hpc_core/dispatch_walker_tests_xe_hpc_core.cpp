@@ -33,7 +33,7 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     }
 
     {
-        DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
+        debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }

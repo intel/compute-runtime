@@ -121,7 +121,7 @@ TEST_F(DrmSimpleTests, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHw
 
 TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingFilterBdfWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.FilterBdfPath.set("invalid");
+    debugManager.flags.FilterBdfPath.set("invalid");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = nullptr; // open shouldn't be called
     ExecutionEnvironment executionEnvironment;
@@ -131,7 +131,7 @@ TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingFilterBdfWhenGetDevice
 
 TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceUsingFilterBdfWhenGetDeviceFdThenReturnFd) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.FilterBdfPath.set("0000:00:02.0");
+    debugManager.flags.FilterBdfPath.set("0000:00:02.0");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     openFull = openWithCounter;
     openCounter = 10;
@@ -203,7 +203,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlEntriesWhenCallIoctlThenIoctlIsPrinted) {
     auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintIoctlEntries.set(true);
+    debugManager.flags.PrintIoctlEntries.set(true);
 
     uint32_t contextId = 1u;
     drm->destroyDrmContext(contextId);
@@ -228,7 +228,7 @@ TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpecte
     auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintIoctlEntries.set(true);
+    debugManager.flags.PrintIoctlEntries.set(true);
 
     uint32_t contextId = 1u;
     uint32_t vmId = 100u;
@@ -247,7 +247,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintIoctlTimes.set(true);
+    debugManager.flags.PrintIoctlTimes.set(true);
     VariableBackup<decltype(forceExtraIoctlDuration)> backupForceExtraIoctlDuration(&forceExtraIoctlDuration, true);
 
     EXPECT_TRUE(drm->ioctlStatistics.empty());
@@ -382,7 +382,7 @@ TEST_F(DrmSimpleTests, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateM
     openFull = openWithCounter;
     ExecutionEnvironment executionEnvironment;
     const uint32_t requestedNumRootDevices = 2u;
-    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
 
     openCounter = 4;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
@@ -400,7 +400,7 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
     openFull = openWithCounter;
     ExecutionEnvironment executionEnvironment;
     const uint32_t requestedNumRootDevices = 2u;
-    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+    debugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
 
     openCounter = 4;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
@@ -414,7 +414,7 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
 
 TEST_F(DrmTests, GivenSelectedIncorectDeviceByDeviceIdWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.FilterDeviceId.set("invalid");
+    debugManager.flags.FilterDeviceId.set("invalid");
     auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_EQ(drm1, nullptr);
 }
@@ -424,7 +424,7 @@ TEST_F(DrmTests, GivenSelectedCorrectDeviceByDeviceIdWhenGetDeviceFdThenSucceed)
     std::stringstream deviceIdStr;
     deviceIdStr << std::hex << deviceId;
 
-    DebugManager.flags.FilterDeviceId.set(deviceIdStr.str());
+    debugManager.flags.FilterDeviceId.set(deviceIdStr.str());
     auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm1, nullptr);
 }
@@ -433,15 +433,15 @@ TEST_F(DrmSimpleTests, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProper
     DebugManagerStateRestore dbgRestorer;
     bool useVmBind = false;
 
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.UseVmBind.set(1);
     Drm::overrideBindSupport(useVmBind);
     EXPECT_TRUE(useVmBind);
 
-    DebugManager.flags.UseVmBind.set(0);
+    debugManager.flags.UseVmBind.set(0);
     Drm::overrideBindSupport(useVmBind);
     EXPECT_FALSE(useVmBind);
 
-    DebugManager.flags.UseVmBind.set(-1);
+    debugManager.flags.UseVmBind.set(-1);
     Drm::overrideBindSupport(useVmBind);
     EXPECT_FALSE(useVmBind);
 }
@@ -522,7 +522,7 @@ TEST_F(DrmTests, GivenNoDeviceWhenCreatingDrmThenNullIsReturned) {
 
 TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
@@ -652,7 +652,7 @@ TEST_F(DrmTests, GivenInvalidDrmVersionNameWhenCreatingDrmThenNullIsReturned) {
 
 TEST_F(DrmTests, whenDrmIsCreatedThenSetMemoryRegionsDoesntFailAndDrmObjectIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
@@ -664,7 +664,7 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverridePatIndex.set(0);
+    debugManager.flags.OverridePatIndex.set(0);
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
@@ -680,9 +680,9 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
 
 TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmMemoryManagerThenHostPtrValidationIsDisabled) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableHostPtrValidation.set(0);
-    DebugManager.flags.EnableGemCloseWorker.set(0);
-    DebugManager.flags.OverridePatIndex.set(0);
+    debugManager.flags.EnableHostPtrValidation.set(0);
+    debugManager.flags.EnableGemCloseWorker.set(0);
+    debugManager.flags.OverridePatIndex.set(0);
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.forceOsAgnosticMemoryManager = false;
@@ -706,7 +706,7 @@ TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsS
 
 TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtualMemoryAddressSpaces) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
@@ -723,8 +723,8 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
 
 TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetVirtualMemoryAddressSpaceReturnsZeroAndVMsAreNotCreated) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.UseVmBind.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.UseVmBind.set(1);
 
     rootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
 
@@ -747,9 +747,9 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     ::testing::internal::CaptureStderr();
     ::testing::internal::CaptureStdout();
 
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.UseVmBind.set(0);
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.UseVmBind.set(0);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     rootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
 
@@ -768,7 +768,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     }
     EXPECT_NE(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
 
-    DebugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintDebugMessages.set(false);
     ::testing::internal::GetCapturedStdout();
     std::string errStr = ::testing::internal::GetCapturedStderr();
 
@@ -777,7 +777,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
 
 TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualMemoryIdZeroAndPrintDebugMessage) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     VariableBackup<decltype(failOnVirtualMemoryCreate)> backupFailOnVirtualMemoryCreate(&failOnVirtualMemoryCreate);
 

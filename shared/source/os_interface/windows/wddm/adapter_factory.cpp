@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool canUseAdapterBasedOnDriverDesc(const char *driverDescription) {
 }
 
 bool isAllowedDeviceId(uint32_t deviceId) {
-    return DeviceFactory::isAllowedDeviceId(deviceId, DebugManager.flags.FilterDeviceId.get());
+    return DeviceFactory::isAllowedDeviceId(deviceId, debugManager.flags.FilterDeviceId.get());
 }
 
 } // namespace NEO

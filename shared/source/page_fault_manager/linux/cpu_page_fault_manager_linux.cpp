@@ -29,8 +29,8 @@ PageFaultManagerLinux::PageFaultManagerLinux() {
     PageFaultManagerLinux::registerFaultHandler();
     UNRECOVERABLE_IF(pageFaultHandler == nullptr);
 
-    this->evictMemoryAfterCopy = DebugManager.flags.EnableDirectSubmission.get() &&
-                                 DebugManager.flags.USMEvictAfterMigration.get();
+    this->evictMemoryAfterCopy = debugManager.flags.EnableDirectSubmission.get() &&
+                                 debugManager.flags.USMEvictAfterMigration.get();
 }
 
 PageFaultManagerLinux::~PageFaultManagerLinux() {

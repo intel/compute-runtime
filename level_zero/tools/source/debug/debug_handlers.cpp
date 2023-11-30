@@ -20,7 +20,7 @@ std::mutex debugSessionMutex;
 ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *config, zet_debug_session_handle_t *phDebug) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    if (L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && !NEO::DebugManager.flags.ExperimentalEnableTileAttach.get()) {
+    if (L0::Device::fromHandle(hDevice)->getNEODevice()->isSubDevice() && !NEO::debugManager.flags.ExperimentalEnableTileAttach.get()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -28,7 +28,7 @@ ze_result_t debugAttach(zet_device_handle_t hDevice, const zet_debug_config_t *c
     auto affinityMask = envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
 
     if (!affinityMask.empty()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "%s", "ZE_AFFINITY_MASK is not recommended while using program debug API\n");
     }
 

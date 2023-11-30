@@ -380,7 +380,7 @@ struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
 struct ContextHostAllocTests : public ::testing::Test {
     void SetUp() override {
 
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
         driverHandle = std::make_unique<DriverHandleImp>();
@@ -894,7 +894,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
@@ -947,7 +947,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
@@ -958,7 +958,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     ASSERT_NE(nullptr, commandList0);
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};

@@ -19,7 +19,7 @@ namespace NEO {
 using GmmTests = Test<MockExecutionEnvironmentGmmFixture>;
 TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCacheForResourcesSetThenFlagCacheableIsTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCpuCacheForResources.set(1);
+    debugManager.flags.EnableCpuCacheForResources.set(1);
     StorageInfo storageInfo{};
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = false;
@@ -36,7 +36,7 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
 
 TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCacheForResourcesNotSetThenFlagCacheableIsRelatedToValueFromHelperIsCachingOnCpuAvailable) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCpuCacheForResources.set(0);
+    debugManager.flags.EnableCpuCacheForResources.set(0);
     StorageInfo storageInfo{};
     auto releaseHelper = getGmmHelper()->getRootDeviceEnvironment().getReleaseHelper();
     GmmRequirements gmmRequirements{};
@@ -68,7 +68,7 @@ TEST_F(GmmTests, givenResourceUsageTypesUnCachedWhenGreateGmmThenFlagCachcableIs
 
 HWTEST_F(GmmTests, givenIsResourceCacheableOnCpuWhenWslFlagThenReturnProperValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCpuCacheForResources.set(false);
+    debugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get());
     rootDeviceEnvironment->isWddmOnLinuxEnable = true;
@@ -89,7 +89,7 @@ HWTEST_F(GmmTests, givenIsResourceCacheableOnCpuWhenWslFlagThenReturnProperValue
 
 HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIsSetProperly) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCpuCacheForResources.set(false);
+    debugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
     auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
     GmmRequirements gmmRequirements{};

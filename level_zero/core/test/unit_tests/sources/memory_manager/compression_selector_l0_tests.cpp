@@ -26,7 +26,7 @@ TEST(CompressionSelectorL0Tests, GivenDefaultDebugFlagWhenProvidingUsmAllocation
 
 TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocationThenExpectCompressionDisabled) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableUsmCompression.set(0);
+    debugManager.flags.EnableUsmCompression.set(0);
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
@@ -39,7 +39,7 @@ TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocatio
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocationThenExpectCompressionEnabled) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableUsmCompression.set(1);
+    debugManager.flags.EnableUsmCompression.set(1);
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
@@ -52,7 +52,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocation
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocationThenExpectCompressionEnabled) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableUsmCompression.set(1);
+    debugManager.flags.EnableUsmCompression.set(1);
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
@@ -64,7 +64,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocat
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocationThenExpectCompressionDisabled) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableUsmCompression.set(1);
+    debugManager.flags.EnableUsmCompression.set(1);
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,

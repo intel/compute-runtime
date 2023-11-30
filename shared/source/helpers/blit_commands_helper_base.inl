@@ -18,8 +18,8 @@ namespace NEO {
 
 template <typename GfxFamily>
 uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (DebugManager.flags.LimitBlitterMaxWidth.get() != -1) {
-        return static_cast<uint64_t>(DebugManager.flags.LimitBlitterMaxWidth.get());
+    if (debugManager.flags.LimitBlitterMaxWidth.get() != -1) {
+        return static_cast<uint64_t>(debugManager.flags.LimitBlitterMaxWidth.get());
     }
     auto maxBlitWidthOverride = getMaxBlitWidthOverride(rootDeviceEnvironment);
     if (maxBlitWidthOverride > 0) {
@@ -30,8 +30,8 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(const RootDeviceEnvironm
 
 template <typename GfxFamily>
 uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
-    if (DebugManager.flags.LimitBlitterMaxHeight.get() != -1) {
-        return static_cast<uint64_t>(DebugManager.flags.LimitBlitterMaxHeight.get());
+    if (debugManager.flags.LimitBlitterMaxHeight.get() != -1) {
+        return static_cast<uint64_t>(debugManager.flags.LimitBlitterMaxHeight.get());
     }
     auto maxBlitHeightOverride = getMaxBlitHeightOverride(rootDeviceEnvironment, isSystemMemoryPoolUsed);
     if (maxBlitHeightOverride > 0) {
@@ -63,8 +63,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize(const RootDevic
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
     MiFlushArgs args{waArgs};
-    if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
-        switch (DebugManager.flags.PostBlitCommand.get()) {
+    if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
+        switch (debugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::MiArbCheck:
             EncodeMiArbCheck<GfxFamily>::programWithWa(linearStream, std::nullopt, waArgs);
             return;
@@ -88,8 +88,8 @@ template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(const RootDeviceEnvironment &rootDeviceEnvironment) {
     EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
 
-    if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
-        switch (DebugManager.flags.PostBlitCommand.get()) {
+    if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
+        switch (debugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::MiArbCheck:
             return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
         case BlitterConstants::PostBlitMode::MiFlush:
@@ -195,7 +195,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
     uint64_t width = 1;
     uint64_t height = 1;
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintBlitDispatchDetails.get(), stdout,
+    PRINT_DEBUG_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
                        "\nBlit dispatch with AuxTranslationDirection %u ", static_cast<uint32_t>(blitProperties.auxTranslationDirection));
 
     dispatchPreBlitCommand(linearStream, *waArgs.rootDeviceEnvironment);
@@ -228,7 +228,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
                 auto dstAddr = calculateBlitCommandDestinationBaseAddress(blitProperties, offset, row, slice);
                 auto srcAddr = calculateBlitCommandSourceBaseAddress(blitProperties, offset, row, slice);
 
-                PRINT_DEBUG_STRING(DebugManager.flags.PrintBlitDispatchDetails.get(), stdout,
+                PRINT_DEBUG_STRING(debugManager.flags.PrintBlitDispatchDetails.get(), stdout,
                                    "\nBlit command. width: %u, height: %u, srcAddr: %#llx, dstAddr: %#llx ", width, height, srcAddr, dstAddr);
 
                 bltCmd.setDestinationBaseAddress(dstAddr);
@@ -322,7 +322,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const Bli
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
         appendSliceOffsets(blitProperties, bltCmd, i, *(waArgs.rootDeviceEnvironment), srcSlicePitch, dstSlicePitch);
 
-        if (DebugManager.flags.PrintImageBlitBlockCopyCmdDetails.get()) {
+        if (debugManager.flags.PrintImageBlitBlockCopyCmdDetails.get()) {
             printImageBlitBlockCopyCommand(bltCmd, i);
         }
 

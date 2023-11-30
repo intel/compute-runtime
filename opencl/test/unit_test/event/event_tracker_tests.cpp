@@ -622,7 +622,7 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
 
 TEST(EventsTracker, whenEventsDebugEnableFlagIsTrueAndCreateOrChangeStatusOrDestroyEventThenDumpingGraph) {
     DebugManagerStateRestore dbRestore;
-    DebugManager.flags.EventsTrackerEnable.set(true);
+    debugManager.flags.EventsTrackerEnable.set(true);
 
     EventsTrackerMock evTrackerMock;
     evTrackerMock.overrideGlobal();

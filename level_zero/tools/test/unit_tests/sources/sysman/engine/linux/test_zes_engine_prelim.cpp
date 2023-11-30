@@ -455,7 +455,7 @@ class ZesEngineAffinityMaskFixture : public ZesEngineMultiFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
         ZesEngineMultiFixture::SetUp();
     }
 

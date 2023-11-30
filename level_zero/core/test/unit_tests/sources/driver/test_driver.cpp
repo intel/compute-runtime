@@ -140,7 +140,7 @@ TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsRet
 
 TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpectedOverrideDriverVersionIsReturned) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.OverrideDriverVersion.set(0);
+    NEO::debugManager.flags.OverrideDriverVersion.set(0);
 
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);
@@ -149,7 +149,7 @@ TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpected
     uint32_t expectedDriverVersion = 0;
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 
-    NEO::DebugManager.flags.OverrideDriverVersion.set(10);
+    NEO::debugManager.flags.OverrideDriverVersion.set(10);
 
     res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -157,7 +157,7 @@ TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpected
     expectedDriverVersion = 10;
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 
-    NEO::DebugManager.flags.OverrideDriverVersion.set(DriverHandleImp::initialDriverVersionValue + 20);
+    NEO::debugManager.flags.OverrideDriverVersion.set(DriverHandleImp::initialDriverVersionValue + 20);
 
     res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -626,7 +626,7 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
@@ -650,7 +650,7 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimenta
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.levelZeroSupported = true;
 
-    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
+    NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};

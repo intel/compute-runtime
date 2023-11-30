@@ -153,7 +153,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     WALKER_TYPE walkerCmd{};
     uint32_t expectedSlmSize = 5;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSize);
+    debugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSize);
 
     kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = 0;
 

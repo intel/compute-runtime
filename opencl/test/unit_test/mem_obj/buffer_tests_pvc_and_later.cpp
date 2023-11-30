@@ -32,7 +32,7 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingBufferThenGpuAddressIsFromHeapEx
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
 
     initPlatform();
 
@@ -71,7 +71,7 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromHeapSt
     }
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
 
     initPlatform();
 
@@ -108,7 +108,7 @@ HWTEST2_F(PvcAndLaterBufferTests, givenCompressedBufferInSystemAndBlitterSupport
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
         &BlitHelperFunctions::blitMemoryToAllocation};
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(true);
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
     UltClDeviceFactory deviceFactory{1, 0};

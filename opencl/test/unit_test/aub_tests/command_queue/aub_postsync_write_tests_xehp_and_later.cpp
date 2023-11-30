@@ -22,7 +22,7 @@ using namespace NEO;
 
 struct PostSyncWriteXeHPTests : public AUBCommandStreamFixture, public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EnableTimestampPacket.set(true);
+        debugManager.flags.EnableTimestampPacket.set(true);
 
         AUBCommandStreamFixture::setUp();
         EXPECT_TRUE(pCommandStreamReceiver->peekTimestampPacketWriteEnabled());
@@ -54,7 +54,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledW
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
-    DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
+    debugManager.flags.UseImmDataWriteModeOnPostSyncOperation.set(true);
     const uint32_t bufferSize = 4;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));

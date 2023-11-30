@@ -264,8 +264,8 @@ HWTEST2_F(CommandQueueProgramSBATest,
 template <bool multiTile>
 struct CommandQueueCommands : DeviceFixture, ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.ForcePreemptionMode.set(static_cast<int>(NEO::PreemptionMode::Disabled));
-        DebugManager.flags.CreateMultipleSubDevices.set(multiTile ? 2 : 1);
+        debugManager.flags.ForcePreemptionMode.set(static_cast<int>(NEO::PreemptionMode::Disabled));
+        debugManager.flags.CreateMultipleSubDevices.set(multiTile ? 2 : 1);
         DeviceFixture::setUp();
     }
 
@@ -323,7 +323,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
 
 HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(1);
+    debugManager.flags.EnableWalkerPartition.set(1);
 
     class MyCsrMock : public MockCsrHw2<FamilyType> {
         using MockCsrHw2<FamilyType>::MockCsrHw2;
@@ -372,7 +372,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
 
 HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerPartitionIsDisabledThenWorkPartitionAllocationIsNotCreated, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.EnableWalkerPartition.set(0);
 
     class MyCsrMock : public MockCsrHw2<FamilyType> {
         using MockCsrHw2<FamilyType>::MockCsrHw2;
@@ -396,7 +396,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerP
 using CommandQueueIndirectAllocations = Test<ModuleFixture>;
 HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocationsAsOnePackWhenIndirectAccessIsUsedThenWholePackIsMadeResident) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(1);
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(1);
     const ze_command_queue_desc_t desc = {};
 
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
@@ -527,7 +527,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
 HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndirectAllocationsAsPackWhenIndirectAccessIsUsedThenWholePackIsMadeResidentWithImmediateCommandListAndFlushTask) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
@@ -579,8 +579,8 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
 HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskWithIndirectAllocsAsPackDisabledThenLaunchKernelWorks) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
-    NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
 
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
@@ -628,11 +628,11 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
 
 struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.EngineInstancedSubDevices.set(true);
+        debugManager.flags.EngineInstancedSubDevices.set(true);
     }
 
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
-        DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
+        debugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
         auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
@@ -683,7 +683,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -732,7 +732,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabri
     constexpr uint32_t genericDevicesCount = 1;
     constexpr uint32_t ccsCount = 2;
 
-    DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
+    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
 
     if (!createDevices(genericDevicesCount, ccsCount)) {
         GTEST_SKIP();
@@ -848,7 +848,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
 
 HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmitPackDiasabledThenMakeResidentAndMigrateCalled, IsAtLeastSkl) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
 
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -1018,7 +1018,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
 
 HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroSizeIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(1);
+    debugManager.flags.UseBindlessMode.set(1);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
@@ -1029,7 +1029,7 @@ HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdS
 
 HWTEST2_F(CommandQueueTest, givenBindlessDisabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseBindlessMode.set(0);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
@@ -1056,8 +1056,8 @@ size_t estimateAllCommmandLists(MockCommandQueueHw<gfxCoreFamily> *commandQueue,
 
 HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculatedAndCorrectStateIsSet, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-    DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
+    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);

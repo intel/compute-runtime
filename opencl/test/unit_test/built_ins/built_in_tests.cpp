@@ -72,7 +72,7 @@ class BuiltInTests
     }
 
     void SetUp() override {
-        DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
         ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
@@ -1923,7 +1923,7 @@ TEST_F(VmeBuiltInTests, WhenValidatingImagesThenCorrectResponses) {
     { // validate image tiling
         std::unique_ptr<Image> imageValid(ImageHelper<ImageVmeValidFormat>::create(pContext));
         DebugManagerStateRestore restorer;
-        DebugManager.flags.ForceLinearImages.set(true);
+        debugManager.flags.ForceLinearImages.set(true);
         std::unique_ptr<Image> imageLinear(ImageHelper<ImageVmeValidFormat>::create(pContext));
         Image *images[] = {imageValid.get(), imageLinear.get()};
         for (Image *srcImg : images) {
@@ -2349,7 +2349,7 @@ TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAl
 }
 
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
-    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
@@ -2358,7 +2358,7 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuilti
 }
 
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCodeSource) {
-    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Source, code.type);

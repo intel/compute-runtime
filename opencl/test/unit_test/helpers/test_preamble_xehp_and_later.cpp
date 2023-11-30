@@ -39,7 +39,7 @@ using ProgramPipelineXeHPAndLater = PreambleFixture;
 HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet, IsWithinXeGfxFamily) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.OverrideSystolicPipelineSelect.set(1);
+    debugManager.flags.OverrideSystolicPipelineSelect.set(1);
 
     LinearStream &cs = linearStream;
     PipelineSelectArgs pipelineArgs;
@@ -184,12 +184,12 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsP
 
     DebugManagerStateRestore dbgRestore;
 
-    DebugManager.flags.CFEFusedEUDispatch.set(expectedValue1);
-    DebugManager.flags.CFEOverDispatchControl.set(expectedValue1);
-    DebugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
-    DebugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
-    DebugManager.flags.CFENumberOfWalkers.set(expectedValue2);
-    DebugManager.flags.CFEMaximumNumberOfThreads.set(expectedValue2);
+    debugManager.flags.CFEFusedEUDispatch.set(expectedValue1);
+    debugManager.flags.CFEOverDispatchControl.set(expectedValue1);
+    debugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
+    debugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
+    debugManager.flags.CFENumberOfWalkers.set(expectedValue2);
+    debugManager.flags.CFEMaximumNumberOfThreads.set(expectedValue2);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
@@ -254,7 +254,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOffWhenDebugFlagIsPresent) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableCachingForHeaps.set(1);
+    debugManager.flags.DisableCachingForHeaps.set(1);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto gmmHelper = pDevice->getRootDeviceEnvironment().getGmmHelper();
@@ -277,7 +277,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(1u);
+    debugManager.flags.ForceL1Caching.set(1u);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
@@ -293,7 +293,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenForceL1CachingDebugFlagDisabledWhenStatelessMocsIsProgrammedThenItHasL3CachingOn) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ForceL1Caching.set(0u);
+    debugManager.flags.ForceL1Caching.set(0u);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
@@ -362,8 +362,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebug
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    DebugManager.flags.ForceMultiGpuAtomics.set(0);
-    DebugManager.flags.ForceMultiGpuPartialWrites.set(0);
+    debugManager.flags.ForceMultiGpuAtomics.set(0);
+    debugManager.flags.ForceMultiGpuPartialWrites.set(0);
     flushTask(commandStreamReceiver);
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);

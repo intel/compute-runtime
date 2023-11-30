@@ -27,7 +27,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO() {
-    if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
+    if (debugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
         auto mmioList = AubHelper::getAdditionalMmioList();
         for (auto &mmioPair : mmioList) {
             stream->writeMMIO(mmioPair.first, mmioPair.second);
@@ -43,8 +43,8 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     uint32_t flags = 0;
     getCsTraits(engineType).setContextSaveRestoreFlags(flags);
 
-    if (DebugManager.flags.AppendAubStreamContextFlags.get() != -1) {
-        flags |= static_cast<uint32_t>(DebugManager.flags.AppendAubStreamContextFlags.get());
+    if (debugManager.flags.AppendAubStreamContextFlags.get() != -1) {
+        flags |= static_cast<uint32_t>(debugManager.flags.AppendAubStreamContextFlags.get());
     }
 
     if (aubManager && !osContext.isLowPriority()) {

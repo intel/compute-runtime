@@ -321,8 +321,8 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
 class KernelImageArgTestBindless : public KernelImageArgTest {
   public:
     void SetUp() override {
-        DebugManager.flags.UseBindlessMode.set(1);
-        DebugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
         KernelImageArgTest::SetUp();
 
         auto &img = pKernelInfo->argAsImg(0);

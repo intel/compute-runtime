@@ -87,14 +87,14 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         }
     }
 
-    auto forcePipeSupport = DebugManager.flags.ForcePipeSupport.get();
+    auto forcePipeSupport = debugManager.flags.ForcePipeSupport.get();
     if ((hwInfo.capabilityTable.supportsPipes && (forcePipeSupport == -1)) ||
         (forcePipeSupport == 1)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_pipes");
         openclCFeatures.push_back(openClCFeature);
     }
 
-    auto forceFp64Support = DebugManager.flags.OverrideDefaultFP64Settings.get();
+    auto forceFp64Support = debugManager.flags.OverrideDefaultFP64Settings.get();
     if ((hwInfo.capabilityTable.ftrSupportsFP64 && (forceFp64Support == -1)) ||
         (forceFp64Support == 1)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_fp64");

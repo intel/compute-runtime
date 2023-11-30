@@ -98,7 +98,7 @@ class MockIafNlApi : public IafNlApi {
 
 struct TestFabricIaf : public ::testing::Test {
     void SetUp() override {
-        DebugManager.flags.CreateMultipleSubDevices.set(1);
+        debugManager.flags.CreateMultipleSubDevices.set(1);
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());

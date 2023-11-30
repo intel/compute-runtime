@@ -26,7 +26,7 @@ struct ClSetEventCallbackTests : public ApiFixture<>,
 
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
-        DebugManager.flags.EnableAsyncEventsHandler.set(false);
+        debugManager.flags.EnableAsyncEventsHandler.set(false);
         ApiFixture::setUp();
         cbInvoked = 0;
         cbData = nullptr;

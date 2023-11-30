@@ -101,7 +101,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
         auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
-        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), productHelper);
+        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, debugManager.flags.DisableCachingForHeaps.get(), productHelper);
 
         args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(args.gmmHelper->getMOCS(resourceUsage));
     }
@@ -119,8 +119,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.surfaceStateBaseAddress);
     }
 
-    if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
-        args.statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
+    if (debugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
+        args.statelessMocsIndex = debugManager.flags.OverrideStatelessMocsIndex.get();
     }
 
     args.statelessMocsIndex = args.statelessMocsIndex << 1;

@@ -486,7 +486,7 @@ TEST_F(WddmResidencyControllerTest, GivenListSizeLessThenDoubleCandidateCountWhe
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenAllocationsAreEvictedMarkedAndRemovedFromTrimCandidateList) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
+    debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
@@ -570,7 +570,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
+    debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
@@ -1167,7 +1167,7 @@ struct WddmResidencyControllerWithMockWddmMakeResidentTest : public WddmResidenc
 
 TEST_F(WddmResidencyControllerWithMockWddmMakeResidentTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenCallItAgainWithWaitForMemoryReleaseSetToTrue) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.WaitForMemoryRelease.set(1);
+    debugManager.flags.WaitForMemoryRelease.set(1);
 
     wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
 
@@ -1189,7 +1189,7 @@ TEST_F(WddmResidencyControllerTest, GivenResidencyLoggingEnabledWhenTrimResidenc
     NEO::IoFunctions::mockFcloseCalled = 0;
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
+    debugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 
@@ -1223,7 +1223,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenResidencyLoggingEnabledWhenTrimm
     NEO::IoFunctions::mockFcloseCalled = 0;
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.WddmResidencyLogger.set(true);
+    debugManager.flags.WddmResidencyLogger.set(true);
     wddm->callBaseCreatePagingLogger = false;
     wddm->callBaseMakeResident = true;
 

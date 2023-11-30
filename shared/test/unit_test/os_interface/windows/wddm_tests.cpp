@@ -188,7 +188,7 @@ TEST_F(WddmTests, whenGetAdapterLuidThenLuidIsReturned) {
 
 TEST_F(WddmTests, GivenDebugFlagDisablesEvictIfNecessarySupportThenFlagIsFalse) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(0);
+    debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(0);
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
@@ -197,7 +197,7 @@ TEST_F(WddmTests, GivenDebugFlagDisablesEvictIfNecessarySupportThenFlagIsFalse) 
 
 TEST_F(WddmTests, GivenDebugFlagEnablesEvictIfNecessarySupportThenFlagIsTrue) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
+    debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
@@ -212,11 +212,11 @@ TEST_F(WddmTests, givenDebugFlagForceEvictOnlyIfNecessaryAllValuesThenForceSetti
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
     EXPECT_EQ(-1, wddm->forceEvictOnlyIfNecessary);
 
-    DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(0);
+    debugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(0);
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
     EXPECT_EQ(0, wddm->forceEvictOnlyIfNecessary);
 
-    DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(1);
+    debugManager.flags.ForceEvictOnlyIfNecessaryFlag.set(1);
     wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
     EXPECT_EQ(1, wddm->forceEvictOnlyIfNecessary);
 }
@@ -462,7 +462,7 @@ TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmitThenProperValueIsReturned) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = true;
     uint64_t pagingFenceValue = 0u;
@@ -488,7 +488,7 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmit
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceExecutionStateThenProperMessageIsVisible) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = true;
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
@@ -509,7 +509,7 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceEx
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFailThenNoMessageIsVisible) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = true;
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
@@ -532,7 +532,7 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFai
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceExecutionStateThenNoMessageIsVisible) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = false;
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
@@ -617,7 +617,7 @@ TEST_F(WddmTests, givenDebugFlagSetWhenFailedOnSubmissionThenCheckDeviceState) {
     EXPECT_EQ(deviceStateId, operations[2]);
     EXPECT_EQ(submitId, operations[3]);
 
-    DebugManager.flags.EnableDeviceStateVerificationAfterFailedSubmission.set(1);
+    debugManager.flags.EnableDeviceStateVerificationAfterFailedSubmission.set(1);
 
     EXPECT_FALSE(myMockWddm.submit(0, 0, &commandBufferHeader, submitArguments));
 
@@ -637,7 +637,7 @@ TEST_F(WddmTests, givenDebugFlagSetWhenFailedOnSubmissionThenCheckDeviceState) {
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsPageFaultThenProperMessageIsVisible) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = true;
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
@@ -658,7 +658,7 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsPag
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFailureThenBasicMessageDisplayed) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = true;
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
@@ -681,7 +681,7 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFai
 
 TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsOtherNonActiveStateThenGenericMessageDisplayed) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDebugBreak.set(false);
+    debugManager.flags.EnableDebugBreak.set(false);
 
     wddm->checkDeviceState = true;
     auto executionState = D3DKMT_DEVICEEXECUTION_RESET;
@@ -731,7 +731,7 @@ TEST_F(WddmTests, givenGetDeviceExecutionStatusWhenGettingPageFaultStatusReturns
 
 TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetTrueWhenCreateWddmThenCheckDeviceStateIsTrue) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDeviceStateVerification.set(1);
+    debugManager.flags.EnableDeviceStateVerification.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     auto mockWddm = std::make_unique<WddmMock>(*rootDeviceEnvironment);
@@ -740,7 +740,7 @@ TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetTrueWhenCreateWdd
 
 TEST(WddmConstructorTest, givenEnableDeviceStateVerificationSetFalseWhenCreateWddmThenCheckDeviceStateIsFalse) {
     DebugManagerStateRestore restorer{};
-    DebugManager.flags.EnableDeviceStateVerification.set(0);
+    debugManager.flags.EnableDeviceStateVerification.set(0);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     auto mockWddm = std::make_unique<WddmMock>(*rootDeviceEnvironment);

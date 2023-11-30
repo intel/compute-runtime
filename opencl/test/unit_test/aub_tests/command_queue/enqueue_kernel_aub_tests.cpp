@@ -341,7 +341,7 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
     cl_event *event = nullptr;
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+    debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
     pCmdQ->getGpgpuCommandStreamReceiver().overwriteFlatBatchBufferHelper(new FlatBatchBufferHelperHw<FamilyType>(*pCmdQ->getDevice().getExecutionEnvironment()));
 
@@ -925,8 +925,8 @@ struct AUBBindlessKernel : public KernelAUBFixture<BindlessKernelFixture>,
                            public ::testing::Test {
 
     void SetUp() override {
-        DebugManager.flags.UseBindlessMode.set(1);
-        DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        debugManager.flags.UseBindlessMode.set(1);
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
         KernelAUBFixture<BindlessKernelFixture>::setUp();
     }
 

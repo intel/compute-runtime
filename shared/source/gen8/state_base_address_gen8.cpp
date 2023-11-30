@@ -70,8 +70,8 @@ void StateBaseAddressHelper<Family>::programStateBaseAddress(
         args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.surfaceStateBaseAddress);
     }
 
-    if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
-        args.statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
+    if (debugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
+        args.statelessMocsIndex = debugManager.flags.OverrideStatelessMocsIndex.get();
     }
 
     args.statelessMocsIndex = args.statelessMocsIndex << 1;

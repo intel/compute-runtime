@@ -181,7 +181,7 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCre
     constexpr auto bufferSize = 16;
 
     auto pageSizeNumber = 1;
-    DebugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+    debugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
     auto extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     auto buffer = clCreateBuffer(pContext, flags, bufferSize, pHostMem, &retVal);
@@ -195,7 +195,7 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCre
     clReleaseMemObject(buffer);
 
     pageSizeNumber = 4;
-    DebugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+    debugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
     extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     buffer = clCreateBufferWithProperties(pContext, nullptr, flags, bufferSize, pHostMem, &retVal);
@@ -209,7 +209,7 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCre
     clReleaseMemObject(buffer);
 
     pageSizeNumber = 6;
-    DebugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+    debugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
     extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
 
     buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, bufferSize, pHostMem, &retVal);
@@ -327,7 +327,7 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
 
 TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndDebugFlagSetWhenCreatingBufferThenClSuccessIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.AllowUnrestrictedSize.set(1);
+    debugManager.flags.AllowUnrestrictedSize.set(1);
     auto pDevice = pContext->getDevice(0);
     size_t size = static_cast<size_t>(pDevice->getDevice().getDeviceInfo().maxMemAllocSize) + 1;
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
@@ -535,7 +535,7 @@ using clCreateBufferWithMultiDeviceContextTests = ClCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
     UltClDeviceFactory deviceFactory{2, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
     auto context = clCreateContext(nullptr, 2u, devices, nullptr, nullptr, &retVal);
@@ -585,7 +585,7 @@ using clCreateBufferWithMultiDeviceContextFaillingAllocationTests = ClCreateBuff
 
 TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContextdWithMultiDeviceFailingAllocationThenBufferAllocateFails) {
     UltClDeviceFactory deviceFactory{3, 0};
-    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2]};
 

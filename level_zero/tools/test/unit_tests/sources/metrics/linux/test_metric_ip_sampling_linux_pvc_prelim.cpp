@@ -319,8 +319,8 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenIoctlHelperFailsWhenIsDependency
 struct MetricIpSamplingLinuxMultiDeviceTest : public ::testing::Test {
 
     std::unique_ptr<UltDeviceFactory> createDevices(uint32_t numSubDevices) {
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-        DebugManager.flags.UseDrmVirtualEnginesForCcs.set(0);
+        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        debugManager.flags.UseDrmVirtualEnginesForCcs.set(0);
         NEO::ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
         executionEnvironment->parseAffinityMask();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface);
@@ -335,7 +335,7 @@ struct MetricIpSamplingLinuxMultiDeviceTest : public ::testing::Test {
 };
 
 HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWhenStartMeasurementIsCalledForRootDeviceThenInstanceIdIsCorrect, IsPVC) {
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1,0.2,0.3");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.1,0.2,0.3");
 
     auto deviceFactory = createDevices(4);
     auto driverHandle = std::make_unique<DriverHandleImp>();
@@ -357,7 +357,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
 }
 
 HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWhenStartMeasurementIsCalledForSubDeviceThenInstanceIdIsCorrect, IsPVC) {
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.2,0.3");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.2,0.3");
 
     auto deviceFactory = createDevices(4);
     auto driverHandle = std::make_unique<DriverHandleImp>();
@@ -401,7 +401,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
 }
 
 HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInfoIsNullWhenStartMeasurementIsCalledForRootDeviceThenErrorIsReturned, IsPVC) {
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
 
     auto deviceFactory = createDevices(4);
     auto driverHandle = std::make_unique<DriverHandleImp>();
@@ -415,7 +415,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInfoIsNullWhenStartMe
 }
 
 HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInstanceIsNullWhenStartMeasurementIsCalledForRootDeviceThenErrorIsReturned, IsPVC) {
-    DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
 
     auto deviceFactory = createDevices(4);
     auto driverHandle = std::make_unique<DriverHandleImp>();

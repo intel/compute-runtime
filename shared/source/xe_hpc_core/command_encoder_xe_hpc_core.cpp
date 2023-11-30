@@ -40,12 +40,12 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescri
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
         bool adjustTGDispatchSize = true;
-        if (DebugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
-            adjustTGDispatchSize = !!DebugManager.flags.AdjustThreadGroupDispatchSize.get();
+        if (debugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
+            adjustTGDispatchSize = !!debugManager.flags.AdjustThreadGroupDispatchSize.get();
         }
         auto algorithmVersion = 2u;
-        if (DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get() != -1) {
-            algorithmVersion = DebugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get();
+        if (debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get() != -1) {
+            algorithmVersion = debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get();
         }
 
         if (algorithmVersion == 2) {
@@ -137,9 +137,9 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescri
         }
     }
 
-    if (DebugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
+    if (debugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
         interfaceDescriptor.setThreadGroupDispatchSize(static_cast<INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(
-            DebugManager.flags.ForceThreadGroupDispatchSize.get()));
+            debugManager.flags.ForceThreadGroupDispatchSize.get()));
     }
 }
 
@@ -225,7 +225,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
         cmd.setMemoryObjectControlState(mocsIndexForL3);
         cmd.setKernelInstructionPrefetch(GraphicsAllocation::isIsaAllocationType(graphicsAllocation.getAllocationType()));
 
-        if (DebugManager.flags.ForceCsStallForStatePrefetch.get() == 1) {
+        if (debugManager.flags.ForceCsStallForStatePrefetch.get() == 1) {
             cmd.setParserStall(true);
         }
 
@@ -242,7 +242,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
 
 template <>
 size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (DebugManager.flags.EnableMemoryPrefetch.get() == 0) {
+    if (debugManager.flags.EnableMemoryPrefetch.get() == 0) {
         return 0;
     }
     size = alignUp(size, MemoryConstants::pageSize64k);
@@ -282,19 +282,19 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto programGlobalFenceAsPostSyncOperationInComputeWalker = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) &&
                                                                 walkerArgs.requiredSystemFence;
-    int32_t overrideProgramSystemMemoryFence = DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
+    int32_t overrideProgramSystemMemoryFence = debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
     if (overrideProgramSystemMemoryFence != -1) {
         programGlobalFenceAsPostSyncOperationInComputeWalker = !!overrideProgramSystemMemoryFence;
     }
     auto &postSyncData = walkerCmd.getPostSync();
     postSyncData.setSystemMemoryFenceRequest(programGlobalFenceAsPostSyncOperationInComputeWalker);
 
-    int32_t forceL3PrefetchForComputeWalker = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
+    int32_t forceL3PrefetchForComputeWalker = debugManager.flags.ForceL3PrefetchForComputeWalker.get();
     if (forceL3PrefetchForComputeWalker != -1) {
         walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
     }
 
-    int32_t overrideDispatchAllWalkerEnableInComputeWalker = DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
+    int32_t overrideDispatchAllWalkerEnableInComputeWalker = debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
     if (overrideDispatchAllWalkerEnableInComputeWalker != -1) {
         walkerCmd.setComputeDispatchAllWalkerEnable(overrideDispatchAllWalkerEnableInComputeWalker);
     }
@@ -353,9 +353,9 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptor
 
     pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);
 
-    if (DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
+    if (debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
         auto toProgram =
-            static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
+            static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
         pInterfaceDescriptor->setPreferredSlmAllocationSize(toProgram);
     }
 }

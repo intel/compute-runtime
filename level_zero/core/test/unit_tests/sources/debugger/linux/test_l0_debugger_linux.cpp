@@ -72,9 +72,9 @@ struct L0DebuggerLinuxMultitileFixture : public L0DebuggerLinuxFixture {
 
     void setUp() {
 
-        DebugManager.flags.CreateMultipleRootDevices.set(1);
+        debugManager.flags.CreateMultipleRootDevices.set(1);
         constexpr auto numSubDevices = 2u;
-        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        debugManager.flags.CreateMultipleSubDevices.set(2);
         hwInfo = *defaultHwInfo;
 
         hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
@@ -175,7 +175,7 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
 
 TEST(L0DebuggerLinux, givenPrintDebugSettingsAndIncorrectSetupWhenInitializingDebuggingInOsThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
@@ -535,7 +535,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueueCrea
 HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenCommandQueueCreatedThenDebuggerIsNotifiedWithCorrectDeviceIndex) {
 
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     auto mockBuiltIns = new NEO::MockBuiltins();

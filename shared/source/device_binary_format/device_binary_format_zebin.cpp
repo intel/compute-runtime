@@ -24,7 +24,7 @@ namespace NEO {
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                      std::string &outErrReason, std::string &outWarning) {
-    if (1 == NEO::DebugManager.flags.DumpZEBin.get()) {
+    if (1 == NEO::debugManager.flags.DumpZEBin.get()) {
         dumpFileIncrement(reinterpret_cast<const char *>(archive.begin()), archive.size(), "dumped_zebin_module", ".elf");
     }
     auto elf = Elf::decodeElf<numBits>(archive, outErrReason, outWarning);

@@ -139,7 +139,7 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
 
 TEST_F(Wddm23Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderSizeForPrivateDriverDataSize) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.set(true);
+    debugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.set(true);
 
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
 
@@ -151,7 +151,7 @@ TEST_F(Wddm23Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderS
 
     EXPECT_EQ(static_cast<UINT>(sizeof(COMMAND_BUFFER_HEADER)), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 
-    DebugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.set(false);
+    debugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.set(false);
 
     cmdBufferHeader = {};
     submitArgs = {};

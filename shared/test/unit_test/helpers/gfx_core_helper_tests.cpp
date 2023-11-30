@@ -49,15 +49,15 @@ TEST(GfxCoreHelperSimpleTest, givenDebugVariableWhenAskingForCompressionThenRetu
     EXPECT_TRUE(GfxCoreHelper::compressedImagesSupported(localHwInfo));
 
     // debug variable set
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    debugManager.flags.RenderCompressedImagesEnabled.set(1);
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
     EXPECT_TRUE(GfxCoreHelper::compressedBuffersSupported(localHwInfo));
     EXPECT_TRUE(GfxCoreHelper::compressedImagesSupported(localHwInfo));
 
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
-    DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    debugManager.flags.RenderCompressedImagesEnabled.set(0);
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
     EXPECT_FALSE(GfxCoreHelper::compressedBuffersSupported(localHwInfo));
@@ -88,7 +88,7 @@ HWTEST_F(GfxCoreHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPadd
 
     auto defaultPadding = gfxCoreHelper.getPaddingForISAAllocation();
     for (int32_t valueToTest : {0, 1, 2, 10}) {
-        DebugManager.flags.ForceExtendedKernelIsaSize.set(valueToTest);
+        debugManager.flags.ForceExtendedKernelIsaSize.set(valueToTest);
         EXPECT_EQ(gfxCoreHelper.getPaddingForISAAllocation(), defaultPadding + MemoryConstants::pageSize * valueToTest);
     }
 }
@@ -417,7 +417,7 @@ TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
 
 TEST(HwInfoTest, givenNodeOrdinalSetWhenChosenEngineTypeQueriedThenSetValueIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_VECS);
+    debugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_VECS);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     auto engineType = getChosenEngineType(hwInfo);
@@ -604,7 +604,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisa
 
 HWTEST_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStateIsProgrammedForScratchSpaceThenOverrideMocsIndexWithCorrectValue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.OverrideMocsIndexForScratchSpace.set(1);
+    debugManager.flags.OverrideMocsIndexForScratchSpace.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
@@ -769,7 +769,7 @@ HWTEST_F(GfxCoreHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemc
 
 TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsEnableWhenPlatformDoesNotSupportThenOverrideAndReturnSupportTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = false;
@@ -780,7 +780,7 @@ TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsEnableWhenPlatformD
 
 TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsDisableWhenPlatformSupportsThenOverrideAndReturnSupportFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(0);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = true;
@@ -791,7 +791,7 @@ TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsDisableWhenPlatform
 
 TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenPlatformDoesNotSupportThenReturnSupportFalse) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(-1);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = false;
@@ -802,7 +802,7 @@ TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSetting
 
 TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenPlatformSupportsThenReturnSupportTrue) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
+    debugManager.flags.EnableCacheFlushAfterWalker.set(-1);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = true;
@@ -821,13 +821,13 @@ TEST_F(GfxCoreHelperTest, givenEnableLocalMemoryDebugVarAndOsEnableLocalMemoryWh
     VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    DebugManager.flags.EnableLocalMemory.set(0);
+    debugManager.flags.EnableLocalMemory.set(0);
     EXPECT_FALSE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
 
-    DebugManager.flags.EnableLocalMemory.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
     EXPECT_TRUE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
 
-    DebugManager.flags.EnableLocalMemory.set(-1);
+    debugManager.flags.EnableLocalMemory.set(-1);
 
     OSInterface::osEnableLocalMemory = false;
     EXPECT_FALSE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
@@ -841,7 +841,7 @@ TEST_F(GfxCoreHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGe
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
     EXPECT_TRUE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
 }
 
@@ -880,18 +880,18 @@ HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationMode
         EXPECT_EQ(AuxTranslationMode::Builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
     }
 
-    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::None));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::None));
     EXPECT_EQ(AuxTranslationMode::None, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = false;
-    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
     EXPECT_EQ(AuxTranslationMode::Builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
     EXPECT_EQ(AuxTranslationMode::Blit, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
-    DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
     EXPECT_EQ(AuxTranslationMode::Builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 }
 
@@ -900,12 +900,12 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompr
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(0);
+    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(0);
     EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(0));
     EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB));
     EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1));
 
-    DebugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
     EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(0));
     EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB));
     EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1));
@@ -1031,12 +1031,12 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForIsaSystemMemoryPlacem
     localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, gfxCoreHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, gfxCoreHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 
-    DebugManager.flags.EnableLocalMemory.set(false);
+    debugManager.flags.EnableLocalMemory.set(false);
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hardwareInfo);
     EXPECT_NE(localMemoryEnabled, gfxCoreHelper.useSystemMemoryPlacementForISA(hardwareInfo));
@@ -1053,11 +1053,11 @@ HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperation
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    debugManager.flags.EnableBlitterOperationsSupport.set(1);
     productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 
-    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    debugManager.flags.EnableBlitterOperationsSupport.set(0);
     productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
@@ -1331,20 +1331,20 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallCopyThroughLocke
     DebugManagerStateRestore restorer;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
-    DebugManager.flags.ExperimentalCopyThroughLock.set(0);
+    debugManager.flags.ExperimentalCopyThroughLock.set(0);
     EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 
-    DebugManager.flags.ExperimentalCopyThroughLock.set(1);
+    debugManager.flags.ExperimentalCopyThroughLock.set(1);
     EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
 
-    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
 }
 
@@ -1564,7 +1564,7 @@ HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThe
 
 HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroupWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.set(1);
+    debugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.set(1);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     std::array<std::array<uint32_t, 5>, 8> values = {{

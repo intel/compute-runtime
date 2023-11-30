@@ -26,8 +26,8 @@ void EncodeWA<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &comman
 
 template <>
 inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable) {
-    if (DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get() != -1) {
-        preParserDisable = !DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get();
+    if (debugManager.flags.ForcePreParserEnabledForMiArbCheck.get() != -1) {
+        preParserDisable = !debugManager.flags.ForcePreParserEnabledForMiArbCheck.get();
     }
     if (preParserDisable.has_value()) {
         miArbCheck.setPreParserDisable(preParserDisable.value());

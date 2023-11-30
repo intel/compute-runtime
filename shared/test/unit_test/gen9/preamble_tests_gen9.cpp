@@ -54,7 +54,7 @@ GEN9TEST_F(PreambleTestGen9, givenKernelDebuggingActiveAndDisabledPreemptionWhen
 using ThreadArbitrationGen9 = PreambleFixture;
 GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotSet) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef Gen9Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef Gen9Family::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
@@ -80,7 +80,7 @@ GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbit
 
 GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCorrectValuesAreSet) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef Gen9Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef Gen9Family::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;

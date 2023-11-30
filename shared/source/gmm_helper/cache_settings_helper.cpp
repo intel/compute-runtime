@@ -18,14 +18,14 @@
 namespace NEO {
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper) {
-    if (DebugManager.flags.ForceUncachedGmmUsageType.get()) {
+    if (debugManager.flags.ForceUncachedGmmUsageType.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::UNKNOWN);
-        if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & DebugManager.flags.ForceUncachedGmmUsageType.get()) {
+        if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & debugManager.flags.ForceUncachedGmmUsageType.get()) {
             forceUncached = true;
         }
     }
 
-    if (forceUncached || DebugManager.flags.ForceAllResourcesUncached.get()) {
+    if (forceUncached || debugManager.flags.ForceAllResourcesUncached.get()) {
         return getDefaultUsageTypeWithCachingDisabled(allocationType);
     } else {
         return getDefaultUsageTypeWithCachingEnabled(allocationType, productHelper);
@@ -33,7 +33,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
 }
 
 bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (DebugManager.flags.EnableCpuCacheForResources.get()) {
+    if (debugManager.flags.EnableCpuCacheForResources.get()) {
         return false;
     }
     if (rootDeviceEnvironment.isWddmOnLinux()) {
@@ -53,12 +53,12 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
         return GMM_RESOURCE_USAGE_OCL_IMAGE;
     case AllocationType::INTERNAL_HEAP:
     case AllocationType::LINEAR_STREAM:
-        if (DebugManager.flags.DisableCachingForHeaps.get()) {
+        if (debugManager.flags.DisableCachingForHeaps.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
     case AllocationType::CONSTANT_SURFACE:
-        if (DebugManager.flags.ForceL1Caching.get() == 0) {
+        if (debugManager.flags.ForceL1Caching.get() == 0) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
@@ -67,7 +67,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::SVM_GPU:
     case AllocationType::UNIFIED_SHARED_MEMORY:
     case AllocationType::EXTERNAL_HOST_PTR:
-        if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
+        if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
@@ -77,7 +77,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::FILL_PATTERN:
     case AllocationType::SVM_CPU:
     case AllocationType::SVM_ZERO_COPY:
-        if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
+        if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;

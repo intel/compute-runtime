@@ -380,13 +380,13 @@ TEST(MemoryManagerTest, givenDebugVariableWhenCreatingMemoryManagerThenSetSuppor
     }
 
     {
-        DebugManager.flags.EnableMultiStorageResources.set(0);
+        debugManager.flags.EnableMultiStorageResources.set(0);
         MockMemoryManager memoryManager;
         EXPECT_FALSE(memoryManager.supportsMultiStorageResources);
     }
 
     {
-        DebugManager.flags.EnableMultiStorageResources.set(1);
+        debugManager.flags.EnableMultiStorageResources.set(1);
         MockMemoryManager memoryManager;
         EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
     }
@@ -677,7 +677,7 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubMan
 
 TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandlesAreCleanedAndAubManagerIsAvailableThenFreeMemoryIsCalledOnAubManager) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableFreeMemory.set(true);
+    debugManager.flags.EnableFreeMemory.set(true);
     const uint32_t rootDeviceIndex = 1u;
     MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get(), true, 3);
     MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
@@ -703,7 +703,7 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandle
 
 HWTEST_F(MemoryAllocatorTest, givenAllocationUsedByContextWhenFreeingThenHandleCompletionIsCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableFreeMemory.set(true);
+    debugManager.flags.EnableFreeMemory.set(true);
     const uint32_t rootDeviceIndex = 0u;
     auto mockManager0 = new MockAubManager();
     auto mockAubCenter0 = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
@@ -1149,7 +1149,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
 
 TEST(OsAgnosticMemoryManager, givenCompressionEnabledWhenAllocateGraphicsMemoryWithAlignmentIsCalledThenGmmIsAllocated) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(true);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, false, executionEnvironment);
@@ -1182,7 +1182,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledAndCompressionEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(true);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(true);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, false, executionEnvironment);
@@ -1469,7 +1469,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableLocalMemory.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -1524,7 +1524,7 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocatingGraphicsMemor
 
 TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemoryWhenAllocatingGraphicsMemoryThenBaseAddressIsEqualToInternalHeapBaseAddress) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->featureTable.flags.ftrLocalMemory = true;
@@ -1611,28 +1611,28 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
 }
 
 TEST(OsAgnosticMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
-    bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
-    DebugManager.flags.EnableDeferredDeleter.set(true);
+    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    debugManager.flags.EnableDeferredDeleter.set(true);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
+    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
-    bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
-    DebugManager.flags.EnableDeferredDeleter.set(false);
+    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
+    debugManager.flags.EnableDeferredDeleter.set(false);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
+    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCreatedThenAlignedto64KbAllocationIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.Enable64kbpages.set(true);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(true, false, executionEnvironment);
@@ -1725,7 +1725,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
         GTEST_SKIP();
     }
     DebugManagerStateRestore restore;
-    DebugManager.flags.EnableHostPtrTracking.set(0);
+    debugManager.flags.EnableHostPtrTracking.set(0);
 
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -1752,7 +1752,7 @@ INSTANTIATE_TEST_CASE_P(OsAgnosticMemoryManagerWithParams,
 
 TEST(OsAgnosticMemoryManager, givenFreeMemoryEnabledAndNonExternalHostPtrAllocationWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableFreeMemory.set(true);
+    debugManager.flags.EnableFreeMemory.set(true);
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     MockAubManager *mockManager = new MockAubManager();
@@ -1794,7 +1794,7 @@ TEST(OsAgnosticMemoryManager, givenFreeMemoryEnabledAndNonExternalHostPtrAllocat
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableFreeMemory.set(false);
+    debugManager.flags.EnableFreeMemory.set(false);
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     MockAubManager *mockManager = new MockAubManager();
@@ -1883,16 +1883,16 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWithFlagEnable64kbpage
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hwInfo = *defaultHwInfo;
-    DebugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.Enable64kbpages.set(true);
     hwInfo.capabilityTable.ftr64KBpages = true;
     EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    DebugManager.flags.Enable64kbpages.set(true);
+    debugManager.flags.Enable64kbpages.set(true);
     hwInfo.capabilityTable.ftr64KBpages = false;
     EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    DebugManager.flags.Enable64kbpages.set(false);
+    debugManager.flags.Enable64kbpages.set(false);
     hwInfo.capabilityTable.ftr64KBpages = false;
     EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    DebugManager.flags.Enable64kbpages.set(false);
+    debugManager.flags.Enable64kbpages.set(false);
     hwInfo.capabilityTable.ftr64KBpages = true;
     EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
 }
@@ -2730,13 +2730,13 @@ TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfac
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsSetTo0ThenHostPointerTrackingIsDisabled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableHostPtrTracking.set(0);
+    debugManager.flags.EnableHostPtrTracking.set(0);
     EXPECT_FALSE(memoryManager->isHostPointerTrackingEnabled(0u));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsNotSetTo1ThenHostPointerTrackingIsEnabled) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableHostPtrTracking.set(1);
+    debugManager.flags.EnableHostPtrTracking.set(1);
     EXPECT_TRUE(memoryManager->isHostPointerTrackingEnabled(0u));
 }
 
@@ -2751,7 +2751,7 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsS
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhen64BitAndHostPtrTrackingDisabledThenNonSvmHostPtrUsageIsSet) {
 
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableHostPtrTracking.set(0);
+    debugManager.flags.EnableHostPtrTracking.set(0);
 
     bool expectedValue = !is32bit;
 
@@ -2791,7 +2791,7 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingDisabledAnd64
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNonSvmHostPtrUsageDependsOnFullRangeSvm) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableHostPtrTracking.set(1);
+    debugManager.flags.EnableHostPtrTracking.set(1);
 
     auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::EXTERNAL_HOST_PTR, 0u);
     EXPECT_EQ(!executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit, result);

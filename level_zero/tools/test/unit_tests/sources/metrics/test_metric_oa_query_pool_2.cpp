@@ -220,7 +220,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     DebugManagerStateRestore restorer;
 
     ze_result_t returnValue;
-    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
@@ -294,7 +294,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     DebugManagerStateRestore restorer;
 
     ze_result_t returnValue;
-    DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;

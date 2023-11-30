@@ -112,7 +112,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndPartition
 
     WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1);
-    DebugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X));
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
     postSync.setDestinationAddress(postSyncAddress);
@@ -153,7 +153,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
-    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+    debugManager.flags.UseCrossAtomicSynchronization.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -204,8 +204,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPa
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
-    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
-    DebugManager.flags.WparidRegisterProgramming.set(1);
+    debugManager.flags.UseCrossAtomicSynchronization.set(1);
+    debugManager.flags.WparidRegisterProgramming.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -259,7 +259,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
-    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+    debugManager.flags.UseCrossAtomicSynchronization.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -310,7 +310,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
-    DebugManager.flags.WparidRegisterProgramming.set(0);
+    debugManager.flags.WparidRegisterProgramming.set(0);
 
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -347,7 +347,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
+    debugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
 
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -384,7 +384,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPrefe
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
+    debugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
 
     uint64_t workPartitionAllocationAddress = 0x0;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -492,7 +492,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
-    DebugManager.flags.WparidRegisterProgramming.set(1);
+    debugManager.flags.WparidRegisterProgramming.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
@@ -560,7 +560,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
-    DebugManager.flags.WparidRegisterProgramming.set(1);
+    debugManager.flags.WparidRegisterProgramming.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
@@ -620,7 +620,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
-    DebugManager.flags.WparidRegisterProgramming.set(1);
+    debugManager.flags.WparidRegisterProgramming.set(1);
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
@@ -679,7 +679,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+    debugManager.flags.UseCrossAtomicSynchronization.set(1);
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
@@ -746,7 +746,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
+    debugManager.flags.UseCrossAtomicSynchronization.set(1);
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
@@ -809,8 +809,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.UseCrossAtomicSynchronization.set(1);
-    DebugManager.flags.WparidRegisterProgramming.set(1);
+    debugManager.flags.UseCrossAtomicSynchronization.set(1);
+    debugManager.flags.WparidRegisterProgramming.set(1);
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
@@ -874,7 +874,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.SynchronizeWalkerInWparidMode.set(1);
+    debugManager.flags.SynchronizeWalkerInWparidMode.set(1);
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
@@ -942,7 +942,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
+    debugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
 
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
@@ -1118,7 +1118,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                           sizeof(MI_ATOMIC) +
                           sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
-    DebugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
+    debugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -1321,8 +1321,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
+    debugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
+    debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     testHardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     size_t expectedSize = sizeof(MI_ATOMIC) +
@@ -1404,7 +1404,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(0);
+    debugManager.flags.ProgramWalkerPartitionSelfCleanup.set(0);
 
     size_t expectedSize = sizeof(PIPE_CONTROL) +
                           sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
@@ -1457,7 +1457,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
+    debugManager.flags.ProgramWalkerPartitionSelfCleanup.set(1);
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
@@ -1514,7 +1514,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    DebugManager.flags.ProgramStallCommandForSelfCleanup.set(1);
+    debugManager.flags.ProgramStallCommandForSelfCleanup.set(1);
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
@@ -1568,7 +1568,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, givenDebugFlagSetWhenCheckingImmWriteOffsetThenReturnQwordSize) {
     EXPECT_EQ(static_cast<uint32_t>(GfxCoreHelperHw<FamilyType>::getSingleTimestampPacketSizeHw()), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());
 
-    DebugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
+    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
 
     if (ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
         EXPECT_EQ(static_cast<uint32_t>(sizeof(uint64_t)), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());

@@ -38,7 +38,7 @@ TEST_F(ClGetExtensionFunctionAddressTests, GivenClGetDeviceIDsFromVaApiMediaAdap
 
 TEST_F(ClGetExtensionFunctionAddressTests, givenEnabledFormatQueryWhenGettingFuncionAddressThenCorrectAddressIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableFormatQuery.set(true);
+    debugManager.flags.EnableFormatQuery.set(true);
 
     auto retVal = clGetExtensionFunctionAddress("clGetSupportedVA_APIMediaSurfaceFormatsINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetSupportedVA_APIMediaSurfaceFormatsINTEL));
@@ -46,7 +46,7 @@ TEST_F(ClGetExtensionFunctionAddressTests, givenEnabledFormatQueryWhenGettingFun
 
 TEST_F(ClGetExtensionFunctionAddressTests, givenDisabledFormatQueryWhenGettingFuncionAddressThenNullptrIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableFormatQuery.set(false);
+    debugManager.flags.EnableFormatQuery.set(false);
 
     auto retVal = clGetExtensionFunctionAddress("clGetSupportedVA_APIMediaSurfaceFormatsINTEL");
     EXPECT_EQ(retVal, nullptr);

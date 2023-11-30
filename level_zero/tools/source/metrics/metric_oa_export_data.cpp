@@ -134,7 +134,7 @@ ze_result_t MetricOaExporter01::assignTypedValue(zet_intel_metric_df_gpu_typed_v
         break;
 
     default:
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Typed value 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mdTypedValue.ValueType),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -162,7 +162,7 @@ ze_result_t MetricOaExporter01::assignAdapterId(zet_intel_metric_df_gpu_adapter_
         break;
 
     default:
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Adapter Type 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mAdapterId->Type),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -206,7 +206,7 @@ ze_result_t MetricOaExporter01::getEquationOperation(zet_intel_metric_df_gpu_equ
     };
 
     if (equationOperationMap.find(mdEquationOperation) == equationOperationMap.end()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Equation Operation 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mdEquationOperation),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -324,7 +324,7 @@ ze_result_t MetricOaExporter01::assignEquation(zet_intel_metric_df_gpu_equation_
             break;
 
         default:
-            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Error: Unknown Equation Element Type 0x%x at %s():%d returning 0x%x\n",
                                   static_cast<uint32_t>(mdElement->Type),
                                   __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -358,7 +358,7 @@ ze_result_t MetricOaExporter01::getDeltaFunction(zet_intel_metric_df_gpu_delta_f
     };
 
     if (deltaFunctionMap.find(mdDeltaFunction.FunctionType) == deltaFunctionMap.end()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Delta Function Type 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mdDeltaFunction.FunctionType),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -381,7 +381,7 @@ ze_result_t MetricOaExporter01::getInformationType(zet_intel_metric_df_gpu_infor
         {MetricsDiscovery::INFORMATION_TYPE_GPU_NODE, ZET_INTEL_METRIC_DF_INFORMATION_TYPE_GPU_NODE}};
 
     if (informationTypeMap.find(mdInfoType) == informationTypeMap.end()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Information Type 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mdInfoType),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -506,7 +506,7 @@ ze_result_t MetricOaExporter01::getMetricType(zet_intel_metric_df_gpu_metric_typ
     };
 
     if (metricTypeMap.find(mdMetricType) == metricTypeMap.end()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Metric Type 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mdMetricType),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -526,7 +526,7 @@ ze_result_t MetricOaExporter01::getMetricResultType(zet_intel_metric_df_gpu_metr
     };
 
     if (resultTypeMap.find(mdResultType) == resultTypeMap.end()) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: Unknown Metric Result Type 0x%x at %s():%d returning 0x%x\n",
                               static_cast<uint32_t>(mdResultType),
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
@@ -753,7 +753,7 @@ ze_result_t OaMetricGroupImp::getExportData(const uint8_t *pRawData,
     }
 
     if (*pExportDataSize < expectedExportDataSize) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error:Incorrect Size Passed at %s():%d returning 0x%x\n",
                               __FUNCTION__, __LINE__, ZE_RESULT_ERROR_INVALID_SIZE);
         return ZE_RESULT_ERROR_INVALID_SIZE;
@@ -771,7 +771,7 @@ ze_result_t OaMetricGroupImp::getExportData(const uint8_t *pRawData,
     // read and update the export data
     status = exporter01.getExportData(&exportData->format01.oaData);
     if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Error: ExportData_0_1 Failed at %s():%d returning 0x%x\n",
                               __FUNCTION__, __LINE__, status);
         return status;

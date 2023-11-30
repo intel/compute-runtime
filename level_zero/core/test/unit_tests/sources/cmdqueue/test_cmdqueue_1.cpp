@@ -129,7 +129,7 @@ HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingBy
 
 HWTEST_F(CommandQueueCreate, givenPrintfKernelAndDetectedHangWhenSynchronizingThenPrintPrintfOutputAfterHangIsCalled) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+    NEO::debugManager.flags.OverrideUseKmdWaitFunction.set(1);
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
@@ -313,7 +313,7 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -412,7 +412,7 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
 
 HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferThenLeftoverIsZeroed, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableSWTags.set(1);
+    NEO::debugManager.flags.EnableSWTags.set(1);
     const ze_command_queue_desc_t desc = {};
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     commandQueue->initialize(false, false, false);
@@ -493,7 +493,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -535,7 +535,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndImmediateCmdListWhen
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -854,7 +854,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
 
 struct DeferredContextCreationDeviceCreateCommandQueueTest : DeviceCreateCommandQueueTest {
     void SetUp() override {
-        DebugManager.flags.DeferOsContextInitialization.set(1);
+        debugManager.flags.DeferOsContextInitialization.set(1);
         DeviceCreateCommandQueueTest::SetUp();
     }
 
@@ -900,9 +900,9 @@ TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQue
 
 struct CommandQueueCreateWithMultipleRegularContextsTests : public DeviceCreateCommandQueueTest {
     void SetUp() override {
-        DebugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
-        DebugManager.flags.EnableMultipleRegularContextForBcs.set(1);
-        DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
+        debugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
+        debugManager.flags.EnableMultipleRegularContextForBcs.set(1);
+        debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
         backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -1045,7 +1045,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
 
 struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {
     void setUp() {
-        DebugManager.flags.EnableImplicitScaling = false;
+        debugManager.flags.EnableImplicitScaling = false;
         MultiDeviceFixture::setUp();
     }
 };
@@ -1255,7 +1255,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
 
 HWTEST2_F(ExecuteCommandListTests, givenBindlessHelperWhenCommandListIsExecutedOnCommandQueueThenHeapContainerIsEmpty, IsAtLeastSkl) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(), neoDevice->getNumGenericSubDevices() > 1, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     ze_command_queue_desc_t desc = {};
@@ -1912,7 +1912,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
 
 HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhenExecutingCmdListThenSetZeroBatchBufferStartAddress) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(0);
+    NEO::debugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(0);
 
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     ze_command_queue_desc_t desc = {};
@@ -1959,7 +1959,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
 
 TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToDefaultWhenCommandQueueIsCreatedWithSynchronousModeThenDefaultModeIsSelected) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.set(0);
+    NEO::debugManager.flags.OverrideCmdQueueSynchronousMode.set(0);
 
     ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
@@ -1982,7 +1982,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToDefaultWhenCommandQueu
 
 TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToAsynchronousWhenCommandQueueIsCreatedWithSynchronousModeThenAsynchronousModeIsSelected) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.set(2);
+    NEO::debugManager.flags.OverrideCmdQueueSynchronousMode.set(2);
 
     ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
@@ -2005,7 +2005,7 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToAsynchronousWhenComman
 
 TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommandQueueIsCreatedWithAsynchronousModeThenSynchronousModeIsSelected) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.set(1);
+    NEO::debugManager.flags.OverrideCmdQueueSynchronousMode.set(1);
 
     ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -2089,7 +2089,7 @@ struct SVMAllocsManagerMock : public NEO::SVMAllocsManager {
 
 TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmiPackEnabledThenMakeIndirectAllocResidentCalled) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(1);
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(1);
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -2115,7 +2115,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
 
 TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmiPackDisabeldThenAddInternalAllocationsToResidencyContainer) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -2142,7 +2142,7 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
 
 TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidencyCalledAndSubmiPackDisabeldThenSVMAllocsMtxIsLocked) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 

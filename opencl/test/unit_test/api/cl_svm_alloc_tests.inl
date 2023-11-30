@@ -225,7 +225,7 @@ TEST_F(ClSVMAllocTests, givenUnrestrictedFlagWhenCreatingSvmAllocThenAllowSizeBi
     {
         // debug flag + not allowed size
         DebugManagerStateRestore restorer;
-        DebugManager.flags.AllowUnrestrictedSize.set(1);
+        debugManager.flags.AllowUnrestrictedSize.set(1);
         svmPtr = clSVMAlloc(pContext, 0, notAllowedSize, 0);
         EXPECT_NE(nullptr, svmPtr);
         clSVMFree(pContext, svmPtr);
@@ -271,7 +271,7 @@ TEST_F(ClSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocat
     EXPECT_EQ(nullptr, allocation);
     clSVMFree(pContext, allocation);
 
-    DebugManager.flags.ForceFineGrainedSVMSupport.set(1);
+    debugManager.flags.ForceFineGrainedSVMSupport.set(1);
     allocation = clSVMAlloc(pContext, CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER, 4096 /* Size */, 0 /* alignment */);
     EXPECT_NE(nullptr, allocation);
     clSVMFree(pContext, allocation);

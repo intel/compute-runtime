@@ -78,7 +78,7 @@ struct MockWddmCsrL0 : public WddmCommandStreamReceiver<GfxFamily> {
             return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission();
         }
         bool ret = true;
-        if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+        if (debugManager.flags.EnableDirectSubmission.get() == 1) {
             if (!initBlitterDirectSubmission) {
                 directSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(*this);

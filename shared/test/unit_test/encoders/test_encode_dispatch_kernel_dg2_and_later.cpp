@@ -106,7 +106,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
                                                            PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K};
 
     for (auto debugOverrideValue : debugOverrideValues) {
-        DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(debugOverrideValue);
+        debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(debugOverrideValue);
         const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
             {0, debugOverrideValue},
             {32 * KB, debugOverrideValue},
@@ -121,7 +121,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocatio
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);
+    debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 1;

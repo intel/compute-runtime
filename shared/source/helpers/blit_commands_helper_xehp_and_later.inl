@@ -46,8 +46,8 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
 
     uint32_t compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
-    if (DebugManager.flags.ForceBufferCompressionFormat.get() != -1) {
-        compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
+    if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
+        compressionFormat = debugManager.flags.ForceBufferCompressionFormat.get();
     }
 
     if (dstAlloc->isCompressionEnabled()) {
@@ -60,16 +60,16 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
-    if (DebugManager.flags.OverrideBlitterMocs.get() == 1) {
+    if (debugManager.flags.OverrideBlitterMocs.get() == 1) {
         mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     }
 
     blitCmd.setDestinationMOCS(mocs);
 
-    if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
-        if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
+    if (debugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
+        if (debugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
             blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
-        } else if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
+        } else if (debugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
             blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
         }
     }
@@ -285,7 +285,7 @@ void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_CO
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream) {
-    if (DebugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
+    if (debugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         constexpr uint32_t globalInvalidationRegister = 0xB404u;
         LriHelper<GfxFamily>::program(&commandStream, globalInvalidationRegister, 1u, false);
@@ -299,7 +299,7 @@ void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &co
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
-    if (DebugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
+    if (debugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
         return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
     }
     return 0u;
@@ -360,8 +360,8 @@ template <typename GfxFamily>
 bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaArgs &waArgs) {
     if (waArgs.isWaRequired) {
         UNRECOVERABLE_IF(!waArgs.rootDeviceEnvironment);
-        if (DebugManager.flags.ForceDummyBlitWa.get() != -1) {
-            return DebugManager.flags.ForceDummyBlitWa.get();
+        if (debugManager.flags.ForceDummyBlitWa.get() != -1) {
+            return debugManager.flags.ForceDummyBlitWa.get();
         }
         auto &productHelper = waArgs.rootDeviceEnvironment->getProductHelper();
         return productHelper.isDummyBlitWaRequired();

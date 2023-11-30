@@ -18,7 +18,7 @@ TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenW
     DebugManagerStateRestore restorer;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useWaitForTimestamps = true;
-    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+    debugManager.flags.EnableTimestampWaitForQueues.set(4);
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(pDevice.get());

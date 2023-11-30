@@ -174,7 +174,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMovingAllocsOfGivenUMMan
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintUmdSharedMigration.set(1);
+    debugManager.flags.PrintUmdSharedMigration.set(1);
 
     auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
@@ -312,7 +312,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMovingToGpuDomainThenUpd
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintUmdSharedMigration.set(1);
+    debugManager.flags.PrintUmdSharedMigration.set(1);
 
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *alloc = reinterpret_cast<void *>(0x1);
@@ -498,7 +498,7 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultThenVerifyPagefaultUn
 
 TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintUmdSharedMigration.set(1);
+    debugManager.flags.PrintUmdSharedMigration.set(1);
 
     void *alloc = reinterpret_cast<void *>(0x1);
 
@@ -538,7 +538,7 @@ TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDe
 
 TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMigrationDebugKeyThenMessageIsPrinted) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.PrintUmdSharedMigration.set(1);
+    debugManager.flags.PrintUmdSharedMigration.set(1);
 
     void *alloc = reinterpret_cast<void *>(0x1);
 
@@ -715,7 +715,7 @@ TEST_F(PageFaultManagerTest, givenPageFaultMAnagerWhenSetCpuAllocEvictableIsCall
     REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     DebugManagerStateRestore restore;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
     auto pageFaultManager = new MockPageFaultManager;
     memoryManager->pageFaultManager.reset(pageFaultManager);
@@ -743,7 +743,7 @@ TEST_F(PageFaultManagerTest, givenCalWhenSelectingHandlerThenAubTbxAndCalGpuDoma
     EXPECT_EQ(pageFaultManager->getHwHandlerAddress(), reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
 
     DebugManagerStateRestore restorer;
-    DebugManager.flags.NEO_CAL_ENABLED.set(true);
+    debugManager.flags.NEO_CAL_ENABLED.set(true);
 
     pageFaultManager->selectGpuDomainHandler();
 
@@ -755,7 +755,7 @@ TEST_F(PageFaultManagerTest, givenAubOrTbxCsrWhenSelectingHandlerThenAubAndTbxGp
 
     for (auto csrType : {CommandStreamReceiverType::CSR_AUB, CommandStreamReceiverType::CSR_TBX,
                          CommandStreamReceiverType::CSR_HW_WITH_AUB, CommandStreamReceiverType::CSR_TBX_WITH_AUB}) {
-        DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+        debugManager.flags.SetCommandStreamReceiver.set(csrType);
 
         auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
         pageFaultManager2->selectGpuDomainHandler();
@@ -769,7 +769,7 @@ TEST_F(PageFaultManagerTest, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandle
 
     EXPECT_EQ(pageFaultManager->getHwHandlerAddress(), reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
 
-    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_HW);
+    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_HW);
 
     auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
     pageFaultManager2->selectGpuDomainHandler();
@@ -795,7 +795,7 @@ struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint3
 
 TEST_P(PageFaultManagerTestWithDebugFlag, givenDebugFlagWhenInsertingAllocationThenItOverridesHints) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UsmInitialPlacement.set(GetParam()); // Should be ignored by the driver, when passing hints
+    debugManager.flags.UsmInitialPlacement.set(GetParam()); // Should be ignored by the driver, when passing hints
     const auto expectedDomain = GetParam() == 1 ? PageFaultManager::AllocationDomain::None : PageFaultManager::AllocationDomain::Cpu;
 
     void *allocs[] = {

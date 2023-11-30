@@ -218,7 +218,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     }
 
     StackVec<BuiltInCodeType, 2> supportedTypes{};
-    if (!NEO::DebugManager.flags.RebuildPrecompiledKernels.get()) {
+    if (!NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
         supportedTypes.push_back(BuiltInCodeType::Binary);
     }
     supportedTypes.push_back(BuiltInCodeType::Intermediate);

@@ -312,7 +312,7 @@ TEST_F(BufferSetArgTest, WhenGettingKernelArgThenBufferIsReturned) {
 
 TEST_F(BufferSetArgTest, givenKernelArgBufferWhenAddPathInfoDataIsSetThenPatchInfoDataIsCollected) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     cl_mem memObj = buffer;
 
     retVal = pKernel->setArg(

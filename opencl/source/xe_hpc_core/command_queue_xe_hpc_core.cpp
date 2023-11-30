@@ -29,8 +29,8 @@ void populateFactoryTable<CommandQueueHw<Family>>() {
 
 template <>
 bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
-    if (DebugManager.flags.ForceCacheFlushForBcs.get() != -1) {
-        return !!DebugManager.flags.ForceCacheFlushForBcs.get();
+    if (debugManager.flags.ForceCacheFlushForBcs.get() != -1) {
+        return !!debugManager.flags.ForceCacheFlushForBcs.get();
     }
     return false;
 }

@@ -59,7 +59,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
     bool useContextEndOffset = eventPool->isImplicitScalingCapableFlagSet() && !NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled();
-    int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
+    int32_t overrideUseContextEndOffset = NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
         useContextEndOffset = !!overrideUseContextEndOffset;
     }
@@ -78,17 +78,17 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     } else {
         event->timestampRefreshIntervalInNanoSec = maxKernelTsValue / 2;
     }
-    if (NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.get() != -1) {
+    if (NEO::debugManager.flags.EventTimestampRefreshIntervalInMilliSec.get() != -1) {
         constexpr uint32_t milliSecondsToNanoSeconds = 1000000u;
-        const uint32_t refreshTime = NEO::DebugManager.flags.EventTimestampRefreshIntervalInMilliSec.get();
+        const uint32_t refreshTime = NEO::debugManager.flags.EventTimestampRefreshIntervalInMilliSec.get();
         event->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
     }
 
-    if (eventPool->isCounterBased() || NEO::DebugManager.flags.ForceInOrderEvents.get() == 1) {
+    if (eventPool->isCounterBased() || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
         event->enableCounterBasedMode(true);
     }
 
-    if (NEO::DebugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1) {
+    if (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1) {
         event->enableKmdWaitMode();
     }
 
@@ -455,8 +455,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_SUCCESS;
     }
 
-    if (NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.get() != -1) {
-        timeout = NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.get();
+    if (NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get() != -1) {
+        timeout = NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get();
     }
 
     waitStartTime = std::chrono::high_resolution_clock::now();
@@ -522,8 +522,8 @@ ze_result_t EventImp<TagSizeT>::reset() {
         inOrderExecSignalValue = 0;
     }
 
-    if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
-        if (NEO::DebugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus() != ZE_RESULT_SUCCESS) {
+    if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() != -1) {
+        if (NEO::debugManager.flags.SynchronizeEventBeforeReset.get() == 2 && queryStatus() != ZE_RESULT_SUCCESS) {
             printf("\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", this);
         }
 
@@ -589,7 +589,7 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *cou
     globalStartTs = globalEndTs = contextStartTs = contextEndTs = Event::STATE_INITIAL;
     bool isStaticPartitioning = true;
 
-    if (NEO::DebugManager.flags.EnableStaticPartitioning.get() == 0) {
+    if (NEO::debugManager.flags.EnableStaticPartitioning.get() == 0) {
         isStaticPartitioning = false;
     }
 

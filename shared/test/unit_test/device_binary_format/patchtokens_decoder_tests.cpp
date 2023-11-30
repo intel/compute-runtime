@@ -1213,7 +1213,7 @@ TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenD
 TEST(ProgramDecoder, givenPatchTokenInterfaceDescriptorDataWhenFlagPrintDebugMessagesAndDecodeTokenThenRightMessagePrinted) {
     using namespace iOpenCL;
     DebugManagerStateRestore debugManagerStateRestore;
-    DebugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
 
     std::vector<uint8_t> storage;
     storage.reserve(512);

@@ -40,8 +40,8 @@ void DrmMemoryManagerFixture::setUp() {
 void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled) {
     ASSERT_NE(nullptr, executionEnvironment);
     executionEnvironment->incRefInternal();
-    DebugManager.flags.DeferOsContextInitialization.set(0);
-    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.SetAmountOfReusableAllocations.set(0);
 
     environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>();
     allocationData.rootDeviceIndex = rootDeviceIndex;
@@ -126,7 +126,7 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp() {
     setUp(false);
 }
 void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocalMem) {
-    DebugManager.flags.DeferOsContextInitialization.set(0);
+    debugManager.flags.DeferOsContextInitialization.set(0);
 
     executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
