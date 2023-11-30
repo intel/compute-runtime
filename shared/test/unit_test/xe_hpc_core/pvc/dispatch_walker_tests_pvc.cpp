@@ -44,7 +44,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor};
     for (auto &testInput : testInputs) {
         for (auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
@@ -70,7 +70,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemF
     hwInfo.platform.usRevId = 0x3;
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false, kernelDescriptor};
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, false, kernelDescriptor};
     for (auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 

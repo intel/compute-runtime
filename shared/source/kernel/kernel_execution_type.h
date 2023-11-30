@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 
 namespace NEO {
 enum class KernelExecutionType {
-    Default = 0x0u,
-    Concurrent = 0x1u,
-    NotApplicable = 0x2u
+    defaultType = 0x0u,
+    concurrent = 0x1u,
+    notApplicable = 0x2u
 };
 } // namespace NEO

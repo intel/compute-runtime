@@ -1080,7 +1080,7 @@ void CmdListLargeGrfFixture::testBody() {
     auto result = ZE_RESULT_SUCCESS;
 
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -1128,7 +1128,7 @@ void CmdListLargeGrfFixture::testBody() {
     }
 
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1148,7 +1148,7 @@ void CmdListLargeGrfFixture::testBody() {
         cmdList.clear();
         stateComputeModeList.clear();
 
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1195,7 +1195,7 @@ void CmdListLargeGrfFixture::testBody() {
     }
 
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1215,7 +1215,7 @@ void CmdListLargeGrfFixture::testBody() {
         cmdList.clear();
         stateComputeModeList.clear();
 
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1238,7 +1238,7 @@ void CmdListLargeGrfFixture::testBody() {
         cmdList.clear();
         stateComputeModeList.clear();
 
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1284,7 +1284,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->reset();
     }
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

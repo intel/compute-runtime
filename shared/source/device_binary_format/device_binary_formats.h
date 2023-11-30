@@ -82,7 +82,7 @@ struct SingleDeviceBinary {
     GeneratorType generator = GeneratorType::Igc;
 };
 
-template <DeviceBinaryFormat Format>
+template <DeviceBinaryFormat format>
 bool isDeviceBinaryFormat(const ArrayRef<const uint8_t> binary);
 
 template <>
@@ -110,7 +110,7 @@ inline bool isAnyDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) {
     return false;
 }
 
-template <DeviceBinaryFormat Format>
+template <DeviceBinaryFormat format>
 SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                             std::string &outErrReason, std::string &outWarning);
 
@@ -141,7 +141,7 @@ inline SingleDeviceBinary unpackSingleDeviceBinary(const ArrayRef<const uint8_t>
     return ret;
 }
 
-template <DeviceBinaryFormat Format>
+template <DeviceBinaryFormat format>
 std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::string &outErrReason, std::string &outWarning);
 
 template <>
@@ -166,7 +166,7 @@ inline bool isAnySingleDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) 
     return ((false == isAnyPackedDeviceBinaryFormat(binary)) && isAnyDeviceBinaryFormat(binary)) || isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(binary);
 }
 
-template <DeviceBinaryFormat Format>
+template <DeviceBinaryFormat format>
 DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper);
 
 template <>

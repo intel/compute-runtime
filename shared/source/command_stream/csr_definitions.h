@@ -35,7 +35,7 @@ namespace L3CachingSettings {
 inline constexpr uint32_t l3CacheOn = 0u;
 inline constexpr uint32_t l3CacheOff = 1u;
 inline constexpr uint32_t l3AndL1On = 2u;
-inline constexpr uint32_t NotApplicable = 3u;
+inline constexpr uint32_t notApplicable = 3u;
 } // namespace L3CachingSettings
 
 struct DispatchBcsFlags {
@@ -96,12 +96,12 @@ struct DispatchFlags {
     FlushStampTrackingObj *flushStampReference = nullptr;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
-    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+    uint32_t numGrfRequired = GrfConfig::defaultGrfNumber;
     uint32_t l3CacheSettings = L3CachingSettings::l3CacheOn;
     int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
-    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
-    KernelExecutionType kernelExecutionType = KernelExecutionType::NotApplicable;
-    MemoryCompressionState memoryCompressionState = MemoryCompressionState::NotApplicable;
+    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::notApplicable;
+    KernelExecutionType kernelExecutionType = KernelExecutionType::notApplicable;
+    MemoryCompressionState memoryCompressionState = MemoryCompressionState::notApplicable;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     uint64_t engineHints = 0;
     bool blocking = false;

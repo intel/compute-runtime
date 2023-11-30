@@ -274,20 +274,20 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G11OrG12WhenAskingIfMaxThreadsForWorkgro
 DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequiredThenReturnTrue) {
     auto hwInfo = *defaultHwInfo;
     std::vector<std::pair<unsigned short, uint16_t>> dg2Configs =
-        {{dg2G10DeviceIds[0], REV_ID_A0},
-         {dg2G10DeviceIds[0], REV_ID_A1},
-         {dg2G10DeviceIds[0], REV_ID_B0},
-         {dg2G10DeviceIds[0], REV_ID_C0},
-         {dg2G11DeviceIds[0], REV_ID_A0},
-         {dg2G11DeviceIds[0], REV_ID_B0},
-         {dg2G11DeviceIds[0], REV_ID_B1},
-         {dg2G12DeviceIds[0], REV_ID_A0}};
+        {{dg2G10DeviceIds[0], revIdA0},
+         {dg2G10DeviceIds[0], revIdA1},
+         {dg2G10DeviceIds[0], revIdB0},
+         {dg2G10DeviceIds[0], revIdC0},
+         {dg2G11DeviceIds[0], revIdA0},
+         {dg2G11DeviceIds[0], revIdB0},
+         {dg2G11DeviceIds[0], revIdB1},
+         {dg2G12DeviceIds[0], revIdA0}};
 
     for (const auto &[deviceID, revisionID] : dg2Configs) {
         hwInfo.platform.usRevId = revisionID;
         hwInfo.platform.usDeviceID = deviceID;
         hwInfo.ipVersion.value = compilerProductHelper->getHwIpVersion(hwInfo);
-        auto expectedValue = DG2::isG10(hwInfo) && revisionID < REV_ID_B0;
+        auto expectedValue = DG2::isG10(hwInfo) && revisionID < revIdB0;
         refreshReleaseHelper(&hwInfo);
 
         EXPECT_EQ(expectedValue, productHelper->isDefaultEngineTypeAdjustmentRequired(hwInfo));

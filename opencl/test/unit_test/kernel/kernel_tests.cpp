@@ -510,7 +510,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     bool isMultiOsContextCapable() const override { return false; }
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
-        return MemoryCompressionState::NotApplicable;
+        return MemoryCompressionState::notApplicable;
     }
 
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), 0, 1) {
@@ -2928,23 +2928,23 @@ TEST(KernelTest, GivenDifferentValuesWhenSetKernelExecutionTypeIsCalledThenCorre
     auto &kernel = *mockKernelWithInternals.mockKernel;
     cl_int retVal;
 
-    EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+    EXPECT_EQ(KernelExecutionType::defaultType, kernel.executionType);
 
     retVal = kernel.setKernelExecutionType(-1);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+    EXPECT_EQ(KernelExecutionType::defaultType, kernel.executionType);
 
     retVal = kernel.setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(KernelExecutionType::Concurrent, kernel.executionType);
+    EXPECT_EQ(KernelExecutionType::concurrent, kernel.executionType);
 
     retVal = kernel.setKernelExecutionType(-1);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    EXPECT_EQ(KernelExecutionType::Concurrent, kernel.executionType);
+    EXPECT_EQ(KernelExecutionType::concurrent, kernel.executionType);
 
     retVal = kernel.setKernelExecutionType(CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(KernelExecutionType::Default, kernel.executionType);
+    EXPECT_EQ(KernelExecutionType::defaultType, kernel.executionType);
 }
 
 TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseWhenGettingStartOffsetThenOffsetToSkipPerThreadDataLoadIsAdded) {
@@ -3073,8 +3073,8 @@ TEST(KernelTest, givenKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueI
 
     mockKernel.setAdditionalKernelExecInfo(123u);
     EXPECT_EQ(123u, mockKernel.getAdditionalKernelExecInfo());
-    mockKernel.setAdditionalKernelExecInfo(AdditionalKernelExecInfo::NotApplicable);
-    EXPECT_EQ(AdditionalKernelExecInfo::NotApplicable, mockKernel.getAdditionalKernelExecInfo());
+    mockKernel.setAdditionalKernelExecInfo(AdditionalKernelExecInfo::notApplicable);
+    EXPECT_EQ(AdditionalKernelExecInfo::notApplicable, mockKernel.getAdditionalKernelExecInfo());
 }
 
 using KernelMultiRootDeviceTest = MultiRootDeviceFixture;
@@ -3238,7 +3238,7 @@ HWTEST_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSiz
     {
         MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
 
-        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
@@ -3247,7 +3247,7 @@ HWTEST_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSiz
     {
         MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
 
-        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, *kernel.maxWorkGroupSizeForCrossThreadData);
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
@@ -3256,7 +3256,7 @@ HWTEST_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSiz
     {
         MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
-        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+        pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);

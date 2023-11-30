@@ -378,7 +378,7 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
     size_t sizeAfter = 0;
     auto result = ZE_RESULT_SUCCESS;
 
-    mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
     mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
 
     sizeBefore = commandListStream.getUsed();

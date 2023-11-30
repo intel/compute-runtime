@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include <cstdint>
 
 namespace GrfConfig {
-inline constexpr uint32_t DefaultGrfNumber = 128u;
-inline constexpr uint32_t LargeGrfNumber = 256u;
-inline constexpr uint32_t NotApplicable = 0u;
+inline constexpr uint32_t defaultGrfNumber = 128u;
+inline constexpr uint32_t largeGrfNumber = 256u;
+inline constexpr uint32_t notApplicable = 0u;
 } // namespace GrfConfig

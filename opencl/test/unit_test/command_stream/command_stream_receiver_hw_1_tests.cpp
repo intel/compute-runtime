@@ -604,7 +604,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
             mockCsr->getStreamProperties().frontEndState = {};
             mockCsr->getStreamProperties().frontEndState.initSupport(rootDeviceEnvironment);
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-            flags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+            flags.additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
 
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;
@@ -616,7 +616,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
         }
         {
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-            flags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+            flags.additionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;
             mockCsr->programVFEState(commandStream, flags, 10);

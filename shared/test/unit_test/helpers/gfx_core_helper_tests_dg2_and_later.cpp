@@ -73,15 +73,15 @@ HWTEST2_F(GfxCoreHelperWithLargeGrf, givenLargeGrfAndSimdSmallerThan32WhenCalcul
     NEO::KernelDescriptor kernelDescriptor{};
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
-    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
     EXPECT_EQ((defaultMaxGroupSize >> 1), gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 
     kernelDescriptor.kernelAttributes.simdSize = 32;
-    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
-    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 }
 

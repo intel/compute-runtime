@@ -2490,7 +2490,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnq
     mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::concurrent);
 }
 
 HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDoingNonBlockedEnqueueThenKernelTypeInCSRIsChanging) {
@@ -2506,15 +2506,15 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
 
     pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
     mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::concurrent);
 
     mockCmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
-    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::concurrent);
 
     pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL);
     mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Default);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::defaultType);
 }
 
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
@@ -2533,7 +2533,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueu
     userEvent.setStatus(CL_COMPLETE);
 
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
+    EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::concurrent);
     mockCmdQ->isQueueBlocked();
 }
 

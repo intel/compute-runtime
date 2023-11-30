@@ -3546,7 +3546,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
+    if ((pKernel->getExecutionType() != KernelExecutionType::defaultType) ||
         pKernel->usesSyncBuffer()) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
@@ -6076,7 +6076,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
     }
 
     if (pKernel->usesSyncBuffer()) {
-        if (pKernel->getExecutionType() != KernelExecutionType::Concurrent) {
+        if (pKernel->getExecutionType() != KernelExecutionType::concurrent) {
             retVal = CL_INVALID_KERNEL;
             return retVal;
         }
@@ -6091,7 +6091,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
     }
 
-    if (pKernel->getExecutionType() == KernelExecutionType::Concurrent) {
+    if (pKernel->getExecutionType() == KernelExecutionType::concurrent) {
         size_t requestedNumberOfWorkgroups = 1;
         for (size_t i = 0; i < workDim; i++) {
             requestedNumberOfWorkgroups *= workgroupCount[i];

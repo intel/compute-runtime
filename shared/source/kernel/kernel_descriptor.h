@@ -60,7 +60,7 @@ struct KernelDescriptor {
         uint16_t inlineDataPayloadSize = 0U;
         uint16_t perThreadDataSize = 0U;
         uint16_t numArgsToPatch = 0U;
-        uint16_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+        uint16_t numGrfRequired = GrfConfig::defaultGrfNumber;
         uint16_t numArgsStateful = 0U;
         uint8_t barrierCount = 0u;
         bool hasNonKernelArgLoad = false;

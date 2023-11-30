@@ -812,7 +812,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     auto mediaSamplerRequired = false;
-    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+    uint32_t numGrfRequired = GrfConfig::defaultGrfNumber;
     auto systolicPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool auxTranslationRequired = false;
@@ -1135,12 +1135,12 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             flushStamp->getStampReference(),                                     // flushStampReference
             getThrottle(),                                                       // throttle
             device->getPreemptionMode(),                                         // preemptionMode
-            GrfConfig::NotApplicable,                                            // numGrfRequired
-            L3CachingSettings::NotApplicable,                                    // l3CacheSettings
+            GrfConfig::notApplicable,                                            // numGrfRequired
+            L3CachingSettings::notApplicable,                                    // l3CacheSettings
             ThreadArbitrationPolicy::NotPresent,                                 // threadArbitrationPolicy
-            AdditionalKernelExecInfo::NotApplicable,                             // additionalKernelExecInfo
-            KernelExecutionType::NotApplicable,                                  // kernelExecutionType
-            MemoryCompressionState::NotApplicable,                               // memoryCompressionState
+            AdditionalKernelExecInfo::notApplicable,                             // additionalKernelExecInfo
+            KernelExecutionType::notApplicable,                                  // kernelExecutionType
+            MemoryCompressionState::notApplicable,                               // memoryCompressionState
             getSliceCount(),                                                     // sliceCount
             blocking,                                                            // blocking
             false,                                                               // dcFlush

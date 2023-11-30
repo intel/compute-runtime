@@ -101,8 +101,8 @@ void StateComputeModeProperties::setDevicePreemptionProperty(PreemptionMode devi
 
 void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
     if (this->scmPropertiesSupport.largeGrfMode &&
-        (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
-        int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
+        (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::notApplicable)) {
+        int32_t largeGrfMode = (numGrfRequired == GrfConfig::largeGrfNumber ? 1 : 0);
         this->largeGrfMode.set(largeGrfMode);
     }
 }

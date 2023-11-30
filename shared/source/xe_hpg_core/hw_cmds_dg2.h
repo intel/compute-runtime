@@ -14,11 +14,11 @@
 
 namespace NEO {
 
-constexpr uint16_t REV_ID_A0 = 0;
-constexpr uint16_t REV_ID_A1 = 1;
-constexpr uint16_t REV_ID_B0 = 4;
-constexpr uint16_t REV_ID_B1 = 5;
-constexpr uint16_t REV_ID_C0 = 8;
+constexpr uint16_t revIdA0 = 0;
+constexpr uint16_t revIdA1 = 1;
+constexpr uint16_t revIdB0 = 4;
+constexpr uint16_t revIdB1 = 5;
+constexpr uint16_t revIdC0 = 8;
 
 struct DG2 : public XeHpgCoreFamily {
     static const PLATFORM platform;

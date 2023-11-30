@@ -90,12 +90,12 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
                                                 size_t argSize,
                                                 const void *argVal);
 
-    template <typename kernel_t = Kernel, typename program_t = Program>
-    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, ClDevice &clDevice, cl_int &errcodeRet) {
+    template <typename KernelType = Kernel, typename ProgramType = Program>
+    static KernelType *create(ProgramType *program, const KernelInfo &kernelInfo, ClDevice &clDevice, cl_int &errcodeRet) {
         cl_int retVal;
-        kernel_t *pKernel = nullptr;
+        KernelType *pKernel = nullptr;
 
-        pKernel = new kernel_t(program, kernelInfo, clDevice);
+        pKernel = new KernelType(program, kernelInfo, clDevice);
         retVal = pKernel->initialize();
 
         if (retVal != CL_SUCCESS) {
@@ -513,12 +513,12 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     char *crossThreadData = nullptr;
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
-    KernelExecutionType executionType = KernelExecutionType::Default;
+    KernelExecutionType executionType = KernelExecutionType::defaultType;
 
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
-    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
     uint32_t maxKernelWorkGroupSize = 0;
     uint32_t slmTotalSize = 0u;
     uint32_t sshLocalSize = 0u;

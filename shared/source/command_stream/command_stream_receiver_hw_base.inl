@@ -1020,16 +1020,16 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &cs
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads) {
     if (mediaVfeStateDirty) {
-        if (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable) {
+        if (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::notApplicable) {
             lastAdditionalKernelExecInfo = dispatchFlags.additionalKernelExecInfo;
         }
-        if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable) {
+        if (dispatchFlags.kernelExecutionType != KernelExecutionType::notApplicable) {
             lastKernelExecutionType = dispatchFlags.kernelExecutionType;
         }
         auto &hwInfo = peekHwInfo();
 
-        auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::Concurrent;
-        auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
+        auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::concurrent;
+        auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::notSet);
         this->streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced());
 
         auto &gfxCoreHelper = getGfxCoreHelper();
@@ -1425,7 +1425,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
 
 template <typename GfxFamily>
 inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired) const {
-    return MemoryCompressionState::NotApplicable;
+    return MemoryCompressionState::notApplicable;
 }
 
 template <typename GfxFamily>
@@ -1585,19 +1585,19 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(const DispatchFlags &dispatchFlags) {
     if (streamProperties.frontEndState.disableOverdispatch.value != -1) {
-        lastAdditionalKernelExecInfo = streamProperties.frontEndState.disableOverdispatch.value == 1 ? AdditionalKernelExecInfo::DisableOverdispatch : AdditionalKernelExecInfo::NotSet;
+        lastAdditionalKernelExecInfo = streamProperties.frontEndState.disableOverdispatch.value == 1 ? AdditionalKernelExecInfo::disableOverdispatch : AdditionalKernelExecInfo::notSet;
     }
     if (streamProperties.frontEndState.computeDispatchAllWalkerEnable.value != -1) {
-        lastKernelExecutionType = streamProperties.frontEndState.computeDispatchAllWalkerEnable.value == 1 ? KernelExecutionType::Concurrent : KernelExecutionType::Default;
+        lastKernelExecutionType = streamProperties.frontEndState.computeDispatchAllWalkerEnable.value == 1 ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
     }
 
     if (feSupportFlags.disableOverdispatch &&
-        (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable && lastAdditionalKernelExecInfo != dispatchFlags.additionalKernelExecInfo)) {
+        (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::notApplicable && lastAdditionalKernelExecInfo != dispatchFlags.additionalKernelExecInfo)) {
         setMediaVFEStateDirty(true);
     }
 
     if (feSupportFlags.computeDispatchAllWalker &&
-        (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType)) {
+        (dispatchFlags.kernelExecutionType != KernelExecutionType::notApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType)) {
         setMediaVFEStateDirty(true);
     }
 
@@ -1636,7 +1636,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTrans
         this->latestSentStatelessMocsConfig = static_cast<uint32_t>(this->streamProperties.stateBaseAddress.statelessMocs.value);
     }
     auto mocsIndex = this->latestSentStatelessMocsConfig;
-    if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
+    if (dispatchFlags.l3CacheSettings != L3CachingSettings::notApplicable) {
         auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
         auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
 
@@ -1650,7 +1650,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTrans
     this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex);
 
     auto memoryCompressionState = this->lastMemoryCompressionState;
-    if (dispatchFlags.memoryCompressionState != MemoryCompressionState::NotApplicable) {
+    if (dispatchFlags.memoryCompressionState != MemoryCompressionState::notApplicable) {
         memoryCompressionState = dispatchFlags.memoryCompressionState;
     }
     if (memoryCompressionState != this->lastMemoryCompressionState) {

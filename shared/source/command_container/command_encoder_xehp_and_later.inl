@@ -351,7 +351,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                             args.dispatchInterface->getSlmPolicy());
 
     EncodeWalkerArgs walkerArgs{
-        args.isCooperative ? KernelExecutionType::Concurrent : KernelExecutionType::Default,
+        args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType,
         args.isHostScopeSignalEvent && args.isKernelUsingSystemAllocation,
         kernelDescriptor};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
@@ -599,7 +599,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.statelessMocsIndex,                            // statelessMocsIndex
         args.l1CachePolicy,                                 // l1CachePolicy
         args.l1CachePolicyDebuggerActive,                   // l1CachePolicyDebuggerActive
-        NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
+        NEO::MemoryCompressionState::notApplicable,         // memoryCompressionState
         true,                                               // setInstructionStateBaseAddress
         setGeneralStateBaseAddress,                         // setGeneralStateBaseAddress
         useGlobalSshAndDsh,                                 // useGlobalHeapsBaseAddress

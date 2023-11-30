@@ -17,7 +17,7 @@ template <typename GfxFamily>
 void setSbaStatelessCompressionParams(typename GfxFamily::STATE_BASE_ADDRESS *stateBaseAddress, MemoryCompressionState memoryCompressionState) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    if (memoryCompressionState == MemoryCompressionState::Enabled) {
+    if (memoryCompressionState == MemoryCompressionState::enabled) {
         stateBaseAddress->setEnableMemoryCompressionForAllStatelessAccesses(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED);
     } else {
         stateBaseAddress->setEnableMemoryCompressionForAllStatelessAccesses(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED);
@@ -90,7 +90,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!!debugManager.flags.ForceMultiGpuPartialWrites.get());
     }
 
-    if (args.memoryCompressionState != MemoryCompressionState::NotApplicable) {
+    if (args.memoryCompressionState != MemoryCompressionState::notApplicable) {
         setSbaStatelessCompressionParams<GfxFamily>(args.stateBaseAddressCmd, args.memoryCompressionState);
     }
 

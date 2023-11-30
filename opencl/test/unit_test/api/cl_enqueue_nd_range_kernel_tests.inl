@@ -166,7 +166,7 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThen
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
-    pKernel->executionType = KernelExecutionType::Concurrent;
+    pKernel->executionType = KernelExecutionType::concurrent;
 
     retVal = clEnqueueNDRangeKernel(
         pCommandQueue,

@@ -617,7 +617,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlus
     }
 
     {
-        flushTaskFlags.l3CacheSettings = L3CachingSettings::NotApplicable;
+        flushTaskFlags.l3CacheSettings = L3CachingSettings::notApplicable;
         auto offset = commandStreamReceiver.commandStream.getUsed();
 
         flushTask(commandStreamReceiver);
@@ -634,7 +634,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableGrfConfigWhenFlu
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     {
-        flushTaskFlags.numGrfRequired = GrfConfig::DefaultGrfNumber;
+        flushTaskFlags.numGrfRequired = GrfConfig::defaultGrfNumber;
         flushTask(commandStreamReceiver);
 
         parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
@@ -643,7 +643,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableGrfConfigWhenFlu
     }
 
     {
-        flushTaskFlags.numGrfRequired = GrfConfig::NotApplicable;
+        flushTaskFlags.numGrfRequired = GrfConfig::notApplicable;
         auto offset = commandStreamReceiver.commandStream.getUsed();
 
         flushTask(commandStreamReceiver);
@@ -1271,7 +1271,7 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
     auto &commandStream = commandQueue.getCS(4096u);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    dispatchFlags.memoryCompressionState = MemoryCompressionState::NotApplicable;
+    dispatchFlags.memoryCompressionState = MemoryCompressionState::notApplicable;
 
     mockCsr.lastMemoryCompressionState = GetParam();
     MemoryCompressionState lastMemoryCompressionState = mockCsr.lastMemoryCompressionState;
@@ -1296,9 +1296,9 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
 
     dispatchFlags.memoryCompressionState = GetParam();
 
-    if (dispatchFlags.memoryCompressionState == MemoryCompressionState::NotApplicable) {
+    if (dispatchFlags.memoryCompressionState == MemoryCompressionState::notApplicable) {
 
-        for (auto memoryCompressionState : {MemoryCompressionState::NotApplicable, MemoryCompressionState::Disabled, MemoryCompressionState::Enabled}) {
+        for (auto memoryCompressionState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
             mockCsr.lastMemoryCompressionState = memoryCompressionState;
             MemoryCompressionState lastMemoryCompressionState = mockCsr.lastMemoryCompressionState;
             mockCsr.flushTask(commandStream,
@@ -1313,7 +1313,7 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
         }
     } else {
 
-        for (auto memoryCompressionState : {MemoryCompressionState::NotApplicable, MemoryCompressionState::Disabled, MemoryCompressionState::Enabled}) {
+        for (auto memoryCompressionState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
             mockCsr.lastMemoryCompressionState = memoryCompressionState;
             mockCsr.flushTask(commandStream,
                               0,
@@ -1331,4 +1331,4 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
 INSTANTIATE_TEST_CASE_P(
     CommandStreamReceiverFlushTaskMemoryCompressionTestsValues,
     CommandStreamReceiverFlushTaskMemoryCompressionTests,
-    testing::Values(MemoryCompressionState::NotApplicable, MemoryCompressionState::Disabled, MemoryCompressionState::Enabled));
+    testing::Values(MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled));

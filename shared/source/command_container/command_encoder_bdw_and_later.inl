@@ -469,7 +469,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.statelessMocsIndex,                            // statelessMocsIndex
         args.l1CachePolicy,                                 // l1CachePolicy
         args.l1CachePolicyDebuggerActive,                   // l1CachePolicyDebuggerActive
-        NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
+        NEO::MemoryCompressionState::notApplicable,         // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
         false,                                              // setGeneralStateBaseAddress
         useGlobalSshAndDsh,                                 // useGlobalHeapsBaseAddress

@@ -459,7 +459,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
 
     auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
     kernelAttributes.flags.usesSyncBuffer = true;
-    kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto &productHelper = device->getProductHelper();

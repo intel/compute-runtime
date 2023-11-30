@@ -1063,10 +1063,10 @@ void Kernel::clearUnifiedMemoryExecInfo() {
 cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) {
     switch (executionType) {
     case CL_KERNEL_EXEC_INFO_DEFAULT_TYPE_INTEL:
-        this->executionType = KernelExecutionType::Default;
+        this->executionType = KernelExecutionType::defaultType;
         break;
     case CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL:
-        this->executionType = KernelExecutionType::Concurrent;
+        this->executionType = KernelExecutionType::concurrent;
         break;
     default: {
         return CL_INVALID_VALUE;
@@ -2194,7 +2194,7 @@ bool Kernel::areMultipleSubDevicesInContext() const {
 
 void Kernel::reconfigureKernel() {
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
-    if (kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber &&
+    if (kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::largeGrfNumber &&
         kernelDescriptor.kernelAttributes.simdSize != 32) {
         this->maxKernelWorkGroupSize >>= 1;
     }

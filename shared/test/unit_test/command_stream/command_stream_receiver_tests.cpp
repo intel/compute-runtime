@@ -818,7 +818,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCallingGetMemo
 
     for (bool auxTranslationRequired : {false, true}) {
         auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
-        EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
+        EXPECT_EQ(MemoryCompressionState::notApplicable, memoryCompressionState);
     }
 }
 
@@ -2165,7 +2165,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoSuitableReu
 HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAddtionalKernelExecInfoValueIsCorrect) {
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCSR(new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    EXPECT_EQ(AdditionalKernelExecInfo::NotSet, mockCSR->lastAdditionalKernelExecInfo);
+    EXPECT_EQ(AdditionalKernelExecInfo::notSet, mockCSR->lastAdditionalKernelExecInfo);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenDebugFlagWhenCreatingCsrThenSetEnableStaticPartitioningAccordingly) {
@@ -2555,40 +2555,40 @@ HWTEST_F(CommandStreamReceiverTest, givenFrontEndStateNotInitedWhenTransitionFro
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
     commandStreamReceiver.feSupportFlags.disableOverdispatch = true;
-    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::notApplicable;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
-    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
-    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
     commandStreamReceiver.feSupportFlags.disableOverdispatch = false;
-    commandStreamReceiver.lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
     commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = true;
-    dispatchFlags.kernelExecutionType = KernelExecutionType::NotApplicable;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::notApplicable;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
-    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::defaultType;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
-    dispatchFlags.kernelExecutionType = KernelExecutionType::Concurrent;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::concurrent;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
     commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
-    commandStreamReceiver.lastKernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.lastKernelExecutionType = KernelExecutionType::defaultType;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
@@ -2626,17 +2626,17 @@ HWTEST_F(CommandStreamReceiverTest, givenFrontEndStateInitedWhenTransitionFrontE
     commandStreamReceiver.feSupportFlags.disableOverdispatch = true;
 
     commandStreamReceiver.streamProperties.frontEndState.disableOverdispatch.value = 0;
-    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
-    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
     commandStreamReceiver.streamProperties.frontEndState.disableOverdispatch.value = 1;
-    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
@@ -2645,17 +2645,17 @@ HWTEST_F(CommandStreamReceiverTest, givenFrontEndStateInitedWhenTransitionFrontE
     commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = true;
 
     commandStreamReceiver.streamProperties.frontEndState.computeDispatchAllWalkerEnable.value = 0;
-    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::defaultType;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
 
-    dispatchFlags.kernelExecutionType = KernelExecutionType::Concurrent;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::concurrent;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
 
     commandStreamReceiver.streamProperties.frontEndState.computeDispatchAllWalkerEnable.value = 1;
-    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::defaultType;
     commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
     commandStreamReceiver.setMediaVFEStateDirty(false);
@@ -3618,7 +3618,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
@@ -3628,7 +3628,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     ASSERT_NE(nullptr, stateComputeModeCmd);
     EXPECT_FALSE(commandStreamReceiver.getStateComputeModeDirty());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesGrfNumberThreadArbitration(GrfConfig::LargeGrfNumber, ThreadArbitrationPolicy::RoundRobin);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesGrfNumberThreadArbitration(GrfConfig::largeGrfNumber, ThreadArbitrationPolicy::RoundRobin);
 
     size_t usedSize = commandStreamReceiver.commandStream.getUsed();
     commandStreamReceiver.flushImmediateTask(commandStream,
@@ -4686,7 +4686,7 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWh
 
     bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 

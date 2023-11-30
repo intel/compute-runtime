@@ -15,29 +15,29 @@
 #include <tuple>
 #include <vector>
 
-template <size_t OnStackCapacity>
+template <size_t onStackCapacity>
 struct StackVecSize {
     static constexpr size_t max32 = std::numeric_limits<uint32_t>::max();
     static constexpr size_t max16 = std::numeric_limits<uint16_t>::max();
     static constexpr size_t max8 = std::numeric_limits<uint8_t>::max();
 
-    using SizeT = std::conditional_t<(OnStackCapacity < max8), uint8_t,
-                                     std::conditional_t<(OnStackCapacity < max16), uint16_t,
-                                                        std::conditional_t<(OnStackCapacity < max32), uint32_t, size_t>>>;
+    using SizeT = std::conditional_t<(onStackCapacity < max8), uint8_t,
+                                     std::conditional_t<(onStackCapacity < max16), uint16_t,
+                                                        std::conditional_t<(onStackCapacity < max32), uint32_t, size_t>>>;
 };
 
-template <typename DataType, size_t OnStackCapacity,
-          typename StackSizeT = typename StackVecSize<OnStackCapacity>::SizeT>
+template <typename DataType, size_t onStackCapacity,
+          typename StackSizeT = typename StackVecSize<onStackCapacity>::SizeT>
 class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
   public:
-    using value_type = DataType;
+    using value_type = DataType; // NOLINT(readability-identifier-naming)
     using SizeT = StackSizeT;
-    using iterator = DataType *;
-    using const_iterator = const DataType *;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using iterator = DataType *;                                          // NOLINT(readability-identifier-naming)
+    using const_iterator = const DataType *;                              // NOLINT(readability-identifier-naming)
+    using reverse_iterator = std::reverse_iterator<iterator>;             // NOLINT(readability-identifier-naming)
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>; // NOLINT(readability-identifier-naming)
 
-    static constexpr SizeT onStackCaps = OnStackCapacity;
+    static constexpr SizeT onStackCaps = onStackCapacity;
 
     StackVec() {
         onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
@@ -47,7 +47,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     StackVec(ItType beginIt, ItType endIt) {
         onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         size_t count = (endIt - beginIt);
-        if (count > OnStackCapacity) {
+        if (count > onStackCapacity) {
             dynamicMem = new std::vector<DataType>(beginIt, endIt);
             setUsesDynamicMem();
             return;
@@ -205,7 +205,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         if (usesDynamicMem()) {
             return dynamicMem->capacity();
         }
-        return OnStackCapacity;
+        return onStackCapacity;
     }
 
     void reserve(size_t newCapacity) {
@@ -345,7 +345,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     }
 
   private:
-    template <typename RhsDataType, size_t RhsOnStackCapacity, typename RhsStackSizeT>
+    template <typename RhsDataType, size_t rhsOnStackCapacity, typename RhsStackSizeT>
     friend class StackVec;
     void setUsesDynamicMem() {
         this->onStackSize = std::numeric_limits<decltype(onStackSize)>::max();
@@ -438,9 +438,9 @@ static_assert(sizeof(StackVec<char, 7U>) <= 16u, "");
 static_assert(sizeof(StackVec<uint32_t, 3U>) <= 24u, "");
 } // namespace
 
-template <typename T, size_t LhsStackCaps, size_t RhsStackCaps>
-bool operator==(const StackVec<T, LhsStackCaps> &lhs,
-                const StackVec<T, RhsStackCaps> &rhs) {
+template <typename T, size_t lhsStackCaps, size_t rhsStackCaps>
+bool operator==(const StackVec<T, lhsStackCaps> &lhs,
+                const StackVec<T, rhsStackCaps> &rhs) {
     if (lhs.size() != rhs.size()) {
         return false;
     }
@@ -458,21 +458,21 @@ bool operator==(const StackVec<T, LhsStackCaps> &lhs,
     return true;
 }
 
-template <typename T, size_t LhsStackCaps, size_t RhsStackCaps>
-bool operator!=(const StackVec<T, LhsStackCaps> &lhs,
-                const StackVec<T, RhsStackCaps> &rhs) {
+template <typename T, size_t lhsStackCaps, size_t rhsStackCaps>
+bool operator!=(const StackVec<T, lhsStackCaps> &lhs,
+                const StackVec<T, rhsStackCaps> &rhs) {
     return false == (lhs == rhs);
 }
 
-constexpr size_t MaxRootDeviceIndices = 16;
-class RootDeviceIndicesContainer : protected StackVec<uint32_t, MaxRootDeviceIndices> {
+constexpr size_t maxRootDeviceIndices = 16;
+class RootDeviceIndicesContainer : protected StackVec<uint32_t, maxRootDeviceIndices> {
   public:
-    using StackVec<uint32_t, MaxRootDeviceIndices>::StackVec;
-    using StackVec<uint32_t, MaxRootDeviceIndices>::at;
-    using StackVec<uint32_t, MaxRootDeviceIndices>::begin;
-    using StackVec<uint32_t, MaxRootDeviceIndices>::end;
-    using StackVec<uint32_t, MaxRootDeviceIndices>::size;
-    using StackVec<uint32_t, MaxRootDeviceIndices>::operator[];
+    using StackVec<uint32_t, maxRootDeviceIndices>::StackVec;
+    using StackVec<uint32_t, maxRootDeviceIndices>::at;
+    using StackVec<uint32_t, maxRootDeviceIndices>::begin;
+    using StackVec<uint32_t, maxRootDeviceIndices>::end;
+    using StackVec<uint32_t, maxRootDeviceIndices>::size;
+    using StackVec<uint32_t, maxRootDeviceIndices>::operator[];
 
     inline void pushUnique(uint32_t rootDeviceIndex) {
         if (indexPresent.size() <= rootDeviceIndex) {
@@ -485,6 +485,6 @@ class RootDeviceIndicesContainer : protected StackVec<uint32_t, MaxRootDeviceInd
     }
 
   protected:
-    StackVec<int8_t, MaxRootDeviceIndices> indexPresent;
+    StackVec<int8_t, maxRootDeviceIndices> indexPresent;
 };
-using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, MaxRootDeviceIndices>;
+using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, maxRootDeviceIndices>;

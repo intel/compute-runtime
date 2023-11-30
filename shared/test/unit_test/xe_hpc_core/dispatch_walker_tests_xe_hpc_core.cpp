@@ -26,7 +26,7 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor};
     {
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());

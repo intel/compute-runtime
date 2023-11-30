@@ -497,7 +497,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDispatchSizeSmallerOrEqualToAv
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.gtSystemInfo.EUCount = 2u;
 
-    const uint32_t numGrf = GrfConfig::LargeGrfNumber;
+    const uint32_t numGrf = GrfConfig::largeGrfNumber;
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
 
@@ -520,7 +520,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
     hwInfo.gtSystemInfo.EUCount = 32;
     hwInfo.gtSystemInfo.DualSubSliceCount = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported;
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
-    const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    const uint32_t numGrf = GrfConfig::defaultGrfNumber;
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf) / 32u;
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(64u);
@@ -546,7 +546,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t threadGroupCount = 512u;
-    const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    const uint32_t numGrf = GrfConfig::defaultGrfNumber;
     std::array<std::pair<uint32_t, uint32_t>, 3> testParams = {{{16u, INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8},
                                                                 {32u, INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4},
                                                                 {64u, INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2}}};
@@ -572,7 +572,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t threadGroupCount = 512u;
-    const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    const uint32_t numGrf = GrfConfig::defaultGrfNumber;
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
 
@@ -663,7 +663,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdju
     const uint32_t numberOfThreadsInThreadGroup = 1u;
 
     {
-        const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+        const uint32_t numGrf = GrfConfig::defaultGrfNumber;
         const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
         iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInThreadGroup);
         EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
@@ -671,7 +671,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdju
     }
 
     {
-        const uint32_t numGrf = GrfConfig::LargeGrfNumber;
+        const uint32_t numGrf = GrfConfig::largeGrfNumber;
         const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
         iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInThreadGroup);
         EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf, walkerCmd);
@@ -693,13 +693,13 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
 
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    uint32_t numGrf = GrfConfig::defaultGrfNumber;
     const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(1);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -707,7 +707,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(256);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -715,7 +715,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(64u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(64);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -723,7 +723,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(512);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -731,7 +731,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(512);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -739,7 +739,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(8u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(512);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -747,7 +747,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(510);
     walkerCmd.setThreadGroupIdYDimension(512);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -755,7 +755,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(509);
     walkerCmd.setThreadGroupIdYDimension(512);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -763,7 +763,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(508);
     walkerCmd.setThreadGroupIdYDimension(512);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -771,7 +771,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(508);
     walkerCmd.setThreadGroupIdYDimension(512);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -779,7 +779,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
-    numGrf = GrfConfig::LargeGrfNumber;
+    numGrf = GrfConfig::largeGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(508);
     walkerCmd.setThreadGroupIdYDimension(512);
     walkerCmd.setThreadGroupIdZDimension(1);
@@ -787,7 +787,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(1);
     walkerCmd.setThreadGroupIdYDimension(510);
     walkerCmd.setThreadGroupIdZDimension(512);
@@ -795,7 +795,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(1);
     walkerCmd.setThreadGroupIdYDimension(509);
     walkerCmd.setThreadGroupIdZDimension(512);
@@ -803,7 +803,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(16u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(1);
     walkerCmd.setThreadGroupIdYDimension(508);
     walkerCmd.setThreadGroupIdZDimension(512);
@@ -811,7 +811,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4, iddArg.getThreadGroupDispatchSize());
 
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(32u);
-    numGrf = GrfConfig::DefaultGrfNumber;
+    numGrf = GrfConfig::defaultGrfNumber;
     walkerCmd.setThreadGroupIdXDimension(1);
     walkerCmd.setThreadGroupIdYDimension(508);
     walkerCmd.setThreadGroupIdZDimension(512);
@@ -831,7 +831,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
 
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t threadGroupCount = 512u;
-    const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    const uint32_t numGrf = GrfConfig::defaultGrfNumber;
     std::array<std::pair<uint32_t, uint32_t>, 3> testParams = {{{16u, INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1},
                                                                 {32u, INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1},
                                                                 {64u, INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1}}};
@@ -854,7 +854,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenThreadGroupCountZeroWhenCallin
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     const uint32_t threadGroupCount = 0u;
-    const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
+    const uint32_t numGrf = GrfConfig::defaultGrfNumber;
     INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
 

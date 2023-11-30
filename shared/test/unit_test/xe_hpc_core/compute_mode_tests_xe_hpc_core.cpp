@@ -124,7 +124,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfM
     char buff[1024];
     LinearStream stream(buff, 1024);
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    uint32_t numGrfRequired = GrfConfig::LargeGrfNumber;
+    uint32_t numGrfRequired = GrfConfig::largeGrfNumber;
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, numGrfRequired);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -140,7 +140,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfR
     char buff[1024];
     LinearStream stream(buff, 1024);
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+    uint32_t numGrfRequired = GrfConfig::defaultGrfNumber;
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, numGrfRequired);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);

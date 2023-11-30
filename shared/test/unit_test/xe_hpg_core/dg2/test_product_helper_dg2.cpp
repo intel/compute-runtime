@@ -83,7 +83,7 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
 
 DG2TEST_F(Dg2ProductHelper, givenDG2WhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
 
-    pInHwInfo.platform.usRevId = REV_ID_A0;
+    pInHwInfo.platform.usRevId = revIdA0;
     pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
     EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
@@ -93,7 +93,7 @@ DG2TEST_F(Dg2ProductHelper, givenDG2WhenGettingLocalMemoryAccessModeThenCorrectV
     pInHwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
-    pInHwInfo.platform.usRevId = REV_ID_B0;
+    pInHwInfo.platform.usRevId = revIdB0;
     pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 

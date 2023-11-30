@@ -50,9 +50,9 @@ class ConstStringRef {
         : ptr(ptr), len(length) {
     }
 
-    template <size_t Length>
-    static constexpr ConstStringRef fromArray(const char (&array)[Length]) noexcept {
-        return ConstStringRef(array, Length);
+    template <size_t length>
+    static constexpr ConstStringRef fromArray(const char (&array)[length]) noexcept {
+        return ConstStringRef(array, length);
     }
 
     ConstStringRef(const std::string &str) noexcept

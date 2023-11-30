@@ -154,7 +154,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastMediaSamplerConfig = 0;
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false, false);
-        commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::DefaultGrfNumber,
+        commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::defaultGrfNumber,
                                                                                  gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode());
         commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false, -1);
     }

@@ -68,17 +68,17 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     std::vector<std::pair<unsigned short, uint16_t>> dg2Configs =
-        {{dg2G10DeviceIds[0], REV_ID_A0},
-         {dg2G10DeviceIds[0], REV_ID_A1},
-         {dg2G10DeviceIds[0], REV_ID_B0},
-         {dg2G10DeviceIds[0], REV_ID_C0},
-         {dg2G11DeviceIds[0], REV_ID_A0},
-         {dg2G11DeviceIds[0], REV_ID_B0},
-         {dg2G11DeviceIds[0], REV_ID_B1},
-         {dg2G12DeviceIds[0], REV_ID_A0}};
+        {{dg2G10DeviceIds[0], revIdA0},
+         {dg2G10DeviceIds[0], revIdA1},
+         {dg2G10DeviceIds[0], revIdB0},
+         {dg2G10DeviceIds[0], revIdC0},
+         {dg2G11DeviceIds[0], revIdA0},
+         {dg2G11DeviceIds[0], revIdB0},
+         {dg2G11DeviceIds[0], revIdB1},
+         {dg2G12DeviceIds[0], revIdA0}};
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor};
 
     for (const auto &[deviceID, revisionID] : dg2Configs) {
         hwInfo.platform.usRevId = revisionID;
@@ -88,7 +88,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
 
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
-        if (DG2::isG10(hwInfo) && revisionID < REV_ID_B0) {
+        if (DG2::isG10(hwInfo) && revisionID < revIdB0) {
             EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
         } else {
             EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());

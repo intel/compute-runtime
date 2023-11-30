@@ -37,16 +37,16 @@ XE_HPG_CORETEST_F(CommandStreamReceiverHwTestXeHpgCore, givenEnableStatelessComp
     debugManager.flags.EnableStatelessCompression.set(0);
     for (bool auxTranslationRequired : {false, true}) {
         auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
-        EXPECT_EQ(MemoryCompressionState::NotApplicable, memoryCompressionState);
+        EXPECT_EQ(MemoryCompressionState::notApplicable, memoryCompressionState);
     }
 
     debugManager.flags.EnableStatelessCompression.set(1);
     for (bool auxTranslationRequired : {false, true}) {
         auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(auxTranslationRequired);
         if (auxTranslationRequired) {
-            EXPECT_EQ(MemoryCompressionState::Disabled, memoryCompressionState);
+            EXPECT_EQ(MemoryCompressionState::disabled, memoryCompressionState);
         } else {
-            EXPECT_EQ(MemoryCompressionState::Enabled, memoryCompressionState);
+            EXPECT_EQ(MemoryCompressionState::enabled, memoryCompressionState);
         }
     }
 }

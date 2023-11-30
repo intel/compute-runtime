@@ -1412,15 +1412,15 @@ HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGr
     NEO::KernelDescriptor kernelDescriptor{};
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
-    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 
     kernelDescriptor.kernelAttributes.simdSize = 32;
-    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
-    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 }
 
@@ -1531,16 +1531,16 @@ HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeT
 
     uint32_t simdSize = 16u;
     uint32_t isHwLocalIdGeneration = true;
-    uint32_t numGrfRequired = GrfConfig::LargeGrfNumber;
+    uint32_t numGrfRequired = GrfConfig::largeGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize));
 
     simdSize = 32u;
-    numGrfRequired = GrfConfig::LargeGrfNumber;
+    numGrfRequired = GrfConfig::largeGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize));
 
     simdSize = 16u;
     isHwLocalIdGeneration = false;
-    numGrfRequired = GrfConfig::DefaultGrfNumber;
+    numGrfRequired = GrfConfig::defaultGrfNumber;
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize));
 }
 

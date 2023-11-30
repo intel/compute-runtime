@@ -25,8 +25,8 @@ DG2TEST_F(Dg2DeviceFactoryTest, givenOverrideHwIpVersionWhenPrepareDeviceEnviron
     MockExecutionEnvironment executionEnvironment{};
 
     std::vector<std::pair<uint32_t, int>> dg2G10Configs = {
-        {AOT::DG2_G10_A0, REV_ID_A0},
-        {AOT::DG2_G10_A1, REV_ID_A1}};
+        {AOT::DG2_G10_A0, revIdA0},
+        {AOT::DG2_G10_A1, revIdA1}};
 
     for (const auto &[config, revisionID] : dg2G10Configs) {
         debugManager.flags.OverrideHwIpVersion.set(config);
@@ -44,8 +44,8 @@ DG2TEST_F(Dg2DeviceFactoryTest, givenOverrideHwIpVersionAndDeviceIdWhenPrepareDe
     MockExecutionEnvironment executionEnvironment{};
 
     std::vector<std::pair<uint32_t, int>> dg2G10Configs = {
-        {AOT::DG2_G10_A0, REV_ID_A0},
-        {AOT::DG2_G10_A1, REV_ID_A1}};
+        {AOT::DG2_G10_A0, revIdA0},
+        {AOT::DG2_G10_A1, revIdA1}};
 
     debugManager.flags.ForceDeviceId.set("0x1234");
     for (const auto &[config, revisionID] : dg2G10Configs) {

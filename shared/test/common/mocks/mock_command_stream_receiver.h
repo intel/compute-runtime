@@ -102,7 +102,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
-        return MemoryCompressionState::NotApplicable;
+        return MemoryCompressionState::notApplicable;
     };
 
     TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }

@@ -1074,7 +1074,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
-    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
     cooperativeKernel.setGroupSize(1, 1, 1);
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};
@@ -1268,7 +1268,7 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
     auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
-    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
     cooperativeKernel.setGroupSize(1, 1, 1);
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};

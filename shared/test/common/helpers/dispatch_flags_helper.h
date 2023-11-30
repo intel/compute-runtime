@@ -19,12 +19,12 @@ struct DispatchFlagsHelper {
             nullptr,                                 // flushStampReference
             QueueThrottle::MEDIUM,                   // throttle
             PreemptionMode::Disabled,                // preemptionMode
-            GrfConfig::DefaultGrfNumber,             // numGrfRequired
+            GrfConfig::defaultGrfNumber,             // numGrfRequired
             L3CachingSettings::l3CacheOn,            // l3CacheSettings
             ThreadArbitrationPolicy::NotPresent,     // threadArbitrationPolicy
-            AdditionalKernelExecInfo::NotApplicable, // additionalKernelExecInfo
-            KernelExecutionType::NotApplicable,      // kernelExecutionType
-            MemoryCompressionState::NotApplicable,   // memoryCompressionState
+            AdditionalKernelExecInfo::notApplicable, // additionalKernelExecInfo
+            KernelExecutionType::notApplicable,      // kernelExecutionType
+            MemoryCompressionState::notApplicable,   // memoryCompressionState
             QueueSliceCount::defaultSliceCount,      // sliceCount
             false,                                   // blocking
             false,                                   // dcFlush

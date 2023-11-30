@@ -151,7 +151,7 @@ class MockKernel : public Kernel {
 
     template <typename KernelType = MockKernel>
     static KernelType *create(Device &device, Program *program) {
-        return create<KernelType>(device, program, GrfConfig::DefaultGrfNumber);
+        return create<KernelType>(device, program, GrfConfig::defaultGrfNumber);
     }
 
     template <typename KernelType = MockKernel>
@@ -276,7 +276,7 @@ class MockKernelWithInternals {
         kernelInfo.heapInfo.dynamicStateHeapSize = sizeof(dshLocal);
 
         populateKernelDescriptor(kernelInfo.kernelDescriptor, execEnv);
-        kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+        kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
         kernelInfo.setLocalIds({1, 1, 1});

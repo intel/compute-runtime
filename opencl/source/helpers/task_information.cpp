@@ -58,12 +58,12 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         commandQueue.flushStamp->getStampReference(),                                // flushStampReference
         commandQueue.getThrottle(),                                                  // throttle
         ClPreemptionHelper::taskPreemptionMode(device, multiDispatch),               // preemptionMode
-        GrfConfig::NotApplicable,                                                    // numGrfRequired
-        L3CachingSettings::NotApplicable,                                            // l3CacheSettings
+        GrfConfig::notApplicable,                                                    // numGrfRequired
+        L3CachingSettings::notApplicable,                                            // l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                                         // threadArbitrationPolicy
-        AdditionalKernelExecInfo::NotApplicable,                                     // additionalKernelExecInfo
-        KernelExecutionType::NotApplicable,                                          // kernelExecutionType
-        MemoryCompressionState::NotApplicable,                                       // memoryCompressionState
+        AdditionalKernelExecInfo::notApplicable,                                     // additionalKernelExecInfo
+        KernelExecutionType::notApplicable,                                          // kernelExecutionType
+        MemoryCompressionState::notApplicable,                                       // memoryCompressionState
         commandQueue.getSliceCount(),                                                // sliceCount
         true,                                                                        // blocking
         true,                                                                        // dcFlush
@@ -370,12 +370,12 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         commandQueue.flushStamp->getStampReference(),                          // flushStampReference
         commandQueue.getThrottle(),                                            // throttle
         commandQueue.getDevice().getPreemptionMode(),                          // preemptionMode
-        GrfConfig::NotApplicable,                                              // numGrfRequired
-        L3CachingSettings::NotApplicable,                                      // l3CacheSettings
+        GrfConfig::notApplicable,                                              // numGrfRequired
+        L3CachingSettings::notApplicable,                                      // l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                                   // threadArbitrationPolicy
-        AdditionalKernelExecInfo::NotApplicable,                               // additionalKernelExecInfo
-        KernelExecutionType::NotApplicable,                                    // kernelExecutionType
-        MemoryCompressionState::NotApplicable,                                 // memoryCompressionState
+        AdditionalKernelExecInfo::notApplicable,                               // additionalKernelExecInfo
+        KernelExecutionType::notApplicable,                                    // kernelExecutionType
+        MemoryCompressionState::notApplicable,                                 // memoryCompressionState
         commandQueue.getSliceCount(),                                          // sliceCount
         true,                                                                  // blocking
         false,                                                                 // dcFlush

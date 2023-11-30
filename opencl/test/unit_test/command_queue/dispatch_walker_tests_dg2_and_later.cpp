@@ -84,7 +84,7 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramCompute
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor};
     for (auto forceL3PrefetchForComputeWalker : {false, true}) {
         debugManager.flags.ForceL3PrefetchForComputeWalker.set(forceL3PrefetchForComputeWalker);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);

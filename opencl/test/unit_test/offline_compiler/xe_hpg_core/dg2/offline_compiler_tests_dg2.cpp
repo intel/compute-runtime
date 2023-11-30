@@ -34,8 +34,8 @@ using Dg2OfflineCompilerTests = ::testing::Test;
 DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G10DeviceAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
     std::vector<std::pair<HardwareIpVersion, int>> dg2G10Configs = {
-        {AOT::DG2_G10_A0, REV_ID_A0},
-        {AOT::DG2_G10_A1, REV_ID_A1}};
+        {AOT::DG2_G10_A0, revIdA0},
+        {AOT::DG2_G10_A1, revIdA1}};
 
     std::string deviceStr;
     auto deviceID = dg2G10DeviceIds.front();
@@ -62,9 +62,9 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G10DeviceAndRevisionIdValueWhenInitHw
 DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G11DeviceAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
     std::vector<std::pair<HardwareIpVersion, int>> dg2G11Configs = {
-        {AOT::DG2_G11_A0, REV_ID_A0},
-        {AOT::DG2_G11_B0, REV_ID_B0},
-        {AOT::DG2_G11_B1, REV_ID_B1}};
+        {AOT::DG2_G11_A0, revIdA0},
+        {AOT::DG2_G11_B0, revIdB0},
+        {AOT::DG2_G11_B1, revIdB1}};
 
     std::string deviceStr;
     auto deviceID = dg2G11DeviceIds.front();
@@ -95,7 +95,7 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2G12DeviceAndRevisionIdValueWhenInitHw
     std::stringstream deviceIDStr, expectedOutput;
     auto deviceID = dg2G12DeviceIds.front();
 
-    mockOfflineCompiler.revisionId = REV_ID_A0;
+    mockOfflineCompiler.revisionId = revIdA0;
 
     deviceIDStr << "0x" << std::hex << deviceID;
     deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(dg2G12Config.value);
@@ -132,10 +132,10 @@ TEST_F(Dg2OfflineCompilerTests, givenDg2G10DeviceAndUnknownRevisionIdValueWhenIn
 DG2TEST_F(Dg2OfflineCompilerTests, givenDg2DeprecatedAcronymAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
     std::vector<std::pair<HardwareIpVersion, int>> dg2G10Configs = {
-        {AOT::DG2_G10_A0, REV_ID_A0},
-        {AOT::DG2_G10_A1, REV_ID_A1},
-        {AOT::DG2_G10_B0, REV_ID_B0},
-        {AOT::DG2_G10_C0, REV_ID_C0}};
+        {AOT::DG2_G10_A0, revIdA0},
+        {AOT::DG2_G10_A1, revIdA1},
+        {AOT::DG2_G10_B0, revIdB0},
+        {AOT::DG2_G10_C0, revIdC0}};
 
     std::string deprecatedAcronym = NEO::hardwarePrefix[IGFX_DG2];
 

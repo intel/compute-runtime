@@ -187,8 +187,8 @@ struct ArgTypeTraits {
 };
 
 namespace {
-inline constexpr auto ArgTypeMetadataSize = sizeof(ArgTypeTraits);
-static_assert(ArgTypeMetadataSize <= 4, "Keep it small");
+inline constexpr auto argTypeMetadataSize = sizeof(ArgTypeTraits);
+static_assert(argTypeMetadataSize <= 4, "Keep it small");
 } // namespace
 
 struct ArgTypeMetadataExtended {

@@ -81,7 +81,7 @@ struct SbaFixture : public NEO::DeviceFixture {
             0,                                        // statelessMocsIndex
             l1CachePolicyData.getL1CacheValue(false), // l1CachePolicy
             l1CachePolicyData.getL1CacheValue(true),  // l1CachePolicyDebuggerActive
-            MemoryCompressionState::NotApplicable,    // memoryCompressionState
+            MemoryCompressionState::notApplicable,    // memoryCompressionState
             false,                                    // setInstructionStateBaseAddress
             false,                                    // setGeneralStateBaseAddress
             false,                                    // useGlobalHeapsBaseAddress

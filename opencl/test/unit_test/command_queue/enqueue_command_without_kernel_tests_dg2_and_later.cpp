@@ -53,20 +53,20 @@ HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoTh
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
     std::vector<Surface *> v;
 
-    pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::DisableOverdispatch);
+    pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::disableOverdispatch);
     std::unique_ptr<CommandComputeKernel> cmd(new CommandComputeKernel(*mockCmdQ.get(), blockedCommandsData, v, false, false, false, std::move(printfHandler), PreemptionMode::Disabled, pKernel, 1, nullptr));
     cmd->submit(1u, false);
-    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::DisableOverdispatch);
+    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::disableOverdispatch);
 
-    pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::NotApplicable);
+    pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::notApplicable);
     mockCsr->setMediaVFEStateDirty(true);
     cmd->submit(1u, false);
-    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::NotApplicable);
+    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::notApplicable);
 
-    pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::NotSet);
+    pKernel->setAdditionalKernelExecInfo(AdditionalKernelExecInfo::notSet);
     cmd->submit(1u, false);
-    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::NotSet);
+    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::notSet);
     cmd->submit(1u, false);
-    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::NotSet);
+    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, AdditionalKernelExecInfo::notSet);
 }
 } // namespace NEO

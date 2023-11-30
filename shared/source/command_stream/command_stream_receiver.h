@@ -532,9 +532,9 @@ class CommandStreamReceiver {
 
     uint32_t requiredScratchSize = 0;
     uint32_t requiredPrivateScratchSize = 0;
-    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
-    KernelExecutionType lastKernelExecutionType = KernelExecutionType::Default;
-    MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::NotApplicable;
+    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
+    KernelExecutionType lastKernelExecutionType = KernelExecutionType::defaultType;
+    MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::notApplicable;
     uint32_t activePartitions = 1;
     uint32_t activePartitionsConfig = 1;
     uint32_t immWritePostSyncWriteOffset = 0;

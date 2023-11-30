@@ -271,7 +271,7 @@ class IDList {
         }
     }
 
-    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
+    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
     typename std::enable_if<c1 && !c2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
         while (locked.test_and_set(std::memory_order_acquire)) {
             notifySpinLocked();
@@ -279,7 +279,7 @@ class IDList {
 
         NodeObjectType *ret = nullptr;
         try {
-            ret = (static_cast<T *>(this)->*Process)(node1, data);
+            ret = (static_cast<T *>(this)->*process)(node1, data);
         } catch (...) {
             locked.clear(std::memory_order_release);
             throw;
@@ -290,11 +290,11 @@ class IDList {
         return ret;
     }
 
-    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
+    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node1, void *data), bool c1 = threadSafe, bool c2 = supportRecursiveLock>
     typename std::enable_if<c1 && c2, NodeObjectType *>::type processLocked(NodeObjectType *node1 = nullptr, void *data = nullptr) {
         std::thread::id currentThreadId = std::this_thread::get_id();
         if (lockOwner == currentThreadId) {
-            return (static_cast<T *>(this)->*Process)(node1, data);
+            return (static_cast<T *>(this)->*process)(node1, data);
         }
 
         while (locked.test_and_set(std::memory_order_acquire)) {
@@ -305,7 +305,7 @@ class IDList {
 
         NodeObjectType *ret = nullptr;
         try {
-            ret = (static_cast<T *>(this)->*Process)(node1, data);
+            ret = (static_cast<T *>(this)->*process)(node1, data);
         } catch (...) {
             lockOwner = std::thread::id();
             locked.clear(std::memory_order_release);
@@ -318,9 +318,9 @@ class IDList {
         return ret;
     }
 
-    template <typename T, NodeObjectType *(T::*Process)(NodeObjectType *node, void *data), bool c = threadSafe>
+    template <typename T, NodeObjectType *(T::*process)(NodeObjectType *node, void *data), bool c = threadSafe>
     typename std::enable_if<!c, NodeObjectType *>::type processLocked(NodeObjectType *node = nullptr, void *data = nullptr) {
-        return (this->*Process)(node, data);
+        return (this->*process)(node, data);
     }
 
     NodeObjectType *pushFrontOneImpl(NodeObjectType *node, void *) {

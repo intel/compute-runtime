@@ -34,7 +34,7 @@ DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValu
 
     wddm->gmmMemory.reset(gmmMemory);
 
-    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_A0;
+    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = revIdA0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G10DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
@@ -69,7 +69,7 @@ DG2TEST_F(Dg2WddmTest, givenG10B0WhenGettingLocalMemoryAccessModeThenCorrectValu
     wddm->init();
     wddm->gmmMemory.reset(gmmMemory);
 
-    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_B0;
+    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = revIdB0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G10DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
@@ -108,7 +108,7 @@ DG2TEST_F(Dg2WddmTest, givenG11WhenGettingLocalMemoryAccessModeThenCorrectValueI
     wddm->init();
     wddm->gmmMemory.reset(gmmMemory);
 
-    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_B0;
+    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = revIdB0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G11DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
@@ -147,7 +147,7 @@ DG2TEST_F(Dg2WddmTest, givenG12WhenGettingLocalMemoryAccessModeThenCorrectValueI
     wddm->init();
     wddm->gmmMemory.reset(gmmMemory);
 
-    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_B0;
+    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = revIdB0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G12DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);

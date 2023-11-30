@@ -72,16 +72,16 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags) {
     const auto &requiredFrontEndState = this->requiredStreamState.frontEndState;
     dispatchFlags.kernelExecutionType = (requiredFrontEndState.computeDispatchAllWalkerEnable.value == 1)
-                                            ? NEO::KernelExecutionType::Concurrent
-                                            : NEO::KernelExecutionType::Default;
+                                            ? NEO::KernelExecutionType::concurrent
+                                            : NEO::KernelExecutionType::defaultType;
     dispatchFlags.disableEUFusion = (requiredFrontEndState.disableEUFusion.value == 1);
     dispatchFlags.additionalKernelExecInfo = (requiredFrontEndState.disableOverdispatch.value == 1)
-                                                 ? NEO::AdditionalKernelExecInfo::DisableOverdispatch
-                                                 : NEO::AdditionalKernelExecInfo::NotSet;
+                                                 ? NEO::AdditionalKernelExecInfo::disableOverdispatch
+                                                 : NEO::AdditionalKernelExecInfo::notSet;
 
     const auto &requiredStateComputeMode = this->requiredStreamState.stateComputeMode;
-    dispatchFlags.numGrfRequired = (requiredStateComputeMode.largeGrfMode.value == 1) ? GrfConfig::LargeGrfNumber
-                                                                                      : GrfConfig::DefaultGrfNumber;
+    dispatchFlags.numGrfRequired = (requiredStateComputeMode.largeGrfMode.value == 1) ? GrfConfig::largeGrfNumber
+                                                                                      : GrfConfig::defaultGrfNumber;
     dispatchFlags.threadArbitrationPolicy = requiredStateComputeMode.threadArbitrationPolicy.value;
 
     const auto &requiredPipelineSelect = this->requiredStreamState.pipelineSelect;
@@ -217,12 +217,12 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         nullptr,                                                     // flushStampReference
         NEO::QueueThrottle::MEDIUM,                                  // throttle
         this->getCommandListPreemptionMode(),                        // preemptionMode
-        GrfConfig::NotApplicable,                                    // numGrfRequired
+        GrfConfig::notApplicable,                                    // numGrfRequired
         NEO::L3CachingSettings::l3CacheOn,                           // l3CacheSettings
         NEO::ThreadArbitrationPolicy::NotPresent,                    // threadArbitrationPolicy
-        NEO::AdditionalKernelExecInfo::NotApplicable,                // additionalKernelExecInfo
-        NEO::KernelExecutionType::NotApplicable,                     // kernelExecutionType
-        NEO::MemoryCompressionState::NotApplicable,                  // memoryCompressionState
+        NEO::AdditionalKernelExecInfo::notApplicable,                // additionalKernelExecInfo
+        NEO::KernelExecutionType::notApplicable,                     // kernelExecutionType
+        NEO::MemoryCompressionState::notApplicable,                  // memoryCompressionState
         NEO::QueueSliceCount::defaultSliceCount,                     // sliceCount
         this->isSyncModeQueue,                                       // blocking
         this->isSyncModeQueue,                                       // dcFlush

@@ -186,17 +186,17 @@ class FileLogger {
 
 extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 
-template <bool Enabled>
+template <bool enabled>
 class LoggerApiEnterWrapper {
   public:
     LoggerApiEnterWrapper(const char *funcName, const int *errorCode)
         : funcName(funcName), errorCode(errorCode) {
-        if (Enabled) {
+        if (enabled) {
             fileLoggerInstance().logApiCall(funcName, true, 0);
         }
     }
     ~LoggerApiEnterWrapper() {
-        if (Enabled) {
+        if (enabled) {
             fileLoggerInstance().logApiCall(funcName, false, (errorCode != nullptr) ? *errorCode : 0);
         }
     }

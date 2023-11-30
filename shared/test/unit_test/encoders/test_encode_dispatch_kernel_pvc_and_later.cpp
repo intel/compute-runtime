@@ -86,7 +86,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::LargeGrfNumber, 0u, PreemptionMode::Disabled);
+    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

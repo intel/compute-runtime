@@ -83,7 +83,7 @@ enum class CompareOperation : uint32_t {
 struct EncodeWalkerArgs {
     EncodeWalkerArgs() = delete;
 
-    KernelExecutionType kernelExecutionType = KernelExecutionType::Default;
+    KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     bool requiredSystemFence = false;
     const KernelDescriptor &kernelDescriptor;
 };

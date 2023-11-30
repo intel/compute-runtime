@@ -130,7 +130,7 @@ bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hw
 }
 template <>
 uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
-    if (grfCount > GrfConfig::DefaultGrfNumber) {
+    if (grfCount > GrfConfig::defaultGrfNumber) {
         return hwInfo.gtSystemInfo.ThreadCount / 2u;
     }
     return hwInfo.gtSystemInfo.ThreadCount;

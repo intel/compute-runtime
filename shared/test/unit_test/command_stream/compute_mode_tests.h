@@ -58,7 +58,7 @@ struct ComputeModeRequirements : public ::testing::Test {
         csrHw->hasSharedHandlesReturnValue = hasSharedHandles;
         csrHw->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;
         csrHw->streamProperties.stateComputeMode.isCoherencyRequired.isDirty = coherencyRequestChanged;
-        csrHw->streamProperties.stateComputeMode.largeGrfMode.value = (numGrfRequired == GrfConfig::LargeGrfNumber);
+        csrHw->streamProperties.stateComputeMode.largeGrfMode.value = (numGrfRequired == GrfConfig::largeGrfNumber);
         csrHw->streamProperties.stateComputeMode.largeGrfMode.isDirty = numGrfRequiredChanged;
         if (hasSharedHandles) {
             makeResidentSharedAlloc();
@@ -94,6 +94,6 @@ struct ComputeModeRequirements : public ::testing::Test {
 
     CommandStreamReceiver *csr = nullptr;
     std::unique_ptr<MockDevice> device;
-    DispatchFlags flags{nullptr, {}, nullptr, QueueThrottle::MEDIUM, PreemptionMode::Disabled, GrfConfig::DefaultGrfNumber, L3CachingSettings::l3CacheOn, ThreadArbitrationPolicy::NotPresent, AdditionalKernelExecInfo::NotApplicable, KernelExecutionType::NotApplicable, MemoryCompressionState::NotApplicable, QueueSliceCount::defaultSliceCount, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+    DispatchFlags flags{nullptr, {}, nullptr, QueueThrottle::MEDIUM, PreemptionMode::Disabled, GrfConfig::defaultGrfNumber, L3CachingSettings::l3CacheOn, ThreadArbitrationPolicy::NotPresent, AdditionalKernelExecInfo::notApplicable, KernelExecutionType::notApplicable, MemoryCompressionState::notApplicable, QueueSliceCount::defaultSliceCount, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
     GraphicsAllocation *alloc = nullptr;
 };

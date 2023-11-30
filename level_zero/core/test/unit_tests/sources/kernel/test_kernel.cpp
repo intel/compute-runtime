@@ -1550,7 +1550,7 @@ HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenCalcu
 
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.simdSize = 16;
-    kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
 
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 

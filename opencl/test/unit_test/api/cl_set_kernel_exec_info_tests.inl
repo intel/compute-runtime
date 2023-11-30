@@ -345,7 +345,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenDifferentExecutionTypesWhenSettingAdditi
         &kernelExecutionType    // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(KernelExecutionType::Default, pMockKernel->executionType);
+    EXPECT_EQ(KernelExecutionType::defaultType, pMockKernel->executionType);
 
     kernelExecutionType = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL;
     retVal = clSetKernelExecInfo(
@@ -355,7 +355,7 @@ HWTEST_F(clSetKernelExecInfoTests, givenDifferentExecutionTypesWhenSettingAdditi
         &kernelExecutionType    // const void *param_value
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(KernelExecutionType::Concurrent, pMockKernel->executionType);
+    EXPECT_EQ(KernelExecutionType::concurrent, pMockKernel->executionType);
 }
 
 } // namespace ULT

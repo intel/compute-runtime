@@ -2994,12 +2994,12 @@ kernels:
       execution_env :
         simd_size : 8
         grf_count: )===" +
-                              std::to_string(GrfConfig::DefaultGrfNumber) + R"===(
+                              std::to_string(GrfConfig::defaultGrfNumber) + R"===(
     - name : kernel_with_reduced_maxWGS
       execution_env :
         simd_size : 16
         grf_count: )===" +
-                              std::to_string(GrfConfig::LargeGrfNumber) + "\n";
+                              std::to_string(GrfConfig::largeGrfNumber) + "\n";
 
     uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
@@ -3041,12 +3041,12 @@ kernels:
       execution_env :
         simd_size : 8
         grf_count: )===" +
-                              std::to_string(GrfConfig::DefaultGrfNumber) + R"===(
+                              std::to_string(GrfConfig::defaultGrfNumber) + R"===(
     - name : kernel_with_reduced_maxWGS
       execution_env :
         simd_size : 16
         grf_count: )===" +
-                              std::to_string(GrfConfig::LargeGrfNumber) + "\n";
+                              std::to_string(GrfConfig::largeGrfNumber) + "\n";
 
     uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;

@@ -46,7 +46,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
 
     auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
     kernelAttributes.flags.usesSyncBuffer = true;
-    kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
     result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);

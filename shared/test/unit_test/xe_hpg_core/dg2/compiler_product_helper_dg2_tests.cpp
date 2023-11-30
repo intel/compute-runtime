@@ -49,14 +49,14 @@ DG2TEST_F(CompilerProductHelperDg2Test, givenDg2ConfigsWhenMatchConfigWithRevIdT
     std::vector<HardwareIpVersion> dg2G11Config = {AOT::DG2_G11_A0, AOT::DG2_G11_B0, AOT::DG2_G11_B1};
 
     for (const auto &config : dg2G10Config) {
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_A0), AOT::DG2_G10_A0);
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_A1), AOT::DG2_G10_A1);
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_B0), AOT::DG2_G10_B0);
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_C0), AOT::DG2_G10_C0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdA0), AOT::DG2_G10_A0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdA1), AOT::DG2_G10_A1);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdB0), AOT::DG2_G10_B0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdC0), AOT::DG2_G10_C0);
     }
     for (const auto &config : dg2G11Config) {
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_A0), AOT::DG2_G11_A0);
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_B0), AOT::DG2_G11_B0);
-        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, REV_ID_B1), AOT::DG2_G11_B1);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdA0), AOT::DG2_G11_A0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdB0), AOT::DG2_G11_B0);
+        EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, revIdB1), AOT::DG2_G11_B1);
     }
 }

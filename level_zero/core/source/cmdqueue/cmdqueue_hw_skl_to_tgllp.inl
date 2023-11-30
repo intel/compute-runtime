@@ -79,7 +79,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
         l1CachePolicyData->getL1CacheValue(false),        // l1CachePolicy
         l1CachePolicyData->getL1CacheValue(true),         // l1CachePolicyDebuggerActive
-        NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
+        NEO::MemoryCompressionState::notApplicable,       // memoryCompressionState
         true,                                             // setInstructionStateBaseAddress
         true,                                             // setGeneralStateBaseAddress
         useGlobalSshAndDsh,                               // useGlobalHeapsBaseAddress

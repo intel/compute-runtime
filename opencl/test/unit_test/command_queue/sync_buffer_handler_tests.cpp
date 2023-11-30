@@ -71,7 +71,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
         kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         kernel = kernelInternals->mockKernel;
-        kernel->executionType = KernelExecutionType::Concurrent;
+        kernel->executionType = KernelExecutionType::concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         auto &hwInfo = pClDevice->getHardwareInfo();
         auto &productHelper = pClDevice->getProductHelper();
@@ -151,7 +151,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSy
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenEnqueuingKernelThenErrorIsReturnedAndSyncBufferIsNotCreated) {
     patchAllocateSyncBuffer();
-    kernel->executionType = KernelExecutionType::Default;
+    kernel->executionType = KernelExecutionType::defaultType;
 
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);

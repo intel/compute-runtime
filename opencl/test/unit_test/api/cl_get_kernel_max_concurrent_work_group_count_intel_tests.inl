@@ -59,7 +59,7 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     size_t globalWorkOffset[] = {0, 0, 0};
     size_t localWorkSize[] = {8, 8, 8};
     size_t maxConcurrentWorkGroupCount = 0;
-    const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim, globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
