@@ -262,6 +262,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DisableSystemPointerKernelArgument, -1, "-1: def
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramUserInterruptOnResolvedDependency, -1, "-1: default, 0: Disabled, 1: On signaling append completion (if possible) - for example in-order counter update")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRegularCmdListPatching, -1, "-1: default, 0: Disabled, 1: If set, patch counter value on execute call")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRelaxedOrderingForEventsChaining, -1, "-1: default, 0: Disabled, 1: If set, send 2 immediate flushes to avoid stalling RelaxedOrdering Scheduler.")
+DECLARE_DEBUG_VARIABLE(int32_t, InOrderAtomicSignallingEnabled, -1, "-1: default, 0: disabled, 1: Use atomic GPU operations in increment the counter. Otherwise use non-atomic commands like SDI.")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

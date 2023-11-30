@@ -1204,6 +1204,18 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnR
     EXPECT_EQ(nullptr, events[0]->inOrderExecInfo.get());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAndSingleTileCmdListWhenAskingForAtomicSignallingThenReturnFalse, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_FALSE(immCmdList->inOrderAtomicSignallingEnabled());
+    EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
+
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+
+    EXPECT_FALSE(immCmdList->inOrderAtomicSignallingEnabled());
+    EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -4075,8 +4087,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEve
 
 struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
     void SetUp() override {
-        NEO::debugManager.flags.CreateMultipleSubDevices.set(2);
-        NEO::debugManager.flags.EnableImplicitScaling.set(1);
+        NEO::debugManager.flags.CreateMultipleSubDevices.set(partitionCount);
+        NEO::debugManager.flags.EnableImplicitScaling.set(4);
 
         InOrderCmdListTests::SetUp();
     }
@@ -4085,11 +4097,70 @@ struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createMultiTileImmCmdList() {
         auto cmdList = createImmCmdList<gfxCoreFamily>();
 
-        cmdList->partitionCount = 2;
+        cmdList->partitionCount = partitionCount;
 
         return cmdList;
     }
+
+    const uint32_t partitionCount = 2;
 };
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastXeHpCore) {
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    EXPECT_FALSE(immCmdList->inOrderAtomicSignallingEnabled());
+    EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
+
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+
+    EXPECT_TRUE(immCmdList->inOrderAtomicSignallingEnabled());
+    EXPECT_EQ(partitionCount, immCmdList->getInOrderIncrementValue());
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicCmd, IsAtLeastXeHpCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
+
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    EXPECT_EQ(0u, immCmdList->inOrderExecInfo->getCounterValue());
+
+    auto handle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(partitionCount, immCmdList->inOrderExecInfo->getCounterValue());
+
+    size_t offset = cmdStream->getUsed();
+
+    immCmdList->appendWaitOnEvents(1, &handle, false, false, true);
+
+    EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto miAtomics = findAll<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1u, miAtomics.size());
+
+    auto atomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomics[0]);
+    ASSERT_NE(nullptr, atomicCmd);
+
+    auto gpuAddress = immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress();
+
+    EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
+    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
+    EXPECT_EQ(0u, atomicCmd->getReturnDataControl());
+    EXPECT_EQ(0u, atomicCmd->getCsStall());
+}
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;

@@ -174,10 +174,10 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
         UNRECOVERABLE_IF(inOrderAllocationOffset + offset >= inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBufferSize());
 
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr); // write 1 on new offset
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr); // signal counter on new offset
     }
 
-    inOrderExecInfo->addCounterValue(1);
+    inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
     this->commandContainer.addToResidencyContainer(&inOrderExecInfo->getDeviceCounterAllocation());
 
@@ -2554,21 +2554,30 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent) {
-    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-
-    uint64_t signalValue = inOrderExecInfo->getCounterValue() + 1;
-
     uint64_t gpuVa = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + this->inOrderAllocationOffset;
+    auto cmdStream = commandContainer.getCommandStream();
 
-    auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)));
+    if (inOrderAtomicSignallingEnabled()) {
+        using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+        using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
-    NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
-                                                           isQwordInOrderCounter(), (this->partitionCount > 1));
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, gpuVa, ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+                                                      DATA_SIZE::DATA_SIZE_QWORD, 0, 0, 0, 0);
+    } else {
+        using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
-    addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+        uint64_t signalValue = inOrderExecInfo->getCounterValue() + 1;
+
+        auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(cmdStream->getSpace(sizeof(MI_STORE_DATA_IMM)));
+
+        NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
+                                                               isQwordInOrderCounter(), (this->partitionCount > 1));
+
+        addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+    }
 
     if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1) && signalEvent && signalEvent->isKmdWaitModeEnabled()) {
-        NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+        NEO::EnodeUserInterrupt<GfxFamily>::encode(*cmdStream);
     }
 }
 
@@ -3659,6 +3668,20 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
     }
 
     return true;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::inOrderAtomicSignallingEnabled() const {
+    if (NEO::debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1) {
+        return (this->getPartitionCount() > 1);
+    }
+
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+uint64_t CommandListCoreFamily<gfxCoreFamily>::getInOrderIncrementValue() const {
+    return (inOrderAtomicSignallingEnabled() ? this->getPartitionCount() : 1);
 }
 
 } // namespace L0

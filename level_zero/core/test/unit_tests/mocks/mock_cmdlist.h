@@ -75,11 +75,13 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
+    using BaseClass::getInOrderIncrementValue;
     using BaseClass::hostPtrMap;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
     using BaseClass::inOrderAllocationOffset;
+    using BaseClass::inOrderAtomicSignallingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isFlushTaskSubmissionEnabled;
@@ -181,8 +183,10 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
+    using BaseClass::getInOrderIncrementValue;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::inOrderAtomicSignallingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isBcsSplitNeeded;
