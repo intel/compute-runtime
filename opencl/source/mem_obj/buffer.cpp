@@ -380,13 +380,23 @@ Buffer *Buffer::create(Context *context,
             if (svmManager) {
                 auto svmData = svmManager->getSVMAlloc(hostPtr);
                 if (svmData) {
-                    allocationInfo.memory = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-                    allocationInfo.allocationType = allocationInfo.memory->getAllocationType();
-                    allocationInfo.isHostPtrSVM = true;
-                    allocationInfo.zeroCopyAllowed = allocationInfo.memory->getAllocationType() == AllocationType::SVM_ZERO_COPY;
-                    allocationInfo.copyMemoryFromHostPtr = false;
-                    allocationInfo.allocateMemory = false;
-                    allocationInfo.mapAllocation = svmData->cpuAllocation;
+                    if ((svmData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) && memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
+                        allocationInfo.memory = nullptr;
+                        allocationInfo.allocationType = AllocationType::BUFFER;
+                        allocationInfo.isHostPtrSVM = false;
+                        allocationInfo.zeroCopyAllowed = false;
+                        allocationInfo.copyMemoryFromHostPtr = true;
+                        allocationInfo.allocateMemory = true;
+                        allocationInfo.mapAllocation = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+                    } else {
+                        allocationInfo.memory = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+                        allocationInfo.allocationType = allocationInfo.memory->getAllocationType();
+                        allocationInfo.isHostPtrSVM = true;
+                        allocationInfo.zeroCopyAllowed = allocationInfo.memory->getAllocationType() == AllocationType::SVM_ZERO_COPY;
+                        allocationInfo.copyMemoryFromHostPtr = false;
+                        allocationInfo.allocateMemory = false;
+                        allocationInfo.mapAllocation = svmData->cpuAllocation;
+                    }
                 }
             }
         }
