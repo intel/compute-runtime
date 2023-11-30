@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1195,6 +1195,32 @@ TEST_P(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         delete bufferSvm;
+        context->getSVMAllocsManager()->freeSVMAlloc(ptr);
+    }
+}
+
+TEST_P(ValidHostPtr, GivenUsmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrectly) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        auto memoryManager = static_cast<MockMemoryManager *>(context->getDevice(0)->getMemoryManager());
+        memoryManager->localMemorySupported[pDevice->getRootDeviceIndex()] = true;
+
+        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+        auto ptr = context->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+
+        auto buffer = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
+        EXPECT_NE(nullptr, buffer);
+
+        auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
+        ASSERT_NE(nullptr, svmData);
+
+        EXPECT_EQ(AllocationType::BUFFER, buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getAllocationType());
+
+        auto mapAllocation = buffer->getMapAllocation(pDevice->getRootDeviceIndex());
+        ASSERT_NE(nullptr, mapAllocation);
+        EXPECT_EQ(reinterpret_cast<void *>(mapAllocation->getGpuAddress()), ptr);
+
+        delete buffer;
         context->getSVMAllocsManager()->freeSVMAlloc(ptr);
     }
 }
