@@ -95,6 +95,7 @@ class DrmMemoryManager : public MemoryManager {
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override;
     Drm &getDrm(uint32_t rootDeviceIndex) const;
+    size_t getSizeOfChunk(size_t allocSize);
 
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
