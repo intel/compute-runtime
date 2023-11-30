@@ -4750,15 +4750,18 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
         return retVal;
     }
 
-    retVal = pCommandQueue->enqueueSVMMemcpy(
-        blockingCopy,
-        dstPtr,
-        srcPtr,
-        size,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
-
+    if (size != 0) {
+        retVal = pCommandQueue->enqueueSVMMemcpy(
+            blockingCopy,
+            dstPtr,
+            srcPtr,
+            size,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    } else {
+        retVal = pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+    }
     TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
     return retVal;
 }

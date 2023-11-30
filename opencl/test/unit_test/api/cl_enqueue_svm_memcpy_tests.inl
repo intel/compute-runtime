@@ -185,6 +185,30 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsRe
     }
 }
 
+TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidPtrAndZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        UserEvent uEvent(pContext);
+        cl_event eventWaitList[] = {&uEvent};
+        void *pDstSvm = reinterpret_cast<int *>(0x100001);
+        void *pSrcSvm = reinterpret_cast<int *>(0x100001);
+
+        auto retVal = clEnqueueSVMMemcpy(
+            pCommandQueue, // cl_command_queue command_queue
+            CL_FALSE,      // cl_bool blocking_copy
+            pDstSvm,       // void *dst_ptr
+            pSrcSvm,       // const void *src_ptr
+            0,             // size_t size
+            1,             // cl_uint num_events_in_wait_list
+            eventWaitList, // const cl_event *event_wait_list
+            nullptr        // cl_event *event
+        );
+        EXPECT_EQ(CL_QUEUED, uEvent.peekExecutionStatus());
+        EXPECT_TRUE(pCommandQueue->enqueueMarkerWithWaitListCalled);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
 TEST_F(ClEnqueueSVMMemcpyTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemcpyThenInvalidOperationErrorIsReturned) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;

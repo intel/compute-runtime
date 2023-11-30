@@ -162,7 +162,10 @@ class MockCommandQueue : public CommandQueue {
     cl_int enqueueSVMMemFill(void *svmPtr, const void *pattern, size_t patternSize, size_t size, cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
 
-    cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
+    cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+        enqueueMarkerWithWaitListCalled = true;
+        return CL_SUCCESS;
+    }
 
     cl_int enqueueMigrateMemObjects(cl_uint numMemObjects, const cl_mem *memObjects, cl_mem_migration_flags flags,
                                     cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
@@ -235,6 +238,7 @@ class MockCommandQueue : public CommandQueue {
         return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
     }
 
+    bool enqueueMarkerWithWaitListCalled = false;
     bool releaseIndirectHeapCalled = false;
     bool waitForTimestampsCalled = false;
     cl_int writeBufferRetValue = CL_SUCCESS;
