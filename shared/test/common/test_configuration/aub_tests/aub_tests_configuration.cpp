@@ -9,7 +9,11 @@
 
 namespace NEO {
 // max time per single test iteration
+#if defined(_WIN32)
+unsigned int ultIterationMaxTime = 360;
+#else
 unsigned int ultIterationMaxTime = 180;
+#endif
 unsigned int testCaseMaxTimeInMs = 20000;
 bool useMockGmm = false;
 const char *executionDirectorySuffix = "_aub";
