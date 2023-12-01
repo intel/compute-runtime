@@ -42,8 +42,8 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
 
   protected:
     std::vector<std::unique_ptr<Module>> modules = {};
-    std::unique_ptr<BuiltinData> builtins[static_cast<uint32_t>(Builtin::COUNT)];
-    std::unique_ptr<BuiltinData> imageBuiltins[static_cast<uint32_t>(ImageBuiltin::COUNT)];
+    std::unique_ptr<BuiltinData> builtins[static_cast<uint32_t>(Builtin::count)];
+    std::unique_ptr<BuiltinData> imageBuiltins[static_cast<uint32_t>(ImageBuiltin::count)];
     Device *device;
     NEO::BuiltIns *builtInsLib;
 

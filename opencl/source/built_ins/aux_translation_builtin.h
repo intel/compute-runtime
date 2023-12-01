@@ -21,7 +21,7 @@
 
 namespace NEO {
 template <>
-class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder {
+class BuiltInOp<EBuiltInOps::auxTranslation> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device);
     template <typename GfxFamily>

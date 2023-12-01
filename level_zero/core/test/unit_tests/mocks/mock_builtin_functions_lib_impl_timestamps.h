@@ -24,14 +24,14 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
 
     void initBuiltinKernel(Builtin func) override {
         switch (static_cast<Builtin>(func)) {
-        case Builtin::QueryKernelTimestamps:
+        case Builtin::queryKernelTimestamps:
             if (builtins[0].get() == nullptr) {
-                builtins[0] = loadBuiltIn(NEO::EBuiltInOps::QueryKernelTimestamps, "QueryKernelTimestamps");
+                builtins[0] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestamps");
             }
             break;
-        case Builtin::QueryKernelTimestampsWithOffsets:
+        case Builtin::queryKernelTimestampsWithOffsets:
             if (builtins[1].get() == nullptr) {
-                builtins[1] = loadBuiltIn(NEO::EBuiltInOps::QueryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
+                builtins[1] = loadBuiltIn(NEO::EBuiltInOps::queryKernelTimestamps, "QueryKernelTimestampsWithOffsets");
             }
             break;
         default:
@@ -43,7 +43,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
     }
 
     Kernel *getFunction(Builtin func) override {
-        return func == Builtin::QueryKernelTimestampsWithOffsets ? builtins[1]->func.get() : builtins[0]->func.get();
+        return func == Builtin::queryKernelTimestampsWithOffsets ? builtins[1]->func.get() : builtins[0]->func.get();
     }
 
     std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {

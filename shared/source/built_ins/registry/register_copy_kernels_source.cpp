@@ -14,7 +14,7 @@ namespace NEO {
 
 static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyBufferToBuffer,
+        EBuiltInOps::copyBufferToBuffer,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -23,7 +23,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
 
 static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyBufferToBufferStateless,
+        EBuiltInOps::copyBufferToBufferStateless,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -32,7 +32,7 @@ static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
 
 static RegisterEmbeddedResource registerCopyBufferRectSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyBufferRect,
+        EBuiltInOps::copyBufferRect,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -41,7 +41,7 @@ static RegisterEmbeddedResource registerCopyBufferRectSrc(
 
 static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyBufferRectStateless,
+        EBuiltInOps::copyBufferRectStateless,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -50,7 +50,7 @@ static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
 
 static RegisterEmbeddedResource registerFillBufferSrc(
     createBuiltinResourceName(
-        EBuiltInOps::FillBuffer,
+        EBuiltInOps::fillBuffer,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -59,7 +59,7 @@ static RegisterEmbeddedResource registerFillBufferSrc(
 
 static RegisterEmbeddedResource registerFillBufferStatelessSrc(
     createBuiltinResourceName(
-        EBuiltInOps::FillBufferStateless,
+        EBuiltInOps::fillBufferStateless,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -68,7 +68,7 @@ static RegisterEmbeddedResource registerFillBufferStatelessSrc(
 
 static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyBufferToImage3d,
+        EBuiltInOps::copyBufferToImage3d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -77,7 +77,7 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dSrc(
 
 static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyBufferToImage3dStateless,
+        EBuiltInOps::copyBufferToImage3dStateless,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -86,7 +86,7 @@ static RegisterEmbeddedResource registerCopyBufferToImage3dStatelessSrc(
 
 static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyImage3dToBuffer,
+        EBuiltInOps::copyImage3dToBuffer,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -95,7 +95,7 @@ static RegisterEmbeddedResource registerCopyImage3dToBufferSrc(
 
 static RegisterEmbeddedResource registerCopyImage3dToBufferStatelessSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyImage3dToBufferStateless,
+        EBuiltInOps::copyImage3dToBufferStateless,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -104,7 +104,7 @@ static RegisterEmbeddedResource registerCopyImage3dToBufferStatelessSrc(
 
 static RegisterEmbeddedResource registerCopyImageToImage1dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyImageToImage1d,
+        EBuiltInOps::copyImageToImage1d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -113,7 +113,7 @@ static RegisterEmbeddedResource registerCopyImageToImage1dSrc(
 
 static RegisterEmbeddedResource registerCopyImageToImage2dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyImageToImage2d,
+        EBuiltInOps::copyImageToImage2d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -122,7 +122,7 @@ static RegisterEmbeddedResource registerCopyImageToImage2dSrc(
 
 static RegisterEmbeddedResource registerCopyImageToImage3dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::CopyImageToImage3d,
+        EBuiltInOps::copyImageToImage3d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -131,7 +131,7 @@ static RegisterEmbeddedResource registerCopyImageToImage3dSrc(
 
 static RegisterEmbeddedResource registerFillImage1dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::FillImage1d,
+        EBuiltInOps::fillImage1d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -140,7 +140,7 @@ static RegisterEmbeddedResource registerFillImage1dSrc(
 
 static RegisterEmbeddedResource registerFillImage2dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::FillImage2d,
+        EBuiltInOps::fillImage2d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -149,7 +149,7 @@ static RegisterEmbeddedResource registerFillImage2dSrc(
 
 static RegisterEmbeddedResource registerFillImage3dSrc(
     createBuiltinResourceName(
-        EBuiltInOps::FillImage3d,
+        EBuiltInOps::fillImage3d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -158,7 +158,7 @@ static RegisterEmbeddedResource registerFillImage3dSrc(
 
 static RegisterEmbeddedResource registerAuxTranslationSrc(
     createBuiltinResourceName(
-        EBuiltInOps::AuxTranslation,
+        EBuiltInOps::auxTranslation,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(
@@ -167,7 +167,7 @@ static RegisterEmbeddedResource registerAuxTranslationSrc(
 
 static RegisterEmbeddedResource registerCopyKernelTimestampsSrc(
     createBuiltinResourceName(
-        EBuiltInOps::FillImage3d,
+        EBuiltInOps::fillImage3d,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
         .c_str(),
     std::string(

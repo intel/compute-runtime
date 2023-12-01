@@ -58,9 +58,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
-    auto eBuiltInOps = EBuiltInOps::CopyBufferToBuffer;
+    auto eBuiltInOps = EBuiltInOps::copyBufferToBuffer;
     if (forceStateless(buffer->getSize())) {
-        eBuiltInOps = EBuiltInOps::CopyBufferToBufferStateless;
+        eBuiltInOps = EBuiltInOps::copyBufferToBufferStateless;
     }
 
     void *srcPtr = const_cast<void *>(ptr);

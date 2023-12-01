@@ -28,14 +28,14 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
     void initBuiltinKernel(L0::Builtin func) override {
         auto builtId = static_cast<uint32_t>(func);
         if (builtins[builtId].get() == nullptr) {
-            builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::CopyBufferToBuffer, "copyBufferToBufferBytesSingle");
+            builtins[builtId] = loadBuiltIn(NEO::EBuiltInOps::copyBufferToBuffer, "copyBufferToBufferBytesSingle");
         }
     }
 
     void initBuiltinImageKernel(L0::ImageBuiltin func) override {
         auto builtId = static_cast<uint32_t>(func);
         if (imageBuiltins[builtId].get() == nullptr) {
-            imageBuiltins[builtId] = loadBuiltIn(NEO::EBuiltInOps::CopyImage3dToBuffer, "CopyImage3dToBuffer16Bytes");
+            imageBuiltins[builtId] = loadBuiltIn(NEO::EBuiltInOps::copyImage3dToBuffer, "CopyImage3dToBuffer16Bytes");
         }
     }
 

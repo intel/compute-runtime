@@ -50,9 +50,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    auto eBuiltInOps = EBuiltInOps::FillBuffer;
+    auto eBuiltInOps = EBuiltInOps::fillBuffer;
     if (forceStateless(buffer->getSize())) {
-        eBuiltInOps = EBuiltInOps::FillBufferStateless;
+        eBuiltInOps = EBuiltInOps::fillBufferStateless;
     }
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,

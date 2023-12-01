@@ -245,11 +245,11 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDispatchInfoBuilder {
+class BuiltInOp<EBuiltInOps::vmeBlockMotionEstimateIntel> : public VmeBuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : VmeBuiltinDispatchInfoBuilder(kernelsLib, device,
-                                        EBuiltInOps::VmeBlockMotionEstimateIntel, "block_motion_estimate_intel") {
+                                        EBuiltInOps::vmeBlockMotionEstimateIntel, "block_motion_estimate_intel") {
     }
 };
 
@@ -445,10 +445,10 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
+class BuiltInOp<EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel,
+        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel,
                                                 "block_advanced_motion_estimate_check_intel") {
     }
 
@@ -469,10 +469,10 @@ class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public 
 };
 
 template <>
-class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
+class BuiltInOp<EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
-        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
+        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
                                                 "block_advanced_motion_estimate_bidirectional_check_intel") {
     }
 

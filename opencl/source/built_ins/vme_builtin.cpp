@@ -77,11 +77,11 @@ Program *Vme::createBuiltInProgram(
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
         builtinsBuilders["block_motion_estimate_intel"] =
-            &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, device);
+            &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockMotionEstimateIntel, device);
         builtinsBuilders["block_advanced_motion_estimate_check_intel"] =
-            &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, device);
+            &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, device);
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
-            &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
+            &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
 
         errcodeRet = pBuiltInProgram->build(deviceVector, mediaKernelsBuildOptions, builtinsBuilders);
     } else {
@@ -94,11 +94,11 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
     switch (builtin) {
     default:
         return nullptr;
-    case EBuiltInOps::VmeBlockMotionEstimateIntel:
+    case EBuiltInOps::vmeBlockMotionEstimateIntel:
         return "vme_block_motion_estimate_intel.builtin_kernel";
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
+    case EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel:
         return "vme_block_advanced_motion_estimate_check_intel.builtin_kernel";
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
+    case EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
         return "vme_block_advanced_motion_estimate_bidirectional_check_intel";
     }
 }
@@ -111,14 +111,14 @@ BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type
     switch (operation) {
     default:
         return BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, device);
-    case EBuiltInOps::VmeBlockMotionEstimateIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>>(builtins, device); });
+    case EBuiltInOps::vmeBlockMotionEstimateIntel:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::vmeBlockMotionEstimateIntel>>(builtins, device); });
         break;
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>>(builtins, device); });
+    case EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel>>(builtins, device); });
         break;
-    case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>>(builtins, device); });
+    case EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>>(builtins, device); });
         break;
     }
     return *operationBuilder.first;

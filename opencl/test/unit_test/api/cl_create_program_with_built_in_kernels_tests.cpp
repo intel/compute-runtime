@@ -191,7 +191,7 @@ TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_backend");
-    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pClDevice);
+    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockMotionEstimateIntel, *pClDevice);
     restoreBuiltInBinaryName();
 
     overwriteBuiltInBinaryName("media_kernels_frontend");
@@ -217,7 +217,7 @@ TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockMotionEstimateKer
     EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(6U, kernNeo->getKernelArgsNumber());
 
-    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pClDevice);
+    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockMotionEstimateIntel, *pClDevice);
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
@@ -228,7 +228,7 @@ TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_backend");
-    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pClDevice);
+    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, *pClDevice);
     restoreBuiltInBinaryName();
 
     overwriteBuiltInBinaryName("media_kernels_frontend");
@@ -254,7 +254,7 @@ TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     EXPECT_NE(nullptr, kernNeo->getKernelInfo().builtinDispatchBuilder);
     EXPECT_EQ(15U, kernNeo->getKernelArgsNumber());
 
-    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pClDevice);
+    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, *pClDevice);
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);
@@ -265,7 +265,7 @@ TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     cl_int retVal = CL_SUCCESS;
 
     overwriteBuiltInBinaryName("media_kernels_backend");
-    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pClDevice);
+    Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pClDevice);
     restoreBuiltInBinaryName();
 
     overwriteBuiltInBinaryName("media_kernels_frontend");
@@ -292,7 +292,7 @@ TEST_F(ClCreateProgramWithBuiltInVmeKernelsTests, GivenVmeBlockAdvancedMotionEst
     EXPECT_EQ(20U, kernNeo->getKernelArgsNumber());
 
     auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *ctxNeo->getDevice(0));
+    auto &vmeBuilder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *ctxNeo->getDevice(0));
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
     clReleaseKernel(kernel);

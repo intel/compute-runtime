@@ -690,19 +690,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
         UNRECOVERABLE_IF(true);
         break;
     case 1u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3dBytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3dBytes);
         break;
     case 2u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d2Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d2Bytes);
         break;
     case 4u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d4Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d4Bytes);
         break;
     case 8u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d8Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d8Bytes);
         break;
     case 16u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3d16Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d16Bytes);
         break;
     }
 
@@ -844,19 +844,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
         UNRECOVERABLE_IF(true);
         break;
     case 1u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBufferBytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
         break;
     case 2u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer2Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer2Bytes);
         break;
     case 4u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer4Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer4Bytes);
         break;
     case 8u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer8Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer8Bytes);
         break;
     case 16u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer16Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer16Bytes);
         break;
     }
 
@@ -1025,7 +1025,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
 
     ze_result_t ret = kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
                                                &groupSizeY, &groupSizeZ);
@@ -1334,7 +1334,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                            srcAllocation, 0,
                                            size - rightSize,
                                            middleElSize,
-                                           Builtin::CopyBufferToBufferMiddle,
+                                           Builtin::copyBufferToBufferMiddle,
                                            nullptr,
                                            isStateless,
                                            launchParams);
@@ -1345,7 +1345,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                reinterpret_cast<void *>(&srcAddress),
                                                srcAllocation, size - rightSize,
                                                rightSize, 1UL,
-                                               Builtin::CopyBufferToBufferSide,
+                                               Builtin::copyBufferToBufferSide,
                                                nullptr,
                                                isStateless,
                                                launchParams);
@@ -1464,9 +1464,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                    srcAllocationStruct.alloc, srcAllocationStruct.offset, size);
     } else {
         if (ret == ZE_RESULT_SUCCESS && leftSize) {
-            Builtin copyKernel = Builtin::CopyBufferToBufferSide;
+            Builtin copyKernel = Builtin::copyBufferToBufferSide;
             if (isStateless) {
-                copyKernel = Builtin::CopyBufferToBufferSideStateless;
+                copyKernel = Builtin::copyBufferToBufferSideStateless;
             }
 
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
@@ -1482,9 +1482,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
 
         if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
-            Builtin copyKernel = Builtin::CopyBufferToBufferMiddle;
+            Builtin copyKernel = Builtin::copyBufferToBufferMiddle;
             if (isStateless) {
-                copyKernel = Builtin::CopyBufferToBufferMiddleStateless;
+                copyKernel = Builtin::copyBufferToBufferMiddleStateless;
             }
 
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
@@ -1501,9 +1501,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
 
         if (ret == ZE_RESULT_SUCCESS && rightSize) {
-            Builtin copyKernel = Builtin::CopyBufferToBufferSide;
+            Builtin copyKernel = Builtin::copyBufferToBufferSide;
             if (isStateless) {
-                copyKernel = Builtin::CopyBufferToBufferSideStateless;
+                copyKernel = Builtin::copyBufferToBufferSideStateless;
             }
 
             ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
@@ -1611,12 +1611,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
                                             signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     } else if (srcRegion->depth > 1) {
-        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, Builtin::CopyBufferRectBytes3d,
+        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, Builtin::copyBufferRectBytes3d,
                                                 dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     } else {
-        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, Builtin::CopyBufferRectBytes2d,
+        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, Builtin::copyBufferRectBytes2d,
                                                 dstRegion, dstPitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcAllocationStruct.offset,
                                                 signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -1809,9 +1809,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, const CmdListKernelLaunchParams &launchParams) {
     Kernel *builtinKernel = nullptr;
     if (isStateless) {
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateLeftOverStateless);
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferImmediateLeftOverStateless);
     } else {
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateLeftOver);
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferImmediateLeftOver);
     }
     uint32_t groupSizeY = 1, groupSizeZ = 1;
     uint32_t groupSizeX = static_cast<uint32_t>(unalignedSize);
@@ -1905,15 +1905,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     Kernel *builtinKernel = nullptr;
     if (patternSize == 1) {
         if (isStateless) {
-            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateStateless);
+            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferImmediateStateless);
         } else {
-            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
+            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferImmediate);
         }
     } else {
         if (isStateless) {
-            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddleStateless);
+            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferMiddleStateless);
         } else {
-            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
+            builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferMiddle);
         }
     }
 
@@ -2019,9 +2019,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             Kernel *builtinKernelRemainder;
             if (isStateless) {
-                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftoverStateless);
+                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferRightLeftoverStateless);
             } else {
-                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferRightLeftover);
             }
 
             builtinKernelRemainder->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
@@ -2051,9 +2051,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             Kernel *builtinKernelRemainder;
             if (isStateless) {
-                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftoverStateless);
+                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferRightLeftoverStateless);
             } else {
-                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
+                builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::fillBufferRightLeftover);
             }
 
             builtinKernelRemainder->setGroupSize(fillArguments.rightRemainingBytes, 1u, 1u);
@@ -2775,7 +2775,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     if (pOffsets == nullptr) {
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps);
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestamps);
         builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocationData(this->device, pOffsets, sizeof(size_t) * numEvents, false);
@@ -2784,7 +2784,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         }
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets);
+        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::queryKernelTimestampsWithOffsets);
         builtinKernel->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc, nullptr);
         builtinKernel->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestampsValue);
         offsetValPtr += sizeof(size_t);

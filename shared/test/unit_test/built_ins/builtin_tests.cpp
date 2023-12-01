@@ -26,7 +26,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinDisabledWhenBinExtensionPass
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindful_copy_buffer_to_buffer.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -41,7 +41,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindless_copy_buffer_to_buffer.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -54,17 +54,17 @@ HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatfor
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.ipVersion.value += 0xdead;
-    const std::array<uint32_t, 11> builtinTypes{EBuiltInOps::CopyBufferToBuffer,
-                                                EBuiltInOps::CopyBufferRect,
-                                                EBuiltInOps::FillBuffer,
-                                                EBuiltInOps::CopyBufferToImage3d,
-                                                EBuiltInOps::CopyImage3dToBuffer,
-                                                EBuiltInOps::CopyImageToImage1d,
-                                                EBuiltInOps::CopyImageToImage2d,
-                                                EBuiltInOps::CopyImageToImage3d,
-                                                EBuiltInOps::FillImage1d,
-                                                EBuiltInOps::FillImage2d,
-                                                EBuiltInOps::FillImage3d};
+    const std::array<uint32_t, 11> builtinTypes{EBuiltInOps::copyBufferToBuffer,
+                                                EBuiltInOps::copyBufferRect,
+                                                EBuiltInOps::fillBuffer,
+                                                EBuiltInOps::copyBufferToImage3d,
+                                                EBuiltInOps::copyImage3dToBuffer,
+                                                EBuiltInOps::copyImageToImage1d,
+                                                EBuiltInOps::copyImageToImage2d,
+                                                EBuiltInOps::copyImageToImage3d,
+                                                EBuiltInOps::fillImage1d,
+                                                EBuiltInOps::fillImage2d,
+                                                EBuiltInOps::fillImage3d};
 
     for (auto &builtinType : builtinTypes) {
         auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDevice);
@@ -79,7 +79,7 @@ HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAdd
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -92,14 +92,14 @@ HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGet
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
     {
-        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
         std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
     }
 
     {
-        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
+        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
         std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
@@ -112,7 +112,7 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
 
     std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.bc";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -123,14 +123,14 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
 }
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
-    std::string builtinResourceName = createBuiltinResourceName(EBuiltInOps::CopyBufferToBuffer, ".bin");
-    std::string expectedBuiltinResourceName = std::string(getBuiltinAsString(EBuiltInOps::CopyBufferToBuffer)) + ".bin";
+    std::string builtinResourceName = createBuiltinResourceName(EBuiltInOps::copyBufferToBuffer, ".bin");
+    std::string expectedBuiltinResourceName = std::string(getBuiltinAsString(EBuiltInOps::copyBufferToBuffer)) + ".bin";
     EXPECT_EQ(expectedBuiltinResourceName, builtinResourceName);
 }
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
-    auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
+    auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());
 }

@@ -30,41 +30,41 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     switch (builtin) {
     default:
         return "unknown";
-    case EBuiltInOps::AuxTranslation:
+    case EBuiltInOps::auxTranslation:
         return "aux_translation.builtin_kernel";
-    case EBuiltInOps::CopyBufferToBuffer:
+    case EBuiltInOps::copyBufferToBuffer:
         return "copy_buffer_to_buffer.builtin_kernel";
-    case EBuiltInOps::CopyBufferToBufferStateless:
+    case EBuiltInOps::copyBufferToBufferStateless:
         return "copy_buffer_to_buffer_stateless.builtin_kernel";
-    case EBuiltInOps::CopyBufferRect:
+    case EBuiltInOps::copyBufferRect:
         return "copy_buffer_rect.builtin_kernel";
-    case EBuiltInOps::CopyBufferRectStateless:
+    case EBuiltInOps::copyBufferRectStateless:
         return "copy_buffer_rect_stateless.builtin_kernel";
-    case EBuiltInOps::FillBuffer:
+    case EBuiltInOps::fillBuffer:
         return "fill_buffer.builtin_kernel";
-    case EBuiltInOps::FillBufferStateless:
+    case EBuiltInOps::fillBufferStateless:
         return "fill_buffer_stateless.builtin_kernel";
-    case EBuiltInOps::CopyBufferToImage3d:
+    case EBuiltInOps::copyBufferToImage3d:
         return "copy_buffer_to_image3d.builtin_kernel";
-    case EBuiltInOps::CopyBufferToImage3dStateless:
+    case EBuiltInOps::copyBufferToImage3dStateless:
         return "copy_buffer_to_image3d_stateless.builtin_kernel";
-    case EBuiltInOps::CopyImage3dToBuffer:
+    case EBuiltInOps::copyImage3dToBuffer:
         return "copy_image3d_to_buffer.builtin_kernel";
-    case EBuiltInOps::CopyImage3dToBufferStateless:
+    case EBuiltInOps::copyImage3dToBufferStateless:
         return "copy_image3d_to_buffer_stateless.builtin_kernel";
-    case EBuiltInOps::CopyImageToImage1d:
+    case EBuiltInOps::copyImageToImage1d:
         return "copy_image_to_image1d.builtin_kernel";
-    case EBuiltInOps::CopyImageToImage2d:
+    case EBuiltInOps::copyImageToImage2d:
         return "copy_image_to_image2d.builtin_kernel";
-    case EBuiltInOps::CopyImageToImage3d:
+    case EBuiltInOps::copyImageToImage3d:
         return "copy_image_to_image3d.builtin_kernel";
-    case EBuiltInOps::FillImage1d:
+    case EBuiltInOps::fillImage1d:
         return "fill_image1d.builtin_kernel";
-    case EBuiltInOps::FillImage2d:
+    case EBuiltInOps::fillImage2d:
         return "fill_image2d.builtin_kernel";
-    case EBuiltInOps::FillImage3d:
+    case EBuiltInOps::fillImage3d:
         return "fill_image3d.builtin_kernel";
-    case EBuiltInOps::QueryKernelTimestamps:
+    case EBuiltInOps::queryKernelTimestamps:
         return "copy_kernel_timestamps.builtin_kernel";
     };
 }

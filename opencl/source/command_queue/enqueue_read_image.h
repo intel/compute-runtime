@@ -116,7 +116,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
+    auto eBuiltInOps = EBuiltInOps::copyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);

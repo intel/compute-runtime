@@ -100,7 +100,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    auto eBuiltInOps = EBuiltInOps::CopyBufferToImage3d;
+    auto eBuiltInOps = EBuiltInOps::copyBufferToImage3d;
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);

@@ -70,9 +70,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
-    auto eBuiltInOps = EBuiltInOps::CopyBufferToBuffer;
+    auto eBuiltInOps = EBuiltInOps::copyBufferToBuffer;
     if (forceStateless(buffer->getSize())) {
-        eBuiltInOps = EBuiltInOps::CopyBufferToBufferStateless;
+        eBuiltInOps = EBuiltInOps::copyBufferToBufferStateless;
     }
 
     void *dstPtr = ptr;

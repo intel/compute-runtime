@@ -23,14 +23,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    auto eBuiltInOpsType = EBuiltInOps::CopyBufferToBuffer;
+    auto eBuiltInOpsType = EBuiltInOps::copyBufferToBuffer;
     constexpr cl_command_type cmdType = CL_COMMAND_COPY_BUFFER;
 
     CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), &size};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     if (forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()))) {
-        eBuiltInOpsType = EBuiltInOps::CopyBufferToBufferStateless;
+        eBuiltInOpsType = EBuiltInOps::copyBufferToBufferStateless;
     }
 
     BuiltinOpParams dc;

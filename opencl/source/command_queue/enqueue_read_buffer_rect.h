@@ -54,9 +54,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     bool isCpuCopyAllowed = false;
     getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
 
-    auto eBuiltInOps = EBuiltInOps::CopyBufferRect;
+    auto eBuiltInOps = EBuiltInOps::copyBufferRect;
     if (forceStateless(buffer->getSize())) {
-        eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
+        eBuiltInOps = EBuiltInOps::copyBufferRectStateless;
     }
 
     void *dstPtr = ptr;

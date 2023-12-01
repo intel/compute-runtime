@@ -24,10 +24,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    auto eBuiltInOpsType = EBuiltInOps::CopyImage3dToBuffer;
+    auto eBuiltInOpsType = EBuiltInOps::copyImage3dToBuffer;
 
     if (forceStateless(dstBuffer->getSize())) {
-        eBuiltInOpsType = EBuiltInOps::CopyImage3dToBufferStateless;
+        eBuiltInOpsType = EBuiltInOps::copyImage3dToBufferStateless;
     }
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOpsType,
                                                                             this->getClDevice());

@@ -36,85 +36,85 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
     NEO::EBuiltInOps::Type builtin;
 
     switch (func) {
-    case Builtin::CopyBufferBytes:
+    case Builtin::copyBufferBytes:
         builtinName = "copyBufferToBufferBytesSingle";
-        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        builtin = NEO::EBuiltInOps::copyBufferToBuffer;
         break;
-    case Builtin::CopyBufferBytesStateless:
+    case Builtin::copyBufferBytesStateless:
         builtinName = "copyBufferToBufferBytesSingle";
-        builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
+        builtin = NEO::EBuiltInOps::copyBufferToBufferStateless;
         break;
-    case Builtin::CopyBufferRectBytes2d:
+    case Builtin::copyBufferRectBytes2d:
         builtinName = "CopyBufferRectBytes2d";
-        builtin = NEO::EBuiltInOps::CopyBufferRect;
+        builtin = NEO::EBuiltInOps::copyBufferRect;
         break;
-    case Builtin::CopyBufferRectBytes3d:
+    case Builtin::copyBufferRectBytes3d:
         builtinName = "CopyBufferRectBytes3d";
-        builtin = NEO::EBuiltInOps::CopyBufferRect;
+        builtin = NEO::EBuiltInOps::copyBufferRect;
         break;
-    case Builtin::CopyBufferToBufferMiddle:
+    case Builtin::copyBufferToBufferMiddle:
         builtinName = "CopyBufferToBufferMiddleRegion";
-        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        builtin = NEO::EBuiltInOps::copyBufferToBuffer;
         break;
-    case Builtin::CopyBufferToBufferMiddleStateless:
+    case Builtin::copyBufferToBufferMiddleStateless:
         builtinName = "CopyBufferToBufferMiddleRegion";
-        builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
+        builtin = NEO::EBuiltInOps::copyBufferToBufferStateless;
         break;
-    case Builtin::CopyBufferToBufferSide:
+    case Builtin::copyBufferToBufferSide:
         builtinName = "CopyBufferToBufferSideRegion";
-        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        builtin = NEO::EBuiltInOps::copyBufferToBuffer;
         break;
-    case Builtin::CopyBufferToBufferSideStateless:
+    case Builtin::copyBufferToBufferSideStateless:
         builtinName = "CopyBufferToBufferSideRegion";
-        builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
+        builtin = NEO::EBuiltInOps::copyBufferToBufferStateless;
         break;
-    case Builtin::FillBufferImmediate:
+    case Builtin::fillBufferImmediate:
         builtinName = "FillBufferImmediate";
-        builtin = NEO::EBuiltInOps::FillBuffer;
+        builtin = NEO::EBuiltInOps::fillBuffer;
         break;
-    case Builtin::FillBufferImmediateStateless:
+    case Builtin::fillBufferImmediateStateless:
         builtinName = "FillBufferImmediate";
-        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
-    case Builtin::FillBufferImmediateLeftOver:
+    case Builtin::fillBufferImmediateLeftOver:
         builtinName = "FillBufferImmediateLeftOver";
-        builtin = NEO::EBuiltInOps::FillBuffer;
+        builtin = NEO::EBuiltInOps::fillBuffer;
         break;
-    case Builtin::FillBufferImmediateLeftOverStateless:
+    case Builtin::fillBufferImmediateLeftOverStateless:
         builtinName = "FillBufferImmediateLeftOver";
-        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
-    case Builtin::FillBufferSSHOffset:
+    case Builtin::fillBufferSSHOffset:
         builtinName = "FillBufferSSHOffset";
-        builtin = NEO::EBuiltInOps::FillBuffer;
+        builtin = NEO::EBuiltInOps::fillBuffer;
         break;
-    case Builtin::FillBufferSSHOffsetStateless:
+    case Builtin::fillBufferSSHOffsetStateless:
         builtinName = "FillBufferSSHOffset";
-        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
-    case Builtin::FillBufferMiddle:
+    case Builtin::fillBufferMiddle:
         builtinName = "FillBufferMiddle";
-        builtin = NEO::EBuiltInOps::FillBuffer;
+        builtin = NEO::EBuiltInOps::fillBuffer;
         break;
-    case Builtin::FillBufferMiddleStateless:
+    case Builtin::fillBufferMiddleStateless:
         builtinName = "FillBufferMiddle";
-        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
-    case Builtin::FillBufferRightLeftover:
+    case Builtin::fillBufferRightLeftover:
         builtinName = "FillBufferRightLeftover";
-        builtin = NEO::EBuiltInOps::FillBuffer;
+        builtin = NEO::EBuiltInOps::fillBuffer;
         break;
-    case Builtin::FillBufferRightLeftoverStateless:
+    case Builtin::fillBufferRightLeftoverStateless:
         builtinName = "FillBufferRightLeftover";
-        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        builtin = NEO::EBuiltInOps::fillBufferStateless;
         break;
-    case Builtin::QueryKernelTimestamps:
+    case Builtin::queryKernelTimestamps:
         builtinName = "QueryKernelTimestamps";
-        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+        builtin = NEO::EBuiltInOps::queryKernelTimestamps;
         break;
-    case Builtin::QueryKernelTimestampsWithOffsets:
+    case Builtin::queryKernelTimestampsWithOffsets:
         builtinName = "QueryKernelTimestampsWithOffsets";
-        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+        builtin = NEO::EBuiltInOps::queryKernelTimestamps;
         break;
     default:
         UNRECOVERABLE_IF(true);
@@ -129,49 +129,49 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
     NEO::EBuiltInOps::Type builtin;
 
     switch (func) {
-    case ImageBuiltin::CopyBufferToImage3d16Bytes:
+    case ImageBuiltin::copyBufferToImage3d16Bytes:
         builtinName = "CopyBufferToImage3d16Bytes";
-        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
-    case ImageBuiltin::CopyBufferToImage3d2Bytes:
+    case ImageBuiltin::copyBufferToImage3d2Bytes:
         builtinName = "CopyBufferToImage3d2Bytes";
-        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
-    case ImageBuiltin::CopyBufferToImage3d4Bytes:
+    case ImageBuiltin::copyBufferToImage3d4Bytes:
         builtinName = "CopyBufferToImage3d4Bytes";
-        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
-    case ImageBuiltin::CopyBufferToImage3d8Bytes:
+    case ImageBuiltin::copyBufferToImage3d8Bytes:
         builtinName = "CopyBufferToImage3d8Bytes";
-        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
-    case ImageBuiltin::CopyBufferToImage3dBytes:
+    case ImageBuiltin::copyBufferToImage3dBytes:
         builtinName = "CopyBufferToImage3dBytes";
-        builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
+        builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
-    case ImageBuiltin::CopyImage3dToBuffer16Bytes:
+    case ImageBuiltin::copyImage3dToBuffer16Bytes:
         builtinName = "CopyImage3dToBuffer16Bytes";
-        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
-    case ImageBuiltin::CopyImage3dToBuffer2Bytes:
+    case ImageBuiltin::copyImage3dToBuffer2Bytes:
         builtinName = "CopyImage3dToBuffer2Bytes";
-        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
-    case ImageBuiltin::CopyImage3dToBuffer4Bytes:
+    case ImageBuiltin::copyImage3dToBuffer4Bytes:
         builtinName = "CopyImage3dToBuffer4Bytes";
-        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
-    case ImageBuiltin::CopyImage3dToBuffer8Bytes:
+    case ImageBuiltin::copyImage3dToBuffer8Bytes:
         builtinName = "CopyImage3dToBuffer8Bytes";
-        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
-    case ImageBuiltin::CopyImage3dToBufferBytes:
+    case ImageBuiltin::copyImage3dToBufferBytes:
         builtinName = "CopyImage3dToBufferBytes";
-        builtin = NEO::EBuiltInOps::CopyImage3dToBuffer;
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
-    case ImageBuiltin::CopyImageRegion:
+    case ImageBuiltin::copyImageRegion:
         builtinName = "CopyImageToImage3d";
-        builtin = NEO::EBuiltInOps::CopyImageToImage3d;
+        builtin = NEO::EBuiltInOps::copyImageToImage3d;
         break;
     default:
         UNRECOVERABLE_IF(true);
@@ -184,7 +184,7 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
 BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib) : device(device), builtInsLib(builtInsLib) {
     if (initBuiltinsAsyncEnabled(device)) {
         this->initAsyncComplete = false;
-        this->initAsync = std::async(std::launch::async, &BuiltinFunctionsLibImpl::initBuiltinKernel, this, Builtin::FillBufferImmediate);
+        this->initAsync = std::async(std::launch::async, &BuiltinFunctionsLibImpl::initBuiltinKernel, this, Builtin::fillBufferImmediate);
     }
 }
 

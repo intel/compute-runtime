@@ -27,7 +27,7 @@ void ClExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevic
     ExecutionEnvironment::prepareRootDeviceEnvironments(numRootDevices);
     builtinOpsBuilders.resize(numRootDevices);
     for (auto i = 0u; i < numRootDevices; i++) {
-        builtinOpsBuilders[i] = std::make_unique<BuilderT[]>(EBuiltInOps::COUNT);
+        builtinOpsBuilders[i] = std::make_unique<BuilderT[]>(EBuiltInOps::count);
     }
 }
 } // namespace NEO

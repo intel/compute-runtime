@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ namespace EBuiltInOps {
 
 using Type = uint32_t;
 
-inline constexpr Type VmeBlockMotionEstimateIntel{MaxCoreValue + 1};
-inline constexpr Type VmeBlockAdvancedMotionEstimateCheckIntel{MaxCoreValue + 2};
-inline constexpr Type VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{MaxCoreValue + 3};
+inline constexpr Type vmeBlockMotionEstimateIntel{maxCoreValue + 1};
+inline constexpr Type vmeBlockAdvancedMotionEstimateCheckIntel{maxCoreValue + 2};
+inline constexpr Type vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel{maxCoreValue + 3};
 } // namespace EBuiltInOps
 } // namespace NEO
