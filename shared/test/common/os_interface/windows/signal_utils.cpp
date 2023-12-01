@@ -57,6 +57,8 @@ int setAbrt(bool enableAbrt) {
     return 0;
 }
 
+std::atomic<bool> abortOnTimeout = false;
+
 int setAlarm(bool enableAlarm) {
     std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
 
@@ -70,6 +72,7 @@ int setAlarm(bool enableAlarm) {
     }
 
     if (enableAlarm) {
+        abortOnTimeout = true;
         std::condition_variable threadStarted;
         alarmThread = std::make_unique<std::thread>([&]() {
             auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
@@ -80,9 +83,23 @@ int setAlarm(bool enableAlarm) {
             unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
             std::cout << "set timeout to: " << alarmTime << std::endl;
             threadStarted.notify_all();
-            std::this_thread::sleep_for(std::chrono::seconds(alarmTime));
-            printf("timeout on %s\n", lastTest.c_str());
-            abort();
+            std::chrono::high_resolution_clock::time_point startTime, endTime;
+            std::chrono::milliseconds elapsedTime{};
+            startTime = std::chrono::high_resolution_clock::now();
+            do {
+                std::this_thread::yield();
+                endTime = std::chrono::high_resolution_clock::now();
+                elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+                if (!abortOnTimeout) {
+                    printf("abort disabled by global tests cleanup\n");
+                    return;
+                }
+            } while (abortOnTimeout && elapsedTime.count() < alarmTime * 1000);
+
+            if (abortOnTimeout && elapsedTime.count() >= alarmTime) {
+                printf("timeout on: %s\n", lastTest.c_str());
+                abort();
+            }
         });
 
         std::mutex mtx;
@@ -99,7 +116,8 @@ int setSegv(bool enableSegv) {
 
 void cleanupSignals() {
     if (alarmThread) {
-        alarmThread->detach();
+        abortOnTimeout = false;
+        alarmThread->join();
         alarmThread.reset();
     }
 }
