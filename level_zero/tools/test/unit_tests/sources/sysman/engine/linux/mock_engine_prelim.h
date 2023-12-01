@@ -22,7 +22,7 @@ constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t mockTimestamp = 87654321;
 constexpr uint64_t mockActiveTime = 987654321;
 const uint32_t microSecondsToNanoSeconds = 1000u;
-constexpr uint16_t I915_INVALID_ENGINE_CLASS = UINT16_MAX;
+constexpr uint16_t invalidEngineClass = UINT16_MAX;
 const std::string deviceDir("device");
 constexpr uint32_t numberOfMockedEnginesForSingleTileDevice = 7u;
 constexpr uint32_t numberOfTiles = 2u;
@@ -63,7 +63,7 @@ struct MockEngineNeoDrm : public Drm {
         i915QueryEngineInfo[4].engine.engineInstance = 0;
         i915QueryEngineInfo[5].engine.engineClass = PrelimI915::prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
         i915QueryEngineInfo[5].engine.engineInstance = 0;
-        i915QueryEngineInfo[6].engine.engineClass = I915_INVALID_ENGINE_CLASS;
+        i915QueryEngineInfo[6].engine.engineClass = invalidEngineClass;
         i915QueryEngineInfo[6].engine.engineInstance = 0;
 
         this->engineInfo.reset(new EngineInfo(this, i915QueryEngineInfo));

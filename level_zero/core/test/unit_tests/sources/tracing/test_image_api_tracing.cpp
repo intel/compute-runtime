@@ -69,26 +69,26 @@ struct {
     ze_image_properties_t imageProperties1;
     void *instanceData0;
     void *instanceData3;
-} ImageGetProperties_args;
+} imageGetPropertiesArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    ImageGetProperties_args.hDevice0 = generateRandomHandle<ze_device_handle_t>();
+    imageGetPropertiesArgs.hDevice0 = generateRandomHandle<ze_device_handle_t>();
 
     // initialize replacement argument set
-    ImageGetProperties_args.hDevice1 = generateRandomHandle<ze_device_handle_t>();
+    imageGetPropertiesArgs.hDevice1 = generateRandomHandle<ze_device_handle_t>();
 
     // initialize user instance data
-    ImageGetProperties_args.instanceData0 = generateRandomHandle<void *>();
-    ImageGetProperties_args.instanceData3 = generateRandomHandle<void *>();
+    imageGetPropertiesArgs.instanceData0 = generateRandomHandle<void *>();
+    imageGetPropertiesArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Image.pfnGetProperties =
         [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) -> ze_result_t {
-        EXPECT_EQ(ImageGetProperties_args.hDevice1, hDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc1, desc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, pImageProperties);
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice1, hDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc1, desc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties1, pImageProperties);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -98,18 +98,18 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     //
     prologCbs0.Image.pfnGetPropertiesCb =
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageGetProperties_args.hDevice0, *params->phDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc0, *params->pdesc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties0, *params->ppImageProperties);
-        *params->phDevice = ImageGetProperties_args.hDevice1;
-        *params->pdesc = &ImageGetProperties_args.desc1;
-        *params->ppImageProperties = &ImageGetProperties_args.imageProperties1;
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice0, *params->phDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc0, *params->pdesc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties0, *params->ppImageProperties);
+        *params->phDevice = imageGetPropertiesArgs.hDevice1;
+        *params->pdesc = &imageGetPropertiesArgs.desc1;
+        *params->ppImageProperties = &imageGetPropertiesArgs.imageProperties1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = ImageGetProperties_args.instanceData0;
+        instanceData->instanceDataValue = imageGetPropertiesArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -121,15 +121,15 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties1, *params->ppImageProperties);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, imageGetPropertiesArgs.instanceData0);
         delete instanceData;
     };
 
@@ -139,9 +139,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     //
     prologCbs1.Image.pfnGetPropertiesCb =
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties1, *params->ppImageProperties);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -155,9 +155,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     epilogCbs2.Image.pfnGetPropertiesCb =
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties1, *params->ppImageProperties);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -170,15 +170,15 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
     //
     prologCbs3.Image.pfnGetPropertiesCb =
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties1, *params->ppImageProperties);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = ImageGetProperties_args.instanceData3;
+        instanceData->instanceDataValue = imageGetPropertiesArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -190,21 +190,21 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
         [](ze_image_get_properties_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageGetProperties_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageGetProperties_args.desc1, *params->pdesc);
-        EXPECT_EQ(&ImageGetProperties_args.imageProperties1, *params->ppImageProperties);
+        EXPECT_EQ(imageGetPropertiesArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageGetPropertiesArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&imageGetPropertiesArgs.imageProperties1, *params->ppImageProperties);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, ImageGetProperties_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, imageGetPropertiesArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageGetPropertiesTracing(ImageGetProperties_args.hDevice0, &ImageGetProperties_args.desc0, &ImageGetProperties_args.imageProperties0);
+    result = zeImageGetPropertiesTracing(imageGetPropertiesArgs.hDevice0, &imageGetPropertiesArgs.desc0, &imageGetPropertiesArgs.imageProperties0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -221,34 +221,34 @@ struct {
     ze_image_handle_t hImageAPI;
     void *instanceData0;
     void *instanceData3;
-} ImageCreate_args;
+} imageCreateArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    ImageCreate_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
-    ImageCreate_args.hDevice0 = generateRandomHandle<ze_device_handle_t>();
-    ImageCreate_args.hImage0 = generateRandomHandle<ze_image_handle_t>();
+    imageCreateArgs.hContext0 = generateRandomHandle<ze_context_handle_t>();
+    imageCreateArgs.hDevice0 = generateRandomHandle<ze_device_handle_t>();
+    imageCreateArgs.hImage0 = generateRandomHandle<ze_image_handle_t>();
 
     // initialize replacement argument set
-    ImageCreate_args.hContext1 = generateRandomHandle<ze_context_handle_t>();
-    ImageCreate_args.hDevice1 = generateRandomHandle<ze_device_handle_t>();
-    ImageCreate_args.hImage1 = generateRandomHandle<ze_image_handle_t>();
+    imageCreateArgs.hContext1 = generateRandomHandle<ze_context_handle_t>();
+    imageCreateArgs.hDevice1 = generateRandomHandle<ze_device_handle_t>();
+    imageCreateArgs.hImage1 = generateRandomHandle<ze_image_handle_t>();
 
     // initialize user instance data
-    ImageCreate_args.instanceData0 = generateRandomHandle<void *>();
-    ImageCreate_args.instanceData3 = generateRandomHandle<void *>();
+    imageCreateArgs.instanceData0 = generateRandomHandle<void *>();
+    imageCreateArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Image.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) -> ze_result_t {
-        EXPECT_EQ(ImageCreate_args.hContext1, hContext);
-        EXPECT_EQ(ImageCreate_args.hDevice1, hDevice);
-        EXPECT_EQ(&ImageCreate_args.desc1, desc);
-        EXPECT_EQ(&ImageCreate_args.hImage1, phImage);
-        EXPECT_EQ(ImageCreate_args.hImage1, *phImage);
-        ImageCreate_args.hImageAPI = generateRandomHandle<ze_image_handle_t>();
-        *phImage = ImageCreate_args.hImageAPI;
+        EXPECT_EQ(imageCreateArgs.hContext1, hContext);
+        EXPECT_EQ(imageCreateArgs.hDevice1, hDevice);
+        EXPECT_EQ(&imageCreateArgs.desc1, desc);
+        EXPECT_EQ(&imageCreateArgs.hImage1, phImage);
+        EXPECT_EQ(imageCreateArgs.hImage1, *phImage);
+        imageCreateArgs.hImageAPI = generateRandomHandle<ze_image_handle_t>();
+        *phImage = imageCreateArgs.hImageAPI;
         return ZE_RESULT_SUCCESS;
     };
 
@@ -263,9 +263,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ASSERT_NE(nullptr, params->phDevice);
         ASSERT_NE(nullptr, *params->phContext);
         ASSERT_NE(nullptr, *params->phDevice);
-        EXPECT_EQ(ImageCreate_args.hContext0, *params->phContext);
-        EXPECT_EQ(ImageCreate_args.hDevice0, *params->phDevice);
-        EXPECT_EQ(&ImageCreate_args.desc0, *params->pdesc);
+        EXPECT_EQ(imageCreateArgs.hContext0, *params->phContext);
+        EXPECT_EQ(imageCreateArgs.hDevice0, *params->phDevice);
+        EXPECT_EQ(&imageCreateArgs.desc0, *params->pdesc);
 
         ze_image_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -274,23 +274,23 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ze_image_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&ImageCreate_args.hImage0, pHandle);
+        EXPECT_EQ(&imageCreateArgs.hImage0, pHandle);
 
         ze_image_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(ImageCreate_args.hImage0, handle);
+        EXPECT_EQ(imageCreateArgs.hImage0, handle);
 
-        *params->phContext = ImageCreate_args.hContext1;
-        *params->phDevice = ImageCreate_args.hDevice1;
-        *params->pdesc = &ImageCreate_args.desc1;
-        *params->pphImage = &ImageCreate_args.hImage1;
+        *params->phContext = imageCreateArgs.hContext1;
+        *params->phDevice = imageCreateArgs.hDevice1;
+        *params->pdesc = &imageCreateArgs.desc1;
+        *params->pphImage = &imageCreateArgs.hImage1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = ImageCreate_args.instanceData0;
+        instanceData->instanceDataValue = imageCreateArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -307,9 +307,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ASSERT_NE(nullptr, params->phDevice);
         ASSERT_NE(nullptr, *params->phContext);
         ASSERT_NE(nullptr, *params->phDevice);
-        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        EXPECT_EQ(imageCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(imageCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageCreateArgs.desc1, *params->pdesc);
 
         ze_image_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -318,19 +318,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ze_image_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        EXPECT_EQ(&imageCreateArgs.hImage1, pHandle);
 
         ze_image_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        EXPECT_EQ(imageCreateArgs.hImage1, handle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, imageCreateArgs.instanceData0);
         delete instanceData;
     };
 
@@ -340,9 +340,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     //
     prologCbs1.Image.pfnCreateCb =
         [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        EXPECT_EQ(imageCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(imageCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageCreateArgs.desc1, *params->pdesc);
 
         ze_image_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -351,12 +351,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ze_image_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        EXPECT_EQ(&imageCreateArgs.hImage1, pHandle);
 
         ze_image_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        EXPECT_EQ(imageCreateArgs.hImage1, handle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
@@ -371,9 +371,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     epilogCbs2.Image.pfnCreateCb =
         [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        EXPECT_EQ(imageCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(imageCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageCreateArgs.desc1, *params->pdesc);
 
         ze_image_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -382,12 +382,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ze_image_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        EXPECT_EQ(&imageCreateArgs.hImage1, pHandle);
 
         ze_image_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        EXPECT_EQ(imageCreateArgs.hImage1, handle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
@@ -401,9 +401,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
     //
     prologCbs3.Image.pfnCreateCb =
         [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        EXPECT_EQ(imageCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(imageCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageCreateArgs.desc1, *params->pdesc);
 
         ze_image_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -412,19 +412,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ze_image_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        EXPECT_EQ(&imageCreateArgs.hImage1, pHandle);
 
         ze_image_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        EXPECT_EQ(imageCreateArgs.hImage1, handle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = ImageCreate_args.instanceData3;
+        instanceData->instanceDataValue = imageCreateArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -436,9 +436,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         [](ze_image_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageCreate_args.hContext1, *params->phContext);
-        EXPECT_EQ(ImageCreate_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&ImageCreate_args.desc1, *params->pdesc);
+        EXPECT_EQ(imageCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(imageCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&imageCreateArgs.desc1, *params->pdesc);
 
         ze_image_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -447,25 +447,25 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
         ze_image_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&ImageCreate_args.hImage1, pHandle);
+        EXPECT_EQ(&imageCreateArgs.hImage1, pHandle);
 
         ze_image_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(ImageCreate_args.hImage1, handle);
+        EXPECT_EQ(imageCreateArgs.hImage1, handle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, ImageCreate_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, imageCreateArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageCreateTracing(ImageCreate_args.hContext0, ImageCreate_args.hDevice0, &ImageCreate_args.desc0, &ImageCreate_args.hImage0);
+    result = zeImageCreateTracing(imageCreateArgs.hContext0, imageCreateArgs.hDevice0, &imageCreateArgs.desc0, &imageCreateArgs.hImage0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -475,24 +475,24 @@ struct {
     ze_image_handle_t hImage1;
     void *instanceData0;
     void *instanceData3;
-} ImageDestroy_args;
+} imageDestroyArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    ImageDestroy_args.hImage0 = generateRandomHandle<ze_image_handle_t>();
+    imageDestroyArgs.hImage0 = generateRandomHandle<ze_image_handle_t>();
 
     // initialize replacement argument set
-    ImageDestroy_args.hImage1 = generateRandomHandle<ze_image_handle_t>();
+    imageDestroyArgs.hImage1 = generateRandomHandle<ze_image_handle_t>();
 
     // initialize user instance data
-    ImageDestroy_args.instanceData0 = generateRandomHandle<void *>();
-    ImageDestroy_args.instanceData3 = generateRandomHandle<void *>();
+    imageDestroyArgs.instanceData0 = generateRandomHandle<void *>();
+    imageDestroyArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Image.pfnDestroy =
         [](ze_image_handle_t hImage) -> ze_result_t {
-        EXPECT_EQ(ImageDestroy_args.hImage1, hImage);
+        EXPECT_EQ(imageDestroyArgs.hImage1, hImage);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -502,14 +502,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     //
     prologCbs0.Image.pfnDestroyCb =
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageDestroy_args.hImage0, *params->phImage);
-        *params->phImage = ImageDestroy_args.hImage1;
+        EXPECT_EQ(imageDestroyArgs.hImage0, *params->phImage);
+        *params->phImage = imageDestroyArgs.hImage1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = ImageDestroy_args.instanceData0;
+        instanceData->instanceDataValue = imageDestroyArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -521,13 +521,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        EXPECT_EQ(imageDestroyArgs.hImage1, *params->phImage);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, imageDestroyArgs.instanceData0);
         delete instanceData;
     };
 
@@ -537,7 +537,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     //
     prologCbs1.Image.pfnDestroyCb =
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        EXPECT_EQ(imageDestroyArgs.hImage1, *params->phImage);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -551,7 +551,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     epilogCbs2.Image.pfnDestroyCb =
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        EXPECT_EQ(imageDestroyArgs.hImage1, *params->phImage);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -564,13 +564,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
     //
     prologCbs3.Image.pfnDestroyCb =
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        EXPECT_EQ(imageDestroyArgs.hImage1, *params->phImage);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = ImageDestroy_args.instanceData3;
+        instanceData->instanceDataValue = imageDestroyArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -582,19 +582,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
         [](ze_image_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(ImageDestroy_args.hImage1, *params->phImage);
+        EXPECT_EQ(imageDestroyArgs.hImage1, *params->phImage);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, ImageDestroy_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, imageDestroyArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageDestroyTracing(ImageDestroy_args.hImage0);
+    result = zeImageDestroyTracing(imageDestroyArgs.hImage0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

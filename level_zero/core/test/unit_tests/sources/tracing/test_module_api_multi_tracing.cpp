@@ -27,7 +27,7 @@ struct {
     ze_module_build_log_handle_t hBuildLogAPI;
     void *instanceData0;
     void *instanceData3;
-} module_create_args;
+} moduleCreateArgs;
 
 static void moduleCreateDescInitRandom(ze_module_desc_t *desc) {
     uint8_t *ptr = (uint8_t *)desc;
@@ -50,37 +50,37 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    module_create_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
-    module_create_args.hDevice0 = generateRandomHandle<ze_device_handle_t>();
-    moduleCreateDescInitRandom(&module_create_args.desc0);
-    module_create_args.hModule0 = generateRandomHandle<ze_module_handle_t>();
-    module_create_args.hBuildLog0 = generateRandomHandle<ze_module_build_log_handle_t>();
+    moduleCreateArgs.hContext0 = generateRandomHandle<ze_context_handle_t>();
+    moduleCreateArgs.hDevice0 = generateRandomHandle<ze_device_handle_t>();
+    moduleCreateDescInitRandom(&moduleCreateArgs.desc0);
+    moduleCreateArgs.hModule0 = generateRandomHandle<ze_module_handle_t>();
+    moduleCreateArgs.hBuildLog0 = generateRandomHandle<ze_module_build_log_handle_t>();
 
     // initialize replacement argument set
-    module_create_args.hContext1 = generateRandomHandle<ze_context_handle_t>();
-    module_create_args.hDevice1 = generateRandomHandle<ze_device_handle_t>();
-    moduleCreateDescInitRandom(&module_create_args.desc1);
-    module_create_args.hModule1 = generateRandomHandle<ze_module_handle_t>();
-    module_create_args.hBuildLog1 = generateRandomHandle<ze_module_build_log_handle_t>();
+    moduleCreateArgs.hContext1 = generateRandomHandle<ze_context_handle_t>();
+    moduleCreateArgs.hDevice1 = generateRandomHandle<ze_device_handle_t>();
+    moduleCreateDescInitRandom(&moduleCreateArgs.desc1);
+    moduleCreateArgs.hModule1 = generateRandomHandle<ze_module_handle_t>();
+    moduleCreateArgs.hBuildLog1 = generateRandomHandle<ze_module_build_log_handle_t>();
 
     // initialize user instance data
-    module_create_args.instanceData0 = generateRandomHandle<void *>();
-    module_create_args.instanceData3 = generateRandomHandle<void *>();
+    moduleCreateArgs.instanceData0 = generateRandomHandle<void *>();
+    moduleCreateArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Module.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_module_desc_t *desc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog) -> ze_result_t {
-        EXPECT_EQ(module_create_args.hContext1, hContext);
-        EXPECT_EQ(module_create_args.hDevice1, hDevice);
-        EXPECT_EQ(&module_create_args.desc1, desc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc1, desc));
-        EXPECT_EQ(&module_create_args.hModule1, phModule);
-        EXPECT_EQ(module_create_args.hModule1, *phModule);
-        EXPECT_EQ(&module_create_args.hBuildLog1, phBuildLog);
-        EXPECT_EQ(module_create_args.hBuildLog1, *phBuildLog);
-        module_create_args.hModuleAPI = generateRandomHandle<ze_module_handle_t>();
-        module_create_args.hBuildLogAPI = generateRandomHandle<ze_module_build_log_handle_t>();
-        *phModule = module_create_args.hModuleAPI;
-        *phBuildLog = module_create_args.hBuildLogAPI;
+        EXPECT_EQ(moduleCreateArgs.hContext1, hContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice1, hDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc1, desc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc1, desc));
+        EXPECT_EQ(&moduleCreateArgs.hModule1, phModule);
+        EXPECT_EQ(moduleCreateArgs.hModule1, *phModule);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog1, phBuildLog);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog1, *phBuildLog);
+        moduleCreateArgs.hModuleAPI = generateRandomHandle<ze_module_handle_t>();
+        moduleCreateArgs.hBuildLogAPI = generateRandomHandle<ze_module_build_log_handle_t>();
+        *phModule = moduleCreateArgs.hModuleAPI;
+        *phBuildLog = moduleCreateArgs.hBuildLogAPI;
         return ZE_RESULT_SUCCESS;
     };
 
@@ -90,10 +90,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     //
     prologCbs0.Module.pfnCreateCb =
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_create_args.hContext0, *params->phContext);
-        EXPECT_EQ(module_create_args.hDevice0, *params->phDevice);
-        EXPECT_EQ(&module_create_args.desc0, *params->pdesc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc0, *params->pdesc));
+        EXPECT_EQ(moduleCreateArgs.hContext0, *params->phContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice0, *params->phDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc0, *params->pdesc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc0, *params->pdesc));
 
         ze_module_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -102,12 +102,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&module_create_args.hModule0, pHandle);
+        EXPECT_EQ(&moduleCreateArgs.hModule0, pHandle);
 
         ze_module_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(module_create_args.hModule0, handle);
+        EXPECT_EQ(moduleCreateArgs.hModule0, handle);
 
         ze_module_build_log_handle_t **ppLogHandle;
         ppLogHandle = params->pphBuildLog;
@@ -115,25 +115,25 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_build_log_handle_t *pLogHandle;
         ASSERT_NE(nullptr, ppLogHandle);
         pLogHandle = *ppLogHandle;
-        EXPECT_EQ(&module_create_args.hBuildLog0, pLogHandle);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog0, pLogHandle);
 
         ze_module_build_log_handle_t logHandle;
         logHandle = *pLogHandle;
         ASSERT_NE(nullptr, logHandle);
-        EXPECT_EQ(module_create_args.hBuildLog0, logHandle);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog0, logHandle);
 
-        *params->phContext = module_create_args.hContext1;
-        *params->phDevice = module_create_args.hDevice1;
-        *params->pdesc = &module_create_args.desc1;
-        *params->pphModule = &module_create_args.hModule1;
-        *params->pphBuildLog = &module_create_args.hBuildLog1;
+        *params->phContext = moduleCreateArgs.hContext1;
+        *params->phDevice = moduleCreateArgs.hDevice1;
+        *params->pdesc = &moduleCreateArgs.desc1;
+        *params->pphModule = &moduleCreateArgs.hModule1;
+        *params->pphBuildLog = &moduleCreateArgs.hBuildLog1;
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = module_create_args.instanceData0;
+        instanceData->instanceDataValue = moduleCreateArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -145,10 +145,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_create_args.hContext1, *params->phContext);
-        EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&module_create_args.desc1, *params->pdesc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc1, *params->pdesc));
+        EXPECT_EQ(moduleCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc1, *params->pdesc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc1, *params->pdesc));
 
         ze_module_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -157,12 +157,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&module_create_args.hModule1, pHandle);
+        EXPECT_EQ(&moduleCreateArgs.hModule1, pHandle);
 
         ze_module_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(module_create_args.hModule1, handle);
+        EXPECT_EQ(moduleCreateArgs.hModule1, handle);
 
         ze_module_build_log_handle_t **ppLogHandle;
         ppLogHandle = params->pphBuildLog;
@@ -170,19 +170,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_build_log_handle_t *pLogHandle;
         ASSERT_NE(nullptr, ppLogHandle);
         pLogHandle = *ppLogHandle;
-        EXPECT_EQ(&module_create_args.hBuildLog1, pLogHandle);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog1, pLogHandle);
 
         ze_module_build_log_handle_t logHandle;
         logHandle = *pLogHandle;
         ASSERT_NE(nullptr, logHandle);
-        EXPECT_EQ(module_create_args.hBuildLog1, logHandle);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog1, logHandle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, module_create_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, moduleCreateArgs.instanceData0);
         delete instanceData;
     };
 
@@ -192,10 +192,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     //
     prologCbs1.Module.pfnCreateCb =
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_create_args.hContext1, *params->phContext);
-        EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&module_create_args.desc1, *params->pdesc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc1, *params->pdesc));
+        EXPECT_EQ(moduleCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc1, *params->pdesc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc1, *params->pdesc));
 
         ze_module_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -204,12 +204,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&module_create_args.hModule1, pHandle);
+        EXPECT_EQ(&moduleCreateArgs.hModule1, pHandle);
 
         ze_module_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(module_create_args.hModule1, handle);
+        EXPECT_EQ(moduleCreateArgs.hModule1, handle);
 
         ze_module_build_log_handle_t **ppLogHandle;
         ppLogHandle = params->pphBuildLog;
@@ -217,12 +217,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_build_log_handle_t *pLogHandle;
         ASSERT_NE(nullptr, ppLogHandle);
         pLogHandle = *ppLogHandle;
-        EXPECT_EQ(&module_create_args.hBuildLog1, pLogHandle);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog1, pLogHandle);
 
         ze_module_build_log_handle_t logHandle;
         logHandle = *pLogHandle;
         ASSERT_NE(nullptr, logHandle);
-        EXPECT_EQ(module_create_args.hBuildLog1, logHandle);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog1, logHandle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
@@ -237,10 +237,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     epilogCbs2.Module.pfnCreateCb =
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_create_args.hContext1, *params->phContext);
-        EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&module_create_args.desc1, *params->pdesc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc1, *params->pdesc));
+        EXPECT_EQ(moduleCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc1, *params->pdesc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc1, *params->pdesc));
 
         ze_module_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -249,12 +249,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&module_create_args.hModule1, pHandle);
+        EXPECT_EQ(&moduleCreateArgs.hModule1, pHandle);
 
         ze_module_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(module_create_args.hModule1, handle);
+        EXPECT_EQ(moduleCreateArgs.hModule1, handle);
 
         ze_module_build_log_handle_t **ppLogHandle;
         ppLogHandle = params->pphBuildLog;
@@ -262,12 +262,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_build_log_handle_t *pLogHandle;
         ASSERT_NE(nullptr, ppLogHandle);
         pLogHandle = *ppLogHandle;
-        EXPECT_EQ(&module_create_args.hBuildLog1, pLogHandle);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog1, pLogHandle);
 
         ze_module_build_log_handle_t logHandle;
         logHandle = *pLogHandle;
         ASSERT_NE(nullptr, logHandle);
-        EXPECT_EQ(module_create_args.hBuildLog1, logHandle);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog1, logHandle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
@@ -281,10 +281,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
     //
     prologCbs3.Module.pfnCreateCb =
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_create_args.hContext1, *params->phContext);
-        EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&module_create_args.desc1, *params->pdesc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc1, *params->pdesc));
+        EXPECT_EQ(moduleCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc1, *params->pdesc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc1, *params->pdesc));
 
         ze_module_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -293,12 +293,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&module_create_args.hModule1, pHandle);
+        EXPECT_EQ(&moduleCreateArgs.hModule1, pHandle);
 
         ze_module_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(module_create_args.hModule1, handle);
+        EXPECT_EQ(moduleCreateArgs.hModule1, handle);
 
         ze_module_build_log_handle_t **ppLogHandle;
         ppLogHandle = params->pphBuildLog;
@@ -306,19 +306,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_build_log_handle_t *pLogHandle;
         ASSERT_NE(nullptr, ppLogHandle);
         pLogHandle = *ppLogHandle;
-        EXPECT_EQ(&module_create_args.hBuildLog1, pLogHandle);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog1, pLogHandle);
 
         ze_module_build_log_handle_t logHandle;
         logHandle = *pLogHandle;
         ASSERT_NE(nullptr, logHandle);
-        EXPECT_EQ(module_create_args.hBuildLog1, logHandle);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog1, logHandle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = module_create_args.instanceData3;
+        instanceData->instanceDataValue = moduleCreateArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -330,10 +330,10 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         [](ze_module_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_create_args.hContext1, *params->phContext);
-        EXPECT_EQ(module_create_args.hDevice1, *params->phDevice);
-        EXPECT_EQ(&module_create_args.desc1, *params->pdesc);
-        EXPECT_TRUE(moduleCreateDescCompare(&module_create_args.desc1, *params->pdesc));
+        EXPECT_EQ(moduleCreateArgs.hContext1, *params->phContext);
+        EXPECT_EQ(moduleCreateArgs.hDevice1, *params->phDevice);
+        EXPECT_EQ(&moduleCreateArgs.desc1, *params->pdesc);
+        EXPECT_TRUE(moduleCreateDescCompare(&moduleCreateArgs.desc1, *params->pdesc));
 
         ze_module_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -342,12 +342,12 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_handle_t *pHandle;
         ASSERT_NE(nullptr, ppHandle);
         pHandle = *ppHandle;
-        EXPECT_EQ(&module_create_args.hModule1, pHandle);
+        EXPECT_EQ(&moduleCreateArgs.hModule1, pHandle);
 
         ze_module_handle_t handle;
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
-        EXPECT_EQ(module_create_args.hModule1, handle);
+        EXPECT_EQ(moduleCreateArgs.hModule1, handle);
 
         ze_module_build_log_handle_t **ppLogHandle;
         ppLogHandle = params->pphBuildLog;
@@ -355,25 +355,25 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
         ze_module_build_log_handle_t *pLogHandle;
         ASSERT_NE(nullptr, ppLogHandle);
         pLogHandle = *ppLogHandle;
-        EXPECT_EQ(&module_create_args.hBuildLog1, pLogHandle);
+        EXPECT_EQ(&moduleCreateArgs.hBuildLog1, pLogHandle);
 
         ze_module_build_log_handle_t logHandle;
         logHandle = *pLogHandle;
         ASSERT_NE(nullptr, logHandle);
-        EXPECT_EQ(module_create_args.hBuildLog1, logHandle);
+        EXPECT_EQ(moduleCreateArgs.hBuildLog1, logHandle);
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, module_create_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, moduleCreateArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleCreateTracing(module_create_args.hContext0, module_create_args.hDevice0, &module_create_args.desc0, &module_create_args.hModule0, &module_create_args.hBuildLog0);
+    result = zeModuleCreateTracing(moduleCreateArgs.hContext0, moduleCreateArgs.hDevice0, &moduleCreateArgs.desc0, &moduleCreateArgs.hModule0, &moduleCreateArgs.hBuildLog0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -383,24 +383,24 @@ struct {
     ze_module_handle_t hModule1;
     void *instanceData0;
     void *instanceData3;
-} module_destroy_args;
+} moduleDestroyArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    module_destroy_args.hModule0 = generateRandomHandle<ze_module_handle_t>();
+    moduleDestroyArgs.hModule0 = generateRandomHandle<ze_module_handle_t>();
 
     // initialize replacement argument set
-    module_destroy_args.hModule1 = generateRandomHandle<ze_module_handle_t>();
+    moduleDestroyArgs.hModule1 = generateRandomHandle<ze_module_handle_t>();
 
     // initialize user instance data
-    module_destroy_args.instanceData0 = generateRandomHandle<void *>();
-    module_destroy_args.instanceData3 = generateRandomHandle<void *>();
+    moduleDestroyArgs.instanceData0 = generateRandomHandle<void *>();
+    moduleDestroyArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Module.pfnDestroy =
         [](ze_module_handle_t hModule) -> ze_result_t {
-        EXPECT_EQ(module_destroy_args.hModule1, hModule);
+        EXPECT_EQ(moduleDestroyArgs.hModule1, hModule);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -410,14 +410,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     //
     prologCbs0.Module.pfnDestroyCb =
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_destroy_args.hModule0, *params->phModule);
-        *params->phModule = module_destroy_args.hModule1;
+        EXPECT_EQ(moduleDestroyArgs.hModule0, *params->phModule);
+        *params->phModule = moduleDestroyArgs.hModule1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = module_destroy_args.instanceData0;
+        instanceData->instanceDataValue = moduleDestroyArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -429,13 +429,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleDestroyArgs.hModule1, *params->phModule);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, module_destroy_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, moduleDestroyArgs.instanceData0);
         delete instanceData;
     };
 
@@ -445,7 +445,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     //
     prologCbs1.Module.pfnDestroyCb =
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleDestroyArgs.hModule1, *params->phModule);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -459,7 +459,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     epilogCbs2.Module.pfnDestroyCb =
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleDestroyArgs.hModule1, *params->phModule);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -472,13 +472,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
     //
     prologCbs3.Module.pfnDestroyCb =
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleDestroyArgs.hModule1, *params->phModule);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = module_destroy_args.instanceData3;
+        instanceData->instanceDataValue = moduleDestroyArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -490,19 +490,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
         [](ze_module_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_destroy_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleDestroyArgs.hModule1, *params->phModule);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, module_destroy_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, moduleDestroyArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleDestroyTracing(module_destroy_args.hModule0);
+    result = zeModuleDestroyTracing(moduleDestroyArgs.hModule0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -519,7 +519,7 @@ struct {
     uint8_t moduleNativeBinary1[moduleGetNativeBinarySize1];
     void *instanceData0;
     void *instanceData3;
-} module_get_native_binary_args;
+} moduleGetNativeBinaryArgs;
 
 static void moduleGetNativeBinaryNativeBinaryInitRandom(uint8_t *binary, size_t size) {
     uint8_t *ptr = binary;
@@ -542,24 +542,24 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    module_get_native_binary_args.hModule0 = generateRandomHandle<ze_module_handle_t>();
-    moduleGetNativeBinaryNativeBinaryInitRandom(module_get_native_binary_args.moduleNativeBinary0, moduleGetNativeBinarySize0);
+    moduleGetNativeBinaryArgs.hModule0 = generateRandomHandle<ze_module_handle_t>();
+    moduleGetNativeBinaryNativeBinaryInitRandom(moduleGetNativeBinaryArgs.moduleNativeBinary0, moduleGetNativeBinarySize0);
 
     // initialize replacement argument set
-    module_get_native_binary_args.hModule1 = generateRandomHandle<ze_module_handle_t>();
-    moduleGetNativeBinaryNativeBinaryInitRandom(module_get_native_binary_args.moduleNativeBinary1, moduleGetNativeBinarySize1);
+    moduleGetNativeBinaryArgs.hModule1 = generateRandomHandle<ze_module_handle_t>();
+    moduleGetNativeBinaryNativeBinaryInitRandom(moduleGetNativeBinaryArgs.moduleNativeBinary1, moduleGetNativeBinarySize1);
 
     // initialize user instance data
-    module_get_native_binary_args.instanceData0 = generateRandomHandle<void *>();
-    module_get_native_binary_args.instanceData3 = generateRandomHandle<void *>();
+    moduleGetNativeBinaryArgs.instanceData0 = generateRandomHandle<void *>();
+    moduleGetNativeBinaryArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Module.pfnGetNativeBinary =
         [](ze_module_handle_t hModule, size_t *pSize, uint8_t *pModuleNativeBinary) -> ze_result_t {
-        EXPECT_EQ(module_get_native_binary_args.hModule1, hModule);
-        EXPECT_EQ(&module_get_native_binary_args.size1, pSize);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule1, hModule);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, pSize);
         EXPECT_EQ(*pSize, moduleGetNativeBinarySize1);
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, pModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary1, pModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary1,
                                                              pModuleNativeBinary, moduleGetNativeBinarySize0));
         return ZE_RESULT_SUCCESS;
     };
@@ -570,7 +570,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     //
     prologCbs0.Module.pfnGetNativeBinaryCb =
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_get_native_binary_args.hModule0, *params->phModule);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule0, *params->phModule);
 
         size_t **ppSize;
         ASSERT_NE(nullptr, params);
@@ -579,26 +579,26 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         size_t *pSize;
         ASSERT_NE(nullptr, ppSize);
         pSize = *ppSize;
-        EXPECT_EQ(&module_get_native_binary_args.size0, *params->ppSize);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size0, *params->ppSize);
 
         size_t size;
         ASSERT_NE(nullptr, pSize);
         size = *pSize;
         EXPECT_EQ(size, moduleGetNativeBinarySize0);
 
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary0, *params->ppModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary0,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary0, *params->ppModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary0,
                                                              *params->ppModuleNativeBinary, moduleGetNativeBinarySize0));
-        *params->phModule = module_get_native_binary_args.hModule1;
-        *params->ppSize = &module_get_native_binary_args.size1;
-        *params->ppModuleNativeBinary = module_get_native_binary_args.moduleNativeBinary1;
+        *params->phModule = moduleGetNativeBinaryArgs.hModule1;
+        *params->ppSize = &moduleGetNativeBinaryArgs.size1;
+        *params->ppModuleNativeBinary = moduleGetNativeBinaryArgs.moduleNativeBinary1;
 
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = module_get_native_binary_args.instanceData0;
+        instanceData->instanceDataValue = moduleGetNativeBinaryArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -610,7 +610,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule1, *params->phModule);
 
         size_t **ppSize;
         ASSERT_NE(nullptr, params);
@@ -619,22 +619,22 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         size_t *pSize;
         ASSERT_NE(nullptr, ppSize);
         pSize = *ppSize;
-        EXPECT_EQ(&module_get_native_binary_args.size1, *params->ppSize);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, *params->ppSize);
 
         size_t size;
         ASSERT_NE(nullptr, pSize);
         size = *pSize;
         EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary1, *params->ppModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary1,
                                                              *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, module_get_native_binary_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, moduleGetNativeBinaryArgs.instanceData0);
         delete instanceData;
     };
 
@@ -644,7 +644,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     //
     prologCbs1.Module.pfnGetNativeBinaryCb =
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule1, *params->phModule);
 
         size_t **ppSize;
         ASSERT_NE(nullptr, params);
@@ -653,15 +653,15 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         size_t *pSize;
         ASSERT_NE(nullptr, ppSize);
         pSize = *ppSize;
-        EXPECT_EQ(&module_get_native_binary_args.size1, *params->ppSize);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, *params->ppSize);
 
         size_t size;
         ASSERT_NE(nullptr, pSize);
         size = *pSize;
         EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary1, *params->ppModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary1,
                                                              *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
@@ -676,7 +676,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     epilogCbs2.Module.pfnGetNativeBinaryCb =
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule1, *params->phModule);
 
         size_t **ppSize;
         ASSERT_NE(nullptr, params);
@@ -685,15 +685,15 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         size_t *pSize;
         ASSERT_NE(nullptr, ppSize);
         pSize = *ppSize;
-        EXPECT_EQ(&module_get_native_binary_args.size1, *params->ppSize);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, *params->ppSize);
 
         size_t size;
         ASSERT_NE(nullptr, pSize);
         size = *pSize;
         EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary1, *params->ppModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary1,
                                                              *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
@@ -707,8 +707,8 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
     //
     prologCbs3.Module.pfnGetNativeBinaryCb =
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
-        EXPECT_EQ(&module_get_native_binary_args.size1, *params->ppSize);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule1, *params->phModule);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, *params->ppSize);
 
         size_t **ppSize;
         ASSERT_NE(nullptr, params);
@@ -717,22 +717,22 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         size_t *pSize;
         ASSERT_NE(nullptr, ppSize);
         pSize = *ppSize;
-        EXPECT_EQ(&module_get_native_binary_args.size1, *params->ppSize);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, *params->ppSize);
 
         size_t size;
         ASSERT_NE(nullptr, pSize);
         size = *pSize;
         EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary1, *params->ppModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary1,
                                                              *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = module_get_native_binary_args.instanceData3;
+        instanceData->instanceDataValue = moduleGetNativeBinaryArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -744,7 +744,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         [](ze_module_get_native_binary_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(module_get_native_binary_args.hModule1, *params->phModule);
+        EXPECT_EQ(moduleGetNativeBinaryArgs.hModule1, *params->phModule);
 
         size_t **ppSize;
         ASSERT_NE(nullptr, params);
@@ -753,28 +753,28 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
         size_t *pSize;
         ASSERT_NE(nullptr, ppSize);
         pSize = *ppSize;
-        EXPECT_EQ(&module_get_native_binary_args.size1, *params->ppSize);
+        EXPECT_EQ(&moduleGetNativeBinaryArgs.size1, *params->ppSize);
 
         size_t size;
         ASSERT_NE(nullptr, pSize);
         size = *pSize;
         EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
-        EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+        EXPECT_EQ(moduleGetNativeBinaryArgs.moduleNativeBinary1, *params->ppModuleNativeBinary);
+        EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(moduleGetNativeBinaryArgs.moduleNativeBinary1,
                                                              *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, module_get_native_binary_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, moduleGetNativeBinaryArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetNativeBinaryTracing(module_get_native_binary_args.hModule0, &module_get_native_binary_args.size0, module_get_native_binary_args.moduleNativeBinary0);
+    result = zeModuleGetNativeBinaryTracing(moduleGetNativeBinaryArgs.hModule0, &moduleGetNativeBinaryArgs.size0, moduleGetNativeBinaryArgs.moduleNativeBinary0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

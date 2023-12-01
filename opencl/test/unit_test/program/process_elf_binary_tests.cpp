@@ -109,7 +109,7 @@ TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryT
     EXPECT_TRUE(program->getIsSpirV());
 }
 
-unsigned int BinaryTypeValues[] = {
+unsigned int binaryTypeValues[] = {
     CL_PROGRAM_BINARY_TYPE_EXECUTABLE,
     CL_PROGRAM_BINARY_TYPE_LIBRARY,
     CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT};
@@ -183,7 +183,7 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
 
 INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
                         ProcessElfBinaryTestsWithBinaryType,
-                        ::testing::ValuesIn(BinaryTypeValues));
+                        ::testing::ValuesIn(binaryTypeValues));
 
 TEST_F(ProcessElfBinaryTests, GivenEmptyBuildOptionsWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
     auto mockElf = std::make_unique<MockElfBinaryPatchtokens<>>(device->getHardwareInfo());

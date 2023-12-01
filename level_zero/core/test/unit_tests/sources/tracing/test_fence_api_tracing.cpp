@@ -94,31 +94,31 @@ struct {
     ze_fence_handle_t hFenceAPI;
     void *instanceData0;
     void *instanceData3;
-} fence_create_args;
+} fenceCreateArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    fence_create_args.hCommandQueue0 = generateRandomHandle<ze_command_queue_handle_t>();
-    fence_create_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
+    fenceCreateArgs.hCommandQueue0 = generateRandomHandle<ze_command_queue_handle_t>();
+    fenceCreateArgs.hFence0 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize replacement argument set
-    fence_create_args.hCommandQueue1 = generateRandomHandle<ze_command_queue_handle_t>();
-    fence_create_args.hFence1 = generateRandomHandle<ze_fence_handle_t>();
+    fenceCreateArgs.hCommandQueue1 = generateRandomHandle<ze_command_queue_handle_t>();
+    fenceCreateArgs.hFence1 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize user instance data
-    fence_create_args.instanceData0 = generateRandomHandle<void *>();
-    fence_create_args.instanceData3 = generateRandomHandle<void *>();
+    fenceCreateArgs.instanceData0 = generateRandomHandle<void *>();
+    fenceCreateArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnCreate =
         [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) -> ze_result_t {
-        EXPECT_EQ(fence_create_args.hCommandQueue1, hCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc1, desc);
-        EXPECT_EQ(&fence_create_args.hFence1, phFence);
-        EXPECT_EQ(fence_create_args.hFence1, *phFence);
-        fence_create_args.hFenceAPI = generateRandomHandle<ze_fence_handle_t>();
-        *phFence = fence_create_args.hFenceAPI;
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue1, hCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc1, desc);
+        EXPECT_EQ(&fenceCreateArgs.hFence1, phFence);
+        EXPECT_EQ(fenceCreateArgs.hFence1, *phFence);
+        fenceCreateArgs.hFenceAPI = generateRandomHandle<ze_fence_handle_t>();
+        *phFence = fenceCreateArgs.hFenceAPI;
         return ZE_RESULT_SUCCESS;
     };
 
@@ -128,9 +128,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     //
     prologCbs0.Fence.pfnCreateCb =
         [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_create_args.hCommandQueue0, *params->phCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc0, *params->pdesc);
-        EXPECT_EQ(&fence_create_args.hFence0, *params->pphFence);
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue0, *params->phCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc0, *params->pdesc);
+        EXPECT_EQ(&fenceCreateArgs.hFence0, *params->pphFence);
 
         ze_fence_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -144,16 +144,16 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
 
-        EXPECT_EQ(fence_create_args.hFence0, handle);
-        *params->phCommandQueue = fence_create_args.hCommandQueue1;
-        *params->pdesc = &fence_create_args.desc1;
-        *params->pphFence = &fence_create_args.hFence1;
+        EXPECT_EQ(fenceCreateArgs.hFence0, handle);
+        *params->phCommandQueue = fenceCreateArgs.hCommandQueue1;
+        *params->pdesc = &fenceCreateArgs.desc1;
+        *params->pphFence = &fenceCreateArgs.hFence1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_create_args.instanceData0;
+        instanceData->instanceDataValue = fenceCreateArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -165,9 +165,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&fenceCreateArgs.hFence1, *params->pphFence);
 
         ze_fence_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -181,13 +181,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
 
-        EXPECT_EQ(fence_create_args.hFence1, handle);
+        EXPECT_EQ(fenceCreateArgs.hFence1, handle);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_create_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceCreateArgs.instanceData0);
         delete instanceData;
     };
 
@@ -197,9 +197,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     //
     prologCbs1.Fence.pfnCreateCb =
         [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&fenceCreateArgs.hFence1, *params->pphFence);
 
         ze_fence_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -213,7 +213,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
 
-        EXPECT_EQ(fence_create_args.hFence1, handle);
+        EXPECT_EQ(fenceCreateArgs.hFence1, handle);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -227,9 +227,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     epilogCbs2.Fence.pfnCreateCb =
         [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&fenceCreateArgs.hFence1, *params->pphFence);
 
         ze_fence_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -243,7 +243,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
 
-        EXPECT_EQ(fence_create_args.hFence1, handle);
+        EXPECT_EQ(fenceCreateArgs.hFence1, handle);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -256,9 +256,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
     //
     prologCbs3.Fence.pfnCreateCb =
         [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&fenceCreateArgs.hFence1, *params->pphFence);
 
         ze_fence_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -272,13 +272,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         ASSERT_NE(nullptr, pHandle);
         handle = *pHandle;
 
-        EXPECT_EQ(fence_create_args.hFence1, handle);
+        EXPECT_EQ(fenceCreateArgs.hFence1, handle);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_create_args.instanceData3;
+        instanceData->instanceDataValue = fenceCreateArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -290,9 +290,9 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         [](ze_fence_create_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_create_args.hCommandQueue1, *params->phCommandQueue);
-        EXPECT_EQ(&fence_create_args.desc1, *params->pdesc);
-        EXPECT_EQ(&fence_create_args.hFence1, *params->pphFence);
+        EXPECT_EQ(fenceCreateArgs.hCommandQueue1, *params->phCommandQueue);
+        EXPECT_EQ(&fenceCreateArgs.desc1, *params->pdesc);
+        EXPECT_EQ(&fenceCreateArgs.hFence1, *params->pphFence);
 
         ze_fence_handle_t **ppHandle;
         ASSERT_NE(nullptr, params);
@@ -307,21 +307,21 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
         handle = *pHandle;
 
         ASSERT_NE(nullptr, handle);
-        EXPECT_EQ(fence_create_args.hFence1, handle);
+        EXPECT_EQ(fenceCreateArgs.hFence1, handle);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_create_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceCreateArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceCreateTracing(fence_create_args.hCommandQueue0, &fence_create_args.desc0, &fence_create_args.hFence0);
+    result = zeFenceCreateTracing(fenceCreateArgs.hCommandQueue0, &fenceCreateArgs.desc0, &fenceCreateArgs.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(fence_create_args.hFence1, fence_create_args.hFenceAPI);
+    EXPECT_EQ(fenceCreateArgs.hFence1, fenceCreateArgs.hFenceAPI);
     validateDefaultUserDataFinal();
 }
 
@@ -330,24 +330,24 @@ struct {
     ze_fence_handle_t hFence1;
     void *instanceData0;
     void *instanceData3;
-} fence_destroy_args;
+} fenceDestroyArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    fence_destroy_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
+    fenceDestroyArgs.hFence0 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize replacement argument set
-    fence_destroy_args.hFence1 = generateRandomHandle<ze_fence_handle_t>();
+    fenceDestroyArgs.hFence1 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize user instance data
-    fence_destroy_args.instanceData0 = generateRandomHandle<void *>();
-    fence_destroy_args.instanceData3 = generateRandomHandle<void *>();
+    fenceDestroyArgs.instanceData0 = generateRandomHandle<void *>();
+    fenceDestroyArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnDestroy =
         [](ze_fence_handle_t hFence) -> ze_result_t {
-        EXPECT_EQ(fence_destroy_args.hFence1, hFence);
+        EXPECT_EQ(fenceDestroyArgs.hFence1, hFence);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -357,14 +357,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     //
     prologCbs0.Fence.pfnDestroyCb =
         [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_destroy_args.hFence0, *params->phFence);
-        *params->phFence = fence_destroy_args.hFence1;
+        EXPECT_EQ(fenceDestroyArgs.hFence0, *params->phFence);
+        *params->phFence = fenceDestroyArgs.hFence1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_destroy_args.instanceData0;
+        instanceData->instanceDataValue = fenceDestroyArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -376,13 +376,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
         [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceDestroyArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_destroy_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceDestroyArgs.instanceData0);
         delete instanceData;
     };
 
@@ -392,7 +392,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     //
     prologCbs1.Fence.pfnDestroyCb =
         [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceDestroyArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -406,7 +406,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     epilogCbs2.Fence.pfnDestroyCb =
         [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceDestroyArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -419,13 +419,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
     //
     prologCbs3.Fence.pfnDestroyCb =
         [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceDestroyArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_destroy_args.instanceData3;
+        instanceData->instanceDataValue = fenceDestroyArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -437,19 +437,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
         [](ze_fence_destroy_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_destroy_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceDestroyArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_destroy_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceDestroyArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceDestroyTracing(fence_destroy_args.hFence0);
+    result = zeFenceDestroyTracing(fenceDestroyArgs.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -461,27 +461,27 @@ struct {
     uint64_t timeout1;
     void *instanceData0;
     void *instanceData3;
-} fence_host_synchronize_args;
+} fenceHostSynchronizeArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchronizeTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    fence_host_synchronize_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
-    fence_host_synchronize_args.timeout0 = generateRandomSize<uint64_t>();
+    fenceHostSynchronizeArgs.hFence0 = generateRandomHandle<ze_fence_handle_t>();
+    fenceHostSynchronizeArgs.timeout0 = generateRandomSize<uint64_t>();
 
     // initialize replacement argument set
-    fence_host_synchronize_args.hFence1 = generateRandomHandle<ze_fence_handle_t>();
-    fence_host_synchronize_args.timeout1 = generateRandomSize<uint64_t>();
+    fenceHostSynchronizeArgs.hFence1 = generateRandomHandle<ze_fence_handle_t>();
+    fenceHostSynchronizeArgs.timeout1 = generateRandomSize<uint64_t>();
 
     // initialize user instance data
-    fence_host_synchronize_args.instanceData0 = generateRandomHandle<void *>();
-    fence_host_synchronize_args.instanceData3 = generateRandomHandle<void *>();
+    fenceHostSynchronizeArgs.instanceData0 = generateRandomHandle<void *>();
+    fenceHostSynchronizeArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnHostSynchronize =
         [](ze_fence_handle_t hFence, uint64_t timeout) -> ze_result_t {
-        EXPECT_EQ(fence_host_synchronize_args.hFence1, hFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout1, timeout);
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence1, hFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout1, timeout);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -491,16 +491,16 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     //
     prologCbs0.Fence.pfnHostSynchronizeCb =
         [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_host_synchronize_args.hFence0, *params->phFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout0, *params->ptimeout);
-        *params->phFence = fence_host_synchronize_args.hFence1;
-        *params->ptimeout = fence_host_synchronize_args.timeout1;
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence0, *params->phFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout0, *params->ptimeout);
+        *params->phFence = fenceHostSynchronizeArgs.hFence1;
+        *params->ptimeout = fenceHostSynchronizeArgs.timeout1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_host_synchronize_args.instanceData0;
+        instanceData->instanceDataValue = fenceHostSynchronizeArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -512,14 +512,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
         [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence1, *params->phFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout1, *params->ptimeout);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_host_synchronize_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceHostSynchronizeArgs.instanceData0);
         delete instanceData;
     };
 
@@ -529,8 +529,8 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     //
     prologCbs1.Fence.pfnHostSynchronizeCb =
         [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence1, *params->phFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout1, *params->ptimeout);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -544,8 +544,8 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     epilogCbs2.Fence.pfnHostSynchronizeCb =
         [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence1, *params->phFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout1, *params->ptimeout);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -558,14 +558,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
     //
     prologCbs3.Fence.pfnHostSynchronizeCb =
         [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence1, *params->phFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout1, *params->ptimeout);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_host_synchronize_args.instanceData3;
+        instanceData->instanceDataValue = fenceHostSynchronizeArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -577,20 +577,20 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
         [](ze_fence_host_synchronize_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_host_synchronize_args.hFence1, *params->phFence);
-        EXPECT_EQ(fence_host_synchronize_args.timeout1, *params->ptimeout);
+        EXPECT_EQ(fenceHostSynchronizeArgs.hFence1, *params->phFence);
+        EXPECT_EQ(fenceHostSynchronizeArgs.timeout1, *params->ptimeout);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_host_synchronize_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceHostSynchronizeArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceHostSynchronizeTracing(fence_host_synchronize_args.hFence0, fence_host_synchronize_args.timeout0);
+    result = zeFenceHostSynchronizeTracing(fenceHostSynchronizeArgs.hFence0, fenceHostSynchronizeArgs.timeout0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -600,24 +600,24 @@ struct {
     ze_fence_handle_t hFence1;
     void *instanceData0;
     void *instanceData3;
-} fence_query_status_args;
+} fenceQueryStatusArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    fence_query_status_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
+    fenceQueryStatusArgs.hFence0 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize replacement argument set
-    fence_query_status_args.hFence1 = generateRandomHandle<ze_fence_handle_t>();
+    fenceQueryStatusArgs.hFence1 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize user instance data
-    fence_query_status_args.instanceData0 = generateRandomHandle<void *>();
-    fence_query_status_args.instanceData3 = generateRandomHandle<void *>();
+    fenceQueryStatusArgs.instanceData0 = generateRandomHandle<void *>();
+    fenceQueryStatusArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnQueryStatus =
         [](ze_fence_handle_t hFence) -> ze_result_t {
-        EXPECT_EQ(fence_query_status_args.hFence1, hFence);
+        EXPECT_EQ(fenceQueryStatusArgs.hFence1, hFence);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -627,14 +627,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     //
     prologCbs0.Fence.pfnQueryStatusCb =
         [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_query_status_args.hFence0, *params->phFence);
-        *params->phFence = fence_query_status_args.hFence1;
+        EXPECT_EQ(fenceQueryStatusArgs.hFence0, *params->phFence);
+        *params->phFence = fenceQueryStatusArgs.hFence1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_query_status_args.instanceData0;
+        instanceData->instanceDataValue = fenceQueryStatusArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -646,13 +646,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
         [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceQueryStatusArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_query_status_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceQueryStatusArgs.instanceData0);
         delete instanceData;
     };
 
@@ -662,7 +662,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     //
     prologCbs1.Fence.pfnQueryStatusCb =
         [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceQueryStatusArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -676,7 +676,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     epilogCbs2.Fence.pfnQueryStatusCb =
         [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceQueryStatusArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -689,13 +689,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
     //
     prologCbs3.Fence.pfnQueryStatusCb =
         [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceQueryStatusArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_query_status_args.instanceData3;
+        instanceData->instanceDataValue = fenceQueryStatusArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -707,19 +707,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
         [](ze_fence_query_status_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_query_status_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceQueryStatusArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_query_status_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceQueryStatusArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceQueryStatusTracing(fence_query_status_args.hFence0);
+    result = zeFenceQueryStatusTracing(fenceQueryStatusArgs.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -729,24 +729,24 @@ struct {
     ze_fence_handle_t hFence1;
     void *instanceData0;
     void *instanceData3;
-} fence_reset_args;
+} fenceResetArgs;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
-    fence_reset_args.hFence0 = generateRandomHandle<ze_fence_handle_t>();
+    fenceResetArgs.hFence0 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize replacement argument set
-    fence_reset_args.hFence1 = generateRandomHandle<ze_fence_handle_t>();
+    fenceResetArgs.hFence1 = generateRandomHandle<ze_fence_handle_t>();
 
     // initialize user instance data
-    fence_reset_args.instanceData0 = generateRandomHandle<void *>();
-    fence_reset_args.instanceData3 = generateRandomHandle<void *>();
+    fenceResetArgs.instanceData0 = generateRandomHandle<void *>();
+    fenceResetArgs.instanceData3 = generateRandomHandle<void *>();
 
     driverDdiTable.coreDdiTable.Fence.pfnReset =
         [](ze_fence_handle_t hFence) -> ze_result_t {
-        EXPECT_EQ(fence_reset_args.hFence1, hFence);
+        EXPECT_EQ(fenceResetArgs.hFence1, hFence);
         return ZE_RESULT_SUCCESS;
     };
 
@@ -756,14 +756,14 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     //
     prologCbs0.Fence.pfnResetCb =
         [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_reset_args.hFence0, *params->phFence);
-        *params->phFence = fence_reset_args.hFence1;
+        EXPECT_EQ(fenceResetArgs.hFence0, *params->phFence);
+        *params->phFence = fenceResetArgs.hFence1;
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 1);
         *val += 1;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_reset_args.instanceData0;
+        instanceData->instanceDataValue = fenceResetArgs.instanceData0;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -775,13 +775,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
         [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceResetArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 2);
         *val += 1;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_reset_args.instanceData0);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceResetArgs.instanceData0);
         delete instanceData;
     };
 
@@ -791,7 +791,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     //
     prologCbs1.Fence.pfnResetCb =
         [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceResetArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 11);
@@ -805,7 +805,7 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     epilogCbs2.Fence.pfnResetCb =
         [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceResetArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 21);
@@ -818,13 +818,13 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
     //
     prologCbs3.Fence.pfnResetCb =
         [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
-        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceResetArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 31);
         *val += 31;
         struct InstanceDataStruct *instanceData = new struct InstanceDataStruct;
-        instanceData->instanceDataValue = fence_reset_args.instanceData3;
+        instanceData->instanceDataValue = fenceResetArgs.instanceData3;
         *ppTracerInstanceUserData = instanceData;
     };
 
@@ -836,19 +836,19 @@ TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
         [](ze_fence_reset_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) -> void {
         struct InstanceDataStruct *instanceData;
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(fence_reset_args.hFence1, *params->phFence);
+        EXPECT_EQ(fenceResetArgs.hFence1, *params->phFence);
         ASSERT_NE(nullptr, pTracerUserData);
         int *val = static_cast<int *>(pTracerUserData);
         EXPECT_EQ(*val, 62);
         *val += 31;
         instanceData = (struct InstanceDataStruct *)*ppTracerInstanceUserData;
-        EXPECT_EQ(instanceData->instanceDataValue, fence_reset_args.instanceData3);
+        EXPECT_EQ(instanceData->instanceDataValue, fenceResetArgs.instanceData3);
         delete instanceData;
     };
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceResetTracing(fence_reset_args.hFence0);
+    result = zeFenceResetTracing(fenceResetArgs.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
