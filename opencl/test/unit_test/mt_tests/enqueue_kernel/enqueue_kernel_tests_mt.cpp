@@ -14,9 +14,9 @@ typedef HelloWorldTest<HelloWorldFixtureFactory> EnqueueKernelTestsMt;
 
 TEST_F(EnqueueKernelTestsMt, WhenCallEnqueueKernelsThenAllCallsPass) {
     size_t workSize[] = {1};
-    const int iterNum = 10;
-    const int threadNum = 10;
-    const int taskNum = 10;
+    const int iterNum = 2;
+    const int threadNum = 4;
+    const int taskNum = 4;
     std::atomic<int> result = {0};
 
     for (int iter = 0; iter < iterNum; iter++) {

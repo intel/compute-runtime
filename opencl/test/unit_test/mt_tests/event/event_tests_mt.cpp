@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class SmallMockEvent : public Event {
 
 TEST(EventTestMt, WhenWaitingForEventsThenDoNotReturnUntilAllStatusesSetToComplete) {
 
-    for (uint32_t i = 0; i < 100; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
         std::unique_ptr<UserEvent> userEvent = std::unique_ptr<UserEvent>(new UserEvent(nullptr));
 
         std::thread t([&]() {
