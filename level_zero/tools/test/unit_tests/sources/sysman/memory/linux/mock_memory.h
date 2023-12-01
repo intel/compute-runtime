@@ -31,6 +31,7 @@ struct MockMemoryManagerSysman : public MemoryManagerMock {
 };
 
 struct MockMemoryNeoDrm : public Drm {
+    using Drm::ioctlHelper;
     using Drm::memoryInfo;
     const int mockFd = 33;
     MockMemoryNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
