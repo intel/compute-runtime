@@ -106,8 +106,8 @@ void testProgrammingStateComputeModeXeLpgWithDisabledWa(ExecutionEnvironment &ex
 
 using CommandEncoderXeHpgTests = ::testing::Test;
 
-HWTEST2_F(CommandEncoderXeHpgTests, whenProgrammingStateComputeModeThenProperFieldsAreSet, IsMTL) {
-    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0};
+HWTEST2_F(CommandEncoderXeHpgTests, whenProgrammingStateComputeModeThenProperFieldsAreSet, IsXeLpg) {
+    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0, AOT::XE_LPGPLUS_A0, AOT::XE_LPGPLUS_B0};
     for (auto &ipRelease : ipReleases) {
 
         MockExecutionEnvironment executionEnvironment{};

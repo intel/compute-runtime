@@ -21,5 +21,6 @@ EnableReleaseHelper<ReleaseType::release1257> enablerReleaseHelper1257{releaseHe
 EnableReleaseHelper<ReleaseType::release1260> enablerReleaseHelper1260{releaseHelperFactoryXe[60]};
 EnableReleaseHelper<ReleaseType::release1270> enablerReleaseHelper1270{releaseHelperFactoryXe[70]};
 EnableReleaseHelper<ReleaseType::release1271> enablerReleaseHelper1271{releaseHelperFactoryXe[71]};
+EnableReleaseHelper<ReleaseType::release1274> enablerReleaseHelper1274{releaseHelperFactoryXe[74]};
 
 } // namespace NEO

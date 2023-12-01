@@ -62,6 +62,9 @@ DEVICE(0x7D60, MtlHwConfig)
 #endif
 #ifdef SUPPORT_ARL
 DEVICE(0x7D67, ArlHwConfig)
+DEVICE(0x7D51, ArlHwConfig)
+DEVICE(0x7DD1, ArlHwConfig)
+DEVICE(0x7D41, ArlHwConfig)
 #endif
 #endif
 

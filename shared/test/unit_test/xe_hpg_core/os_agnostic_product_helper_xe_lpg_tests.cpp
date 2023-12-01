@@ -279,7 +279,7 @@ HWTEST2_F(XeLpgProductHelperTests, givenHwIpVersionWhenIsPipeControlPriorToNonPi
     HardwareInfo hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0};
+    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0, AOT::XE_LPGPLUS_A0, AOT::XE_LPGPLUS_B0};
     for (auto &ipRelease : ipReleases) {
         hwInfo.ipVersion.value = ipRelease;
         auto releaseHelper = ReleaseHelper::create(ipRelease);

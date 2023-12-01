@@ -16,6 +16,7 @@ if(TESTS_XE_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_57_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_70_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_71_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_74_tests.cpp
   )
 endif()
 if(TESTS_XE_HPC_CORE)

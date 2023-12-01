@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,8 @@ enum PRODUCT_CONFIG : uint32_t {
     MTL_M_B0 = 0x03118004,
     MTL_P_A0 = 0x0311c000,
     MTL_P_B0 = 0x0311c004,
+    XE_LPGPLUS_A0 = 0x03128000,
+    XE_LPGPLUS_B0 = 0x03128004,
     CONFIG_MAX_PLATFORM,
 };
 
@@ -64,6 +66,7 @@ enum RELEASE : uint32_t {
     XE_HPG_RELEASE,
     XE_HPC_RELEASE,
     XE_LPG_RELEASE,
+    XE_LPGPLUS_RELEASE,
     RELEASE_MAX,
 };
 
@@ -116,6 +119,9 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 #if defined(SUPPORT_XE_HPG_CORE) && defined(SUPPORT_MTL)
     {"xe-lpg", XE_LPG_RELEASE},
+#endif
+#if defined(SUPPORT_XE_HPG_CORE) && defined(SUPPORT_ARL)
+    {"xe-lpgplus", XE_LPGPLUS_RELEASE},
 #endif
 };
 
@@ -188,6 +194,10 @@ inline const std::map<std::string, AOT::PRODUCT_CONFIG> deviceAcronyms = {
     {"mtl-s", MTL_M_B0},
     {"mtl-m", MTL_M_B0},
     {"mtl-p", MTL_P_B0},
+#endif
+#ifdef SUPPORT_ARL
+    {"xe-lpgplus-a0", XE_LPGPLUS_A0},
+    {"xe-lpgplus-b0", XE_LPGPLUS_B0},
 #endif
 };
 } // namespace AOT

@@ -18,4 +18,8 @@ inline const std::vector<unsigned short> mtlmDeviceIds{
 inline const std::vector<unsigned short> mtlpDeviceIds{
     0x7D55,
     0x7DD5};
+inline const std::vector<unsigned short> arlDeviceIds{
+    0x7D51,
+    0x7DD1,
+    0x7D41};
 } // namespace NEO
