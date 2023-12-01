@@ -73,7 +73,7 @@ int setAlarm(bool enableAlarm) {
 
     if (enableAlarm) {
         abortOnTimeout = true;
-        std::condition_variable threadStarted;
+        std::atomic<bool> threadStarted{false};
         alarmThread = std::make_unique<std::thread>([&]() {
             auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
             auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
@@ -82,12 +82,13 @@ int setAlarm(bool enableAlarm) {
             }
             unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
             std::cout << "set timeout to: " << alarmTime << std::endl;
-            threadStarted.notify_all();
+            threadStarted = true;
             std::chrono::high_resolution_clock::time_point startTime, endTime;
             std::chrono::milliseconds elapsedTime{};
             startTime = std::chrono::high_resolution_clock::now();
             do {
                 std::this_thread::yield();
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 endTime = std::chrono::high_resolution_clock::now();
                 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
                 if (!abortOnTimeout) {
@@ -101,10 +102,11 @@ int setAlarm(bool enableAlarm) {
                 abort();
             }
         });
+        SetThreadPriority(alarmThread->native_handle(), THREAD_PRIORITY_LOWEST);
 
-        std::mutex mtx;
-        std::unique_lock<std::mutex> lock(mtx);
-        threadStarted.wait(lock);
+        while (!threadStarted.load()) {
+            std::this_thread::yield();
+        }
     }
 
     return 0;
