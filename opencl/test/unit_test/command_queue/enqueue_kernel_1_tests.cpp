@@ -542,7 +542,7 @@ HWTEST_F(EnqueueKernelTest, GivenGpuHangAndBlockingCallWhenEnqueingKernelThenOut
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -759,7 +759,7 @@ HWTEST_F(EnqueueKernelTest, givenGpuHangAndBlockingCallAndEnqueueWithGlobalWorkS
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     size_t gws[3] = {0, 0, 0};
     MockKernelWithInternals mockKernel(*pClDevice);

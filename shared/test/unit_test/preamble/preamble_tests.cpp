@@ -168,7 +168,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrect
     uint64_t addressToPatch = 0xC0DEC0DE;
     uint64_t expectedAddress = 0xC0DEC000;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     MockExecutionEnvironment executionEnvironment{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 1024u, addressToPatch, 10u, emptyProperties);
@@ -192,7 +192,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfe
     FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
     uint64_t addressToPatch = 0xC0DEC0DE;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, mockDevice->getRootDeviceEnvironment(), 1024u, addressToPatch, 10u, emptyProperties);
 
@@ -299,6 +299,6 @@ HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeC
 
     auto &hwInfo = pDevice->getHardwareInfo();
 
-    PreambleHelper<FamilyType>::addPipeControlBeforeVfeCmd(&stream, &hwInfo, EngineGroupType::Compute);
+    PreambleHelper<FamilyType>::addPipeControlBeforeVfeCmd(&stream, &hwInfo, EngineGroupType::compute);
     EXPECT_EQ(0u, stream.getUsed());
 }

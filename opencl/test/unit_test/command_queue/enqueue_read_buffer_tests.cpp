@@ -108,7 +108,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, GivenGpuHangAndBlockingCallWhenReadingBuffer
     cl_queue_properties props{};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     srcBuffer->forceDisallowCPUCopy = true;
     const auto enqueueResult = EnqueueReadBufferHelper<>::enqueueReadBuffer(&mockCommandQueueHw, srcBuffer.get(), CL_TRUE);
@@ -441,7 +441,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenGpuHangAndBlockingCallAndOOQWithDisable
     cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     const auto enqueueResult = mockCommandQueueHw.enqueueReadBuffer(srcBuffer.get(),

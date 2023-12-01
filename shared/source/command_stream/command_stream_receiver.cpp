@@ -216,11 +216,11 @@ WaitStatus CommandStreamReceiver::waitForTaskCount(TaskCountType requiredTaskCou
         return baseWaitFunction(address, WaitParams{false, false, 0}, requiredTaskCount);
     }
 
-    return WaitStatus::Ready;
+    return WaitStatus::ready;
 }
 
 WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage) {
-    WaitStatus waitStatus{WaitStatus::Ready};
+    WaitStatus waitStatus{WaitStatus::ready};
     auto &list = allocationUsage == TEMPORARY_ALLOCATION ? internalAllocationStorage->getTemporaryAllocations() : internalAllocationStorage->getAllocationsForReuse();
     if (!list.peekIsEmpty()) {
         waitStatus = this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
@@ -454,7 +454,7 @@ WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams 
     if (latestSentTaskCount < taskCountToWait) {
         if (!this->flushBatchedSubmissions()) {
             const auto isGpuHang{isGpuHangDetected()};
-            return isGpuHang ? WaitStatus::GpuHang : WaitStatus::NotReady;
+            return isGpuHang ? WaitStatus::gpuHang : WaitStatus::notReady;
         }
     }
 
@@ -484,7 +484,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
     TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         if (this->flushTagUpdate() != NEO::SubmissionStatus::SUCCESS) {
-            return WaitStatus::NotReady;
+            return WaitStatus::notReady;
         }
     }
     volatile TagAddressType *partitionAddress = pollAddress;
@@ -501,7 +501,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
 
             currentTime = std::chrono::high_resolution_clock::now();
             if (checkGpuHangDetected(currentTime, lastHangCheckTime)) {
-                return WaitStatus::GpuHang;
+                return WaitStatus::gpuHang;
             }
 
             if (params.enableTimeout) {
@@ -515,12 +515,12 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
     partitionAddress = pollAddress;
     for (uint32_t i = 0; i < activePartitions; i++) {
         if (*partitionAddress < taskCountToWait) {
-            return WaitStatus::NotReady;
+            return WaitStatus::notReady;
         }
         partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);
     }
 
-    return WaitStatus::Ready;
+    return WaitStatus::ready;
 }
 
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {

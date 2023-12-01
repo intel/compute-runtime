@@ -472,11 +472,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     queueOwnership.unlock();
 
     if (blocking) {
-        auto waitStatus = WaitStatus::Ready;
+        auto waitStatus = WaitStatus::ready;
         auto &builtinOpParams = multiDispatchInfo.peekBuiltinOpParams();
         if (builtinOpParams.userPtrForPostOperationCpuCopy) {
             waitStatus = waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), false);
-            if (waitStatus == WaitStatus::GpuHang) {
+            if (waitStatus == WaitStatus::gpuHang) {
                 return CL_OUT_OF_RESOURCES;
             }
 
@@ -491,7 +491,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             waitStatus = waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
         }
 
-        if (waitStatus == WaitStatus::GpuHang) {
+        if (waitStatus == WaitStatus::gpuHang) {
             return CL_OUT_OF_RESOURCES;
         }
     }
@@ -1491,7 +1491,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     bcsCommandStreamReceiverOwnership.unlock();
     if (blocking) {
         const auto waitStatus = waitForAllEngines(blockQueue, nullptr);
-        if (waitStatus == WaitStatus::GpuHang) {
+        if (waitStatus == WaitStatus::gpuHang) {
             return CL_OUT_OF_RESOURCES;
         }
     }

@@ -110,7 +110,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenMappingSvm
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = mockCommandQueueHw.enqueueSVMMap(
         CL_TRUE,     // cl_bool blocking_map
@@ -183,7 +183,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenUnmappingS
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = mockCommandQueueHw.enqueueSVMUnmap(
         ptrSVM,
@@ -317,7 +317,7 @@ HWTEST_F(EnqueueSvmTest, GivenEventAndGpuHangAndBlockingCallAndValidParamsWhenFr
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const cl_uint numOfSvmPointers = 1;
     void *svmPtrs[numOfSvmPointers] = {ptrSVM};
@@ -352,7 +352,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFreeingSvm
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const cl_uint numOfSvmPointers = 1;
     void *svmPtrs[numOfSvmPointers] = {ptrSVM};
@@ -813,7 +813,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFillingMem
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
@@ -1033,7 +1033,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenMigratingM
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const void *svmPtrs[] = {ptrSVM};
     const auto enqueueResult = mockCommandQueueHw.enqueueSVMMigrateMem(
@@ -1147,7 +1147,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvm
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndWriteInvalidateRegionFlagWhenMappingSvmThenOutOfResourcesIsReturned) {
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
-    queue.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    queue.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     uintptr_t offset = 64;
     void *regionSvmPtr = ptrOffset(svmPtr, offset);
@@ -1341,7 +1341,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpu
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::Ready;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::ready;
 
     uintptr_t offset = 64;
     void *regionSvmPtr = ptrOffset(svmPtr, offset);
@@ -1358,7 +1358,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpu
         false);
     EXPECT_EQ(CL_SUCCESS, firstMapResult);
 
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
     const auto secondMapResult = mockCommandQueueHw.enqueueSVMMap(
         CL_TRUE,
         CL_MAP_WRITE,
@@ -1405,7 +1405,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndGpuHangAndBlocking
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = mockCommandQueueHw.enqueueSVMUnmap(
         svmPtr,
@@ -1474,7 +1474,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpu
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::Ready;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::ready;
 
     const auto enqueueMapResult = mockCommandQueueHw.enqueueSVMMap(
         CL_FALSE,
@@ -1487,7 +1487,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpu
         false);
     EXPECT_EQ(CL_SUCCESS, enqueueMapResult);
 
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
     const auto enqueueUnmapResult = mockCommandQueueHw.enqueueSVMUnmap(
         svmPtr,
         0,
@@ -1601,7 +1601,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndEnabledLocalMe
     debugManager.flags.MakeEachEnqueueBlocking.set(true);
 
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
-    queue.waitForAllEnginesReturnValue = WaitStatus::Ready;
+    queue.waitForAllEnginesReturnValue = WaitStatus::ready;
 
     const auto enqueueMapResult = queue.enqueueSVMMap(
         CL_TRUE,
@@ -1614,7 +1614,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndEnabledLocalMe
         false);
     EXPECT_EQ(CL_SUCCESS, enqueueMapResult);
 
-    queue.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    queue.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
     const auto enqueueUnmapResult = queue.enqueueSVMUnmap(
         svmPtr,
         0,

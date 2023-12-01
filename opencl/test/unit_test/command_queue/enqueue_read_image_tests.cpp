@@ -199,7 +199,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndPtrCopyAllowedForHostSurfaceW
 HWTEST_F(EnqueueReadImageTest, givenGpuHangAndCommandQueueAndPtrCopyAllowedForHostSurfaceWhenBlockingEnqueueReadImageThenOutOfResourcesIsReturned) {
     auto csr = std::make_unique<CreateAllocationForHostSurfaceCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    cmdQ->waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    cmdQ->waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     csr->setupContext(*pDevice->getDefaultEngine().osContext);
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();

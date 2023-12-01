@@ -448,7 +448,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTi
     constexpr auto taskCountToWait = 1;
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWithTimeoutThenReadyIsReturned) {
@@ -475,7 +475,7 @@ HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWith
     constexpr auto taskCountToWait = 1;
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
@@ -496,7 +496,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndGpuHangWhenWa
     constexpr auto taskCountToWait = 1;
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndNoGpuHangWhenWaititingForCompletionWithTimeoutThenNotReadyIsReturned) {
@@ -517,7 +517,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndNoGpuHangWhen
     constexpr auto taskCountToWait = 1;
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+    EXPECT_EQ(WaitStatus::notReady, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaitingForTaskCountThenGpuHangIsReturned) {
@@ -537,7 +537,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaitingForTaskCountThenGpuHa
 
     constexpr auto taskCountToWait = 1;
     const auto waitStatus = csr.waitForTaskCount(taskCountToWait);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
     EXPECT_TRUE(csr.downloadAllocationCalled);
 }
 
@@ -548,23 +548,23 @@ HWTEST_F(CommandStreamReceiverTest, givenFlushUnsuccessWhenWaitingForTaskCountTh
     constexpr auto taskCountToWait = 1;
     csr.flushReturnValue = SubmissionStatus::FAILED;
     auto waitStatus = csr.waitForTaskCount(taskCountToWait);
-    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+    EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
     csr.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
-    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+    EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
     csr.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
-    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+    EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
     csr.flushReturnValue = SubmissionStatus::UNSUPPORTED;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
-    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+    EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
     csr.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
-    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+    EXPECT_EQ(WaitStatus::notReady, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenDownloadTagAllocationThenDonwloadOnlyIfTagAllocationWasFlushed) {
@@ -627,7 +627,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCa
     constexpr auto allocationUsage = TEMPORARY_ALLOCATION;
     const auto waitStatus = csr.waitForTaskCountAndCleanAllocationList(taskCountToWait, allocationUsage);
 
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {
@@ -1786,7 +1786,7 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 
     const auto waitStatus = csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     CpuIntrinsicsTests::pauseAddress = nullptr;
 }
@@ -1812,7 +1812,7 @@ TEST(CommandStreamReceiverSimpleTest, givenEmptyTemporaryAllocationListWhenWaiti
 
     const auto waitStatus = csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
     EXPECT_EQ(0u, CpuIntrinsicsTests::pauseCounter);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     CpuIntrinsicsTests::pauseAddress = nullptr;
 }
@@ -2433,7 +2433,7 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
     testing::internal::CaptureStdout();
 
     WaitStatus status = csr.waitForCompletionWithTimeout(waitParams, taskCount);
-    EXPECT_EQ(WaitStatus::Ready, status);
+    EXPECT_EQ(WaitStatus::ready, status);
 
     std::string output = testing::internal::GetCapturedStdout();
 
@@ -2872,7 +2872,7 @@ TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCount
 HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                           commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
                                                                           commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
                                                                           commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
@@ -3101,7 +3101,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenMultiRootDeviceSyncNodeWhenFlushBcsTA
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                           commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
                                                                           commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
                                                                           commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
@@ -3132,7 +3132,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenNullPtrAsMultiRootDeviceSyncNodeWhenF
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                           commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
                                                                           commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
                                                                           commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,

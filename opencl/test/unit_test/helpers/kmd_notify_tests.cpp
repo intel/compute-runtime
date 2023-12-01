@@ -102,7 +102,7 @@ struct KmdNotifyTests : public ::testing::Test {
         };
 
         uint32_t waitForCompletionWithTimeoutCalled = 0u;
-        WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::Ready;
+        WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::ready;
         StackVec<WaitForCompletionWithTimeoutParams, 2> waitForCompletionWithTimeoutParamsPassed{};
     };
 
@@ -152,7 +152,7 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     auto csr = createMockCsr<FamilyType>();
     *csr->getTagAddress() = taskCountToWait - 1;
 
-    csr->waitForCompletionWithTimeoutResult = WaitStatus::NotReady;
+    csr->waitForCompletionWithTimeoutResult = WaitStatus::notReady;
 
     // we have unrecoverable for this case, this will throw.
     EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false), std::exception);
@@ -218,7 +218,7 @@ HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSl
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenPollForCompletionCalledThenTimeout) {
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait - 1;
     auto success = device->getUltCommandStreamReceiver<FamilyType>().waitForCompletionWithTimeout(true, 1, taskCountToWait);
-    EXPECT_NE(NEO::WaitStatus::Ready, success);
+    EXPECT_NE(NEO::WaitStatus::ready, success);
 }
 
 HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) {

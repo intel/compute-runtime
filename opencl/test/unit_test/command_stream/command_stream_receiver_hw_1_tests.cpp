@@ -435,7 +435,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideDisableWhenComputeSup
 HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNotifyThenExpectImplicitBusyLoopWaitCalled) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
-    commandStreamReceiver.returnWaitForCompletionWithTimeout = NEO::WaitStatus::NotReady;
+    commandStreamReceiver.returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
 
     commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
@@ -444,7 +444,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNot
 HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmdNotifyThenExpectExplicitBusyLoopWaitCalled) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
-    commandStreamReceiver.returnWaitForCompletionWithTimeout = NEO::WaitStatus::NotReady;
+    commandStreamReceiver.returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
 
     commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
@@ -711,7 +711,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
-        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = {bltSize, 1, 1};
         blitPropertiesContainer.push_back(blitProperties);
@@ -754,7 +754,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
-        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = {bltSize, 1, 1};
         blitPropertiesContainer.push_back(blitProperties);
@@ -796,7 +796,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
-        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = bltSize;
         blitPropertiesContainer.push_back(blitProperties);
@@ -838,7 +838,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
-        blitProperties.blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+        blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
         blitProperties.copySize = bltSize;
         blitPropertiesContainer.push_back(blitProperties);
@@ -996,12 +996,12 @@ HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorre
 
 HWTEST_F(BcsTests, givenImageAndBufferBlitDirectionsWhenIsImageOperationIsCalledThenReturnCorrectValue) {
     BlitProperties blitProperties{};
-    std::pair<bool, BlitterConstants::BlitDirection> params[] = {{false, BlitterConstants::BlitDirection::HostPtrToBuffer},
-                                                                 {false, BlitterConstants::BlitDirection::BufferToHostPtr},
-                                                                 {false, BlitterConstants::BlitDirection::BufferToBuffer},
-                                                                 {true, BlitterConstants::BlitDirection::HostPtrToImage},
-                                                                 {true, BlitterConstants::BlitDirection::ImageToHostPtr},
-                                                                 {true, BlitterConstants::BlitDirection::ImageToImage}};
+    std::pair<bool, BlitterConstants::BlitDirection> params[] = {{false, BlitterConstants::BlitDirection::hostPtrToBuffer},
+                                                                 {false, BlitterConstants::BlitDirection::bufferToHostPtr},
+                                                                 {false, BlitterConstants::BlitDirection::bufferToBuffer},
+                                                                 {true, BlitterConstants::BlitDirection::hostPtrToImage},
+                                                                 {true, BlitterConstants::BlitDirection::imageToHostPtr},
+                                                                 {true, BlitterConstants::BlitDirection::imageToImage}};
 
     for (auto [isImageDirection, blitDirection] : params) {
         blitProperties.blitDirection = blitDirection;
@@ -1040,7 +1040,7 @@ struct RelaxedOrderingBcsTests : public BcsTests {
     }
 
     BlitProperties generateBlitProperties(CommandStreamReceiver &csr, Buffer *clBuffer) {
-        auto properties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+        auto properties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           csr, clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
                                                                           clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
@@ -1199,7 +1199,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     csr.taskCount = newTaskCount - 1;
     uint32_t expectedResursiveLockCount = csr.resourcesInitialized ? 1u : 0u;
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           csr, buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
                                                                           buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
                                                                           0, 0, {bltSize, 1, 1}, 0, 0, 0, 0);
@@ -1307,16 +1307,16 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
 }
 HWTEST_F(BcsTests, givenCommandTypeWhenObtainBlitDirectionIsCalledThenReturnCorrectBlitDirection) {
 
-    std::array<std::pair<uint32_t, BlitterConstants::BlitDirection>, 10> testParams = {{{CL_COMMAND_WRITE_BUFFER, BlitterConstants::BlitDirection::HostPtrToBuffer},
-                                                                                        {CL_COMMAND_WRITE_BUFFER_RECT, BlitterConstants::BlitDirection::HostPtrToBuffer},
-                                                                                        {CL_COMMAND_READ_BUFFER, BlitterConstants::BlitDirection::BufferToHostPtr},
-                                                                                        {CL_COMMAND_READ_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToHostPtr},
-                                                                                        {CL_COMMAND_COPY_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToBuffer},
-                                                                                        {CL_COMMAND_SVM_MEMCPY, BlitterConstants::BlitDirection::BufferToBuffer},
-                                                                                        {CL_COMMAND_WRITE_IMAGE, BlitterConstants::BlitDirection::HostPtrToImage},
-                                                                                        {CL_COMMAND_READ_IMAGE, BlitterConstants::BlitDirection::ImageToHostPtr},
-                                                                                        {CL_COMMAND_COPY_BUFFER, BlitterConstants::BlitDirection::BufferToBuffer},
-                                                                                        {CL_COMMAND_COPY_IMAGE, BlitterConstants::BlitDirection::ImageToImage}}};
+    std::array<std::pair<uint32_t, BlitterConstants::BlitDirection>, 10> testParams = {{{CL_COMMAND_WRITE_BUFFER, BlitterConstants::BlitDirection::hostPtrToBuffer},
+                                                                                        {CL_COMMAND_WRITE_BUFFER_RECT, BlitterConstants::BlitDirection::hostPtrToBuffer},
+                                                                                        {CL_COMMAND_READ_BUFFER, BlitterConstants::BlitDirection::bufferToHostPtr},
+                                                                                        {CL_COMMAND_READ_BUFFER_RECT, BlitterConstants::BlitDirection::bufferToHostPtr},
+                                                                                        {CL_COMMAND_COPY_BUFFER_RECT, BlitterConstants::BlitDirection::bufferToBuffer},
+                                                                                        {CL_COMMAND_SVM_MEMCPY, BlitterConstants::BlitDirection::bufferToBuffer},
+                                                                                        {CL_COMMAND_WRITE_IMAGE, BlitterConstants::BlitDirection::hostPtrToImage},
+                                                                                        {CL_COMMAND_READ_IMAGE, BlitterConstants::BlitDirection::imageToHostPtr},
+                                                                                        {CL_COMMAND_COPY_BUFFER, BlitterConstants::BlitDirection::bufferToBuffer},
+                                                                                        {CL_COMMAND_COPY_IMAGE, BlitterConstants::BlitDirection::imageToImage}}};
 
     for (const auto &[commandType, expectedBlitDirection] : testParams) {
         auto blitDirection = ClBlitProperties::obtainBlitDirection(commandType);
@@ -1696,7 +1696,7 @@ INSTANTIATE_TEST_CASE_P(BcsDetaliedTest,
                         BcsDetaliedTestsWithParams,
                         ::testing::Combine(
                             ::testing::ValuesIn(BlitterProperties),
-                            ::testing::Values(BlitterConstants::BlitDirection::HostPtrToBuffer, BlitterConstants::BlitDirection::BufferToHostPtr)));
+                            ::testing::Values(BlitterConstants::BlitDirection::hostPtrToBuffer, BlitterConstants::BlitDirection::bufferToHostPtr)));
 
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

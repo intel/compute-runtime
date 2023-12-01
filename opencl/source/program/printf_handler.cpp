@@ -94,7 +94,7 @@ bool PrintfHandler::printEnqueueOutput() {
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
-            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                             *bcsEngine.commandStreamReceiver, printfSurface, nullptr,
                                                             printfOutputDecompressed.get(),
                                                             printfSurface->getGpuAddress(),

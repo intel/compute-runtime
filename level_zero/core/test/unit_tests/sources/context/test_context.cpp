@@ -752,7 +752,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
                                                                      device,
-                                                                     NEO::EngineGroupType::Copy,
+                                                                     NEO::EngineGroupType::copy,
                                                                      0u,
                                                                      returnValue));
     auto commandListHandle = commandList->toHandle();
@@ -803,7 +803,7 @@ HWTEST2_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
     commandList->indirectAllocationsAllowed = true;
     commandList->close();
@@ -853,7 +853,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
                                                                      device,
-                                                                     NEO::EngineGroupType::Copy,
+                                                                     NEO::EngineGroupType::copy,
                                                                      0u,
                                                                      returnValue));
     auto commandListHandle = commandList->toHandle();
@@ -900,7 +900,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                                device,
                                                                                &desc,
                                                                                false,
-                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               NEO::EngineGroupType::renderCompute,
                                                                                result));
     ASSERT_NE(nullptr, commandList0);
 
@@ -953,7 +953,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                                device,
                                                                                &desc,
                                                                                false,
-                                                                               NEO::EngineGroupType::RenderCompute,
+                                                                               NEO::EngineGroupType::renderCompute,
                                                                                result));
     ASSERT_NE(nullptr, commandList0);
 

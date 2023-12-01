@@ -84,7 +84,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -128,7 +128,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -150,7 +150,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
@@ -168,7 +168,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     createKernel();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
 
     auto &commandContainer = commandList->getCmdContainer();
     const auto stream = commandContainer.getCommandStream();
@@ -227,7 +227,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListThenKernelIsStored) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernel = new Mock<KernelImp>{};
@@ -245,7 +245,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListMultipleTimesThenKernelIsStoredOnce) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernel = new Mock<KernelImp>{};
@@ -272,7 +272,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     auto kernel = new Mock<KernelImp>{};
     kernel->module = module.get();
@@ -302,7 +302,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsync
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     auto kernel = new Mock<KernelImp>{};
     kernel->module = module.get();
@@ -338,9 +338,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.callBaseWaitForCompletionWithTimeout = false;
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     auto kernel = new Mock<KernelImp>{};
     kernel->module = module.get();
@@ -376,7 +376,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToCommandLi
     auto commandQueue = static_cast<L0::ult::CommandQueue *>(L0::CommandQueue::fromHandle(commandQueueHandle));
     EXPECT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -419,7 +419,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     auto commandQueue = static_cast<L0::ult::CommandQueue *>(L0::CommandQueue::fromHandle(commandQueueHandle));
     EXPECT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -486,7 +486,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     auto commandQueue = static_cast<L0::ult::CommandQueue *>(L0::CommandQueue::fromHandle(commandQueueHandle));
     EXPECT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -551,7 +551,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmComman
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -581,7 +581,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -635,7 +635,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -688,7 +688,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmComman
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -718,7 +718,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -772,7 +772,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     queueDesc.ordinal = 0u;
     queueDesc.index = 0u;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
@@ -821,7 +821,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernelSshSize = kernel->getSurfaceStateHeapDataSize();
@@ -850,7 +850,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
 
     Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -942,7 +942,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
 
     Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -985,7 +985,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
 
     Mock<::L0::KernelImp> kernel;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandListBase(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandListBase(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceBefore = commandListBase->getCmdContainer().getCommandStream()->getUsed();
 
@@ -1008,7 +1008,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePipeControlPriorToWalker.set(1);
 
-    std::unique_ptr<L0::CommandList> commandListWithDebugKey(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandListWithDebugKey(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     usedSpaceBefore = commandListWithDebugKey->getCmdContainer().getCommandStream()->getUsed();
 
@@ -1037,7 +1037,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
 
     Mock<::L0::KernelImp> kernel;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto firstBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
@@ -1060,7 +1060,7 @@ using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelSeveralTimesThenAlwaysFirstEventPacketIsUsed, SupportedPlatforms) {
     createKernel();
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -1096,7 +1096,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.workDim = 4;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
 
     void *alloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -1191,11 +1191,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     createKernel();
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
     ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
-    auto commandListControl = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandListControl = std::unique_ptr<CommandList>(CommandList::whiteboxCast(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandListControl);
     ASSERT_NE(nullptr, commandListControl->getCmdContainer().getCommandStream());
 
@@ -1255,7 +1255,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerD
     Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -1280,7 +1280,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
     Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
@@ -1329,7 +1329,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsThenAddSemap
     Mock<::L0::KernelImp> kernel;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
@@ -1376,7 +1376,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCoo
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     returnValue = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 1, nullptr, false);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
@@ -1388,7 +1388,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1404,7 +1404,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     cmdList.isFlushTaskSubmissionEnabled = false;
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1429,7 +1429,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
     kernel.module = mockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(-1, commandList->requiredStreamState.stateComputeMode.threadArbitrationPolicy.value);

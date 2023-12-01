@@ -12,7 +12,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 inline cl_command_queue_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getAdditionalDisabledQueueFamilyCapabilities(EngineGroupType type) const {
-    if (type == EngineGroupType::Copy) {
+    if (type == EngineGroupType::copy) {
         return CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL;
     }
     return 0;

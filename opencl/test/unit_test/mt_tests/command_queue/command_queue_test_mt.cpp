@@ -32,7 +32,7 @@ TEST(CommandQueue, givenCommandQueueWhenTakeOwnershipWrapperForCommandQueueThenW
         false,
         retVal);
 
-    auto status = WaitStatus::NotReady;
+    auto status = WaitStatus::notReady;
 
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*pCmdQ);
     std::atomic<bool> threadStarted = false;

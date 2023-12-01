@@ -77,12 +77,12 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
 
 template <typename Family>
 void L0GfxCoreHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const {
-    if (group.engineGroupType == NEO::EngineGroupType::LinkedCopy) {
+    if (group.engineGroupType == NEO::EngineGroupType::linkedCopy) {
         groupProperty.flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
         groupProperty.maxMemoryFillPatternSize = sizeof(uint8_t);
     }
 
-    if (group.engineGroupType == NEO::EngineGroupType::Copy) {
+    if (group.engineGroupType == NEO::EngineGroupType::copy) {
         groupProperty.flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
 
         bool virtualEnginesEnabled = true;

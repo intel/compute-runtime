@@ -44,7 +44,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
         auto commandQueue = whiteboxCast(cmdQ);
 
         Mock<KernelImp> kernel;
-        std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
         ze_group_count_t groupCount{1, 1, 1};
         NEO::LinearStream &cmdStream = commandQueue->commandStream;
 

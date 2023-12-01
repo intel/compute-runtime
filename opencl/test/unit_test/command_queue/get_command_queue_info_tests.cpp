@@ -192,7 +192,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGe
 
     const cl_device_id deviceId = &mockClDevice;
     auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
-    auto ccsFamily = mockClDevice.getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+    auto ccsFamily = mockClDevice.getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
     cl_command_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, ccsFamily, CL_QUEUE_INDEX_INTEL, 0, 0};
     EXPECT_EQ(0u, mockClDevice.getNumGenericSubDevices());
     auto commandQueue = clCreateCommandQueueWithProperties(context, deviceId, properties, nullptr);
@@ -253,7 +253,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenLimitedNumberOfCcsWhe
 
     const uint32_t ccsCount = 4;
 
-    auto ccsEngine = device->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+    auto ccsEngine = device->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
     cl_queue_properties properties[5] = {CL_QUEUE_FAMILY_INTEL, ccsEngine, CL_QUEUE_INDEX_INTEL, 0, 0};
 
     auto mutableHwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();

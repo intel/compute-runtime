@@ -37,7 +37,7 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
 
@@ -83,7 +83,7 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
 

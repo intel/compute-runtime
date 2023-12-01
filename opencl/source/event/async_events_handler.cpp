@@ -81,7 +81,7 @@ void *AsyncEventsHandler::asyncProcess(void *arg) {
         sleepCandidate = self->processList();
         if (sleepCandidate) {
             waitStatus = sleepCandidate->wait(true, true);
-            if (waitStatus == WaitStatus::GpuHang) {
+            if (waitStatus == WaitStatus::gpuHang) {
                 sleepCandidate->abortExecutionDueToGpuHang();
             }
         }

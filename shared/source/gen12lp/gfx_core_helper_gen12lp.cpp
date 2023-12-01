@@ -126,11 +126,11 @@ template <>
 EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     switch (engineType) {
     case aub_stream::ENGINE_RCS:
-        return EngineGroupType::RenderCompute;
+        return EngineGroupType::renderCompute;
     case aub_stream::ENGINE_CCS:
-        return EngineGroupType::Compute;
+        return EngineGroupType::compute;
     case aub_stream::ENGINE_BCS:
-        return EngineGroupType::Copy;
+        return EngineGroupType::copy;
     default:
         UNRECOVERABLE_IF(true);
     }

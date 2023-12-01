@@ -97,7 +97,7 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -182,7 +182,7 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -290,7 +290,7 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -362,7 +362,7 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -458,7 +458,7 @@ void testSingleTileAppendMemoryCopySignalScopeEventToSubDevice(CopyTestInput &in
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, input.device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, input.device, NEO::EngineGroupType::renderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -516,7 +516,7 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(2u, commandList.partitionCount);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -607,7 +607,7 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(2u, commandList.partitionCount);
     auto &commandContainer = commandList.commandContainer;
 
@@ -733,7 +733,7 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(2u, commandList.partitionCount);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -809,7 +809,7 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
     MockCommandListCoreFamily<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
-    commandList.initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(2u, commandList.partitionCount);
     auto &commandContainer = commandList.commandContainer;
 

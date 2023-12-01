@@ -27,7 +27,7 @@ HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispat
     auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
     LinearStream stream(buffer.get(), bufferSize);
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::renderCompute);
     StreamProperties props;
     props.frontEndState.disableEUFusion.set(true);
     MockExecutionEnvironment executionEnvironment{};

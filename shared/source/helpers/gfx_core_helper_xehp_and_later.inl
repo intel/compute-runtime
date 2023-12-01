@@ -89,13 +89,13 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
 template <typename GfxFamily>
 EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_RCS) {
-        return EngineGroupType::RenderCompute;
+        return EngineGroupType::renderCompute;
     }
     if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
-        return EngineGroupType::Compute;
+        return EngineGroupType::compute;
     }
     if (engineType == aub_stream::ENGINE_BCS) {
-        return EngineGroupType::Copy;
+        return EngineGroupType::copy;
     }
     UNRECOVERABLE_IF(true);
 }

@@ -45,7 +45,7 @@ uint32_t KernelImpSuggestMaxCooperativeGroupCountFixture::getMaxWorkGroupCount()
     kernel.groupSize[1] = lws[1];
     kernel.groupSize[2] = lws[2];
     uint32_t totalGroupCount = 0;
-    kernel.KernelImp::suggestMaxCooperativeGroupCount(&totalGroupCount, NEO::EngineGroupType::CooperativeCompute, true);
+    kernel.KernelImp::suggestMaxCooperativeGroupCount(&totalGroupCount, NEO::EngineGroupType::cooperativeCompute, true);
     return totalGroupCount;
 }
 } // namespace ult

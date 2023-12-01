@@ -28,8 +28,8 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         ze_result_t returnValue;
-        commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-        commandListBcs.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
+        commandListBcs.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue)));
 
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -392,7 +392,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64
 HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, IsAtLeastSkl) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     MockCommandListExtensionHw<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     uint32_t waitMemData = 1u;
 
     zex_wait_on_mem_desc_t desc;
@@ -692,7 +692,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSignalEventAnd
 
 HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMemoryPtrThenAlignedPtrUsed, IsAtLeastSkl) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
@@ -826,7 +826,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeCo
 HWTEST2_F(CommandListAppendWriteToMem, givenCommandListWriteToMemCalledWithNullPtrThenAppendWriteToMemoryReturnsError, IsAtLeastSkl) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     MockCommandListExtensionHw<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     zex_write_to_mem_desc_t desc = {};
     uint64_t data = 0xabc;
@@ -896,7 +896,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
 
 HWTEST2_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeControlEncodedCorrectlyAlignedPtrUsed, IsAtLeastSkl) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
@@ -953,8 +953,8 @@ class ImmediateCommandListWaitOnMemFixture : public DeviceFixture {
         ze_result_t returnValue;
         ze_command_queue_desc_t queueDesc{};
         queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-        immCommandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue)));
-        immCommandListBcs.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue)));
+        immCommandList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue)));
+        immCommandListBcs.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue)));
 
         ze_event_pool_desc_t eventPoolDesc{};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

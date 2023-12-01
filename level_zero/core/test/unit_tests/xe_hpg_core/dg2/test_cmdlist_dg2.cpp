@@ -34,7 +34,7 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
 
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
 
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
@@ -73,7 +73,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     kernel.module = pMockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
@@ -90,7 +90,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     kernel.module = pMockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
@@ -108,7 +108,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForRegu
     kernel.module = pMockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
@@ -126,7 +126,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     kernel.module = pMockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
@@ -143,7 +143,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     kernel.module = pMockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
@@ -161,7 +161,7 @@ HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenUpdateStreamPropertiesForFlus
     kernel.module = pMockModule.get();
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;

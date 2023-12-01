@@ -54,7 +54,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
 
             NEO::BlitPropertiesContainer blitPropertiesContainer;
             blitPropertiesContainer.push_back(
-                NEO::BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+                NEO::BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                      *bcsEngine->commandStreamReceiver, printfBuffer, nullptr,
                                                                      printfOutputBuffer,
                                                                      printfBuffer->getGpuAddress(),

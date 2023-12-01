@@ -46,13 +46,13 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForReadW
 
     auto csr = deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver;
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                                *csr, srcAlloc.get(), nullptr,
                                                                                dst,
                                                                                srcGpuAddr,
                                                                                0, dstOffsets, srcOffsets, copySize, dstRowPitch, dstSlicePitch, srcRowPitch, srcSlicePitch);
 
-    EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::BufferToHostPtr);
+    EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::bufferToHostPtr);
     EXPECT_NE(blitProperties.dstAllocation, nullptr);
     EXPECT_EQ(blitProperties.dstAllocation->getUnderlyingBufferSize(), copySize.x * copySize.y * copySize.z);
     EXPECT_EQ(blitProperties.srcAllocation, srcAlloc.get());
@@ -96,7 +96,7 @@ TEST(BlitCommandsHelperTest, GivenBufferParamsWhenConstructingPropertiesForBuffe
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
 
-    EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::BufferToBuffer);
+    EXPECT_EQ(blitProperties.blitDirection, BlitterConstants::BlitDirection::bufferToBuffer);
     EXPECT_EQ(blitProperties.dstAllocation, dstAlloc.get());
     EXPECT_EQ(blitProperties.srcAllocation, srcAlloc.get());
     EXPECT_EQ(blitProperties.clearColorAllocation, clearColorAllocation.get());
@@ -168,14 +168,14 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
 
     EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
     EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
     waArgs.isWaRequired = true;
     EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
     EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 }
 
@@ -216,7 +216,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     memset(streamBuffer, 0, sizeof(streamBuffer));
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
     waArgs.isWaRequired = true;
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
@@ -228,7 +228,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     memset(streamBuffer, 0, sizeof(streamBuffer));
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
     waArgs.isWaRequired = true;
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
@@ -240,7 +240,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     memset(streamBuffer, 0, sizeof(streamBuffer));
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
-    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
     waArgs.isWaRequired = true;
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 

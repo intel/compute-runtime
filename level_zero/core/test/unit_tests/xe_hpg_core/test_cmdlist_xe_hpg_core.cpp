@@ -36,7 +36,7 @@ HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAdd
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 
@@ -79,7 +79,7 @@ HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventBeforeComm
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -115,7 +115,7 @@ HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventAfterComma
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -152,7 +152,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingEventThenStoreRegC
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -175,7 +175,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenAppendRangesBarrierThenL3Contro
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1100;
@@ -200,7 +200,7 @@ HWTEST2_F(CommandListCreate, givenAllocationWithSizeTooBigForL3ControlWhenAppend
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x2000;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = NEO::L3Range::maxSingleRange * (NEO::maxFlushSubrangeCount + 1);
@@ -225,7 +225,7 @@ HWTEST2_F(CommandListCreate, givenRangeSizeTwiceBiggerThanAllocWhenAppendRangesB
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1000;
@@ -248,7 +248,7 @@ HWTEST2_F(CommandListCreate, givenRangeNotInSvmManagerThanAllocWhenAppendRangesB
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1000;
@@ -268,7 +268,7 @@ HWTEST2_F(CommandListCreate, givenRangeNotAlignedToPageWhenAppendRangesBarrierTh
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     using L3_FLUSH_ADDRESS_RANGE = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1100;
@@ -297,7 +297,7 @@ HWTEST2_F(CommandListCreate, givenRangeBetweenTwoPagesWhenAppendRangesBarrierThe
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     using L3_FLUSH_ADDRESS_RANGE = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 2 * MemoryConstants::pageSize + MemoryConstants::pageSize / 2;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = MemoryConstants::pageSize / 2 + 1;
@@ -347,7 +347,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
     auto commandList = std::make_unique<CommandListAdjustStateComputeMode<productFamily>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
@@ -386,7 +386,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
     auto commandList = std::make_unique<CommandListAdjustStateComputeMode<productFamily>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
     const ze_group_count_t launchKernelArgs = {};
@@ -422,7 +422,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpgCore, givenEventWhenAppendKernelIsCa
     kernel.setGroupSize(1, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = commandList->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    auto result = commandList->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_event_pool_desc_t eventPoolDesc = {};

@@ -98,9 +98,9 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenComputeEngineAndCooperativeUsageWhe
     for (auto engineType : engineTypes) {
         for (auto engineUsage : engineUsages) {
             if (engineUsage == EngineUsage::Cooperative) {
-                EXPECT_EQ(EngineGroupType::CooperativeCompute, gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo));
+                EXPECT_EQ(EngineGroupType::cooperativeCompute, gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo));
             } else {
-                EXPECT_EQ(EngineGroupType::Compute, gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo));
+                EXPECT_EQ(EngineGroupType::compute, gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo));
             }
         }
     }
@@ -149,19 +149,19 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCo
         raii.mockProductHelper->isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
         for (auto isRcsAvailable : ::testing::Bool()) {
             gfxCoreHelper.isRcsAvailableValue = isRcsAvailable;
-            for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute,
-                                         EngineGroupType::CooperativeCompute}) {
+            for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute,
+                                         EngineGroupType::cooperativeCompute}) {
 
                 auto isCooperativeDispatchSupported = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
                 if (isCooperativeEngineSupported) {
                     switch (engineGroupType) {
-                    case EngineGroupType::RenderCompute:
+                    case EngineGroupType::renderCompute:
                         EXPECT_FALSE(isCooperativeDispatchSupported);
                         break;
-                    case EngineGroupType::Compute:
+                    case EngineGroupType::compute:
                         EXPECT_EQ(!isRcsAvailable, isCooperativeDispatchSupported);
                         break;
-                    default: // EngineGroupType::CooperativeCompute
+                    default: // EngineGroupType::cooperativeCompute
                         EXPECT_TRUE(isCooperativeDispatchSupported);
                     }
                 } else {

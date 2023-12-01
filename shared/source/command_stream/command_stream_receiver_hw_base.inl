@@ -968,14 +968,14 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
                                                              this->isAnyDirectSubmissionEnabled());
 
     auto status = waitForCompletionWithTimeout(params, taskCountToWait);
-    if (status == WaitStatus::NotReady) {
+    if (status == WaitStatus::notReady) {
         waitForFlushStamp(flushStampToWait);
         // now call blocking wait, this is to ensure that task count is reached
         status = waitForCompletionWithTimeout(WaitParams{false, false, 0}, taskCountToWait);
     }
 
     // If GPU hang occured, then propagate it to the caller.
-    if (status == WaitStatus::GpuHang) {
+    if (status == WaitStatus::gpuHang) {
         return status;
     }
 
@@ -986,7 +986,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
     if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
         kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
-    return WaitStatus::Ready;
+    return WaitStatus::ready;
 }
 
 template <typename GfxFamily>
@@ -1270,7 +1270,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
         internalAllocationStorage->cleanAllocationList(newTaskCount, DEFERRED_DEALLOCATION);
 
-        if (waitStatus == WaitStatus::GpuHang) {
+        if (waitStatus == WaitStatus::gpuHang) {
             return CompletionStamp::gpuHang;
         }
     }

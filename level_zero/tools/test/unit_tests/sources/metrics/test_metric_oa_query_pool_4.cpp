@@ -136,7 +136,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAp
     zet_device_handle_t metricDevice = devices[0]->toHandle();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -269,7 +269,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenInvalidCommandBufferGetSizeWhenZetCo
     zet_device_handle_t metricDevice = devices[0]->toHandle();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -368,7 +368,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenInvalidCommandBufferGetWhenZetComman
     zet_device_handle_t metricDevice = devices[0]->toHandle();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;

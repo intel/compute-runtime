@@ -44,7 +44,7 @@ HWTEST_F(BcsTests, given3dImageWhenBlitBufferIsCalledThenBlitCmdIsFoundZtimes) {
     builtinOpParams.size = {1, 1, 10};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::hostPtrToImage,
                                                                 csr,
                                                                 builtinOpParams);
     flushBcsTask(&csr, blitProperties, true, *pDevice);
@@ -75,7 +75,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     builtinOpParams.size = {1, 1, 1};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToHostPtr,
                                                                 csr,
                                                                 builtinOpParams);
     flushBcsTask(&csr, blitProperties, true, *pDevice);
@@ -105,7 +105,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     builtinOpParams.size = {6, 8, 1};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::hostPtrToImage,
                                                                 csr,
                                                                 builtinOpParams);
     flushBcsTask(&csr, blitProperties, true, *pDevice);
@@ -140,7 +140,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     builtinOpParams.size = {2, 3, 1};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToHostPtr,
                                                                 csr,
                                                                 builtinOpParams);
     flushBcsTask(&csr, blitProperties, true, *pDevice);
@@ -172,7 +172,7 @@ HWTEST_F(BcsTests, givenImageToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrectly
     builtinOpParams.size = {2, 3, 1};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToImage,
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToImage,
                                                                 csr,
                                                                 builtinOpParams);
     flushBcsTask(&csr, blitProperties, true, *pDevice);

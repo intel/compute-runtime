@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
 
     // Stall until HW reaches taskCount on all its engines
     const auto waitStatus = waitForAllEngines(true, nullptr);
-    if (waitStatus == WaitStatus::GpuHang) {
+    if (waitStatus == WaitStatus::gpuHang) {
         return CL_OUT_OF_RESOURCES;
     }
 

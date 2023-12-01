@@ -35,9 +35,9 @@ XE_HPC_CORETEST_F(XeHpcCoreClDeviceCaps, givenXeHpcCoreWhenCheckingCapsThenDevic
 using QueueFamilyNameTestXeHpcCore = QueueFamilyNameTest;
 
 XE_HPC_CORETEST_F(QueueFamilyNameTestXeHpcCore, givenCccsWhenGettingQueueFamilyNameThenReturnProperValue) {
-    verify(EngineGroupType::RenderCompute, "cccs");
+    verify(EngineGroupType::renderCompute, "cccs");
 }
 
 XE_HPC_CORETEST_F(QueueFamilyNameTestXeHpcCore, givenLinkedBcsWhenGettingQueueFamilyNameThenReturnProperValue) {
-    verify(EngineGroupType::LinkedCopy, "linked bcs");
+    verify(EngineGroupType::linkedCopy, "linked bcs");
 }

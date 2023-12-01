@@ -338,7 +338,7 @@ HWTEST_F(EnqueueCopyBufferToImageStatelessTest, givenGpuHangAndBlockingCallAndBi
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     srcBuffer.size = static_cast<size_t>(bigSize);
 

@@ -79,7 +79,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenGpuHangAndBlockingEnqueueWhenWritingImageTh
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = EnqueueWriteImageHelper<>::enqueueWriteImage(&mockCommandQueueHw, dstImage, CL_TRUE);
 

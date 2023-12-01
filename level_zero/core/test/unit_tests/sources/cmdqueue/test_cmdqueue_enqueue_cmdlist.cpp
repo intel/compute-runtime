@@ -36,11 +36,11 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     }
@@ -83,12 +83,12 @@ struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFix
         ASSERT_NE(nullptr, device);
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->getPartitionCount());
 
-        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->getPartitionCount());
@@ -590,7 +590,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};
     auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandListWithCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
+    pCommandListWithCooperativeKernels->initialize(&device, NEO::EngineGroupType::compute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
@@ -601,7 +601,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     EXPECT_EQ(1u, pMockCsr->submitBatchBufferCalled);
 
     auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
+    pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::compute, 0u);
 
     launchParams.isCooperative = false;
     pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, threadGroupDimensions, nullptr, launchParams);
@@ -630,10 +630,10 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
     preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
 
-    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
     ze_command_list_handle_t commandLists[] = {commandListDisabled->toHandle(),
@@ -907,7 +907,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     constexpr uint32_t preemptionRegisterOffset = 0x2580;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
@@ -963,7 +963,7 @@ struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1197,7 +1197,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
@@ -1250,7 +1250,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     using PARSE = typename FamilyType::PARSE;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);

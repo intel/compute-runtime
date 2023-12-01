@@ -125,20 +125,20 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         EXPECT_NE(nullptr, tileDevices[tile]);
         if (EnabledCommandStreamers::Single == enabledCommandStreamers) {
             if (EngineHelpers::isCcs(engineType)) {
-                auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+                auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
             } else {
-                auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::RenderCompute);
+                auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
             }
         } else if (EnabledCommandStreamers::Dual == enabledCommandStreamers) {
-            auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::RenderCompute);
-            auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+            auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
+            auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
         } else if (EnabledCommandStreamers::All == enabledCommandStreamers) {
-            auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::RenderCompute);
-            auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+            auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
+            auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 1));

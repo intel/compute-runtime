@@ -185,7 +185,7 @@ BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
 
     auto mockBlitMemoryToAllocation = [this](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                              Vec3<size_t> size) -> BlitOperationResult {
-        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                               *bcsCsr, memory, nullptr,
                                                                               hostPtr,
                                                                               memory->getGpuAddress(), 0,

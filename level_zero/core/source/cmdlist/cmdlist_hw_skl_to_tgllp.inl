@@ -211,7 +211,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         false,                                                  // isHostScopeSignalEvent
         false,                                                  // isKernelUsingSystemAllocation
         cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
-        engineGroupType == NEO::EngineGroupType::RenderCompute, // isRcs
+        engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport                                    // dcFlushEnable
     };
 

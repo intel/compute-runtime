@@ -3281,7 +3281,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
             EXPECT_EQ(0u, output.size()); // memory is not actually copied with blitter in ULTs
             auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
             EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-            EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+            EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
             EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
         } else {
             EXPECT_STREQ(expectedString.c_str(), output.c_str());
@@ -3343,7 +3343,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         std::string error = testing::internal::GetCapturedStderr();
 
         EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-        EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+        EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
         EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
 
         EXPECT_STREQ(expectedString.c_str(), output.c_str());

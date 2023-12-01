@@ -59,7 +59,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         bcsEngine->commandStreamReceiver->initDirectSubmission();
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
-            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                             *bcsEngine->commandStreamReceiver, memory, nullptr,
                                                             hostPtr,
                                                             (memory->getGpuAddress() + offset),

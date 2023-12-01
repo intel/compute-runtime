@@ -560,10 +560,10 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
     struct MyGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             if (engineType == aub_stream::ENGINE_RCS) {
-                return EngineGroupType::RenderCompute;
+                return EngineGroupType::renderCompute;
             }
             if (EngineHelpers::isCcs(engineType)) {
-                return EngineGroupType::Compute;
+                return EngineGroupType::compute;
             }
             UNRECOVERABLE_IF(true);
         }
@@ -584,10 +584,10 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
     device.addEngineToEngineGroup(rcsEngine);
     auto &engineGroups = device.getRegularEngineGroups();
     EXPECT_EQ(1u, engineGroups[0].engines.size());
-    EXPECT_EQ(EngineGroupType::Compute, engineGroups[0].engineGroupType);
+    EXPECT_EQ(EngineGroupType::compute, engineGroups[0].engineGroupType);
     EXPECT_EQ(aub_stream::EngineType::ENGINE_CCS, engineGroups[0].engines[0].getEngineType());
     EXPECT_EQ(1u, engineGroups[1].engines.size());
-    EXPECT_EQ(EngineGroupType::RenderCompute, engineGroups[1].engineGroupType);
+    EXPECT_EQ(EngineGroupType::renderCompute, engineGroups[1].engineGroupType);
     EXPECT_EQ(aub_stream::EngineType::ENGINE_RCS, engineGroups[1].engines[0].getEngineType());
 
     device.getRegularEngineGroups().clear();
@@ -595,10 +595,10 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
     device.addEngineToEngineGroup(ccsEngine);
     engineGroups = device.getRegularEngineGroups();
     EXPECT_EQ(1u, engineGroups[0].engines.size());
-    EXPECT_EQ(EngineGroupType::RenderCompute, engineGroups[0].engineGroupType);
+    EXPECT_EQ(EngineGroupType::renderCompute, engineGroups[0].engineGroupType);
     EXPECT_EQ(aub_stream::EngineType::ENGINE_RCS, engineGroups[0].engines[0].getEngineType());
     EXPECT_EQ(1u, engineGroups[1].engines.size());
-    EXPECT_EQ(EngineGroupType::Compute, engineGroups[1].engineGroupType);
+    EXPECT_EQ(EngineGroupType::compute, engineGroups[1].engineGroupType);
     EXPECT_EQ(aub_stream::EngineType::ENGINE_CCS, engineGroups[1].engines[0].getEngineType());
 }
 
@@ -706,8 +706,8 @@ HWTEST_F(QueueFamiliesTests, whenGettingQueueFamilyCapabilitiesAllThenReturnCorr
 
 HWTEST_F(QueueFamiliesTests, givenComputeQueueWhenGettingQueueFamilyCapabilitiesThenReturnDefaultCapabilities) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), device->getQueueFamilyCapabilities(NEO::EngineGroupType::Compute));
-    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), device->getQueueFamilyCapabilities(NEO::EngineGroupType::RenderCompute));
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), device->getQueueFamilyCapabilities(NEO::EngineGroupType::compute));
+    EXPECT_EQ(static_cast<uint64_t>(CL_QUEUE_DEFAULT_CAPABILITIES_INTEL), device->getQueueFamilyCapabilities(NEO::EngineGroupType::renderCompute));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, QueueFamiliesTests, givenCopyQueueWhenGettingQueueFamilyCapabilitiesThenDoNotReturnUnsupportedOperations) {
@@ -720,7 +720,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, QueueFamiliesTests, givenCopyQueueWhenGettingQueueFa
                                                                                   CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL;
     const cl_command_queue_capabilities_intel expectedBlitterCapabilities = setBits(MockClDevice::getQueueFamilyCapabilitiesAll(), false, capabilitiesNotSupportedOnBlitter);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_EQ(expectedBlitterCapabilities, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Copy));
+    EXPECT_EQ(expectedBlitterCapabilities, device->getQueueFamilyCapabilities(NEO::EngineGroupType::copy));
 }
 
 TEST(ClDeviceHelperTest, givenNonZeroNumberOfTilesWhenPrepareDeviceEnvironmentsCountCalledThenReturnCorrectValue) {

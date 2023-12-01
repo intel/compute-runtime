@@ -41,7 +41,7 @@ PVCTEST_F(DeviceTestsPvc, WhenDeviceIsCreatedThenOnlyOneCcsEngineIsExposed) {
 
     auto device = deviceFactory.rootDevices[0];
 
-    auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+    auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
     auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
     EXPECT_EQ(1u, computeEngineGroup.engines.size());
 }

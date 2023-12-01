@@ -150,7 +150,7 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
 
         if (enable > 0) {
             EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-            EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+            EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
         } else {
             EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
         }
@@ -190,7 +190,7 @@ HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessComp
 
     EXPECT_FALSE(printfHandler->printEnqueueOutput());
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
-    EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+    EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
     EXPECT_EQ(1u, bcsCsr->receivedBlitProperties[0].dstAllocation->hostPtrTaskCountAssignment.load());
     bcsCsr->receivedBlitProperties[0].dstAllocation->hostPtrTaskCountAssignment--;
 }
@@ -236,7 +236,7 @@ HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueue
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
 
     EXPECT_TRUE(bcsCsr->blitBufferCalled >= 1);
-    EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
+    EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
 }
 
 HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePrintfObjectAfterMove) {
@@ -257,7 +257,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePr
 
         bool waitCalled = false;
         PrintfHandler *printfHandlerUsedForWait = nullptr;
-        WaitStatus waitForAllEnginesReturnValue = WaitStatus::Ready;
+        WaitStatus waitForAllEnginesReturnValue = WaitStatus::ready;
     };
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

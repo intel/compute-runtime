@@ -3038,7 +3038,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         finalStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode());
     }
     if (finalStreamState.stateComputeMode.isDirty()) {
-        bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
+        bool isRcs = (this->engineGroupType == NEO::EngineGroupType::renderCompute);
         NEO::PipelineSelectArgs pipelineSelectArgs;
         pipelineSelectArgs.systolicPipelineSelectMode = kernelAttributes.flags.usesSystolicPipelineSelectMode;
         pipelineSelectArgs.systolicPipelineSelectSupport = this->systolicModeSupport;
@@ -3151,7 +3151,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
+    bool isRcs = (this->engineGroupType == NEO::EngineGroupType::renderCompute);
 
     uint32_t statelessMocsIndex = this->defaultMocsIndex;
     NEO::StateBaseAddressProperties *sbaProperties = useSbaProperties ? &this->finalStreamState.stateBaseAddress : nullptr;

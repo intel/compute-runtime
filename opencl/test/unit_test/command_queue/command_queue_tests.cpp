@@ -935,7 +935,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
     cl_uint expectedEngineIndex = 0u;
 
     cl_int retVal = CL_SUCCESS;
-    auto userPropertiesEngineGroupType = static_cast<cl_uint>(EngineGroupType::Compute);
+    auto userPropertiesEngineGroupType = static_cast<cl_uint>(EngineGroupType::compute);
     cl_uint userPropertiesEngineIndex = 2u;
 
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, userPropertiesEngineGroupType, CL_QUEUE_INDEX_INTEL, userPropertiesEngineIndex, 0};
@@ -972,7 +972,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
 
     struct FakeGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
-            return EngineGroupType::RenderCompute;
+            return EngineGroupType::renderCompute;
         }
     };
     RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
@@ -1025,7 +1025,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
 
-            return WaitStatus::Ready;
+            return WaitStatus::ready;
         }
         bool isQueueBlocked() override {
             return false;
@@ -1097,9 +1097,9 @@ class CommandStreamReceiverHwMock : public CommandStreamReceiverHw<GfxFamily> {
     int waitForTaskCountWithKmdNotifyFallbackCounter{0};
     int waitForTaskCountAndCleanTemporaryAllocationListCalledCounter{0};
 
-    WaitStatus waitForTaskCountReturnValue{WaitStatus::Ready};
-    WaitStatus waitForTaskCountWithKmdNotifyFallbackReturnValue{WaitStatus::Ready};
-    WaitStatus waitForTaskCountAndCleanTemporaryAllocationListReturnValue{WaitStatus::Ready};
+    WaitStatus waitForTaskCountReturnValue{WaitStatus::ready};
+    WaitStatus waitForTaskCountWithKmdNotifyFallbackReturnValue{WaitStatus::ready};
+    WaitStatus waitForTaskCountAndCleanTemporaryAllocationListReturnValue{WaitStatus::ready};
 };
 
 struct WaitUntilCompletionTests : public ::testing::Test {
@@ -1129,7 +1129,7 @@ struct WaitUntilCompletionTests : public ::testing::Test {
 HWTEST_F(WaitUntilCompletionTests, givenCleanTemporaryAllocationListEqualsFalseWhenWaitingUntilCompleteThenWaitForTaskCountIsCalledAndItsReturnValueIsPropagated) {
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> cmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     cmdStream->initializeTagAllocation();
-    cmdStream->waitForTaskCountReturnValue = WaitStatus::Ready;
+    cmdStream->waitForTaskCountReturnValue = WaitStatus::ready;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
@@ -1140,7 +1140,7 @@ HWTEST_F(WaitUntilCompletionTests, givenCleanTemporaryAllocationListEqualsFalseW
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
     const auto waitStatus = cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, cleanTemporaryAllocationList, false);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
     EXPECT_EQ(1, cmdStream->waitForTaskCountCalledCounter);
 
     cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
@@ -1149,7 +1149,7 @@ HWTEST_F(WaitUntilCompletionTests, givenCleanTemporaryAllocationListEqualsFalseW
 HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndCleanTemporaryAllocationListEqualsTrueWhenWaitingUntilCompleteThenWaitForTaskCountAndCleanAllocationIsCalledAndGpuHangIsReturned) {
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> cmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     cmdStream->initializeTagAllocation();
-    cmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::GpuHang;
+    cmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::gpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
@@ -1160,7 +1160,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndCleanTemporaryAllocationListEq
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
     const auto waitStatus = cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, cleanTemporaryAllocationList, false);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
     EXPECT_EQ(1, cmdStream->waitForTaskCountAndCleanTemporaryAllocationListCalledCounter);
 
     cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
@@ -1187,7 +1187,7 @@ HWTEST_F(WaitUntilCompletionTests, givenEmptyBcsStatesAndSkipWaitEqualsTrueWhenW
 HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndSkipWaitEqualsFalseWhenWaitingUntilCompleteThenOnlyWaitForTaskCountWithKmdNotifyFallbackIsCalledAndGpuHangIsReturned) {
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> cmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     cmdStream->initializeTagAllocation();
-    cmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
+    cmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
@@ -1198,7 +1198,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndSkipWaitEqualsFalseWhenWaiting
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
     const auto waitStatus = cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false, skipWait);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 
     EXPECT_EQ(0, cmdStream->waitForTaskCountCalledCounter);
     EXPECT_EQ(1, cmdStream->waitForTaskCountWithKmdNotifyFallbackCounter);
@@ -1210,11 +1210,11 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndSkipWaitEqualsFalseWhenWaiting
 HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteThenOnlyWaitForTaskCountWithKmdNotifyFallbackIsCalledOnBcsCsrAndGpuHangIsReturned) {
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> gpgpuCmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     gpgpuCmdStream->initializeTagAllocation();
-    gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
+    gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
 
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> bcsCmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     bcsCmdStream->initializeTagAllocation();
-    bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
+    bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
@@ -1226,7 +1226,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
     const auto waitStatus = cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false, skipWait);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 
     EXPECT_EQ(0, gpgpuCmdStream->waitForTaskCountCalledCounter);
     EXPECT_EQ(1, gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackCounter);
@@ -1242,12 +1242,12 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
 HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteThenWaitForTaskCountAndCleanTemporaryAllocationListIsCalledOnBcsCsrAndGpuHangIsReturned) {
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> gpgpuCmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     gpgpuCmdStream->initializeTagAllocation();
-    gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
+    gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
 
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> bcsCmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     bcsCmdStream->initializeTagAllocation();
-    bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
-    bcsCmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::GpuHang;
+    bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+    bcsCmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::gpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
@@ -1259,7 +1259,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
     const auto waitStatus = cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false, skipWait);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 
     EXPECT_EQ(0, gpgpuCmdStream->waitForTaskCountCalledCounter);
     EXPECT_EQ(1, gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackCounter);
@@ -1275,13 +1275,13 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
 HWTEST_F(WaitUntilCompletionTests, givenSuccessOnBcsCsrWhenWaitingUntilCompleteThenGpgpuCsrWaitStatusIsReturned) {
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> gpgpuCmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     gpgpuCmdStream->initializeTagAllocation();
-    gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
-    gpgpuCmdStream->waitForTaskCountReturnValue = WaitStatus::Ready;
+    gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+    gpgpuCmdStream->waitForTaskCountReturnValue = WaitStatus::ready;
 
     std::unique_ptr<CommandStreamReceiverHwMock<FamilyType>> bcsCmdStream(new CommandStreamReceiverHwMock<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     bcsCmdStream->initializeTagAllocation();
-    bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
-    bcsCmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::Ready;
+    bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+    bcsCmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::ready;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
@@ -1293,7 +1293,7 @@ HWTEST_F(WaitUntilCompletionTests, givenSuccessOnBcsCsrWhenWaitingUntilCompleteT
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
     const auto waitStatus = cmdQ->waitUntilComplete(taskCount, activeBcsStates, cmdQ->flushStamp->peekStamp(), false, false, skipWait);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     EXPECT_EQ(1, gpgpuCmdStream->waitForTaskCountCalledCounter);
     EXPECT_EQ(1, gpgpuCmdStream->waitForTaskCountWithKmdNotifyFallbackCounter);
@@ -1780,7 +1780,7 @@ struct CsrSelectionCommandQueueTests : ::testing::Test {
         cl_command_queue_properties queueProperties[5] = {};
         if (selectBlitterWithQueueFamilies) {
             queueProperties[0] = CL_QUEUE_FAMILY_INTEL;
-            queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy);
+            queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::copy);
             queueProperties[2] = CL_QUEUE_INDEX_INTEL;
             queueProperties[3] = 0;
         }
@@ -2567,14 +2567,14 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             switch (engineType) {
             case aub_stream::ENGINE_RCS:
-                return EngineGroupType::RenderCompute;
+                return EngineGroupType::renderCompute;
             case aub_stream::ENGINE_CCS:
             case aub_stream::ENGINE_CCS1:
             case aub_stream::ENGINE_CCS2:
             case aub_stream::ENGINE_CCS3:
-                return EngineGroupType::Compute;
+                return EngineGroupType::compute;
             case aub_stream::ENGINE_BCS:
-                return EngineGroupType::Copy;
+                return EngineGroupType::copy;
             default:
                 UNRECOVERABLE_IF(true);
             }
@@ -2707,7 +2707,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     EXPECT_FALSE(osContext.isInitialized());
 
     debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
-    const auto ccsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute));
+    const auto ccsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute));
     fillProperties(properties, ccsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
@@ -2731,7 +2731,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     EXPECT_FALSE(osContext.isInitialized());
 
     debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
-    const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::RenderCompute));
+    const auto rcsFamilyIndex = static_cast<cl_uint>(context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute));
     fillProperties(properties, rcsFamilyIndex, 0);
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
@@ -2820,7 +2820,7 @@ HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenDebugFlagSetWh
 
     cl_queue_properties queueProperties[] = {
         CL_QUEUE_FAMILY_INTEL,
-        device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute),
+        device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute),
         CL_QUEUE_INDEX_INTEL,
         0,
         0,
@@ -2865,7 +2865,7 @@ HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenDebugFlagSetWh
 
     cl_queue_properties queueProperties[] = {
         CL_QUEUE_FAMILY_INTEL,
-        device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy),
+        device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::copy),
         CL_QUEUE_INDEX_INTEL,
         0,
         0,
@@ -2963,7 +2963,7 @@ struct CopyOnlyQueueTests : ::testing::Test {
         typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, device->getRootDeviceEnvironment());
 
         auto copyEngineGroup = std::find_if(device->regularEngineGroups.begin(), device->regularEngineGroups.end(), [](const auto &engineGroup) {
-            return engineGroup.engineGroupType == EngineGroupType::Copy;
+            return engineGroup.engineGroupType == EngineGroupType::copy;
         });
         if (copyEngineGroup == device->regularEngineGroups.end()) {
             GTEST_SKIP();
@@ -2979,7 +2979,7 @@ struct CopyOnlyQueueTests : ::testing::Test {
 
         context = std::make_unique<MockContext>(clDevice.get());
 
-        properties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy);
+        properties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::copy);
     }
 
     EngineTypeUsage typeUsageBcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular};
@@ -3112,11 +3112,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     auto retVal = CL_SUCCESS;
     const auto &ccsInstances = localHwInfo.gtSystemInfo.CCSInfo.Instances.Bits;
     std::vector<CommandQueueTestValues> commandQueueTestValues;
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::RenderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment()), true);
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 0, aub_stream::ENGINE_CCS, ccsFound);
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 1, aub_stream::ENGINE_CCS1, ccsInstances.CCS1Enabled);
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 2, aub_stream::ENGINE_CCS2, ccsInstances.CCS2Enabled);
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 3, aub_stream::ENGINE_CCS3, ccsInstances.CCS3Enabled);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::renderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment()), true);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 0, aub_stream::ENGINE_CCS, ccsFound);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 1, aub_stream::ENGINE_CCS1, ccsInstances.CCS1Enabled);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 2, aub_stream::ENGINE_CCS2, ccsInstances.CCS2Enabled);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 3, aub_stream::ENGINE_CCS3, ccsInstances.CCS3Enabled);
 
     for (auto &commandQueueTestValue : commandQueueTestValues) {
         if (commandQueueTestValue.properties[1] >= device->getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {

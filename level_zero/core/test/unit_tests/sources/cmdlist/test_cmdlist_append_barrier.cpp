@@ -579,7 +579,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
     immediateCommandList->isFlushTaskSubmissionEnabled = true;
-    ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
 
@@ -674,7 +674,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
     immediateCommandList->isFlushTaskSubmissionEnabled = false;
-    ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
 

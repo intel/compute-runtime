@@ -193,7 +193,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenNotCompressedBuffer
                                                                 0, 0, {bufferSize, 1, 1}, 0, 0, 0, 0, bcsCsr->getClearColorAllocation());
     executeBlitCommand(blitProperties, true);
 
-    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr, *bcsCsr,
+    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr, *bcsCsr,
                                                                      dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), nullptr,
                                                                      dstHostPtr.get(),
                                                                      dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -217,7 +217,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenHostPtrWhenBlitComm
     auto dstCompressedBuffer = createBuffer(true, testLocalMemory, nullptr);
 
     // HostPtr to Buffer - System -> compressed HBM
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), nullptr,
                                                                           compressiblePattern.get(),
                                                                           dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -225,7 +225,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenHostPtrWhenBlitComm
 
     executeBlitCommand(blitProperties, true);
 
-    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr, *bcsCsr,
+    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr, *bcsCsr,
                                                                      dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex), nullptr,
                                                                      dstHostPtr.get(),
                                                                      dstCompressedBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -244,7 +244,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenDstHostPtrWhenBlitC
     }
 
     auto srcCompressedBuffer = createBuffer(true, testLocalMemory, nullptr);
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, srcCompressedBuffer->getGraphicsAllocation(rootDeviceIndex),
                                                                           nullptr, compressiblePattern.get(),
                                                                           srcCompressedBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -252,7 +252,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenDstHostPtrWhenBlitC
     executeBlitCommand(blitProperties, true);
 
     // Buffer to HostPtr - compressed HBM -> System
-    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                      *bcsCsr, srcCompressedBuffer->getGraphicsAllocation(rootDeviceIndex),
                                                                      nullptr, dstHostPtr.get(),
                                                                      srcCompressedBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -274,7 +274,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenDstHostPtrWhenBlitC
     auto srcNotCompressedLocalBuffer = createBuffer(false, testLocalMemory, compressiblePattern.get());
 
     // Buffer to HostPtr - uncompressed HBM -> System
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                           *bcsCsr, srcNotCompressedLocalBuffer->getGraphicsAllocation(rootDeviceIndex),
                                                                           nullptr, dstHostPtr.get(),
                                                                           srcNotCompressedLocalBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -294,7 +294,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcHostPtrWhenBlitC
     auto buffer = createBuffer(false, testLocalMemory, nullptr);
 
     // HostPtr to Buffer - System -> uncompressed HBM
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, buffer->getGraphicsAllocation(rootDeviceIndex), nullptr, compressiblePattern.get(),
                                                                           buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
                                                                           0, 0, {bufferSize, 1, 1}, 0, 0, 0, 0);
@@ -309,7 +309,7 @@ template <typename FamilyType>
 void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopiedImpl() {
     auto buffer = createBuffer(false, testLocalMemory, nullptr);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, buffer->getGraphicsAllocation(rootDeviceIndex), nullptr, writePattern.get(),
                                                                           buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
                                                                           0, {offset, 0, 0}, {bufferSize - offset, 1, 1}, 0, 0, 0, 0);
@@ -326,7 +326,7 @@ template <typename FamilyType>
 void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl() {
     auto srcBuffer = createBuffer(false, testLocalMemory, writePattern.get());
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                           *bcsCsr, srcBuffer->getGraphicsAllocation(rootDeviceIndex), nullptr, dstHostPtr.get(),
                                                                           srcBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
                                                                           0, {offset, 0, 0}, {bufferSize - offset, 1, 1}, 0, 0, 0, 0);
@@ -368,7 +368,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcCompressedBuffer
     }
 
     auto srcBuffer = createBuffer(true, testLocalMemory, nullptr);
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, srcBuffer->getGraphicsAllocation(rootDeviceIndex),
                                                                           nullptr, compressiblePattern.get(),
                                                                           srcBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -383,7 +383,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcCompressedBuffer
 
     executeBlitCommand(blitProperties, true);
 
-    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr, *bcsCsr,
+    blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr, *bcsCsr,
                                                                      dstBuffer->getGraphicsAllocation(rootDeviceIndex), nullptr,
                                                                      dstHostPtr.get(),
                                                                      dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), 0,
@@ -482,7 +482,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenReadBufferRectWithO
     GraphicsAllocation *allocation = hostPtrSurface.getAllocation();
     auto srcAllocation = srcBuffer->getGraphicsAllocation(rootDeviceIndex);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr, // blitDirection
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr, // blitDirection
                                                                           *bcsCsr,                                          // commandStreamReceiver
                                                                           srcAllocation,                                    // memObjAllocation
                                                                           allocation,                                       // preallocatedHostAllocation
@@ -540,7 +540,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenWriteBufferRectWith
     GraphicsAllocation *allocation = hostPtrSurface.getAllocation();
     auto srcAllocation = srcBuffer->getGraphicsAllocation(rootDeviceIndex);
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer, // blitDirection
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer, // blitDirection
                                                                           *bcsCsr,                                          // commandStreamReceiver
                                                                           srcAllocation,                                    // memObjAllocation
                                                                           allocation,                                       // preallocatedHostAllocation

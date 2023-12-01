@@ -34,7 +34,7 @@ CommandListFixture ::~CommandListFixture() = default;
 void CommandListFixture::setUp() {
     DeviceFixture::setUp();
     ze_result_t returnValue;
-    commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -69,7 +69,7 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
 
     ze_result_t returnValue;
 
-    NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
+    NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::copy : NEO::EngineGroupType::renderCompute;
 
     if (!createImmediate) {
         commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, cmdListEngineType, 0u, returnValue)));
@@ -449,7 +449,7 @@ void CommandListAppendLaunchRayTracingKernelFixture::setUp() {
     ASSERT_NE(nullptr, buffer2);
 
     ze_result_t returnValue;
-    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ASSERT_NE(commandList->getCmdContainer().getCommandStream(), nullptr);
 
     dispatchKernelArguments.groupCountX = 1u;
@@ -567,7 +567,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
                                                      returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+    commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue);
     ASSERT_NE(nullptr, commandList);
 
     commandList->close();

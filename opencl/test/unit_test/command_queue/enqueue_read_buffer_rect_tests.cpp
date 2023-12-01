@@ -103,7 +103,7 @@ HWTEST_F(EnqueueReadBufferRectTest, GivenGpuHangAndBlockingCallAndValidParamsWhe
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     size_t bufferOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};

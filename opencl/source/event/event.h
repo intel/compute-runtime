@@ -220,7 +220,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // adds a callback (execution state change listener) to this event's list of callbacks
     void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
 
-    // if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
+    // if(blocking==false), will return with WaitStatus::notReady instead of blocking while waiting for completion
     virtual WaitStatus wait(bool blocking, bool useQuickKmdSleep);
 
     bool isUserEvent() const {

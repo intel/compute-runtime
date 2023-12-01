@@ -1215,7 +1215,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     mockCsr->latestFlushedTaskCount.store(5);
 
     const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1226,14 +1226,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenGpuHangOnPrintEnqueueOutputWhenWaitingForEnginesThenGpuHangIsReported) {
     MockCommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, nullptr);
-    commandQueue.waitUntilCompleteReturnValue = WaitStatus::Ready;
+    commandQueue.waitUntilCompleteReturnValue = WaitStatus::ready;
 
     const auto blockedQueue{false};
     const auto cleanTemporaryAllocationsList{false};
     MockPrintfHandler printfHandler(*pDevice);
 
     const auto waitStatus = commandQueue.waitForAllEngines(blockedQueue, &printfHandler, cleanTemporaryAllocationsList);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdateTaskCountFromWaitSetWhenFlushTaskThenPipeControlAndBBSIsFlushed) {
@@ -1261,7 +1261,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
     mockCsr->directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*mockCsr);
 
     const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
-    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+    EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -2090,5 +2090,5 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     mockCsr.latestSentTaskCount = 1;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
     mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
-    EXPECT_EQ(NEO::WaitStatus::NotReady, mockCsr.waitForCompletionWithTimeout(WaitParams{false, false, 0}, 1));
+    EXPECT_EQ(NEO::WaitStatus::notReady, mockCsr.waitForCompletionWithTimeout(WaitParams{false, false, 0}, 1));
 }

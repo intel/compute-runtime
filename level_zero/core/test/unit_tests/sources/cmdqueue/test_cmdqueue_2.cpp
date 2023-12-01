@@ -86,7 +86,7 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
     auto &subDevice0 = *deviceFactory.subDevices[0];
     rootDevice.regularEngineGroups.resize(1);
     subDevice0.getRegularEngineGroups().push_back(NEO::EngineGroupT{});
-    subDevice0.getRegularEngineGroups().back().engineGroupType = EngineGroupType::Compute;
+    subDevice0.getRegularEngineGroups().back().engineGroupType = EngineGroupType::compute;
     subDevice0.getRegularEngineGroups().back().engines.resize(1);
     subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
     auto ordinal = static_cast<uint32_t>(subDevice0.getRegularEngineGroups().size() - 1);
@@ -130,7 +130,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteC
     CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -156,7 +156,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndSyncQueueWhenCallingExecuteCommandL
     CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -182,7 +182,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndAsyncQueueWhenCallingExecuteCommand
     CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
@@ -223,7 +223,7 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     uint32_t partitionCountSet = 0;
     bool enableTimeoutSet = false;
-    WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::Ready;
+    WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::ready;
 };
 
 template <typename GfxFamily>
@@ -264,7 +264,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
 HWTEST_F(CommandQueueSynchronizeTest, givenGpuHangWhenCallingSynchronizeThenErrorIsPropagated) {
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
                                                                                           device->getNEODevice()->getDeviceBitfield()));
-    csr->waitForCompletionWithTimeoutResult = NEO::WaitStatus::GpuHang;
+    csr->waitForCompletionWithTimeoutResult = NEO::WaitStatus::gpuHang;
 
     ze_command_queue_desc_t desc{};
     ze_command_queue_handle_t commandQueue{};
@@ -293,7 +293,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledAndGpuHangWhenCal
 
     auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
                                                                                           device->getNEODevice()->getDeviceBitfield()));
-    csr->waitForCompletionWithTimeoutResult = NEO::WaitStatus::GpuHang;
+    csr->waitForCompletionWithTimeoutResult = NEO::WaitStatus::gpuHang;
 
     ze_command_queue_desc_t desc{};
     ze_command_queue_handle_t commandQueue{};
@@ -378,7 +378,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
     commandList->partitionCount = 2;
 
@@ -421,7 +421,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(2u, commandQueue->activeSubDevices);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
@@ -441,7 +441,7 @@ struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
     }
 
-    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::NotReady, (const WaitParams &params, TaskCountType taskCountToWait));
+    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::notReady, (const WaitParams &params, TaskCountType taskCountToWait));
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
@@ -505,7 +505,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     ASSERT_NE(nullptr, commandQueue);
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, commandQueue->getCommandQueueMode());
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     // 1st execute provides all preamble commands
@@ -774,7 +774,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandQueue);
 
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, res)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, res)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandList);
     Mock<KernelImp> kernel;

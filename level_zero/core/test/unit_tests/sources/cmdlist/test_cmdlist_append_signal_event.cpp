@@ -375,7 +375,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
-    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
@@ -433,7 +433,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     auto commandList = std::make_unique<::L0::ult::MockCommandListImmediateHw<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
-    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
@@ -574,7 +574,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
-    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
@@ -616,7 +616,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
-    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
@@ -660,7 +660,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
-    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto cmdStream = commandList->getCmdContainer().getCommandStream();

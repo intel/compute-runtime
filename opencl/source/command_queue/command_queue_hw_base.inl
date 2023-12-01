@@ -143,7 +143,7 @@ bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
 template <typename TSPacketType>
 inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container, CommandStreamReceiver &csr, WaitStatus &status) {
     bool waited = false;
-    status = WaitStatus::NotReady;
+    status = WaitStatus::notReady;
 
     if (container) {
         auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
@@ -153,11 +153,11 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
                     csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
                     WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
                     if (csr.checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
-                        status = WaitStatus::GpuHang;
+                        status = WaitStatus::gpuHang;
                         return false;
                     }
                 }
-                status = WaitStatus::Ready;
+                status = WaitStatus::ready;
                 waited = true;
             }
         }

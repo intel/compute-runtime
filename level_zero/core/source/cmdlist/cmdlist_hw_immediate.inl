@@ -876,9 +876,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
         const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, timeoutInMicroSeconds},
                                                                         taskCount);
-        if (waitStatus == NEO::WaitStatus::GpuHang) {
+        if (waitStatus == NEO::WaitStatus::gpuHang) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
-        } else if (waitStatus == NEO::WaitStatus::NotReady) {
+        } else if (waitStatus == NEO::WaitStatus::notReady) {
             status = ZE_RESULT_NOT_READY;
         }
     }

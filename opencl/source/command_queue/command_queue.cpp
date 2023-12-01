@@ -449,7 +449,7 @@ bool CommandQueue::isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEng
 WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) {
     WAIT_ENTER()
 
-    WaitStatus waitStatus{WaitStatus::Ready};
+    WaitStatus waitStatus{WaitStatus::ready};
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
@@ -462,8 +462,8 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, R
                                                                                            flushStampToWait,
                                                                                            useQuickKmdSleep,
                                                                                            this->getThrottle());
-        if (waitStatus == WaitStatus::GpuHang) {
-            return WaitStatus::GpuHang;
+        if (waitStatus == WaitStatus::gpuHang) {
+            return WaitStatus::gpuHang;
         }
 
         DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
@@ -476,8 +476,8 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, R
             auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
 
             waitStatus = bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, this->getThrottle());
-            if (waitStatus == WaitStatus::GpuHang) {
-                return WaitStatus::GpuHang;
+            if (waitStatus == WaitStatus::gpuHang) {
+                return WaitStatus::gpuHang;
             }
         }
     } else if (gtpinIsGTPinInitialized()) {
@@ -488,8 +488,8 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, R
         auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
 
         waitStatus = bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
-        if (waitStatus == WaitStatus::GpuHang) {
-            return WaitStatus::GpuHang;
+        if (waitStatus == WaitStatus::gpuHang) {
+            return WaitStatus::gpuHang;
         }
     }
 
@@ -1284,14 +1284,14 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         }
     }
 
-    auto waitStatus = WaitStatus::NotReady;
+    auto waitStatus = WaitStatus::notReady;
     bool waitedOnTimestamps = false;
 
     // TSP for OOQ dispatch is optional. We need to wait for task count.
     if (!isOOQEnabled()) {
         waitedOnTimestamps = waitForTimestamps(activeBcsStates, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
-        if (waitStatus == WaitStatus::GpuHang) {
-            return WaitStatus::GpuHang;
+        if (waitStatus == WaitStatus::gpuHang) {
+            return WaitStatus::gpuHang;
         }
     }
 
@@ -1322,7 +1322,7 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
 
     if (printfHandler) {
         if (!printfHandler->printEnqueueOutput()) {
-            return WaitStatus::GpuHang;
+            return WaitStatus::gpuHang;
         }
     }
 

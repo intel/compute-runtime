@@ -139,7 +139,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQue
     MockClDevice clDevice{device};
     MockContext context{&clDevice};
 
-    const auto familyIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::LinkedCopy);
+    const auto familyIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::linkedCopy);
     cl_command_queue_properties queueProperties[5] = {
         CL_QUEUE_FAMILY_INTEL,
         familyIndex,
@@ -431,7 +431,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
         auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
         MockContext context(pDevice.get());
         cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
-        propertiesCooperativeQueue[1] = pDevice->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        propertiesCooperativeQueue[1] = pDevice->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
 
         for (size_t i = 0; i < 4; i++) {
             propertiesCooperativeQueue[3] = i;
@@ -505,7 +505,7 @@ struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
     std::unique_ptr<MockCommandQueue> createQueueWithLinkBcsSelectedWithQueueFamilies(size_t linkBcsIndex) {
         cl_command_queue_properties queueProperties[5] = {};
         queueProperties[0] = CL_QUEUE_FAMILY_INTEL;
-        queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::LinkedCopy);
+        queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::linkedCopy);
         queueProperties[2] = CL_QUEUE_INDEX_INTEL;
         queueProperties[3] = linkBcsIndex;
         auto queue = createQueue(queueProperties);

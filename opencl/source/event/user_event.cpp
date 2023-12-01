@@ -28,10 +28,10 @@ void UserEvent::updateExecutionStatus() {
 WaitStatus UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
     while (updateStatusAndCheckCompletion() == false) {
         if (blocking == false) {
-            return WaitStatus::NotReady;
+            return WaitStatus::notReady;
         }
     }
-    return WaitStatus::Ready;
+    return WaitStatus::ready;
 }
 
 TaskCountType UserEvent::getTaskLevel() {
@@ -59,10 +59,10 @@ void VirtualEvent::updateExecutionStatus() {
 WaitStatus VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
     while (updateStatusAndCheckCompletion() == false) {
         if (blocking == false) {
-            return WaitStatus::NotReady;
+            return WaitStatus::notReady;
         }
     }
-    return WaitStatus::Ready;
+    return WaitStatus::ready;
 }
 
 TaskCountType VirtualEvent::getTaskLevel() {

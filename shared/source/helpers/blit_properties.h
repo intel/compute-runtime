@@ -47,7 +47,7 @@ struct BlitProperties {
 
     TagNodeBase *outputTimestampPacket = nullptr;
     TagNodeBase *multiRootDeviceEventSync = nullptr;
-    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
     CsrDependencies csrDependencies;
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
 

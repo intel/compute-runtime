@@ -63,12 +63,12 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize(const RootDevic
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
     MiFlushArgs args{waArgs};
-    if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
+    if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
         switch (debugManager.flags.PostBlitCommand.get()) {
-        case BlitterConstants::PostBlitMode::MiArbCheck:
+        case BlitterConstants::PostBlitMode::miArbCheck:
             EncodeMiArbCheck<GfxFamily>::programWithWa(linearStream, std::nullopt, waArgs);
             return;
-        case BlitterConstants::PostBlitMode::MiFlush:
+        case BlitterConstants::PostBlitMode::miFlush:
             EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
             return;
         default:
@@ -88,11 +88,11 @@ template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(const RootDeviceEnvironment &rootDeviceEnvironment) {
     EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
 
-    if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
+    if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
         switch (debugManager.flags.PostBlitCommand.get()) {
-        case BlitterConstants::PostBlitMode::MiArbCheck:
+        case BlitterConstants::PostBlitMode::miArbCheck:
             return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
-        case BlitterConstants::PostBlitMode::MiFlush:
+        case BlitterConstants::PostBlitMode::miFlush:
             return EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         default:
             return 0;

@@ -103,7 +103,7 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
 
     if (!memObj.isMemObjZeroCopy()) {
         const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
-        if (waitStatus == WaitStatus::GpuHang) {
+        if (waitStatus == WaitStatus::gpuHang) {
             completionStamp.taskCount = CompletionStamp::gpuHang;
             return completionStamp;
         }
@@ -285,7 +285,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     if (printfHandler) {
         const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
-        if (waitStatus == WaitStatus::GpuHang) {
+        if (waitStatus == WaitStatus::gpuHang) {
             completionStamp.taskCount = CompletionStamp::gpuHang;
         }
 

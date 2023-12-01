@@ -128,7 +128,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWhenAppendMetricQueryBeginAnd
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};
@@ -168,7 +168,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndCompletionEventWhenAppendM
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};
@@ -225,7 +225,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     zet_device_handle_t metricDevice = device->toHandle();
 
@@ -299,7 +299,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     zet_device_handle_t metricDevice = device->toHandle();
 
@@ -375,7 +375,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhen
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};

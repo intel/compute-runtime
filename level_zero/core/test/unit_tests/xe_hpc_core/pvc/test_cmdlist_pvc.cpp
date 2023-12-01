@@ -44,7 +44,7 @@ PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfter
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -76,7 +76,7 @@ PVCTEST_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrie
     using GfxFamily = typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;

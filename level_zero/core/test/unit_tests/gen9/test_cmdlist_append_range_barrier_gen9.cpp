@@ -39,7 +39,7 @@ HWTEST2_F(CommandListAppendGen9, WhenAppendingMemoryRangesBarrierThenPipeControl
     const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
     auto usedSpaceBefore =
         commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -74,7 +74,7 @@ HWTEST2_F(CommandListAppendGen9, givenSignalEventWhenAppendingMemoryRangesBarrie
     const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,

@@ -406,7 +406,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenGpuHangWhenEvictUnusedResource
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.callBaseWaitForCompletionWithTimeout = false;
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
     const auto status = operationHandler->evictUnusedAllocations(true, true);
     EXPECT_EQ(MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION, status);

@@ -133,7 +133,7 @@ TEST(UserEvent, GivenInitialUserEventStateWhenCheckingReadyForSubmissionThenFals
 TEST(UserEvent, GivenUserEventWhenGettingTaskLevelThenZeroIsReturned) {
     MyUserEvent uEvent;
     EXPECT_EQ(0U, uEvent.getTaskLevel());
-    EXPECT_EQ(WaitStatus::NotReady, uEvent.wait(false, false));
+    EXPECT_EQ(WaitStatus::notReady, uEvent.wait(false, false));
 }
 
 TEST(UserEvent, WhenSettingStatusThenReadyForSubmissionisTrue) {
@@ -954,7 +954,7 @@ TEST_F(EventTests, WhenWaitingForEventsThenTemporaryAllocationsAreDestroyed) {
 TEST_F(EventTest, WhenUserEventIsCreatedThenWaitIsNonBlocking) {
     UserEvent event;
     auto result = event.wait(false, false);
-    EXPECT_EQ(WaitStatus::NotReady, result);
+    EXPECT_EQ(WaitStatus::notReady, result);
 }
 
 TEST_F(EventTest, GivenSingleUserEventWhenWaitingForEventsThenSuccessIsReturned) {

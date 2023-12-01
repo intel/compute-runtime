@@ -78,7 +78,7 @@ template <>
 void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
     PipeControlArgs args = {};
     if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
-        if (engineGroupType != EngineGroupType::Compute) {
+        if (engineGroupType != EngineGroupType::compute) {
             args.renderTargetCacheFlushEnable = true;
             args.depthCacheFlushEnable = true;
             args.depthStallEnable = true;

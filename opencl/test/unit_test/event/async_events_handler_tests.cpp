@@ -46,7 +46,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         }
 
         uint32_t waitCalled = 0u;
-        WaitStatus waitResult = WaitStatus::Ready;
+        WaitStatus waitResult = WaitStatus::ready;
         std::unique_ptr<MockHandler> handler;
     };
 
@@ -366,7 +366,7 @@ TEST_F(AsyncEventsHandlerTests, givenSleepCandidateAndGpuHangWhenProcessedThenCa
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
     event1->handler->registerEvent(event1.get());
     event1->handler->allowAsyncProcess.store(true);
-    event1->waitResult = WaitStatus::GpuHang;
+    event1->waitResult = WaitStatus::gpuHang;
 
     MockHandler::asyncProcess(event1->handler.get());
 

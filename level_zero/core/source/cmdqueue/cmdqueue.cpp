@@ -106,7 +106,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool imm
 }
 
 NEO::WaitStatus CommandQueueImp::reserveLinearStreamSize(size_t size) {
-    auto waitStatus{NEO::WaitStatus::Ready};
+    auto waitStatus{NEO::WaitStatus::ready};
 
     if (commandStream.getAvailableSpace() < size) {
         waitStatus = buffers.switchBuffers(csr);
@@ -153,7 +153,7 @@ ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
     if ((timeout == std::numeric_limits<uint64_t>::max()) && useKmdWaitFunction) {
         auto &waitPair = buffers.getCurrentFlushStamp();
         const auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, NEO::QueueThrottle::MEDIUM);
-        if (waitStatus == NEO::WaitStatus::GpuHang) {
+        if (waitStatus == NEO::WaitStatus::gpuHang) {
             postSyncOperations(true);
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
@@ -177,10 +177,10 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
     }
 
     const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, enableTimeout, timeoutMicroseconds}, taskCountToWait);
-    if (waitStatus == NEO::WaitStatus::NotReady) {
+    if (waitStatus == NEO::WaitStatus::notReady) {
         return ZE_RESULT_NOT_READY;
     }
-    if (waitStatus == NEO::WaitStatus::GpuHang) {
+    if (waitStatus == NEO::WaitStatus::gpuHang) {
         postSyncOperations(true);
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
@@ -313,7 +313,7 @@ NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::Comman
         bufferUse = BUFFER_ALLOCATION::FIRST;
     }
 
-    auto waitStatus{NEO::WaitStatus::Ready};
+    auto waitStatus{NEO::WaitStatus::ready};
     auto completionId = flushId[bufferUse];
     if (completionId.second != 0u) {
         UNRECOVERABLE_IF(csr == nullptr);

@@ -93,19 +93,19 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 template <>
 EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_CCCS) {
-        return EngineGroupType::RenderCompute;
+        return EngineGroupType::renderCompute;
     }
     if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
         if (engineUsage == EngineUsage::Cooperative) {
-            return EngineGroupType::CooperativeCompute;
+            return EngineGroupType::cooperativeCompute;
         }
-        return EngineGroupType::Compute;
+        return EngineGroupType::compute;
     }
     if (engineType == aub_stream::ENGINE_BCS) {
-        return EngineGroupType::Copy;
+        return EngineGroupType::copy;
     }
     if (engineType >= aub_stream::ENGINE_BCS1 && engineType < aub_stream::ENGINE_BCS1 + hwInfo.featureTable.ftrBcsInfo.size() - 1) {
-        return EngineGroupType::LinkedCopy;
+        return EngineGroupType::linkedCopy;
     }
     UNRECOVERABLE_IF(true);
 }

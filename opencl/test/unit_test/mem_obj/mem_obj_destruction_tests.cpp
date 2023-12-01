@@ -47,7 +47,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     };
 
     uint32_t waitForCompletionWithTimeoutCalled = 0u;
-    WaitStatus waitForCompletionWithTimeoutResult = NEO::WaitStatus::Ready;
+    WaitStatus waitForCompletionWithTimeoutResult = NEO::WaitStatus::ready;
     StackVec<WaitForCompletionWithTimeoutParams, 2> waitForCompletionWithTimeoutParamsPassed{};
     uint32_t getTagAddressValue{};
 };

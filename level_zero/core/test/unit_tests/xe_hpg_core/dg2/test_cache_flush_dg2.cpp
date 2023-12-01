@@ -27,7 +27,7 @@ HWTEST2_F(CacheFlushDG2Tests, givenCommandStreamWithSingleL3RangeAndNonZeroPostS
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     LinearStream *cmdStream = commandList->commandContainer.getCommandStream();
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);

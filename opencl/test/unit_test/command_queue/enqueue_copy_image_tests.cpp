@@ -76,7 +76,7 @@ HWTEST_F(EnqueueCopyImageTest, GivenGpuHangAndBlockingCallWhenCopyingImageThenOu
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = EnqueueCopyImageHelper<>::enqueueCopyImage(&mockCommandQueueHw, srcImage, dstImage);
 

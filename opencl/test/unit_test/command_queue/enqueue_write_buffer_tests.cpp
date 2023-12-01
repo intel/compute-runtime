@@ -77,7 +77,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, GivenGpuHangAndBlockingEnqueueWhenWritingBu
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     srcBuffer->forceDisallowCPUCopy = true;
     const auto enqueueResult = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(&mockCommandQueueHw, srcBuffer.get(), CL_TRUE);

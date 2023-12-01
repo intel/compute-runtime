@@ -306,7 +306,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -354,7 +354,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     commandList->close();
 
     auto commandListHandle = commandList->toHandle();
@@ -417,7 +417,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -481,7 +481,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -540,7 +540,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                                                               device,
                                                                               &desc,
                                                                               false,
-                                                                              NEO::EngineGroupType::Compute,
+                                                                              NEO::EngineGroupType::compute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<L0::ult::CommandList *>(commandList.get());
@@ -593,7 +593,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
                                                                               device,
                                                                               &desc,
                                                                               false,
-                                                                              NEO::EngineGroupType::Compute,
+                                                                              NEO::EngineGroupType::compute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
@@ -706,7 +706,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
@@ -757,7 +757,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabri
     l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
@@ -800,7 +800,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecuti
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto cmdListHandle = commandList->toHandle();
     commandList->close();
 
@@ -826,7 +826,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     commandList->close();
     auto cmdListHandle = commandList.get()->toHandle();
 
@@ -855,7 +855,7 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAl
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto cmdListHandle = commandList.get()->toHandle();
     auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
                                                                                                          1,
@@ -1079,14 +1079,14 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};
     auto commandListA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListA->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
     commandListA->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
     commandListA->close();
 
     auto commandListBB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListBB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListBB->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
     commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
@@ -1094,7 +1094,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandListBB->close();
 
     auto commandListAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListAB->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     launchParams.isCooperative = false;
     commandListAB->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
@@ -1104,7 +1104,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandListAB->close();
 
     auto commandListBA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListBA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListBA->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
     commandListBA->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
 
     launchParams.isCooperative = false;
@@ -1112,7 +1112,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandListBA->close();
 
     auto commandListBAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListBAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListBAB->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
     commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);
@@ -1125,7 +1125,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandListBAB->close();
 
     auto commandListAAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListAAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListAAB->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     launchParams.isCooperative = false;
     commandListAAB->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
@@ -1136,7 +1136,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandListAAB->close();
 
     auto commandListEmpty = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListEmpty->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListEmpty->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
     commandListEmpty->close();
 
     size_t singleFrontEndCmdSize = commandQueue->estimateFrontEndCmdSize();
@@ -1228,7 +1228,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
@@ -1273,14 +1273,14 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};
     auto commandListA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListA->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
     commandListA->appendLaunchKernelWithParams(&defaultKernel, threadGroupDimensions, nullptr, launchParams);
     commandListA->close();
 
     auto commandListB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandListB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListB->initialize(device, NEO::EngineGroupType::cooperativeCompute, 0u);
 
     launchParams.isCooperative = true;
     commandListB->appendLaunchKernelWithParams(&cooperativeKernel, threadGroupDimensions, nullptr, launchParams);

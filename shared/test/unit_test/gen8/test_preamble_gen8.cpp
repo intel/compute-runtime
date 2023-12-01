@@ -95,7 +95,7 @@ BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef Gen8Family::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
-    auto pVfeCmd = PreambleHelper<Gen8Family>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<Gen8Family>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<Gen8Family>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 168u, emptyProperties);
 

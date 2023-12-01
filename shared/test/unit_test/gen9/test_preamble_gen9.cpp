@@ -95,7 +95,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsC
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 168u, emptyProperties);
 
@@ -115,7 +115,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCo
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 168u, emptyProperties);
 

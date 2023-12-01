@@ -111,7 +111,7 @@ HWTEST_F(EnqueueFillBuffer, GivenGpuHangAndBlockingCallWhenFillingBufferThenOutO
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(&context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     cl_uint numEventsInWaitList = 0;
     const cl_event *eventWaitList = nullptr;

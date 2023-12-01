@@ -48,7 +48,7 @@ struct BcsBufferTests : public ::testing::Test {
             EXPECT_EQ(1u, this->activePartitions);
             waitForTaskCountWithKmdNotifyFallbackCalled++;
 
-            return WaitStatus::Ready;
+            return WaitStatus::ready;
         }
 
         WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount) override {
@@ -56,7 +56,7 @@ struct BcsBufferTests : public ::testing::Test {
             EXPECT_EQ(this->latestFlushedTaskCount, requiredTaskCount);
             waitForTaskCountAndCleanAllocationListCalled++;
 
-            return WaitStatus::Ready;
+            return WaitStatus::ready;
         }
 
         uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;
@@ -1405,7 +1405,7 @@ HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenPro
 
                     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
-                    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToBuffer,
+                    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::bufferToBuffer,
                                                                                 *bcsCsr, builtinOpParams);
 
                     EXPECT_EQ(srcOffset, blitProperties.srcOffset.x);
@@ -1492,7 +1492,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsQueueWhenEnqueueingCopyBufferToBuffer
 
     cl_command_queue_properties properties[] = {
         CL_QUEUE_FAMILY_INTEL,
-        device->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy),
+        device->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::copy),
         CL_QUEUE_INDEX_INTEL,
         0,
         0,

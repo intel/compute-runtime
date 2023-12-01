@@ -226,7 +226,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
 
     uint32_t expectedCopyOrdinal = 0;
     for (uint32_t i = 0; i < engineGroups.size(); i++) {
-        if (engineGroups[i].engineGroupType == EngineGroupType::LinkedCopy) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::linkedCopy) {
             expectedCopyOrdinal = i;
             break;
         }
@@ -262,7 +262,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
 
     uint32_t expectedCopyOrdinal = 0;
     for (uint32_t i = 0; i < engineGroups.size(); i++) {
-        if (engineGroups[i].engineGroupType == EngineGroupType::LinkedCopy) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::linkedCopy) {
             expectedCopyOrdinal = i;
             break;
         }
@@ -288,7 +288,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenDebugFlagWit
 
     uint32_t expectedCopyOrdinal = 0;
     for (uint32_t i = 0; i < engineGroups.size(); i++) {
-        if (engineGroups[i].engineGroupType == EngineGroupType::Copy) {
+        if (engineGroups[i].engineGroupType == EngineGroupType::copy) {
             expectedCopyOrdinal = i;
             break;
         }
@@ -518,7 +518,7 @@ HWTEST2_F(DeviceCopyQueueGroupXeHpcTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
-        EXPECT_NE(NEO::EngineGroupType::Copy, engineGroup.engineGroupType);
+        EXPECT_NE(NEO::EngineGroupType::copy, engineGroup.engineGroupType);
     }
 }
 
@@ -556,7 +556,7 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportWithBcsVirtualEnginesEnabled
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
-        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint8_t));
@@ -586,7 +586,7 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportWithBcsVirtualEnginesDisable
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
-        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, 4 * sizeof(uint32_t));
@@ -614,25 +614,25 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportAndCCSThenFourQueueGroupsAre
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
-        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::renderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Compute) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::compute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             uint32_t numerOfCCSEnabled = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
             EXPECT_EQ(properties[i].numQueues, numerOfCCSEnabled);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint8_t));
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::LinkedCopy) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::linkedCopy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, hwInfo.featureTable.ftrBcsInfo.count() - 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint8_t));
@@ -660,21 +660,21 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportCCSAndLinkedBcsDisabledThenT
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
-        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::renderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Compute) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::compute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             uint32_t numerOfCCSEnabled = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
             EXPECT_EQ(properties[i].numQueues, numerOfCCSEnabled);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint8_t));
@@ -714,25 +714,25 @@ HWTEST2_P(CommandQueueGroupTestXeHpc, givenVaryingBlitterSupportAndCCSThenBCSGro
 
     auto &engineGroups = neoMockDevice->getRegularEngineGroups();
     for (uint32_t i = 0; i < count; i++) {
-        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::renderCompute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Compute) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::compute) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
             uint32_t numerOfCCSEnabled = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
             EXPECT_EQ(properties[i].numQueues, numerOfCCSEnabled);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::Copy) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint8_t));
-        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::LinkedCopy) {
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::linkedCopy) {
             EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
             EXPECT_EQ(properties[i].numQueues, hwInfo.featureTable.ftrBcsInfo.count() - 1u);
             EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint8_t));

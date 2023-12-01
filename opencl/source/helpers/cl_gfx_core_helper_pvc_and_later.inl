@@ -15,10 +15,10 @@ std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPo
 template <>
 inline bool ClGfxCoreHelperHw<Family>::getQueueFamilyName(std::string &name, EngineGroupType type) const {
     switch (type) {
-    case EngineGroupType::RenderCompute:
+    case EngineGroupType::renderCompute:
         name = "cccs";
         return true;
-    case EngineGroupType::LinkedCopy:
+    case EngineGroupType::linkedCopy:
         name = "linked bcs";
         return true;
     default:

@@ -590,7 +590,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenMultipleMarkerInsertionsWhenZetComman
     ze_event_handle_t eventHandle = {};
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, devices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue));
 
     zet_metric_streamer_handle_t streamerHandle = {};
     zet_metric_streamer_desc_t streamerDesc = {};

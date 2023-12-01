@@ -37,7 +37,7 @@ HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoW
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     auto taskCount = device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount();
-    auto status = WaitStatus::NotReady;
+    auto status = WaitStatus::notReady;
 
     cmdQ.waitForTimestamps({}, status, cmdQ.timestampPacketContainer.get(), cmdQ.deferredTimestampPackets.get());
 
@@ -78,7 +78,7 @@ HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetecte
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
-    auto status = WaitStatus::NotReady;
+    auto status = WaitStatus::notReady;
 
     auto mockCSR = new MockCommandStreamReceiver(*executionEnvironment, 0, device->getDeviceBitfield());
     mockCSR->isGpuHangDetectedReturnValue = true;
@@ -92,7 +92,7 @@ HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetecte
 
     status = cmdQ.waitForAllEngines(false, nullptr, false);
 
-    EXPECT_EQ(WaitStatus::GpuHang, status);
+    EXPECT_EQ(WaitStatus::gpuHang, status);
 }
 
 HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {
@@ -1218,7 +1218,7 @@ HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErro
 HWTEST_F(CommandQueueHwTest, givenGpuHangWhenFinishingCommandQueueHwThenWaitForEnginesIsCalledAndOutOfResourcesIsReturned) {
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
 
-    mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
     mockCmdQueueHw.getUltCommandStreamReceiver().shouldFlushBatchedSubmissionsReturnSuccess = true;
 
     const auto finishResult = mockCmdQueueHw.finish();
@@ -1229,7 +1229,7 @@ HWTEST_F(CommandQueueHwTest, givenGpuHangWhenFinishingCommandQueueHwThenWaitForE
 HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitForEnginesIsCalledAndSuccessIsReturned) {
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
 
-    mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::Ready;
+    mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::ready;
     mockCmdQueueHw.getUltCommandStreamReceiver().shouldFlushBatchedSubmissionsReturnSuccess = true;
 
     const auto finishResult = mockCmdQueueHw.finish();

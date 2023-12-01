@@ -176,11 +176,11 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
     for (auto &revision : revisions) {
         auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
         hwInfo.platform.usRevId = hwRevId;
-        for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute, EngineGroupType::CooperativeCompute}) {
+        for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute, EngineGroupType::cooperativeCompute}) {
             for (auto isRcsEnabled : ::testing::Bool()) {
                 hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
-                bool disallowDispatch = (engineGroupType == EngineGroupType::RenderCompute ||
-                                         (engineGroupType == EngineGroupType::Compute && isRcsEnabled)) &&
+                bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute ||
+                                         (engineGroupType == EngineGroupType::compute && isRcsEnabled)) &&
                                         productHelper.isCooperativeEngineSupported(hwInfo);
                 for (auto isEngineInstanced : ::testing::Bool()) {
                     if (disallowDispatch) {

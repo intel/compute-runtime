@@ -25,8 +25,8 @@ struct ClBlitProperties {
         auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
         BlitProperties blitProperties{};
 
-        if (BlitterConstants::BlitDirection::BufferToBuffer == blitDirection ||
-            BlitterConstants::BlitDirection::ImageToImage == blitDirection) {
+        if (BlitterConstants::BlitDirection::bufferToBuffer == blitDirection ||
+            BlitterConstants::BlitDirection::imageToImage == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
             auto srcOffset = builtinOpParams.srcOffset.x;
             GraphicsAllocation *dstAllocation = nullptr;
@@ -52,7 +52,7 @@ struct ClBlitProperties {
                                                                         builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
                                                                         builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
 
-            if (BlitterConstants::BlitDirection::ImageToImage == blitDirection) {
+            if (BlitterConstants::BlitDirection::imageToImage == blitDirection) {
                 blitProperties.blitDirection = blitDirection;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);
             }
@@ -76,8 +76,8 @@ struct ClBlitProperties {
         size_t gpuRowPitch = 0;
         size_t gpuSlicePitch = 0;
 
-        if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection ||
-            BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
+        if (BlitterConstants::BlitDirection::hostPtrToBuffer == blitDirection ||
+            BlitterConstants::BlitDirection::hostPtrToImage == blitDirection) {
             // write buffer/image
             hostPtr = builtinOpParams.srcPtr;
             hostPtrOffset = builtinOpParams.srcOffset;
@@ -101,8 +101,8 @@ struct ClBlitProperties {
             copySize = builtinOpParams.size;
         }
 
-        if (BlitterConstants::BlitDirection::BufferToHostPtr == blitDirection ||
-            BlitterConstants::BlitDirection::ImageToHostPtr == blitDirection) {
+        if (BlitterConstants::BlitDirection::bufferToHostPtr == blitDirection ||
+            BlitterConstants::BlitDirection::imageToHostPtr == blitDirection) {
             // read buffer/image
             hostPtr = builtinOpParams.dstPtr;
             hostPtrOffset = builtinOpParams.dstOffset;
@@ -126,10 +126,10 @@ struct ClBlitProperties {
             copySize = builtinOpParams.size;
         }
 
-        UNRECOVERABLE_IF(BlitterConstants::BlitDirection::HostPtrToBuffer != blitDirection &&
-                         BlitterConstants::BlitDirection::BufferToHostPtr != blitDirection &&
-                         BlitterConstants::BlitDirection::HostPtrToImage != blitDirection &&
-                         BlitterConstants::BlitDirection::ImageToHostPtr != blitDirection);
+        UNRECOVERABLE_IF(BlitterConstants::BlitDirection::hostPtrToBuffer != blitDirection &&
+                         BlitterConstants::BlitDirection::bufferToHostPtr != blitDirection &&
+                         BlitterConstants::BlitDirection::hostPtrToImage != blitDirection &&
+                         BlitterConstants::BlitDirection::imageToHostPtr != blitDirection);
 
         blitProperties = BlitProperties::constructPropertiesForReadWrite(blitDirection, commandStreamReceiver, gpuAllocation,
                                                                          hostAllocation, hostPtr, memObjGpuVa, hostAllocGpuVa,
@@ -137,8 +137,8 @@ struct ClBlitProperties {
                                                                          hostRowPitch, hostSlicePitch,
                                                                          gpuRowPitch, gpuSlicePitch);
 
-        if (BlitterConstants::BlitDirection::HostPtrToImage == blitDirection ||
-            BlitterConstants::BlitDirection::ImageToHostPtr == blitDirection) {
+        if (BlitterConstants::BlitDirection::hostPtrToImage == blitDirection ||
+            BlitterConstants::BlitDirection::imageToHostPtr == blitDirection) {
             setBlitPropertiesForImage(blitProperties, builtinOpParams);
         }
 
@@ -150,20 +150,20 @@ struct ClBlitProperties {
         switch (commandType) {
         case CL_COMMAND_WRITE_BUFFER:
         case CL_COMMAND_WRITE_BUFFER_RECT:
-            return BlitterConstants::BlitDirection::HostPtrToBuffer;
+            return BlitterConstants::BlitDirection::hostPtrToBuffer;
         case CL_COMMAND_READ_BUFFER:
         case CL_COMMAND_READ_BUFFER_RECT:
-            return BlitterConstants::BlitDirection::BufferToHostPtr;
+            return BlitterConstants::BlitDirection::bufferToHostPtr;
         case CL_COMMAND_COPY_BUFFER:
         case CL_COMMAND_COPY_BUFFER_RECT:
         case CL_COMMAND_SVM_MEMCPY:
-            return BlitterConstants::BlitDirection::BufferToBuffer;
+            return BlitterConstants::BlitDirection::bufferToBuffer;
         case CL_COMMAND_WRITE_IMAGE:
-            return BlitterConstants::BlitDirection::HostPtrToImage;
+            return BlitterConstants::BlitDirection::hostPtrToImage;
         case CL_COMMAND_READ_IMAGE:
-            return BlitterConstants::BlitDirection::ImageToHostPtr;
+            return BlitterConstants::BlitDirection::imageToHostPtr;
         case CL_COMMAND_COPY_IMAGE:
-            return BlitterConstants::BlitDirection::ImageToImage;
+            return BlitterConstants::BlitDirection::imageToImage;
         default:
             UNRECOVERABLE_IF(true);
         }
@@ -199,14 +199,14 @@ struct ClBlitProperties {
         plane = image->getPlane();
 
         if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-            if (blitDirection == BlitterConstants::BlitDirection::HostPtrToImage) {
-                blitDirection = BlitterConstants::BlitDirection::HostPtrToBuffer;
+            if (blitDirection == BlitterConstants::BlitDirection::hostPtrToImage) {
+                blitDirection = BlitterConstants::BlitDirection::hostPtrToBuffer;
             }
-            if (blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
-                blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
+            if (blitDirection == BlitterConstants::BlitDirection::imageToHostPtr) {
+                blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
             }
-            if (blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
-                blitDirection = BlitterConstants::BlitDirection::BufferToBuffer;
+            if (blitDirection == BlitterConstants::BlitDirection::imageToImage) {
+                blitDirection = BlitterConstants::BlitDirection::bufferToBuffer;
             }
 
             size.x *= bytesPerPixel;
@@ -221,13 +221,13 @@ struct ClBlitProperties {
         size_t srcSlicePitch = builtinOpParams.srcSlicePitch;
         size_t dstSlicePitch = builtinOpParams.dstSlicePitch;
 
-        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
-            blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
+        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::imageToHostPtr ||
+            blitProperties.blitDirection == BlitterConstants::BlitDirection::imageToImage) {
             adjustBlitPropertiesForImage(builtinOpParams.srcMemObj, blitProperties, srcRowPitch, srcSlicePitch, true);
         }
 
-        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
-            blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
+        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::hostPtrToImage ||
+            blitProperties.blitDirection == BlitterConstants::BlitDirection::imageToImage) {
             adjustBlitPropertiesForImage(builtinOpParams.dstMemObj, blitProperties, dstRowPitch, dstSlicePitch, false);
         }
 

@@ -490,7 +490,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     ImmediateDispatchFlags recordedImmediateDispatchFlags = {};
     BlitPropertiesContainer receivedBlitProperties = {};
     uint32_t createAllocationForHostSurfaceCalled = 0;
-    WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;

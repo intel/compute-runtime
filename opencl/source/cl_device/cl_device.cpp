@@ -242,13 +242,13 @@ void ClDevice::getQueueFamilyName(char *outputName, EngineGroupType type) {
 
     if (!hasHwSpecificName) {
         switch (type) {
-        case EngineGroupType::RenderCompute:
+        case EngineGroupType::renderCompute:
             name = "rcs";
             break;
-        case EngineGroupType::Compute:
+        case EngineGroupType::compute:
             name = "ccs";
             break;
-        case EngineGroupType::Copy:
+        case EngineGroupType::copy:
             name = "bcs";
             break;
         default:

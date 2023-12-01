@@ -22,7 +22,7 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
 
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
@@ -56,7 +56,7 @@ HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledTh
 
 HWTEST2_F(MultiPartitionPrologueTest, whenAppendMultiPartitionPrologueIsCalledThenCommandListIsNotUpdated, IsAtMostGen12lp) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
 
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
@@ -77,7 +77,7 @@ HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledTh
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
 
     ASSERT_NE(nullptr, commandContainer.getCommandStream());
@@ -108,7 +108,7 @@ HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionEpilogueIsCalledTh
 HWTEST2_F(MultiPartitionEpilogueTest, whenAppendMultiPartitionPrologueIsCalledThenCommandListIsNotUpdated, IsAtMostGen12lp) {
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
 
     ASSERT_NE(nullptr, commandContainer.getCommandStream());

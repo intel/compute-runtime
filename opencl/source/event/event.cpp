@@ -437,16 +437,16 @@ void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContai
 inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     while (this->taskCount == CompletionStamp::notReady) {
         if (blocking == false) {
-            return WaitStatus::NotReady;
+            return WaitStatus::notReady;
         }
     }
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
-    auto waitStatus = WaitStatus::NotReady;
+    auto waitStatus = WaitStatus::notReady;
     auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
     waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
-    if (waitStatus == WaitStatus::GpuHang) {
-        return WaitStatus::GpuHang;
+    if (waitStatus == WaitStatus::gpuHang) {
+        return WaitStatus::gpuHang;
     }
 
     this->gpuStateWaited = true;
@@ -468,7 +468,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
     allocationStorage->cleanAllocationList(this->taskCount, DEFERRED_DEALLOCATION);
 
-    return WaitStatus::Ready;
+    return WaitStatus::ready;
 }
 
 void Event::updateExecutionStatus() {
@@ -675,7 +675,7 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     // pointers to workerLists - for fast swap operations
     WorkerListT *currentlyPendingEvents = &workerList1;
     WorkerListT *pendingEventsLeft = &workerList2;
-    WaitStatus eventWaitStatus = WaitStatus::NotReady;
+    WaitStatus eventWaitStatus = WaitStatus::notReady;
 
     while (currentlyPendingEvents->size() > 0) {
         for (auto current = currentlyPendingEvents->begin(), end = currentlyPendingEvents->end(); current != end; ++current) {
@@ -685,9 +685,9 @@ cl_int Event::waitForEvents(cl_uint numEvents,
             }
 
             eventWaitStatus = event->wait(false, false);
-            if (eventWaitStatus == WaitStatus::NotReady) {
+            if (eventWaitStatus == WaitStatus::notReady) {
                 pendingEventsLeft->push_back(event);
-            } else if (eventWaitStatus == WaitStatus::GpuHang) {
+            } else if (eventWaitStatus == WaitStatus::gpuHang) {
                 setExecutionStatusToAbortedDueToGpuHang(pendingEventsLeft->begin(), pendingEventsLeft->end());
                 setExecutionStatusToAbortedDueToGpuHang(current, end);
 

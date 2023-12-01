@@ -4115,7 +4115,7 @@ using EventTimestampTest = Test<LocalMemoryEnabledDeviceFixture>;
 HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndCopyTimeIsLessThanDeviceTimestampResolutionThenReturnTimstampDifferenceAsOne, IsXeHpcCore) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
-    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     neoDevice->setOSTime(new NEO::MockOSTimeWithConstTimestamp());
 

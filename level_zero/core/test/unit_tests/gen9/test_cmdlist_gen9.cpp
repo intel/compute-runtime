@@ -30,7 +30,7 @@ HWTEST2_F(CommandListProgramL3, givenAllocationsWhenProgramL3ThenMmioIsAppended,
     const uint32_t registerOffset = NEO::L3CNTLRegisterOffset<GfxFamily>::registerOffset;
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
     commandList->programL3(false);
@@ -59,7 +59,7 @@ HWTEST2_F(CommandListProgramL3, givenAllocationsWhenProgramL3WithSlmThenMmioIsAp
     const uint32_t valueForSLM = NEO::PreambleHelper<GfxFamily>::getL3Config(hwInfo, true);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
     commandList->programL3(true);
@@ -89,7 +89,7 @@ HWTEST2_F(CommandListProgramL3, givenAllocationsWhenProgramL3WithoutSlmThenMmioI
     const uint32_t valueForNoSLM = NEO::PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, false);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
     commandList->programL3(false);

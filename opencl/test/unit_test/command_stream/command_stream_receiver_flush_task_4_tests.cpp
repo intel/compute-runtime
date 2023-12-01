@@ -814,7 +814,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     CpuIntrinsicsTests::pauseValue = taskCountToWait;
 
     const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, 1}, taskCountToWait);
-    EXPECT_EQ(NEO::WaitStatus::Ready, ret);
+    EXPECT_EQ(NEO::WaitStatus::ready, ret);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitAndIndefinitelyPollWhenWaitForCompletionThenDoNotCallWaitUtils) {
@@ -832,7 +832,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     CpuIntrinsicsTests::pauseValue = taskCountToWait;
 
     const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{true, true, 10}, taskCountToWait);
-    EXPECT_EQ(NEO::WaitStatus::NotReady, ret);
+    EXPECT_EQ(NEO::WaitStatus::notReady, ret);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdded) {

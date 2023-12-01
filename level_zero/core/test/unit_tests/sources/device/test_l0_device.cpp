@@ -1289,9 +1289,9 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrd
     auto &engineGroups = deviceImp->getActiveDevice()->getRegularEngineGroups();
     engineGroups.clear();
     NEO::EngineGroupT engineGroupCompute{};
-    engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
+    engineGroupCompute.engineGroupType = NEO::EngineGroupType::compute;
     NEO::EngineGroupT engineGroupRender{};
-    engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
+    engineGroupRender.engineGroupType = NEO::EngineGroupType::renderCompute;
     engineGroups.push_back(engineGroupCompute);
     engineGroups.push_back(engineGroupRender);
 
@@ -1313,7 +1313,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     DebugManagerStateRestore restore;
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
-            return EngineGroupType::Compute;
+            return EngineGroupType::compute;
         }
     };
 
@@ -1333,7 +1333,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     auto &engineGroups = deviceImp->getActiveDevice()->getRegularEngineGroups();
     engineGroups.clear();
     NEO::EngineGroupT engineGroupCompute{};
-    engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
+    engineGroupCompute.engineGroupType = NEO::EngineGroupType::compute;
     engineGroupCompute.engines.resize(3);
     auto osContext1 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext1->engineType = aub_stream::EngineType::ENGINE_CCS;
@@ -1345,7 +1345,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     osContext3->engineType = aub_stream::EngineType::ENGINE_CCS2;
     engineGroupCompute.engines[2].osContext = osContext3.get();
     NEO::EngineGroupT engineGroupRender{};
-    engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
+    engineGroupRender.engineGroupType = NEO::EngineGroupType::renderCompute;
     engineGroups.push_back(engineGroupRender);
     engineGroups.push_back(engineGroupCompute);
 
@@ -2408,7 +2408,7 @@ HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSame
         auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(hwCsr);
 
         ultCsr->callBaseWaitForCompletionWithTimeout = false;
-        ultCsr->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+        ultCsr->returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
     }
 
     GFXCORE_FAMILY device0Family = devices[0]->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
@@ -3804,7 +3804,7 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    NEO::EngineGroupType engineGroupTypes[] = {NEO::EngineGroupType::RenderCompute, NEO::EngineGroupType::Compute};
+    NEO::EngineGroupType engineGroupTypes[] = {NEO::EngineGroupType::renderCompute, NEO::EngineGroupType::compute};
     for (auto isCooperativeDispatchSupported : ::testing::Bool()) {
         raii.mockGfxCoreHelper->isCooperativeDispatchSupportedValue = isCooperativeDispatchSupported;
 

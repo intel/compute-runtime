@@ -68,7 +68,7 @@ TEST_F(ClEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsI
         }
         WaitStatus wait(bool blocking, bool quickKmdSleep) override {
             wasWaitCalled = true;
-            return WaitStatus::Ready;
+            return WaitStatus::ready;
         };
         bool wasWaitCalled = false;
     };

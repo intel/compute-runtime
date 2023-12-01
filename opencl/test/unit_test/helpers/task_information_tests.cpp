@@ -96,7 +96,7 @@ TEST(CommandTest, GivenGpuHangWhenSubmittingMapUnmapCommandsThenReturnedCompleti
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
         std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr, false));
-        cmdQ->waitUntilCompleteReturnValue = WaitStatus::GpuHang;
+        cmdQ->waitUntilCompleteReturnValue = WaitStatus::gpuHang;
 
         MemObjSizeArray size = {{1, 1, 1}};
         MemObjOffsetArray offset = {{0, 0, 0}};
@@ -128,7 +128,7 @@ TEST(CommandTest, GivenNoGpuHangWhenSubmittingMapUnmapCommandsThenReturnedComple
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
         std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr, false));
-        cmdQ->waitUntilCompleteReturnValue = WaitStatus::Ready;
+        cmdQ->waitUntilCompleteReturnValue = WaitStatus::ready;
 
         MemObjSizeArray size = {{1, 1, 1}};
         MemObjOffsetArray offset = {{0, 0, 0}};

@@ -32,7 +32,7 @@ void CommandListStatePrefetchXeHpcCore::checkIfDebugFlagSetWhenPrefetchApiCalled
     using STATE_PREFETCH = typename XeHpcCoreFamily::STATE_PREFETCH;
     DebugManagerStateRestore restore;
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     constexpr size_t size = MemoryConstants::cacheLineSize * 2;
@@ -83,7 +83,7 @@ void CommandListStatePrefetchXeHpcCore::checkIfCommandBufferIsExhaustedWhenPrefe
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     constexpr size_t size = MemoryConstants::cacheLineSize * 2;

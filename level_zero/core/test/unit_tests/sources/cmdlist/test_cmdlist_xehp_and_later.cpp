@@ -43,7 +43,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 
@@ -99,7 +99,7 @@ HWTEST2_F(CommandListTests, givenDebugFlagSetWhenCallingRegisterOffsetThenDontPr
     debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     auto &commandContainer = pCommandList->getCmdContainer();
 
     auto offset = commandContainer.getCommandStream()->getUsed();
@@ -119,7 +119,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 
@@ -188,7 +188,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListTests, givenPartitionedCommandL
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     EXPECT_EQ(2u, commandList->getPartitionCount());
     auto &commandContainer = commandList->getCmdContainer();
 
@@ -237,7 +237,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(-1, pCommandList->requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
@@ -311,7 +311,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     const ze_group_count_t launchKernelArgs = {};
@@ -382,7 +382,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         kernel.module = module.get();
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         ze_event_pool_desc_t eventPoolDesc = {};
@@ -624,7 +624,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto cmdStream = commandList->commandContainer.getCommandStream();
@@ -713,7 +713,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
+        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
         auto result = commandList->initialize(device, engineType, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -863,7 +863,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         bool dynamicAllocSize = (ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset() != ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
+        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
         auto result = commandList->initialize(device, engineType, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -948,7 +948,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
+        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
         auto result = commandList->initialize(device, engineType, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1097,7 +1097,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+        auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto cmdStream = commandList->commandContainer.getCommandStream();
@@ -1156,7 +1156,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::Compute;
+        auto engineType = copyOnly == 1 ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
         auto result = commandList->initialize(device, engineType, 0u);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1609,7 +1609,7 @@ HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenKernelUsingRayTracin
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0);
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     kernel.immutableData.kernelDescriptor->kernelAttributes.flags.hasRTCalls = true;
@@ -2386,7 +2386,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppend
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();
 
     uint64_t timestampAddress = 0x123456785000;

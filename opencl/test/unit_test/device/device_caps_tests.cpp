@@ -1613,19 +1613,19 @@ TEST_F(DeviceGetCapsTest, givenClDeviceWhenInitializingCapsThenUseGetQueueFamily
 }
 
 HWTEST_F(QueueFamilyNameTest, givenCcsWhenGettingQueueFamilyNameThenReturnProperValue) {
-    verify(EngineGroupType::Compute, "ccs");
+    verify(EngineGroupType::compute, "ccs");
 }
 
 HWTEST_F(QueueFamilyNameTest, givenRcsWhenGettingQueueFamilyNameThenReturnProperValue) {
-    verify(EngineGroupType::RenderCompute, "rcs");
+    verify(EngineGroupType::renderCompute, "rcs");
 }
 
 HWTEST_F(QueueFamilyNameTest, givenBcsWhenGettingQueueFamilyNameThenReturnProperValue) {
-    verify(EngineGroupType::Copy, "bcs");
+    verify(EngineGroupType::copy, "bcs");
 }
 
 HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameThenReturnEmptyName) {
-    verify(EngineGroupType::MaxEngineGroups, "");
+    verify(EngineGroupType::maxEngineGroups, "");
 }
 
 template <typename FamilyType>
@@ -1646,11 +1646,11 @@ HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNa
     char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL] = "";
 
     mockClGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
-    device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups);
+    device->getQueueFamilyName(name, EngineGroupType::maxEngineGroups);
     EXPECT_EQ(0, std::strcmp(name, mockClGfxCoreHelper.familyNameOverride.c_str()));
 
     mockClGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
-    EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups));
+    EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::maxEngineGroups));
 
     device->executionEnvironment->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(clGfxCoreHelper);
     clGfxCoreHelper.release();
@@ -1768,5 +1768,5 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceGetCapsTest, givenCopyQueueWhenGettingQueueFa
                                                                                   CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL;
     const cl_command_queue_capabilities_intel expectedBlitterCapabilities = setBits(MockClDevice::getQueueFamilyCapabilitiesAll(), false, capabilitiesNotSupportedOnBlitter);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    EXPECT_EQ(expectedBlitterCapabilities, device->getQueueFamilyCapabilities(NEO::EngineGroupType::Copy));
+    EXPECT_EQ(expectedBlitterCapabilities, device->getQueueFamilyCapabilities(NEO::EngineGroupType::copy));
 }

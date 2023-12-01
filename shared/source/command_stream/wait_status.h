@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,9 @@
 namespace NEO {
 
 enum class WaitStatus {
-    NotReady = 0,
-    Ready = 1,
-    GpuHang = 2,
+    notReady = 0,
+    ready = 1,
+    gpuHang = 2,
 };
 
 struct WaitParams {

@@ -32,7 +32,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExe
     mockCmdQ->initialize(false, false, false);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     CommandList::fromHandle(commandLists[0])->close();
     mockCmdQ->executeCommandLists(1, commandLists, nullptr, true);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 1u);
@@ -50,7 +50,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDevi
 
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     CommandList::fromHandle(commandLists[0])->close();
     const auto result = mockCmdQ->executeCommandLists(1, commandLists, nullptr, true);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 1u);
@@ -67,7 +67,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenEx
     mockCmdQ->initialize(false, false, false);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     CommandList::fromHandle(commandLists[0])->close();
     mockCmdQ->executeCommandLists(1, commandLists, nullptr, true);
     EXPECT_EQ(mockCmdQ->synchronizedCalled, 0u);
@@ -93,8 +93,8 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeC
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle(),
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle(),
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
     CommandList::fromHandle(commandLists[1])->close();
@@ -139,7 +139,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     ze_result_t returnValue;
 
-    ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+    ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     ze_command_queue_desc_t queueDesc = {};
@@ -201,7 +201,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     ze_result_t returnValue;
 
-    ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
+    ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     CommandList::whiteboxCast(CommandList::fromHandle(commandList))->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
@@ -291,7 +291,7 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
 
         ze_command_queue_desc_t queueDesc = {};
         ze_result_t returnValue;
-        commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+        commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
         ASSERT_NE(nullptr, commandList);
         commandListHandle = commandList->toHandle();
     }
@@ -418,7 +418,7 @@ struct PauseOnGpuTests : public PauseOnGpuFixture {
         commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
         ASSERT_NE(nullptr, commandQueue);
 
-        commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+        commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue);
         ASSERT_NE(nullptr, commandList);
         commandListHandle = commandList->toHandle();
     }
@@ -583,7 +583,7 @@ struct PauseOnGpuWithImmediateCommandListTests : public PauseOnGpuFixture {
         commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
         ASSERT_NE(nullptr, commandQueue);
 
-        commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+        commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
         ASSERT_NE(nullptr, commandList);
         commandListHandle = commandList->toHandle();
     }
@@ -802,8 +802,8 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenDirtyFlagForContextInBi
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle(),
-        CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle(),
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
     CommandList::fromHandle(commandLists[0])->close();
     CommandList::fromHandle(commandLists[1])->close();

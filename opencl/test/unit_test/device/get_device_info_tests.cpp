@@ -691,14 +691,14 @@ class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
     EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
         switch (engineType) {
         case aub_stream::ENGINE_RCS:
-            return EngineGroupType::RenderCompute;
+            return EngineGroupType::renderCompute;
         case aub_stream::ENGINE_CCS:
         case aub_stream::ENGINE_CCS1:
         case aub_stream::ENGINE_CCS2:
         case aub_stream::ENGINE_CCS3:
-            return EngineGroupType::Compute;
+            return EngineGroupType::compute;
         case aub_stream::ENGINE_BCS:
-            return EngineGroupType::Copy;
+            return EngineGroupType::copy;
         default:
             UNRECOVERABLE_IF(true);
         }
@@ -744,7 +744,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
     EXPECT_EQ(3u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
-    EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
+    EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::copy), families[1].capabilities);
     EXPECT_EQ(1u, families[1].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
 }
@@ -771,7 +771,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
     EXPECT_EQ(3u, families[0].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
-    EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
+    EXPECT_EQ(clDevice.getQueueFamilyCapabilities(EngineGroupType::copy), families[1].capabilities);
     EXPECT_EQ(1u, families[1].count);
     EXPECT_EQ(clDevice.getDeviceInfo().queueOnHostProperties, families[1].properties);
 }
@@ -810,7 +810,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenI
         EXPECT_EQ(3u, families[0].count);
         EXPECT_EQ(clDevice0.getDeviceInfo().queueOnHostProperties, families[0].properties);
 
-        EXPECT_EQ(clDevice0.getQueueFamilyCapabilities(EngineGroupType::Copy), families[1].capabilities);
+        EXPECT_EQ(clDevice0.getQueueFamilyCapabilities(EngineGroupType::copy), families[1].capabilities);
         EXPECT_EQ(1u, families[1].count);
         EXPECT_EQ(clDevice0.getDeviceInfo().queueOnHostProperties, families[1].properties);
     }

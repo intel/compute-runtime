@@ -418,7 +418,7 @@ TEST_F(EventTest, GivenInvalidEventWhenGettingEventInfoThenInvalidValueErrorIsRe
 TEST_F(EventTest, GivenNonBlockingEventWhenWaitingThenFalseIsReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, CompletionStamp::notReady);
     auto result = event.wait(false, false);
-    EXPECT_EQ(WaitStatus::NotReady, result);
+    EXPECT_EQ(WaitStatus::notReady, result);
 }
 
 struct UpdateEventTest : public ::testing::Test {
@@ -596,7 +596,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
 TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWithPrintfWhenSubmittedThenEventIsAbortedAndHangIsReported) {
     MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
-    mockCmdQueue.waitUntilCompleteReturnValue = WaitStatus::GpuHang;
+    mockCmdQueue.waitUntilCompleteReturnValue = WaitStatus::gpuHang;
 
     testing::internal::CaptureStdout();
     MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -913,10 +913,10 @@ TEST_F(InternalsEventTest, givenGpuHangWhenEventWaitReportsHangThenWaititingIsAb
     MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
 
     MockEvent<Event> passingEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    passingEvent.waitReturnValue = WaitStatus::Ready;
+    passingEvent.waitReturnValue = WaitStatus::ready;
 
     MockEvent<Event> hangingEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    hangingEvent.waitReturnValue = WaitStatus::GpuHang;
+    hangingEvent.waitReturnValue = WaitStatus::gpuHang;
 
     cl_event eventWaitlist[] = {&passingEvent, &hangingEvent};
 
@@ -931,7 +931,7 @@ TEST_F(InternalsEventTest, givenPassingEventWhenWaitingForEventsThenWaititingIsS
     MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
 
     MockEvent<Event> passingEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    passingEvent.waitReturnValue = WaitStatus::Ready;
+    passingEvent.waitReturnValue = WaitStatus::ready;
 
     cl_event eventWaitlist[] = {&passingEvent};
 
@@ -1676,7 +1676,7 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     };
 
     uint32_t waitForCompletionWithTimeoutCalled = 0u;
-    WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::Ready;
+    WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::ready;
     StackVec<WaitForCompletionWithTimeoutParams, 1> waitForCompletionWithTimeoutParamsPassed{};
 };
 
@@ -1696,7 +1696,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
     event.updateCompletionStamp(1u, 0, 1u, 1u);
 
     const auto result = event.wait(true, true);
-    EXPECT_EQ(WaitStatus::Ready, result);
+    EXPECT_EQ(WaitStatus::ready, result);
 
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
@@ -1719,7 +1719,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     event.updateCompletionStamp(1u, 0, 1u, 1u);
 
     const auto result = event.wait(true, false);
-    EXPECT_EQ(WaitStatus::Ready, result);
+    EXPECT_EQ(WaitStatus::ready, result);
 
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
@@ -1727,13 +1727,13 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
 
 HWTEST_F(EventTest, givenGpuHangWhenWaitIsCalledThenPassRequestToWaitingFunctionAndReturnGpuHang) {
     auto csr = new TestEventCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-    csr->waitForCompletionWithTimeoutResult = WaitStatus::GpuHang;
+    csr->waitForCompletionWithTimeoutResult = WaitStatus::gpuHang;
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     const auto waitStatus = event.wait(true, false);
-    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
 }
 

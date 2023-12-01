@@ -266,8 +266,8 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
         (void)subDeviceEngineGroups;
 
         for (uint32_t i = 0; i < subDeviceEngineGroups.size(); i++) {
-            if (subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::Copy ||
-                subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::LinkedCopy) {
+            if (subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::copy ||
+                subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::linkedCopy) {
                 subDeviceNumEngineGroups += 1;
             }
         }

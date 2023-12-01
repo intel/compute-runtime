@@ -109,7 +109,7 @@ void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, Te
     uint64_t secondKernelEventAddress = arg.postSyncAddressZero ? 0 : gpuBaseAddress + event->getSinglePacketSize();
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
@@ -189,7 +189,7 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
     uint64_t secondKernelEventAddress = arg.postSyncAddressZero ? 0 : gpuBaseAddress + event->getSinglePacketSize();
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
@@ -270,7 +270,7 @@ void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, T
     uint64_t secondKernelEventAddress = arg.postSyncAddressZero ? 0 : gpuBaseAddress + event->getSinglePacketSize();
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
@@ -345,7 +345,7 @@ void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpect
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, input.device));
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     int pattern = 0;
     const size_t size = 1024;
@@ -424,7 +424,7 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, input.device));
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     int pattern = 0;
     const size_t size = 1024;
@@ -534,7 +534,7 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
     uint64_t secondKernelEventAddress = arg.postSyncAddressZero ? 0 : gpuBaseAddress + 2 * event->getSinglePacketSize();
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(2u, commandList->partitionCount);
     auto &commandContainer = commandList->commandContainer;
 
@@ -643,7 +643,7 @@ void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, T
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, input.device));
 
     auto commandList = std::make_unique<CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(input.device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
 
     int pattern = 0;
     const size_t size = 1024;

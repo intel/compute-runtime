@@ -37,11 +37,11 @@ bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupTy
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-        if (engineGroupType == EngineGroupType::RenderCompute) {
+        if (engineGroupType == EngineGroupType::renderCompute) {
             return false;
         }
 
-        bool isExclusiveContextUsed = (engineGroupType == EngineGroupType::CooperativeCompute);
+        bool isExclusiveContextUsed = (engineGroupType == EngineGroupType::cooperativeCompute);
         return !isRcsAvailable(hwInfo) || isExclusiveContextUsed;
     }
 
@@ -61,7 +61,7 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     bool requiresLimitation = productHelper.isCooperativeEngineSupported(hwInfo) &&
-                              (engineGroupType != EngineGroupType::CooperativeCompute) &&
+                              (engineGroupType != EngineGroupType::cooperativeCompute) &&
                               (!isEngineInstanced);
 
     auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;

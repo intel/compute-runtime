@@ -1300,15 +1300,15 @@ HWTEST_F(GfxCoreHelperTest, GivenHwInfoWhenGetBatchBufferEndReferenceCalledThenC
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenPassingCopyEngineTypeThenItsCopyOnly) {
-    EXPECT_TRUE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::Copy));
+    EXPECT_TRUE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::copy));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenPassingLinkedCopyEngineTypeThenItsCopyOnly) {
-    EXPECT_TRUE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::LinkedCopy));
+    EXPECT_TRUE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::linkedCopy));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenPassingComputeEngineTypeThenItsNotCopyOnly) {
-    EXPECT_FALSE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::Compute));
+    EXPECT_FALSE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::compute));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSupportThenReturnFalse) {
@@ -1495,12 +1495,12 @@ HWTEST_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustM
         for (auto isEngineInstanced : ::testing::Bool()) {
             for (auto isRcsEnabled : ::testing::Bool()) {
                 hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
-                for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute, EngineGroupType::CooperativeCompute}) {
+                for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute, EngineGroupType::cooperativeCompute}) {
                     if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-                        bool disallowDispatch = (engineGroupType == EngineGroupType::RenderCompute) ||
-                                                ((engineGroupType == EngineGroupType::Compute) && isRcsEnabled);
+                        bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute) ||
+                                                ((engineGroupType == EngineGroupType::compute) && isRcsEnabled);
                         bool applyLimitation = !isEngineInstanced &&
-                                               (engineGroupType != EngineGroupType::CooperativeCompute);
+                                               (engineGroupType != EngineGroupType::cooperativeCompute);
                         if (disallowDispatch) {
                             EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
                             EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));

@@ -368,7 +368,7 @@ HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutput
     std::shared_ptr<Mock<KernelImp>> kernel{new Mock<KernelImp>{}};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::ready;
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     *csr.tagAddress = currentTaskCount;
     commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel});
@@ -412,7 +412,7 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
     *csr.tagAddress = 0;
     csr.gpuHangCheckPeriod = 0us;
     commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel});
@@ -448,7 +448,7 @@ HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroT
     std::shared_ptr<Mock<KernelImp>> kernel{new Mock<KernelImp>{}};
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::ready;
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     *csr.tagAddress = currentTaskCount - 1;
 

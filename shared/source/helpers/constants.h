@@ -70,19 +70,19 @@ inline constexpr uint64_t maxBlitSetHeight = 0x1FFC0; // 0x20000 aligned to cach
 
 inline constexpr uint64_t maxBytesPerPixel = 0x10;
 enum class BlitDirection : uint32_t {
-    BufferToHostPtr,
-    HostPtrToBuffer,
-    BufferToBuffer,
-    HostPtrToImage,
-    ImageToHostPtr,
-    ImageToImage
+    bufferToHostPtr,
+    hostPtrToBuffer,
+    bufferToBuffer,
+    hostPtrToImage,
+    imageToHostPtr,
+    imageToImage
 };
 
 enum PostBlitMode : int32_t {
-    Default = -1,
-    MiArbCheck = 0,
-    MiFlush = 1,
-    None = 2
+    defaultMode = -1,
+    miArbCheck = 0,
+    miFlush = 1,
+    none = 2
 };
 } // namespace BlitterConstants
 
@@ -93,5 +93,5 @@ inline constexpr uint32_t invalidStepping = std::numeric_limits<uint32_t>::max()
 inline constexpr uint32_t invalidRevisionID = std::numeric_limits<uint16_t>::max();
 inline constexpr uint32_t maximalSimdSize = 32;
 inline constexpr uint32_t maximalSizeOfAtomicType = 8;
-inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups);
+inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::maxEngineGroups);
 } // namespace CommonConstants

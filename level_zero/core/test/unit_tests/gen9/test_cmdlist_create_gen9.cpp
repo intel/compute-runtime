@@ -92,7 +92,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
 
 GEN9TEST_F(CommandListCreateGen9, WhenGettingCommandListPreemptionModeThenMatchesDevicePreemptionMode) {
     ze_result_t returnValue;
-    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
 
     auto result = commandList->close();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -113,7 +113,7 @@ GEN9TEST_F(CommandListCreateGen9, GivenDisabledMidThreadPreemptionWhenLaunchingK
     initializeKernel(kernelThreadGroup, kernelInfoThreadGroupData, device);
 
     ze_result_t returnValue;
-    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
     CmdListKernelLaunchParams launchParams = {};
@@ -143,7 +143,7 @@ GEN9TEST_F(CommandListCreateGen9, GivenUsesFencesForReadWriteImagesWhenLaunching
     initializeKernel(kernelMidBatch, kernelInfoMidBatchData, device);
 
     ze_result_t returnValue;
-    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
     CmdListKernelLaunchParams launchParams = {};
@@ -178,7 +178,7 @@ GEN9TEST_F(CommandListCreateGen9, WhenCommandListHasLowerPreemptionLevelThenDoNo
     initializeKernel(kernelMidThread, kernelInfoMidThreadData, device);
 
     ze_result_t returnValue;
-    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
     CmdListKernelLaunchParams launchParams = {};

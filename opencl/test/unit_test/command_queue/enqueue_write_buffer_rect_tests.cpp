@@ -83,7 +83,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, GivenGpuHangAndBlockingCallAndValidParamsWh
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = clEnqueueWriteBufferRect(
         &mockCommandQueueHw,

@@ -762,7 +762,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::makeAlignedChildStreamAndSetGpuBase(N
 
     size_t alignedSize = alignUp<size_t>(requiredSize, this->minCmdBufferPtrAlign);
 
-    if (const auto waitStatus = this->reserveLinearStreamSize(alignedSize); waitStatus == NEO::WaitStatus::GpuHang) {
+    if (const auto waitStatus = this->reserveLinearStreamSize(alignedSize); waitStatus == NEO::WaitStatus::gpuHang) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 

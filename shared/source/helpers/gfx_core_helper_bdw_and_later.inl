@@ -65,7 +65,7 @@ template <typename GfxFamily>
 EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     switch (engineType) {
     case aub_stream::ENGINE_RCS:
-        return EngineGroupType::RenderCompute;
+        return EngineGroupType::renderCompute;
     default:
         UNRECOVERABLE_IF(true);
     }

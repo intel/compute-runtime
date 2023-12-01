@@ -139,11 +139,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
-        return WaitStatus::Ready;
+        return WaitStatus::ready;
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) {
-        return WaitStatus::Ready;
+        return WaitStatus::ready;
     }
 
     TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
@@ -224,7 +224,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool programStallingCommandsForBarrierCalled = false;
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
-    WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::Ready};
+    WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::ready};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
     BatchBuffer latestFlushedBatchBuffer = {};
 };

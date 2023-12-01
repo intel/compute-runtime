@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,17 +12,17 @@
 namespace NEO {
 
 enum class EngineGroupType : uint32_t {
-    Compute = 0,
-    RenderCompute,
-    Copy,
-    LinkedCopy,
-    CooperativeCompute,
-    MaxEngineGroups
+    compute = 0,
+    renderCompute,
+    copy,
+    linkedCopy,
+    cooperativeCompute,
+    maxEngineGroups
 };
 
 struct EngineHelper {
     static bool isCopyOnlyEngineType(EngineGroupType type) {
-        return (EngineGroupType::Copy == type || EngineGroupType::LinkedCopy == type);
+        return (EngineGroupType::copy == type || EngineGroupType::linkedCopy == type);
     }
 };
 

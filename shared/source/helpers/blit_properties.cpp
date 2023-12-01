@@ -39,8 +39,8 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
         hostAllocGpuVa = hostAllocation->getGpuAddress();
     }
 
-    if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection ||
-        BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
+    if (BlitterConstants::BlitDirection::hostPtrToBuffer == blitDirection ||
+        BlitterConstants::BlitDirection::hostPtrToImage == blitDirection) {
         return {
             nullptr,                       // outputTimestampPacket
             nullptr,                       // multiRootDeviceEventSync
@@ -100,7 +100,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *ds
     return {
         nullptr,                                         // outputTimestampPacket
         nullptr,                                         // multiRootDeviceEventSync
-        BlitterConstants::BlitDirection::BufferToBuffer, // blitDirection
+        BlitterConstants::BlitDirection::bufferToBuffer, // blitDirection
         {},                                              // csrDependencies
         AuxTranslationDirection::None,                   // auxTranslationDirection
         dstAllocation,                                   // dstAllocation
@@ -125,7 +125,7 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
     return {
         nullptr,                                         // outputTimestampPacket
         nullptr,                                         // multiRootDeviceEventSync
-        BlitterConstants::BlitDirection::BufferToBuffer, // blitDirection
+        BlitterConstants::BlitDirection::bufferToBuffer, // blitDirection
         {},                                              // csrDependencies
         auxTranslationDirection,                         // auxTranslationDirection
         allocation,                                      // dstAllocation
@@ -165,9 +165,9 @@ void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer 
 }
 
 bool BlitProperties::isImageOperation() const {
-    return blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
-           blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
-           blitDirection == BlitterConstants::BlitDirection::ImageToImage;
+    return blitDirection == BlitterConstants::BlitDirection::hostPtrToImage ||
+           blitDirection == BlitterConstants::BlitDirection::imageToHostPtr ||
+           blitDirection == BlitterConstants::BlitDirection::imageToImage;
 }
 
 } // namespace NEO

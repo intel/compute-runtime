@@ -41,7 +41,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue);
     commandList->close();
     ze_command_list_handle_t commandLists[] = {
         commandList->toHandle()};
@@ -84,7 +84,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue);
     commandList->close();
     ze_command_list_handle_t commandLists[] = {
         commandList->toHandle()};
@@ -134,7 +134,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     commandList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
     commandList->close();
 
@@ -182,11 +182,11 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    auto commandListMidThread = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListMidThread = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     commandListMidThread->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
     commandListMidThread->close();
 
-    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
     commandListThreadGroup->close();
 

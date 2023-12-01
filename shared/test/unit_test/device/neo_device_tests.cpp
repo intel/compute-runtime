@@ -570,7 +570,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedW
     {
         auto device = deviceFactory.rootDevices[0];
 
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         auto expectedNumberOfCcs = std::min(4u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
         EXPECT_EQ(expectedNumberOfCcs, computeEngineGroup.engines.size());
@@ -578,14 +578,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedW
     {
         auto device = deviceFactory.rootDevices[1];
 
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         EXPECT_EQ(1u, computeEngineGroup.engines.size());
     }
     {
         auto device = deviceFactory.rootDevices[2];
 
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         auto expectedNumberOfCcs = std::min(2u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
         EXPECT_EQ(expectedNumberOfCcs, computeEngineGroup.engines.size());
@@ -593,7 +593,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedW
     {
         auto device = deviceFactory.rootDevices[3];
 
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         EXPECT_EQ(1u, computeEngineGroup.engines.size());
     }
@@ -648,7 +648,7 @@ HWTEST2_F(DeviceTests, givenDeviceIsCreatedWithAmbiguousZexNumberOfCssEnvVariabl
 
         auto device = deviceFactory.rootDevices[0];
 
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         EXPECT_EQ(1u, computeEngineGroup.engines.size());
 
@@ -681,7 +681,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssAndZeAffinityMaskSe
         auto device = devices[0].get();
 
         EXPECT_EQ(0u, device->getRootDeviceIndex());
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         EXPECT_EQ(1u, computeEngineGroup.engines.size());
     }
@@ -815,7 +815,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableIsLarger
 
     auto device = deviceFactory.rootDevices[0];
 
-    auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+    auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
     auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
     EXPECT_EQ(defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, computeEngineGroup.engines.size());
 }
@@ -837,7 +837,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableSetAmbig
 
         auto device = deviceFactory.rootDevices[0];
 
-        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute);
+        auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
         auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
         EXPECT_EQ(defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, computeEngineGroup.engines.size());
     }

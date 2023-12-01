@@ -77,7 +77,7 @@ HWTEST_F(ResourceBarrierTest, GivenGpuHangAndBlockingCallsWhenEnqueueResourceBar
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     auto retVal = CL_INVALID_VALUE;
     size_t bufferSize = MemoryConstants::pageSize;

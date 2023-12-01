@@ -55,7 +55,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties);
 
@@ -77,7 +77,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::Compute);
+    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::compute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties);
 
@@ -98,7 +98,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
+    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties);
 

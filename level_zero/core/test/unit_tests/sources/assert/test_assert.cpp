@@ -149,7 +149,7 @@ TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKerne
 
     Mock<KernelImp> kernel;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -167,7 +167,7 @@ TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKer
     ze_result_t returnValue;
 
     std::unique_ptr<ult::WhiteBox<L0::CommandListImp>> commandList(ult::CommandList::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,
-                                                                                                                      &l0Device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+                                                                                                                      &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
 
     commandList->kernelWithAssertAppended = true;
     EXPECT_TRUE(commandList->hasKernelWithAssert());
@@ -189,7 +189,7 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssert
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
-                                                                              NEO::EngineGroupType::RenderCompute, result));
+                                                                              NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -211,7 +211,7 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAsser
     desc.pNext = 0;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
-                                                                              NEO::EngineGroupType::RenderCompute, result));
+                                                                              NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
@@ -229,7 +229,7 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandle
     desc.pNext = 0;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
-                                                                              NEO::EngineGroupType::RenderCompute, result));
+                                                                              NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
@@ -250,7 +250,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.isSyncModeQueue = false;
-    result = cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -278,7 +278,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.isSyncModeQueue = true;
-    result = cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -310,14 +310,14 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynch
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.callBaseWaitForCompletionWithTimeout = false;
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.isSyncModeQueue = true;
-    result = cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.setCsr(&csr);
@@ -359,7 +359,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     Mock<KernelImp> kernel;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -447,7 +447,7 @@ HWTEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedAndDetectedHangWh
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.callBaseWaitForCompletionWithTimeout = false;
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
-    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
     commandQueue->cmdListWithAssertExecuted = true;
 

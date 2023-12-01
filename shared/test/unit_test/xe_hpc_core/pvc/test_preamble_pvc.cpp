@@ -21,7 +21,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     const auto &productHelper = pDevice->getProductHelper();
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::renderCompute);
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, false},
          {REVISION_A0, true},

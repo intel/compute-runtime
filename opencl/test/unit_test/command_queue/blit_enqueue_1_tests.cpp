@@ -1179,7 +1179,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangAndBlockingCallAndNonBlock
     myUltBcsCsr->flushCounter = &flushCounter;
 
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    mockCommandQueue->waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueue->waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = mockCommandQueue->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);

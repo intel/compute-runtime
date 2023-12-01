@@ -80,7 +80,7 @@ HWTEST_F(MigrateMemObjectsTest, GivenGpuHangAndBlockingCallsAndValidEventListWhe
     cl_queue_properties props = {};
 
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     MockBuffer buffer;
     auto bufferMemObj = static_cast<cl_mem>(&buffer);
