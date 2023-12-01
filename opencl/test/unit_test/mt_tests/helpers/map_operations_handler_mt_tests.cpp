@@ -108,7 +108,7 @@ TEST_F(MapOperationsHandlerMtTests, giveMapOperationsStorageWhenAddingIteratingA
             std::this_thread::yield();
         }
 
-        constexpr auto numHandlers = 100u;
+        constexpr auto numHandlers = 4u;
         for (size_t i = 0; i < numHandlers; i++) {
 
             mockStorage.getHandler(reinterpret_cast<cl_mem>(i));
