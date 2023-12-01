@@ -19,8 +19,12 @@ class SysmanProductHelperHw : public SysmanProductHelper {
         return pSysmanProductHelper;
     }
 
+    // Memory
     ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) override;
     ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) override;
+
+    // Performance
+    void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) override;
 
     ~SysmanProductHelperHw() override = default;
 

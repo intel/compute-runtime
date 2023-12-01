@@ -16,11 +16,12 @@ namespace L0 {
 namespace Sysman {
 
 class SysFsAccessInterface;
+class SysmanProductHelper;
 class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t osPerformanceGetProperties(zes_perf_properties_t &pProperties) override;
     ze_result_t osPerformanceGetConfig(double *pFactor) override;
-    ze_result_t osPerformanceSetConfig(double pFactor) override;
+    ze_result_t osPerformanceSetConfig(double performanceFactor) override;
 
     bool isPerformanceSupported(void) override;
 
@@ -43,7 +44,7 @@ class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass
     ze_bool_t isSubdevice = 0;
     double baseScaleReading = 0;
     double mediaScaleReading = 0;
-    PRODUCT_FAMILY productFamily{};
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
     ze_result_t getMediaFreqFactor();
     ze_result_t getMediaScaleFactor();
     ze_result_t getBaseFreqFactor();

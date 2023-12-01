@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
@@ -109,47 +110,33 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     return result;
 }
 
-ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
+ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double performanceFactor) {
     double multiplier = 0;
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (pFactor < minPerformanceFactor || pFactor > maxPerformanceFactor) {
+    if (performanceFactor < minPerformanceFactor || performanceFactor > maxPerformanceFactor) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     switch (domain) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
-        if (pFactor <= halfOfMaxPerformanceFactor) {
-            multiplier = 63.0 - std::round(pFactor * (47.0) / 50.0); // multiplier = 63 - ROUND(pFactor * (63.0 - 16.0) / 50.0)
+        if (performanceFactor <= halfOfMaxPerformanceFactor) {
+            multiplier = 63.0 - std::round(performanceFactor * (47.0) / 50.0); // multiplier = 63 - ROUND(performanceFactor * (63.0 - 16.0) / 50.0)
         } else {
-            multiplier = 16.0 - std::round((pFactor - 50.0) * 16.0 / 50.0);
+            multiplier = 16.0 - std::round((performanceFactor - 50.0) * 16.0 / 50.0);
         }
         result = pSysfsAccess->write(sysPwrBalance, multiplier);
         break;
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
-        if (productFamily == IGFX_PVC) {
-            if (pFactor > halfOfMaxPerformanceFactor) {
-                multiplier = 1;
-            } else {
-                multiplier = 0.5;
-            }
-        } else {
-            if (pFactor > halfOfMaxPerformanceFactor) {
-                multiplier = 1;
-            } else if (pFactor > minPerformanceFactor) {
-                multiplier = 0.5;
-            } else {
-                multiplier = 0; // dynamic control mode is not supported on PVC
-            }
-        }
+        pSysmanProductHelper->getMediaPerformanceFactorMultiplier(performanceFactor, &multiplier);
         multiplier = multiplier / mediaScaleReading; // Divide by scale factor and then round off to convert from decimal to U format
         multiplier = std::round(multiplier);
         result = pSysfsAccess->write(mediaFreqFactor, multiplier);
         break;
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
-        if (pFactor < halfOfMaxPerformanceFactor) {
-            multiplier = 2 - (pFactor / 50.0);
+        if (performanceFactor < halfOfMaxPerformanceFactor) {
+            multiplier = 2 - (performanceFactor / 50.0);
         } else {
-            multiplier = 1 - ((pFactor - 50) / 100.0);
+            multiplier = 1 - ((performanceFactor - 50) / 100.0);
         }
         multiplier = multiplier / baseScaleReading; // Divide by scale factor and then round off to convert from decimal to U format
         multiplier = std::round(multiplier);
@@ -209,7 +196,7 @@ LinuxPerformanceImp::LinuxPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdev
                                          zes_engine_type_flag_t domain) : domain(domain), subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    productFamily = pLinuxSysmanImp->getProductFamily();
+    pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     init();
 }
 

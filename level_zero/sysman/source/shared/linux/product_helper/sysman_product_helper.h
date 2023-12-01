@@ -34,8 +34,13 @@ class SysmanProductHelper {
         return productHelper;
     }
 
+    // Memory
     virtual ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) = 0;
     virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) = 0;
+
+    // Performance
+    virtual void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) = 0;
+
     virtual ~SysmanProductHelper() = default;
 
   protected:
