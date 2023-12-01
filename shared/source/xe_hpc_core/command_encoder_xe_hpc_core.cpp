@@ -43,7 +43,8 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescri
         if (debugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
             adjustTGDispatchSize = !!debugManager.flags.AdjustThreadGroupDispatchSize.get();
         }
-        auto algorithmVersion = 2u;
+        // apply v2 algorithm only for parts where MaxSubSlicesSupported is equal to SubSliceCount
+        auto algorithmVersion = hwInfo.gtSystemInfo.MaxSubSlicesSupported == hwInfo.gtSystemInfo.SubSliceCount ? 2 : 1;
         if (debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get() != -1) {
             algorithmVersion = debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get();
         }

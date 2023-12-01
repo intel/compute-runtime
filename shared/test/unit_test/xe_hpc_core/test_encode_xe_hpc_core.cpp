@@ -820,6 +820,31 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, iddArg.getThreadGroupDispatchSize());
 }
 
+XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDualSubSliceCountNotEqualToMaxSubsliceCounteWhenTgDispatchSizeIsSelectedThenAlgorithmV1IsUsed) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    WALKER_TYPE walkerCmd{};
+    const auto &productHelper = pDevice->getProductHelper();
+    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
+    mutableHwInfo->gtSystemInfo.SubSliceCount = 32u;
+    mutableHwInfo->gtSystemInfo.ThreadCount = 2048u;
+    auto hwInfo = pDevice->getHardwareInfo();
+
+    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    uint32_t numGrf = GrfConfig::defaultGrfNumber;
+
+    INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+
+    iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
+    numGrf = GrfConfig::defaultGrfNumber;
+    walkerCmd.setThreadGroupIdXDimension(256);
+    walkerCmd.setThreadGroupIdYDimension(1);
+    walkerCmd.setThreadGroupIdZDimension(1);
+    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, 256u, numGrf, walkerCmd);
+    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
+}
+
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAndDebugFlagDisabledWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsDefault) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
