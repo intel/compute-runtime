@@ -3274,7 +3274,8 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto syncAllocation = new NEO::MockGraphicsAllocation(&storage, sizeof(storage));
 
-    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*syncAllocation, *neoDevice->getMemoryManager(), false);
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*syncAllocation, *neoDevice->getMemoryManager(), 1, false, false);
+    *inOrderExecInfo->getHostAddress() = 1;
 
     event->enableCounterBasedMode(true);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);

@@ -2420,7 +2420,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
     uint64_t gpuAddress = dependencyCounterAllocation.getGpuAddress() + offset;
 
-    for (uint32_t i = 0; i < this->partitionCount; i++) {
+    for (uint32_t i = 0; i < inOrderExecInfo->getNumDevicePartitionsToWait(); i++) {
         if (relaxedOrderingAllowed) {
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue, NEO::CompareOperation::Less, true, isQwordInOrderCounter());
 

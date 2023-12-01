@@ -1284,9 +1284,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
         bool signaled = true;
 
-        auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer(), this->inOrderAllocationOffset));
+        const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getHostAddress(), this->inOrderAllocationOffset);
 
-        for (uint32_t i = 0; i < this->partitionCount; i++) {
+        for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
             if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
                 signaled = false;
                 break;

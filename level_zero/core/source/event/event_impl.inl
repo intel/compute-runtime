@@ -163,11 +163,11 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
         return ZE_RESULT_NOT_READY;
     }
 
-    auto hostAddress = static_cast<uint64_t *>(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer(), this->inOrderAllocationOffset));
+    const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getHostAddress(), this->inOrderAllocationOffset);
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
     bool signaled = true;
 
-    for (uint32_t i = 0; i < this->getPacketsInUse(); i++) {
+    for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
             signaled = false;
             break;
@@ -438,7 +438,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
         return ZE_RESULT_NOT_READY;
     }
 
-    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer(), this->inOrderAllocationOffset));
+    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getHostAddress(), this->inOrderAllocationOffset));
 
     if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout)) {
         return ZE_RESULT_NOT_READY;

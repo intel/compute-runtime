@@ -27,9 +27,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     InOrderExecInfo() = delete;
 
-    InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, bool regularCmdList);
+    InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
 
     NEO::GraphicsAllocation &getDeviceCounterAllocation() const { return deviceCounterAllocation; }
+    uint64_t *getHostAddress() const { return hostAddress; }
 
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
@@ -40,6 +41,9 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     bool isRegularCmdList() const { return regularCmdList; }
 
+    uint32_t getNumDevicePartitionsToWait() const { return numDevicePartitionsToWait; }
+    uint32_t getNumHostPartitionsToWait() const { return numHostPartitionsToWait; }
+
     void reset();
 
   protected:
@@ -47,6 +51,9 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::MemoryManager &memoryManager;
     uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
+    uint64_t *hostAddress = nullptr;
+    uint32_t numDevicePartitionsToWait = 0;
+    uint32_t numHostPartitionsToWait = 0;
     bool regularCmdList = false;
 };
 

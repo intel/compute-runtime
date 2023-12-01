@@ -340,7 +340,7 @@ struct CommandListCoreFamily : public CommandListImp {
 
     void addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 
-    bool inOrderAtomicSignallingEnabled() const;
+    bool inOrderAtomicSignallingEnabled() const override;
     uint64_t getInOrderIncrementValue() const;
 
     InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;

@@ -19,8 +19,15 @@ InOrderExecInfo::~InOrderExecInfo() {
     memoryManager.freeGraphicsMemory(&deviceCounterAllocation);
 }
 
-InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, bool regularCmdList)
+InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling)
     : deviceCounterAllocation(deviceCounterAllocation), memoryManager(memoryManager), regularCmdList(regularCmdList) {
+
+    numDevicePartitionsToWait = atomicDeviceSignalling ? 1 : partitionCount;
+    numHostPartitionsToWait = partitionCount;
+
+    hostAddress = reinterpret_cast<uint64_t *>(deviceCounterAllocation.getUnderlyingBuffer());
+
+    reset();
 }
 
 void InOrderExecInfo::reset() {

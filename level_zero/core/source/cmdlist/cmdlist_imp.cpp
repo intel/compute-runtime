@@ -234,9 +234,7 @@ void CommandListImp::enableInOrderExecution() {
 
     UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
-    memset(inOrderDependencyCounterAllocation->getUnderlyingBuffer(), 0, inOrderDependencyCounterAllocation->getUnderlyingBufferSize());
-
-    inOrderExecInfo = std::make_shared<InOrderExecInfo>(*inOrderDependencyCounterAllocation, *device->getMemoryManager(), (this->cmdListType == TYPE_REGULAR));
+    inOrderExecInfo = std::make_shared<InOrderExecInfo>(*inOrderDependencyCounterAllocation, *device->getMemoryManager(), this->partitionCount, (this->cmdListType == TYPE_REGULAR), inOrderAtomicSignallingEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {
