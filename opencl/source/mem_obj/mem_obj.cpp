@@ -436,7 +436,7 @@ bool MemObj::mappingOnCpuAllowed() const {
     auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !debugManager.flags.DisableZeroCopyForBuffers.get() &&
            !graphicsAllocation->isCompressionEnabled() && MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) &&
-           allowCpuAccess();
+           allowCpuForMapUnmap();
 }
 
 bool MemObj::allowCpuAccess() const {
@@ -446,6 +446,14 @@ bool MemObj::allowCpuAccess() const {
     }
 
     return !graphicsAllocation->getDefaultGmm()->getPreferNoCpuAccess();
+}
+
+bool MemObj::allowCpuForMapUnmap() const {
+    auto ret = allowCpuAccess();
+    if (debugManager.flags.AllowZeroCopyWithoutCoherency.get() != -1) {
+        ret = debugManager.flags.AllowZeroCopyWithoutCoherency.get();
+    }
+    return ret;
 }
 
 void MemObj::storeProperties(const cl_mem_properties *properties) {

@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/logger.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -20,6 +21,15 @@
 #include "opencl/source/mem_obj/image.h"
 
 namespace NEO {
+void cachelineFlushMemory(char *ptr, size_t size) {
+    const auto lastPtr = ptr + size;
+    while (ptr < lastPtr) {
+        CpuIntrinsics::clFlushOpt(ptr);
+        ptr += MemoryConstants::cacheLineSize;
+    }
+    CpuIntrinsics::sfence();
+}
+
 void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) {
     MapInfo unmapInfo;
     Event *outEventObj = nullptr;
@@ -116,6 +126,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                     transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
                 }
                 eventCompleted = true;
+            } else if (debugManager.flags.AllowZeroCopyWithoutCoherency.get() == 1) {
+                cachelineFlushMemory(static_cast<char *>(transferProperties.getCpuPtrForReadWrite()), transferProperties.size[0]);
             }
             break;
         case CL_COMMAND_MAP_IMAGE:
@@ -132,6 +144,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                     transferProperties.memObj->transferDataFromHostPtr(unmapInfo.size, unmapInfo.offset);
                 }
                 eventCompleted = true;
+            } else if (debugManager.flags.AllowZeroCopyWithoutCoherency.get() == 1) {
+                cachelineFlushMemory(static_cast<char *>(transferProperties.getCpuPtrForReadWrite()), transferProperties.memObj->getSize());
             }
             if (!unmapInfo.readOnly) {
                 modifySimulationFlags = true;

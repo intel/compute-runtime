@@ -726,6 +726,17 @@ if(NOT MSVC)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=1024")
 endif()
 
+# _mm_clflushopt support
+if(NOT MSVC)
+  check_cxx_compiler_flag(-mclflushopt SUPPORTS_CLFLUSHOPT)
+  if(SUPPORTS_CLFLUSHOPT)
+    add_compile_definitions(SUPPORTS_CLFLUSHOPT)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mclflushopt")
+  endif()
+else()
+  add_compile_definitions(SUPPORTS_CLFLUSHOPT)
+endif()
+
 # Compiler warning flags
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")

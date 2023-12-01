@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,11 @@ struct BufferDefaults {
 template <typename BaseClass = BufferDefaults>
 struct BufferUseHostPtr : public BaseClass {
     enum { flags = BaseClass::flags | CL_MEM_USE_HOST_PTR };
+};
+
+template <typename BaseClass = BufferDefaults>
+struct BufferAllocHostPtr : public BaseClass {
+    enum { flags = BaseClass::flags | CL_MEM_ALLOC_HOST_PTR };
 };
 
 template <typename BaseClass = BufferDefaults>

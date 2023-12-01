@@ -13,7 +13,13 @@
 
 #include <memory>
 
-using namespace NEO;
+namespace CpuIntrinsicsTests {
+extern std::atomic<uintptr_t> lastClFlushedPtr;
+extern std::atomic<uint32_t> clFlushCounter;
+extern std::atomic<uint32_t> sfenceCounter;
+} // namespace CpuIntrinsicsTests
+
+namespace NEO {
 
 using ClEnqueueUnmapMemObjTests = ApiTests;
 
@@ -68,6 +74,43 @@ TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenRetur
         nullptr,
         nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(ClEnqueueUnmapMemObjTests, givenZeroCopyWithoutCoherencyAllowedWhenMapAndUnmapThenFlushCachelines) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowZeroCopyWithoutCoherency.set(1);
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferAllocHostPtr<>>::create(pContext));
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+    buffer->isMemObjZeroCopy();
+    cl_int retVal = CL_SUCCESS;
+
+    CpuIntrinsicsTests::clFlushCounter.store(0u);
+    CpuIntrinsicsTests::lastClFlushedPtr.store(0u);
+    CpuIntrinsicsTests::sfenceCounter.store(0u);
+
+    auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CpuIntrinsicsTests::clFlushCounter.load(), 1u);
+    EXPECT_EQ(CpuIntrinsicsTests::lastClFlushedPtr.load(), reinterpret_cast<uintptr_t>(mappedPtr));
+    EXPECT_EQ(CpuIntrinsicsTests::sfenceCounter.load(), 1u);
+    CpuIntrinsicsTests::lastClFlushedPtr.store(0u);
+
+    retVal = clEnqueueUnmapMemObject(
+        pCommandQueue,
+        buffer.get(),
+        mappedPtr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CpuIntrinsicsTests::clFlushCounter.load(), 2u);
+    EXPECT_EQ(CpuIntrinsicsTests::lastClFlushedPtr.load(), reinterpret_cast<uintptr_t>(mappedPtr));
+    EXPECT_EQ(CpuIntrinsicsTests::sfenceCounter.load(), 2u);
+
+    CpuIntrinsicsTests::clFlushCounter.store(0u);
+    CpuIntrinsicsTests::lastClFlushedPtr.store(0u);
+    CpuIntrinsicsTests::sfenceCounter.store(0u);
 }
 
 TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnGpuThenReturnError) {
@@ -208,3 +251,5 @@ INSTANTIATE_TEST_SUITE_P(
         CL_MEM_OBJECT_IMAGE1D,
         CL_MEM_OBJECT_IMAGE1D_ARRAY,
         CL_MEM_OBJECT_IMAGE1D_BUFFER));
+
+} // namespace NEO
