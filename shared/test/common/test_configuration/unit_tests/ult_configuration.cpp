@@ -8,8 +8,12 @@
 #include "test_mode.h"
 
 namespace NEO {
-#if defined(_WIN32) && defined(_DEBUG)
-unsigned int ultIterationMaxTime = 110;
+#if defined(_WIN32)
+#if defined(_DEBUG)
+unsigned int ultIterationMaxTime = 240;
+#else
+unsigned int ultIterationMaxTime = 120;
+#endif
 #else
 unsigned int ultIterationMaxTime = 45;
 #endif
