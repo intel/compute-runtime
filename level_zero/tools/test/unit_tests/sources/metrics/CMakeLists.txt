@@ -11,6 +11,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_pool_fixture.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_pool_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_oa.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_source.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_oa.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_oa_enumeration.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_oa_enumeration.cpp

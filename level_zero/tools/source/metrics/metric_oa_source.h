@@ -41,11 +41,11 @@ class OaMetricSourceImp : public MetricSource {
     ze_result_t getTimerResolution(uint64_t &resolution) override;
     ze_result_t getTimestampValidBits(uint64_t &validBits) override;
 
-    ze_result_t activateMetricGroups();
-    ze_result_t activateMetricGroupsDeferred(const uint32_t count,
-                                             zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t activateMetricGroupsAlreadyDeferred() override;
+    ze_result_t activateMetricGroupsPreferDeferred(const uint32_t count,
+                                                   zet_metric_group_handle_t *phMetricGroups) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
-    bool isMetricGroupActivated() const;
+    bool isMetricGroupActivatedInHw() const;
     void setUseCompute(const bool useCompute);
     bool isComputeUsed() const;
     uint32_t getSubDeviceIndex();
@@ -65,6 +65,7 @@ class OaMetricSourceImp : public MetricSource {
     MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
     std::unique_ptr<MetricOAOsInterface> metricOAOsInterface = nullptr;
+    std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
 };
 
 template <>

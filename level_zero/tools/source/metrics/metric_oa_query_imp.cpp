@@ -586,7 +586,7 @@ ze_result_t OaMetricQueryPoolImp::destroy() {
 
     // Check open queries.
     if (metricSource.getMetricsLibrary().getMetricQueryCount() == 0) {
-        if (!metricSource.isMetricGroupActivated()) {
+        if (!metricSource.isMetricGroupActivatedInHw()) {
             metricSource.getMetricsLibrary().release();
         }
     }

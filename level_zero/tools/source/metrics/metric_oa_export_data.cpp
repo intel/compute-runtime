@@ -718,6 +718,8 @@ ze_result_t OaMetricGroupImp::getExportDataHeapSize(size_t &exportDataHeapSize) 
     }
 
     HeapUsageTracker memoryTracker(0, 0, HeapUsageTracker::OperationModeTrackOnly);
+
+    OaMetricSourceImp *metricSource = getMetricSource();
     MetricsDiscovery::IMetricsDevice_1_5 *mdDevice = metricSource->getMetricEnumeration().getMdapiDevice();
     MetricsDiscovery::IAdapter_1_9 *mdAdapter = metricSource->getMetricEnumeration().getMdapiAdapter();
 
@@ -763,6 +765,8 @@ ze_result_t OaMetricGroupImp::getExportData(const uint8_t *pRawData,
     uintptr_t endHeapAddress = startHeapAddress + requiredHeapSize;
 
     HeapUsageTracker memoryTracker(startHeapAddress, endHeapAddress);
+
+    OaMetricSourceImp *metricSource = getMetricSource();
     MetricsDiscovery::IMetricsDevice_1_5 *mdDevice = metricSource->getMetricEnumeration().getMdapiDevice();
     MetricsDiscovery::IAdapter_1_9 *mdAdapter = metricSource->getMetricEnumeration().getMdapiAdapter();
     MetricOaExporter01 exporter01(*mdDevice, *mdAdapter, *pReferenceMetricSet, *pReferenceConcurrentGroup, memoryTracker);

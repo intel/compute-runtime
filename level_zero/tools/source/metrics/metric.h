@@ -39,7 +39,32 @@ class MetricSource {
     virtual ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual ze_result_t getTimerResolution(uint64_t &resolution) = 0;
     virtual ze_result_t getTimestampValidBits(uint64_t &validBits) = 0;
+    virtual ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) = 0;
+    virtual ze_result_t activateMetricGroupsAlreadyDeferred() = 0;
     virtual ~MetricSource() = default;
+    uint32_t getType() const {
+        return type;
+    }
+
+  protected:
+    uint32_t type = MetricSource::metricSourceTypeUndefined;
+};
+
+class MultiDomainDeferredActivationTracker {
+  public:
+    MultiDomainDeferredActivationTracker(uint32_t subDeviceIndex) : subDeviceIndex(subDeviceIndex) {}
+    virtual ~MultiDomainDeferredActivationTracker() = default;
+    ze_result_t activateMetricGroupsAlreadyDeferred();
+    virtual bool activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
+    bool isMetricGroupActivatedInHw() const;
+
+  protected:
+    void deActivateDomain(uint32_t domain);
+    void deActivateAllDomains();
+
+    std::map<uint32_t, std::pair<zet_metric_group_handle_t, bool>> domains = {};
+    uint32_t subDeviceIndex{};
 };
 
 class MetricDeviceContext {
@@ -47,11 +72,9 @@ class MetricDeviceContext {
   public:
     MetricDeviceContext(Device &device);
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
-    void activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroups();
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList);
-    bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
-    bool isMetricGroupActivated() const;
     bool isImplicitScalingCapable() const;
     Device &getDevice() const;
     uint32_t getSubDeviceIndex() const;
@@ -67,11 +90,7 @@ class MetricDeviceContext {
 
   private:
     bool enable();
-    ze_result_t activateAllDomains();
-    void deActivateAllDomains();
-    void deActivateDomain(uint32_t domain);
     struct Device &device;
-    std::map<uint32_t, std::pair<zet_metric_group_handle_t, bool>> domains;
     bool multiDeviceCapable = false;
     uint32_t subDeviceIndex = 0;
 };
@@ -87,6 +106,7 @@ struct Metric : _zet_metric_handle_t {
 
 struct MetricGroup : _zet_metric_group_handle_t {
     virtual ~MetricGroup() = default;
+    MetricGroup() {}
 
     virtual ze_result_t getProperties(zet_metric_group_properties_t *pProperties) = 0;
     virtual ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
@@ -122,6 +142,18 @@ struct MetricGroup : _zet_metric_group_handle_t {
     ze_result_t getMetricGroupExtendedProperties(MetricSource &metricSource, void *pnext);
     virtual ze_result_t getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
                                       uint8_t *pExportData) = 0;
+};
+
+struct MetricGroupImp : public MetricGroup {
+
+    MetricSource &getMetricSource() {
+        return metricSource;
+    }
+    ~MetricGroupImp() override = default;
+    MetricGroupImp(MetricSource &metricSource) : metricSource(metricSource) {}
+
+  protected:
+    MetricSource &metricSource;
 };
 
 struct MetricGroupCalculateHeader {

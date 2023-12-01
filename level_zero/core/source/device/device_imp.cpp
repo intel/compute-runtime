@@ -1123,14 +1123,18 @@ ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEAT
 
 ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
                                                     zet_metric_group_handle_t *phMetricGroups) {
+    auto status = ZE_RESULT_SUCCESS;
     if (!this->isSubdevice && this->isImplicitScalingCapable()) {
         for (auto &subDevice : this->subDevices) {
-            subDevice->getMetricDeviceContext().activateMetricGroupsDeferred(count, phMetricGroups);
+            status = subDevice->getMetricDeviceContext().activateMetricGroupsPreferDeferred(count, phMetricGroups);
+            if (status != ZE_RESULT_SUCCESS) {
+                return status;
+            }
         }
     } else {
-        metricContext->activateMetricGroupsDeferred(count, phMetricGroups);
+        status = metricContext->activateMetricGroupsPreferDeferred(count, phMetricGroups);
     }
-    return ZE_RESULT_SUCCESS;
+    return status;
 }
 
 void *DeviceImp::getExecEnvironment() { return execEnvironment; }

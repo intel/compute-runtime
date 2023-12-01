@@ -273,8 +273,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
 
         // Cache and aggregate all metric groups from all sub devices.
         for (uint32_t i = 0; i < metricGroupCount; i++) {
-            auto metricGroupRootDevice = new OaMetricGroupImp();
-            metricGroupRootDevice->setMetricSource(&metricSource);
+            auto metricGroupRootDevice = new OaMetricGroupImp(metricSource);
 
             for (auto subDevice : deviceImp.subDevices) {
                 MetricGroup *metricGroupSubDevice = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupByIndex(i);
@@ -562,7 +561,7 @@ ze_result_t OaMetricGroupImp::getProperties(zet_metric_group_properties_t *pProp
         copyProperties(properties, *pProperties);
         pProperties->pNext = pNext;
         if (pNext) {
-            status = getMetricGroupExtendedProperties(*metricSource, pNext);
+            status = getMetricGroupExtendedProperties(metricSource, pNext);
         }
     }
 
@@ -606,6 +605,7 @@ bool OaMetricGroupImp::activate() {
         return true;
     }
 
+    auto metricSource = getMetricSource();
     auto hConfiguration = metricSource->getMetricsLibrary().getConfiguration(toHandle());
     // Validate metrics library handle.
     if (!hConfiguration.IsValid()) {
@@ -626,6 +626,7 @@ bool OaMetricGroupImp::deactivate() {
         return true;
     }
 
+    auto metricSource = getMetricSource();
     auto hConfiguration = metricSource->getMetricsLibrary().getConfiguration(toHandle());
     // Deactivate metric group configuration using metrics library.
     metricSource->getMetricsLibrary().deactivateConfiguration(hConfiguration);
@@ -979,7 +980,6 @@ ze_result_t OaMetricGroupImp::initialize(const zet_metric_group_properties_t &so
     pReferenceMetricSet = &metricSet;
     pReferenceConcurrentGroup = &concurrentGroup;
     metrics = groupMetrics;
-    this->metricSource = &metricSource;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1039,7 +1039,7 @@ void OaMetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source
 }
 
 const MetricEnumeration &OaMetricGroupImp::getMetricEnumeration() const {
-    return metricSource->getMetricEnumeration();
+    return getMetricSource()->getMetricEnumeration();
 }
 
 void OaMetricGroupImp::setCachedExportDataHeapSize(size_t size) {
@@ -1079,7 +1079,7 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
                                       MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                       const std::vector<Metric *> &metrics,
                                       MetricSource &metricSource) {
-    auto pMetricGroup = new OaMetricGroupImp();
+    auto pMetricGroup = new OaMetricGroupImp(metricSource);
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
     pMetricGroup->initialize(properties, metricSet, concurrentGroup, metrics, static_cast<OaMetricSourceImp &>(metricSource));
     pMetricGroup->isPredefined = true;

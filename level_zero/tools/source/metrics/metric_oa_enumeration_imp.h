@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 #include <vector>
 
@@ -17,8 +18,6 @@ namespace L0 {
 
 static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize";
 static constexpr std::string_view globalSymbolOaMaxTimestamp = "MaxTimestamp";
-
-class OaMetricSourceImp;
 
 struct MetricEnumeration {
     MetricEnumeration(OaMetricSourceImp &metricSource);
@@ -122,8 +121,9 @@ struct MetricEnumeration {
     static const char *oaConcurrentGroupName;
 };
 
-struct OaMetricGroupImp : MetricGroup {
+struct OaMetricGroupImp : MetricGroupImp {
     ~OaMetricGroupImp() override;
+    OaMetricGroupImp(MetricSource &metricSource) : MetricGroupImp(metricSource) {}
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
@@ -178,8 +178,7 @@ struct OaMetricGroupImp : MetricGroup {
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                const std::vector<Metric *> &metrics,
                                MetricSource &metricSource);
-    OaMetricSourceImp *getMetricSource() { return metricSource; }
-    void setMetricSource(OaMetricSourceImp *inputMetricSource) { metricSource = inputMetricSource; }
+    OaMetricSourceImp *getMetricSource() const { return static_cast<OaMetricSourceImp *>(&metricSource); }
     static ze_result_t getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties);
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
@@ -207,7 +206,6 @@ struct OaMetricGroupImp : MetricGroup {
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 
     std::vector<zet_metric_group_handle_t> metricGroups;
-    OaMetricSourceImp *metricSource = nullptr;
     size_t cachedExportDataHeapSize = 0;
     bool isPredefined{};
 

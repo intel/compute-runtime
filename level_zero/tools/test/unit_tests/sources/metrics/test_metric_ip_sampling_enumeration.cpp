@@ -1054,5 +1054,38 @@ TEST_F(MetricExportDataIpSamplingTest, GivenIncorrectExportDataSizeWhenMetricGro
     }
 }
 
+class MockMultiDomainDeferredActivationTracker : public MultiDomainDeferredActivationTracker {
+
+  public:
+    ~MockMultiDomainDeferredActivationTracker() override = default;
+    MockMultiDomainDeferredActivationTracker(uint32_t subdeviceIndex) : MultiDomainDeferredActivationTracker(subdeviceIndex) {}
+
+    bool activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) override {
+        return false;
+    }
+};
+
+TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulAndActivationFailsThenErrorIsReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+        auto &metricSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+        MockMultiDomainDeferredActivationTracker *mockTracker = new MockMultiDomainDeferredActivationTracker(0);
+        metricSource.setActivationTracker(mockTracker);
+    }
+
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
 } // namespace ult
 } // namespace L0

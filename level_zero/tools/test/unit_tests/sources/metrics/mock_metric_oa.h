@@ -15,6 +15,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa_enumeration.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
 
 namespace L0 {
 namespace ult {

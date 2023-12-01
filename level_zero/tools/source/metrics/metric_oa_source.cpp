@@ -27,6 +27,8 @@ OaMetricSourceImp::OaMetricSourceImp(const MetricDeviceContext &metricDeviceCont
                                                                                        metricEnumeration(std::unique_ptr<MetricEnumeration>(new(std::nothrow) MetricEnumeration(*this))),
                                                                                        metricsLibrary(std::unique_ptr<MetricsLibrary>(new(std::nothrow) MetricsLibrary(*this))) {
     metricOAOsInterface = MetricOAOsInterface::create(metricDeviceContext.getDevice());
+    activationTracker = std::make_unique<MultiDomainDeferredActivationTracker>(metricDeviceContext.getSubDeviceIndex());
+    type = MetricSource::metricSourceTypeOa;
 }
 
 OaMetricSourceImp::~OaMetricSourceImp() = default;
@@ -156,11 +158,11 @@ uint32_t OaMetricSourceImp::getSubDeviceIndex() {
 }
 
 bool OaMetricSourceImp::isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const {
-    return metricDeviceContext.isMetricGroupActivated(hMetricGroup);
+    return activationTracker->isMetricGroupActivated(hMetricGroup);
 }
 
-bool OaMetricSourceImp::isMetricGroupActivated() const {
-    return metricDeviceContext.isMetricGroupActivated();
+bool OaMetricSourceImp::isMetricGroupActivatedInHw() const {
+    return activationTracker->isMetricGroupActivatedInHw();
 }
 
 bool OaMetricSourceImp::isImplicitScalingCapable() const {
@@ -169,6 +171,16 @@ bool OaMetricSourceImp::isImplicitScalingCapable() const {
 
 void OaMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface) {
     this->metricOAOsInterface = std::move(metricOAOsInterface);
+}
+
+ze_result_t OaMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,
+                                                                  zet_metric_group_handle_t *phMetricGroups) {
+    activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t OaMetricSourceImp::activateMetricGroupsAlreadyDeferred() {
+    return activationTracker->activateMetricGroupsAlreadyDeferred();
 }
 
 template <>

@@ -42,21 +42,22 @@ ze_result_t IpSamplingMetricGroupImp::streamerOpen(
     auto device = Device::fromHandle(hDevice);
 
     // Check whether metric group is activated.
-    if (!device->getMetricDeviceContext().isMetricGroupActivated(this->toHandle())) {
+    IpSamplingMetricSourceImp &source = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+    if (!source.isMetricGroupActivated(this->toHandle())) {
         return ZE_RESULT_NOT_READY;
     }
 
     // Check whether metric streamer is already open.
-    if (metricSource.pActiveStreamer != nullptr) {
+    if (source.pActiveStreamer != nullptr) {
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
 
-    auto pStreamerImp = new IpSamplingMetricStreamerImp(metricSource);
+    auto pStreamerImp = new IpSamplingMetricStreamerImp(source);
     UNRECOVERABLE_IF(pStreamerImp == nullptr);
 
-    const ze_result_t result = metricSource.getMetricOsInterface()->startMeasurement(desc->notifyEveryNReports, desc->samplingPeriod);
+    const ze_result_t result = source.getMetricOsInterface()->startMeasurement(desc->notifyEveryNReports, desc->samplingPeriod);
     if (result == ZE_RESULT_SUCCESS) {
-        metricSource.pActiveStreamer = pStreamerImp;
+        source.pActiveStreamer = pStreamerImp;
         pStreamerImp->attachEvent(hNotificationEvent);
     } else {
         delete pStreamerImp;

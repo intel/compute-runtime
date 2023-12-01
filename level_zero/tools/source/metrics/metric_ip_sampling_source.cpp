@@ -31,6 +31,8 @@ std::unique_ptr<IpSamplingMetricSourceImp> IpSamplingMetricSourceImp::create(con
 
 IpSamplingMetricSourceImp::IpSamplingMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext) {
     metricIPSamplingpOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
+    activationTracker = std::make_unique<MultiDomainDeferredActivationTracker>(metricDeviceContext.getSubDeviceIndex());
+    type = MetricSource::metricSourceTypeIpSampling;
 }
 
 ze_result_t IpSamplingMetricSourceImp::getTimerResolution(uint64_t &resolution) {
@@ -70,7 +72,8 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
             subDeviceMetricGroup.push_back(static_cast<IpSamplingMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup)));
         }
 
-        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(subDeviceMetricGroup);
+        IpSamplingMetricSourceImp &source = deviceImp->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(source, subDeviceMetricGroup);
         return;
     }
 
@@ -145,6 +148,23 @@ ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &co
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t IpSamplingMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,
+                                                                          zet_metric_group_handle_t *phMetricGroups) {
+    auto status = activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
+    if (!status) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t IpSamplingMetricSourceImp::activateMetricGroupsAlreadyDeferred() {
+    return activationTracker->activateMetricGroupsAlreadyDeferred();
+}
+
+bool IpSamplingMetricSourceImp::isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const {
+    return activationTracker->isMetricGroupActivated(hMetricGroup);
+}
+
 void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface) {
     this->metricIPSamplingpOsInterface = std::move(metricIPSamplingpOsInterface);
 }
@@ -179,7 +199,7 @@ ze_result_t IpSamplingMetricGroupBase::getExportData(const uint8_t *pRawData, si
 }
 
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
-                                                   std::vector<IpSamplingMetricImp> &metrics) : metricSource(metricSource) {
+                                                   std::vector<IpSamplingMetricImp> &metrics) : IpSamplingMetricGroupBase(metricSource) {
     this->metrics.reserve(metrics.size());
     for (const auto &metric : metrics) {
         this->metrics.push_back(std::make_unique<IpSamplingMetricImp>(metric));
@@ -628,9 +648,10 @@ ze_result_t MultiDeviceIpSamplingMetricGroupImp::getMetricTimestampsExp(const ze
 }
 
 std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetricGroupImp::create(
+    MetricSource &metricSource,
     std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup) {
     UNRECOVERABLE_IF(subDeviceMetricGroup.size() == 0);
-    return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(subDeviceMetricGroup));
+    return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(metricSource, subDeviceMetricGroup));
 }
 
 IpSamplingMetricImp::IpSamplingMetricImp(zet_metric_properties_t &properties) : properties(properties) {

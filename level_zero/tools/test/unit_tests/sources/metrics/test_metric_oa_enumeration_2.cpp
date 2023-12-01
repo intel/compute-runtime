@@ -21,7 +21,8 @@ using MetricEnumerationTest = Test<MetricContextFixture>;
 TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenOpenIoStreamReturnsErrorThenTheMetricGroupOpenIoStreamReturnsErrorUnknown) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
     concurrentGroup.openIoStreamResult = TCompletionCode::CC_ERROR_GENERAL;
@@ -35,7 +36,8 @@ TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenOpenIoStreamReturnsError
 TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsOkTheMetricGroupReadIoStreamReturnsSuccess) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
 
@@ -48,7 +50,9 @@ TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamRetur
 TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsPendingTheMetricGroupReadIoStreamReturnsSuccess) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
     concurrentGroup.readIoStreamResult = TCompletionCode::CC_READ_PENDING;
@@ -62,7 +66,8 @@ TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamRetur
 TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsErrorThenMetrigGroupReadIoStreamReturnsError) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
     concurrentGroup.readIoStreamResult = TCompletionCode::CC_ERROR_GENERAL;
@@ -76,7 +81,8 @@ TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamRetur
 TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenCloseIoStreamIsCalledCloseAndFailThenIoStreamReturnsErrorUnknown) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
     concurrentGroup.CloseIoStreamResult = TCompletionCode::CC_ERROR_GENERAL;
@@ -87,7 +93,8 @@ TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilled
 
     MetricsDiscovery::TTypedValue_1_0 source = {};
     zet_typed_value_t destination = {};
-    MetricGroupImpTest metricGroup = {};
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
 
     for (int vType = MetricsDiscovery::VALUE_TYPE_UINT32;
          vType < MetricsDiscovery::VALUE_TYPE_LAST; vType++) {

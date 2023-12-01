@@ -2611,7 +2611,8 @@ INSTANTIATE_TEST_CASE_P(parameterizedMetricEnumerationTestInformationTypes,
 TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsTrue) {
 
     Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockMetricSource{};
+    MetricGroupImpTest metricGroup(mockMetricSource);
 
     metricGroup.pReferenceMetricSet = &metricsSet;
 
@@ -2621,7 +2622,8 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsT
 TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsFalse) {
 
     Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockMetricSource{};
+    MetricGroupImpTest metricGroup(mockMetricSource);
 
     metricGroup.pReferenceMetricSet = &metricsSet;
     metricsSet.ActivateResult = TCompletionCode::CC_ERROR_GENERAL;
@@ -2632,7 +2634,8 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsF
 TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateReturnsTrue) {
 
     Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockMetricSource{};
+    MetricGroupImpTest metricGroup(mockMetricSource);
 
     metricGroup.pReferenceMetricSet = &metricsSet;
 
@@ -2642,7 +2645,8 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateRetu
 TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateReturnsFalse) {
 
     Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockMetricSource{};
+    MetricGroupImpTest metricGroup(mockMetricSource);
 
     metricGroup.pReferenceMetricSet = &metricsSet;
     metricsSet.DeactivateResult = TCompletionCode::CC_ERROR_GENERAL;
@@ -2653,7 +2657,8 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenDeactivateIsCalledDeactivateRetu
 TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForReportsReturnsSuccess) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockMetricSource{};
+    MetricGroupImpTest metricGroup(mockMetricSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
 
@@ -2664,7 +2669,8 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForRep
 TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForReportsReturnsNotReady) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
-    MetricGroupImpTest metricGroup;
+    MockMetricSource mockMetricSource{};
+    MetricGroupImpTest metricGroup(mockMetricSource);
 
     metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
     concurrentGroup.WaitForReportsResult = TCompletionCode::CC_ERROR_GENERAL;

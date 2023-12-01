@@ -294,6 +294,7 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
 template <>
 struct Mock<MetricGroup> : public OaMetricGroupImp {
     ~Mock() override = default;
+    Mock(MetricSource &metricSource) : OaMetricGroupImp(metricSource) {}
 
     ADDMETHOD_NOBASE(metricGet, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t *, zet_metric_handle_t *));
     ADDMETHOD_NOBASE(calculateMetricValues, ze_result_t, ZE_RESULT_SUCCESS, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, zet_typed_value_t *));
@@ -317,6 +318,7 @@ struct Mock<MetricGroup> : public OaMetricGroupImp {
 };
 
 struct MetricGroupImpTest : public OaMetricGroupImp {
+    MetricGroupImpTest(MetricSource &metricSource) : OaMetricGroupImp(metricSource) {}
     using OaMetricGroupImp::copyValue;
     using OaMetricGroupImp::pReferenceConcurrentGroup;
     using OaMetricGroupImp::pReferenceMetricSet;
