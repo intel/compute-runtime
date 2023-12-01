@@ -616,6 +616,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
     createKernel();
 
     ze_result_t returnValue;
@@ -657,7 +659,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                // isRcs
         commandList->getDcFlushRequired(true) // dcFlushEnable
     };
-    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs), std::exception);
+    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(commandContainer, dispatchKernelArgs), std::exception);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenReturnErrorInvalidArgument) {

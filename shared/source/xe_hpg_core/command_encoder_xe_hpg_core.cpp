@@ -189,13 +189,14 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 }
 
 template <>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
     if (productHelper.isAdjustWalkOrderAvailable(rootDeviceEnvironment.getReleaseHelper())) {
         if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
-            walkerCmd.setDispatchWalkOrder(WALKER_TYPE::DISPATCH_WALK_ORDER::LINERAR_WALKER);
+            walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER);
         } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
-            walkerCmd.setDispatchWalkOrder(WALKER_TYPE::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
+            walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
         }
     }
 }
@@ -228,6 +229,9 @@ template void EncodeDispatchKernel<Family>::setGrfInfo<Family::INTERFACE_DESCRIP
 template void EncodeDispatchKernel<Family>::appendAdditionalIDDFields<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 template void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData<Family::WALKER_TYPE, Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, Family::WALKER_TYPE &walkerCmd);
 template void EncodeDispatchKernel<Family>::setupPostSyncMocs<Family::WALKER_TYPE>(Family::WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
+template void EncodeDispatchKernel<Family>::encode<Family::WALKER_TYPE>(CommandContainer &container, EncodeDispatchKernelArgs &args);
+template void EncodeDispatchKernel<Family>::encodeThreadData<Family::WALKER_TYPE>(Family::WALKER_TYPE &walkerCmd, const uint32_t *startWorkGroup, const uint32_t *numWorkGroups, const uint32_t *workGroupSizes, uint32_t simd, uint32_t localIdDimensions, uint32_t threadsPerThreadGroup, uint32_t threadExecutionMask, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, bool isIndirect, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
+template void EncodeDispatchKernel<Family>::adjustWalkOrder<Family::WALKER_TYPE>(Family::WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;

@@ -16,6 +16,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -210,6 +211,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
@@ -230,7 +232,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, this->cmdListType == CommandListType::TYPE_REGULAR);
     this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
     this->maxFillPaternSizeForCopyEngine = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
-
+    this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
 
@@ -3179,7 +3181,10 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         false,                                    // useGlobalAtomics
         this->partitionCount > 1,                 // multiOsContextCapable
         isRcs,                                    // isRcs
-        this->doubleSbaWa};                       // doubleSbaWa
+        this->doubleSbaWa,                        // doubleSbaWa
+        this->heaplessModeEnabled                 // heaplessModeEnabled
+    };
+
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
     bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && this->device->getL0Debugger();

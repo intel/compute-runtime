@@ -236,15 +236,15 @@ HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrde
     WALKER_TYPE walkerOnStart{};
 
     uint32_t yOrder = 2u;
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<WALKER_TYPE>(walkerCmd, yOrder, rootDeviceEnvironment);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
 
     uint32_t linearOrder = 0u;
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<WALKER_TYPE>(walkerCmd, linearOrder, rootDeviceEnvironment);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
 
     uint32_t fakeOrder = 5u;
-    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, rootDeviceEnvironment);
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<WALKER_TYPE>(walkerCmd, fakeOrder, rootDeviceEnvironment);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
 }
 

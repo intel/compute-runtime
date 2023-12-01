@@ -538,6 +538,12 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 }
 
 template <typename Family>
+inline void EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+    using WALKER_TYPE = typename Family::WALKER_TYPE;
+    EncodeDispatchKernel<Family>::template encode<WALKER_TYPE>(container, args);
+}
+
+template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset) {
 
     if (container.nextIddInBlockRef() == container.getNumIddPerBlock()) {

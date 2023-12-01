@@ -48,6 +48,7 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
 }
 
 template <typename Family>
+template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
@@ -347,7 +348,8 @@ inline bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(ui
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
                                                     const uint32_t *startWorkGroup,
                                                     const uint32_t *numWorkGroups,
                                                     const uint32_t *workGroupSizes,
@@ -375,7 +377,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
         walkerCmd.setThreadGroupIdStartingResumeZ(static_cast<uint32_t>(startWorkGroup[2]));
     }
 
-    walkerCmd.setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
+    walkerCmd.setSimdSize(getSimdConfig<WalkerType>(simd));
 
     auto localWorkSize = static_cast<uint32_t>(workGroupSizes[0] * workGroupSizes[1] * workGroupSizes[2]);
     if (threadsPerThreadGroup == 0) {
@@ -603,7 +605,8 @@ template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {}
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {

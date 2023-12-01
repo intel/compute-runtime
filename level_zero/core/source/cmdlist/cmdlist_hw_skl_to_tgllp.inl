@@ -212,10 +212,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         false,                                                  // isKernelUsingSystemAllocation
         cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
-        this->dcFlushSupport                                    // dcFlushEnable
+        this->dcFlushSupport,                                   // dcFlushEnable
+        this->heaplessModeEnabled                               // isHeaplessModeEnabled
     };
 
-    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
+    NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     if (!this->isFlushTaskSubmissionEnabled) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
     }

@@ -105,12 +105,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     uint32_t sizeToCopy = sizeCrossThreadData;
     if (inlineDataProgrammingRequired == true) {
 
-        using InlineData = typename GfxFamily::INLINE_DATA;
-        uint32_t inlineDataSize = sizeof(InlineData);
-
-        if constexpr (heaplessModeEnabled) {
-            inlineDataSize = 64;
-        }
+        constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
 
         sizeToCopy = std::min(inlineDataSize, sizeCrossThreadData);
         dest = reinterpret_cast<char *>(walkerCmd->getInlineDataPointer());

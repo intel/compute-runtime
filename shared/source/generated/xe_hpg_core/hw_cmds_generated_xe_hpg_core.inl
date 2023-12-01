@@ -5579,6 +5579,9 @@ typedef struct tagCOMPUTE_WALKER {
     inline uint32_t *getInlineDataPointer() {
         return reinterpret_cast<uint32_t *>(&TheStructure.Common.InlineData);
     }
+    static constexpr uint32_t getInlineDataSize() { // patched
+        return 32u;
+    }
     using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
 } COMPUTE_WALKER;
 STATIC_ASSERT(156 == sizeof(COMPUTE_WALKER));

@@ -490,6 +490,9 @@ typedef struct tagGPGPU_WALKER {
     inline uint32_t getBottomExecutionMask() const {
         return (TheStructure.Common.BottomExecutionMask);
     }
+    static constexpr uint32_t getInlineDataSize() { // patched
+        return 0u;
+    }
     using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
 
 } GPGPU_WALKER;

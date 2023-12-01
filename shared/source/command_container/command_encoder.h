@@ -65,6 +65,7 @@ struct EncodeDispatchKernelArgs {
     bool isKernelDispatchedFromImmediateCmdList = false;
     bool isRcs = false;
     bool dcFlushEnable = false;
+    bool isHeaplessModeEnabled = false;
 };
 
 enum class MiPredicateType : uint32_t {
@@ -94,6 +95,9 @@ struct EncodeDispatchKernel {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
+    static void encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args);
+
+    template <typename WalkerType>
     static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
     template <typename WalkerType>
@@ -102,6 +106,21 @@ struct EncodeDispatchKernel {
     template <typename InterfaceDescriptorType>
     static void appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
                                           const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
+
+    template <typename WalkerType>
+    static void encodeThreadData(WalkerType &walkerCmd,
+                                 const uint32_t *startWorkGroup,
+                                 const uint32_t *numWorkGroups,
+                                 const uint32_t *workGroupSizes,
+                                 uint32_t simd,
+                                 uint32_t localIdDimensions,
+                                 uint32_t threadsPerThreadGroup,
+                                 uint32_t threadExecutionMask,
+                                 bool localIdsGenerationByRuntime,
+                                 bool inlineDataProgrammingRequired,
+                                 bool isIndirect,
+                                 uint32_t requiredWorkGroupOrder,
+                                 const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <typename InterfaceDescriptorType>
     static void setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
@@ -118,20 +137,6 @@ struct EncodeDispatchKernel {
 
     static bool inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc);
 
-    static void encodeThreadData(WALKER_TYPE &walkerCmd,
-                                 const uint32_t *startWorkGroup,
-                                 const uint32_t *numWorkGroups,
-                                 const uint32_t *workGroupSizes,
-                                 uint32_t simd,
-                                 uint32_t localIdDimensions,
-                                 uint32_t threadsPerThreadGroup,
-                                 uint32_t threadExecutionMask,
-                                 bool localIdsGenerationByRuntime,
-                                 bool inlineDataProgrammingRequired,
-                                 bool isIndirect,
-                                 uint32_t requiredWorkGroupOrder,
-                                 const RootDeviceEnvironment &rootDeviceEnvironment);
-
     template <typename InterfaceDescriptorType>
     static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 
@@ -146,7 +151,8 @@ struct EncodeDispatchKernel {
     template <typename WalkerType>
     static void setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
 
-    static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
+    template <typename WalkerType>
+    static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
