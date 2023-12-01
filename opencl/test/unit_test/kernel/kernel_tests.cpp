@@ -3472,6 +3472,24 @@ TEST(KernelTest, givenKernelWithNumThreadsRequiredPatchTokenWhenQueryingEuThread
     EXPECT_EQ(123U, euThreadCount);
 }
 
+TEST(KernelTest, givenKernelWithNumGRFRequiredPatchTokenWhenQueryingRegisterCountThenRegisterCountIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    KernelInfo kernelInfo = {};
+
+    kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired = 213U;
+    auto rootDeviceIndex = 0u;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex));
+    auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+    MockKernel kernel(program.get(), kernelInfo, *device);
+
+    cl_uint regCount;
+    size_t paramRetSize;
+    retVal = kernel.getWorkGroupInfo(CL_KERNEL_REGISTER_COUNT_INTEL, sizeof(cl_uint), &regCount, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_uint), paramRetSize);
+    EXPECT_EQ(213U, regCount);
+}
+
 HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatched, SupportsSampler) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     MockKernelWithInternals kernel(*device);

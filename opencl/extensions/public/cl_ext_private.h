@@ -343,6 +343,10 @@ typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
 #define CL_DEVICE_EU_THREAD_COUNTS_INTEL 0x1000A // placeholder
 #define CL_KERNEL_EU_THREAD_COUNT_INTEL 0x1000B  // placeholder
 
+#if !defined(cl_intel_maximum_registers)
+#define CL_KERNEL_REGISTER_COUNT_INTEL 0x425B
+#endif
+
 /*************************************************
  *   cl_ext_float_atomics extension              *
  *************************************************/

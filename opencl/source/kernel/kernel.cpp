@@ -577,6 +577,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     cl_ulong scratchSize;
     cl_ulong privateMemSize;
     size_t maxWorkgroupSize;
+    cl_uint regCount;
     const auto &hwInfo = clDevice.getHardwareInfo();
     auto &gfxCoreHelper = this->getGfxCoreHelper();
     auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
@@ -629,6 +630,11 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     case CL_KERNEL_EU_THREAD_COUNT_INTEL:
         srcSize = sizeof(cl_uint);
         pSrc = &this->getKernelInfo().kernelDescriptor.kernelAttributes.numThreadsRequired;
+        break;
+    case CL_KERNEL_REGISTER_COUNT_INTEL:
+        regCount = kernelDescriptor.kernelAttributes.numGrfRequired;
+        srcSize = sizeof(cl_uint);
+        pSrc = &regCount;
         break;
     default:
         break;
