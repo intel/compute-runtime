@@ -34,6 +34,10 @@ ze_result_t RasImp::rasGetState(zes_ras_state_t *pState, ze_bool_t clear) {
     return pOsRas->osRasGetState(*pState, clear);
 }
 
+ze_result_t RasImp::rasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) {
+    return pOsRas->osRasGetStateExp(pCount, pState);
+}
+
 void RasImp::init() {
     pOsRas->osRasGetProperties(rasProperties);
 }

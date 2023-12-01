@@ -128,6 +128,7 @@ void usage() {
                  "\n  -C,   --ecc                                                                       selectively run ecc black box test"
                  "\n  -a,   --fan                                                                       selectively run fan black box test"
                  "\n  -h,   --help                                                                      display help message"
+                 "\n  -re,   --rasexp                                                                    selectively run ras experimental API black box test"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -652,6 +653,50 @@ void testSysmanFrequency(ze_device_handle_t &device) {
             }
         } else {
             std::cout << "Not running as Root. Skipping zetSysmanFrequencySetRange test." << std::endl;
+        }
+    }
+}
+
+void testSysmanRasExp(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Ras Exp tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Ras Error Sets" << std::endl;
+        return;
+    }
+    std::vector<zes_ras_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_ras_properties_t rasProperties = {};
+
+        VALIDATECALL(zesRasGetProperties(handle, &rasProperties));
+        if (verbose) {
+            std::cout << "rasProperties.type = " << rasProperties.type << std::endl;
+            if (rasProperties.onSubdevice) {
+                std::cout << "rasProperties.subdeviceId = " << rasProperties.subdeviceId << std::endl;
+            }
+        }
+
+        // Query for number of error categories supported by platform
+        uint32_t rasCategoryCount = 0;
+        VALIDATECALL(zesRasGetStateExp(handle, &rasCategoryCount, nullptr));
+
+        // Gather error states
+        std::vector<zes_ras_state_exp_t> rasStates(rasCategoryCount);
+        VALIDATECALL(zesRasGetStateExp(handle, &rasCategoryCount, rasStates.data()));
+
+        if (verbose) {
+            if (rasProperties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+                std::cout << "Uncorrectable errors listing:" << std::endl;
+            } else {
+                std::cout << "Correctable errors listing:" << std::endl;
+            }
+            for (uint32_t i = 0; i < rasCategoryCount; i++) {
+                std::cout << " Error category: " << rasStates[i].category << "Count: " << rasStates[i].errorCounter << std::endl;
+            }
         }
     }
 }
@@ -1597,6 +1642,11 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-R", "--ras", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanRas(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-re", "--rasexp", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanRasExp(device);
         });
     }
     if (isParamEnabled(argc, argv, "-i", "--firmware", &optind)) {

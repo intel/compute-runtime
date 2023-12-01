@@ -13,6 +13,7 @@ namespace Sysman {
 class WddmRasImp : public OsRas {
     ze_result_t osRasGetProperties(zes_ras_properties_t &properties) override;
     ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
+    ze_result_t osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) override;
     ze_result_t osRasGetConfig(zes_ras_config_t *config) override;
     ze_result_t osRasSetConfig(const zes_ras_config_t *config) override;
 };
@@ -32,6 +33,10 @@ ze_result_t WddmRasImp::osRasSetConfig(const zes_ras_config_t *config) {
 }
 
 ze_result_t WddmRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

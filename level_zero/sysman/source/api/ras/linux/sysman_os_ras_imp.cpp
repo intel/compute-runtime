@@ -16,6 +16,8 @@
 
 #include "drm/intel_hwconfig_types.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 
@@ -82,6 +84,40 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
             state.category[i] += localState.category[i];
         }
         result = ZE_RESULT_SUCCESS;
+    }
+    return result;
+}
+
+ze_result_t LinuxRasImp::osRasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) {
+    ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+
+    uint32_t totalCategoryCount = 0;
+    std::vector<uint32_t> numCategoriesBySources = {};
+    for (auto &rasSource : rasSources) {
+        totalCategoryCount += rasSource->osRasGetCategoryCount();
+        numCategoriesBySources.push_back(totalCategoryCount);
+    }
+
+    if (*pCount == 0) {
+        *pCount = totalCategoryCount;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint32_t remainingCategories = std::min(totalCategoryCount, *pCount);
+    uint32_t numCategoriesAssigned = 0u;
+    for (uint32_t rasSourceIdx = 0u; rasSourceIdx < rasSources.size(); rasSourceIdx++) {
+        auto &rasSource = rasSources[rasSourceIdx];
+        uint32_t numCategoriesRequested = std::min(remainingCategories, numCategoriesBySources[rasSourceIdx]);
+        ze_result_t localResult = rasSource->osRasGetStateExp(numCategoriesRequested, &pState[numCategoriesAssigned]);
+        if (localResult != ZE_RESULT_SUCCESS) {
+            continue;
+        }
+        remainingCategories -= numCategoriesRequested;
+        numCategoriesAssigned += numCategoriesBySources[rasSourceIdx];
+        result = localResult;
+        if (remainingCategories == 0u) {
+            break;
+        }
     }
     return result;
 }
