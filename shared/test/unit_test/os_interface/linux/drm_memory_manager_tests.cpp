@@ -5300,6 +5300,150 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocat
     }
 }
 
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor2ChunksThenActualValueReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.NumberOfBOChunks.set(2);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 1048576;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor3ChunksThenCorrectedValueReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.NumberOfBOChunks.set(3);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 1048576;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor7ChunksThenCorrectedValueReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.NumberOfBOChunks.set(6);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 524288;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor1ChunkThenDefaultMinimumChunkSizeReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.NumberOfBOChunks.set(1);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 65536;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkForTooManyChunksThenDefaultMinimumChunkSizeReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.NumberOfBOChunks.set(10000);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 65536;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeThenSameSizeReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetBOChunkingSize.set(65536);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 65536;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeThenCorrectedSizeReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetBOChunkingSize.set(100000);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 65536;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeTooLargeThenCorrectedSizeReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetBOChunkingSize.set(4000000);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 1048576;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenSetChunkSizeTooSmallThenCorrectedSizeReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetBOChunkingSize.set(4000);
+    size_t allocSize = 2097152;
+    size_t expectedSize = 65536;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingReturnTrue) {
+    size_t allocSize = 2097152;
+    size_t minSize = 2097152;
+    bool subDeviceEnabled = true;
+    bool debugDisabled = true;
+    bool modeEnabled = true;
+    bool bufferEnabled = true;
+    EXPECT_TRUE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+    minSize = 1048576;
+    EXPECT_TRUE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithImproperAllocSizeReturnFalse) {
+    size_t allocSize = 2098000;
+    size_t minSize = 2097152;
+    bool subDeviceEnabled = true;
+    bool debugDisabled = true;
+    bool modeEnabled = true;
+    bool bufferEnabled = true;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithUnevenNumberChunksReturnsFalse) {
+    size_t allocSize = 2162688;
+    size_t minSize = 2097152;
+    bool subDeviceEnabled = true;
+    bool debugDisabled = true;
+    bool modeEnabled = true;
+    bool bufferEnabled = true;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithAllocationLessThanMinSizeReturnsFalse) {
+    size_t allocSize = 100000;
+    size_t minSize = 2097152;
+    bool subDeviceEnabled = true;
+    bool debugDisabled = true;
+    bool modeEnabled = true;
+    bool bufferEnabled = true;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCheckAllocationForChunkingWithBooleanInputFalseReturnsFalse) {
+    size_t allocSize = 2097152;
+    size_t minSize = 2097152;
+    bool subDeviceEnabled = true;
+    bool debugDisabled = true;
+    bool modeEnabled = true;
+    bool bufferEnabled = true;
+    EXPECT_TRUE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+    subDeviceEnabled = false;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+    subDeviceEnabled = true;
+    debugDisabled = false;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+    debugDisabled = true;
+    modeEnabled = false;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+    modeEnabled = true;
+    bufferEnabled = false;
+    EXPECT_FALSE(memoryManager->checkAllocationForChunking(allocSize, minSize, subDeviceEnabled, debugDisabled, modeEnabled, bufferEnabled));
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateBufferObjectInMemoryRegionIsCalledWithoutMemoryInfoThenNullBufferObjectIsReturned) {
     mock->memoryInfo.reset(nullptr);
 
