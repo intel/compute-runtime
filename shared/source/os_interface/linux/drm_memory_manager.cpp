@@ -1901,40 +1901,12 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
     return bo;
 }
 
-size_t DrmMemoryManager::getSizeOfChunk(size_t allocSize) {
-    size_t chunkSize = MemoryConstants::chunkThreshold;
-    size_t chunkMask = (~(MemoryConstants::chunkThreshold - 1));
-    size_t numChunk = debugManager.flags.NumberOfBOChunks.get();
-    if (debugManager.flags.SetBOChunkingSize.get() != -1) {
-        chunkSize = debugManager.flags.SetBOChunkingSize.get() & chunkMask;
-        if (chunkSize == 0) {
-            chunkSize = MemoryConstants::chunkThreshold;
-        }
-        numChunk = allocSize / chunkSize;
-        if (numChunk < 2) {
-            numChunk = 2;
-        }
-    }
-    if (numChunk > 1) {
-        chunkSize = (allocSize / numChunk) & chunkMask;
-        if (chunkSize == 0) {
-            chunkSize = MemoryConstants::chunkThreshold;
-        }
-        numChunk = allocSize / chunkSize;
-        while (((!Math::isPow2(numChunk)) || (chunkSize & (MemoryConstants::chunkThreshold - 1))) && (numChunk > 2)) {
-            numChunk -= 1;
-            chunkSize = allocSize / numChunk;
-        }
-    }
-    return chunkSize;
-}
-
 bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *allocation, uint64_t boAddress, size_t boSize, size_t maxOsContextCount) {
     auto &storageInfo = allocation->storageInfo;
     auto memoryInfo = drm->getMemoryInfo();
     uint32_t handle = 0;
     auto memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
-    uint32_t numOfChunks = static_cast<uint32_t>(boSize / getSizeOfChunk(boSize));
+    uint32_t numOfChunks = debugManager.flags.NumberOfBOChunks.get();
 
     auto gmm = allocation->getGmm(0u);
     auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, !allocation->isAllocatedInLocalMemoryPool());
@@ -1976,7 +1948,9 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         (drm->getChunkingMode() & 0x02)) {
 
         boTotalChunkSize = allocation->getUnderlyingBufferSize();
-        size_t chunkingSize = getSizeOfChunk(boTotalChunkSize);
+
+        uint32_t numOfChunks = debugManager.flags.NumberOfBOChunks.get();
+        size_t chunkingSize = boTotalChunkSize / numOfChunks;
 
         // Do not chunk for sizes less than chunkThreshold
         // Do not chunk for single tile device memory
@@ -2326,8 +2300,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
 
     bool useChunking = false;
-    size_t chunkingSize = getSizeOfChunk(size);
-    uint32_t numOfChunks = static_cast<uint32_t>(size / getSizeOfChunk(size));
+    uint32_t numOfChunks = debugManager.flags.NumberOfBOChunks.get();
+    size_t chunkingSize = size / numOfChunks;
 
     // Dont chunk for sizes less than chunkThreshold or if debugging is enabled
     if (!executionEnvironment.isDebuggingEnabled() &&
