@@ -25,7 +25,7 @@ class MemoryManager;
 template <typename PoolT>
 struct SmallBuffersParams {
   protected:
-    static constexpr auto aggregatedSmallBuffersPoolSize = 64 * KB;
+    static constexpr auto aggregatedSmallBuffersPoolSize = 2 * MB;
     static constexpr auto smallBufferThreshold = 4 * KB;
     static constexpr auto chunkAlignment = 512u;
     static constexpr auto startingOffset = chunkAlignment;
