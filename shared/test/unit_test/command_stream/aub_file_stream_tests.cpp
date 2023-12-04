@@ -693,7 +693,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryIsCall
 
     uintptr_t gpuAddress = 0x30000;
     void *sourceAddress = reinterpret_cast<void *>(0x50000);
-    auto physicalAddress = aubCsr->ppgtt->map(gpuAddress, MemoryConstants::pageSize, PageTableEntry::presentBit, MemoryBanks::MainBank);
+    auto physicalAddress = aubCsr->ppgtt->map(gpuAddress, MemoryConstants::pageSize, PageTableEntry::presentBit, MemoryBanks::mainBank);
 
     aubCsr->expectMemoryEqual(reinterpret_cast<void *>(gpuAddress), sourceAddress, MemoryConstants::pageSize);
 

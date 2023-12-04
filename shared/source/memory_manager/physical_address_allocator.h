@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class PhysicalAddressAllocator {
     }
 
     virtual uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignement) {
-        UNRECOVERABLE_IF(memoryBank != MemoryBanks::MainBank);
+        UNRECOVERABLE_IF(memoryBank != MemoryBanks::mainBank);
 
         std::unique_lock<std::mutex> lock(pageReserveMutex);
 
@@ -73,7 +73,7 @@ class PhysicalAddressAllocatorHw : public PhysicalAddressAllocator {
     uint64_t reservePage(uint32_t memoryBank, size_t pageSize, size_t alignement) override {
         std::unique_lock<std::mutex> lock(pageReserveMutex);
 
-        if (memoryBank == MemoryBanks::MainBank || numberOfBanks == 0) {
+        if (memoryBank == MemoryBanks::mainBank || numberOfBanks == 0) {
             auto currentAddress = mainAllocator.load();
             auto alignmentSize = alignUp(currentAddress, alignement) - currentAddress;
             mainAllocator += alignmentSize;

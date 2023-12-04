@@ -694,7 +694,7 @@ HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorre
 
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     auto bank = aubCsr->getMemoryBankForGtt();
-    EXPECT_EQ(MemoryBanks::MainBank, bank);
+    EXPECT_EQ(MemoryBanks::mainBank, bank);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenEntryBitsPresentAndWritableWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceNonLocalIsReturned) {
@@ -845,10 +845,10 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
     ASSERT_NE(nullptr, aubCsr->ggtt.get());
 
     uintptr_t address = 0x20000;
-    auto physicalAddress = aubCsr->ppgtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
+    auto physicalAddress = aubCsr->ppgtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::mainBank);
     EXPECT_NE(0u, physicalAddress);
 
-    physicalAddress = aubCsr->ggtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
+    physicalAddress = aubCsr->ggtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::mainBank);
     EXPECT_NE(0u, physicalAddress);
 }
 

@@ -222,10 +222,10 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
 
     setupMemoryInfo(regionInfo, 2);
 
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
+    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::mainBank, *pHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
+    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *pHwInfo);
@@ -254,7 +254,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenDisabledLocalMemoryAndMemoryInfoWithR
 
     setupMemoryInfo(regionInfo, 2);
 
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
+    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::mainBank, *pHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
 
@@ -283,10 +283,10 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     debugManager.flags.OverrideDrmRegion.set(1);
 
     // system memory not affected
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
+    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::mainBank, *pHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
+    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
     // overrite route to tile 1
@@ -322,7 +322,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     // system memory not affected
     debugManager.flags.OverrideDrmRegion.set(-1);
     debugManager.flags.ForceMemoryBankIndexOverride.set(1);
-    regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
+    regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::mainBank, *pHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
 }
 
@@ -350,7 +350,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, whenDebugVariablePrintMemoryRegionSizeIsSe
     setupMemoryInfo(regionInfo, 0);
 
     testing::internal::CaptureStdout();
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
+    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(16 * GB, regionSize);
 
     std::string output = testing::internal::GetCapturedStdout();

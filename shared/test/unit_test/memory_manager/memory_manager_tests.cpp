@@ -407,13 +407,13 @@ TEST(MemoryManagerTest, whenCreatingAllocPropertiesForMultiStorageResourceThenMu
 
 TEST(MemoryBank, givenDifferentDeviceOrdinalsWhenGettingBankThenCorrectBanksAreReturned) {
     auto bank = MemoryBanks::getBank(0);
-    EXPECT_EQ(MemoryBanks::MainBank, bank);
+    EXPECT_EQ(MemoryBanks::mainBank, bank);
 
     bank = MemoryBanks::getBank(1);
-    EXPECT_EQ(MemoryBanks::MainBank, bank);
+    EXPECT_EQ(MemoryBanks::mainBank, bank);
 
     bank = MemoryBanks::getBank(100);
-    EXPECT_EQ(MemoryBanks::MainBank, bank);
+    EXPECT_EQ(MemoryBanks::mainBank, bank);
 
     bank = MemoryBanks::getBankForLocalMemory(0);
     EXPECT_EQ(1u, bank);

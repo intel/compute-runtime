@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 #include <cstdint>
 
 namespace MemoryBanks {
-constexpr uint32_t BankNotSpecified{0};
-constexpr uint32_t MainBank{0};
+constexpr uint32_t bankNotSpecified{0};
+constexpr uint32_t mainBank{0};
 
 inline uint32_t getBank(uint32_t deviceOrdinal) {
-    return MemoryBanks::MainBank;
+    return MemoryBanks::mainBank;
 }
 
 inline uint32_t getBankForLocalMemory(uint32_t deviceOrdinal) {

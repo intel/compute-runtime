@@ -397,12 +397,12 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 
         if (patchInfoData.sourceAllocation) {
             allocationsMap.insert(std::pair<uint64_t, uint64_t>(patchInfoData.sourceAllocation,
-                                                                ppgtt->map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1, 0, MemoryBanks::MainBank)));
+                                                                ppgtt->map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1, 0, MemoryBanks::mainBank)));
         }
 
         if (patchInfoData.targetAllocation) {
             allocationsMap.insert(std::pair<uint64_t, uintptr_t>(patchInfoData.targetAllocation,
-                                                                 ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1, 0, MemoryBanks::MainBank)));
+                                                                 ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1, 0, MemoryBanks::mainBank)));
         }
     }
     bool result = getAubStream()->addComment(str.str().c_str());
@@ -749,7 +749,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
                                            compareOperation);
     };
 
-    this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+    this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::bankNotSpecified);
     return true;
 }
 
@@ -868,7 +868,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
 
     auto physBufferAddres = ppgtt->map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize,
                                        this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),
-                                       MemoryBanks::MainBank);
+                                       MemoryBanks::mainBank);
 
     AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres,
                              this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),

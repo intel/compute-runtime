@@ -62,7 +62,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
     auto bank = csr->getMemoryBank(&allocation);
-    EXPECT_EQ(MemoryBanks::MainBank, bank);
+    EXPECT_EQ(MemoryBanks::mainBank, bank);
 }
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageInfoZeroWhenMemoryBankIsQueriedThenBankForCsrIsReturned) {

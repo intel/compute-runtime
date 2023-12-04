@@ -94,10 +94,10 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryEnabledWhenGettingMemor
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *defaultHwInfo);
+    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::mainBank, *defaultHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
+    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *defaultHwInfo);
@@ -132,10 +132,10 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndLocalMemoryDisabledWhenGettingMemo
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
-    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *defaultHwInfo);
+    auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::mainBank, *defaultHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
+    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *defaultHwInfo);
@@ -159,7 +159,7 @@ TEST(MemoryInfo, whenDebugVariablePrintMemoryRegionSizeIsSetAndGetMemoryRegionSi
     ASSERT_NE(nullptr, memoryInfo);
 
     testing::internal::CaptureStdout();
-    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
+    auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(16 * GB, regionSize);
 
     std::string output = testing::internal::GetCapturedStdout();
