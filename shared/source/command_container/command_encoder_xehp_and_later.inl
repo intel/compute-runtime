@@ -33,8 +33,8 @@
 #include <algorithm>
 
 namespace NEO {
-constexpr size_t TimestampDestinationAddressAlignment = 16;
-constexpr size_t ImmWriteDestinationAddressAlignment = 8;
+constexpr size_t timestampDestinationAddressAlignment = 16;
+constexpr size_t immWriteDestinationAddressAlignment = 8;
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
@@ -347,11 +347,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (args.eventAddress != 0) {
         postSync.setDataportPipelineFlush(true);
         if (args.isTimestampEvent) {
-            UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
+            UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(args.eventAddress)));
 
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
         } else {
-            UNRECOVERABLE_IF(!(isAligned<ImmWriteDestinationAddressAlignment>(args.eventAddress)));
+            UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(args.eventAddress)));
 
             postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
             postSync.setImmediateData(args.postSyncImmValue);

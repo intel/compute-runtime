@@ -32,7 +32,7 @@ class EventFixture : public ApiFixture<>, public T {
 
 typedef EventFixture<::testing::Test> clEventProfilingTests;
 
-cl_int ProfilingInfo[] = {
+cl_int profilingInfo[] = {
     CL_PROFILING_COMMAND_QUEUED,
     CL_PROFILING_COMMAND_SUBMIT,
     CL_PROFILING_COMMAND_START,
@@ -88,7 +88,7 @@ TEST_F(clEventProfilingTests, GivenInvalidParamValueSizeWhenGettingEventProfilin
     cl_event event = (cl_event)pEvent;
     pEvent->setProfilingEnabled(true);
     retVal = clGetEventProfilingInfo(event,
-                                     ProfilingInfo[0],
+                                     profilingInfo[0],
                                      paramValueSize - 1,
                                      &paramValue,
                                      &paramValueSizeRet);
@@ -106,7 +106,7 @@ TEST_F(clEventProfilingTests, GivenValidParametersWhenGettingEventProfilingInfoT
 
     cl_event event = (cl_event)pEvent;
     pEvent->setProfilingEnabled(true);
-    for (auto infoId : ::ProfilingInfo) {
+    for (auto infoId : ::profilingInfo) {
         cl_int retVal = clGetEventProfilingInfo(event,
                                                 infoId,
                                                 paramValueSize,
@@ -128,7 +128,7 @@ TEST_F(clEventProfilingTests, GivenNullParamValueSizeRetWhenGettingEventProfilin
     pEvent->setProfilingEnabled(true);
 
     cl_int retVal = clGetEventProfilingInfo(event,
-                                            ProfilingInfo[0],
+                                            profilingInfo[0],
                                             paramValueSize,
                                             &paramValue,
                                             nullptr);
@@ -188,7 +188,7 @@ TEST_F(clEventProfilingTests, GivenUserEventWhenGettingEventProfilingInfoThenPro
     size_t paramValueSizeRet;
 
     cl_event event = (cl_event)ue;
-    for (auto infoId : ::ProfilingInfo) {
+    for (auto infoId : ::profilingInfo) {
         cl_int retVal = clGetEventProfilingInfo(event,
                                                 infoId,
                                                 paramValueSize,

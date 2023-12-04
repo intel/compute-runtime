@@ -550,11 +550,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
     ASSERT_GE(queueSemaphores.size(), 5u);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp3.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp5.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[2])), timestamp4.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[3])), timestamp6.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[4])), timestamp6.getNode(1), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp3.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp5.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[2])), timestamp4.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[3])), timestamp6.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[4])), timestamp6.getNode(1), 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenTrackOwnershipUntilQueueIsCompleted) {
@@ -1239,11 +1239,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
     ASSERT_GE(queueSemaphores.size(), 5u);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp3.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp5.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[2])), timestamp4.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[3])), timestamp6.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[4])), timestamp6.getNode(1), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp3.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp5.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[2])), timestamp4.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[3])), timestamp6.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[4])), timestamp6.getNode(1), 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenProgramSemaphoresOnQueueStreamOnFlush) {
@@ -1292,8 +1292,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
     ASSERT_GE(queueSemaphores.size(), 2u);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp0.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp1.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp0.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp1.getNode(0), 0);
 
     auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
     EXPECT_EQ(0u, csrSemaphores.size());
@@ -1351,8 +1351,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
     ASSERT_GE(queueSemaphores.size(), 2u);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp0.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp1.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp0.getNode(0), 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp1.getNode(0), 0);
 
     auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
     EXPECT_EQ(0u, csrSemaphores.size());
@@ -1418,11 +1418,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
         if (semaphoreCmd) {
             semaphoresFound++;
             if (semaphoresFound == 1) {
-                verifySemaphore(semaphoreCmd, timestamp3.getNode(0), 0);
+                verifySemaphore<FamilyType>(semaphoreCmd, timestamp3.getNode(0), 0);
             } else if (semaphoresFound == 2) {
-                verifySemaphore(semaphoreCmd, timestamp5.getNode(0), 0);
+                verifySemaphore<FamilyType>(semaphoreCmd, timestamp5.getNode(0), 0);
             } else if (semaphoresFound == 3) {
-                verifySemaphore(semaphoreCmd, timestamp5.getNode(1), 0);
+                verifySemaphore<FamilyType>(semaphoreCmd, timestamp5.getNode(1), 0);
             }
         }
         if (genCmdCast<WALKER *>(*it)) {
@@ -1492,11 +1492,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
         if (semaphoreCmd) {
             semaphoresFound++;
             if (semaphoresFound == 1) {
-                verifySemaphore(semaphoreCmd, timestamp3.getNode(0), 0);
+                verifySemaphore<FamilyType>(semaphoreCmd, timestamp3.getNode(0), 0);
             } else if (semaphoresFound == 2) {
-                verifySemaphore(semaphoreCmd, timestamp5.getNode(0), 0);
+                verifySemaphore<FamilyType>(semaphoreCmd, timestamp5.getNode(0), 0);
             } else if (semaphoresFound == 3) {
-                verifySemaphore(semaphoreCmd, timestamp5.getNode(1), 0);
+                verifySemaphore<FamilyType>(semaphoreCmd, timestamp5.getNode(1), 0);
             }
         }
         if (genCmdCast<WALKER *>(*it)) {
@@ -1754,9 +1754,9 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
     hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
 
     auto it = hwParser.cmdList.begin();
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it), firstTag0, 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*it), firstTag0, 0);
 
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*++it), firstTag1, 0);
+    verifySemaphore<FamilyType>(genCmdCast<MI_SEMAPHORE_WAIT *>(*++it), firstTag1, 0);
     it++;
 
     while (it != hwParser.cmdList.end()) {

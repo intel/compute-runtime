@@ -158,9 +158,9 @@ struct ArgDescriptor final {
     template <typename T>
     T &as(bool initIfUnknown = false);
 
-    template <ArgType Type>
+    template <ArgType type>
     bool is() const {
-        return Type == this->type;
+        return type == this->type;
     }
 
     ArgTypeTraits &getTraits() {
@@ -208,8 +208,8 @@ struct ArgDescriptor final {
 };
 
 namespace {
-constexpr auto ArgSize = sizeof(ArgDescriptor);
-static_assert(ArgSize <= 72, "Keep it small");
+constexpr auto argSize = sizeof(ArgDescriptor);
+static_assert(argSize <= 72, "Keep it small");
 } // namespace
 
 template <>
@@ -276,9 +276,9 @@ inline ArgDescValue &ArgDescriptor::as<ArgDescValue>(bool initIfUnknown) {
     return this->asByValue;
 }
 
-template <uint32_t VecSize, typename T>
-inline void setOffsetsVec(CrossThreadDataOffset (&dst)[VecSize], const T (&src)[VecSize]) {
-    for (uint32_t i = 0; i < VecSize; ++i) {
+template <uint32_t vecSize, typename T>
+inline void setOffsetsVec(CrossThreadDataOffset (&dst)[vecSize], const T (&src)[vecSize]) {
+    for (uint32_t i = 0; i < vecSize; ++i) {
         dst[i] = src[i];
     }
 }
@@ -293,9 +293,9 @@ inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset loca
     return true;
 }
 
-template <uint32_t VecSize, typename T>
-inline void patchVecNonPointer(ArrayRef<uint8_t> buffer, const CrossThreadDataOffset (&location)[VecSize], const T (&value)[VecSize]) {
-    for (uint32_t i = 0; i < VecSize; ++i) {
+template <uint32_t vecSize, typename T>
+inline void patchVecNonPointer(ArrayRef<uint8_t> buffer, const CrossThreadDataOffset (&location)[vecSize], const T (&value)[vecSize]) {
+    for (uint32_t i = 0; i < vecSize; ++i) {
         patchNonPointer<T, T>(buffer, location[i], value[i]);
     }
     return;

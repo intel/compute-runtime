@@ -89,7 +89,7 @@ class GivenCacheResourceSurfacesWhenprocessingCacheFlushThenExpectProperCacheFlu
         std::string err;
         auto cmdBuffOk = expectCmdBuff<FamilyType>(cmdQ.getCS(0), 0,
                                                    std::vector<MatchCmd *>{
-                                                       new MatchHwCmd<FamilyType, L3_CONTROL_WITHOUT_POST_SYNC>(AtLeastOne)},
+                                                       new MatchHwCmd<FamilyType, L3_CONTROL_WITHOUT_POST_SYNC>(atLeastOne)},
                                                    &err);
         EXPECT_TRUE(cmdBuffOk) << err;
         svmManager->freeSVMAlloc(svm);

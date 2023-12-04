@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,9 @@
 #include <optional>
 #include <utility>
 
-template <typename KeyT, typename ValueT, size_t NumElements>
+template <typename KeyT, typename ValueT, size_t numElements>
 struct LookupArray {
-    using LookupMapArrayT = std::array<std::pair<KeyT, ValueT>, NumElements>;
+    using LookupMapArrayT = std::array<std::pair<KeyT, ValueT>, numElements>;
     constexpr LookupArray(const LookupMapArrayT &lookupArray) : lookupArray(lookupArray){};
 
     constexpr std::optional<ValueT> find(const KeyT &keyToFind) const {
@@ -34,7 +34,7 @@ struct LookupArray {
     }
 
     constexpr size_t size() const {
-        return NumElements;
+        return numElements;
     }
 
   protected:

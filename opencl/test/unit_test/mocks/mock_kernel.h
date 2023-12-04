@@ -62,7 +62,7 @@ class MockMultiDeviceKernel : public MultiDeviceKernel {
         return kernelVector;
     }
     using MultiDeviceKernel::MultiDeviceKernel;
-    template <typename kernel_t = Kernel>
+    template <typename KernelType = Kernel>
     static MockMultiDeviceKernel *create(Program *programArg, const KernelInfoContainer &kernelInfoArg) {
         KernelVectorType kernelVector;
         kernelVector.resize(programArg->getMaxRootDeviceIndex() + 1);
@@ -71,7 +71,7 @@ class MockMultiDeviceKernel : public MultiDeviceKernel {
             if (kernelVector[rootDeviceIndex]) {
                 continue;
             }
-            kernelVector[rootDeviceIndex] = new kernel_t(programArg, *kernelInfoArg[rootDeviceIndex], *pDevice);
+            kernelVector[rootDeviceIndex] = new KernelType(programArg, *kernelInfoArg[rootDeviceIndex], *pDevice);
         }
         return new MockMultiDeviceKernel(std::move(kernelVector), kernelInfoArg);
     }

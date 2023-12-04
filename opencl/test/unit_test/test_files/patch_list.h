@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-const uint32_t MAGIC_CL = 0x494E5443; 
+const uint32_t MAGIC_CL = 0x494E5443; // NOLINT(readability-identifier-naming)
 struct SProgramBinaryHeader
 {
 	uint32_t   Magic;   // NOLINT(readability-identifier-naming)

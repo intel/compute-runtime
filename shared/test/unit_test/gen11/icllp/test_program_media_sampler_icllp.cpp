@@ -18,9 +18,9 @@
 
 using namespace NEO;
 
+using PIPE_CONTROL = typename Gen11Family::PIPE_CONTROL;
 struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
     typedef typename Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename Gen11Family::PIPE_CONTROL PIPE_CONTROL;
 
     struct MyCsr : public CommandStreamReceiverHw<Gen11Family> {
         using CommandStreamReceiver::commandStream;
@@ -59,7 +59,6 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
     std::unique_ptr<LinearStream> stream;
 };
 
-template <typename PIPE_CONTROL>
 void setFlushAllCaches(PIPE_CONTROL &pc) {
     pc.setDcFlushEnable(true);
     pc.setRenderTargetCacheFlushEnable(true);

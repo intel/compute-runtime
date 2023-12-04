@@ -117,8 +117,8 @@ struct BlitEnqueueTests : public ::testing::Test {
     template <typename FamilyType>
     void tearDownT() {}
 
-    template <size_t N>
-    void setMockKernelArgs(std::array<Buffer *, N> buffers) {
+    template <size_t n>
+    void setMockKernelArgs(std::array<Buffer *, n> buffers) {
         for (uint32_t i = 0; i < buffers.size(); i++) {
             mockKernel->kernelInfo.addArgBuffer(i, 0);
         }
@@ -132,8 +132,8 @@ struct BlitEnqueueTests : public ::testing::Test {
         }
     }
 
-    template <size_t N>
-    void setMockKernelArgs(std::array<GraphicsAllocation *, N> allocs) {
+    template <size_t n>
+    void setMockKernelArgs(std::array<GraphicsAllocation *, n> allocs) {
         for (uint32_t i = 0; i < allocs.size(); i++) {
             mockKernel->kernelInfo.addArgBuffer(i, 0);
         }

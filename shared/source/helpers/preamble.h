@@ -62,21 +62,21 @@ struct PreambleHelper {
     static uint32_t getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize);
 };
 
-template <PRODUCT_FAMILY ProductFamily>
+template <PRODUCT_FAMILY productFamily>
 static uint32_t getL3ConfigHelper(bool useSLM);
 
-template <PRODUCT_FAMILY ProductFamily>
+template <PRODUCT_FAMILY productFamily>
 struct L3CNTLREGConfig {
     static const uint32_t valueForSLM;
     static const uint32_t valueForNoSLM;
 };
 
-template <PRODUCT_FAMILY ProductFamily>
+template <PRODUCT_FAMILY productFamily>
 uint32_t getL3ConfigHelper(bool useSLM) {
     if (!useSLM) {
-        return L3CNTLREGConfig<ProductFamily>::valueForNoSLM;
+        return L3CNTLREGConfig<productFamily>::valueForNoSLM;
     }
-    return L3CNTLREGConfig<ProductFamily>::valueForSLM;
+    return L3CNTLREGConfig<productFamily>::valueForSLM;
 }
 
 template <typename GfxFamily>

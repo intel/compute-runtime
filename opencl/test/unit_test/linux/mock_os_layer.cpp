@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
-int (*c_open)(const char *pathname, int flags, ...) = nullptr;
+int (*openFunc)(const char *pathname, int flags, ...) = nullptr;
 int (*openFull)(const char *pathname, int flags, ...) = nullptr;
 
 int fakeFd = 1023;
@@ -81,8 +81,8 @@ int open(const char *pathname, int flags, ...) {
     if (openFull != nullptr) {
         return openFull(pathname, flags);
     }
-    if (c_open == nullptr) {
-        c_open = (int (*)(const char *, int, ...))dlsym(RTLD_NEXT, "open");
+    if (openFunc == nullptr) {
+        openFunc = (int (*)(const char *, int, ...))dlsym(RTLD_NEXT, "open");
     }
 
     if (strncmp("/dev/dri/", pathname, 9) == 0) {
@@ -93,7 +93,7 @@ int open(const char *pathname, int flags, ...) {
         }
     }
 
-    return c_open(pathname, flags);
+    return openFunc(pathname, flags);
 }
 bool failOnOpenDir = false;
 DIR *validDir = reinterpret_cast<DIR *>(0xc001);

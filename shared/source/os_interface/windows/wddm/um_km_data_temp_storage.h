@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-template <size_t StaticSize>
+template <size_t staticSize>
 struct UmKmDataTempStorageBase {
     UmKmDataTempStorageBase() = default;
     UmKmDataTempStorageBase(size_t dynSize) {
@@ -33,12 +33,12 @@ struct UmKmDataTempStorageBase {
     }
 
   protected:
-    static constexpr size_t staticSizeQwordsCount = (StaticSize + sizeof(uint64_t) - 1) / sizeof(uint64_t);
+    static constexpr size_t staticSizeQwordsCount = (staticSize + sizeof(uint64_t) - 1) / sizeof(uint64_t);
     StackVec<uint64_t, staticSizeQwordsCount> storage;
     size_t requestedSize = 0U;
 };
 
-template <typename SrcT, size_t OverestimateMul = 2, typename BaseT = UmKmDataTempStorageBase<sizeof(SrcT) * OverestimateMul>>
+template <typename SrcT, size_t overestimateMul = 2, typename BaseT = UmKmDataTempStorageBase<sizeof(SrcT) * overestimateMul>>
 struct UmKmDataTempStorage : BaseT {
     using BaseT::BaseT;
 };

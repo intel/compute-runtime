@@ -27,8 +27,8 @@ static DestroyableZeUniquePtr<T> zeUniquePtr(T *object) {
     return DestroyableZeUniquePtr<T>{object};
 }
 
-template <class _Ty, class... _Types>
-inline DestroyableZeUniquePtr<_Ty> makeZeUniquePtr(_Types &&...args) {
-    return (DestroyableZeUniquePtr<_Ty>(new _Ty(std::forward<_Types>(args)...)));
+template <class Type, class... Types>
+inline DestroyableZeUniquePtr<Type> makeZeUniquePtr(Types &&...args) {
+    return (DestroyableZeUniquePtr<Type>(new Type(std::forward<Types>(args)...)));
 }
 } // namespace NEO

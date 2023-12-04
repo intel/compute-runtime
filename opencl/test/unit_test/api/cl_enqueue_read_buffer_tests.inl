@@ -125,14 +125,14 @@ TEST_P(EnqueueReadReadBufferTests, GivenNoReadFlagsWhenReadingBufferThenInvalidO
     clReleaseEvent(eventReturned);
 }
 
-static cl_mem_flags read_buffer_flags[] = {
+static cl_mem_flags readBufferFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
 INSTANTIATE_TEST_CASE_P(
     EnqueueReadBufferFlagsTests_Create,
     EnqueueReadReadBufferTests,
-    testing::ValuesIn(read_buffer_flags));
+    testing::ValuesIn(readBufferFlags));
 } // namespace ULT
 
 class EnqueueReadBufferTest : public ApiTests {

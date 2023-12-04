@@ -11,7 +11,7 @@
 #include <atomic>
 
 namespace NEO {
-static std::atomic<int> PerfTicks{0};
+static std::atomic<int> perfTicks{0};
 constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
   public:
@@ -20,12 +20,12 @@ class MockDeviceTime : public DeviceTime {
         if (gpuTimeStampResult) {
             pGpuCpuTime->gpuTimeStamp = *gpuTimeStampResult;
         } else {
-            pGpuCpuTime->gpuTimeStamp = ++PerfTicks;
+            pGpuCpuTime->gpuTimeStamp = ++perfTicks;
         }
         if (cpuTimeResult) {
             pGpuCpuTime->cpuTimeinNS = *cpuTimeResult;
         } else {
-            pGpuCpuTime->cpuTimeinNS = PerfTicks * convertToNs;
+            pGpuCpuTime->cpuTimeinNS = perfTicks * convertToNs;
         }
         return true;
     }
@@ -53,7 +53,7 @@ class MockOSTime : public OSTime {
         if (cpuTimeResult) {
             *timeStamp = *cpuTimeResult;
         } else {
-            *timeStamp = ++PerfTicks * convertToNs;
+            *timeStamp = ++perfTicks * convertToNs;
         }
         return true;
     };

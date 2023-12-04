@@ -50,9 +50,9 @@ inline constexpr ConstStringRef enableFP64GenEmu = "-cl-fp64-gen-emu";
 inline constexpr size_t nullterminateSize = 1U;
 inline constexpr size_t spaceSeparatorSize = 1U;
 
-template <size_t Length>
-constexpr size_t length(const char (&array)[Length]) {
-    return Length;
+template <size_t lengthValue>
+constexpr size_t length(const char (&array)[lengthValue]) {
+    return lengthValue;
 }
 
 constexpr size_t length(ConstStringRef string) {
@@ -111,8 +111,8 @@ inline std::string concatenate(T &&arg, RestT &&...rest) {
     return ret;
 }
 
-template <size_t NumOptions>
-constexpr size_t concatenationLength(const ConstStringRef (&options)[NumOptions]) {
+template <size_t numOptions>
+constexpr size_t concatenationLength(const ConstStringRef (&options)[numOptions]) {
     size_t ret = 0U;
     for (auto &opt : options) {
         ret += spaceSeparatorSize + opt.length();
@@ -135,11 +135,11 @@ inline bool extract(const ConstStringRef &toBeExtracted, ContainerT &options) {
     return true;
 }
 
-template <size_t MaxLength = 256>
+template <size_t maxLength = 256>
 class ConstConcatenation {
   public:
-    template <size_t NumOptions>
-    constexpr ConstConcatenation(const ConstStringRef (&options)[NumOptions]) {
+    template <size_t numOptions>
+    constexpr ConstConcatenation(const ConstStringRef (&options)[numOptions]) {
         size_t i = 0U;
         for (auto &opt : options) {
             for (size_t j = 0U, e = opt.length(); j < e; ++j, ++i) {
@@ -163,17 +163,17 @@ class ConstConcatenation {
     }
 
   protected:
-    char storage[MaxLength + nullterminateSize] = {};
+    char storage[maxLength + nullterminateSize] = {};
     size_t length = 0U;
 };
 
-template <size_t MaxLength>
-bool operator==(const ConstStringRef &lhs, const ConstConcatenation<MaxLength> &rhs) {
+template <size_t maxLength>
+bool operator==(const ConstStringRef &lhs, const ConstConcatenation<maxLength> &rhs) {
     return lhs == rhs.operator ConstStringRef();
 }
 
-template <size_t MaxLength>
-bool operator==(const ConstConcatenation<MaxLength> &lhs, const ConstStringRef &rhs) {
+template <size_t maxLength>
+bool operator==(const ConstConcatenation<maxLength> &lhs, const ConstStringRef &rhs) {
     return rhs == lhs;
 }
 

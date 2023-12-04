@@ -89,9 +89,9 @@ HWTEST2_F(ResourceBarrierAubTest, givenAllocationsWhenEnqueueResourceBarrierCall
     std::string err;
     auto cmdBuffOk = expectCmdBuff<FamilyType>(l3FlushCmdStream, sizeUsed,
                                                std::vector<MatchCmd *>{
-                                                   new MatchAnyCmd(AnyNumber),
+                                                   new MatchAnyCmd(anyNumber),
                                                    new MatchHwCmd<FamilyType, L3_CONTROL>(1),
-                                                   new MatchAnyCmd(AnyNumber),
+                                                   new MatchAnyCmd(anyNumber),
                                                },
                                                &err);
     EXPECT_TRUE(cmdBuffOk) << err;

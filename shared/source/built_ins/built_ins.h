@@ -172,7 +172,7 @@ class BuiltIns {
     std::unordered_map<ContextId, std::pair<std::unique_ptr<SipKernel>, std::once_flag>> perContextSipKernels;
 };
 
-template <EBuiltInOps::Type OpCode>
+template <EBuiltInOps::Type opCode>
 class BuiltInOp;
 
 } // namespace NEO

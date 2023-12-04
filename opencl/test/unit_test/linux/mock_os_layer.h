@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-extern int (*c_open)(const char *pathname, int flags, ...);
+extern int (*openFunc)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
 
 extern int drmOtherRequests(unsigned long int request, ...);

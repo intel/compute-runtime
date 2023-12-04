@@ -117,7 +117,7 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
     std::string err;
 
     std::vector<MatchCmd *> expectedCommands{
-        new MatchAnyCmd(AnyNumber),
+        new MatchAnyCmd(anyNumber),
         new MatchHwCmd<FamilyType, PIPE_CONTROL>(1, Expects{EXPECT_MEMBER(PIPE_CONTROL, getCommandStreamerStallEnable, true), EXPECT_MEMBER(PIPE_CONTROL, getDcFlushEnable, false)}),
         new MatchHwCmd<FamilyType, L3_CONTROL>(1, Expects{EXPECT_MEMBER(L3_CONTROL, getPostSyncOperation, L3_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE)}),
     };
@@ -128,7 +128,7 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
         }
     }
     expectedCommands.push_back(new MatchHwCmd<FamilyType, PIPE_CONTROL>(1, Expects{EXPECT_MEMBER(PIPE_CONTROL, getDcFlushEnable, false)}));
-    expectedCommands.push_back(new MatchAnyCmd(AnyNumber));
+    expectedCommands.push_back(new MatchAnyCmd(anyNumber));
     expectedCommands.push_back(new MatchHwCmd<FamilyType, PIPE_CONTROL>(0));
 
     auto cmdBuffOk = expectCmdBuff<FamilyType>(l3FlushCmdStream, 0, std::move(expectedCommands), &err);
@@ -213,11 +213,11 @@ HWTEST2_F(RangeBasedFlushTest, givenL3ControlWhenPostSyncIsSetThenExpectPostSync
     std::string err;
     auto cmdBuffOk = expectCmdBuff<FamilyType>(l3FlushCmdStream, 0,
                                                std::vector<MatchCmd *>{
-                                                   new MatchAnyCmd(AnyNumber),
+                                                   new MatchAnyCmd(anyNumber),
                                                    new MatchHwCmd<FamilyType, PIPE_CONTROL>(1, Expects{EXPECT_MEMBER(PIPE_CONTROL, getCommandStreamerStallEnable, true), EXPECT_MEMBER(PIPE_CONTROL, getDcFlushEnable, false)}),
                                                    new MatchHwCmd<FamilyType, L3_CONTROL>(1, Expects{EXPECT_MEMBER(L3_CONTROL, getPostSyncOperation, L3_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA)}),
                                                    new MatchHwCmd<FamilyType, PIPE_CONTROL>(1, Expects{EXPECT_MEMBER(PIPE_CONTROL, getDcFlushEnable, false)}), // epilogue
-                                                   new MatchAnyCmd(AnyNumber),
+                                                   new MatchAnyCmd(anyNumber),
                                                    new MatchHwCmd<FamilyType, PIPE_CONTROL>(0),
                                                },
                                                &err);

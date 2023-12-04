@@ -330,12 +330,12 @@ TEST_P(EnqueueReadReadBufferRectTests, GivenNoReadFlagsWhenReadingRectangularReg
     clReleaseEvent(eventReturned);
 }
 
-static cl_mem_flags read_buffer_rect_flags[] = {
+static cl_mem_flags readBufferRectFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
 INSTANTIATE_TEST_CASE_P(
     EnqueueReadBufferRectFlagsTests_Create,
     EnqueueReadReadBufferRectTests,
-    testing::ValuesIn(read_buffer_rect_flags));
+    testing::ValuesIn(readBufferRectFlags));
 } // namespace ULT

@@ -190,14 +190,14 @@ TEST_P(EnqueueMapReadBufferTests, GivenInvalidFlagsWhenMappingBufferForReadingTh
     clReleaseEvent(eventReturned);
 }
 
-static cl_mem_flags NoReadAccessFlags[] = {
+static cl_mem_flags noReadAccessFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
 INSTANTIATE_TEST_CASE_P(
     EnqueueMapBufferFlagsTests_Create,
     EnqueueMapReadBufferTests,
-    testing::ValuesIn(NoReadAccessFlags));
+    testing::ValuesIn(noReadAccessFlags));
 
 typedef EnqueueMapBufferFlagsTest EnqueueMapWriteBufferTests;
 
@@ -219,11 +219,11 @@ TEST_P(EnqueueMapWriteBufferTests, GivenInvalidFlagsWhenMappingBufferForWritingT
     clReleaseEvent(eventReturned);
 }
 
-static cl_mem_flags NoWriteAccessFlags[] = {
+static cl_mem_flags noWriteAccessFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
 INSTANTIATE_TEST_CASE_P(
     EnqueueMapBufferFlagsTests_Create,
     EnqueueMapWriteBufferTests,
-    testing::ValuesIn(NoWriteAccessFlags));
+    testing::ValuesIn(noWriteAccessFlags));

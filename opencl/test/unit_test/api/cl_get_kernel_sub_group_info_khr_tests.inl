@@ -52,7 +52,7 @@ struct TestParam {
     size_t gwsX;
     size_t gwsY;
     size_t gwsZ;
-} KernelSubGroupInfoKhrWGS[] = {
+} kernelSubGroupInfoKhrWGS[] = {
     {0, 0, 0},
     {1, 1, 1},
     {1, 5, 1},
@@ -68,7 +68,7 @@ typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturn
 
 INSTANTIATE_TEST_CASE_P(wgs,
                         KernelSubGroupInfoKhrReturnSizeTest,
-                        ::testing::ValuesIn(KernelSubGroupInfoKhrWGS));
+                        ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
 
 TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGroupSizeThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
@@ -93,7 +93,7 @@ typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturn
 
 INSTANTIATE_TEST_CASE_P(wgs,
                         KernelSubGroupInfoKhrReturnCountTest,
-                        ::testing::ValuesIn(KernelSubGroupInfoKhrWGS));
+                        ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
 
 TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGroupCountThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
@@ -220,7 +220,7 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamNameWhenGettingKernelSubGroup
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-uint32_t /*cl_kernel_sub_group_info_khr*/ KernelSubGroupInfoKhrInputParams[] = {
+uint32_t /*cl_kernel_sub_group_info_khr*/ kernelSubGroupInfoKhrInputParams[] = {
     CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,
     CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR};
 
@@ -228,7 +228,7 @@ typedef KernelSubGroupInfoKhrParamFixture<uint32_t /*cl_kernel_sub_group_info_kh
 
 INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoKhrInputParams,
                         KernelSubGroupInfoKhrInputParamsTest,
-                        ::testing::ValuesIn(KernelSubGroupInfoKhrInputParams));
+                        ::testing::ValuesIn(kernelSubGroupInfoKhrInputParams));
 
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     // work dim == 0

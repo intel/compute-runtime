@@ -30,13 +30,13 @@ struct CmdValidatorWithStaticStorage : CmdValidator {
     }
 };
 
-template <typename CmdT, typename ReturnT, ReturnT (CmdT::*Getter)() const, ReturnT Expected>
-struct GenericCmdValidator : CmdValidatorWithStaticStorage<GenericCmdValidator<CmdT, ReturnT, Getter, Expected>> {
+template <typename CmdT, typename ReturnT, ReturnT (CmdT::*getter)() const, ReturnT expected>
+struct GenericCmdValidator : CmdValidatorWithStaticStorage<GenericCmdValidator<CmdT, ReturnT, getter, expected>> {
     bool operator()(GenCmdList::iterator it, size_t numInSection, const std::string &member, std::string &outFailReason) override {
         auto cmd = genCmdCast<CmdT *>(*it);
         UNRECOVERABLE_IF(cmd == nullptr);
-        if (Expected != (cmd->*Getter)()) {
-            outFailReason = member + " - expected: " + std::to_string(Expected) + ", got: " + std::to_string((cmd->*Getter)());
+        if (expected != (cmd->*getter)()) {
+            outFailReason = member + " - expected: " + std::to_string(expected) + ", got: " + std::to_string((cmd->*getter)());
             return false;
         }
         return true;
@@ -90,12 +90,12 @@ struct MatchCmd {
     bool matchesAny = false;
 };
 
-inline constexpr int32_t AnyNumber = -1;
-inline constexpr int32_t AtLeastOne = -2;
+inline constexpr int32_t anyNumber = -1;
+inline constexpr int32_t atLeastOne = -2;
 inline std::string countToString(int32_t count) {
-    if (count == AnyNumber) {
+    if (count == anyNumber) {
         return "AnyNumber";
-    } else if (count == AtLeastOne) {
+    } else if (count == atLeastOne) {
         return "AtLeastOne";
     } else {
         return std::to_string(count);
@@ -103,7 +103,7 @@ inline std::string countToString(int32_t count) {
 }
 
 inline bool notPreciseNumber(int32_t count) {
-    return (count == AnyNumber) || (count == AtLeastOne);
+    return (count == anyNumber) || (count == atLeastOne);
 }
 
 struct MatchAnyCmd : MatchCmd {
@@ -204,7 +204,7 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
     while (it != end) {
         if (currentMatcher < expectedCmdBuffMatchers.size()) {
             auto currentMatcherExpectedCount = expectedCmdBuffMatchers[currentMatcher]->getExpectedCount();
-            if (expectedCmdBuffMatchers[currentMatcher]->getMatchesAny() && ((currentMatcherExpectedCount == AnyNumber) || ((currentMatcherExpectedCount == AtLeastOne) && (currentMatcherCount > 0)))) {
+            if (expectedCmdBuffMatchers[currentMatcher]->getMatchesAny() && ((currentMatcherExpectedCount == anyNumber) || ((currentMatcherExpectedCount == atLeastOne) && (currentMatcherCount > 0)))) {
                 if (expectedCmdBuffMatchers.size() > currentMatcher + 1) {
                     // eat as many as possible but proceed to next matcher when possible
                     if (expectedCmdBuffMatchers[currentMatcher + 1]->matches(it)) {
@@ -214,7 +214,7 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
                 }
             } else if ((notPreciseNumber(expectedCmdBuffMatchers[currentMatcher]->getExpectedCount())) && (false == expectedCmdBuffMatchers[currentMatcher]->matches(it))) {
                 // proceed to next matcher if not matched
-                if ((expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == AtLeastOne) && (currentMatcherCount < 1)) {
+                if ((expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == atLeastOne) && (currentMatcherCount < 1)) {
                     failed = true;
                     failReason = "Unmatched cmd#" + std::to_string(cmdNum) + ":" + HardwareParse::getCommandName<FamilyType>(*it) + " - expected " + std::string(expectedCmdBuffMatchers[currentMatcher]->getName()) + "(" + countToString(expectedCmdBuffMatchers[currentMatcher]->getExpectedCount()) + " - " + std::to_string(currentMatcherCount) + ") after : " + matchedCommandsString();
                     break;
@@ -271,7 +271,7 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
     }
 
     if (failed == false) {
-        while ((currentMatcher < expectedCmdBuffMatchers.size()) && ((expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == 0) || (expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == AnyNumber))) {
+        while ((currentMatcher < expectedCmdBuffMatchers.size()) && ((expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == 0) || (expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == anyNumber))) {
             ++currentMatcher;
             currentMatcherCount = 0;
         }
@@ -281,7 +281,7 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
         } else if (currentMatcher + 1 == expectedCmdBuffMatchers.size()) {
             // last matcher
             auto currentMatcherExpectedCount = expectedCmdBuffMatchers[currentMatcher]->getExpectedCount();
-            if ((currentMatcherExpectedCount == AtLeastOne) && (currentMatcherCount < 1)) {
+            if ((currentMatcherExpectedCount == atLeastOne) && (currentMatcherCount < 1)) {
                 failReason = "Unexpected command buffer end at cmd#" + std::to_string(cmdNum) + " - expected " + expectedCmdBuffMatchers[currentMatcher]->getName() + "(" + countToString(currentMatcherExpectedCount) + " - " + std::to_string(currentMatcherCount) + ") after : " + matchedCommandsString();
                 failed = true;
             }

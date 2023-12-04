@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #pragma once
 
-template <size_t X, size_t Y, size_t Z>
+template <size_t x, size_t y, size_t z>
 struct StatickSize3 {
     operator const size_t *() {
-        static const size_t v[] = {X, Y, Z};
+        static const size_t v[] = {z, y, z};
         return v;
     }
 };

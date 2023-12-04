@@ -19,10 +19,9 @@ namespace NEO {
 
 namespace ClDeviceInfoTable {
 
-template <cl_device_info clDeviceInfoParam, typename _Type, _Type ClDeviceInfo::*val>
+template <cl_device_info clDeviceInfoParam, typename Type, Type ClDeviceInfo::*val>
 struct ClMapBase {
     enum { param = clDeviceInfoParam };
-    typedef _Type Type;
     enum { size = sizeof(Type) };
 
     static const Type &getValue(const NEO::ClDevice &clDevice) {
@@ -30,10 +29,9 @@ struct ClMapBase {
     }
 };
 
-template <cl_device_info clDeviceInfoParam, typename _Type, _Type DeviceInfo::*val>
+template <cl_device_info clDeviceInfoParam, typename Type, Type DeviceInfo::*val>
 struct MapBase {
     enum { param = clDeviceInfoParam };
-    typedef _Type Type;
     enum { size = sizeof(Type) };
 
     static const Type &getValue(const NEO::ClDevice &clDevice) {

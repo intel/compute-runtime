@@ -84,7 +84,7 @@ class AILConfiguration {
 
 extern const std::set<std::string_view> applicationsContextSyncFlag;
 
-template <PRODUCT_FAMILY Product>
+template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
   public:
     static std::unique_ptr<AILConfiguration> create() {

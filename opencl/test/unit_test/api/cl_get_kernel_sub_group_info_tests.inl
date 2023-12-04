@@ -67,13 +67,13 @@ struct KernelSubGroupInfoParamFixture : KernelSubGroupInfoFixture,
     }
 };
 
-static size_t WorkDimensions[] = {1, 2, 3};
+static size_t workDimensions[] = {1, 2, 3};
 
 static struct WorkSizeParam {
     size_t x;
     size_t y;
     size_t z;
-} KernelSubGroupInfoWGS[] = {
+} kernelSubGroupInfoWGS[] = {
     {0, 0, 0},
     {1, 1, 1},
     {1, 5, 1},
@@ -90,8 +90,8 @@ typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> Kernel
 INSTANTIATE_TEST_CASE_P(wgs,
                         KernelSubGroupInfoReturnSizeTest,
                         ::testing::Combine(
-                            ::testing::ValuesIn(KernelSubGroupInfoWGS),
-                            ::testing::ValuesIn(WorkDimensions)));
+                            ::testing::ValuesIn(kernelSubGroupInfoWGS),
+                            ::testing::ValuesIn(workDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGroupSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
@@ -132,8 +132,8 @@ typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> Kernel
 INSTANTIATE_TEST_CASE_P(wgs,
                         KernelSubGroupInfoReturnCountTest,
                         ::testing::Combine(
-                            ::testing::ValuesIn(KernelSubGroupInfoWGS),
-                            ::testing::ValuesIn(WorkDimensions)));
+                            ::testing::ValuesIn(kernelSubGroupInfoWGS),
+                            ::testing::ValuesIn(workDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupCountThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
@@ -181,15 +181,15 @@ TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupC
     }
 }
 
-static size_t SubGroupsNumbers[] = {0, 1, 10, 12, 21, 33, 67, 99};
+static size_t subGroupsNumbers[] = {0, 1, 10, 12, 21, 33, 67, 99};
 
 typedef KernelSubGroupInfoParamFixture<std::tuple<size_t, size_t>> KernelSubGroupInfoReturnLocalSizeTest;
 
 INSTANTIATE_TEST_CASE_P(sgn,
                         KernelSubGroupInfoReturnLocalSizeTest,
                         ::testing::Combine(
-                            ::testing::ValuesIn(SubGroupsNumbers),
-                            ::testing::ValuesIn(WorkDimensions)));
+                            ::testing::ValuesIn(subGroupsNumbers),
+                            ::testing::ValuesIn(workDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocalSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
@@ -372,7 +372,7 @@ TEST_F(KernelSubGroupInfoTest, GivenInvalidParamNameWhenGettingSubGroupInfoThenI
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-uint32_t /*cl_kernel_sub_group_info*/ KernelSubGroupInfoInputParams[] = {
+uint32_t /*cl_kernel_sub_group_info*/ kernelSubGroupInfoInputParams[] = {
     CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
     CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
     CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
@@ -384,7 +384,7 @@ typedef KernelSubGroupInfoParamFixture<uint32_t /*cl_kernel_sub_group_info*/> Ke
 
 INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoInputParams,
                         KernelSubGroupInfoInputParamsTest,
-                        ::testing::ValuesIn(KernelSubGroupInfoInputParams));
+                        ::testing::ValuesIn(kernelSubGroupInfoInputParams));
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGettingKenrelSubGroupInfoThenInvalidOperationErrorIsReturned) {
     bool requireOpenCL21 = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||

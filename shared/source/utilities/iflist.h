@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-template <typename NodeObjectType, bool Atomic>
+template <typename NodeObjectType, bool atomic>
 struct PtrType {
 };
 
@@ -29,8 +29,8 @@ struct PtrType<NodeObjectType, false> {
     using type = NodeObjectType *;
 };
 
-template <typename NodeObjectType, bool Atomic>
-using PtrType_t = typename PtrType<NodeObjectType, Atomic>::type;
+template <typename NodeObjectType, bool atomic>
+using PtrType_t = typename PtrType<NodeObjectType, atomic>::type;
 
 template <typename NodeObjectType>
 struct IFNode {

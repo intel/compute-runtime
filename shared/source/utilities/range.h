@@ -30,9 +30,9 @@ struct Range {
         : Range(&*container.begin(), container.size()) {
     }
 
-    template <typename T, size_t S>
-    Range(T (&base)[S])
-        : Range(&base[0], S) {
+    template <typename T, size_t size>
+    Range(T (&base)[size])
+        : Range(&base[0], size) {
     }
     Range &operator=(const Range &) = delete;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,8 @@ static ReleaseableObjectPtr<T> clUniquePtr(T *object) {
     return ReleaseableObjectPtr<T>{object};
 }
 
-template <class _Ty, class... _Types>
-inline ReleaseableObjectPtr<_Ty> makeReleaseable(_Types &&...args) {
-    return (ReleaseableObjectPtr<_Ty>(new _Ty(std::forward<_Types>(args)...)));
+template <class Type, class... Types>
+inline ReleaseableObjectPtr<Type> makeReleaseable(Types &&...args) {
+    return (ReleaseableObjectPtr<Type>(new Type(std::forward<Types>(args)...)));
 }
 } // namespace NEO

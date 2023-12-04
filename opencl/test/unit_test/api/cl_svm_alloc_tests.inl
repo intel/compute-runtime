@@ -93,7 +93,7 @@ TEST_P(ClSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAlloc
     }
 };
 
-static cl_mem_flags SVMAllocValidFlags[] = {
+static cl_mem_flags svmAllocValidFlags[] = {
     0,
     CL_MEM_READ_WRITE,
     CL_MEM_WRITE_ONLY,
@@ -110,14 +110,14 @@ static cl_mem_flags SVMAllocValidFlags[] = {
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlags,
     ClSVMAllocValidFlagsTests,
-    testing::ValuesIn(SVMAllocValidFlags));
+    testing::ValuesIn(svmAllocValidFlags));
 
 using ClSVMAllocFtrFlagsTests = ClSvmAllocTemplateTests;
 
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlagsFtrFlags,
     ClSVMAllocFtrFlagsTests,
-    testing::ValuesIn(SVMAllocValidFlags));
+    testing::ValuesIn(svmAllocValidFlags));
 
 TEST_P(ClSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAllocated) {
     HardwareInfo *pHwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
@@ -161,7 +161,7 @@ TEST_P(ClSVMAllocInvalidFlagsTests, GivenInvalidFlagsWhenAllocatingSvmThenSvmIsN
     EXPECT_EQ(nullptr, svmPtr);
 };
 
-cl_mem_flags SVMAllocInvalidFlags[] = {
+cl_mem_flags svmAllocInvalidFlags[] = {
     CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY,
     CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY,
     CL_MEM_SVM_ATOMICS,
@@ -170,7 +170,7 @@ cl_mem_flags SVMAllocInvalidFlags[] = {
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlags,
     ClSVMAllocInvalidFlagsTests,
-    testing::ValuesIn(SVMAllocInvalidFlags));
+    testing::ValuesIn(svmAllocInvalidFlags));
 
 TEST_F(ClSVMAllocTests, GivenNullContextWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
