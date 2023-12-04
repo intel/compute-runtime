@@ -162,8 +162,8 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
         currentPos += currOffset;
 
         auto ownerName = reinterpret_cast<const char *>(ptrOffset(intelGTNote, sizeof(Elf::ElfNoteSection)));
-        bool isValidGTNote = Elf::IntelGTNoteOwnerName.size() + 1 == nameSz;
-        isValidGTNote &= Elf::IntelGTNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
+        bool isValidGTNote = Elf::intelGTNoteOwnerName.size() + 1 == nameSz;
+        isValidGTNote &= Elf::intelGTNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
         if (false == isValidGTNote) {
             if (0u == nameSz) {
                 outWarning.append("DeviceBinaryFormat::Zebin : Empty owner name.\n");

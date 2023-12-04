@@ -16,16 +16,16 @@
 
 namespace HostSideTracing {
 
-#define TRACING_SET_ENABLED_BIT(state) ((state) | (HostSideTracing::TRACING_STATE_ENABLED_BIT))
-#define TRACING_UNSET_ENABLED_BIT(state) ((state) & (~HostSideTracing::TRACING_STATE_ENABLED_BIT))
-#define TRACING_GET_ENABLED_BIT(state) ((state) & (HostSideTracing::TRACING_STATE_ENABLED_BIT))
+#define TRACING_SET_ENABLED_BIT(state) ((state) | (HostSideTracing::tracingStateEnabledBit))
+#define TRACING_UNSET_ENABLED_BIT(state) ((state) & (~HostSideTracing::tracingStateEnabledBit))
+#define TRACING_GET_ENABLED_BIT(state) ((state) & (HostSideTracing::tracingStateEnabledBit))
 
-#define TRACING_SET_LOCKED_BIT(state) ((state) | (HostSideTracing::TRACING_STATE_LOCKED_BIT))
-#define TRACING_UNSET_LOCKED_BIT(state) ((state) & (~HostSideTracing::TRACING_STATE_LOCKED_BIT))
-#define TRACING_GET_LOCKED_BIT(state) ((state) & (HostSideTracing::TRACING_STATE_LOCKED_BIT))
+#define TRACING_SET_LOCKED_BIT(state) ((state) | (HostSideTracing::tracingStateLockedBit))
+#define TRACING_UNSET_LOCKED_BIT(state) ((state) & (~HostSideTracing::tracingStateLockedBit))
+#define TRACING_GET_LOCKED_BIT(state) ((state) & (HostSideTracing::tracingStateLockedBit))
 
-#define TRACING_ZERO_CLIENT_COUNTER(state) ((state) & (HostSideTracing::TRACING_STATE_ENABLED_BIT | HostSideTracing::TRACING_STATE_LOCKED_BIT))
-#define TRACING_GET_CLIENT_COUNTER(state) ((state) & (~(HostSideTracing::TRACING_STATE_ENABLED_BIT | HostSideTracing::TRACING_STATE_LOCKED_BIT)))
+#define TRACING_ZERO_CLIENT_COUNTER(state) ((state) & (HostSideTracing::tracingStateEnabledBit | HostSideTracing::tracingStateLockedBit))
+#define TRACING_GET_CLIENT_COUNTER(state) ((state) & (~(HostSideTracing::tracingStateEnabledBit | HostSideTracing::tracingStateLockedBit)))
 
 inline thread_local bool tracingInProgress = false;
 
@@ -58,13 +58,13 @@ typedef enum _tracing_notify_state_t {
     TRACING_NOTIFY_STATE_EXIT_CALLED = 2,
 } tracing_notify_state_t;
 
-inline constexpr size_t TRACING_MAX_HANDLE_COUNT = 16;
+inline constexpr size_t tracingMaxHandleCount = 16;
 
-inline constexpr uint32_t TRACING_STATE_ENABLED_BIT = 0x80000000u;
-inline constexpr uint32_t TRACING_STATE_LOCKED_BIT = 0x40000000u;
+inline constexpr uint32_t tracingStateEnabledBit = 0x80000000u;
+inline constexpr uint32_t tracingStateLockedBit = 0x40000000u;
 
 extern std::atomic<uint32_t> tracingState;
-extern TracingHandle *tracingHandle[TRACING_MAX_HANDLE_COUNT];
+extern TracingHandle *tracingHandle[tracingMaxHandleCount];
 extern std::atomic<uint32_t> tracingCorrelationId;
 
 bool addTracingClient();
@@ -117,7 +117,7 @@ class ClBuildProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clBuildProgram)) {
@@ -137,7 +137,7 @@ class ClBuildProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clBuildProgram)) {
@@ -157,7 +157,7 @@ class ClBuildProgramTracer {
   private:
     cl_params_clBuildProgram params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -180,7 +180,7 @@ class ClCloneKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCloneKernel)) {
@@ -200,7 +200,7 @@ class ClCloneKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCloneKernel)) {
@@ -220,7 +220,7 @@ class ClCloneKernelTracer {
   private:
     cl_params_clCloneKernel params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -257,7 +257,7 @@ class ClCompileProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCompileProgram)) {
@@ -277,7 +277,7 @@ class ClCompileProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCompileProgram)) {
@@ -297,7 +297,7 @@ class ClCompileProgramTracer {
   private:
     cl_params_clCompileProgram params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -326,7 +326,7 @@ class ClCreateBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateBuffer)) {
@@ -346,7 +346,7 @@ class ClCreateBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateBuffer)) {
@@ -366,7 +366,7 @@ class ClCreateBufferTracer {
   private:
     cl_params_clCreateBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -393,7 +393,7 @@ class ClCreateCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueue)) {
@@ -413,7 +413,7 @@ class ClCreateCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueue)) {
@@ -433,7 +433,7 @@ class ClCreateCommandQueueTracer {
   private:
     cl_params_clCreateCommandQueue params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -460,7 +460,7 @@ class ClCreateCommandQueueWithPropertiesTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueueWithProperties)) {
@@ -480,7 +480,7 @@ class ClCreateCommandQueueWithPropertiesTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueueWithProperties)) {
@@ -500,7 +500,7 @@ class ClCreateCommandQueueWithPropertiesTracer {
   private:
     cl_params_clCreateCommandQueueWithProperties params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -531,7 +531,7 @@ class ClCreateContextTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContext)) {
@@ -551,7 +551,7 @@ class ClCreateContextTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContext)) {
@@ -571,7 +571,7 @@ class ClCreateContextTracer {
   private:
     cl_params_clCreateContext params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -600,7 +600,7 @@ class ClCreateContextFromTypeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContextFromType)) {
@@ -620,7 +620,7 @@ class ClCreateContextFromTypeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateContextFromType)) {
@@ -640,7 +640,7 @@ class ClCreateContextFromTypeTracer {
   private:
     cl_params_clCreateContextFromType params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -671,7 +671,7 @@ class ClCreateImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage)) {
@@ -691,7 +691,7 @@ class ClCreateImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage)) {
@@ -711,7 +711,7 @@ class ClCreateImageTracer {
   private:
     cl_params_clCreateImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -746,7 +746,7 @@ class ClCreateImage2DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage2D)) {
@@ -766,7 +766,7 @@ class ClCreateImage2DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage2D)) {
@@ -786,7 +786,7 @@ class ClCreateImage2DTracer {
   private:
     cl_params_clCreateImage2D params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -825,7 +825,7 @@ class ClCreateImage3DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage3D)) {
@@ -845,7 +845,7 @@ class ClCreateImage3DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateImage3D)) {
@@ -865,7 +865,7 @@ class ClCreateImage3DTracer {
   private:
     cl_params_clCreateImage3D params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -890,7 +890,7 @@ class ClCreateKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernel)) {
@@ -910,7 +910,7 @@ class ClCreateKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernel)) {
@@ -930,7 +930,7 @@ class ClCreateKernelTracer {
   private:
     cl_params_clCreateKernel params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -957,7 +957,7 @@ class ClCreateKernelsInProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernelsInProgram)) {
@@ -977,7 +977,7 @@ class ClCreateKernelsInProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateKernelsInProgram)) {
@@ -997,7 +997,7 @@ class ClCreateKernelsInProgramTracer {
   private:
     cl_params_clCreateKernelsInProgram params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1026,7 +1026,7 @@ class ClCreateSubDevicesTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSubDevices)) {
@@ -1046,7 +1046,7 @@ class ClCreateSubDevicesTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSubDevices)) {
@@ -1066,7 +1066,7 @@ class ClCreateSubDevicesTracer {
   private:
     cl_params_clCreateSubDevices params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1097,7 +1097,7 @@ class ClCreatePipeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreatePipe)) {
@@ -1117,7 +1117,7 @@ class ClCreatePipeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreatePipe)) {
@@ -1137,7 +1137,7 @@ class ClCreatePipeTracer {
   private:
     cl_params_clCreatePipe params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1170,7 +1170,7 @@ class ClCreateProgramWithBinaryTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBinary)) {
@@ -1190,7 +1190,7 @@ class ClCreateProgramWithBinaryTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBinary)) {
@@ -1210,7 +1210,7 @@ class ClCreateProgramWithBinaryTracer {
   private:
     cl_params_clCreateProgramWithBinary params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1239,7 +1239,7 @@ class ClCreateProgramWithBuiltInKernelsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBuiltInKernels)) {
@@ -1259,7 +1259,7 @@ class ClCreateProgramWithBuiltInKernelsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithBuiltInKernels)) {
@@ -1279,7 +1279,7 @@ class ClCreateProgramWithBuiltInKernelsTracer {
   private:
     cl_params_clCreateProgramWithBuiltInKernels params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1306,7 +1306,7 @@ class ClCreateProgramWithIlTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithIL)) {
@@ -1326,7 +1326,7 @@ class ClCreateProgramWithIlTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithIL)) {
@@ -1346,7 +1346,7 @@ class ClCreateProgramWithIlTracer {
   private:
     cl_params_clCreateProgramWithIL params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1375,7 +1375,7 @@ class ClCreateProgramWithSourceTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithSource)) {
@@ -1395,7 +1395,7 @@ class ClCreateProgramWithSourceTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithSource)) {
@@ -1415,7 +1415,7 @@ class ClCreateProgramWithSourceTracer {
   private:
     cl_params_clCreateProgramWithSource params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1444,7 +1444,7 @@ class ClCreateSamplerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSampler)) {
@@ -1464,7 +1464,7 @@ class ClCreateSamplerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSampler)) {
@@ -1484,7 +1484,7 @@ class ClCreateSamplerTracer {
   private:
     cl_params_clCreateSampler params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1509,7 +1509,7 @@ class ClCreateSamplerWithPropertiesTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSamplerWithProperties)) {
@@ -1529,7 +1529,7 @@ class ClCreateSamplerWithPropertiesTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSamplerWithProperties)) {
@@ -1549,7 +1549,7 @@ class ClCreateSamplerWithPropertiesTracer {
   private:
     cl_params_clCreateSamplerWithProperties params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1578,7 +1578,7 @@ class ClCreateSubBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSubBuffer)) {
@@ -1598,7 +1598,7 @@ class ClCreateSubBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateSubBuffer)) {
@@ -1618,7 +1618,7 @@ class ClCreateSubBufferTracer {
   private:
     cl_params_clCreateSubBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1641,7 +1641,7 @@ class ClCreateUserEventTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateUserEvent)) {
@@ -1661,7 +1661,7 @@ class ClCreateUserEventTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateUserEvent)) {
@@ -1681,7 +1681,7 @@ class ClCreateUserEventTracer {
   private:
     cl_params_clCreateUserEvent params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1702,7 +1702,7 @@ class ClEnqueueBarrierTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrier)) {
@@ -1722,7 +1722,7 @@ class ClEnqueueBarrierTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrier)) {
@@ -1742,7 +1742,7 @@ class ClEnqueueBarrierTracer {
   private:
     cl_params_clEnqueueBarrier params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1769,7 +1769,7 @@ class ClEnqueueBarrierWithWaitListTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrierWithWaitList)) {
@@ -1789,7 +1789,7 @@ class ClEnqueueBarrierWithWaitListTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueBarrierWithWaitList)) {
@@ -1809,7 +1809,7 @@ class ClEnqueueBarrierWithWaitListTracer {
   private:
     cl_params_clEnqueueBarrierWithWaitList params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1846,7 +1846,7 @@ class ClEnqueueCopyBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBuffer)) {
@@ -1866,7 +1866,7 @@ class ClEnqueueCopyBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBuffer)) {
@@ -1886,7 +1886,7 @@ class ClEnqueueCopyBufferTracer {
   private:
     cl_params_clEnqueueCopyBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -1931,7 +1931,7 @@ class ClEnqueueCopyBufferRectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferRect)) {
@@ -1951,7 +1951,7 @@ class ClEnqueueCopyBufferRectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferRect)) {
@@ -1971,7 +1971,7 @@ class ClEnqueueCopyBufferRectTracer {
   private:
     cl_params_clEnqueueCopyBufferRect params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2008,7 +2008,7 @@ class ClEnqueueCopyBufferToImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferToImage)) {
@@ -2028,7 +2028,7 @@ class ClEnqueueCopyBufferToImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyBufferToImage)) {
@@ -2048,7 +2048,7 @@ class ClEnqueueCopyBufferToImageTracer {
   private:
     cl_params_clEnqueueCopyBufferToImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2085,7 +2085,7 @@ class ClEnqueueCopyImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImage)) {
@@ -2105,7 +2105,7 @@ class ClEnqueueCopyImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImage)) {
@@ -2125,7 +2125,7 @@ class ClEnqueueCopyImageTracer {
   private:
     cl_params_clEnqueueCopyImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2162,7 +2162,7 @@ class ClEnqueueCopyImageToBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImageToBuffer)) {
@@ -2182,7 +2182,7 @@ class ClEnqueueCopyImageToBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueCopyImageToBuffer)) {
@@ -2202,7 +2202,7 @@ class ClEnqueueCopyImageToBufferTracer {
   private:
     cl_params_clEnqueueCopyImageToBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2239,7 +2239,7 @@ class ClEnqueueFillBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillBuffer)) {
@@ -2259,7 +2259,7 @@ class ClEnqueueFillBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillBuffer)) {
@@ -2279,7 +2279,7 @@ class ClEnqueueFillBufferTracer {
   private:
     cl_params_clEnqueueFillBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2314,7 +2314,7 @@ class ClEnqueueFillImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillImage)) {
@@ -2334,7 +2334,7 @@ class ClEnqueueFillImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueFillImage)) {
@@ -2354,7 +2354,7 @@ class ClEnqueueFillImageTracer {
   private:
     cl_params_clEnqueueFillImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2393,7 +2393,7 @@ class ClEnqueueMapBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapBuffer)) {
@@ -2413,7 +2413,7 @@ class ClEnqueueMapBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapBuffer)) {
@@ -2433,7 +2433,7 @@ class ClEnqueueMapBufferTracer {
   private:
     cl_params_clEnqueueMapBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2476,7 +2476,7 @@ class ClEnqueueMapImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapImage)) {
@@ -2496,7 +2496,7 @@ class ClEnqueueMapImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMapImage)) {
@@ -2516,7 +2516,7 @@ class ClEnqueueMapImageTracer {
   private:
     cl_params_clEnqueueMapImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2539,7 +2539,7 @@ class ClEnqueueMarkerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarker)) {
@@ -2559,7 +2559,7 @@ class ClEnqueueMarkerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarker)) {
@@ -2579,7 +2579,7 @@ class ClEnqueueMarkerTracer {
   private:
     cl_params_clEnqueueMarker params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2606,7 +2606,7 @@ class ClEnqueueMarkerWithWaitListTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarkerWithWaitList)) {
@@ -2626,7 +2626,7 @@ class ClEnqueueMarkerWithWaitListTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMarkerWithWaitList)) {
@@ -2646,7 +2646,7 @@ class ClEnqueueMarkerWithWaitListTracer {
   private:
     cl_params_clEnqueueMarkerWithWaitList params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2679,7 +2679,7 @@ class ClEnqueueMigrateMemObjectsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMigrateMemObjects)) {
@@ -2699,7 +2699,7 @@ class ClEnqueueMigrateMemObjectsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMigrateMemObjects)) {
@@ -2719,7 +2719,7 @@ class ClEnqueueMigrateMemObjectsTracer {
   private:
     cl_params_clEnqueueMigrateMemObjects params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2756,7 +2756,7 @@ class ClEnqueueNdRangeKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNDRangeKernel)) {
@@ -2776,7 +2776,7 @@ class ClEnqueueNdRangeKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNDRangeKernel)) {
@@ -2796,7 +2796,7 @@ class ClEnqueueNdRangeKernelTracer {
   private:
     cl_params_clEnqueueNDRangeKernel params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2835,7 +2835,7 @@ class ClEnqueueNativeKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNativeKernel)) {
@@ -2855,7 +2855,7 @@ class ClEnqueueNativeKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNativeKernel)) {
@@ -2875,7 +2875,7 @@ class ClEnqueueNativeKernelTracer {
   private:
     cl_params_clEnqueueNativeKernel params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2912,7 +2912,7 @@ class ClEnqueueReadBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBuffer)) {
@@ -2932,7 +2932,7 @@ class ClEnqueueReadBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBuffer)) {
@@ -2952,7 +2952,7 @@ class ClEnqueueReadBufferTracer {
   private:
     cl_params_clEnqueueReadBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -2999,7 +2999,7 @@ class ClEnqueueReadBufferRectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBufferRect)) {
@@ -3019,7 +3019,7 @@ class ClEnqueueReadBufferRectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadBufferRect)) {
@@ -3039,7 +3039,7 @@ class ClEnqueueReadBufferRectTracer {
   private:
     cl_params_clEnqueueReadBufferRect params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3080,7 +3080,7 @@ class ClEnqueueReadImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadImage)) {
@@ -3100,7 +3100,7 @@ class ClEnqueueReadImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReadImage)) {
@@ -3120,7 +3120,7 @@ class ClEnqueueReadImageTracer {
   private:
     cl_params_clEnqueueReadImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3155,7 +3155,7 @@ class ClEnqueueSvmFreeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMFree)) {
@@ -3175,7 +3175,7 @@ class ClEnqueueSvmFreeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMFree)) {
@@ -3195,7 +3195,7 @@ class ClEnqueueSvmFreeTracer {
   private:
     cl_params_clEnqueueSVMFree params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3230,7 +3230,7 @@ class ClEnqueueSvmMapTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMap)) {
@@ -3250,7 +3250,7 @@ class ClEnqueueSvmMapTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMap)) {
@@ -3270,7 +3270,7 @@ class ClEnqueueSvmMapTracer {
   private:
     cl_params_clEnqueueSVMMap params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3305,7 +3305,7 @@ class ClEnqueueSvmMemFillTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemFill)) {
@@ -3325,7 +3325,7 @@ class ClEnqueueSvmMemFillTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemFill)) {
@@ -3345,7 +3345,7 @@ class ClEnqueueSvmMemFillTracer {
   private:
     cl_params_clEnqueueSVMMemFill params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3380,7 +3380,7 @@ class ClEnqueueSvmMemcpyTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemcpy)) {
@@ -3400,7 +3400,7 @@ class ClEnqueueSvmMemcpyTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMemcpy)) {
@@ -3420,7 +3420,7 @@ class ClEnqueueSvmMemcpyTracer {
   private:
     cl_params_clEnqueueSVMMemcpy params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3455,7 +3455,7 @@ class ClEnqueueSvmMigrateMemTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMigrateMem)) {
@@ -3475,7 +3475,7 @@ class ClEnqueueSvmMigrateMemTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMMigrateMem)) {
@@ -3495,7 +3495,7 @@ class ClEnqueueSvmMigrateMemTracer {
   private:
     cl_params_clEnqueueSVMMigrateMem params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3524,7 +3524,7 @@ class ClEnqueueSvmUnmapTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMUnmap)) {
@@ -3544,7 +3544,7 @@ class ClEnqueueSvmUnmapTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueSVMUnmap)) {
@@ -3564,7 +3564,7 @@ class ClEnqueueSvmUnmapTracer {
   private:
     cl_params_clEnqueueSVMUnmap params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3593,7 +3593,7 @@ class ClEnqueueTaskTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueTask)) {
@@ -3613,7 +3613,7 @@ class ClEnqueueTaskTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueTask)) {
@@ -3633,7 +3633,7 @@ class ClEnqueueTaskTracer {
   private:
     cl_params_clEnqueueTask params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3664,7 +3664,7 @@ class ClEnqueueUnmapMemObjectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueUnmapMemObject)) {
@@ -3684,7 +3684,7 @@ class ClEnqueueUnmapMemObjectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueUnmapMemObject)) {
@@ -3704,7 +3704,7 @@ class ClEnqueueUnmapMemObjectTracer {
   private:
     cl_params_clEnqueueUnmapMemObject params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3729,7 +3729,7 @@ class ClEnqueueWaitForEventsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWaitForEvents)) {
@@ -3749,7 +3749,7 @@ class ClEnqueueWaitForEventsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWaitForEvents)) {
@@ -3769,7 +3769,7 @@ class ClEnqueueWaitForEventsTracer {
   private:
     cl_params_clEnqueueWaitForEvents params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3806,7 +3806,7 @@ class ClEnqueueWriteBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBuffer)) {
@@ -3826,7 +3826,7 @@ class ClEnqueueWriteBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBuffer)) {
@@ -3846,7 +3846,7 @@ class ClEnqueueWriteBufferTracer {
   private:
     cl_params_clEnqueueWriteBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3893,7 +3893,7 @@ class ClEnqueueWriteBufferRectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBufferRect)) {
@@ -3913,7 +3913,7 @@ class ClEnqueueWriteBufferRectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteBufferRect)) {
@@ -3933,7 +3933,7 @@ class ClEnqueueWriteBufferRectTracer {
   private:
     cl_params_clEnqueueWriteBufferRect params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -3974,7 +3974,7 @@ class ClEnqueueWriteImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteImage)) {
@@ -3994,7 +3994,7 @@ class ClEnqueueWriteImageTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueWriteImage)) {
@@ -4014,7 +4014,7 @@ class ClEnqueueWriteImageTracer {
   private:
     cl_params_clEnqueueWriteImage params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4035,7 +4035,7 @@ class ClFinishTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFinish)) {
@@ -4055,7 +4055,7 @@ class ClFinishTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFinish)) {
@@ -4075,7 +4075,7 @@ class ClFinishTracer {
   private:
     cl_params_clFinish params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4096,7 +4096,7 @@ class ClFlushTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFlush)) {
@@ -4116,7 +4116,7 @@ class ClFlushTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clFlush)) {
@@ -4136,7 +4136,7 @@ class ClFlushTracer {
   private:
     cl_params_clFlush params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4165,7 +4165,7 @@ class ClGetCommandQueueInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetCommandQueueInfo)) {
@@ -4185,7 +4185,7 @@ class ClGetCommandQueueInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetCommandQueueInfo)) {
@@ -4205,7 +4205,7 @@ class ClGetCommandQueueInfoTracer {
   private:
     cl_params_clGetCommandQueueInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4234,7 +4234,7 @@ class ClGetContextInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetContextInfo)) {
@@ -4254,7 +4254,7 @@ class ClGetContextInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetContextInfo)) {
@@ -4274,7 +4274,7 @@ class ClGetContextInfoTracer {
   private:
     cl_params_clGetContextInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4299,7 +4299,7 @@ class ClGetDeviceAndHostTimerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceAndHostTimer)) {
@@ -4319,7 +4319,7 @@ class ClGetDeviceAndHostTimerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceAndHostTimer)) {
@@ -4339,7 +4339,7 @@ class ClGetDeviceAndHostTimerTracer {
   private:
     cl_params_clGetDeviceAndHostTimer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4368,7 +4368,7 @@ class ClGetDeviceIDsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceIDs)) {
@@ -4388,7 +4388,7 @@ class ClGetDeviceIDsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceIDs)) {
@@ -4408,7 +4408,7 @@ class ClGetDeviceIDsTracer {
   private:
     cl_params_clGetDeviceIDs params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4437,7 +4437,7 @@ class ClGetDeviceInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceInfo)) {
@@ -4457,7 +4457,7 @@ class ClGetDeviceInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceInfo)) {
@@ -4477,7 +4477,7 @@ class ClGetDeviceInfoTracer {
   private:
     cl_params_clGetDeviceInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4506,7 +4506,7 @@ class ClGetEventInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventInfo)) {
@@ -4526,7 +4526,7 @@ class ClGetEventInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventInfo)) {
@@ -4546,7 +4546,7 @@ class ClGetEventInfoTracer {
   private:
     cl_params_clGetEventInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4575,7 +4575,7 @@ class ClGetEventProfilingInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventProfilingInfo)) {
@@ -4595,7 +4595,7 @@ class ClGetEventProfilingInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetEventProfilingInfo)) {
@@ -4615,7 +4615,7 @@ class ClGetEventProfilingInfoTracer {
   private:
     cl_params_clGetEventProfilingInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4636,7 +4636,7 @@ class ClGetExtensionFunctionAddressTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddress)) {
@@ -4656,7 +4656,7 @@ class ClGetExtensionFunctionAddressTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddress)) {
@@ -4676,7 +4676,7 @@ class ClGetExtensionFunctionAddressTracer {
   private:
     cl_params_clGetExtensionFunctionAddress params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4699,7 +4699,7 @@ class ClGetExtensionFunctionAddressForPlatformTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddressForPlatform)) {
@@ -4719,7 +4719,7 @@ class ClGetExtensionFunctionAddressForPlatformTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetExtensionFunctionAddressForPlatform)) {
@@ -4739,7 +4739,7 @@ class ClGetExtensionFunctionAddressForPlatformTracer {
   private:
     cl_params_clGetExtensionFunctionAddressForPlatform params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4762,7 +4762,7 @@ class ClGetHostTimerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetHostTimer)) {
@@ -4782,7 +4782,7 @@ class ClGetHostTimerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetHostTimer)) {
@@ -4802,7 +4802,7 @@ class ClGetHostTimerTracer {
   private:
     cl_params_clGetHostTimer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4831,7 +4831,7 @@ class ClGetImageInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetImageInfo)) {
@@ -4851,7 +4851,7 @@ class ClGetImageInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetImageInfo)) {
@@ -4871,7 +4871,7 @@ class ClGetImageInfoTracer {
   private:
     cl_params_clGetImageInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4902,7 +4902,7 @@ class ClGetKernelArgInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelArgInfo)) {
@@ -4922,7 +4922,7 @@ class ClGetKernelArgInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelArgInfo)) {
@@ -4942,7 +4942,7 @@ class ClGetKernelArgInfoTracer {
   private:
     cl_params_clGetKernelArgInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -4971,7 +4971,7 @@ class ClGetKernelInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelInfo)) {
@@ -4991,7 +4991,7 @@ class ClGetKernelInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelInfo)) {
@@ -5011,7 +5011,7 @@ class ClGetKernelInfoTracer {
   private:
     cl_params_clGetKernelInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5046,7 +5046,7 @@ class ClGetKernelSubGroupInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSubGroupInfo)) {
@@ -5066,7 +5066,7 @@ class ClGetKernelSubGroupInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSubGroupInfo)) {
@@ -5086,7 +5086,7 @@ class ClGetKernelSubGroupInfoTracer {
   private:
     cl_params_clGetKernelSubGroupInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5117,7 +5117,7 @@ class ClGetKernelWorkGroupInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelWorkGroupInfo)) {
@@ -5137,7 +5137,7 @@ class ClGetKernelWorkGroupInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetKernelWorkGroupInfo)) {
@@ -5157,7 +5157,7 @@ class ClGetKernelWorkGroupInfoTracer {
   private:
     cl_params_clGetKernelWorkGroupInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5186,7 +5186,7 @@ class ClGetMemObjectInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetMemObjectInfo)) {
@@ -5206,7 +5206,7 @@ class ClGetMemObjectInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetMemObjectInfo)) {
@@ -5226,7 +5226,7 @@ class ClGetMemObjectInfoTracer {
   private:
     cl_params_clGetMemObjectInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5255,7 +5255,7 @@ class ClGetPipeInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPipeInfo)) {
@@ -5275,7 +5275,7 @@ class ClGetPipeInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPipeInfo)) {
@@ -5295,7 +5295,7 @@ class ClGetPipeInfoTracer {
   private:
     cl_params_clGetPipeInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5320,7 +5320,7 @@ class ClGetPlatformIDsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformIDs)) {
@@ -5340,7 +5340,7 @@ class ClGetPlatformIDsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformIDs)) {
@@ -5360,7 +5360,7 @@ class ClGetPlatformIDsTracer {
   private:
     cl_params_clGetPlatformIDs params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5389,7 +5389,7 @@ class ClGetPlatformInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformInfo)) {
@@ -5409,7 +5409,7 @@ class ClGetPlatformInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetPlatformInfo)) {
@@ -5429,7 +5429,7 @@ class ClGetPlatformInfoTracer {
   private:
     cl_params_clGetPlatformInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5460,7 +5460,7 @@ class ClGetProgramBuildInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramBuildInfo)) {
@@ -5480,7 +5480,7 @@ class ClGetProgramBuildInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramBuildInfo)) {
@@ -5500,7 +5500,7 @@ class ClGetProgramBuildInfoTracer {
   private:
     cl_params_clGetProgramBuildInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5529,7 +5529,7 @@ class ClGetProgramInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramInfo)) {
@@ -5549,7 +5549,7 @@ class ClGetProgramInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetProgramInfo)) {
@@ -5569,7 +5569,7 @@ class ClGetProgramInfoTracer {
   private:
     cl_params_clGetProgramInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5598,7 +5598,7 @@ class ClGetSamplerInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSamplerInfo)) {
@@ -5618,7 +5618,7 @@ class ClGetSamplerInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSamplerInfo)) {
@@ -5638,7 +5638,7 @@ class ClGetSamplerInfoTracer {
   private:
     cl_params_clGetSamplerInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5669,7 +5669,7 @@ class ClGetSupportedImageFormatsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSupportedImageFormats)) {
@@ -5689,7 +5689,7 @@ class ClGetSupportedImageFormatsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetSupportedImageFormats)) {
@@ -5709,7 +5709,7 @@ class ClGetSupportedImageFormatsTracer {
   private:
     cl_params_clGetSupportedImageFormats params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5746,7 +5746,7 @@ class ClLinkProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clLinkProgram)) {
@@ -5766,7 +5766,7 @@ class ClLinkProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clLinkProgram)) {
@@ -5786,7 +5786,7 @@ class ClLinkProgramTracer {
   private:
     cl_params_clLinkProgram params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5807,7 +5807,7 @@ class ClReleaseCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseCommandQueue)) {
@@ -5827,7 +5827,7 @@ class ClReleaseCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseCommandQueue)) {
@@ -5847,7 +5847,7 @@ class ClReleaseCommandQueueTracer {
   private:
     cl_params_clReleaseCommandQueue params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5868,7 +5868,7 @@ class ClReleaseContextTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseContext)) {
@@ -5888,7 +5888,7 @@ class ClReleaseContextTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseContext)) {
@@ -5908,7 +5908,7 @@ class ClReleaseContextTracer {
   private:
     cl_params_clReleaseContext params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5929,7 +5929,7 @@ class ClReleaseDeviceTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseDevice)) {
@@ -5949,7 +5949,7 @@ class ClReleaseDeviceTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseDevice)) {
@@ -5969,7 +5969,7 @@ class ClReleaseDeviceTracer {
   private:
     cl_params_clReleaseDevice params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -5990,7 +5990,7 @@ class ClReleaseEventTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseEvent)) {
@@ -6010,7 +6010,7 @@ class ClReleaseEventTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseEvent)) {
@@ -6030,7 +6030,7 @@ class ClReleaseEventTracer {
   private:
     cl_params_clReleaseEvent params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6051,7 +6051,7 @@ class ClReleaseKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseKernel)) {
@@ -6071,7 +6071,7 @@ class ClReleaseKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseKernel)) {
@@ -6091,7 +6091,7 @@ class ClReleaseKernelTracer {
   private:
     cl_params_clReleaseKernel params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6112,7 +6112,7 @@ class ClReleaseMemObjectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseMemObject)) {
@@ -6132,7 +6132,7 @@ class ClReleaseMemObjectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseMemObject)) {
@@ -6152,7 +6152,7 @@ class ClReleaseMemObjectTracer {
   private:
     cl_params_clReleaseMemObject params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6173,7 +6173,7 @@ class ClReleaseProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseProgram)) {
@@ -6193,7 +6193,7 @@ class ClReleaseProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseProgram)) {
@@ -6213,7 +6213,7 @@ class ClReleaseProgramTracer {
   private:
     cl_params_clReleaseProgram params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6234,7 +6234,7 @@ class ClReleaseSamplerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseSampler)) {
@@ -6254,7 +6254,7 @@ class ClReleaseSamplerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clReleaseSampler)) {
@@ -6274,7 +6274,7 @@ class ClReleaseSamplerTracer {
   private:
     cl_params_clReleaseSampler params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6295,7 +6295,7 @@ class ClRetainCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainCommandQueue)) {
@@ -6315,7 +6315,7 @@ class ClRetainCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainCommandQueue)) {
@@ -6335,7 +6335,7 @@ class ClRetainCommandQueueTracer {
   private:
     cl_params_clRetainCommandQueue params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6356,7 +6356,7 @@ class ClRetainContextTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainContext)) {
@@ -6376,7 +6376,7 @@ class ClRetainContextTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainContext)) {
@@ -6396,7 +6396,7 @@ class ClRetainContextTracer {
   private:
     cl_params_clRetainContext params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6417,7 +6417,7 @@ class ClRetainDeviceTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainDevice)) {
@@ -6437,7 +6437,7 @@ class ClRetainDeviceTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainDevice)) {
@@ -6457,7 +6457,7 @@ class ClRetainDeviceTracer {
   private:
     cl_params_clRetainDevice params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6478,7 +6478,7 @@ class ClRetainEventTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainEvent)) {
@@ -6498,7 +6498,7 @@ class ClRetainEventTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainEvent)) {
@@ -6518,7 +6518,7 @@ class ClRetainEventTracer {
   private:
     cl_params_clRetainEvent params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6539,7 +6539,7 @@ class ClRetainKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainKernel)) {
@@ -6559,7 +6559,7 @@ class ClRetainKernelTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainKernel)) {
@@ -6579,7 +6579,7 @@ class ClRetainKernelTracer {
   private:
     cl_params_clRetainKernel params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6600,7 +6600,7 @@ class ClRetainMemObjectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainMemObject)) {
@@ -6620,7 +6620,7 @@ class ClRetainMemObjectTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainMemObject)) {
@@ -6640,7 +6640,7 @@ class ClRetainMemObjectTracer {
   private:
     cl_params_clRetainMemObject params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6661,7 +6661,7 @@ class ClRetainProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainProgram)) {
@@ -6681,7 +6681,7 @@ class ClRetainProgramTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainProgram)) {
@@ -6701,7 +6701,7 @@ class ClRetainProgramTracer {
   private:
     cl_params_clRetainProgram params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6722,7 +6722,7 @@ class ClRetainSamplerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainSampler)) {
@@ -6742,7 +6742,7 @@ class ClRetainSamplerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clRetainSampler)) {
@@ -6762,7 +6762,7 @@ class ClRetainSamplerTracer {
   private:
     cl_params_clRetainSampler params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6789,7 +6789,7 @@ class ClSvmAllocTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMAlloc)) {
@@ -6809,7 +6809,7 @@ class ClSvmAllocTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMAlloc)) {
@@ -6829,7 +6829,7 @@ class ClSvmAllocTracer {
   private:
     cl_params_clSVMAlloc params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6852,7 +6852,7 @@ class ClSvmFreeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMFree)) {
@@ -6872,7 +6872,7 @@ class ClSvmFreeTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSVMFree)) {
@@ -6892,7 +6892,7 @@ class ClSvmFreeTracer {
   private:
     cl_params_clSVMFree params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6919,7 +6919,7 @@ class ClSetCommandQueuePropertyTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetCommandQueueProperty)) {
@@ -6939,7 +6939,7 @@ class ClSetCommandQueuePropertyTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetCommandQueueProperty)) {
@@ -6959,7 +6959,7 @@ class ClSetCommandQueuePropertyTracer {
   private:
     cl_params_clSetCommandQueueProperty params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -6984,7 +6984,7 @@ class ClSetDefaultDeviceCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetDefaultDeviceCommandQueue)) {
@@ -7004,7 +7004,7 @@ class ClSetDefaultDeviceCommandQueueTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetDefaultDeviceCommandQueue)) {
@@ -7024,7 +7024,7 @@ class ClSetDefaultDeviceCommandQueueTracer {
   private:
     cl_params_clSetDefaultDeviceCommandQueue params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7051,7 +7051,7 @@ class ClSetEventCallbackTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetEventCallback)) {
@@ -7071,7 +7071,7 @@ class ClSetEventCallbackTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetEventCallback)) {
@@ -7091,7 +7091,7 @@ class ClSetEventCallbackTracer {
   private:
     cl_params_clSetEventCallback params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7118,7 +7118,7 @@ class ClSetKernelArgTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArg)) {
@@ -7138,7 +7138,7 @@ class ClSetKernelArgTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArg)) {
@@ -7158,7 +7158,7 @@ class ClSetKernelArgTracer {
   private:
     cl_params_clSetKernelArg params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7183,7 +7183,7 @@ class ClSetKernelArgSvmPointerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArgSVMPointer)) {
@@ -7203,7 +7203,7 @@ class ClSetKernelArgSvmPointerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArgSVMPointer)) {
@@ -7223,7 +7223,7 @@ class ClSetKernelArgSvmPointerTracer {
   private:
     cl_params_clSetKernelArgSVMPointer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7250,7 +7250,7 @@ class ClSetKernelExecInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelExecInfo)) {
@@ -7270,7 +7270,7 @@ class ClSetKernelExecInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetKernelExecInfo)) {
@@ -7290,7 +7290,7 @@ class ClSetKernelExecInfoTracer {
   private:
     cl_params_clSetKernelExecInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7315,7 +7315,7 @@ class ClSetMemObjectDestructorCallbackTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetMemObjectDestructorCallback)) {
@@ -7335,7 +7335,7 @@ class ClSetMemObjectDestructorCallbackTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetMemObjectDestructorCallback)) {
@@ -7355,7 +7355,7 @@ class ClSetMemObjectDestructorCallbackTracer {
   private:
     cl_params_clSetMemObjectDestructorCallback params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7378,7 +7378,7 @@ class ClSetUserEventStatusTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetUserEventStatus)) {
@@ -7398,7 +7398,7 @@ class ClSetUserEventStatusTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clSetUserEventStatus)) {
@@ -7418,7 +7418,7 @@ class ClSetUserEventStatusTracer {
   private:
     cl_params_clSetUserEventStatus params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7437,7 +7437,7 @@ class ClUnloadCompilerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadCompiler)) {
@@ -7457,7 +7457,7 @@ class ClUnloadCompilerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadCompiler)) {
@@ -7476,7 +7476,7 @@ class ClUnloadCompilerTracer {
 
   private:
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7497,7 +7497,7 @@ class ClUnloadPlatformCompilerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadPlatformCompiler)) {
@@ -7517,7 +7517,7 @@ class ClUnloadPlatformCompilerTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clUnloadPlatformCompiler)) {
@@ -7537,7 +7537,7 @@ class ClUnloadPlatformCompilerTracer {
   private:
     cl_params_clUnloadPlatformCompiler params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7560,7 +7560,7 @@ class ClWaitForEventsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clWaitForEvents)) {
@@ -7580,7 +7580,7 @@ class ClWaitForEventsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clWaitForEvents)) {
@@ -7600,7 +7600,7 @@ class ClWaitForEventsTracer {
   private:
     cl_params_clWaitForEvents params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7627,7 +7627,7 @@ class ClCreateFromGlBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLBuffer)) {
@@ -7647,7 +7647,7 @@ class ClCreateFromGlBufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLBuffer)) {
@@ -7667,7 +7667,7 @@ class ClCreateFromGlBufferTracer {
   private:
     cl_params_clCreateFromGLBuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7694,7 +7694,7 @@ class ClCreateFromGlRenderbufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLRenderbuffer)) {
@@ -7714,7 +7714,7 @@ class ClCreateFromGlRenderbufferTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLRenderbuffer)) {
@@ -7734,7 +7734,7 @@ class ClCreateFromGlRenderbufferTracer {
   private:
     cl_params_clCreateFromGLRenderbuffer params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7765,7 +7765,7 @@ class ClCreateFromGlTextureTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture)) {
@@ -7785,7 +7785,7 @@ class ClCreateFromGlTextureTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture)) {
@@ -7805,7 +7805,7 @@ class ClCreateFromGlTextureTracer {
   private:
     cl_params_clCreateFromGLTexture params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7836,7 +7836,7 @@ class ClCreateFromGlTexture2DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture2D)) {
@@ -7856,7 +7856,7 @@ class ClCreateFromGlTexture2DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture2D)) {
@@ -7876,7 +7876,7 @@ class ClCreateFromGlTexture2DTracer {
   private:
     cl_params_clCreateFromGLTexture2D params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7907,7 +7907,7 @@ class ClCreateFromGlTexture3DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture3D)) {
@@ -7927,7 +7927,7 @@ class ClCreateFromGlTexture3DTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clCreateFromGLTexture3D)) {
@@ -7947,7 +7947,7 @@ class ClCreateFromGlTexture3DTracer {
   private:
     cl_params_clCreateFromGLTexture3D params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -7978,7 +7978,7 @@ class ClEnqueueAcquireGlObjectsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueAcquireGLObjects)) {
@@ -7998,7 +7998,7 @@ class ClEnqueueAcquireGlObjectsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueAcquireGLObjects)) {
@@ -8018,7 +8018,7 @@ class ClEnqueueAcquireGlObjectsTracer {
   private:
     cl_params_clEnqueueAcquireGLObjects params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -8049,7 +8049,7 @@ class ClEnqueueReleaseGlObjectsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReleaseGLObjects)) {
@@ -8069,7 +8069,7 @@ class ClEnqueueReleaseGlObjectsTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReleaseGLObjects)) {
@@ -8089,7 +8089,7 @@ class ClEnqueueReleaseGlObjectsTracer {
   private:
     cl_params_clEnqueueReleaseGLObjects params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -8114,7 +8114,7 @@ class ClGetGlObjectInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLObjectInfo)) {
@@ -8134,7 +8134,7 @@ class ClGetGlObjectInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLObjectInfo)) {
@@ -8154,7 +8154,7 @@ class ClGetGlObjectInfoTracer {
   private:
     cl_params_clGetGLObjectInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
@@ -8183,7 +8183,7 @@ class ClGetGlTextureInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLTextureInfo)) {
@@ -8203,7 +8203,7 @@ class ClGetGlTextureInfoTracer {
 
         size_t i = 0;
         DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
-        while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
             TracingHandle *handle = tracingHandle[i];
             DEBUG_BREAK_IF(handle == nullptr);
             if (handle->getTracingPoint(CL_FUNCTION_clGetGLTextureInfo)) {
@@ -8223,7 +8223,7 @@ class ClGetGlTextureInfoTracer {
   private:
     cl_params_clGetGLTextureInfo params{};
     cl_callback_data data{};
-    uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
+    uint64_t correlationData[tracingMaxHandleCount];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 

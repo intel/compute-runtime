@@ -5443,7 +5443,7 @@ class IntelGTNotesFixture : public ::testing::Test {
     void appendIntelGTSectionData(std::vector<NEO::Elf::ElfNoteSection> &elfNoteSections, uint8_t *const intelGTSectionData, std::vector<uint8_t *> &descData, size_t spaceAvailable) {
         size_t idx = 0u, offset = 0u;
         for (auto &elfNoteSection : elfNoteSections) {
-            appendSingleIntelGTSectionData(elfNoteSection, intelGTSectionData, descData.at(idx), Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), spaceAvailable, offset);
+            appendSingleIntelGTSectionData(elfNoteSection, intelGTSectionData, descData.at(idx), Zebin::Elf::intelGTNoteOwnerName.str().c_str(), spaceAvailable, offset);
             spaceAvailable -= (sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize);
             idx++;
         }
@@ -5712,7 +5712,7 @@ TEST_F(IntelGTNotesFixture, givenAotConfigInIntelGTNotesSectionWhenValidatingTar
 
     auto sectionDataSize = sizeof(NEO::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), productConfigData, NEO::Zebin::Elf::IntelGTNoteOwnerName.data(), sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), productConfigData, NEO::Zebin::Elf::intelGTNoteOwnerName.data(), sectionDataSize);
     zebin.appendSection(NEO::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
@@ -5917,7 +5917,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndI
     auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.nameSize + elfNoteSection.descSize;
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
 
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), nullptr, Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), nullptr, Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
     zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
@@ -5942,7 +5942,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSe
     auto incorrectSectionDataSize = sectionDataSize + 0x5; // add rubbish data at the end - may cause OOB access.
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(incorrectSectionDataSize);
 
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), platformData, Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), incorrectSectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), platformData, Zebin::Elf::intelGTNoteOwnerName.str().c_str(), incorrectSectionDataSize);
     zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), incorrectSectionDataSize));
 
     std::string outErrReason, outWarning;
@@ -5971,7 +5971,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidZeInfoVersionInI
     auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.nameSize + alignUp(elfNoteSection.descSize, 4);
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
     appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), reinterpret_cast<const uint8_t *>(decoderVersion.c_str()),
-                                   Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), sectionDataSize);
+                                   Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
     zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
@@ -5994,7 +5994,7 @@ TEST_F(IntelGTNotesFixture, GivenNotNullTerminatedVersioningStringWhenGettingInt
     uint8_t zeInfoVersionNotTerminated[4] = {0x31, 0x2e, 0x31, 0x35}; // version "1.15 not null terminated"
     auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize;
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), zeInfoVersionNotTerminated, Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), zeInfoVersionNotTerminated, Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
     zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
@@ -6019,7 +6019,7 @@ TEST_F(IntelGTNotesFixture, GivenInvalidVersioningWhenValidatingTargetDeviceThen
     uint8_t incorrectZeInfoVersion[4] = {0x2e, 0x31, 0x31, 0x0}; // version ".11\0"
     auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize;
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), incorrectZeInfoVersion, Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), incorrectZeInfoVersion, Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
     zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;
@@ -6043,7 +6043,7 @@ TEST_F(IntelGTNotesFixture, GivenIncompatibleVersioningWhenValidatingTargetDevic
     uint8_t incompatibleZeInfo[4] = {0x32, 0x2e, 0x3f, 0x0}; // version "2.9\0"
     auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.descSize + elfNoteSection.nameSize;
     auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
-    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), incompatibleZeInfo, Zebin::Elf::IntelGTNoteOwnerName.str().c_str(), sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), incompatibleZeInfo, Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
     zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
 
     std::string outErrReason, outWarning;

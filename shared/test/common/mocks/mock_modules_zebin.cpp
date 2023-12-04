@@ -268,7 +268,7 @@ size_t writeElfNote(ArrayRef<uint8_t> dst, ArrayRef<const uint8_t> desc, NEO::Co
 }
 
 size_t writeIntelGTNote(ArrayRef<uint8_t> dst, NEO::Zebin::Elf::IntelGTSectionType sectionType, ArrayRef<const uint8_t> desc) {
-    return writeElfNote(dst, desc, NEO::Zebin::Elf::IntelGTNoteOwnerName, static_cast<uint32_t>(sectionType));
+    return writeElfNote(dst, desc, NEO::Zebin::Elf::intelGTNoteOwnerName, static_cast<uint32_t>(sectionType));
 }
 
 size_t writeIntelGTVersionNote(ArrayRef<uint8_t> dst, NEO::ConstStringRef version) {

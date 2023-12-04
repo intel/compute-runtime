@@ -400,7 +400,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
     for (int i = 0; i < 3; i++) {
         memcpy_s(sectionDataPointer, sizeof(NEO::Elf::ElfNoteSection), &elfNoteSections.at(i), sizeof(NEO::Elf::ElfNoteSection));
         sectionDataPointer = ptrOffset(sectionDataPointer, sizeof(NEO::Elf::ElfNoteSection));
-        strcpy_s(reinterpret_cast<char *>(sectionDataPointer), elfNoteSections.at(i).nameSize, NEO::Zebin::Elf::IntelGTNoteOwnerName.str().c_str());
+        strcpy_s(reinterpret_cast<char *>(sectionDataPointer), elfNoteSections.at(i).nameSize, NEO::Zebin::Elf::intelGTNoteOwnerName.str().c_str());
         sectionDataPointer = ptrOffset(sectionDataPointer, elfNoteSections.at(i).nameSize);
         memcpy_s(sectionDataPointer, elfNoteSections.at(i).descSize, descDatas.at(i), elfNoteSections.at(i).descSize);
         sectionDataPointer = ptrOffset(sectionDataPointer, elfNoteSections.at(i).descSize);

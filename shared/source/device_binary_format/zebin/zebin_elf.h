@@ -58,7 +58,7 @@ inline constexpr ConstStringRef vIsaAsmPrefix = ".visaasm.";
 inline constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Program";
 } // namespace SectionNames
 
-inline constexpr ConstStringRef IntelGTNoteOwnerName = "IntelGT";
+inline constexpr ConstStringRef intelGTNoteOwnerName = "IntelGT";
 enum IntelGTSectionType : uint32_t {
     ProductFamily = 1,
     GfxCore = 2,

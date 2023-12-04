@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ namespace HostSideTracing {
 
 // [XYZZ..Z] - { X - enabled/disabled bit, Y - locked/unlocked bit, ZZ..Z - client count bits }
 std::atomic<uint32_t> tracingState(0);
-TracingHandle *tracingHandle[TRACING_MAX_HANDLE_COUNT] = {nullptr};
+TracingHandle *tracingHandle[tracingMaxHandleCount] = {nullptr};
 std::atomic<uint32_t> tracingCorrelationId(0);
 
 bool addTracingClient() {
@@ -62,7 +62,7 @@ static void lockTracingState() {
 static void unlockTracingState() {
     DEBUG_BREAK_IF(!TRACING_GET_LOCKED_BIT(tracingState.load(std::memory_order_acquire)));
     DEBUG_BREAK_IF(TRACING_GET_CLIENT_COUNTER(tracingState.load(std::memory_order_acquire)) > 0);
-    tracingState.fetch_and(~TRACING_STATE_LOCKED_BIT, std::memory_order_acq_rel);
+    tracingState.fetch_and(~tracingStateLockedBit, std::memory_order_acq_rel);
 }
 
 } // namespace HostSideTracing
@@ -125,7 +125,7 @@ cl_int CL_API_CALL clEnableTracingINTEL(cl_tracing_handle handle) {
 
     size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
-    while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+    while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
             unlockTracingState();
             return CL_INVALID_VALUE;
@@ -133,7 +133,7 @@ cl_int CL_API_CALL clEnableTracingINTEL(cl_tracing_handle handle) {
         ++i;
     }
 
-    if (i == TRACING_MAX_HANDLE_COUNT) {
+    if (i == tracingMaxHandleCount) {
         unlockTracingState();
         return CL_OUT_OF_RESOURCES;
     }
@@ -141,7 +141,7 @@ cl_int CL_API_CALL clEnableTracingINTEL(cl_tracing_handle handle) {
     DEBUG_BREAK_IF(tracingHandle[i] != nullptr);
     tracingHandle[i] = handle->handle;
     if (i == 0) {
-        tracingState.fetch_or(TRACING_STATE_ENABLED_BIT, std::memory_order_acq_rel);
+        tracingState.fetch_or(tracingStateEnabledBit, std::memory_order_acq_rel);
     }
 
     unlockTracingState();
@@ -156,17 +156,17 @@ cl_int CL_API_CALL clDisableTracingINTEL(cl_tracing_handle handle) {
     lockTracingState();
 
     size_t size = 0;
-    while (size < TRACING_MAX_HANDLE_COUNT && tracingHandle[size] != nullptr) {
+    while (size < tracingMaxHandleCount && tracingHandle[size] != nullptr) {
         ++size;
     }
 
     size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
-    while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+    while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
             if (size == 1) {
                 DEBUG_BREAK_IF(i != 0);
-                tracingState.fetch_and(~TRACING_STATE_ENABLED_BIT, std::memory_order_acq_rel);
+                tracingState.fetch_and(~tracingStateEnabledBit, std::memory_order_acq_rel);
                 tracingHandle[i] = nullptr;
             } else {
                 tracingHandle[i] = tracingHandle[size - 1];
@@ -193,7 +193,7 @@ cl_int CL_API_CALL clGetTracingStateINTEL(cl_tracing_handle handle, cl_bool *ena
 
     size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
-    while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
+    while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
             *enable = CL_TRUE;
             break;
