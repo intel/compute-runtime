@@ -2850,11 +2850,11 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::globalTimestampLdw);
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, globalOffset));
     EXPECT_NE(cmdList.end(), ++itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
 }
 
@@ -2885,11 +2885,11 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
     auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::globalTimestampLdw);
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, globalOffset));
     EXPECT_NE(cmdList.end(), ++itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
     EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
 }
 

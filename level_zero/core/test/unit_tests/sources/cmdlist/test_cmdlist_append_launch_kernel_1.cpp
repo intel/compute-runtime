@@ -882,7 +882,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     ASSERT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getSourceRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::globalTimestampLdw, cmd->getSourceRegisterAddress());
     }
     itor++;
 
@@ -890,7 +890,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     ASSERT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getSourceRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, cmd->getSourceRegisterAddress());
     }
     itor++;
 
@@ -911,7 +911,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     ASSERT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getSourceRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::globalTimestampLdw, cmd->getSourceRegisterAddress());
     }
     itor++;
 
@@ -919,7 +919,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     EXPECT_NE(cmdList.end(), itor);
     {
         auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getSourceRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, cmd->getSourceRegisterAddress());
     }
     itor++;
 

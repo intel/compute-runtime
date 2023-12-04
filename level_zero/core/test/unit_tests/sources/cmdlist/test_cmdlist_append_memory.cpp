@@ -697,11 +697,11 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyT
     auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::globalTimestampLdw);
     itor++;
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
 
     itor = find<MI_FLUSH_DW *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -709,11 +709,11 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyT
     itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::globalTimestampLdw);
     itor++;
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
     itor++;
     EXPECT_EQ(cmdList.end(), itor);
 }
@@ -766,14 +766,14 @@ HWTEST2_F(AppendMemoryCopy,
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            begin,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                            false);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            secondWalker,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                            false);
 }
 
@@ -824,14 +824,14 @@ HWTEST2_F(AppendMemoryCopy,
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            begin,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                            false);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            thirdWalker,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                            false);
 }
 

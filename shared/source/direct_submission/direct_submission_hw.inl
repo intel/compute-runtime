@@ -128,21 +128,21 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
 
-        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, CS_GPR_R0, CS_GPR_R9);
-        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, CS_GPR_R0 + 4, CS_GPR_R9 + 4);
+        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR9);
+        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR9 + 4);
 
-        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(schedulerCmdStream, 0, CS_GPR_R1, 0, CompareOperation::Equal, true, false);
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(schedulerCmdStream, 0, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, true, false);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2, 0, true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2 + 4, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR2, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR2 + 4, 0, true);
 
         uint64_t removeTaskVa = schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::removeTaskSectionStart;
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL), true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(removeTaskVa >> 32), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR3 + 4, static_cast<uint32_t>(removeTaskVa >> 32), true);
 
         uint64_t walkersLoopConditionCheckVa = schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::tasksListLoopCheckSectionStart;
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL), true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32), true);
     }
 
     // 2. Dispatch task section (loop start)
@@ -151,11 +151,11 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
 
         EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R6, 8, true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R6 + 4, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR6, 8, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR6 + 4, 0, true);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
 
         EncodeAluHelper<GfxFamily, 10> aluHelper;
         aluHelper.setMocs(miMathMocs);
@@ -184,16 +184,16 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         EncodeMathMMIO<GfxFamily>::encodeDecrement(schedulerCmdStream, AluRegisters::R_1);
         EncodeMathMMIO<GfxFamily>::encodeDecrement(schedulerCmdStream, AluRegisters::R_2);
 
-        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, CS_GPR_R0, CS_GPR_R9);
-        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, CS_GPR_R0 + 4, CS_GPR_R9 + 4);
+        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR9);
+        EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR9 + 4);
 
-        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(schedulerCmdStream, 0, CS_GPR_R1, 0, CompareOperation::Equal, true, false);
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(schedulerCmdStream, 0, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, true, false);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R7, 8, true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R7 + 4, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR7, 8, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR7 + 4, 0, true);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
 
         EncodeAluHelper<GfxFamily, 14> aluHelper;
         aluHelper.setMocs(miMathMocs);
@@ -228,8 +228,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
             loopSectionStartAddress,
             AluRegisters::R_1, AluRegisters::R_2, CompareOperation::NotEqual, false);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2, 0, true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2 + 4, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR2, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR2 + 4, 0, true);
     }
 
     // 5. Drain request section
@@ -250,20 +250,20 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
             schedulerCmdStream,
             loopSectionStartAddress,
-            CS_GPR_R1, currentRelaxedOrderingQueueSize, CompareOperation::GreaterOrEqual, false, false);
+            RegisterOffsets::csGprR1, currentRelaxedOrderingQueueSize, CompareOperation::GreaterOrEqual, false, false);
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
             schedulerCmdStream,
             loopSectionStartAddress,
-            CS_GPR_R5, 1, CompareOperation::Equal, false, false);
+            RegisterOffsets::csGprR5, 1, CompareOperation::Equal, false, false);
     }
 
     // 6. Scheduler loop check section
     {
         UNRECOVERABLE_IF(schedulerCmdStream.getUsed() != RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::schedulerLoopCheckSectionStart);
 
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionSize), true);
-        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R10 + 4, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionSize), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10 + 4, 0, true);
 
         EncodeAluHelper<GfxFamily, 4> aluHelper;
         aluHelper.setMocs(miMathMocs);
@@ -273,7 +273,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_0, AluRegisters::R_ACCU);
         aluHelper.copyToCmdStream(schedulerCmdStream);
 
-        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalRegMemBatchBufferStart(schedulerCmdStream, 0, semaphoreGpuVa, CS_GPR_R11, CompareOperation::GreaterOrEqual, true);
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalRegMemBatchBufferStart(schedulerCmdStream, 0, semaphoreGpuVa, RegisterOffsets::csGprR11, CompareOperation::GreaterOrEqual, true);
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerCmdStream, schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart,
                                                                         false, false, false);
@@ -292,9 +292,9 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingScheduler
 
     uint64_t semaphoreSectionVa = schedulerStartVa + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionStart;
 
-    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R11, value, true);
-    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R9, static_cast<uint32_t>(semaphoreSectionVa & 0xFFFF'FFFFULL), true);
-    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R9 + 4, static_cast<uint32_t>(semaphoreSectionVa >> 32), true);
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR11, value, true);
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR9, static_cast<uint32_t>(semaphoreSectionVa & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR9 + 4, static_cast<uint32_t>(semaphoreSectionVa >> 32), true);
 
     schedulerCmdStream.getSpace(sizeof(typename GfxFamily::MI_BATCH_BUFFER_START)); // skip patching
 
@@ -795,12 +795,12 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingQueueStal
     LinearStream bbStartStream(ringCommandStream.getSpace(EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart(false)),
                                EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart(false));
 
-    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 1, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, RegisterOffsets::csGprR5, 1, true);
     dispatchSemaphoreSection(currentQueueWorkCount);
 
     // patch conditional bb_start with current GPU address
     EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(bbStartStream, ringCommandStream.getCurrentGpuAddressPosition(),
-                                                                                      CS_GPR_R1, 0, CompareOperation::Equal, false, false);
+                                                                                      RegisterOffsets::csGprR1, 0, CompareOperation::Equal, false, false);
 
     relaxedOrderingSchedulerRequired = false;
 }
@@ -813,23 +813,23 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatchRelaxedOrdering
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr) {
-    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
-    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
+    LriHelper<GfxFamily>::program(&cmdStream, RegisterOffsets::csGprR4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&cmdStream, RegisterOffsets::csGprR4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
 
     uint64_t returnPtrAfterTaskStoreSection = returnPtr;
 
     returnPtrAfterTaskStoreSection += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
 
-    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3, static_cast<uint32_t>(returnPtrAfterTaskStoreSection & 0xFFFF'FFFFULL), true);
-    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtrAfterTaskStoreSection >> 32), true);
+    LriHelper<GfxFamily>::program(&cmdStream, RegisterOffsets::csGprR3, static_cast<uint32_t>(returnPtrAfterTaskStoreSection & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&cmdStream, RegisterOffsets::csGprR3 + 4, static_cast<uint32_t>(returnPtrAfterTaskStoreSection >> 32), true);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::initRelaxedOrderingRegisters() {
-    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R1, 0, true);
-    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R1 + 4, 0, true);
-    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 0, true);
-    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5 + 4, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, RegisterOffsets::csGprR1, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, RegisterOffsets::csGprR1 + 4, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, RegisterOffsets::csGprR5, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, RegisterOffsets::csGprR5 + 4, 0, true);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -842,16 +842,16 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
     EncodeMiPredicate<GfxFamily>::encode(stream, MiPredicateType::Disable);
 
     uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
+    LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR6, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR6 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
 
     // Task start VA
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R7, 0, true);
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R7 + 4, 0, true);
+    LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR7, 0, true);
+    LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR7 + 4, 0, true);
 
     // Shift by 8 = multiply by 256. Address must by 64b aligned (shift by 6), but SHL accepts only 1, 2, 4, 8, 16 and 32
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R8, 8, true);
-    LriHelper<GfxFamily>::program(&stream, CS_GPR_R8 + 4, 0, true);
+    LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR8, 8, true);
+    LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR8 + 4, 0, true);
 
     const uint32_t miMathMocs = this->rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
@@ -880,9 +880,9 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
     uint64_t schedulerStartAddress = relaxedOrderingSchedulerAllocation->getGpuAddress();
 
     // 1. Init section
-    LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R11, 0, true);
-    LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R9, 0, true);
-    LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R9 + 4, 0, true);
+    LriHelper<GfxFamily>::program(&schedulerStream, RegisterOffsets::csGprR11, 0, true);
+    LriHelper<GfxFamily>::program(&schedulerStream, RegisterOffsets::csGprR9, 0, true);
+    LriHelper<GfxFamily>::program(&schedulerStream, RegisterOffsets::csGprR9 + 4, 0, true);
     EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerStream, schedulerStartAddress, false, false, false);
 
     // 2. Semaphore section
@@ -898,7 +898,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
     {
         EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::Disable);
 
-        LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R5, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerStream, RegisterOffsets::csGprR5, 0, true);
     }
 
     UNRECOVERABLE_IF(schedulerStream.getUsed() != RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);

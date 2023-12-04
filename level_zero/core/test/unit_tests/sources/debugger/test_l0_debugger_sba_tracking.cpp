@@ -446,11 +446,11 @@ HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsEx
         MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
         ASSERT_NE(nullptr, miLoad);
 
-        if (miLoad->getRegisterOffset() == CS_GPR_R15) {
+        if (miLoad->getRegisterOffset() == RegisterOffsets::csGprR15) {
             gpr15RegisterCount++;
             gprMiLoadindex = i;
         }
-        if (miLoad->getRegisterOffset() == CS_GPR_R15 + 4) {
+        if (miLoad->getRegisterOffset() == RegisterOffsets::csGprR15 + 4) {
             gpr15RegisterCount++;
         }
     }
@@ -463,11 +463,11 @@ HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsEx
     uint32_t high = (sbaGpuVa >> 32) & 0xffffffff;
 
     MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[gprMiLoadindex]);
-    EXPECT_EQ(CS_GPR_R15, miLoad->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR15, miLoad->getRegisterOffset());
     EXPECT_EQ(low, miLoad->getDataDword());
 
     miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[gprMiLoadindex + 1]);
-    EXPECT_EQ(CS_GPR_R15 + 4, miLoad->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR15 + 4, miLoad->getRegisterOffset());
     EXPECT_EQ(high, miLoad->getDataDword());
 
     for (auto i = 0u; i < numCommandLists; i++) {

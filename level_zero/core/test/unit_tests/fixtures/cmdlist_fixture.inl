@@ -43,14 +43,14 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         ASSERT_NE(cmdList.end(), itor);
         auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
         EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R13, cmdLoadReg->getDestinationRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
     }
 
     itor++;
     {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R14, cmdLoadImm->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
         EXPECT_EQ(mask, cmdLoadImm->getDataDword());
     }
 
@@ -65,7 +65,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(CS_GPR_R15, cmdMem->getRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR15, cmdMem->getRegisterAddress());
         EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
         if (workloadPartition) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -79,14 +79,14 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         ASSERT_NE(cmdList.end(), itor);
         auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
         EXPECT_EQ(secondLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R13, cmdLoadReg->getDestinationRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
     }
 
     itor++;
     {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R14, cmdLoadImm->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
         EXPECT_EQ(mask, cmdLoadImm->getDataDword());
     }
 
@@ -101,7 +101,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(CS_GPR_R15, cmdMem->getRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR15, cmdMem->getRegisterAddress());
         EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
         if (workloadPartition) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));

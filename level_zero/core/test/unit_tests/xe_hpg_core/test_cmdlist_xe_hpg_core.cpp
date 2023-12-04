@@ -101,12 +101,12 @@ HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventBeforeComm
     auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), RegisterOffsets::globalTimestampLdw);
     itor++;
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
 }
 
 HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventAfterCommandThenPipeControlAndStoreRegMemAdded, IsXeHpgCore) {
@@ -140,12 +140,12 @@ HWTEST2_F(CommandListCreate, givenNotCopyCommandListWhenProfilingEventAfterComma
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), RegisterOffsets::globalTimestampLdw);
     itor++;
     itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     cmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmd->getSourceRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getSourceRegisterAddress(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
 }
 
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingEventThenStoreRegCommandIsAdded, IsXeHpgCore) {

@@ -1089,44 +1089,44 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miPredicate);
 
-    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, RegisterOffsets::csGprR0, RegisterOffsets::csGprR9)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR9 + 4)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, CS_GPR_R1, 0, CompareOperation::Equal, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, true)) {
         return false;
     }
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false)));
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR2, 0)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R2 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR2 + 4, 0)) {
         return false;
     }
 
     uint64_t removeTaskVa = schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::removeTaskSectionStart;
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(removeTaskVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR3 + 4, static_cast<uint32_t>(removeTaskVa >> 32))) {
         return false;
     }
 
     uint64_t walkersLoopConditionCheckVa = schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::tasksListLoopCheckSectionStart;
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32))) {
         return false;
     }
 
@@ -1138,19 +1138,19 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miPredicate);
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R6, 8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR6, 8)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR6 + 4, 0)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
         return false;
     }
 
@@ -1230,32 +1230,32 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
 
     lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(cmds, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement()));
 
-    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, RegisterOffsets::csGprR0, RegisterOffsets::csGprR9)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR9 + 4)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, CS_GPR_R1, 0, CompareOperation::Equal, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, true)) {
         return false;
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false)));
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R7, 8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR7, 8)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR7 + 4, 0)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
         return false;
     }
 
@@ -1348,11 +1348,11 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(cmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalRegRegBatchBufferStart()));
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR2, 0)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R2 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR2 + 4, 0)) {
         return false;
     }
 
@@ -1364,25 +1364,25 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++arbCheck, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                                                    CS_GPR_R1, expectedQueueSizeLimit, CompareOperation::GreaterOrEqual, false)) {
+                                                                                    RegisterOffsets::csGprR1, expectedQueueSizeLimit, CompareOperation::GreaterOrEqual, false)) {
         return false;
     }
 
     auto conditionalBbStartcmds = ptrOffset(arbCheck, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));
 
     if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(conditionalBbStartcmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                                                    CS_GPR_R5, 1, CompareOperation::Equal, false)) {
+                                                                                    RegisterOffsets::csGprR5, 1, CompareOperation::Equal, false)) {
         return false;
     }
 
     // 6. Scheduler loop check section
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(conditionalBbStartcmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false)));
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionSize))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionSize))) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R10 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR10 + 4, 0)) {
         return false;
     }
 
@@ -1414,7 +1414,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalRegMemBbStart<FamilyType>(++miAluCmd, 0, semaphoreGpuVa, CS_GPR_R11, CompareOperation::GreaterOrEqual, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalRegMemBbStart<FamilyType>(++miAluCmd, 0, semaphoreGpuVa, RegisterOffsets::csGprR11, CompareOperation::GreaterOrEqual, true)) {
         return false;
     }
 
@@ -1453,15 +1453,15 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
 
             uint64_t semaphoreSectionVa = schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionStart;
 
-            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R11, semaphoreValue)) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR11, semaphoreValue)) {
                 continue;
             }
 
-            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R9, static_cast<uint32_t>(semaphoreSectionVa & 0xFFFF'FFFFULL))) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR9, static_cast<uint32_t>(semaphoreSectionVa & 0xFFFF'FFFFULL))) {
                 continue;
             }
 
-            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R9 + 4, static_cast<uint32_t>(semaphoreSectionVa >> 32))) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR9 + 4, static_cast<uint32_t>(semaphoreSectionVa >> 32))) {
                 continue;
             }
 
@@ -1491,7 +1491,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
             }
 
             lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miPredicate);
-            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR5, 0)) {
                 continue;
             }
             lriCmd++;
@@ -1669,21 +1669,21 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenPreinitialize
 
         for (auto &it : hwParse.cmdList) {
             if (auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it)) {
-                if (CS_GPR_R1 == lriCmd->getRegisterOffset()) {
+                if (RegisterOffsets::csGprR1 == lriCmd->getRegisterOffset()) {
                     EXPECT_EQ(0u, lriCmd->getDataDword());
 
                     lriCmd++;
-                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R1 + 4, 0)) {
+                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR1 + 4, 0)) {
                         continue;
                     }
 
                     lriCmd++;
-                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
+                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR5, 0)) {
                         continue;
                     }
 
                     lriCmd++;
-                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R5 + 4, 0)) {
+                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR5 + 4, 0)) {
                         continue;
                     }
 
@@ -1770,23 +1770,23 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(taskStoreSection);
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R6, static_cast<uint32_t>(deferredTasksVa & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR6, static_cast<uint32_t>(deferredTasksVa & 0xFFFF'FFFFULL)));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksVa >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR6 + 4, static_cast<uint32_t>(deferredTasksVa >> 32)));
 
     EXPECT_NE(0u, batchBuffer.taskStartAddress);
 
     uint32_t taskStartAddressLow = static_cast<uint32_t>(batchBuffer.taskStartAddress & 0xFFFF'FFFFULL);
     EXPECT_NE(0u, taskStartAddressLow);
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R7, taskStartAddressLow));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR7, taskStartAddressLow));
 
     uint32_t taskStartHigh = static_cast<uint32_t>(batchBuffer.taskStartAddress >> 32);
     EXPECT_NE(0u, taskStartHigh);
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, taskStartHigh));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR7 + 4, taskStartHigh));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, 8));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8, 8));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, 0));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8 + 4, 0));
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
     EXPECT_EQ(8u, miMathCmd->DW0.BitField.DwordLength);
@@ -1898,7 +1898,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispa
                       EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false);
     uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, false));
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));
@@ -1910,7 +1910,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispa
     for (auto &it : hwParse.cmdList) {
         lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
         if (lriCmd) {
-            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+            if (RegisterOffsets::csGprR5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
                 success = true;
                 break;
             }
@@ -1956,7 +1956,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenFirstBbWithStallingCmdsWhen
     for (auto &it : hwParse.cmdList) {
         lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
         if (lriCmd) {
-            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+            if (RegisterOffsets::csGprR5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
                 success = true;
                 break;
             }
@@ -1999,7 +1999,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
                       EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false);
     uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, false));
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));
@@ -2011,7 +2011,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
     for (auto &it : hwParse.cmdList) {
         lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
         if (lriCmd) {
-            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+            if (RegisterOffsets::csGprR5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
                 success = true;
                 break;
             }
@@ -2056,7 +2056,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
     for (auto &it : hwParse.cmdList) {
         lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
         if (lriCmd) {
-            if (CS_GPR_R5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
+            if (RegisterOffsets::csGprR5 == lriCmd->getRegisterOffset() && lriCmd->getDataDword() == 1) {
                 success = true;
                 break;
             }
@@ -2164,12 +2164,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
     ultCsr->programEndingCmd(commandStream, &endingPtr, true, true);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
@@ -2220,12 +2220,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSet
     ultCsr->programEndingCmd(commandStream, &endingPtr, true, true);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
@@ -2270,12 +2270,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkloadSectionTh
     uint64_t returnPtr = directSubmission.ringCommandStream.getGpuBase() + offset + (4 * sizeof(MI_LOAD_REGISTER_IMM)) + directSubmission.getSizeStartSection();
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
 
     uint64_t returnPtr2 = returnPtr + RelaxedOrderingHelper::getSizeTaskStoreSection<FamilyType>();
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
 
     EXPECT_EQ(0, memcmp(&originalBbStart, batchBuffer.endCmdPtr, sizeof(MI_BATCH_BUFFER_START)));
 }
@@ -2685,11 +2685,11 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenSchedulerRequiredWhenDispat
     directSubmission.dispatchRelaxedOrderingReturnPtrRegs(directSubmission.ringCommandStream, returnPtr);
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenReturnPtrsRequiredWhenAskingForDispatchSizeTheAddMmioSizes, IsAtLeastXeHpcCore) {

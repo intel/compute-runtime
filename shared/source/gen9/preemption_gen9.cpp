@@ -41,8 +41,8 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pComm
         preemptionMode == PreemptionMode::MidThread) {
         if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
             LriHelper<GfxFamily>::program(pCommandStream,
-                                          CS_GPR_R0,
-                                          GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER,
+                                          RegisterOffsets::csGprR0,
+                                          RegisterConstants::gpgpuWalkerCookieValueBeforeWalker,
                                           false);
         }
     }
@@ -56,8 +56,8 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pComman
         preemptionMode == PreemptionMode::MidThread) {
         if (device.getHardwareInfo().workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption) {
             LriHelper<GfxFamily>::program(pCommandStream,
-                                          CS_GPR_R0,
-                                          GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER,
+                                          RegisterOffsets::csGprR0,
+                                          RegisterConstants::gpgpuWalkerCookieValueAfterWalker,
                                           false);
         }
     }

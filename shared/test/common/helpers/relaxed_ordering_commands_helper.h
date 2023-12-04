@@ -80,12 +80,12 @@ bool verifyIncrementOrDecrement(void *cmds, AluRegisters aluRegister, bool incre
     using MI_MATH = typename FamilyType::MI_MATH;
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmds);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7, 1)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR7, 1)) {
         return false;
     }
 
     lriCmd++;
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR7 + 4, 0)) {
         return false;
     }
 
@@ -190,7 +190,7 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
     }
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miAluCmd);
-    if (!verifyLrr<FamilyType>(lrrCmd, CS_PREDICATE_RESULT_2, CS_GPR_R7)) {
+    if (!verifyLrr<FamilyType>(lrrCmd, RegisterOffsets::csPredicateResult2, RegisterOffsets::csGprR7)) {
         return false;
     }
 
@@ -229,7 +229,7 @@ bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t 
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmd);
-    if ((lrmCmd->getRegisterAddress() != CS_GPR_R7) || (lrmCmd->getMemoryAddress() != compareAddress)) {
+    if ((lrmCmd->getRegisterAddress() != RegisterOffsets::csGprR7) || (lrmCmd->getMemoryAddress() != compareAddress)) {
         return false;
     }
 
@@ -237,25 +237,25 @@ bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t 
 
     if (qwordData) {
         lrmCmd++;
-        if ((lrmCmd->getRegisterAddress() != CS_GPR_R7 + 4) || (lrmCmd->getMemoryAddress() != compareAddress + 4)) {
+        if ((lrmCmd->getRegisterAddress() != RegisterOffsets::csGprR7 + 4) || (lrmCmd->getMemoryAddress() != compareAddress + 4)) {
             return false;
         }
 
         lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
     } else {
         auto lriCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
-        if (!verifyLri<FamilyType>(lriCmd2, CS_GPR_R7 + 4, 0)) {
+        if (!verifyLri<FamilyType>(lriCmd2, RegisterOffsets::csGprR7 + 4, 0)) {
             return false;
         }
 
         lriCmd = ++lriCmd2;
     }
 
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8, getLowPart(compareData))) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR8, getLowPart(compareData))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, qwordData ? getHighPart(compareData) : 0)) {
+    if (!verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8 + 4, qwordData ? getHighPart(compareData) : 0)) {
         return false;
     }
 
@@ -269,22 +269,22 @@ bool verifyConditionalDataRegBbStart(void *cmds, uint64_t startAddress, uint32_t
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(cmds);
-    if (!verifyLrr<FamilyType>(lrrCmd, CS_GPR_R7, compareReg)) {
+    if (!verifyLrr<FamilyType>(lrrCmd, RegisterOffsets::csGprR7, compareReg)) {
         return false;
     }
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrrCmd);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR7 + 4, 0)) {
         return false;
     }
 
     lriCmd++;
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8, compareData)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR8, compareData)) {
         return false;
     }
 
     lriCmd++;
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8 + 4, 0)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR8 + 4, 0)) {
         return false;
     }
 
@@ -299,22 +299,22 @@ bool verifyConditionalRegMemBbStart(void *cmds, uint64_t startAddress, uint64_t 
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
     auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmds);
-    if ((lrmCmd->getRegisterAddress() != CS_GPR_R7) || (lrmCmd->getMemoryAddress() != compareAddress)) {
+    if ((lrmCmd->getRegisterAddress() != RegisterOffsets::csGprR7) || (lrmCmd->getMemoryAddress() != compareAddress)) {
         return false;
     }
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR7 + 4, 0)) {
         return false;
     }
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++lriCmd);
-    if (!verifyLrr<FamilyType>(lrrCmd, CS_GPR_R8, compareReg)) {
+    if (!verifyLrr<FamilyType>(lrrCmd, RegisterOffsets::csGprR8, compareReg)) {
         return false;
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrrCmd);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8 + 4, 0)) {
+    if (!verifyLri<FamilyType>(lriCmd, RegisterOffsets::csGprR8 + 4, 0)) {
         return false;
     }
 

@@ -1161,12 +1161,12 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(mockCmdQueueHw.getCS(0).getCpuBase(), cmdsOffset));
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto eventNode = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes()[0];
     auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
@@ -1259,12 +1259,12 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
     EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(cmdStream.getCpuBase(), cmdsOffset));
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto eventNode = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes()[0];
     auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();

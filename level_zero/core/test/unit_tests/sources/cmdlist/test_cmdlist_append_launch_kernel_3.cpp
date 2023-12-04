@@ -839,12 +839,12 @@ bool InOrderCmdListTests::verifyInOrderDependency(GenCmdList::iterator &cmd, uin
             return false;
         }
         EXPECT_EQ(getLowPart(counter), lri->getDataDword());
-        EXPECT_EQ(CS_GPR_R0, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
 
         lri++;
 
         EXPECT_EQ(getHighPart(counter), lri->getDataDword());
-        EXPECT_EQ(CS_GPR_R0 + 4, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lri->getRegisterOffset());
 
         std::advance(cmd, 2);
     }
@@ -2105,11 +2105,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsTh
     auto lrrCmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_REG *>(*cmdList.begin());
     ASSERT_NE(nullptr, lrrCmd);
 
-    EXPECT_EQ(CS_GPR_R4, lrrCmd->getSourceRegisterAddress());
-    EXPECT_EQ(CS_GPR_R0, lrrCmd->getDestinationRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR4, lrrCmd->getSourceRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR0, lrrCmd->getDestinationRegisterAddress());
     lrrCmd++;
-    EXPECT_EQ(CS_GPR_R4 + 4, lrrCmd->getSourceRegisterAddress());
-    EXPECT_EQ(CS_GPR_R0 + 4, lrrCmd->getDestinationRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR4 + 4, lrrCmd->getSourceRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSyncAllocation, IsAtLeastXeHpCore) {
@@ -2370,11 +2370,11 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         auto lrrCmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_REG *>(*cmdList.begin());
         ASSERT_NE(nullptr, lrrCmd);
 
-        EXPECT_EQ(CS_GPR_R4, lrrCmd->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R0, lrrCmd->getDestinationRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR4, lrrCmd->getSourceRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR0, lrrCmd->getDestinationRegisterAddress());
         lrrCmd++;
-        EXPECT_EQ(CS_GPR_R4 + 4, lrrCmd->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R0 + 4, lrrCmd->getDestinationRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR4 + 4, lrrCmd->getSourceRegisterAddress());
+        EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
 
         lrrCmd++;
 
@@ -5451,31 +5451,31 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + getIndirectHeapOffsetForImplicitArgsBuffer<FamilyType>(kernel);
 
     auto workDimStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    workDimStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R0);
+    workDimStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR0);
     workDimStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA);
 
     auto groupCountXStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    groupCountXStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMX);
+    groupCountXStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimX);
     groupCountXStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, groupCountX));
 
     auto groupCountYStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    groupCountYStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMY);
+    groupCountYStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimY);
     groupCountYStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, groupCountY));
 
     auto groupCountZStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    groupCountZStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMZ);
+    groupCountZStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimZ);
     groupCountZStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, groupCountZ));
 
     auto globalSizeXStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    globalSizeXStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R1);
+    globalSizeXStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
     globalSizeXStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, globalSizeX));
 
     auto globalSizeYStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    globalSizeYStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R1);
+    globalSizeYStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
     globalSizeYStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, globalSizeY));
 
     auto globalSizeZStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    globalSizeZStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R1);
+    globalSizeZStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
     globalSizeZStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, globalSizeZ));
 
     GenCmdList cmdList;

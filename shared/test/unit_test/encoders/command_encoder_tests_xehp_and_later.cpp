@@ -147,13 +147,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     ASSERT_NE(commands.end(), itor);
     auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(regOffset, cmdLoadReg->getSourceRegisterAddress());
-    EXPECT_EQ(CS_GPR_R13, cmdLoadReg->getDestinationRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
 
     // load immVal to R14
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(CS_GPR_R14, cmdLoadImm->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
     EXPECT_EQ(immVal, cmdLoadImm->getDataDword());
 
     // encodeAluAnd should have its own unit tests, so we only check
@@ -167,7 +167,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(CS_GPR_R15, cmdMem->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR15, cmdMem->getRegisterAddress());
     EXPECT_EQ(dstAddress, cmdMem->getMemoryAddress());
     EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
 }

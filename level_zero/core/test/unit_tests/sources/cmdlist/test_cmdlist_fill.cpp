@@ -325,14 +325,14 @@ HWTEST2_F(AppendFillTest,
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            begin,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                            false);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            secondWalker,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                            false);
 }
 
@@ -379,14 +379,14 @@ HWTEST2_F(AppendFillTest,
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            begin,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                            false);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            secondWalker,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                            false);
 }
 

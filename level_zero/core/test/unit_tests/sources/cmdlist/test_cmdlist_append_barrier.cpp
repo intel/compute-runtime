@@ -384,8 +384,8 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         auto begin = cmdList.begin();
         validateTimestampRegisters<FamilyType>(cmdList,
                                                begin,
-                                               REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
-                                               GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                               RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                                true);
 
         auto barrierOffset = timestampRegisters;
@@ -418,8 +418,8 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         begin = cmdList.begin();
         validateTimestampRegisters<FamilyType>(cmdList,
                                                begin,
-                                               REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
-                                               GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                               RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                                true);
     }
 };

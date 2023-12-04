@@ -583,7 +583,7 @@ bool IoctlHelper::getGemTiling(void *setTiling) {
 
 bool getGpuTime32(::NEO::Drm &drm, uint64_t *timestamp) {
     RegisterRead reg = {};
-    reg.offset = REG_GLOBAL_TIMESTAMP_LDW;
+    reg.offset = RegisterOffsets::globalTimestampLdw;
 
     if (drm.ioctl(DrmIoctl::RegRead, &reg)) {
         return false;
@@ -594,7 +594,7 @@ bool getGpuTime32(::NEO::Drm &drm, uint64_t *timestamp) {
 
 bool getGpuTime36(::NEO::Drm &drm, uint64_t *timestamp) {
     RegisterRead reg = {};
-    reg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
+    reg.offset = RegisterOffsets::globalTimestampLdw | 1;
 
     if (drm.ioctl(DrmIoctl::RegRead, &reg)) {
         return false;
@@ -609,8 +609,8 @@ bool getGpuTimeSplitted(::NEO::Drm &drm, uint64_t *timestamp) {
     uint64_t tmpHi;
     int err = 0, loop = 3;
 
-    regHi.offset = REG_GLOBAL_TIMESTAMP_UN;
-    regLo.offset = REG_GLOBAL_TIMESTAMP_LDW;
+    regHi.offset = RegisterOffsets::globalTimestampUn;
+    regLo.offset = RegisterOffsets::globalTimestampLdw;
 
     err += drm.ioctl(DrmIoctl::RegRead, &regHi);
     do {
@@ -631,10 +631,10 @@ void IoctlHelper::initializeGetGpuTimeFunction() {
     RegisterRead reg = {};
     int err;
 
-    reg.offset = (REG_GLOBAL_TIMESTAMP_LDW | 1);
+    reg.offset = (RegisterOffsets::globalTimestampLdw | 1);
     err = this->ioctl(DrmIoctl::RegRead, &reg);
     if (err) {
-        reg.offset = REG_GLOBAL_TIMESTAMP_UN;
+        reg.offset = RegisterOffsets::globalTimestampUn;
         err = this->ioctl(DrmIoctl::RegRead, &reg);
         if (err) {
             this->getGpuTime = &getGpuTime32;

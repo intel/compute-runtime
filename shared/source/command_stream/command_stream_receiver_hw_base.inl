@@ -123,8 +123,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
 
         bool indirect = false;
         if (relaxedOrderingEnabled && hasRelaxedOrderingDependencies) {
-            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0, CS_GPR_R3);
-            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, CS_GPR_R0 + 4, CS_GPR_R3 + 4);
+            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR3);
+            NEO::EncodeSetMMIO<GfxFamily>::encodeREG(commandStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR3 + 4);
 
             indirect = true;
         }

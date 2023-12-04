@@ -179,7 +179,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
         ASSERT_NE(cmdList.end(), itor);
 
         auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R0, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
 
         itor = find<MI_MATH *>(itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
@@ -287,7 +287,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     ASSERT_NE(cmdList.end(), itor);
 
     auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(CS_GPR_R0, lri->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
 
     itor = find<MI_MATH *>(itor, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);

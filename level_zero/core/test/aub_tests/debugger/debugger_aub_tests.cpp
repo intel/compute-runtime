@@ -140,8 +140,8 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     uint32_t low = sbaAddress & 0xffffffff;
     uint32_t high = (sbaAddress >> 32) & 0xffffffff;
 
-    expectMMIO<FamilyType>(CS_GPR_R15, low);
-    expectMMIO<FamilyType>(CS_GPR_R15 + 4, high);
+    expectMMIO<FamilyType>(RegisterOffsets::csGprR15, low);
+    expectMMIO<FamilyType>(RegisterOffsets::csGprR15 + 4, high);
 
     auto instructionHeapBaseAddress = memoryManager->getInternalHeapBaseAddress(rootDeviceIndex,
                                                                                 memoryManager->isLocalMemoryUsedForIsa(rootDeviceIndex));

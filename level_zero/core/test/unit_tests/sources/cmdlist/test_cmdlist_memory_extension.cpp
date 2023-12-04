@@ -236,7 +236,7 @@ bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64
         }
 
         EXPECT_EQ(getLowPart(compareData), lri->getDataDword());
-        EXPECT_EQ(CS_GPR_R0, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
 
         lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*(++itor));
         if (!lri) {
@@ -244,7 +244,7 @@ bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64
         }
 
         EXPECT_EQ(getHighPart(compareData), lri->getDataDword());
-        EXPECT_EQ(CS_GPR_R0 + 4, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lri->getRegisterOffset());
 
         itor++;
     }

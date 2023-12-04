@@ -537,8 +537,8 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto startCmdList = cmdList.begin();
     validateTimestampRegisters<FamilyType>(cmdList,
                                            startCmdList,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                            true);
 
     if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
@@ -546,15 +546,15 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         uint64_t contextStartAddressHigh = contextStartAddress + sizeof(uint32_t);
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
-                                               REG_GLOBAL_TIMESTAMP_UN, globalStartAddressHigh,
+                                               RegisterOffsets::globalTimestampUn, globalStartAddressHigh,
                                                0x23AC, contextStartAddressHigh,
                                                true);
     }
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            startCmdList,
-                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
-                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                            true);
 
     if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
@@ -562,7 +562,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         uint64_t contextEndAddressHigh = contextEndAddress + sizeof(uint32_t);
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
-                                               REG_GLOBAL_TIMESTAMP_UN, globalEndAddressHigh,
+                                               RegisterOffsets::globalTimestampUn, globalEndAddressHigh,
                                                0x23AC, contextEndAddressHigh,
                                                true);
     }

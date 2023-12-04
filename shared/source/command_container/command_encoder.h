@@ -189,7 +189,7 @@ template <typename GfxFamily>
 struct EncodeMath {
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
     using MI_MATH = typename GfxFamily::MI_MATH;
-    constexpr static size_t streamCommandSize = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
+    constexpr static size_t streamCommandSize = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * RegisterConstants::numAluInstForReadModifyWrite;
 
     static uint32_t *commandReserve(CommandContainer &container);
     static uint32_t *commandReserve(LinearStream &cmdStream);

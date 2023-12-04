@@ -40,14 +40,14 @@ GEN9TEST_F(CommandEncoderMathTestGen9, WhenAppendsAGreaterThanThenPredicateCorre
     ASSERT_NE(itor, commands.end());
 
     auto cmdMEM = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmdMEM->getRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(cmdMEM->getRegisterAddress(), RegisterOffsets::csGprR0);
     EXPECT_EQ(cmdMEM->getMemoryAddress(), 0xDEADBEEFCAF0u);
 
     itor = find<MI_LOAD_REGISTER_IMM *>(itor, commands.end());
     ASSERT_NE(itor, commands.end());
 
     auto cmdIMM = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(cmdIMM->getRegisterOffset(), CS_GPR_R1);
+    EXPECT_EQ(cmdIMM->getRegisterOffset(), RegisterOffsets::csGprR1);
     EXPECT_EQ(cmdIMM->getDataDword(), 17u);
 
     itor = find<MI_MATH *>(itor, commands.end());
@@ -60,8 +60,8 @@ GEN9TEST_F(CommandEncoderMathTestGen9, WhenAppendsAGreaterThanThenPredicateCorre
     ASSERT_NE(itor, commands.end());
 
     auto cmdREG = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmdREG->getSourceRegisterAddress(), CS_GPR_R2);
-    EXPECT_EQ(cmdREG->getDestinationRegisterAddress(), CS_PREDICATE_RESULT);
+    EXPECT_EQ(cmdREG->getSourceRegisterAddress(), RegisterOffsets::csGprR2);
+    EXPECT_EQ(cmdREG->getDestinationRegisterAddress(), RegisterOffsets::csPredicateResult);
 
     auto cmdALU = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmdMATH + 3);
     EXPECT_EQ(cmdALU->DW0.BitField.ALUOpcode,

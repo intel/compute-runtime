@@ -102,29 +102,29 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(cmdList.end(), itor);
 
     auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto eventGpuAddr = event->getCompletionFieldGpuAddress(this->device);
 
     // conditional bb_start
     auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(++lrrCmd);
-    EXPECT_EQ(lrmCmd->getRegisterAddress(), CS_GPR_R7);
+    EXPECT_EQ(lrmCmd->getRegisterAddress(), RegisterOffsets::csGprR7);
     EXPECT_EQ(lrmCmd->getMemoryAddress(), eventGpuAddr);
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
-    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7 + 4);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), RegisterOffsets::csGprR7 + 4);
     EXPECT_EQ(lriCmd->getDataDword(), 0u);
 
     lriCmd++;
-    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R8);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), RegisterOffsets::csGprR8);
     EXPECT_EQ(lriCmd->getDataDword(), static_cast<uint32_t>(Event::State::STATE_CLEARED));
 
     lriCmd++;
-    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R8 + 4);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), RegisterOffsets::csGprR8 + 4);
     EXPECT_EQ(lriCmd->getDataDword(), 0u);
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
@@ -151,8 +151,8 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ZF), miAluCmd->DW0.BitField.Operand2);
 
     lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miAluCmd);
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R7);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_PREDICATE_RESULT_2);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR7);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csPredicateResult2);
 
     auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
     EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::NoopOnResult2Clear), predicateCmd->getPredicateEnable());

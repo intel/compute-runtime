@@ -22,8 +22,8 @@ static constexpr uint32_t maxQueueSize = 16;
 template <typename GfxFamily>
 void encodeRegistersBeforeDependencyCheckers(LinearStream &cmdStream) {
     // Indirect BB_START operates only on GPR_0
-    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, CS_GPR_R0, CS_GPR_R4);
-    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, CS_GPR_R0 + 4, CS_GPR_R4 + 4);
+    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR4);
+    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR4 + 4);
 }
 
 template <typename GfxFamily>

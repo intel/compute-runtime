@@ -522,8 +522,8 @@ void BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(LinearStream &cmdS
     auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(timestampPacketNode);
     auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(timestampPacketNode);
 
-    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextStartGpuAddress, false);
-    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalStartAddress, false);
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextStartGpuAddress, false);
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, RegisterOffsets::globalTimestampLdw, timestampGlobalStartAddress, false);
 }
 
 template <typename GfxFamily>
@@ -531,8 +531,8 @@ void BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(LinearStream &cmdStr
     auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(timestampPacketNode);
     auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(timestampPacketNode);
 
-    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextEndGpuAddress, false);
-    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalEndAddress, false);
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextEndGpuAddress, false);
+    EncodeStoreMMIO<GfxFamily>::encode(cmdStream, RegisterOffsets::globalTimestampLdw, timestampGlobalEndAddress, false);
 }
 
 template <typename GfxFamily>

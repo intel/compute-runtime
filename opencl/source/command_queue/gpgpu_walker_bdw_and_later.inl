@@ -131,7 +131,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
         auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
         MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
         adjustMiStoreRegMemMode(&cmd);
-        cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+        cmd.setRegisterAddress(RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
         cmd.setMemoryAddress(timeStampAddress);
         *pMICmdLow = cmd;
     }
@@ -164,7 +164,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
         auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
         MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
         adjustMiStoreRegMemMode(&cmd);
-        cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+        cmd.setRegisterAddress(RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
         cmd.setMemoryAddress(timeStampAddress);
         *pMICmdLow = cmd;
     }

@@ -2432,8 +2432,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
             if (isQwordInOrderCounter()) {
                 indirectMode = true;
 
-                auto lri1 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0, getLowPart(waitValue), true);
-                auto lri2 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0 + 4, getHighPart(waitValue), true);
+                auto lri1 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0, getLowPart(waitValue), true);
+                auto lri2 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0 + 4, getHighPart(waitValue), true);
 
                 if (inOrderExecInfo->isRegularCmdList()) {
                     addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, InOrderPatchCommandHelpers::PatchCmdType::Lri64b);
@@ -2614,11 +2614,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *eve
     uint64_t contextAddress = ptrOffset(baseAddr, contextOffset);
 
     if (maskLsb) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, mask, globalAddress, workloadPartition);
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, mask, contextAddress, workloadPartition);
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::globalTimestampLdw, mask, globalAddress, workloadPartition);
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, mask, contextAddress, workloadPartition);
     } else {
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalAddress, workloadPartition);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextAddress, workloadPartition);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::globalTimestampLdw, globalAddress, workloadPartition);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextAddress, workloadPartition);
     }
 
     adjustWriteKernelTimestamp(globalAddress, contextAddress, maskLsb, mask, workloadPartition);
@@ -2875,11 +2875,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 
         auto groupCount = ptrOffset(alloc->getGpuAddress(), groupCountOffset);
 
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMX,
+        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimX,
                                                  ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountX)));
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMY,
+        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimY,
                                                  ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountY)));
-        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMZ,
+        NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimZ,
                                                  ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountZ)));
     }
 
@@ -3377,8 +3377,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         if (isQwordInOrderCounter()) {
             indirectMode = true;
 
-            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0, getLowPart(data), true);
-            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), CS_GPR_R0 + 4, getHighPart(data), true);
+            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0, getLowPart(data), true);
+            NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0 + 4, getHighPart(data), true);
 
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

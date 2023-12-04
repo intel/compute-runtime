@@ -251,13 +251,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProflingWhenWal
     auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pBeforeMI->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pBeforeMI->getRegisterAddress());
 
     auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), itorAfterMI);
     auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
     ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pAfterMI->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pAfterMI->getRegisterAddress());
     ++itorAfterMI;
     pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
     EXPECT_EQ(nullptr, pAfterMI);
@@ -370,13 +370,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilin
     auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pBeforeMI->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pBeforeMI->getRegisterAddress());
 
     auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), itorAfterMI);
     auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
     ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pAfterMI->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetLow, pAfterMI->getRegisterAddress());
     ++itorAfterMI;
     EXPECT_EQ(itorAfterMI, cmdList.end());
     clReleaseEvent(event);
@@ -1050,10 +1050,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWit
     auto &cmdList = parse.cmdList;
     parse.parseCommands<FamilyType>(*pCmdQ);
 
-    auto itor = expectStoreRegister<FamilyType>(cmdList, cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, contextStartTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    auto itor = expectStoreRegister<FamilyType>(cmdList, cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, contextStartTS), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
     // after WALKER:
 
-    itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, contextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, contextEndTS), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
 
     EXPECT_TRUE(pEvent->calcProfilingData());
 

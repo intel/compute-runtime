@@ -112,7 +112,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     regAddress = cmd->getRegisterAddress();
     gpuAddress = cmd->getMemoryAddress();
 
-    EXPECT_EQ(GPUGPU_DISPATCHDIMX, regAddress);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimX, regAddress);
     EXPECT_EQ(expectedXAddress, gpuAddress);
 
     itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
@@ -122,7 +122,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     regAddress = cmd->getRegisterAddress();
     gpuAddress = cmd->getMemoryAddress();
 
-    EXPECT_EQ(GPUGPU_DISPATCHDIMY, regAddress);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimY, regAddress);
     EXPECT_EQ(expectedYAddress, gpuAddress);
 
     itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
@@ -132,7 +132,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     regAddress = cmd->getRegisterAddress();
     gpuAddress = cmd->getMemoryAddress();
 
-    EXPECT_EQ(GPUGPU_DISPATCHDIMZ, regAddress);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimZ, regAddress);
     EXPECT_EQ(expectedZAddress, gpuAddress);
 
     MI_STORE_REGISTER_MEM *cmd2 = nullptr;
@@ -140,11 +140,11 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     do {
         itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
         cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    } while (itor != cmdList.end() && cmd2->getRegisterAddress() != GPUGPU_DISPATCHDIMX);
+    } while (itor != cmdList.end() && cmd2->getRegisterAddress() != RegisterOffsets::gpgpuDispatchDimX);
     EXPECT_NE(cmdList.end(), itor);
 
     auto groupCountStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMX);
+    groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimX);
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
@@ -154,7 +154,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMY);
+    groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimY);
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
@@ -164,14 +164,14 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMZ);
+    groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimZ);
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
 
     auto workSizeStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    workSizeStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R1);
+    workSizeStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
 
     // Find workgroup size cmds
     itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
@@ -284,7 +284,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     regAddress = cmd->getRegisterAddress();
     gpuAddress = cmd->getMemoryAddress();
 
-    EXPECT_EQ(GPUGPU_DISPATCHDIMX, regAddress);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimX, regAddress);
     EXPECT_EQ(expectedXAddress, gpuAddress);
 
     itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
@@ -294,7 +294,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     regAddress = cmd->getRegisterAddress();
     gpuAddress = cmd->getMemoryAddress();
 
-    EXPECT_EQ(GPUGPU_DISPATCHDIMY, regAddress);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimY, regAddress);
     EXPECT_EQ(expectedYAddress, gpuAddress);
 
     itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
@@ -304,7 +304,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     regAddress = cmd->getRegisterAddress();
     gpuAddress = cmd->getMemoryAddress();
 
-    EXPECT_EQ(GPUGPU_DISPATCHDIMZ, regAddress);
+    EXPECT_EQ(RegisterOffsets::gpgpuDispatchDimZ, regAddress);
     EXPECT_EQ(expectedZAddress, gpuAddress);
 
     MI_STORE_REGISTER_MEM *cmd2 = nullptr;
@@ -312,11 +312,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     do {
         itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
         cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    } while (itor != cmdList.end() && cmd2->getRegisterAddress() != GPUGPU_DISPATCHDIMX);
+    } while (itor != cmdList.end() && cmd2->getRegisterAddress() != RegisterOffsets::gpgpuDispatchDimX);
     EXPECT_NE(cmdList.end(), itor);
 
     auto groupCountStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMX);
+    groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimX);
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
@@ -326,7 +326,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMY);
+    groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimY);
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
@@ -336,14 +336,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMZ);
+    groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimZ);
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
 
     auto workSizeStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
-    workSizeStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R1);
+    workSizeStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
 
     // Find workgroup size cmds
     itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());

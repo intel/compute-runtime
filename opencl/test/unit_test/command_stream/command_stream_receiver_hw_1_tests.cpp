@@ -1086,12 +1086,12 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorre
     EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(csr.commandStream.getCpuBase(), cmdsOffset));
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto eventNode = timestamp.peekNodes()[0];
     auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();

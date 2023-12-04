@@ -34,7 +34,7 @@ void PreambleHelper<GfxFamily>::programSemaphoreDelay(LinearStream *pCommandStre
     if (debugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
         uint32_t valueOfNewSemaphoreDelay = debugManager.flags.ForceSemaphoreDelayBetweenWaits.get();
         LriHelper<GfxFamily>::program(pCommandStream,
-                                      SEMA_WAIT_POLL,
+                                      RegisterOffsets::semaWaitPoll,
                                       valueOfNewSemaphoreDelay,
                                       true);
     };

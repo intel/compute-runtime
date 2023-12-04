@@ -38,14 +38,14 @@ HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredica
     ASSERT_NE(itor, commands.end());
 
     auto cmdMEM = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(CS_GPR_R0, cmdMEM->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR0, cmdMEM->getRegisterAddress());
     EXPECT_EQ(0xDEADBEEFCAF0u, cmdMEM->getMemoryAddress());
 
     itor = find<MI_LOAD_REGISTER_IMM *>(itor, commands.end());
     ASSERT_NE(itor, commands.end());
 
     auto cmdIMM = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(CS_GPR_R1, cmdIMM->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR1, cmdIMM->getRegisterOffset());
     EXPECT_EQ(17u, cmdIMM->getDataDword());
     EXPECT_TRUE(cmdIMM->getMmioRemapEnable());
 
@@ -59,8 +59,8 @@ HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredica
     ASSERT_NE(itor, commands.end());
 
     auto cmdREG = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-    EXPECT_EQ(cmdREG->getSourceRegisterAddress(), CS_GPR_R2);
-    EXPECT_EQ(cmdREG->getDestinationRegisterAddress(), CS_PREDICATE_RESULT);
+    EXPECT_EQ(cmdREG->getSourceRegisterAddress(), RegisterOffsets::csGprR2);
+    EXPECT_EQ(cmdREG->getDestinationRegisterAddress(), RegisterOffsets::csPredicateResult);
 
     auto cmdALU = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmdMATH + 3);
     EXPECT_EQ(cmdALU->DW0.BitField.ALUOpcode,

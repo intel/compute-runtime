@@ -148,8 +148,8 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     uint32_t valueToAdd = 5u;
     uint64_t valueAfterMiMathOperation = bufferMemory[0] + valueToAdd;
 
-    loadAddressToRegisters<FamilyType>(CS_GPR_R0, CS_GPR_R1, CS_GPR_R2, allocation->getGpuAddress()); // prepare registers to mi_math operation
-    loadValueToRegister<FamilyType>(valueToAdd, CS_GPR_R3);
+    loadAddressToRegisters<FamilyType>(RegisterOffsets::csGprR0, RegisterOffsets::csGprR1, RegisterOffsets::csGprR2, allocation->getGpuAddress()); // prepare registers to mi_math operation
+    loadValueToRegister<FamilyType>(valueToAdd, RegisterOffsets::csGprR3);
 
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
@@ -236,8 +236,8 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     csr->makeResident(*buffer->getGraphicsAllocation(rootDeviceIndex));
     csr->makeResident(*bufferB->getGraphicsAllocation(rootDeviceIndex));
 
-    loadAddressToRegisters<FamilyType>(CS_GPR_R0, CS_GPR_R1, CS_GPR_R2, buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());  // prepare registers to mi_math operation
-    loadAddressToRegisters<FamilyType>(CS_GPR_R3, CS_GPR_R4, CS_GPR_R2, bufferB->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress()); // prepare registers to mi_math operation
+    loadAddressToRegisters<FamilyType>(RegisterOffsets::csGprR0, RegisterOffsets::csGprR1, RegisterOffsets::csGprR2, buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());  // prepare registers to mi_math operation
+    loadAddressToRegisters<FamilyType>(RegisterOffsets::csGprR3, RegisterOffsets::csGprR4, RegisterOffsets::csGprR2, bufferB->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress()); // prepare registers to mi_math operation
 
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
@@ -299,9 +299,9 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     uint32_t notPowerOfTwoShift = 5u;
     uint32_t expectedUsedShift = 4u;
 
-    loadValueToRegister<FamilyType>(value, CS_GPR_R0);
-    loadValueToRegister<FamilyType>(shift, CS_GPR_R1);
-    loadValueToRegister<FamilyType>(notPowerOfTwoShift, CS_GPR_R2);
+    loadValueToRegister<FamilyType>(value, RegisterOffsets::csGprR0);
+    loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR1);
+    loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR2);
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
@@ -337,8 +337,8 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
 
-    storeValueInRegisterToMemory<FamilyType>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), CS_GPR_R1);
-    storeValueInRegisterToMemory<FamilyType>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + 4, CS_GPR_R2);
+    storeValueInRegisterToMemory<FamilyType>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), RegisterOffsets::csGprR1);
+    storeValueInRegisterToMemory<FamilyType>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + 4, RegisterOffsets::csGprR2);
     flushStream();
 
     uint32_t firstShift = value << shift;
@@ -370,9 +370,9 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     uint32_t notPowerOfTwoShift = 5u;
     uint32_t expectedUsedShift = 4u;
 
-    loadValueToRegister<FamilyType>(value, CS_GPR_R0);
-    loadValueToRegister<FamilyType>(shift, CS_GPR_R1);
-    loadValueToRegister<FamilyType>(notPowerOfTwoShift, CS_GPR_R2);
+    loadValueToRegister<FamilyType>(value, RegisterOffsets::csGprR0);
+    loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR1);
+    loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR2);
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
@@ -408,8 +408,8 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
 
-    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress(), CS_GPR_R1);
-    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress() + 4, CS_GPR_R2);
+    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress(), RegisterOffsets::csGprR1);
+    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress() + 4, RegisterOffsets::csGprR2);
     flushStream();
 
     uint32_t firstShift = value >> shift;
@@ -441,9 +441,9 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     uint32_t notPowerOfTwoShift = 5u;
     uint32_t expectedUsedShift = 4u;
 
-    loadAddressToRegisters<FamilyType>(CS_GPR_R0, CS_GPR_R1, CS_GPR_R2, allocation->getGpuAddress()); // prepare registers to mi_math operation
-    loadValueToRegister<FamilyType>(shift, CS_GPR_R4);
-    loadValueToRegister<FamilyType>(notPowerOfTwoShift, CS_GPR_R5);
+    loadAddressToRegisters<FamilyType>(RegisterOffsets::csGprR0, RegisterOffsets::csGprR1, RegisterOffsets::csGprR2, allocation->getGpuAddress()); // prepare registers to mi_math operation
+    loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR4);
+    loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR5);
 
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
@@ -488,8 +488,8 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_5);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
 
-    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress(), CS_GPR_R4);
-    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress() + 4, CS_GPR_R5);
+    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress(), RegisterOffsets::csGprR4);
+    storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress() + 4, RegisterOffsets::csGprR5);
     flushStream();
 
     int64_t firstShift = bufferMemory[0];

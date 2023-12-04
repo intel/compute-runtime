@@ -167,7 +167,7 @@ HWTEST_F(CommandEncoderMathTest, WhenReservingCommandThenBitfieldSetCorrectly) {
     EXPECT_EQ(cmdMATH->DW0.BitField.InstructionOpcode,
               static_cast<uint32_t>(MI_MATH::MI_COMMAND_OPCODE_MI_MATH));
     EXPECT_EQ(cmdMATH->DW0.BitField.DwordLength,
-              static_cast<uint32_t>(NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1));
+              static_cast<uint32_t>(RegisterConstants::numAluInstForReadModifyWrite - 1));
 }
 
 HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCalledThenContainerHasCorrectMathCommands) {
@@ -194,13 +194,13 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     EXPECT_NE(commands.end(), itor);
     auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(cmdLoadReg->getSourceRegisterAddress(), regOffset);
-    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), CS_GPR_R13);
+    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), RegisterOffsets::csGprR13);
 
     // load immVal to R14
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), CS_GPR_R14);
+    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), RegisterOffsets::csGprR14);
     EXPECT_EQ(cmdLoadImm->getDataDword(), immVal);
 
     // encodeAluAnd should have its own unit tests, so we only check
@@ -214,7 +214,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmdMem->getRegisterAddress(), CS_GPR_R15);
+    EXPECT_EQ(cmdMem->getRegisterAddress(), RegisterOffsets::csGprR15);
     EXPECT_EQ(cmdMem->getMemoryAddress(), dstAddress);
 }
 
@@ -299,11 +299,11 @@ HWTEST_F(CommandEncodeAluTests, whenProgrammingIncrementOperationThenUseCorrectA
     EXPECT_EQ(bufferSize, cmdStream.getUsed());
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(buffer);
-    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), RegisterOffsets::csGprR7);
     EXPECT_EQ(lriCmd->getDataDword(), 1u);
 
     lriCmd++;
-    EXPECT_EQ(CS_GPR_R7 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR7 + 4, lriCmd->getRegisterOffset());
     EXPECT_EQ(0u, lriCmd->getDataDword());
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
@@ -346,11 +346,11 @@ HWTEST_F(CommandEncodeAluTests, whenProgrammingDecrementOperationThenUseCorrectA
     EXPECT_EQ(bufferSize, cmdStream.getUsed());
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(buffer);
-    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), RegisterOffsets::csGprR7);
     EXPECT_EQ(lriCmd->getDataDword(), 1u);
 
     lriCmd++;
-    EXPECT_EQ(CS_GPR_R7 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(RegisterOffsets::csGprR7 + 4, lriCmd->getRegisterOffset());
     EXPECT_EQ(0u, lriCmd->getDataDword());
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);

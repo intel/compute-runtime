@@ -38,23 +38,23 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
     MI_LOAD_REGISTER_REG cmdReg = GfxFamily::cmdInitLoadRegisterReg;
     cmdReg.setSourceRegisterAddress(aluRegister);
-    cmdReg.setDestinationRegisterAddress(CS_GPR_R0);
+    cmdReg.setDestinationRegisterAddress(RegisterOffsets::csGprR0);
     *pCmd = cmdReg;
 
     // Load "Mask" into CS_GPR_R1
     LriHelper<GfxFamily>::program(pCommandStream,
-                                  CS_GPR_R1,
+                                  RegisterOffsets::csGprR1,
                                   mask,
                                   false);
 
     // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
-    auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE)));
+    auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + RegisterConstants::numAluInstForReadModifyWrite * sizeof(MI_MATH_ALU_INST_INLINE)));
     MI_MATH mathCmd;
     mathCmd.DW0.Value = 0x0;
     mathCmd.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
     mathCmd.DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
     // 0x3 - 5 Dwords length cmd (-2): 1 for MI_MATH, 4 for MI_MATH_ALU_INST_INLINE
-    mathCmd.DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
+    mathCmd.DW0.BitField.DwordLength = RegisterConstants::numAluInstForReadModifyWrite - 1;
     *reinterpret_cast<MI_MATH *>(pCmd3) = mathCmd;
 
     pCmd3++;
@@ -104,7 +104,7 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     // LOAD value of CS_GPR_R0 into "Register"
     auto pCmd4 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
     cmdReg = GfxFamily::cmdInitLoadRegisterReg;
-    cmdReg.setSourceRegisterAddress(CS_GPR_R0);
+    cmdReg.setSourceRegisterAddress(RegisterOffsets::csGprR0);
     cmdReg.setDestinationRegisterAddress(aluRegister);
     *pCmd4 = cmdReg;
 
