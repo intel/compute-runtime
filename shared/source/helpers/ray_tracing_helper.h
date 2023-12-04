@@ -23,7 +23,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     static constexpr uint32_t stackDssMultiplier = 2048;
     static constexpr uint32_t hitInfoSize = 64;
     static constexpr uint32_t bvhStackSize = 96;
-    static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * KB;
+    static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * MemoryConstants::kiloByte;
     static constexpr uint32_t maxBvhLevels = 8;
 
     static size_t getDispatchGlobalSize() {
@@ -39,7 +39,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static size_t getMemoryBackedFifoSizeToPatch() {
-        return static_cast<size_t>(Math::log2(memoryBackedFifoSizePerDss / KB) - 1);
+        return static_cast<size_t>(Math::log2(memoryBackedFifoSizePerDss / MemoryConstants::kiloByte) - 1);
     }
 
     static uint32_t getNumRtStacks(const Device &device) {

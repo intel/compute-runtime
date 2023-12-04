@@ -197,9 +197,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_LE(sharedCaps.maxReadImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(sharedCaps.maxWriteImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
-    EXPECT_LE(128u * MB, sharedCaps.maxMemAllocSize);
+    EXPECT_LE(128u * MemoryConstants::megaByte, sharedCaps.maxMemAllocSize);
     if (!device->areSharedSystemAllocationsAllowed()) {
-        EXPECT_GE((4 * GB) - (8 * KB), sharedCaps.maxMemAllocSize);
+        EXPECT_GE((4 * MemoryConstants::gigaByte) - (8 * MemoryConstants::kiloByte), sharedCaps.maxMemAllocSize);
     }
     EXPECT_LE(65536u, sharedCaps.imageMaxBufferSize);
 
@@ -394,7 +394,7 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
         } else {
             EXPECT_FALSE(sharedCaps.force32BitAddressess);
         }
-        auto expectedSize = (cl_ulong)(4 * memSizePercent * GB);
+        auto expectedSize = (cl_ulong)(4 * memSizePercent * MemoryConstants::gigaByte);
         EXPECT_LE(sharedCaps.globalMemSize, expectedSize);
         EXPECT_LE(sharedCaps.maxMemAllocSize, expectedSize);
         EXPECT_LE(caps.maxConstantBufferSize, expectedSize);
@@ -431,7 +431,7 @@ TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSi
     memSize = (cl_ulong)((double)memSize * memSizePercent) - internalResourcesSize;
 
     if (addressing32Bit) {
-        memSize = std::min(memSize, (uint64_t)(4 * GB * memSizePercent));
+        memSize = std::min(memSize, (uint64_t)(4 * MemoryConstants::gigaByte * memSizePercent));
     }
     cl_ulong expectedSize = alignDown(memSize, MemoryConstants::pageSize);
 
@@ -454,7 +454,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     auto memSize = std::min(localMem, maxAppAddrSpace);
     memSize = static_cast<cl_ulong>(memSize * memSizePercent);
     if (addressing32Bit) {
-        memSize = std::min(memSize, static_cast<cl_ulong>(4 * GB * memSizePercent));
+        memSize = std::min(memSize, static_cast<cl_ulong>(4 * MemoryConstants::gigaByte * memSizePercent));
     }
     cl_ulong expectedSize = alignDown(memSize, MemoryConstants::pageSize);
 
@@ -1578,7 +1578,7 @@ TEST(Device_UseCaps, givenOverrideSlmSizeWhenWhenInitializeDeviceThenSlmSizeInDe
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     auto &deviceInfoWithoutForceSlmFlag = device->getSharedDeviceInfo();
 
-    EXPECT_EQ(defaultSlmSize, static_cast<uint32_t>(deviceInfoWithoutForceSlmFlag.localMemSize / KB));
+    EXPECT_EQ(defaultSlmSize, static_cast<uint32_t>(deviceInfoWithoutForceSlmFlag.localMemSize / MemoryConstants::kiloByte));
 
     uint32_t newSlmSize = 1;
     EXPECT_NE(defaultSlmSize, newSlmSize);
@@ -1587,7 +1587,7 @@ TEST(Device_UseCaps, givenOverrideSlmSizeWhenWhenInitializeDeviceThenSlmSizeInDe
     device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo)});
     auto &deviceInfoWithForceSlmFlag = device->getSharedDeviceInfo();
 
-    EXPECT_EQ(newSlmSize, static_cast<uint32_t>(deviceInfoWithForceSlmFlag.localMemSize / KB));
+    EXPECT_EQ(newSlmSize, static_cast<uint32_t>(deviceInfoWithForceSlmFlag.localMemSize / MemoryConstants::kiloByte));
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenInitializingCapsThenUseGetQueueFamilyCapabilitiesMethod) {

@@ -86,7 +86,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     auto cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER;
     // if transfer size bigger then L3 size, copy with L3 disabled
-    if (blitProperites.copySize.x * blitProperites.copySize.y * blitProperites.copySize.z * blitProperites.bytesPerPixel >= (rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.L3CacheSizeInKb * KB / 2)) {
+    if (blitProperites.copySize.x * blitProperites.copySize.y * blitProperites.copySize.z * blitProperites.bytesPerPixel >= (rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte / 2)) {
         cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 

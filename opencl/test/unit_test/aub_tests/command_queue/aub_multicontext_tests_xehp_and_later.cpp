@@ -40,7 +40,7 @@ struct MultitileMulticontextTests : public MulticontextAubFixture, public ::test
     template <typename FamilyType>
     void runAubTest() {
         cl_int retVal = CL_SUCCESS;
-        const uint32_t bufferSize = 64 * KB;
+        const uint32_t bufferSize = 64 * MemoryConstants::kiloByte;
         uint8_t writePattern[bufferSize];
         uint8_t initPattern[bufferSize];
         std::fill(writePattern, writePattern + sizeof(writePattern), 1);

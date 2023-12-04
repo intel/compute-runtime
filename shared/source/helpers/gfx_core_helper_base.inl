@@ -37,7 +37,7 @@ bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t si
     if (debugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!debugManager.flags.OverrideBufferSuitableForRenderCompression.get();
     }
-    return size > KB;
+    return size > MemoryConstants::kiloByte;
 }
 
 template <typename Family>
@@ -404,7 +404,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) const {
     }
     slmSize = std::max(slmSize, 1024u);
     slmSize = Math::nextPowerOfTwo(slmSize);
-    UNRECOVERABLE_IF(slmSize > 64u * KB);
+    UNRECOVERABLE_IF(slmSize > 64u * MemoryConstants::kiloByte);
     return slmSize;
 }
 
@@ -600,7 +600,7 @@ void GfxCoreHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, si
 
 template <typename GfxFamily>
 size_t GfxCoreHelperHw<GfxFamily>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
-    return 24 * MB;
+    return 24 * MemoryConstants::megaByte;
 }
 
 template <typename GfxFamily>

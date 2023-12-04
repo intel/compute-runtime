@@ -59,8 +59,8 @@ class Buffer : public MemObj {
         bool doNotProvidePerformanceHints;
         bool makeAllocationLockable;
     };
-    constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
-    constexpr static size_t maxBufferSizeForCopyOnCpu = 64 * KB;
+    constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MemoryConstants::megaByte;
+    constexpr static size_t maxBufferSizeForCopyOnCpu = 64 * MemoryConstants::kiloByte;
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
     bool forceDisallowCPUCopy = false;

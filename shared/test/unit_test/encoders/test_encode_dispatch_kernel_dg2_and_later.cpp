@@ -82,10 +82,10 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettin
 
     const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
         {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K},
-        {16 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
-        {32 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K},
+        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
+        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K},
         // since we can't set 48KB as SLM size for workgroup, we need to ask for 64KB here.
-        {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
+        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
     };
 
     const std::array<REVID, 5> revs{REVISION_A0, REVISION_B, REVISION_C, REVISION_D, REVISION_K};
@@ -109,8 +109,8 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
         debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(debugOverrideValue);
         const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
             {0, debugOverrideValue},
-            {32 * KB, debugOverrideValue},
-            {64 * KB, debugOverrideValue},
+            {32 * MemoryConstants::kiloByte, debugOverrideValue},
+            {64 * MemoryConstants::kiloByte, debugOverrideValue},
         };
         verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
     }

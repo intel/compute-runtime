@@ -101,7 +101,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPream
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenCommandStreamReceiverHwIsCreatedThenDefaultSshSizeIs2MB) {
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
-    EXPECT_EQ(2 * MB, commandStreamReceiver.defaultSshSize);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, commandStreamReceiver.defaultSshSize);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenScratchSpaceExistsThenReturnNonZeroGpuAddressToPatch) {

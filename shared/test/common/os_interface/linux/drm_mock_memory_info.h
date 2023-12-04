@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,19 +14,19 @@
 #include <vector>
 
 const std::vector<NEO::MemoryRegion> memoryRegions = {
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 64 * GB, 0},
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 8 * GB, 0}};
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 64 * MemoryConstants::gigaByte, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 8 * MemoryConstants::gigaByte, 0}};
 
 struct MockMemoryInfo : public NEO::MemoryInfo {
     MockMemoryInfo(const NEO::Drm &drm) : MemoryInfo(memoryRegions, drm) {}
 };
 
 const std::vector<NEO::MemoryRegion> extendedMemoryRegions = {
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1}, 64 * GB, 0},
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x100}, 8 * GB, 0},
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x200}, 8 * GB, 0},
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x400}, 8 * GB, 0},
-    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x800}, 8 * GB, 0}};
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1}, 64 * MemoryConstants::gigaByte, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x100}, 8 * MemoryConstants::gigaByte, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x200}, 8 * MemoryConstants::gigaByte, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x400}, 8 * MemoryConstants::gigaByte, 0},
+    {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0x800}, 8 * MemoryConstants::gigaByte, 0}};
 
 struct MockExtendedMemoryInfo : public NEO::MemoryInfo {
     MockExtendedMemoryInfo(const NEO::Drm &drm) : MemoryInfo(extendedMemoryRegions, drm) {}

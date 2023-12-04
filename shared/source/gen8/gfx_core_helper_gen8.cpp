@@ -31,7 +31,7 @@ uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
-    slmSize += (4 * KB - 1);
+    slmSize += (4 * MemoryConstants::kiloByte - 1);
     slmSize = slmSize >> 12;
     slmSize = std::min(slmSize, 15u);
     slmSize = slmSizeId[slmSize];

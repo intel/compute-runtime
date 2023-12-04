@@ -17,7 +17,7 @@ TEST(RayTracingHelperTests, whenGetMemoryBackedFifoSizeToPatchIsCalledCorrectVal
     size_t expectedSize =
         RayTracingHelper::memoryBackedFifoSizePerDss == 0
             ? 0
-            : Math::log2(RayTracingHelper::memoryBackedFifoSizePerDss / KB) - 1;
+            : Math::log2(RayTracingHelper::memoryBackedFifoSizePerDss / MemoryConstants::kiloByte) - 1;
     EXPECT_EQ(expectedSize, fifoSize);
 }
 

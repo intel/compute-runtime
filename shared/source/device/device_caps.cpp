@@ -77,7 +77,7 @@ void Device::initializeCaps() {
 
     if (debugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
-        deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * GB * percentOfGlobalMemoryAvailable));
+        deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * MemoryConstants::gigaByte * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;
         deviceInfo.force32BitAddressess = is64bit;
     }
@@ -159,9 +159,9 @@ void Device::initializeCaps() {
     deviceInfo.computeUnitsUsedForScratch = gfxCoreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
     deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);
 
-    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
+    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * MemoryConstants::kiloByte;
     if (debugManager.flags.OverrideSlmSize.get() != -1) {
-        deviceInfo.localMemSize = debugManager.flags.OverrideSlmSize.get() * KB;
+        deviceInfo.localMemSize = debugManager.flags.OverrideSlmSize.get() * MemoryConstants::kiloByte;
     }
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
@@ -170,7 +170,7 @@ void Device::initializeCaps() {
     deviceInfo.image3DMaxDepth = 2048;
     deviceInfo.imageMaxArraySize = 2048;
 
-    deviceInfo.printfBufferSize = 4 * MB;
+    deviceInfo.printfBufferSize = 4 * MemoryConstants::megaByte;
     deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
 
     deviceInfo.maxSubGroups = gfxCoreHelper.getDeviceSubGroupSizes();

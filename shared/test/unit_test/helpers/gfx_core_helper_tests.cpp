@@ -902,13 +902,13 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompr
 
     debugManager.flags.OverrideBufferSuitableForRenderCompression.set(0);
     EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(0));
-    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB));
-    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1));
+    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(MemoryConstants::kiloByte));
+    EXPECT_FALSE(gfxCoreHelper.isBufferSizeSuitableForCompression(MemoryConstants::kiloByte + 1));
 
     debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
     EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(0));
-    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB));
-    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(KB + 1));
+    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(MemoryConstants::kiloByte));
+    EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(MemoryConstants::kiloByte + 1));
 }
 
 HWTEST_F(GfxCoreHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned) {

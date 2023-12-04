@@ -26,8 +26,8 @@ struct DummyBuffer {
 
 template <>
 struct NEO::SmallBuffersParams<DummyBufferPool> {
-    static constexpr auto aggregatedSmallBuffersPoolSize = 32 * KB;
-    static constexpr auto smallBufferThreshold = 2 * KB;
+    static constexpr auto aggregatedSmallBuffersPoolSize = 32 * MemoryConstants::kiloByte;
+    static constexpr auto smallBufferThreshold = 2 * MemoryConstants::kiloByte;
     static constexpr auto chunkAlignment = 1024u;
     static constexpr auto startingOffset = chunkAlignment;
 };

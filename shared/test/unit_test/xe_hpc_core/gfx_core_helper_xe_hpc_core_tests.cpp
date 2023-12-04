@@ -20,29 +20,29 @@ using GfxCoreHelperXeHpcCoreTest = ::testing::Test;
 
 XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
     ComputeSlmTestInput computeSlmValuesXeHpcTestsInput[] = {
-        {0, 0 * KB},
-        {1, 0 * KB + 1},
-        {1, 1 * KB},
-        {2, 1 * KB + 1},
-        {2, 2 * KB},
-        {3, 2 * KB + 1},
-        {3, 4 * KB},
-        {4, 4 * KB + 1},
-        {4, 8 * KB},
-        {5, 8 * KB + 1},
-        {5, 16 * KB},
-        {8, 16 * KB + 1},
-        {8, 24 * KB},
-        {6, 24 * KB + 1},
-        {6, 32 * KB},
-        {9, 32 * KB + 1},
-        {9, 48 * KB},
-        {7, 48 * KB + 1},
-        {7, 64 * KB},
-        {10, 64 * KB + 1},
-        {10, 96 * KB},
-        {11, 96 * KB + 1},
-        {11, 128 * KB}};
+        {0, 0 * MemoryConstants::kiloByte},
+        {1, 0 * MemoryConstants::kiloByte + 1},
+        {1, 1 * MemoryConstants::kiloByte},
+        {2, 1 * MemoryConstants::kiloByte + 1},
+        {2, 2 * MemoryConstants::kiloByte},
+        {3, 2 * MemoryConstants::kiloByte + 1},
+        {3, 4 * MemoryConstants::kiloByte},
+        {4, 4 * MemoryConstants::kiloByte + 1},
+        {4, 8 * MemoryConstants::kiloByte},
+        {5, 8 * MemoryConstants::kiloByte + 1},
+        {5, 16 * MemoryConstants::kiloByte},
+        {8, 16 * MemoryConstants::kiloByte + 1},
+        {8, 24 * MemoryConstants::kiloByte},
+        {6, 24 * MemoryConstants::kiloByte + 1},
+        {6, 32 * MemoryConstants::kiloByte},
+        {9, 32 * MemoryConstants::kiloByte + 1},
+        {9, 48 * MemoryConstants::kiloByte},
+        {7, 48 * MemoryConstants::kiloByte + 1},
+        {7, 64 * MemoryConstants::kiloByte},
+        {10, 64 * MemoryConstants::kiloByte + 1},
+        {10, 96 * MemoryConstants::kiloByte},
+        {11, 96 * MemoryConstants::kiloByte + 1},
+        {11, 128 * MemoryConstants::kiloByte}};
 
     auto hwInfo = *defaultHwInfo;
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -52,7 +52,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturn
         EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
     }
 
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 129 * KB), std::exception);
+    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 129 * MemoryConstants::kiloByte), std::exception);
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {

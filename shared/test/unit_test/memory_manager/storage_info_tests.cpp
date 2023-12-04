@@ -388,7 +388,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenD
 
     debugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 64 * KB * 40, AllocationType::BUFFER, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 64 * MemoryConstants::kiloByte * 40, AllocationType::BUFFER, true, allTilesMask};
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(proposedTiles, storageInfo.memoryBanks);
@@ -404,7 +404,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlace
 
     debugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 512 * KB, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 512 * MemoryConstants::kiloByte, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
 
@@ -415,7 +415,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryOnMultiTileWhenKmdMig
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 512 * KB, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 512 * MemoryConstants::kiloByte, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
 

@@ -255,7 +255,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
-    auto sizeAlignedTo64Kb = 64 * KB;
+    auto sizeAlignedTo64Kb = 64 * MemoryConstants::kiloByte;
     D3DGPU_VIRTUAL_ADDRESS reservationAddress;
     auto status = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
                                                  wddm->getGfxPartition().Heap32[0].Limit,
@@ -275,7 +275,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamt
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithInvalidBaseThenFailureIsReturned) {
-    auto sizeAlignedTo64Kb = 64 * KB;
+    auto sizeAlignedTo64Kb = 64 * MemoryConstants::kiloByte;
     D3DGPU_VIRTUAL_ADDRESS reservationAddress;
     auto status = wddm->reserveGpuVirtualAddress(0x1234, wddm->getGfxPartition().Heap32[0].Base,
                                                  wddm->getGfxPartition().Heap32[0].Limit,
@@ -284,7 +284,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithInvalidBaseT
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithAttemptBaseAddressWithValidBaseThenAddressInRangeIsReturned) {
-    auto sizeAlignedTo64Kb = 64 * KB;
+    auto sizeAlignedTo64Kb = 64 * MemoryConstants::kiloByte;
     D3DGPU_VIRTUAL_ADDRESS previousReservationAddress;
     D3DGPU_VIRTUAL_ADDRESS reservationAddress;
     NTSTATUS status;
@@ -542,7 +542,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
 TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledWithMapPointerThenGraphicsAllocationWithSharedPropertiesIsCreated) {
     void *pSysMem = (void *)0x1000;
 
-    size_t sizeAlignedTo64Kb = 64 * KB;
+    size_t sizeAlignedTo64Kb = 64 * MemoryConstants::kiloByte;
     void *reservedAddress;
     EXPECT_TRUE(wddm->reserveValidAddressRange(sizeAlignedTo64Kb, reservedAddress));
     GmmRequirements gmmRequirements{};

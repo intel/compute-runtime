@@ -940,7 +940,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedAndAllowedAndBigAllocationHostPtrThenPinAf
     }
     ASSERT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
 
-    allocationData.size = 10 * MB;
+    allocationData.size = 10 * MemoryConstants::megaByte;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
@@ -1945,7 +1945,7 @@ TEST_F(DrmMemoryManagerTest, GivenExhaustedInternalHeapWhenAllocate32BitIsCalled
     auto alloc = memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocate(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, size);
     EXPECT_NE(0llu, alloc);
 
-    size_t allocationSize = 4 * GB;
+    size_t allocationSize = 4 * MemoryConstants::gigaByte;
     auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, allocationSize, nullptr, AllocationType::INTERNAL_HEAP);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
@@ -2600,7 +2600,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     auto gpuPtr = drmAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
     auto heapBase = gmmHelper->canonize(memoryManager->getInternalHeapBaseAddress(drmAllocation->getRootDeviceIndex(), drmAllocation->isAllocatedInLocalMemoryPool()));
-    auto heapSize = 4 * GB;
+    auto heapSize = 4 * MemoryConstants::gigaByte;
 
     EXPECT_GE(gpuPtr, heapBase);
     EXPECT_LE(gpuPtr, heapBase + heapSize);
@@ -2633,7 +2633,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
     auto gpuPtr = drmAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
     auto heapBase = gmmHelper->canonize(memoryManager->getInternalHeapBaseAddress(drmAllocation->getRootDeviceIndex(), drmAllocation->isAllocatedInLocalMemoryPool()));
-    auto heapSize = 4 * GB;
+    auto heapSize = 4 * MemoryConstants::gigaByte;
 
     EXPECT_GE(gpuPtr, heapBase);
     EXPECT_LE(gpuPtr, heapBase + heapSize);
@@ -2690,7 +2690,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     auto gpuPtr = drmAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
     auto heapBase = gmmHelper->canonize(memoryManager->getInternalHeapBaseAddress(drmAllocation->getRootDeviceIndex(), drmAllocation->isAllocatedInLocalMemoryPool()));
-    auto heapSize = 4 * GB;
+    auto heapSize = 4 * MemoryConstants::gigaByte;
 
     EXPECT_GE(gpuPtr, heapBase);
     EXPECT_LE(gpuPtr, heapBase + heapSize);
@@ -3065,7 +3065,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
     }
     ASSERT_NE(nullptr, memoryManager->pinBBs[device->getRootDeviceIndex()]);
 
-    size_t size = 10 * MB;
+    size_t size = 10 * MemoryConstants::megaByte;
     void *ptr = ::alignedMalloc(size, 4096);
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), false, size}, ptr));
     ASSERT_NE(nullptr, alloc);
@@ -3206,7 +3206,7 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
-    allocationData.size = 4 * MB + 16 * 1024;
+    allocationData.size = 4 * MemoryConstants::megaByte + 16 * 1024;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x10000000);
     auto allocation0 = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
@@ -3215,11 +3215,11 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     memoryManager->freeGraphicsMemory(allocation0);
 
-    allocationData.size = 4 * MB + 12 * 1024;
+    allocationData.size = 4 * MemoryConstants::megaByte + 12 * 1024;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x30000000);
     allocation0 = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
-    EXPECT_EQ(static_cast<uint64_t>(allocation0->getBO()->peekSize()), 4 * MB + 12 * 1024);
+    EXPECT_EQ(static_cast<uint64_t>(allocation0->getBO()->peekSize()), 4 * MemoryConstants::megaByte + 12 * 1024);
 
     memoryManager->freeGraphicsMemory(allocation0);
     memoryManager->freeGraphicsMemory(allocation1);
@@ -3250,7 +3250,7 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
-    allocationData.size = 64 * GB;
+    allocationData.size = 64 * MemoryConstants::gigaByte;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x100000000000);
     EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 }
@@ -3258,7 +3258,7 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrFailsThenNullPtrReturnedAndAllocationIsNotRegistered) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
-    MockAllocationProperties properties(0u, 64 * GB);
+    MockAllocationProperties properties(0u, 64 * MemoryConstants::gigaByte);
 
     auto ptr = reinterpret_cast<const void *>(0x100000000000);
     EXPECT_FALSE(memoryManager->allocateGraphicsMemoryInPreferredPool(properties, ptr));
@@ -3319,7 +3319,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
     mock->ioctlExpected.gemWait = 1;
 
     AllocationData allocationData;
-    allocationData.size = 10 * MB; // bigger than threshold
+    allocationData.size = 10 * MemoryConstants::megaByte; // bigger than threshold
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
     allocationData.flags.forcePin = true;
     allocationData.rootDeviceIndex = device->getRootDeviceIndex();
@@ -3757,7 +3757,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThenGpuAddressIsDecanonized) {
-    constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * GB) : 0;
+    constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * MemoryConstants::gigaByte) : 0;
     auto hwInfo = defaultHwInfo.get();
     auto mockGfxPartition = std::make_unique<MockGfxPartition>();
     mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1, false, 0u);
@@ -4834,7 +4834,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIs
 }
 
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenDeviceHeapIsDepletedThenNullptrReturnedAndStatusIsError) {
-    constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * GB) : 0;
+    constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * MemoryConstants::gigaByte) : 0;
 
     auto hwInfo = defaultHwInfo.get();
     auto executionEnvironment = MockExecutionEnvironment{hwInfo};
@@ -4978,7 +4978,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenFreeingNonImportedMemoryTh
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
-    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex, 0xF));
+    EXPECT_EQ(0 * MemoryConstants::gigaByte, memoryManager->getLocalMemorySize(rootDeviceIndex, 0xF));
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUpdateCachePolicyInBufferObject) {

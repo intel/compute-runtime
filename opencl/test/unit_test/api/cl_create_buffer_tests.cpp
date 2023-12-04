@@ -286,7 +286,7 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWi
 
 TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferThenClSuccessIsReturned) {
     auto pDevice = pContext->getDevice(0);
-    uint64_t bigSize = GB * 5;
+    uint64_t bigSize = MemoryConstants::gigaByte * 5;
     size_t size = static_cast<size_t>(bigSize);
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR | CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
@@ -306,7 +306,7 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
 
 TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferWithPropertiesINTELThenClSuccesssIsReturned) {
     auto pDevice = pContext->getDevice(0);
-    uint64_t bigSize = GB * 5;
+    uint64_t bigSize = MemoryConstants::gigaByte * 5;
     size_t size = static_cast<size_t>(bigSize);
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL, 0};
 

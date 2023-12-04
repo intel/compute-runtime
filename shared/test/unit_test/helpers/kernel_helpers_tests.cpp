@@ -20,7 +20,7 @@ struct KernelHelperMaxWorkGroupsTests : ::testing::Test {
     uint32_t simd = 8;
     uint32_t threadCount = 8 * 1024;
     uint32_t dssCount = 16;
-    uint32_t availableSlm = 64 * KB;
+    uint32_t availableSlm = 64 * MemoryConstants::kiloByte;
     uint32_t usedSlm = 0;
     uint32_t maxBarrierCount = 32;
     uint32_t numberOfBarriers = 0;
@@ -54,14 +54,14 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroups
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToUsedSlmSize) {
-    usedSlm = 4 * KB;
+    usedSlm = 4 * MemoryConstants::kiloByte;
 
     auto expected = availableSlm / usedSlm;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkGroupsCountThenLowestResultIsAlwaysReturned) {
-    usedSlm = 1 * KB;
+    usedSlm = 1 * MemoryConstants::kiloByte;
     numberOfBarriers = 1;
     dssCount = 1;
 

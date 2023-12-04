@@ -1006,7 +1006,7 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
 
     const auto &hardwareInfo = this->getHwInfo();
     uint32_t subDeviceCount = std::max(this->numSubDevices, 1u);
-    pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3CacheSizeInKb * subDeviceCount * KB;
+    pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3CacheSizeInKb * subDeviceCount * MemoryConstants::kiloByte;
     pCacheProperties[0].flags = 0;
 
     if (pCacheProperties->pNext) {

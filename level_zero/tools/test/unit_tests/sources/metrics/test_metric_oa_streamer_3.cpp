@@ -223,7 +223,7 @@ TEST_F(MetricStreamerTest, givenRawReportSizeIsNotAlignedToOaBufferSizeWhenZetMe
     metricsSetParams.ShortName = "Metric set description";
     metricsSetParams.RawReportSize = 576;
 
-    uint32_t testOaBufferSize = 128 * MB;
+    uint32_t testOaBufferSize = 128 * MemoryConstants::megaByte;
 
     openMetricsAdapter();
 

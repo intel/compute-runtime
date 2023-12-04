@@ -210,7 +210,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAre
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
 
-    size_t size = 2 * GB;
+    size_t size = 2 * MemoryConstants::gigaByte;
     void *ptr = reinterpret_cast<void *>(0x100000000000);
     auto retVal = CL_SUCCESS;
 
@@ -221,7 +221,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAre
         ptr,
         retVal);
 
-    size_t size2 = 4 * GB - MemoryConstants::pageSize; // Keep size aligned
+    size_t size2 = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize; // Keep size aligned
 
     auto buffer2 = Buffer::create(
         &context,
@@ -251,7 +251,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAre
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
 
-    size_t size = 2 * GB;
+    size_t size = 2 * MemoryConstants::gigaByte;
     void *ptr = reinterpret_cast<void *>(0x100000000000);
     auto retVal = CL_SUCCESS;
 
@@ -262,7 +262,7 @@ TEST_F(ClDrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAre
         nullptr,
         retVal);
 
-    size_t size2 = 4 * GB - MemoryConstants::pageSize; // Keep size aligned
+    size_t size2 = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize; // Keep size aligned
 
     auto buffer2 = Buffer::create(
         &context,

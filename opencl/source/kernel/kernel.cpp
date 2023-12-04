@@ -1128,7 +1128,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
     auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, kernelDescriptor.kernelAttributes.numGrfRequired);
-    auto availableSlmSize = static_cast<uint32_t>(dssCount * KB * hardwareInfo.capabilityTable.slmSize);
+    auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.slmSize);
     auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
     auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
     auto barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
@@ -1429,7 +1429,7 @@ cl_int Kernel::setArgLocal(uint32_t argIndexIn,
         ++argIndex;
     }
 
-    slmTotalSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, KB);
+    slmTotalSize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize + alignUp(slmOffset, MemoryConstants::kiloByte);
 
     return CL_SUCCESS;
 }

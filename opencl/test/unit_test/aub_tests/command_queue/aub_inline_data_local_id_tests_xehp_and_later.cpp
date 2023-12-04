@@ -409,7 +409,7 @@ struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
         debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         kernelIds |= (1 << 9);
-        variables[0].sizeUserMemory = 16 * KB;
+        variables[0].sizeUserMemory = 16 * MemoryConstants::kiloByte;
         AubDispatchThreadDataFixture::setUp();
 
         memset(variables[0].destMemory, 0, variables[0].sizeUserMemory);

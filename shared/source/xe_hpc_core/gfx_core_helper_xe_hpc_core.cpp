@@ -263,17 +263,17 @@ template <>
 uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
     const uint32_t alignedSlmSizes[] = {
         0u,
-        1u * KB,
-        2u * KB,
-        4u * KB,
-        8u * KB,
-        16u * KB,
-        24u * KB,
-        32u * KB,
-        48u * KB,
-        64u * KB,
-        96u * KB,
-        128u * KB,
+        1u * MemoryConstants::kiloByte,
+        2u * MemoryConstants::kiloByte,
+        4u * MemoryConstants::kiloByte,
+        8u * MemoryConstants::kiloByte,
+        16u * MemoryConstants::kiloByte,
+        24u * MemoryConstants::kiloByte,
+        32u * MemoryConstants::kiloByte,
+        48u * MemoryConstants::kiloByte,
+        64u * MemoryConstants::kiloByte,
+        96u * MemoryConstants::kiloByte,
+        128u * MemoryConstants::kiloByte,
     };
 
     for (auto &alignedSlmSize : alignedSlmSizes) {
@@ -293,36 +293,36 @@ uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, u
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
     }
 
-    UNRECOVERABLE_IF(slmSize > 128u * KB);
+    UNRECOVERABLE_IF(slmSize > 128u * MemoryConstants::kiloByte);
 
-    if (slmSize > 96u * KB) {
+    if (slmSize > 96u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_128K;
     }
-    if (slmSize > 64u * KB) {
+    if (slmSize > 64u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_96K;
     }
-    if (slmSize > 48u * KB) {
+    if (slmSize > 48u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_64K;
     }
-    if (slmSize > 32u * KB) {
+    if (slmSize > 32u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_48K;
     }
-    if (slmSize > 24u * KB) {
+    if (slmSize > 24u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_32K;
     }
-    if (slmSize > 16u * KB) {
+    if (slmSize > 16u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_24K;
     }
-    if (slmSize > 8u * KB) {
+    if (slmSize > 8u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_16K;
     }
-    if (slmSize > 4u * KB) {
+    if (slmSize > 4u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_8K;
     }
-    if (slmSize > 2u * KB) {
+    if (slmSize > 2u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_4K;
     }
-    if (slmSize > 1u * KB) {
+    if (slmSize > 1u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_2K;
     }
     return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K;
@@ -362,7 +362,7 @@ uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDevice
 
 template <>
 size_t GfxCoreHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
-    return 40 * MB;
+    return 40 * MemoryConstants::megaByte;
 }
 
 template <>

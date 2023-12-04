@@ -35,7 +35,7 @@ class SyncBufferHandler : NonCopyableOrMovableClass {
     Device &device;
     MemoryManager &memoryManager;
     GraphicsAllocation *graphicsAllocation;
-    const size_t bufferSize = 64 * KB;
+    const size_t bufferSize = 64 * MemoryConstants::kiloByte;
     size_t usedBufferSize = 0;
     std::mutex mutex;
 };

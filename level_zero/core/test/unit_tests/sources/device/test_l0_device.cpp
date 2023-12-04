@@ -1063,7 +1063,7 @@ TEST_F(MultiSubDeviceCachePropertiesTest, givenDeviceWithSubDevicesWhenQueriedFo
 
     auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
     auto &hwInfo = *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
-    auto singleRootDeviceCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * KB;
+    auto singleRootDeviceCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte;
 
     uint32_t count = 0;
     ze_result_t res = device->getCacheProperties(&count, nullptr);

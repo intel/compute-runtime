@@ -15,14 +15,14 @@
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
 using namespace NEO;
-constexpr uint64_t probedSizeRegionZero = 8 * GB;
-constexpr uint64_t probedSizeRegionOne = 16 * GB;
-constexpr uint64_t probedSizeRegionTwo = 4 * GB;
-constexpr uint64_t probedSizeRegionThree = 16 * GB;
-constexpr uint64_t unallocatedSizeRegionZero = 6 * GB;
-constexpr uint64_t unallocatedSizeRegionOne = 12 * GB;
-constexpr uint64_t unallocatedSizeRegionTwo = 25 * GB;
-constexpr uint64_t unallocatedSizeRegionThree = 3 * GB;
+constexpr uint64_t probedSizeRegionZero = 8 * MemoryConstants::gigaByte;
+constexpr uint64_t probedSizeRegionOne = 16 * MemoryConstants::gigaByte;
+constexpr uint64_t probedSizeRegionTwo = 4 * MemoryConstants::gigaByte;
+constexpr uint64_t probedSizeRegionThree = 16 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionZero = 6 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionOne = 12 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionTwo = 25 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionThree = 3 * MemoryConstants::gigaByte;
 namespace L0 {
 namespace ult {
 

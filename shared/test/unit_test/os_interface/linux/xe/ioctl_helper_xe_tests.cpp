@@ -51,9 +51,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThen
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {0, 0};
-    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
     regionInfo[1].region = {1, 0};
-    regionInfo[1].probedSize = 16 * GB;
+    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
     MemRegionsVec memRegions = {regionInfo[0].region, regionInfo[1].region};
 
     uint32_t handle = 0u;
@@ -72,9 +72,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
 
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {0, 0};
-    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
     regionInfo[1].region = {1, 0};
-    regionInfo[1].probedSize = 16 * GB;
+    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
     MemRegionsVec memRegions = {regionInfo[0].region, regionInfo[1].region};
 
     uint32_t handle = 0u;

@@ -17,12 +17,12 @@
 
 namespace NEO {
 
-constexpr uint64_t probedSizeRegionZero = 8 * GB;
-constexpr uint64_t probedSizeRegionOne = 16 * GB;
-constexpr uint64_t probedSizeRegionFour = 32 * GB;
-constexpr uint64_t unallocatedSizeRegionZero = 6 * GB;
-constexpr uint64_t unallocatedSizeRegionOne = 12 * GB;
-constexpr uint64_t unallocatedSizeRegionFour = 4 * GB;
+constexpr uint64_t probedSizeRegionZero = 8 * MemoryConstants::gigaByte;
+constexpr uint64_t probedSizeRegionOne = 16 * MemoryConstants::gigaByte;
+constexpr uint64_t probedSizeRegionFour = 32 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionZero = 6 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionOne = 12 * MemoryConstants::gigaByte;
+constexpr uint64_t unallocatedSizeRegionFour = 4 * MemoryConstants::gigaByte;
 
 class MockIoctlHelper : public IoctlHelperPrelim20 {
   public:

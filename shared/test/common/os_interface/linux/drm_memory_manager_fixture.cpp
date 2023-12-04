@@ -142,9 +142,9 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocal
     mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
     std::vector<MemoryRegion> regionInfo(2);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[0].probedSize = 8 * MemoryConstants::gigaByte;
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
-    regionInfo[1].probedSize = 16 * GB;
+    regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
     mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, *mock));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
     memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));

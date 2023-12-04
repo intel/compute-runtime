@@ -63,7 +63,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     DefaultWalkerType walkerCmd{};
     // define kernel info
     kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
-    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = GetParam() * KB;
+    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = GetParam() * MemoryConstants::kiloByte;
 
     MockKernel kernel(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());

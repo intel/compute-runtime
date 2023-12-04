@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,6 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
 }
 size_t getSizeToReserve() {
     // 4 x sizeof(Heap32) + 2 x sizeof(Standard/Standard64k)
-    return (4 * 4 + 2 * 4) * GB;
+    return (4 * 4 + 2 * 4) * MemoryConstants::gigaByte;
 }
 } // namespace NEO

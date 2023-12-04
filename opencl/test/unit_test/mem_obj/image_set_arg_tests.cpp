@@ -1159,7 +1159,7 @@ HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsPr
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;
 
-    uint64_t surfaceOffset = 8 * GB;
+    uint64_t surfaceOffset = 8 * MemoryConstants::gigaByte;
 
     srcImage->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex(), false);

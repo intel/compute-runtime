@@ -98,7 +98,7 @@ TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetGreaterThan4gbWhenCreatin
     cl_buffer_region region = {0, size / 2};
 
     if constexpr (is64bit) {
-        offsetExpected = 8 * GB;
+        offsetExpected = 8 * MemoryConstants::gigaByte;
         region = {static_cast<size_t>(offsetExpected), size / 2};
     }
 

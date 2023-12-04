@@ -58,10 +58,6 @@ inline constexpr size_t chunkThreshold = MemoryConstants::pageSize64k;
 
 } // namespace MemoryConstants
 
-inline constexpr uint64_t KB = MemoryConstants::kiloByte;
-inline constexpr uint64_t MB = MemoryConstants::megaByte;
-inline constexpr uint64_t GB = MemoryConstants::gigaByte;
-
 namespace BlitterConstants {
 inline constexpr uint64_t maxBlitWidth = 0x4000;
 inline constexpr uint64_t maxBlitHeight = 0x4000;

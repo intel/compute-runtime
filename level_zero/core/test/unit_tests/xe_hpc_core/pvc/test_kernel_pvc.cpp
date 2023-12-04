@@ -33,7 +33,7 @@ PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenBarriersWhenCal
 }
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize) {
-    usedSlm = 64 * KB;
+    usedSlm = 64 * MemoryConstants::kiloByte;
     auto expected = (availableSlm / usedSlm) / 2;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }

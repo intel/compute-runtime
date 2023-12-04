@@ -276,7 +276,7 @@ void ClDevice::initializeCaps() {
     const auto systemInfo = hwInfo.gtSystemInfo;
 
     const auto subDevicesCount = std::max(getNumGenericSubDevices(), 1u);
-    deviceInfo.globalMemCacheSize = systemInfo.L3CacheSizeInKb * KB * subDevicesCount;
+    deviceInfo.globalMemCacheSize = systemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte * subDevicesCount;
     deviceInfo.grfSize = hwInfo.capabilityTable.grfSize;
 
     deviceInfo.globalMemCacheType = CL_READ_WRITE_CACHE;
@@ -377,7 +377,7 @@ void ClDevice::initializeCaps() {
         deviceInfo.supportedThreadArbitrationPolicies[policy] = supportedThreadArbitrationPolicies[policy];
     }
     deviceInfo.preemptionSupported = false;
-    deviceInfo.maxGlobalVariableSize = ocl21FeaturesEnabled ? 64 * KB : 0;
+    deviceInfo.maxGlobalVariableSize = ocl21FeaturesEnabled ? 64 * MemoryConstants::kiloByte : 0;
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
 
     deviceInfo.planarYuvMaxWidth = 16384;

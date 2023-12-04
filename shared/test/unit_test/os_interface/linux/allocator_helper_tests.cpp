@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,5 +11,5 @@
 #include "gtest/gtest.h"
 
 TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenExpectedValueReturned) {
-    EXPECT_EQ((4 * 4 + 2 * 4) * GB, NEO::getSizeToReserve());
+    EXPECT_EQ((4 * 4 + 2 * 4) * MemoryConstants::gigaByte, NEO::getSizeToReserve());
 }

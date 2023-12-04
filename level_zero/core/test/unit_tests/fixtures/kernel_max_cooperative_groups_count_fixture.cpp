@@ -25,7 +25,7 @@ void KernelImpSuggestMaxCooperativeGroupCountFixture::setUp() {
     if (dssCount == 0) {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
-    availableSlm = dssCount * KB * hardwareInfo.capabilityTable.slmSize;
+    availableSlm = dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.slmSize;
     maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 
     kernelInfo.kernelDescriptor->kernelAttributes.simdSize = simd;

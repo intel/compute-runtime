@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ class KernelSlmArgTest : public MultiRootDeviceWithSubDevicesFixture {
 
         pKernelInfo->addArgLocal(2, 0x30, 0x10);
 
-        pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = 3 * KB;
+        pKernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize = 3 * MemoryConstants::kiloByte;
 
         for (auto &rootDeviceIndex : this->context->getRootDeviceIndices()) {
             pKernel[rootDeviceIndex] = new MockKernel(program.get(), *pKernelInfo, *deviceFactory->rootDevices[rootDeviceIndex]);
@@ -88,7 +88,7 @@ TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
         slmOffset = ptrOffset(crossThreadData, 0x30);
         EXPECT_EQ(0x200u, *slmOffset);
 
-        EXPECT_EQ(4 * KB, pKernel[rootDeviceIndex]->slmTotalSize);
+        EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSize);
     }
 }
 
@@ -107,6 +107,6 @@ TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSl
         slmOffset = ptrOffset(crossThreadData, 0x30);
         EXPECT_EQ(0x200u, *slmOffset);
 
-        EXPECT_EQ(4 * KB, pKernel[rootDeviceIndex]->slmTotalSize);
+        EXPECT_EQ(4 * MemoryConstants::kiloByte, pKernel[rootDeviceIndex]->slmTotalSize);
     }
 }

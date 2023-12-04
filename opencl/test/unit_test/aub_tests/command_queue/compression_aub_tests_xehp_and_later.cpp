@@ -122,7 +122,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
     const size_t imageWidth = 16;
     const size_t imageHeight = 16;
 
-    const size_t bufferSize = 64 * KB;
+    const size_t bufferSize = 64 * MemoryConstants::kiloByte;
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
