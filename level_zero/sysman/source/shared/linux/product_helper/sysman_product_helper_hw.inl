@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
@@ -103,6 +104,16 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(PlatformMoni
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
+    return RasInterfaceType::NONE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
+    return RasInterfaceType::NONE;
 }
 
 } // namespace Sysman

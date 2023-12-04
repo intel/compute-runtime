@@ -1752,7 +1752,7 @@ TEST_F(SysmanEventsFixture,
     delete pUdevLibLocal;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout, IsPVC) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -1792,7 +1792,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventThenAfterReceivingEventRegisterEventAgainToReceiveEvent) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventThenAfterReceivingEventRegisterEventAgainToReceiveEvent, IsPVC) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -1837,7 +1837,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout, IsPVC) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -1877,7 +1877,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout, IsPVC) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -1918,7 +1918,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout, IsPVC) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -1959,7 +1959,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIWaitForTimeoutIfEventNotReceived, IsPVC) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -1983,7 +1983,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIReturnsNoEvents) {
+HWTEST2_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIReturnsNoEvents, IsPVC) {
     pFsAccess->mockListDirectoryResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
     auto pMockFwInterface = new MockEventsFwInterface;
@@ -2018,7 +2018,7 @@ TEST_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRasUnc
     delete pMockFwInterface;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIWaitForTimeoutIfEventNotReceived, IsPVC) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -2042,7 +2042,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventAndPmuReadSingleFailsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventAndPmuReadSingleFailsThenEventListenAPIWaitForTimeoutIfEventNotReceived, IsPVC) {
 
     pPmuInterface->mockPmuReadFail = true;
 
@@ -2074,7 +2074,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectable
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsDoNotThresholdThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsDoNotThresholdThenEventListenAPIWaitForTimeoutIfEventNotReceived, IsPVC) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
@@ -2098,7 +2098,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsDoNotCrossThresholdThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
+HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingCategoryThresholdEventAndCategoryErrorsDoNotCrossThresholdThenEventListenAPIWaitForTimeoutIfEventNotReceived, IsPVC) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS));
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {

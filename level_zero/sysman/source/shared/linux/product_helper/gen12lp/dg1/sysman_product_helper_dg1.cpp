@@ -101,6 +101,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(PlatformMoni
     return ZE_RESULT_SUCCESS;
 }
 
+template <>
+RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
+    return RasInterfaceType::PMU;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

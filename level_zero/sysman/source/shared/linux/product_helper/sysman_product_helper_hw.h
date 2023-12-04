@@ -35,6 +35,10 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
     bool isMemoryMaxTemperatureSupported() override;
 
+    // Ras
+    RasInterfaceType getGtRasUtilInterface() override;
+    RasInterfaceType getHbmRasUtilInterface() override;
+
     ~SysmanProductHelperHw() override = default;
 
   protected:

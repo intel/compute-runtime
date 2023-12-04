@@ -55,7 +55,6 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockRasNeoDrm>(pDrm));
 
@@ -76,7 +75,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesInThenSuccessReturn) {
+HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesInThenSuccessReturn, IsGtRasSupportedProduct) {
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -92,7 +91,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesInThenSuc
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessIsReturned, IsGtRasSupportedProduct) {
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
 
@@ -112,7 +111,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessI
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForGtAndIfReadSymLinkFailsThenNoSupportedErrorTypeIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForGtAndIfReadSymLinkFailsThenNoSupportedErrorTypeIsReturned, IsGtRasSupportedProduct) {
     std::set<zes_ras_error_type_t> errorType = {};
 
     pSysfsAccess->mockReadSymLinkResult = true;
@@ -121,7 +120,7 @@ TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErro
     EXPECT_EQ(errorType.size(), 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForGtAndIfListDirectoryFailsThenNoSupportedErrorTypeIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForGtAndIfListDirectoryFailsThenNoSupportedErrorTypeIsReturned, IsGtRasSupportedProduct) {
     std::set<zes_ras_error_type_t> errorType = {};
 
     pFsAccess->mockReadDirectoryFailure = true;
@@ -130,15 +129,16 @@ TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErro
     EXPECT_EQ(errorType.size(), 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForHbmAndFwInterfaceIsAbsentThenNoSupportedErrorTypeIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForHbmAndFwInterfaceIsAbsentThenNoSupportedErrorTypeIsReturned, IsPVC) {
     std::set<zes_ras_error_type_t> errorType = {};
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     L0::Sysman::LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, false, 0);
     EXPECT_EQ(errorType.size(), 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentThenZeroHandlesAreCreated) {
+HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentThenZeroHandlesAreCreated, IsGtRasSupportedProduct) {
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
 
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
@@ -154,8 +154,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
     EXPECT_EQ(testcount, 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAndHbmAreAbsentThenZeroHandlesAreCreated) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4);
+HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAndHbmAreAbsentThenZeroHandlesAreCreated, IsNotPVC) {
     pRasFwUtilInterface->mockMemorySuccess = true;
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
 
@@ -167,8 +166,8 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmAndFwInterfaceArePresentThenSuccessIsReturned) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2);
+HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmAndFwInterfaceArePresentThenSuccessIsReturned, IsPVC) {
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
     pRasFwUtilInterface->mockMemorySuccess = true;
 
     uint32_t count = 0;
@@ -177,7 +176,8 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmAndF
     EXPECT_EQ(count, mockHandleCount);
 }
 
-TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentAndQuerySystemInfoSucceedsButMemSysInfoIsNullThenZeroHandlesAreCreated) {
+HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentAndQuerySystemInfoSucceedsButMemSysInfoIsNullThenZeroHandlesAreCreated, IsPVC) {
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
     pDrm->mockQuerySystemInfoReturnValue.push_back(true);
 
@@ -188,7 +188,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned, IsGtRasSupportedProduct) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -234,7 +234,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSu
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateForGtAfterClearThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateForGtAfterClearThenSuccessIsReturned, IsGtRasSupportedProduct) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -304,10 +304,11 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateForGtAfterClea
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmThenSuccessIsReturned, IsPVC) {
 
     pPmuInterface->mockPmuReadResult = true;
     pRasFwUtilInterface->mockMemorySuccess = true;
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
 
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
@@ -324,10 +325,11 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmThenS
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmWithClearThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmWithClearThenSuccessIsReturned, IsPVC) {
 
     pPmuInterface->mockPmuReadResult = true;
     pRasFwUtilInterface->mockMemorySuccess = true;
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
 
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
@@ -358,7 +360,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmWithC
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateWithClearOptionWithoutPermissionsThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateWithClearOptionWithoutPermissionsThenFailureIsReturned, IsGtRasSupportedProduct) {
 
     pFsAccess->mockRootUser = true;
 
@@ -371,7 +373,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateWithClearOpt
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndUnableToRetrieveConfigValuesAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndUnableToRetrieveConfigValuesAndOtherInterfacesAreAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
 
     pFsAccess->mockReadFileFailure = true;
 
@@ -383,7 +385,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPerfEventOpenFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPerfEventOpenFailsAndOtherInterfacesAreAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
 
     pPmuInterface->mockPerfEvent = true;
 
@@ -395,10 +397,22 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
 
     pPmuInterface->mockPmuReadResult = true;
-
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -407,10 +421,23 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceWithClearAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceWithClearAndPmuReadFailsAndOtherInterfacesAreAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+        return sizeofPath;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << pmuDriverType;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
 
     pPmuInterface->mockPmuReadResult = true;
-
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -419,7 +446,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateForGtInterfaceAndPMUGetEventTypeFailsAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateForGtInterfaceAndPMUGetEventTypeFailsAndOtherInterfacesAreAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
 
     pFsAccess->mockReadVal = true;
 
@@ -431,7 +458,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateForGtInterf
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenFailureIsReturned, IsGtRasSupportedProduct) {
 
     pFsAccess->mockReadVal = true;
 
@@ -444,7 +471,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmware
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRasSetConfigThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRasSetConfigThenSuccessIsReturned, IsGtRasSupportedProduct) {
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -461,7 +488,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRa
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned, IsGtRasSupportedProduct) {
 
     pFsAccess->mockRootUser = true;
 
@@ -476,43 +503,26 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPer
     }
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndReadSymLinkFailsDuringInitAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, SysmanRasFixture_GivenValidRasHandleWhenCallingzesRasGetStateAndReadSymLinkFailsDuringInitAndOtherInterfacesAreAbsentThenVerifyNoHandlesAreReturned, IsGtRasSupportedProduct) {
 
     pSysfsAccess->mockReadSymLinkStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
-    auto handles = getRasHandles(mockHandleCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_ras_state_t state = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
-    }
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, count);
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndReadSymLinkFailsInsideGetEventOpenAndOtherInterfacesAreAbsentThenFailureIsReturned) {
-
-    pSysfsAccess->mockReadSymLinkStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    auto handles = getRasHandles(mockHandleCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_ras_state_t state = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
-    }
-}
-
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterfaceAndListDirectoryFailsDuringInitAndOtherInterfacesAreAbsentThenFailureIsReturned) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateAndListDirectoryFailsDuringInitAndOtherInterfacesAreAbsentThenVerifyNoHandlesAreReturned, IsGtRasSupportedProduct) {
 
     pFsAccess->mockListDirectoryStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    auto handles = getRasHandles(mockHandleCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_ras_state_t state = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
-    }
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, count);
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumRasErrorSetsSucceeds) {
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumRasErrorSetsSucceeds, IsGtRasSupportedProduct) {
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -528,6 +538,39 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleAndHandleCountZeroWhenCallingReInitT
     result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockHandleCount);
+}
+
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenRequestingCountWithzesGetStateStateThenVerifyGetStateReturnsFailure, isRasNotSupportedProduct) {
+    bool isSubDevice = true;
+    uint32_t subDeviceId = 0u;
+
+    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
+    pLinuxRasImp->rasSources.clear();
+    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
+
+    zes_ras_state_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasGetState(state, 0));
+}
+
+HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesGetRasStateAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenCallFails, IsPVC) {
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pFsAccess->mockReadVal = true;
+    VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+
+    VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess);
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
+
+    auto handles = getRasHandles(mockHandleCount);
+    for (const auto &handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 1, &state));
+    }
 }
 
 struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
@@ -565,7 +608,6 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockRasNeoDrm>(pDrm));
         device = pSysmanDevice;
@@ -587,7 +629,7 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         return handles;
     }
 };
-TEST_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRetrievingRasHandlesThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRetrievingRasHandlesThenSuccessIsReturned, IsGtRasSupportedProduct) {
     L0::Sysman::RasHandleContext *pRasHandleContext = new L0::Sysman::RasHandleContext(pSysmanDeviceImp->pOsSysman);
     uint32_t count = 0;
     ze_result_t result = pRasHandleContext->rasGet(&count, nullptr);
@@ -595,7 +637,7 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRet
     EXPECT_EQ((count > 0), true);
     delete pRasHandleContext;
 }
-TEST_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesThenSuccessIsReturned, IsGtRasSupportedProduct) {
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -610,7 +652,7 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWhenRetrievingRasHandl
         EXPECT_NE(handle, nullptr);
     }
 }
-TEST_F(SysmanRasMultiDeviceFixture, GivenValidHandleWhenGettingRasPropertiesThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidHandleWhenGettingRasPropertiesThenSuccessIsReturned, IsGtRasSupportedProduct) {
     zes_ras_properties_t properties = {};
     bool isSubDevice = true;
     uint32_t subDeviceId = 0u;
@@ -622,7 +664,7 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidHandleWhenGettingRasPropertiesThen
     delete pLinuxRasImp;
 }
 
-TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned, IsGtRasSupportedProduct) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
@@ -684,11 +726,11 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetState
     }
 }
 
-TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmThenSuccessIsReturned) {
+HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmThenSuccessIsReturned, IsPVC) {
 
     pPmuInterface->mockPmuReadResult = true;
     pRasFwUtilInterface->mockMemorySuccess = true;
-
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
     auto handles = getRasHandles(mockHandleCountForSubDevice);
     uint32_t handleIndex = 0u;
 

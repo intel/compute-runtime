@@ -20,6 +20,7 @@ namespace Sysman {
 class SysmanProductHelper;
 class LinuxSysmanImp;
 class PlatformMonitoringTech;
+enum class RasInterfaceType;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
 extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
@@ -47,6 +48,10 @@ class SysmanProductHelper {
     virtual ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
     virtual ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
     virtual bool isMemoryMaxTemperatureSupported() = 0;
+
+    // Ras
+    virtual RasInterfaceType getGtRasUtilInterface() = 0;
+    virtual RasInterfaceType getHbmRasUtilInterface() = 0;
 
     virtual ~SysmanProductHelper() = default;
 

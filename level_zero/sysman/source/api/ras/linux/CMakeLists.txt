@@ -14,3 +14,5 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_ras_imp_hbm.cpp
   )
 endif()
+
+add_subdirectories()

@@ -13,6 +13,11 @@ namespace Sysman {
 
 constexpr static auto gfxProduct = IGFX_DG2;
 
+template <>
+RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
+    return RasInterfaceType::PMU;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

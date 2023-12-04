@@ -17,16 +17,6 @@ namespace Sysman {
 constexpr static auto gfxProduct = IGFX_PVC;
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-template <>
 void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) {
     if (performanceFactor > halfOfMaxPerformanceFactor) {
         *pMultiplier = 1;
@@ -85,6 +75,16 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(PlatformM
 
     *pTemperature = static_cast<double>(*std::max_element(maxDeviceTemperatureList.begin(), maxDeviceTemperatureList.end()));
     return result;
+}
+
+template <>
+RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
+    return RasInterfaceType::PMU;
+}
+
+template <>
+RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
+    return RasInterfaceType::GSC;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

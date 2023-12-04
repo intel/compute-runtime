@@ -147,7 +147,7 @@ ze_result_t LinuxRasImp::osRasClearStateExp(zes_ras_error_category_exp_t categor
 void LinuxRasImp::initSources() {
     rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
     if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {
-        rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, subdeviceId));
+        rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
     }
 }
 

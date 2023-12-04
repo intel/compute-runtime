@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/api/ras/sysman_ras.h"
@@ -25,6 +26,9 @@ using namespace NEO;
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+using IsGtRasSupportedProduct = IsWithinProducts<IGFX_DG1, IGFX_PVC>;
+using isRasNotSupportedProduct = IsNotWithinProducts<IGFX_DG1, IGFX_PVC>;
 
 const std::string deviceDir("device");
 const std::string eventsDir("/sys/devices/i915_0000_03_00.0/events");
@@ -655,7 +659,7 @@ struct MockRasFwInterface : public L0::Sysman::FirmwareUtil {
 
 struct MockRasNeoDrm : public Drm {
     using Drm::setupIoctlHelper;
-    uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_HBM2e;
+    uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_LPDDR5;
     const int mockFd = 33;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
@@ -691,6 +695,7 @@ class PublicLinuxRasImp : public L0::Sysman::LinuxRasImp {
   public:
     PublicLinuxRasImp(L0::Sysman::OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxRasImp(pOsSysman, type, onSubdevice, subdeviceId) {}
     using LinuxRasImp::pFsAccess;
+    using LinuxRasImp::rasSources;
 };
 
 } // namespace ult
