@@ -4199,10 +4199,10 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
 
 using DeviceSimpleTests = Test<DeviceFixture>;
 
-static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_RW == UNIFIED_SHARED_MEMORY_ACCESS, "Flags value difference");
-static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC == UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS, "Flags value difference");
-static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT == UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS, "Flags value difference");
-static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC == UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_RW == UnifiedSharedMemoryFlags::access, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC == UnifiedSharedMemoryFlags::atomicAccess, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT == UnifiedSharedMemoryFlags::concurrentAccess, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC == UnifiedSharedMemoryFlags::concurrentAtomicAccess, "Flags value difference");
 
 TEST_F(DeviceSimpleTests, returnsGPUType) {
     ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};

@@ -21,7 +21,7 @@ namespace NEO {
 
 template <>
 uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
-    return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
+    return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess);
 }
 
 template <>

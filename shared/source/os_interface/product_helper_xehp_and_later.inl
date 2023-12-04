@@ -11,15 +11,15 @@ namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
-    return (UNIFIED_SHARED_MEMORY_ACCESS);
+    return (UnifiedSharedMemoryFlags::access);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() const {
-    uint64_t capabilities = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS;
+    uint64_t capabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess;
 
     if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedCrossDevice)) {
-        capabilities |= UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
+        capabilities |= UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
     }
 
     return capabilities;

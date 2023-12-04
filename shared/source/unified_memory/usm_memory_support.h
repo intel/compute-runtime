@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,11 @@
 
 #include <cstdint>
 
-inline constexpr uint64_t UNIFIED_SHARED_MEMORY_ACCESS = 1 << 0;
-inline constexpr uint64_t UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS = 1 << 1;
-inline constexpr uint64_t UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS = 1 << 2;
-inline constexpr uint64_t UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS = 1 << 3;
+namespace UnifiedSharedMemoryFlags {
+
+inline constexpr uint64_t access = 1 << 0;
+inline constexpr uint64_t atomicAccess = 1 << 1;
+inline constexpr uint64_t concurrentAccess = 1 << 2;
+inline constexpr uint64_t concurrentAtomicAccess = 1 << 3;
+
+} // namespace UnifiedSharedMemoryFlags

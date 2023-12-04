@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@
 #include "gtest/gtest.h"
 
 TEST(UnifiedMemoryTests, givenCLUSMMemorySupportFlagsWhenUsingUnifiedMemorySupportFlagsThenEverythingMatch) {
-    static_assert(CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL == UNIFIED_SHARED_MEMORY_ACCESS, "Flags value difference");
-    static_assert(CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL == UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS, "Flags value difference");
-    static_assert(CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL == UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS, "Flags value difference");
-    static_assert(CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL == UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS, "Flags value difference");
+    static_assert(CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL == UnifiedSharedMemoryFlags::access, "Flags value difference");
+    static_assert(CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL == UnifiedSharedMemoryFlags::atomicAccess, "Flags value difference");
+    static_assert(CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL == UnifiedSharedMemoryFlags::concurrentAccess, "Flags value difference");
+    static_assert(CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL == UnifiedSharedMemoryFlags::concurrentAtomicAccess, "Flags value difference");
 }

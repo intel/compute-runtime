@@ -39,7 +39,7 @@ bool ProductHelperHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwIn
 
 template <>
 uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
-    return UNIFIED_SHARED_MEMORY_ACCESS;
+    return UnifiedSharedMemoryFlags::access;
 }
 
 template <>

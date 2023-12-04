@@ -73,7 +73,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabili
         debugManager.flags.EnableSharedSystemUsmSupport.set(enable);
 
         if (enable > 0) {
-            auto caps = UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS;
+            auto caps = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
             EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
         } else {
             EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
@@ -96,40 +96,40 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
         auto hostMemCapabilities = productHelper->getHostMemCapabilities(&pInHwInfo);
         if (hostMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::Host))) {
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & hostMemCapabilities);
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & hostMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & hostMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & hostMemCapabilities);
             }
         }
 
         auto deviceMemCapabilities = productHelper->getDeviceMemCapabilities();
         if (deviceMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::Device))) {
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & deviceMemCapabilities);
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & deviceMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & deviceMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & deviceMemCapabilities);
             }
         }
 
         auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities();
         if (singleDeviceSharedMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedSingleDevice))) {
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & singleDeviceSharedMemCapabilities);
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & singleDeviceSharedMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & singleDeviceSharedMemCapabilities);
             }
         }
 
         auto crossDeviceSharedMemCapabilities = productHelper->getCrossDeviceSharedMemCapabilities();
         if (crossDeviceSharedMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedCrossDevice))) {
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & crossDeviceSharedMemCapabilities);
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & crossDeviceSharedMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & crossDeviceSharedMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & crossDeviceSharedMemCapabilities);
             }
         }
 
         auto sharedSystemMemCapabilities = productHelper->getSharedSystemMemCapabilities(&pInHwInfo);
         if (sharedSystemMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedSystemCrossDevice))) {
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & sharedSystemMemCapabilities);
-                EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & sharedSystemMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & sharedSystemMemCapabilities);
+                EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & sharedSystemMemCapabilities);
             }
         }
     }
@@ -139,8 +139,8 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndSingleDeviceSharedMemAccessConc
 
     auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities();
     if ((singleDeviceSharedMemCapabilities > 0) && (productHelper->isKmdMigrationSupported())) {
-        EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS & singleDeviceSharedMemCapabilities);
-        EXPECT_TRUE(UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS & singleDeviceSharedMemCapabilities);
+        EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities);
+        EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & singleDeviceSharedMemCapabilities);
     }
 }
 
