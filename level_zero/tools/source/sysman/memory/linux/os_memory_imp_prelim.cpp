@@ -198,7 +198,7 @@ ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) 
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pSysfsAccess->read returning error:0x%x  \n", __FUNCTION__, result);
     }
-    pBandwidth->maxBandwidth = maxBw * MbpsToBytesPerSecond;
+    pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
     return ZE_RESULT_SUCCESS;
 }

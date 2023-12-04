@@ -30,9 +30,9 @@ namespace Sysman {
 //
 int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
     double pcieSpeedWithEnc;
-    if ((maxLinkSpeedInGt == PciLinkSpeeds::Pci32_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci16_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci8_0GigatransfersPerSecond)) {
+    if ((maxLinkSpeedInGt == PciLinkSpeeds::pci32GigaTransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::pci16GigaTransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::pci8GigaTransfersPerSecond)) {
         pcieSpeedWithEnc = maxLinkSpeedInGt * 1000 * 128 / 130;
-    } else if ((maxLinkSpeedInGt == PciLinkSpeeds::Pci5_0GigatransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::Pci2_5GigatransfersPerSecond)) {
+    } else if ((maxLinkSpeedInGt == PciLinkSpeeds::pci5GigaTransfersPerSecond) || (maxLinkSpeedInGt == PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond)) {
         pcieSpeedWithEnc = maxLinkSpeedInGt * 1000 * 8 / 10;
     } else {
         pcieSpeedWithEnc = 0;
@@ -50,19 +50,19 @@ int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
 double convertPciGenToLinkSpeed(uint32_t gen) {
     switch (gen) {
     case PciGenerations::PciGen1: {
-        return PciLinkSpeeds::Pci2_5GigatransfersPerSecond;
+        return PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond;
     } break;
     case PciGenerations::PciGen2: {
-        return PciLinkSpeeds::Pci5_0GigatransfersPerSecond;
+        return PciLinkSpeeds::pci5GigaTransfersPerSecond;
     } break;
     case PciGenerations::PciGen3: {
-        return PciLinkSpeeds::Pci8_0GigatransfersPerSecond;
+        return PciLinkSpeeds::pci8GigaTransfersPerSecond;
     } break;
     case PciGenerations::PciGen4: {
-        return PciLinkSpeeds::Pci16_0GigatransfersPerSecond;
+        return PciLinkSpeeds::pci16GigaTransfersPerSecond;
     } break;
     case PciGenerations::PciGen5: {
-        return PciLinkSpeeds::Pci32_0GigatransfersPerSecond;
+        return PciLinkSpeeds::pci32GigaTransfersPerSecond;
     } break;
     default: {
         return 0.0;
@@ -71,15 +71,15 @@ double convertPciGenToLinkSpeed(uint32_t gen) {
 }
 
 int32_t convertLinkSpeedToPciGen(double speed) {
-    if (speed == PciLinkSpeeds::Pci2_5GigatransfersPerSecond) {
+    if (speed == PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond) {
         return PciGenerations::PciGen1;
-    } else if (speed == PciLinkSpeeds::Pci5_0GigatransfersPerSecond) {
+    } else if (speed == PciLinkSpeeds::pci5GigaTransfersPerSecond) {
         return PciGenerations::PciGen2;
-    } else if (speed == PciLinkSpeeds::Pci8_0GigatransfersPerSecond) {
+    } else if (speed == PciLinkSpeeds::pci8GigaTransfersPerSecond) {
         return PciGenerations::PciGen3;
-    } else if (speed == PciLinkSpeeds::Pci16_0GigatransfersPerSecond) {
+    } else if (speed == PciLinkSpeeds::pci16GigaTransfersPerSecond) {
         return PciGenerations::PciGen4;
-    } else if (speed == PciLinkSpeeds::Pci32_0GigatransfersPerSecond) {
+    } else if (speed == PciLinkSpeeds::pci32GigaTransfersPerSecond) {
         return PciGenerations::PciGen5;
     } else {
         return -1;

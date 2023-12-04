@@ -12,7 +12,7 @@ const std::string vendorIntel("Intel(R) Corporation");
 const std::string unknown("unknown");
 const std::string intelPciId("0x8086");
 const std::string guid64BitMemoryCounters("0xb15a0ede");
-constexpr uint32_t MbpsToBytesPerSecond = 125000;
+constexpr uint32_t mbpsToBytesPerSecond = 125000;
 constexpr double milliVoltsFactor = 1000.0;
 constexpr uint32_t maxRasErrorCategoryCount = 7;
 
@@ -37,11 +37,11 @@ struct SteadyClock {
 } // namespace L0
 
 namespace PciLinkSpeeds {
-constexpr double Pci2_5GigatransfersPerSecond = 2.5;
-constexpr double Pci5_0GigatransfersPerSecond = 5.0;
-constexpr double Pci8_0GigatransfersPerSecond = 8.0;
-constexpr double Pci16_0GigatransfersPerSecond = 16.0;
-constexpr double Pci32_0GigatransfersPerSecond = 32.0;
+constexpr double pci2Dot5GigaTransfersPerSecond = 2.5;
+constexpr double pci5GigaTransfersPerSecond = 5.0;
+constexpr double pci8GigaTransfersPerSecond = 8.0;
+constexpr double pci16GigaTransfersPerSecond = 16.0;
+constexpr double pci32GigaTransfersPerSecond = 32.0;
 
 } // namespace PciLinkSpeeds
 enum PciGenerations {

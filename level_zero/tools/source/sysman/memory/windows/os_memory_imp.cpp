@@ -197,7 +197,7 @@ ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     pBandwidth->maxBandwidth = 0;
     if (vResponses[0].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu32, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
-        pBandwidth->maxBandwidth = static_cast<uint64_t>(retValu32) * static_cast<uint64_t>(MbpsToBytesPerSecond);
+        pBandwidth->maxBandwidth = static_cast<uint64_t>(retValu32) * static_cast<uint64_t>(mbpsToBytesPerSecond);
     }
 
     pBandwidth->readCounter = 0;

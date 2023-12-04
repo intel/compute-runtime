@@ -159,7 +159,7 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingBand
         ze_result_t result = zesMemoryGetBandwidth(handle, &bandwidth);
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(bandwidth.maxBandwidth, pKmdSysManager->mockMemoryMaxBandwidth * MbpsToBytesPerSecond);
+        EXPECT_EQ(bandwidth.maxBandwidth, pKmdSysManager->mockMemoryMaxBandwidth * mbpsToBytesPerSecond);
         EXPECT_EQ(bandwidth.readCounter, pKmdSysManager->mockMemoryCurrentBandwidthRead);
         EXPECT_EQ(bandwidth.writeCounter, pKmdSysManager->mockMemoryCurrentBandwidthWrite);
         EXPECT_GT(bandwidth.timestamp, 0u);

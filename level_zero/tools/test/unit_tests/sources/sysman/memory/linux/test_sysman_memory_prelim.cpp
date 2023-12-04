@@ -764,7 +764,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemo
         EXPECT_EQ(expectedReadCounters, bandwidth.readCounter);
         expectedWriteCounters = numberMcChannels * mockIdiWriteVal * transactionSize;
         EXPECT_EQ(expectedWriteCounters, bandwidth.writeCounter);
-        expectedBandwidth = mockMaxBwDg2 * MbpsToBytesPerSecond;
+        expectedBandwidth = mockMaxBwDg2 * mbpsToBytesPerSecond;
         EXPECT_EQ(expectedBandwidth, bandwidth.maxBandwidth);
         EXPECT_GT(bandwidth.timestamp, 0u);
     }
