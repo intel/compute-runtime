@@ -11,7 +11,7 @@
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<IGFX_TIGERLAKE_LP> enableTGL_LP;
+static EnableSysmanProductHelper<IGFX_TIGERLAKE_LP> enableTgllp;
 
 } // namespace Sysman
 } // namespace L0

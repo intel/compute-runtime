@@ -11,7 +11,7 @@
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<IGFX_ICELAKE_LP> enableICL_LP;
+static EnableSysmanProductHelper<IGFX_ICELAKE_LP> enableIcllp;
 
 } // namespace Sysman
 } // namespace L0

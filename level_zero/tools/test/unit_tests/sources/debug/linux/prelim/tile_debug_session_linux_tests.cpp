@@ -147,7 +147,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     EXPECT_TRUE(session->sipSupportsSlm);
 }
 
-template <bool BlockOnFence = false>
+template <bool blockOnFence = false>
 struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
     void setUp() {
         NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
@@ -161,7 +161,7 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
         session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
         session->createTileSessionsIfEnabled();
         rootSession = session.get();
-        rootSession->blockOnFenceMode = BlockOnFence;
+        rootSession->blockOnFenceMode = blockOnFence;
 
         tileSessions[0] = static_cast<MockTileDebugSessionLinuxi915 *>(rootSession->tileSessions[0].first);
         tileSessions[1] = static_cast<MockTileDebugSessionLinuxi915 *>(rootSession->tileSessions[1].first);

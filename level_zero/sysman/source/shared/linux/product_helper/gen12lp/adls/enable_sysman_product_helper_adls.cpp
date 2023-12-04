@@ -11,7 +11,7 @@
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<IGFX_ALDERLAKE_S> enableADL_S;
+static EnableSysmanProductHelper<IGFX_ALDERLAKE_S> enableAdls;
 
 } // namespace Sysman
 } // namespace L0
