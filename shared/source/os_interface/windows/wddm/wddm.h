@@ -242,6 +242,7 @@ class Wddm : public DriverModel {
     void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
     void populateIpVersion(HardwareInfo &hwInfo);
     void setNewResourceBoundToPageTable();
+    void setProcessPowerThrottling();
 
     GMM_GFX_PARTITIONING gfxPartition{};
     ADAPTER_BDF adapterBDF{};

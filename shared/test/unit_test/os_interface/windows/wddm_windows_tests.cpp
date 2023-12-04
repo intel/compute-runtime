@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/utilities/debug_settings_reader.h"
@@ -24,11 +25,12 @@
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
-
 namespace NEO {
 namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
-}
+extern size_t setProcessPowerThrottlingStateCalled;
+extern SysCalls::ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue;
+} // namespace SysCalls
 extern uint32_t numRootDevicesToEnum;
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinalIn);
 } // namespace NEO
@@ -322,4 +324,51 @@ TEST_F(WddmGfxPartitionTest, WhenInitializingGfxPartitionThenAllHeapsAreInitiali
             EXPECT_TRUE(gfxPartition.heapInitialized(heap));
         }
     }
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingStateDefaultWhenInitWddmThenPowerThrottlingStateIsNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetProcessPowerThrottlingState.set(-1);
+    SysCalls::setProcessPowerThrottlingStateCalled = 0u;
+    SysCalls::setProcessPowerThrottlingStateLastValue = SysCalls::ProcessPowerThrottlingState::Eco;
+    wddm->init();
+    EXPECT_EQ(0u, SysCalls::setProcessPowerThrottlingStateCalled);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingState0WhenInitWddmThenPowerThrottlingStateIsNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetProcessPowerThrottlingState.set(0);
+    SysCalls::setProcessPowerThrottlingStateCalled = 0u;
+    SysCalls::setProcessPowerThrottlingStateLastValue = SysCalls::ProcessPowerThrottlingState::Eco;
+    wddm->init();
+    EXPECT_EQ(0u, SysCalls::setProcessPowerThrottlingStateCalled);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingState1WhenInitWddmThenPowerThrottlingStateIsSetToEco) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetProcessPowerThrottlingState.set(1);
+    SysCalls::setProcessPowerThrottlingStateCalled = 0u;
+    SysCalls::setProcessPowerThrottlingStateLastValue = SysCalls::ProcessPowerThrottlingState::High;
+    wddm->init();
+    EXPECT_EQ(1u, SysCalls::setProcessPowerThrottlingStateCalled);
+    EXPECT_EQ(SysCalls::ProcessPowerThrottlingState::Eco, SysCalls::setProcessPowerThrottlingStateLastValue);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingState2WhenInitWddmThenPowerThrottlingStateIsSetToHigh) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetProcessPowerThrottlingState.set(2);
+    SysCalls::setProcessPowerThrottlingStateCalled = 0u;
+    SysCalls::setProcessPowerThrottlingStateLastValue = SysCalls::ProcessPowerThrottlingState::Eco;
+    wddm->init();
+    EXPECT_EQ(1u, SysCalls::setProcessPowerThrottlingStateCalled);
+    EXPECT_EQ(SysCalls::ProcessPowerThrottlingState::High, SysCalls::setProcessPowerThrottlingStateLastValue);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingStateUnsupportedWhenInitWddmThenPowerThrottlingStateIsNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetProcessPowerThrottlingState.set(3);
+    SysCalls::setProcessPowerThrottlingStateCalled = 0u;
+    SysCalls::setProcessPowerThrottlingStateLastValue = SysCalls::ProcessPowerThrottlingState::Eco;
+    wddm->init();
+    EXPECT_EQ(0u, SysCalls::setProcessPowerThrottlingStateCalled);
 }

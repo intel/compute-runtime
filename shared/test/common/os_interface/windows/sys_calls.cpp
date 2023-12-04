@@ -93,6 +93,9 @@ DWORD getFileAttributesResult = TRUE;
 size_t setFilePointerCalled = 0u;
 DWORD setFilePointerResult = 0;
 
+size_t setProcessPowerThrottlingStateCalled = 0u;
+ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue{};
+
 bool pathExists(const std::string &path) {
     std::string tempP1 = path;
     if (!path.empty() && path.back() == PATH_SEPARATOR) {
@@ -271,6 +274,11 @@ DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveH
 
 void coTaskMemFree(LPVOID pv) {
     return;
+}
+
+void setProcessPowerThrottlingState(ProcessPowerThrottlingState state) {
+    setProcessPowerThrottlingStateCalled++;
+    setProcessPowerThrottlingStateLastValue = state;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

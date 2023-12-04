@@ -151,6 +151,8 @@ bool Wddm::init() {
 
     buildTopologyMapping();
 
+    setProcessPowerThrottling();
+
     return configureDeviceAddressSpace();
 }
 

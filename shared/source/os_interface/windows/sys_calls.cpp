@@ -136,6 +136,15 @@ void coTaskMemFree(LPVOID pv) {
     CoTaskMemFree(pv);
 }
 
+void setProcessPowerThrottlingState(ProcessPowerThrottlingState state) {
+    PROCESS_POWER_THROTTLING_STATE prio;
+    prio.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+    prio.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
+
+    prio.StateMask = state == ProcessPowerThrottlingState::Eco ? PROCESS_POWER_THROTTLING_EXECUTION_SPEED : 0;
+    SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &prio, sizeof(prio));
+}
+
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
     return RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
 }

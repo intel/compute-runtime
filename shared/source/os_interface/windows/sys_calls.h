@@ -13,6 +13,11 @@ namespace NEO {
 
 namespace SysCalls {
 
+enum class ProcessPowerThrottlingState {
+    Eco,
+    High
+};
+
 DWORD getLastError();
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
 BOOL closeHandle(HANDLE hObject);
@@ -36,6 +41,7 @@ BOOL findClose(HANDLE hFindFile);
 DWORD getFileAttributesA(LPCSTR lpFileName);
 DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 
+void setProcessPowerThrottlingState(ProcessPowerThrottlingState state);
 void coTaskMemFree(LPVOID pv);
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
