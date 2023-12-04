@@ -11,21 +11,21 @@
 
 namespace NEO {
 
-template <typename WALKER_TYPE>
+template <typename DefaultWalkerType>
 class GivenSimdSizeWhenGetSimdConfigCalledThenCorrectEnumReturnedPVCAndLater {
   public:
     static void testBodyImpl() {
         uint32_t simd = 32;
-        auto result = getSimdConfig<WALKER_TYPE>(simd);
-        EXPECT_EQ(result, WALKER_TYPE::SIMD_SIZE::SIMD_SIZE_SIMT32);
+        auto result = getSimdConfig<DefaultWalkerType>(simd);
+        EXPECT_EQ(result, DefaultWalkerType::SIMD_SIZE::SIMD_SIZE_SIMT32);
 
         simd = 16;
-        result = getSimdConfig<WALKER_TYPE>(simd);
-        EXPECT_EQ(result, WALKER_TYPE::SIMD_SIZE::SIMD_SIZE_SIMT16);
+        result = getSimdConfig<DefaultWalkerType>(simd);
+        EXPECT_EQ(result, DefaultWalkerType::SIMD_SIZE::SIMD_SIZE_SIMT16);
 
         simd = 1;
-        result = getSimdConfig<WALKER_TYPE>(simd);
-        EXPECT_EQ(result, WALKER_TYPE::SIMD_SIZE::SIMD_SIZE_SIMT32);
+        result = getSimdConfig<DefaultWalkerType>(simd);
+        EXPECT_EQ(result, DefaultWalkerType::SIMD_SIZE::SIMD_SIZE_SIMT32);
     }
 };
 } // namespace NEO

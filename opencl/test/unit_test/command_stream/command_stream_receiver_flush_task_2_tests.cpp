@@ -408,7 +408,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests,
     cmdList.clear();
     parseCommands<FamilyType>(commandStreamTask, 0);
 
-    auto itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    auto itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
 
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker, cmdList.end());
     ASSERT_NE(cmdList.end(), itorCmd);

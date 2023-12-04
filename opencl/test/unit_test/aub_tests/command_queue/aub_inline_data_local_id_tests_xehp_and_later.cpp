@@ -132,7 +132,7 @@ struct InlineDataFixture : AubDispatchThreadDataFixture {
 using XeHPAndLaterAubInlineDataTest = Test<InlineDataFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitIntoSingleGrfWhenInlineDataAllowedThenCopyAllCrossThreadIntoInline) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernels[4]->getKernelInfo().kernelDescriptor)) {
@@ -164,7 +164,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<WALKER_TYPE *>(*hwParser.itorWalker);
+    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
     EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
     auto localId = kernels[4]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
@@ -186,7 +186,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSizeMoreThanSingleGrfWhenInlineDataAllowedThenCopyGrfCrossThreadToInline) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernels[3]->getKernelInfo().kernelDescriptor)) {
@@ -220,7 +220,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<WALKER_TYPE *>(*hwParser.itorWalker);
+    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
     EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
     auto localId = kernels[3]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
@@ -301,7 +301,7 @@ struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
 using XeHPAndLaterAubHwLocalIdsTest = Test<HwLocalIdsFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimensionsArePow2ThenSetEmitLocalIdsAndGenerateLocalIdsFields) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     cl_uint workDim = 1;
@@ -328,7 +328,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<WALKER_TYPE *>(*hwParser.itorWalker);
+    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
 
     auto localId = kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
@@ -358,7 +358,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalWorkSizeButCompatibleWorkOrderWhenLocalIdsAreUsedThenDataVerifiesCorrectly) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     cl_uint workDim = 1;
@@ -381,7 +381,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<WALKER_TYPE *>(*hwParser.itorWalker);
+    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
 
     auto localId = kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
@@ -420,7 +420,7 @@ struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
 
 using XeHPAndLaterAubHwLocalIdsWithSubgroupsTest = Test<HwLocalIdsWithSubGroups>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKernelUsingSubgroupsWhenLocalIdsAreGeneratedByHwThenValuesAreCorrect) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     cl_uint workDim = 1;
@@ -443,7 +443,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<WALKER_TYPE *>(*hwParser.itorWalker);
+    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
 
     auto localId = kernels[9]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;

@@ -194,15 +194,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPostSyncMocsThenNothingHappen) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd{};
+    DefaultWalkerType walkerCmd{};
     MockExecutionEnvironment executionEnvironment{};
     EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0], false));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSetupPostSyncMocsThenCorrect) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
@@ -210,7 +210,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
     bool dcFlush = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, rootDeviceEnvironment);
 
     {
-        WALKER_TYPE walkerCmd{};
+        DefaultWalkerType walkerCmd{};
         EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
 
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
@@ -222,30 +222,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
         DebugManagerStateRestore restorer{};
         auto expectedMocs = 9u;
         debugManager.flags.OverridePostSyncMocs.set(expectedMocs);
-        WALKER_TYPE walkerCmd{};
+        DefaultWalkerType walkerCmd{};
         EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
 }
 
 HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenWalkerIsNotChanged, IsAtMostXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    WALKER_TYPE walkerCmd{};
-    WALKER_TYPE walkerOnStart{};
+    DefaultWalkerType walkerCmd{};
+    DefaultWalkerType walkerOnStart{};
 
     uint32_t yOrder = 2u;
-    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<WALKER_TYPE>(walkerCmd, yOrder, rootDeviceEnvironment);
-    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, yOrder, rootDeviceEnvironment);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 
     uint32_t linearOrder = 0u;
-    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<WALKER_TYPE>(walkerCmd, linearOrder, rootDeviceEnvironment);
-    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, linearOrder, rootDeviceEnvironment);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 
     uint32_t fakeOrder = 5u;
-    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<WALKER_TYPE>(walkerCmd, fakeOrder, rootDeviceEnvironment);
-    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+    EncodeDispatchKernel<FamilyType>::template adjustWalkOrder<DefaultWalkerType>(walkerCmd, fakeOrder, rootDeviceEnvironment);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
 }
 
 HWTEST_F(CommandEncoderTests, givenDcFlushNotRequiredWhenGettingDcFlushValueThenReturnValueIsFalse) {

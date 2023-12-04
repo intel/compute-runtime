@@ -307,7 +307,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
 using EncodeKernelXeHpcCoreTest = Test<CommandEncodeStatesFixture>;
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenDoNotGenerateFenceCommands) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
@@ -319,21 +319,21 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInCo
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenGenerateFenceCommands) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
@@ -345,21 +345,21 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComp
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryFlagTrueAndNoHostSignalEventThenNotUseSystemFence) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
@@ -378,7 +378,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.isKernelUsingSystemAllocation = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(
@@ -386,16 +386,16 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
         cmdContainer->getCommandStream()->getCpuBase(),
         cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEventHostSignalScopeFlagTrueAndNoSystemMemoryThenNotUseSystemFence) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
@@ -414,7 +414,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEven
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.isHostScopeSignalEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(
@@ -422,16 +422,16 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEven
         cmdContainer->getCommandStream()->getCpuBase(),
         cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKernelUsesSystemMemoryAndHostSignalEventFlagTrueThenUseSystemFence) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
@@ -450,21 +450,21 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     dispatchArgs.isKernelUsingSystemAllocation = true;
     dispatchArgs.isHostScopeSignalEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndUncachedMocsRequestedThenSBAIsProgrammedAndMocsAreSet) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->slmSizeRef() = 1;
@@ -474,7 +474,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
     bool requiresUncachedMocs = true;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -491,8 +491,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDispatchSizeSmallerOrEqualToAvailableThreadCountWhenAdjustInterfaceDescriptorDataIsCalledThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -511,8 +511,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDispatchSizeSmallerOrEqualToAv
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalingWhenAdjustInterfaceDescriptorDataIsCalledThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(0);
     const auto &productHelper = pDevice->getProductHelper();
@@ -539,8 +539,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -565,8 +565,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(1u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -653,8 +653,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
@@ -684,8 +684,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2u);
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
@@ -822,8 +822,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenVariousDispatchParamtersWhenAl
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDualSubSliceCountNotEqualToMaxSubsliceCounteWhenTgDispatchSizeIsSelectedThenAlgorithmV1IsUsed) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
@@ -847,8 +847,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDualSubSliceCountNotEqualToMax
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAndDebugFlagDisabledWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsDefault) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     DebugManagerStateRestore restorer;
     debugManager.flags.AdjustThreadGroupDispatchSize.set(0);
     const auto &productHelper = pDevice->getProductHelper();
@@ -873,8 +873,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenThreadGroupCountZeroWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsSetToDefault) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    WALKER_TYPE walkerCmd{};
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd{};
     const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);

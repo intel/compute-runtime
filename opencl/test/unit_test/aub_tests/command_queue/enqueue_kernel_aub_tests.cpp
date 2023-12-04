@@ -570,7 +570,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
 
 using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 1, 1};
@@ -593,7 +593,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     pCmdQ->flush();
@@ -602,7 +602,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 1};
@@ -625,7 +625,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     pCmdQ->flush();
@@ -634,7 +634,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 1};
@@ -657,7 +657,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     pCmdQ->flush();
@@ -666,7 +666,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 2;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 1};
@@ -689,7 +689,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(4u, walkerCount);
 
     pCmdQ->flush();
@@ -698,7 +698,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 32};
@@ -721,7 +721,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     pCmdQ->flush();
@@ -730,7 +730,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 32};
@@ -753,7 +753,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     pCmdQ->flush();
@@ -762,7 +762,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 39};
@@ -785,7 +785,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     pCmdQ->flush();
@@ -794,7 +794,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 32};
@@ -817,7 +817,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(4u, walkerCount);
 
     pCmdQ->flush();
@@ -826,7 +826,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 32, 39};
@@ -849,7 +849,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(4u, walkerCount);
 
     pCmdQ->flush();
@@ -858,7 +858,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 39, 39};
@@ -881,7 +881,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(4u, walkerCount);
 
     pCmdQ->flush();
@@ -890,7 +890,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     cl_uint workDim = 3;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {39, 39, 39};
@@ -913,7 +913,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     hwParser.parseCommands<FamilyType>(*pCmdQ);
-    uint32_t walkerCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkerCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(8u, walkerCount);
 
     pCmdQ->flush();

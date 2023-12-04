@@ -111,7 +111,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
 
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
     walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
-    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::WALKER_TYPE>(
+    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
         cmdQ,
         multiDispatchInfo,
         CsrDependencies(),

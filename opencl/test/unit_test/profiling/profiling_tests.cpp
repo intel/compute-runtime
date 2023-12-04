@@ -87,7 +87,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndFor
 HWTEST_F(ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithNoKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
 
     uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM);
 
@@ -782,7 +782,7 @@ struct ProfilingWithPerfCountersOnCCSTests : ProfilingWithPerfCountersTests {
 HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCounterAndForWorkloadWithNoKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
 
     pCmdQ->setPerfCountersEnabled();
 
@@ -965,7 +965,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueBlo
 
 HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersNoEventWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsNotPresentInCS) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
 
     pCmdQ->setPerfCountersEnabled();

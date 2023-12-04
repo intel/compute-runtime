@@ -408,7 +408,7 @@ using CommandListAppendLaunchKernelXeHpgCore = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernelXeHpgCore, givenEventWhenAppendKernelIsCalledThenImmediateDataPostSyncIsAdded, IsXeHpgCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
@@ -454,9 +454,9 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpgCore, givenEventWhenAppendKernelIsCa
 
     auto gpuAddress = event->getGpuAddress(device);
 
-    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorWalker);
-    auto cmdWalker = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    auto cmdWalker = genCmdCast<DefaultWalkerType *>(*itorWalker);
     auto &postSync = cmdWalker->getPostSync();
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
     EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());

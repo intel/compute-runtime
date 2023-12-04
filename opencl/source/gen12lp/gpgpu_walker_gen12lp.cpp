@@ -54,15 +54,15 @@ size_t GpgpuWalkerHelper<Family>::getSizeForWaDisableRccRhwoOptimization(const K
 
 template class HardwareInterface<Family>;
 
-template void HardwareInterface<Family>::dispatchWalker<Family::WALKER_TYPE>(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs);
-template void HardwareInterface<Family>::programWalker<Family::WALKER_TYPE>(LinearStream &commandStream, Kernel &kernel, CommandQueue &commandQueue, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, const DispatchInfo &dispatchInfo, HardwareInterfaceWalkerArgs &walkerArgs);
-template void HardwareInterface<Family>::dispatchKernelCommands<Family::WALKER_TYPE>(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, HardwareInterfaceWalkerArgs &walkerArgs);
-template Family::WALKER_TYPE *HardwareInterface<Family>::allocateWalkerSpace<Family::WALKER_TYPE>(LinearStream &commandStream, const Kernel &kernel);
+template void HardwareInterface<Family>::dispatchWalker<Family::DefaultWalkerType>(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs);
+template void HardwareInterface<Family>::programWalker<Family::DefaultWalkerType>(LinearStream &commandStream, Kernel &kernel, CommandQueue &commandQueue, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, const DispatchInfo &dispatchInfo, HardwareInterfaceWalkerArgs &walkerArgs);
+template void HardwareInterface<Family>::dispatchKernelCommands<Family::DefaultWalkerType>(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, HardwareInterfaceWalkerArgs &walkerArgs);
+template Family::DefaultWalkerType *HardwareInterface<Family>::allocateWalkerSpace<Family::DefaultWalkerType>(LinearStream &commandStream, const Kernel &kernel);
 
 template class GpgpuWalkerHelper<Family>;
-template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::WALKER_TYPE>(LinearStream *cmdStream, Family::WALKER_TYPE *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
-template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::WALKER_TYPE>(Family::WALKER_TYPE *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t globalOffsets[3], const size_t startWorkGroups[3],
-                                                                                         const size_t numWorkGroups[3], const size_t localWorkSizesIn[3], uint32_t simd, uint32_t workDim, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, uint32_t requiredWorkGroupOrder);
+template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::DefaultWalkerType>(LinearStream *cmdStream, Family::DefaultWalkerType *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
+template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::DefaultWalkerType>(Family::DefaultWalkerType *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t globalOffsets[3], const size_t startWorkGroups[3],
+                                                                                               const size_t numWorkGroups[3], const size_t localWorkSizesIn[3], uint32_t simd, uint32_t workDim, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, uint32_t requiredWorkGroupOrder);
 
 template struct EnqueueOperation<Family>;
 

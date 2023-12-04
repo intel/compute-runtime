@@ -74,7 +74,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
 
-    WALKER_TYPE cmd = Family::cmdInitGpgpuWalker;
+    DefaultWalkerType cmd = Family::cmdInitGpgpuWalker;
     auto idd = Family::cmdInitInterfaceDescriptorData;
     {
         auto alloc = args.dispatchInterface->getIsaAllocation();
@@ -186,10 +186,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     {
         auto heapIndirect = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
         UNRECOVERABLE_IF(!(heapIndirect));
-        heapIndirect->align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+        heapIndirect->align(DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         void *ptr = nullptr;
         if (args.isKernelDispatchedFromImmediateCmdList) {
-            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
+            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
         } else {
             ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
         }
@@ -302,7 +302,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
-    auto buffer = listCmdBufferStream->getSpaceForCmd<WALKER_TYPE>();
+    auto buffer = listCmdBufferStream->getSpaceForCmd<DefaultWalkerType>();
     *buffer = cmd;
 
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);

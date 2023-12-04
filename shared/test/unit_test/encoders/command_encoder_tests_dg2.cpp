@@ -67,9 +67,9 @@ HWTEST2_F(DG2CommandEncoderTest, givenDG2AndCommandContainerWithDirtyHeapWhenGet
 
 HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsDefaultThenThreadGroupDispatchSizeIsNotChanged, IsDG2) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     INTERFACE_DESCRIPTOR_DATA iddArg;
-    WALKER_TYPE walkerCmd{};
+    DefaultWalkerType walkerCmd{};
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
     auto hwInfo = pDevice->getHardwareInfo();

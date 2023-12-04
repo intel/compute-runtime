@@ -616,7 +616,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     createKernel();
 
@@ -659,7 +659,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                // isRcs
         commandList->getDcFlushRequired(true) // dcFlushEnable
     };
-    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(commandContainer, dispatchKernelArgs), std::exception);
+    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs), std::exception);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenReturnErrorInvalidArgument) {
@@ -2605,7 +2605,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenAskingForNonWalkerSigna
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, NonPostSyncWalkerMatcher) {
-    using WALKER = typename FamilyType::WALKER_TYPE;
+    using WALKER = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -2644,7 +2644,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenProgramPcAndSignalAlloc, NonPostSyncWalkerMatcher) {
-    using WALKER = typename FamilyType::WALKER_TYPE;
+    using WALKER = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -2957,7 +2957,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderRegularCmdListWhenProgrammingNonKerne
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch, IsAtLeastSkl) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
@@ -2991,12 +2991,12 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
 
     EXPECT_EQ(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
 
-    auto walkerItor = find<WALKER_TYPE *>(semaphoreItor, cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(semaphoreItor, cmdList.end());
     EXPECT_NE(cmdList.end(), walkerItor);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFromImmediateThenUseSubmissionCounter, IsAtLeastSkl) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_command_queue_desc_t desc = {};
@@ -5600,7 +5600,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 using MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchKernelFixture>;
 
 HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -5629,7 +5629,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     auto sizeAfter = cmdStream->getUsed();
 
     uint64_t bbStartGpuAddress = cmdStream->getGraphicsAllocation()->getGpuAddress() + sizeBefore;
-    bbStartGpuAddress += sizeof(WALKER_TYPE) + sizeof(PIPE_CONTROL) + sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
+    bbStartGpuAddress += sizeof(DefaultWalkerType) + sizeof(PIPE_CONTROL) + sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                          sizeof(MI_BATCH_BUFFER_START) + 3 * sizeof(uint32_t);
 
     GenCmdList cmdList;
@@ -5638,9 +5638,9 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
         ptrOffset(cmdStream->getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorWalker);
-    auto cmdWalker = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    auto cmdWalker = genCmdCast<DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmdWalker->getWorkloadPartitionEnable());
 
     auto itorPipeControl = find<PIPE_CONTROL *>(itorWalker, cmdList.end());
@@ -5663,7 +5663,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
 }
 
 HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListWithoutFlushTaskThenUseSecondaryBuffer, IsAtLeastXeHpCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -5693,9 +5693,9 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
         ptrOffset(cmdStream->getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorWalker);
-    auto cmdWalker = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    auto cmdWalker = genCmdCast<DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmdWalker->getWorkloadPartitionEnable());
 
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());

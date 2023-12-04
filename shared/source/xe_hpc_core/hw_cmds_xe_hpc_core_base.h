@@ -81,7 +81,7 @@ struct XeHpcCore {
 struct XeHpcCoreFamily : public XeHpcCore {
     using PARSE = CmdParse<XeHpcCoreFamily>;
     using GfxFamily = XeHpcCoreFamily;
-    using WALKER_TYPE = COMPUTE_WALKER;
+    using DefaultWalkerType = COMPUTE_WALKER;
     using VFE_STATE_TYPE = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::MEM_COPY;
@@ -134,12 +134,12 @@ struct XeHpcCoreFamily : public XeHpcCore {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;
     }
 
-    template <typename WalkerType = WALKER_TYPE>
+    template <typename WalkerType = DefaultWalkerType>
     static WalkerType getInitGpuWalker() {
         return cmdInitGpgpuWalker;
     }
 
-    template <typename WalkerType = WALKER_TYPE>
+    template <typename WalkerType = DefaultWalkerType>
     static constexpr size_t getInterfaceDescriptorSize() {
         return sizeof(INTERFACE_DESCRIPTOR_DATA);
     }

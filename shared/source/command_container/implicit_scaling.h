@@ -38,7 +38,7 @@ struct ImplicitScalingHelper {
 
 template <typename GfxFamily>
 struct ImplicitScalingDispatch {
-    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
 
     template <typename WalkerType>
     static size_t getSize(bool apiSelfCleanup,

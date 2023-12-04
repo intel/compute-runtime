@@ -1511,7 +1511,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenDebugVariableSetWhenUsingNonTimestampEventThenDontOverridePostSyncMode) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
@@ -1546,8 +1546,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
-    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itorWalker);
     ASSERT_NE(nullptr, cmd);
 
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
@@ -1570,8 +1570,8 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
-    auto itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
+    auto itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
     EXPECT_EQ(4u, cmd->getPartitionSize());
 
@@ -1587,15 +1587,15 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
-    itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
-    cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
+    itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
     EXPECT_EQ(16u, cmd->getPartitionSize());
 }
 
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
           givenRegularCommandListWhenSynchronizationRequiredThenExpectJumpingBbStartCommandToSecondary, IsAtLeastXeHpCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     debugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
 
@@ -1615,8 +1615,8 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
         ptrOffset(cmdStream->getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto itorWalker = find<WALKER_TYPE *>(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itorWalker);
+    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
 
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());

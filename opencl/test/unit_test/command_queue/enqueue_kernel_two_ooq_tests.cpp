@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,7 +98,7 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
         delete e1;
         delete e2;
 
-        typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+        typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
         itorWalker1 = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker1);
 

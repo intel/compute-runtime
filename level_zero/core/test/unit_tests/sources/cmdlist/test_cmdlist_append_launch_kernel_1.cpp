@@ -161,7 +161,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restorer;
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
@@ -208,7 +208,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                // isRcs
         commandList->getDcFlushRequired(true) // dcFlushEnable
     };
-    NEO::EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(commandContainer, dispatchKernelArgs);
+    NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, 0u);

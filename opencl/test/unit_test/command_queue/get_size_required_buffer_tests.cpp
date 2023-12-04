@@ -62,7 +62,7 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
 };
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
@@ -116,7 +116,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
@@ -169,7 +169,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferCo
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
@@ -223,7 +223,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndComm
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
@@ -278,7 +278,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCom
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferNonBlockingThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
@@ -514,7 +514,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenHelloWorldKernelWhenEnqueingKernelThenH
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, GivenKernelWithSimpleArgWhenEnqueingKernelThenHeapsAndCommandBufferConsumedMinimumRequiredSize) {
-    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
     typedef SimpleArgKernelFixture KernelFixture;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();

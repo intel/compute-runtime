@@ -91,7 +91,7 @@ struct EncodeWalkerArgs {
 
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
-    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 

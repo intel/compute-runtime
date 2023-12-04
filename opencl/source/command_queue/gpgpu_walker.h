@@ -25,7 +25,7 @@ using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
 
 template <typename GfxFamily>
 class GpgpuWalkerHelper {
-    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
 
   public:
     static void applyWADisableLSQCROPERFforOCL(LinearStream *pCommandStream,

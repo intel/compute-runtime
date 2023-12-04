@@ -241,10 +241,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     {
         auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
         UNRECOVERABLE_IF(!heap);
-        heap->align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+        heap->align(DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         void *ptr = nullptr;
         if (args.isKernelDispatchedFromImmediateCmdList) {
-            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
+            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
         } else {
             ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
         }

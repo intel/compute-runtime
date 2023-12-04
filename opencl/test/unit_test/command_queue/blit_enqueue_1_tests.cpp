@@ -40,7 +40,7 @@ using BlitAuxTranslationTests = BlitEnqueueTests<1>;
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstructingCommandBufferThenEnsureCorrectOrder) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
@@ -68,8 +68,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
         auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdListQueue.begin(), cmdListQueue.end());
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
         // Walker
-        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
-        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<DefaultWalkerType>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<DefaultWalkerType>(++cmdFound, cmdListQueue.end());
         // NonAux to Aux
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
@@ -125,7 +125,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenGpuHangOnFlushBcsAndBlitAuxTran
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstructingBlockedCommandBufferThenEnsureCorrectOrder) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
@@ -158,8 +158,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
         auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdListQueue.begin(), cmdListQueue.end());
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
         // Walker
-        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
-        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<DefaultWalkerType>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<DefaultWalkerType>(++cmdFound, cmdListQueue.end());
         // NonAux to Aux
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
@@ -253,7 +253,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto buffer0 = createBuffer(1, true);
     auto buffer1 = createBuffer(1, true);
@@ -298,7 +298,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
         verifySemaphore<FamilyType>(cmdFound, auxToNonAuxOutputAddress[1]);
 
         // Walker
-        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<DefaultWalkerType>(++cmdFound, cmdListQueue.end());
 
         // NonAux to Aux
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
@@ -339,7 +339,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto buffer = createBuffer(1, true);
     setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
@@ -355,7 +355,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     uint64_t cacheFlushWriteAddress = 0;
 
     {
-        auto cmdFound = expectCommand<WALKER_TYPE>(cmdListQueue.begin(), cmdListQueue.end());
+        auto cmdFound = expectCommand<DefaultWalkerType>(cmdListQueue.begin(), cmdListQueue.end());
         cmdFound = expectPipeControl<FamilyType>(++cmdFound, cmdListQueue.end());
 
         auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*cmdFound);
@@ -412,7 +412,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenOutEventWhenDispatchingThenAssignNonAuxNodes) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto buffer0 = createBuffer(1, true);
@@ -429,7 +429,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenOutEventWhenDispatchingThenAssi
 
     auto cmdListQueue = getCmdList<FamilyType>(commandQueue->getCS(0), 0);
 
-    auto cmdFound = expectCommand<WALKER_TYPE>(cmdListQueue.begin(), cmdListQueue.end());
+    auto cmdFound = expectCommand<DefaultWalkerType>(cmdListQueue.begin(), cmdListQueue.end());
 
     // NonAux to Aux
     cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
@@ -446,7 +446,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenOutEventWhenDispatchingThenAssi
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchingThenEstimateCmdBufferSize) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
@@ -484,7 +484,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchi
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredCacheFlushWhenDispatchingThenEstimateCmdBufferSize) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
@@ -619,7 +619,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto buffer0 = createBuffer(1, true);
     auto buffer1 = createBuffer(1, true);
@@ -668,7 +668,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
         verifySemaphore<FamilyType>(cmdFound, auxToNonAuxOutputAddress[1]);
 
         // Walker
-        cmdFound = expectCommand<WALKER_TYPE>(++cmdFound, cmdListQueue.end());
+        cmdFound = expectCommand<DefaultWalkerType>(++cmdFound, cmdListQueue.end());
 
         // NonAux to Aux
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
@@ -846,7 +846,7 @@ using BlitEnqueueWithNoTimestampPacketTests = BlitEnqueueTests<0>;
 HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacketsWritewhenEnqueueingBlitOperationThenEnginesAreSynchronized) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     const size_t bufferSize = 1u;
     auto buffer = createBuffer(bufferSize, false);
@@ -867,7 +867,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacket
 
     cmdFound = expectMiFlush<MI_FLUSH_DW>(cmdFound++, bcsCommands.end());
 
-    cmdFound = expectCommand<WALKER_TYPE>(ccsCommands.begin(), ccsCommands.end());
+    cmdFound = expectCommand<DefaultWalkerType>(ccsCommands.begin(), ccsCommands.end());
 
     expectNoCommand<MI_SEMAPHORE_WAIT>(cmdFound++, ccsCommands.end());
 }

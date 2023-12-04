@@ -50,7 +50,7 @@ template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kernel,
                                                              const size_t localWorkSizes[3]) {
     auto localWorkSize = Math::computeTotalElementsCount(localWorkSizes);
-    typedef typename GfxFamily::WALKER_TYPE WALKER_TYPE;
+    typedef typename GfxFamily::DefaultWalkerType DefaultWalkerType;
     const auto &kernelDescriptor = kernel.getDescriptor();
     const auto &hwInfo = kernel.getHardwareInfo();
     const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
@@ -76,7 +76,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
     if (pImplicitArgs) {
         size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, gfxCoreHelper);
     }
-    return alignUp(size, WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    return alignUp(size, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 }
 
 template <typename GfxFamily>

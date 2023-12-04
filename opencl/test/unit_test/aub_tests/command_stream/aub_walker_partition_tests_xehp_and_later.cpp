@@ -77,7 +77,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     template <typename FamilyType>
     void validatePartitionProgramming(uint64_t postSyncAddress, int32_t partitionCount) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
         uint32_t totalWorkgroupCount = 1u;
         uint32_t totalWorkItemsInWorkgroup = 1u;
         uint32_t totalWorkItemsCount = 1;
@@ -97,10 +97,10 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
         hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
 
-        uint32_t walkersCount = hwParser.getCommandCount<WALKER_TYPE>();
+        uint32_t walkersCount = hwParser.getCommandCount<DefaultWalkerType>();
         EXPECT_EQ(walkersCount, 1u);
-        GenCmdList walkerList = hwParser.getCommandsList<WALKER_TYPE>();
-        WALKER_TYPE *walkerCmd = static_cast<WALKER_TYPE *>(*walkerList.begin());
+        GenCmdList walkerList = hwParser.getCommandsList<DefaultWalkerType>();
+        DefaultWalkerType *walkerCmd = static_cast<DefaultWalkerType *>(*walkerList.begin());
         EXPECT_EQ(0u, walkerCmd->getPartitionId());
         if (partitionCount > 1) {
             EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
@@ -259,8 +259,8 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
 using AubWalkerPartitionZeroTest = Test<AubWalkerPartitionZeroFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetToZeroThenProvideEqualSingleWalker) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    using PARTITION_TYPE = typename FamilyType::WALKER_TYPE::PARTITION_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using PARTITION_TYPE = typename FamilyType::DefaultWalkerType::PARTITION_TYPE;
 
     size_t globalWorkOffset[3] = {0, 0, 0};
     cl_uint numEventsInWaitList = 0;
@@ -286,15 +286,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
     uint32_t cmdPartitionCount = static_cast<uint32_t>(partitionCount);
 
     hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
-    uint32_t walkersCount = hwParser.getCommandCount<WALKER_TYPE>();
+    uint32_t walkersCount = hwParser.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(cmdPartitionCount + 1, walkersCount);
 
-    GenCmdList walkerList = hwParser.getCommandsList<WALKER_TYPE>();
+    GenCmdList walkerList = hwParser.getCommandsList<DefaultWalkerType>();
     EXPECT_EQ(walkersCount, static_cast<uint32_t>(walkerList.size()));
 
     uint32_t i = 0;
     for (GenCmdList::iterator walker = walkerList.begin(); walker != walkerList.end(); ++walker, ++i) {
-        WALKER_TYPE *walkerCmd = static_cast<WALKER_TYPE *>(*walker);
+        DefaultWalkerType *walkerCmd = static_cast<DefaultWalkerType *>(*walker);
         EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionId());
         EXPECT_EQ(cmdPartitionType, walkerCmd->getPartitionType());
         EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionSize());
@@ -975,14 +975,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenNonBlockingAtomicO
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandBufferWhenItIsExecutedThenAtomicIsIncrementedEquallyToPartitionCountPlusOne) {
     MockExecutionEnvironment mockExecutionEnvironment{};
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto streamCpuPointer = taskStream->getSpace(0);
     auto postSyncAddress = helperSurface->getGpuAddress();
 
     uint32_t totalBytesProgrammed = 0u;
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    walkerCmd.setPartitionType(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X);
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
     walkerCmd.getPostSync().setDestinationAddress(postSyncAddress);
     walkerCmd.getPostSync().setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);

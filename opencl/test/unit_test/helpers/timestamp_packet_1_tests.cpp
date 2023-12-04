@@ -306,7 +306,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketDisabledWh
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
     walkerArgs.currentTimestampPacketNodes = &timestampPacket;
-    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::WALKER_TYPE>(
+    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
         *mockCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
@@ -375,7 +375,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
-    using GPGPU_WALKER = typename FamilyType::WALKER_TYPE;
+    using GPGPU_WALKER = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -1363,7 +1363,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingThenProgramSemaphoresForWaitlist) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER = typename FamilyType::WALKER_TYPE;
+    using WALKER = typename FamilyType::DefaultWalkerType;
 
     auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -1436,7 +1436,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenDispatchingThenProgramSemaphoresForWaitlist) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER = typename FamilyType::WALKER_TYPE;
+    using WALKER = typename FamilyType::DefaultWalkerType;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -1513,7 +1513,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WALKER = typename FamilyType::WALKER_TYPE;
+    using WALKER = typename FamilyType::DefaultWalkerType;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 

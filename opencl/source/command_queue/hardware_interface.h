@@ -53,7 +53,7 @@ template <typename GfxFamily>
 class HardwareInterface {
   public:
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
 
     template <typename WalkerType>
     static void dispatchWalker(

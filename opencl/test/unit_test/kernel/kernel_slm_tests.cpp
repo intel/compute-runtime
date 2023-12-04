@@ -58,9 +58,9 @@ static uint32_t slmSizeInKb[] = {1, 4, 8, 16, 32, 64};
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgrammingIsCorrect) {
     ASSERT_NE(nullptr, pClDevice);
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    WALKER_TYPE walkerCmd{};
+    DefaultWalkerType walkerCmd{};
     // define kernel info
     kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
     kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = GetParam() * KB;
@@ -74,7 +74,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
 
-    size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<WALKER_TYPE, INTERFACE_DESCRIPTOR_DATA>(
+    size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
         indirectHeap,
         interfaceDescriptorOffset,
         0,
@@ -148,9 +148,9 @@ INSTANTIATE_TEST_CASE_P(
 
 HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd{};
+    DefaultWalkerType walkerCmd{};
     uint32_t expectedSlmSize = 5;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.OverrideSlmAllocationSize.set(expectedSlmSize);
@@ -167,7 +167,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
     INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
 
-    HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<WALKER_TYPE, INTERFACE_DESCRIPTOR_DATA>(
+    HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
         indirectHeap,
         interfaceDescriptorOffset,
         0,

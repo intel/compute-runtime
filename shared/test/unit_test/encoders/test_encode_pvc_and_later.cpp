@@ -296,7 +296,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalRegRe
 using CommandEncodeStatesXeHpcAndLaterTests = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesXeHpcAndLaterTests, givenDebugFlagSetWhenProgrammingWalkerThenSetFlushingBits, IsAtLeastXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore;
     debugManager.flags.ForceComputeWalkerPostSyncFlush.set(1);
 
@@ -305,15 +305,15 @@ HWTEST2_F(CommandEncodeStatesXeHpcAndLaterTests, givenDebugFlagSetWhenProgrammin
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_TRUE(walkerCmd->getPostSync().getDataportPipelineFlush());
     EXPECT_TRUE(walkerCmd->getPostSync().getDataportSubsliceCacheFlush());
 }

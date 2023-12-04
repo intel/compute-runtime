@@ -27,7 +27,7 @@ using CommandEncodeStatesTestDg2AndLater = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCAndDG2ThenSetDataportSubsliceCacheFlushIstSet, IsAtLeastXeHpgCore) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -37,21 +37,21 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
     dispatchArgs.eventAddress = eventAddress;
     dispatchArgs.isTimestampEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(true, cmd->getPostSync().getDataportSubsliceCacheFlush());
 }
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMocsIndex2IsSet, IsXeHpgCore) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -62,15 +62,15 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMoc
     dispatchArgs.isTimestampEvent = true;
     dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
 
     auto gmmHelper = pDevice->getGmmHelper();
 
@@ -118,7 +118,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocationSizePerDssWhenDispatchingKernelThenCorrectValueIsSet, IsAtLeastXeHpgCore) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     DebugManagerStateRestore restorer;
     debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);
@@ -131,15 +131,15 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocatio
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_EQ(5u, static_cast<uint32_t>(idd.getPreferredSlmAllocationSize()));

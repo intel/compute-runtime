@@ -38,7 +38,7 @@ using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThanZeroWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 1;
@@ -48,15 +48,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
     auto &gfxcoreHelper = this->getHelper<GfxCoreHelper>();
 
@@ -67,7 +67,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpAndLaterWhenDispatchingKernelThenSetDenormMode) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     uint32_t dims[] = {2, 1, 1};
@@ -75,22 +75,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpAndLaterWhenDispa
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_FTZ, idd.getDenormMode());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpDebuggingEnabledAndAssertInKernelWhenDispatchingKernelThenSwExceptionsAreEnabled) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto debugger = new MockDebuggerL0(pDevice);
@@ -102,15 +102,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpDebuggingEnabledA
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_TRUE(idd.getSoftwareExceptionEnable());
@@ -118,7 +118,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpDebuggingEnabledA
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSimdSizeWhenDispatchingKernelThenSimdMessageIsSet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t simdSize = 32;
@@ -126,21 +126,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSimdSizeWhenDispatchi
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(getSimdConfig<WALKER_TYPE>(simdSize), cmd->getMessageSimd());
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(getSimdConfig<DefaultWalkerType>(simdSize), cmd->getMessageSimd());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 0;
@@ -149,15 +149,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZero
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     uint32_t expectedValue = INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
@@ -167,7 +167,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZero
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeDebugVariableWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -183,13 +183,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
         cmdContainer->reset();
 
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-        EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+        EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-        auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+        auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
         ASSERT_NE(itor, commands.end());
-        auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+        auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
         auto &idd = cmd->getInterfaceDescriptor();
 
         EXPECT_EQ(valueToProgram, idd.getSharedLocalMemorySize());
@@ -199,7 +199,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndImageWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -221,15 +221,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndIma
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_EQ(idd.getBindingTablePointer(), expectedOffset);
@@ -238,7 +238,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndIma
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhenDispatchingKernelThenBTOffsetIsCorrect) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -258,15 +258,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_EQ(idd.getBindingTablePointer(), expectedOffset);
@@ -275,7 +275,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBTOffsetIsZero) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 0;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -295,15 +295,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhe
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     EXPECT_EQ(idd.getBindingTablePointer(), 0u);
@@ -322,7 +322,7 @@ struct SamplerSupportedMatcher {
 HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensamplerStateWasCopied, SamplerSupportedMatcher) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     if (!pDevice->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -350,15 +350,15 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
     dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
     auto borderColorOffsetInDsh = usedBefore;
@@ -372,7 +372,7 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDispatchingKernelThenPostSyncIsAdded) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -382,21 +382,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDi
     dispatchArgs.eventAddress = eventAddress;
     dispatchArgs.isTimestampEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, cmd->getPostSync().getOperation());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncodeThenMocsFromGmmHelperIsSet) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -407,15 +407,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
     dispatchArgs.isTimestampEvent = true;
     dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment())) {
         EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), cmd->getPostSync().getMocs());
     } else {
@@ -425,7 +425,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatchKernelThenFlushNotAdded) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     cmdContainer->slmSizeRef() = 1;
@@ -434,7 +434,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -445,7 +445,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenCorrectValuesAreSetUp) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
@@ -475,13 +475,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-        EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+        EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-        auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+        auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
         ASSERT_NE(itor, commands.end());
-        auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+        auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
         auto &idd = cmd->getInterfaceDescriptor();
 
         if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -509,13 +509,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-        EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+        EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-        auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+        auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
         ASSERT_NE(itor, commands.end());
-        auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+        auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
         auto &idd = cmd->getInterfaceDescriptor();
 
         EXPECT_EQ(0u, idd.getBindingTableEntryCount());
@@ -534,13 +534,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-        EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+        EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-        auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+        auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
         ASSERT_NE(itor, commands.end());
-        auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+        auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
         auto &idd = cmd->getInterfaceDescriptor();
 
         EXPECT_NE(0u, idd.getBindingTableEntryCount());
@@ -572,7 +572,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNot
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhenEncodingWalkerThenEmitInlineParameterIsSet) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using InlineData = typename FamilyType::INLINE_DATA;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -581,14 +581,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(1u, cmd->getEmitInlineParameter());
 
     const uint32_t inlineDataSize = sizeof(InlineData);
@@ -600,7 +600,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsFalseWhenEncodingWalkerThenEmitInlineParameterIsNotSet) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -608,15 +608,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsF
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(0u, cmd->getEmitInlineParameter());
 
     size_t expectedSizeIOH = dispatchInterface->getCrossThreadDataSize() +
@@ -626,7 +626,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsF
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAndZeroCrossThreadDataSizeWhenEncodingWalkerThenEmitInlineParameterIsNotSet) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -635,15 +635,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(0u, cmd->getEmitInlineParameter());
 
     auto heap = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
@@ -651,7 +651,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAndLocalIdsGenerateByHwWhenEncodingWalkerThenEmitInlineParameterAndGenerateLocalIdsIsSet) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     dispatchInterface->requiredWalkGroupOrder = 2u;
@@ -664,15 +664,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(1u, cmd->getEmitInlineParameter());
     EXPECT_EQ(1u, cmd->getGenerateLocalId());
     uint32_t expectedEmitLocalIds = (1 << 0) | (1 << 1) | (1 << 2);
@@ -685,9 +685,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsDefaultThenThreadGroupDispatchSizeIsNotChanged) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     INTERFACE_DESCRIPTOR_DATA iddArg;
-    WALKER_TYPE walkerCmd{};
+    DefaultWalkerType walkerCmd{};
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
     auto hwInfo = pDevice->getHardwareInfo();
@@ -711,9 +711,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsSetThenThreadGroupDispatchSizeIsChanged) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     INTERFACE_DESCRIPTOR_DATA iddArg;
-    WALKER_TYPE walkerCmd{};
+    DefaultWalkerType walkerCmd{};
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
 
@@ -733,9 +733,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDa
 using WalkerThreadTestXeHPAndLater = WalkerThreadTest;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     MockExecutionEnvironment executionEnvironment{};
@@ -752,7 +752,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
     EXPECT_EQ(2u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(3u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -769,9 +769,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     MockExecutionEnvironment executionEnvironment{};
@@ -787,7 +787,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroup
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -804,9 +804,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroup
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenWorkGroupSmallerThanSimdThenExpectSimdSizeAsMaxAndExecutionMaskFull) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     workGroupSizes[0] = 30u;
@@ -824,7 +824,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenW
     EXPECT_EQ(2u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(3u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -841,9 +841,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenW
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndExecutionMaskNotFull) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     workGroupSizes[0] = 30u;
@@ -860,7 +860,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
     EXPECT_EQ(2u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(3u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -877,9 +877,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenNoLocalIdsPresentThenExpectNoEmitAndGenerateLocalIds) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     localIdDimensions = 0u;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
@@ -894,7 +894,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -911,9 +911,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenLocalIdsPresentThenExpectEmitAndGenerateLocalIds) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     requiredWorkGroupOrder = 2u;
     workGroupSizes[1] = workGroupSizes[2] = 2u;
     MockExecutionEnvironment executionEnvironment{};
@@ -929,7 +929,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -950,10 +950,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToO
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceSimdMessageSizeInWalker.set(1);
 
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     requiredWorkGroupOrder = 2u;
     workGroupSizes[1] = workGroupSizes[2] = 2u;
 
@@ -963,9 +963,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToO
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueThenExpectInlineDataProgramming) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     MockExecutionEnvironment executionEnvironment{};
@@ -981,7 +981,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueT
     EXPECT_EQ(2u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(3u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -998,9 +998,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueT
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     uint32_t expectedExecutionMask = 0xFFFFu;
@@ -1015,7 +1015,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZ
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingZ());
 
-    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
     EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
     EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
 
@@ -1060,7 +1060,7 @@ using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScali
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
             givenStaticPartitioningWhenNonTimestampEventProvidedThenExpectTimestampComputeWalkerPostSync) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     uint32_t dims[] = {16, 1, 1};
@@ -1072,7 +1072,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
     dispatchArgs.eventAddress = eventAddress;
     dispatchArgs.partitionCount = 2;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
     size_t usedBuffer = cmdContainer->getCommandStream()->getUsed();
     EXPECT_EQ(2u, dispatchArgs.partitionCount);
 
@@ -1082,16 +1082,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
         cmdContainer->getCommandStream()->getCpuBase(),
         usedBuffer);
 
-    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    auto itor = find<DefaultWalkerType *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
     ASSERT_NE(itor, partitionedWalkerList.end());
-    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSync = partitionWalkerCmd->getPostSync();
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
     EXPECT_EQ(eventAddress, postSync.getDestinationAddress());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativeKernelWhenEncodingDispatchKernelThenExpectPartitionSizeEqualWorkgroupSize) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     uint32_t dims[] = {16, 1, 1};
@@ -1105,17 +1105,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativ
     dispatchArgs.isInternal = isInternal;
     dispatchArgs.isCooperative = isCooperative;
     dispatchArgs.partitionCount = 2;
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     size_t containerUsedAfterBase = cmdContainer->getCommandStream()->getUsed();
 
     GenCmdList partitionedWalkerList;
     CmdParse<FamilyType>::parseCommandBuffer(partitionedWalkerList, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), containerUsedAfterBase);
-    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    auto itor = find<DefaultWalkerType *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
     ASSERT_NE(itor, partitionedWalkerList.end());
 
-    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+    auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
     uint32_t expectedPartitionSize = dims[0];
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 }
@@ -1136,7 +1136,7 @@ struct CommandEncodeStatesDynamicImplicitScalingFixture : CommandEncodeStatesImp
 using CommandEncodeStatesDynamicImplicitScaling = Test<CommandEncodeStatesDynamicImplicitScalingFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelThenExpectPartitionCommandBuffer) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     uint32_t dims[] = {16, 1, 1};
@@ -1147,25 +1147,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.isInternal = isInternal;
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     size_t containerUsedAfterBase = cmdContainer->getCommandStream()->getUsed();
 
     GenCmdList baseWalkerList;
     CmdParse<FamilyType>::parseCommandBuffer(baseWalkerList, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), containerUsedAfterBase);
-    auto itor = find<WALKER_TYPE *>(baseWalkerList.begin(), baseWalkerList.end());
+    auto itor = find<DefaultWalkerType *>(baseWalkerList.begin(), baseWalkerList.end());
     ASSERT_NE(itor, baseWalkerList.end());
-    auto baseWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_DISABLED, baseWalkerCmd->getPartitionType());
+    auto baseWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, baseWalkerCmd->getPartitionType());
     EXPECT_EQ(16u, baseWalkerCmd->getThreadGroupIdXDimension());
 
     dispatchArgs.partitionCount = 2;
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     size_t total = cmdContainer->getCommandStream()->getUsed();
     size_t partitionedWalkerSize = total - containerUsedAfterBase;
 
-    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
     EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
 
     GenCmdList partitionedWalkerList;
@@ -1182,16 +1182,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     }
     EXPECT_TRUE(secondary);
 
-    itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    itor = find<DefaultWalkerType *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
     ASSERT_NE(itor, partitionedWalkerList.end());
-    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+    auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
     uint32_t expectedPartitionSize = (dims[0] + dispatchArgs.partitionCount - 1u) / dispatchArgs.partitionCount;
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingRequiresPipeControlStallWhenEncodingDispatchKernelThenExpectCrossTileSyncAndSelfCleanupSection) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -1211,12 +1211,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     dispatchArgs.partitionCount = 2;
     dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     EXPECT_EQ(2u, dispatchArgs.partitionCount);
     size_t partitionedWalkerSize = cmdContainer->getCommandStream()->getUsed();
 
-    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
     EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
 
     GenCmdList partitionedWalkerList;
@@ -1233,10 +1233,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     }
     EXPECT_TRUE(secondary);
 
-    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    auto itor = find<DefaultWalkerType *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
     ASSERT_NE(itor, partitionedWalkerList.end());
-    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+    auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
     uint32_t expectedPartitionSize = (dims[0] + dispatchArgs.partitionCount - 1u) / dispatchArgs.partitionCount;
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 
@@ -1292,7 +1292,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
             givenImplicitScalingRequiresNoPipeControlStallWhenEncodingDispatchKernelThenExpectCrossTileSyncAndSelfCleanupSection) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -1310,12 +1310,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
     dispatchArgs.isInternal = isInternal;
     dispatchArgs.partitionCount = 2;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     EXPECT_EQ(2u, dispatchArgs.partitionCount);
     size_t partitionedWalkerSize = cmdContainer->getCommandStream()->getUsed();
 
-    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<WALKER_TYPE>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
+    size_t expectedPartitionedWalkerSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(true, false, pDevice->getDeviceBitfield(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(16, 1, 1));
     EXPECT_EQ(expectedPartitionedWalkerSize, partitionedWalkerSize);
 
     GenCmdList partitionedWalkerList;
@@ -1332,10 +1332,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
     }
     EXPECT_TRUE(secondary);
 
-    auto itor = find<WALKER_TYPE *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
+    auto itor = find<DefaultWalkerType *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
     ASSERT_NE(itor, partitionedWalkerList.end());
-    auto partitionWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+    auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
     uint32_t expectedPartitionSize = (dims[0] + dispatchArgs.partitionCount - 1u) / dispatchArgs.partitionCount;
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 
@@ -1355,7 +1355,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelOnInternalEngineThenExpectNoWalkerPartitioning) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -1368,7 +1368,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     dispatchArgs.isInternal = isInternal;
     dispatchArgs.partitionCount = 2;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     size_t internalWalkerSize = cmdContainer->getCommandStream()->getUsed();
 
@@ -1376,16 +1376,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     CmdParse<FamilyType>::parseCommandBuffer(internalWalkerList,
                                              cmdContainer->getCommandStream()->getCpuBase(),
                                              internalWalkerSize);
-    auto itor = find<WALKER_TYPE *>(internalWalkerList.begin(), internalWalkerList.end());
+    auto itor = find<DefaultWalkerType *>(internalWalkerList.begin(), internalWalkerList.end());
     ASSERT_NE(itor, internalWalkerList.end());
-    auto internalWalkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
-    EXPECT_EQ(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_DISABLED, internalWalkerCmd->getPartitionType());
+    auto internalWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, internalWalkerCmd->getPartitionType());
     EXPECT_EQ(16u, internalWalkerCmd->getThreadGroupIdXDimension());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhenTimestampPostSyncRequiredThenTimestampPostSyncIsAdded) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -1395,21 +1395,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhen
     dispatchArgs.eventAddress = eventAddress;
     dispatchArgs.isTimestampEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
-    auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, cmd->getPostSync().getOperation());
 }
 
 HWTEST2_F(CommandEncodeStatesTest,
           givenDispatchInterfaceWhenDpasRequiredIsNotDefaultThenPipelineSelectCommandAdded, IsWithinXeGfxFamily) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1422,7 +1422,7 @@ HWTEST2_F(CommandEncodeStatesTest,
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands,
@@ -1444,7 +1444,7 @@ HWTEST2_F(CommandEncodeStatesTest,
 HWTEST2_F(CommandEncodeStatesTest,
           givenDebugVariableWhenEncodeStateIsCalledThenSystolicValueIsOverwritten, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1457,7 +1457,7 @@ HWTEST2_F(CommandEncodeStatesTest,
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands,
@@ -1479,7 +1479,7 @@ HWTEST2_F(CommandEncodeStatesTest,
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
             givenDispatchInterfaceWhenDpasRequiredIsSameAsDefaultThenPipelineSelectCommandNotAdded) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -1490,7 +1490,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands,
@@ -1516,7 +1516,7 @@ struct CommandEncodeStatesImplicitScalingPrimaryBufferFixture : public CommandEn
     template <typename FamilyType>
     void testBodyFindPrimaryBatchBuffer() {
         using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
         constexpr bool expectPrimary = flushTaskUsedForImmediate || usePrimaryBuffer;
 
         uint32_t dims[] = {16, 1, 1};
@@ -1528,7 +1528,7 @@ struct CommandEncodeStatesImplicitScalingPrimaryBufferFixture : public CommandEn
         dispatchArgs.eventAddress = eventAddress;
         dispatchArgs.partitionCount = 2;
 
-        EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*BaseClass::cmdContainer.get(), dispatchArgs);
+        EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*BaseClass::cmdContainer.get(), dispatchArgs);
         size_t usedBuffer = BaseClass::cmdContainer->getCommandStream()->getUsed();
         EXPECT_EQ(2u, dispatchArgs.partitionCount);
 

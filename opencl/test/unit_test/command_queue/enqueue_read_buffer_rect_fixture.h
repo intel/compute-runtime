@@ -49,7 +49,7 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
   protected:
     template <typename FamilyType>
     void enqueueReadBufferRect2D(cl_bool blocking = CL_FALSE) {
-        typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
+        typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
         typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
         size_t bufferOrigin[] = {0, 0, 0};

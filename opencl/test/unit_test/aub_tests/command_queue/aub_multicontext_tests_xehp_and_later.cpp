@@ -428,15 +428,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenFourTiles
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalkerSyncWhenStaticWalkerPartitionIsThenAtomicsAreIncrementedCorrectly) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto taskStream = createTaskStream();
     auto taskStreamCpu = taskStream->getSpace(0);
     auto taskStreamGpu = taskStream->getGraphicsAllocation()->getGpuAddress();
 
     uint32_t totalBytesProgrammed = 0u;
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    walkerCmd.setPartitionType(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X);
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
@@ -474,15 +474,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalker
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalkerSyncThenAtomicsAreIncrementedCorrectly) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto taskStream = createTaskStream();
     auto taskStreamCpu = taskStream->getSpace(0);
     auto taskStreamGpu = taskStream->getGraphicsAllocation()->getGpuAddress();
 
     uint32_t totalBytesProgrammed = 0u;
-    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    walkerCmd.setPartitionType(WALKER_TYPE::PARTITION_TYPE::PARTITION_TYPE_X);
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};

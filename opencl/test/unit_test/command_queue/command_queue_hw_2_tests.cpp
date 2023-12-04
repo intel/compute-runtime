@@ -1171,7 +1171,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    using COMPUTE_WALKER = typename FamilyType::WALKER_TYPE;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
     if (pCmdQ->getTimestampPacketContainer() == nullptr) {
         GTEST_SKIP();

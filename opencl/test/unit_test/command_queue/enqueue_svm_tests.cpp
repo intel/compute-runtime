@@ -1244,7 +1244,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenM
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapValidSvmPtrThenExpectSingleWalker) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
@@ -1273,7 +1273,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapValidSv
 
     queue.flush();
     hwParse.parseCommands<FamilyType>(stream);
-    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    auto walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(1u, walkerCount);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MAP;
@@ -1284,7 +1284,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapValidSv
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapSvmPtrTwiceThenExpectSingleWalker) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
@@ -1326,7 +1326,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapSvmPtrT
 
     queue.flush();
     hwParse.parseCommands<FamilyType>(stream);
-    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    auto walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(1u, walkerCount);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MAP;
@@ -1372,7 +1372,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpu
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThenExpectNoUnmapCopyKernel) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
@@ -1387,7 +1387,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThe
 
     queue.flush();
     hwParse.parseCommands<FamilyType>(stream);
-    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    auto walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(0u, walkerCount);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_UNMAP;
@@ -1419,7 +1419,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndGpuHangAndBlocking
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsReadOnlyThenExpectNoUnmapCopyKernel) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
@@ -1440,7 +1440,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
     queue.flush();
     size_t offset = stream.getUsed();
     hwParse.parseCommands<FamilyType>(stream);
-    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    auto walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(1u, walkerCount);
     hwParse.tearDown();
 
@@ -1456,7 +1456,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
     queue.flush();
     hwParse.parseCommands<FamilyType>(stream, offset);
-    walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(0u, walkerCount);
 
     constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_UNMAP;
@@ -1550,7 +1550,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenReadOnlyMapWhenUnmappingThenDontResetAu
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsWritableThenExpectMapAndUnmapCopyKernel) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
@@ -1581,7 +1581,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
     queue.flush();
     hwParse.parseCommands<FamilyType>(stream);
-    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    auto walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 
     constexpr cl_command_type expectedMapCmd = CL_COMMAND_SVM_MAP;
@@ -1626,7 +1626,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndEnabledLocalMe
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAndNoEventIsUsedIsWritableThenExpectMapAndUnmapCopyKernelAnNo) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     LinearStream &stream = queue.getCS(0x1000);
 
@@ -1655,7 +1655,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAn
 
     queue.flush();
     hwParse.parseCommands<FamilyType>(stream);
-    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    auto walkerCount = hwParse.getCommandCount<DefaultWalkerType>();
     EXPECT_EQ(2u, walkerCount);
 }
 

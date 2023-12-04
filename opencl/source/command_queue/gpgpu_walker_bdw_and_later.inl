@@ -45,11 +45,11 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     if (!executionMask)
         executionMask = ~executionMask;
 
-    using SIMD_SIZE = typename WALKER_TYPE::SIMD_SIZE;
+    using SIMD_SIZE = typename DefaultWalkerType::SIMD_SIZE;
 
     walkerCmd->setRightExecutionMask(static_cast<uint32_t>(executionMask));
     walkerCmd->setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
-    walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
+    walkerCmd->setSimdSize(getSimdConfig<DefaultWalkerType>(simd));
 
     walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
     walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));

@@ -24,7 +24,7 @@ size_t HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() {
 
 template struct HardwareCommandsHelper<FamilyType>;
 
-template size_t HardwareCommandsHelper<FamilyType>::sendIndirectState<FamilyType::WALKER_TYPE, FamilyType::INTERFACE_DESCRIPTOR_DATA>(
+template size_t HardwareCommandsHelper<FamilyType>::sendIndirectState<FamilyType::DefaultWalkerType, FamilyType::INTERFACE_DESCRIPTOR_DATA>(
     LinearStream &commandStream,
     IndirectHeap &dsh,
     IndirectHeap &ioh,
@@ -37,21 +37,21 @@ template size_t HardwareCommandsHelper<FamilyType>::sendIndirectState<FamilyType
     const uint64_t offsetInterfaceDescriptorTable,
     uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
-    FamilyType::WALKER_TYPE *walkerCmd,
+    FamilyType::DefaultWalkerType *walkerCmd,
     FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
     uint64_t scratchAddress,
     const Device &device);
 
-template size_t HardwareCommandsHelper<FamilyType>::sendCrossThreadData<FamilyType::WALKER_TYPE>(
+template size_t HardwareCommandsHelper<FamilyType>::sendCrossThreadData<FamilyType::DefaultWalkerType>(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
-    FamilyType::WALKER_TYPE *walkerCmd,
+    FamilyType::DefaultWalkerType *walkerCmd,
     uint32_t &sizeCrossThreadData,
     uint64_t scratchAddress);
 
-template size_t HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData<FamilyType::WALKER_TYPE, FamilyType::INTERFACE_DESCRIPTOR_DATA>(
+template size_t HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData<FamilyType::DefaultWalkerType, FamilyType::INTERFACE_DESCRIPTOR_DATA>(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     uint64_t kernelStartOffset,
@@ -66,11 +66,11 @@ template size_t HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData<
     uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
     const Device &device,
-    FamilyType::WALKER_TYPE *walkerCmd,
+    FamilyType::DefaultWalkerType *walkerCmd,
     FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
 
-template void HardwareCommandsHelper<FamilyType>::programInlineData<FamilyType::WALKER_TYPE>(
+template void HardwareCommandsHelper<FamilyType>::programInlineData<FamilyType::DefaultWalkerType>(
     Kernel &kernel,
-    FamilyType::WALKER_TYPE *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress);
+    FamilyType::DefaultWalkerType *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress);
 
 } // namespace NEO

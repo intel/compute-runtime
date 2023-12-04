@@ -63,7 +63,7 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
 using EncodeKernelPvcTest = Test<CommandEncodeStatesFixture>;
 
 PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThenDontReprogramPipelineSelect) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     bool requiresUncachedMocs = false;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
@@ -93,7 +93,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
             EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
             dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
-            EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+            EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
             EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequiredRef());
         }
     }
@@ -174,7 +174,7 @@ PVCTEST_F(CommandEncodeStatesTestPvc, GivenVariousSlmTotalSizesAndSettingRevIDTo
 }
 
 PVCTEST_F(EncodeKernelPvcTest, givenDefaultSettingForFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenDoNotGenerateFenceCommands) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     DebugManagerStateRestore restore;
@@ -196,15 +196,15 @@ PVCTEST_F(EncodeKernelPvcTest, givenDefaultSettingForFenceAsPostSyncOperationInC
     dispatchArgs.isKernelUsingSystemAllocation = true;
     dispatchArgs.isHostScopeSignalEvent = true;
 
-    EncodeDispatchKernel<FamilyType>::template encode<WALKER_TYPE>(*cmdContainer.get(), dispatchArgs);
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 }

@@ -91,7 +91,7 @@ struct Gen12Lp {
 struct Gen12LpFamily : public Gen12Lp {
     using PARSE = CmdParse<Gen12LpFamily>;
     using GfxFamily = Gen12LpFamily;
-    using WALKER_TYPE = GPGPU_WALKER;
+    using DefaultWalkerType = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;

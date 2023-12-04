@@ -23,7 +23,7 @@ struct MultiDispatchInfo;
 
 template <typename GfxFamily>
 struct HardwareCommandsHelper : public PerThreadDataHelper {
-    using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
@@ -123,7 +123,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const MultiDispatchInfo &multiDispatchInfo);
 
     static void setInterfaceDescriptorOffset(
-        WALKER_TYPE *walkerCmd,
+        DefaultWalkerType *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
 
     static bool kernelUsesLocalIds(const Kernel &kernel);

@@ -137,7 +137,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenMediaStateFlushIsCreatedTh
 
 HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
@@ -166,7 +166,7 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
     auto usedBefore = indirectHeap.getUsed();
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
-    HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *kernel,
         false,
@@ -179,7 +179,7 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
 
 HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataOffsetsAreNotMoved) {
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     MockContext context;
 
@@ -193,7 +193,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     kernel->getPatchInfoDataList().push_back(patchInfoData);
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
-    HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *kernel,
         false,
@@ -211,12 +211,12 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap indirectHeap(nonInternalAllocation, false);
 
     auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
-    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
@@ -228,13 +228,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapNotAllocatedF
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     auto internalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP, pDevice->getDeviceBitfield()));
     IndirectHeap indirectHeap(internalAllocation, true);
     auto expectedOffset = internalAllocation->getGpuAddressToPatch();
 
     auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
-    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
@@ -249,7 +249,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapAllocatedFrom
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
@@ -269,7 +269,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhenWh
     kernel->getPatchInfoDataList().push_back(patchInfoData1);
     kernel->getPatchInfoDataList().push_back(patchInfoData2);
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
-    auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *kernel,
         false,
@@ -1154,8 +1154,8 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernel.getDescriptor(), false, gfxCoreHelper);
 
         auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
-        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
-        HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+        HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
             indirectHeap,
             kernel,
             false,
@@ -1292,14 +1292,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 using HardwareCommandsTestXeHpAndLater = HardwareCommandsTest;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap indirectHeap(nonInternalAllocation, false);
 
     auto expectedOffset = is64bit ? 0u : indirectHeap.getHeapGpuBase();
 
     auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
-    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
@@ -1311,13 +1311,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeap
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     auto internalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP, pDevice->getDeviceBitfield()));
     IndirectHeap indirectHeap(internalAllocation, true);
     auto expectedOffset = is64bit ? internalAllocation->getGpuAddressToPatch() : 0u;
 
     auto sizeCrossThreadData = mockKernelWithInternal->mockKernel->getCrossThreadDataSize();
-    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    auto offset = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
@@ -1330,7 +1330,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeap
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
@@ -1353,7 +1353,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     kernel->getPatchInfoDataList().push_back(patchInfoData1);
     kernel->getPatchInfoDataList().push_back(patchInfoData2);
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
-    auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<WALKER_TYPE>(
+    auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *kernel,
         false,

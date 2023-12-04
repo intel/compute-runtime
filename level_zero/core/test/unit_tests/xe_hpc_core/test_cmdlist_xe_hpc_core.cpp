@@ -377,7 +377,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedDeviceMemoryThenDontCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
@@ -428,7 +428,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
@@ -481,7 +481,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
@@ -552,7 +552,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
@@ -727,7 +727,7 @@ HWTEST2_F(CommandListAppendRangesBarrierXeHpcCore, givenCallToAppendRangesBarrie
 
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelNotUsingSystemMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -784,10 +784,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
         commandList->commandContainer.getCommandStream()->getCpuBase(),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
@@ -797,7 +797,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -852,10 +852,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
         commandList->commandContainer.getCommandStream()->getCpuBase(),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
@@ -865,7 +865,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
           givenHwSupportsSystemFenceWhenMigrationOnComputeKernelUsingUsmSharedCpuMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -908,10 +908,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
         commandList->commandContainer.getCommandStream()->getCpuBase(),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
@@ -921,7 +921,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelUsingIndirectSystemMemoryAllocationsAndEventNotHostSignalScopeThenExpectsNoSystemFenceUsed, IsXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -980,10 +980,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
         commandList->commandContainer.getCommandStream()->getCpuBase(),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
@@ -993,7 +993,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelUsingDeviceMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1050,10 +1050,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
         commandList->commandContainer.getCommandStream()->getCpuBase(),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
@@ -1063,7 +1063,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
           givenHwSupportsSystemFenceWhenKernelUsingUsmHostMemoryAllocationsAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXeHpcCore) {
-    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1118,10 +1118,10 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
         commandList->commandContainer.getCommandStream()->getCpuBase(),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
-    auto itor = find<WALKER_TYPE *>(commands.begin(), commands.end());
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
     ASSERT_NE(itor, commands.end());
 
-    auto walkerCmd = genCmdCast<WALKER_TYPE *>(*itor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
@@ -1219,7 +1219,7 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
     template <GFXCORE_FAMILY gfxCoreFamily>
     void testHostSignalScopeDeviceMemoryAppendMultiKernelCopy(AppendKernelXeHpcTestInput &input) {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1266,10 +1266,10 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
             commandList->commandContainer.getCommandStream()->getCpuBase(),
             commandList->commandContainer.getCommandStream()->getUsed()));
 
-        auto itorWalkers = findAll<WALKER_TYPE *>(commands.begin(), commands.end());
+        auto itorWalkers = findAll<DefaultWalkerType *>(commands.begin(), commands.end());
         EXPECT_NE(0u, itorWalkers.size());
         for (const auto &it : itorWalkers) {
-            auto walkerCmd = genCmdCast<WALKER_TYPE *>(*it);
+            auto walkerCmd = genCmdCast<DefaultWalkerType *>(*it);
             auto &postSyncData = walkerCmd->getPostSync();
             EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
         }
@@ -1281,7 +1281,7 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
     template <GFXCORE_FAMILY gfxCoreFamily>
     void testHostSignalScopeHostMemoryAppendMultiKernelCopy(AppendKernelXeHpcTestInput &input) {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1326,10 +1326,10 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
             commandList->commandContainer.getCommandStream()->getCpuBase(),
             commandList->commandContainer.getCommandStream()->getUsed()));
 
-        auto itorWalkers = findAll<WALKER_TYPE *>(commands.begin(), commands.end());
+        auto itorWalkers = findAll<DefaultWalkerType *>(commands.begin(), commands.end());
         EXPECT_NE(0u, itorWalkers.size());
         for (const auto &it : itorWalkers) {
-            auto walkerCmd = genCmdCast<WALKER_TYPE *>(*it);
+            auto walkerCmd = genCmdCast<DefaultWalkerType *>(*it);
             auto &postSyncData = walkerCmd->getPostSync();
             EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
         }

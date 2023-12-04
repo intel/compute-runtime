@@ -32,7 +32,7 @@ inline WalkerType *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStrea
 template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::dispatchWalkerCommon(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs) {
 
-    dispatchWalker<typename GfxFamily::WALKER_TYPE>(commandQueue, multiDispatchInfo, csrDependencies, walkerArgs);
+    dispatchWalker<typename GfxFamily::DefaultWalkerType>(commandQueue, multiDispatchInfo, csrDependencies, walkerArgs);
 }
 
 template <typename GfxFamily>

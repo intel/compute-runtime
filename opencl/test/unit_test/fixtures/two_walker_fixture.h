@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,12 +43,12 @@ struct TwoWalkerTest
 
         parseCommands<FamilyType>(*pCmdQ);
 
-        itorWalker1 = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
+        itorWalker1 = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker1);
 
         itorWalker2 = itorWalker1;
         ++itorWalker2;
-        itorWalker2 = find<typename FamilyType::WALKER_TYPE *>(itorWalker2, cmdList.end());
+        itorWalker2 = find<typename FamilyType::DefaultWalkerType *>(itorWalker2, cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker2);
     }
 

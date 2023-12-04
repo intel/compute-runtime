@@ -93,7 +93,7 @@ struct Gen8 {
 struct Gen8Family : public Gen8 {
     using PARSE = CmdParse<Gen8Family>;
     using GfxFamily = Gen8Family;
-    using WALKER_TYPE = GPGPU_WALKER;
+    using DefaultWalkerType = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
@@ -137,12 +137,12 @@ struct Gen8Family : public Gen8 {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;
     }
 
-    template <typename WalkerType = WALKER_TYPE>
+    template <typename WalkerType = DefaultWalkerType>
     static constexpr size_t getInterfaceDescriptorSize() {
         return sizeof(INTERFACE_DESCRIPTOR_DATA);
     }
 
-    template <typename WalkerType = WALKER_TYPE>
+    template <typename WalkerType = DefaultWalkerType>
     static WalkerType getInitGpuWalker() {
         return cmdInitGpgpuWalker;
     }
