@@ -38,7 +38,7 @@ decltype(&LoadLibraryExA) OsLibrary::loadLibraryExA = LoadLibraryExA;
 decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA;
 decltype(&GetSystemDirectoryA) OsLibrary::getSystemDirectoryA = GetSystemDirectoryA;
 
-extern "C" IMAGE_DOS_HEADER __ImageBase;
+extern "C" IMAGE_DOS_HEADER __ImageBase; // NOLINT(readability-identifier-naming)
 __inline HINSTANCE getModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
 
 void OsLibrary::getLastErrorString(std::string *errorValue) {

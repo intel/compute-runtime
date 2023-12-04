@@ -38,7 +38,7 @@ NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     return STATUS_SUCCESS;
 }
 
-UINT64 PagingFence = 0;
+UINT64 pagingFence = 0;
 
 void mockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uint64_t gpuAddressSpace) {
     if (pGfxPlatform != NULL) {
@@ -86,7 +86,7 @@ NTSTATUS __stdcall mockD3DKMTCreatePagingQueue(IN OUT D3DKMT_CREATEPAGINGQUEUE *
     }
     createQueue->hPagingQueue = PAGINGQUEUE_HANDLE;
     createQueue->hSyncObject = PAGINGQUEUE_SYNCOBJECT_HANDLE;
-    createQueue->FenceValueCPUVirtualAddress = &PagingFence;
+    createQueue->FenceValueCPUVirtualAddress = &pagingFence;
     return STATUS_SUCCESS;
 }
 
@@ -217,15 +217,15 @@ NTSTATUS __stdcall mockD3DKMTShareObjects(UINT cObjects, const D3DKMT_HANDLE *hO
     return STATUS_SUCCESS;
 }
 
-static unsigned int DestroyAllocationWithResourceHandleCalled = 0u;
+static unsigned int destroyAllocationWithResourceHandleCalled = 0u;
 static D3DKMT_DESTROYALLOCATION2 destroyalloc2{};
-static D3DKMT_HANDLE LastDestroyedResourceHandle = 0;
-static D3DKMT_CREATEDEVICE CreateDeviceParams{};
+static D3DKMT_HANDLE lastDestroyedResourceHandle = 0;
+static D3DKMT_CREATEDEVICE createDeviceParams{};
 
 NTSTATUS __stdcall mockD3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *destroyAllocation) {
     int numOfAllocations;
     const D3DKMT_HANDLE *allocationList;
-    LastDestroyedResourceHandle = 0;
+    lastDestroyedResourceHandle = 0;
     if (destroyAllocation == nullptr || destroyAllocation->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -249,8 +249,8 @@ NTSTATUS __stdcall mockD3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATIO
         return STATUS_UNSUCCESSFUL;
     }
     if (destroyAllocation->hResource) {
-        DestroyAllocationWithResourceHandleCalled = 1;
-        LastDestroyedResourceHandle = destroyAllocation->hResource;
+        destroyAllocationWithResourceHandleCalled = 1;
+        lastDestroyedResourceHandle = destroyAllocation->hResource;
     }
 
     return STATUS_SUCCESS;
@@ -682,26 +682,26 @@ NTSTATUS setMockSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS getMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc) {
-    destroyAlloactionWithResourceHandleCalled = DestroyAllocationWithResourceHandleCalled;
+NTSTATUS getMockSizes(UINT &outDestroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc) {
+    outDestroyAlloactionWithResourceHandleCalled = destroyAllocationWithResourceHandleCalled;
     ptrDestroyAlloc = &destroyalloc2;
     return NTSTATUS();
 }
 
 D3DKMT_HANDLE getMockLastDestroyedResHandle() {
-    return LastDestroyedResourceHandle;
+    return lastDestroyedResourceHandle;
 }
 
 void setMockLastDestroyedResHandle(D3DKMT_HANDLE handle) {
-    LastDestroyedResourceHandle = handle;
+    lastDestroyedResourceHandle = handle;
 }
 
 D3DKMT_CREATEDEVICE getMockCreateDeviceParams() {
-    return CreateDeviceParams;
+    return createDeviceParams;
 }
 
 void setMockCreateDeviceParams(D3DKMT_CREATEDEVICE params) {
-    CreateDeviceParams = params;
+    createDeviceParams = params;
 }
 
 D3DKMT_CREATEALLOCATION *getMockAllocation() {
