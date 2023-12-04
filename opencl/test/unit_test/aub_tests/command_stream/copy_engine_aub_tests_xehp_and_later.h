@@ -41,6 +41,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         if (!productHelper.obtainBlitterPreference(*defaultHwInfo.get())) {
             GTEST_SKIP();
         }
+        bcsEngineType = productHelper.getDefaultCopyEngine();
 
         if (useLocalMemory) {
             if (!defaultHwInfo->featureTable.flags.ftrLocalMemory) {

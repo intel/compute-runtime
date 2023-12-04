@@ -406,11 +406,13 @@ CommandStreamReceiver &CommandQueue::selectCsrForHostPtrAllocation(bool split, C
 }
 
 void CommandQueue::releaseMainCopyEngine() {
-    if (auto mainBcs = bcsEngines[0]; mainBcs != nullptr) {
+    const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+    const auto mainBcsIndex = EngineHelpers::getBcsIndex(productHelper.getDefaultCopyEngine());
+    if (auto mainBcs = bcsEngines[mainBcsIndex]; mainBcs != nullptr) {
         auto &selectorCopyEngineSubDevice = device->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
-        EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngineSubDevice);
+        EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngineSubDevice, device->getRootDeviceEnvironment());
         auto &selectorCopyEngine = device->getSelectorCopyEngine();
-        EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine);
+        EngineHelpers::releaseBcsEngineType(mainBcs->getEngineType(), selectorCopyEngine, device->getRootDeviceEnvironment());
     }
 }
 

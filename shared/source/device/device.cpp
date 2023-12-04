@@ -651,7 +651,8 @@ EngineControl *Device::getInternalCopyEngine() {
         return nullptr;
     }
 
-    auto expectedEngine = aub_stream::ENGINE_BCS;
+    const auto &productHelper = this->getProductHelper();
+    auto expectedEngine = productHelper.getDefaultCopyEngine();
 
     if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
         expectedEngine = EngineHelpers::mapBcsIndexToEngineType(debugManager.flags.ForceBCSForInternalCopyEngine.get(), true);

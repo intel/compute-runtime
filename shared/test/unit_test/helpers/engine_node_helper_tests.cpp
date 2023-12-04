@@ -83,15 +83,19 @@ TEST(EngineNodeHelperTest, givenLinkCopyEnginesSupportedWhenGettingBcsEngineType
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     DeviceBitfield deviceBitfield = 0b11;
-    hwInfo.featureTable.ftrBcsInfo = 0b111;
 
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    const auto mainBcsEngine = rootDeviceEnvironment.getProductHelper().getDefaultCopyEngine();
+    const auto isBCS0Main = (aub_stream::ENGINE_BCS == mainBcsEngine);
+    hwInfo.featureTable.ftrBcsInfo = isBCS0Main ? 0b00111 : 0b10111;
+    const auto nextLinkCopyEngine = isBCS0Main ? aub_stream::EngineType::ENGINE_BCS1 : aub_stream::EngineType::ENGINE_BCS4;
+
+    EXPECT_EQ(mainBcsEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 }
 
 TEST(EngineNodeHelperTest, givenMainBcsEngineIsReleasedWhenGettingBcsEngineTypeThenItCanBeReturnedAgain) {
@@ -102,16 +106,20 @@ TEST(EngineNodeHelperTest, givenMainBcsEngineIsReleasedWhenGettingBcsEngineTypeT
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     DeviceBitfield deviceBitfield = 0b11;
-    hwInfo.featureTable.ftrBcsInfo = 0b111;
 
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    const auto mainBcsEngine = rootDeviceEnvironment.getProductHelper().getDefaultCopyEngine();
+    const auto isBCS0Main = (aub_stream::ENGINE_BCS == mainBcsEngine);
+    hwInfo.featureTable.ftrBcsInfo = isBCS0Main ? 0b00111 : 0b10111;
+    const auto nextLinkCopyEngine = isBCS0Main ? aub_stream::EngineType::ENGINE_BCS1 : aub_stream::EngineType::ENGINE_BCS4;
+
+    EXPECT_EQ(mainBcsEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
-    EngineHelpers::releaseBcsEngineType(aub_stream::EngineType::ENGINE_BCS, selectorCopyEngine);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EngineHelpers::releaseBcsEngineType(mainBcsEngine, selectorCopyEngine, rootDeviceEnvironment);
+    EXPECT_EQ(mainBcsEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 }
 
@@ -123,17 +131,21 @@ TEST(EngineNodeHelperTest, givenLinkBcsEngineIsReleasedWhenGettingBcsEngineTypeT
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     DeviceBitfield deviceBitfield = 0b11;
-    hwInfo.featureTable.ftrBcsInfo = 0b111;
 
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    const auto mainBcsEngine = rootDeviceEnvironment.getProductHelper().getDefaultCopyEngine();
+    const auto isBCS0Main = (aub_stream::ENGINE_BCS == mainBcsEngine);
+    hwInfo.featureTable.ftrBcsInfo = isBCS0Main ? 0b00111 : 0b10111;
+    const auto nextLinkCopyEngine = isBCS0Main ? aub_stream::EngineType::ENGINE_BCS1 : aub_stream::EngineType::ENGINE_BCS4;
+
+    EXPECT_EQ(mainBcsEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 
-    EngineHelpers::releaseBcsEngineType(aub_stream::EngineType::ENGINE_BCS1, selectorCopyEngine);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EngineHelpers::releaseBcsEngineType(nextLinkCopyEngine, selectorCopyEngine, rootDeviceEnvironment);
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
+    EXPECT_EQ(nextLinkCopyEngine, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false));
 }
 
 TEST(EngineNodeHelperTest, givenLinkCopyEnginesAndInternalUsageEnabledWhenGettingBcsEngineThenUseBcs2only) {

@@ -40,13 +40,18 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenGetBcsCommand
     MockCommandQueue queue{context};
     queue.clearBcsEngines();
     ASSERT_EQ(0u, queue.countBcsEngines());
-    queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS);
+
+    auto &productHelper = device->getProductHelper();
+    auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+    queue.insertBcsEngine(defaultCopyEngine);
     queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS3);
     queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS7);
     ASSERT_EQ(3u, queue.countBcsEngines());
 
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getOsContext().getEngineType());
-    EXPECT_EQ(nullptr, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS1));
+    EXPECT_EQ(defaultCopyEngine, queue.getBcsCommandStreamReceiver(defaultCopyEngine)->getOsContext().getEngineType());
+    if (aub_stream::EngineType::ENGINE_BCS1 != defaultCopyEngine) {
+        EXPECT_EQ(nullptr, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS1));
+    }
     EXPECT_EQ(nullptr, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS2));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS3)->getOsContext().getEngineType());
     EXPECT_EQ(nullptr, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS4));
@@ -65,6 +70,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCo
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
     MockClDevice clDevice{device};
     MockContext context{&clDevice};
+    auto &productHelper = device->getProductHelper();
 
     CommandStreamReceiver *bcsCsr0 = nullptr;
     CommandStreamReceiver *bcsCsr3 = nullptr;
@@ -91,15 +97,16 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCo
         MockCommandQueueHw<FamilyType> queue(&context, &clDevice, nullptr);
         queue.clearBcsEngines();
 
-        queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS);
+        auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+        queue.insertBcsEngine(defaultCopyEngine);
         queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS3);
         queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS7);
 
-        bcsCsr0 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+        bcsCsr0 = queue.getBcsCommandStreamReceiver(defaultCopyEngine);
         bcsCsr3 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS3);
         bcsCsr7 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS7);
 
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, bcsCsr0->getOsContext().getEngineType());
+        EXPECT_EQ(defaultCopyEngine, bcsCsr0->getOsContext().getEngineType());
         EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, bcsCsr3->getOsContext().getEngineType());
         EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS7, bcsCsr7->getOsContext().getEngineType());
 
@@ -140,17 +147,19 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenEnqueueBlitIs
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
     MockClDevice clDevice{device};
     MockContext context{&clDevice};
+    const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+    const auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
 
     MockCommandQueueHw<FamilyType> queue(&context, &clDevice, nullptr);
     queue.setProfilingEnabled();
     queue.bcsSplitInitialized = true;
     queue.clearBcsEngines();
 
-    queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS);
+    queue.insertBcsEngine(defaultCopyEngine);
     queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS3);
     queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS7);
 
-    auto bcsCsr0 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+    auto bcsCsr0 = queue.getBcsCommandStreamReceiver(defaultCopyEngine);
 
     MockGraphicsAllocation mockGraphicsAllocation;
     MockBuffer mockMemObj(mockGraphicsAllocation);
@@ -445,25 +454,29 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
     auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    auto &productHelper = device->getProductHelper();
+    const auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+    auto nextLinkedCopyEngine = (aub_stream::ENGINE_BCS1 == defaultCopyEngine) ? aub_stream::ENGINE_BCS4 : aub_stream::ENGINE_BCS1;
+
     auto queue1 = std::make_unique<MockCommandQueue>(*context);
     auto queue2 = std::make_unique<MockCommandQueue>(*context);
     auto queue3 = std::make_unique<MockCommandQueue>(*context);
     auto queue4 = std::make_unique<MockCommandQueue>(*context);
 
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queue1->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getOsContext().getEngineType());
+    EXPECT_EQ(defaultCopyEngine, queue1->getBcsCommandStreamReceiver(defaultCopyEngine)->getOsContext().getEngineType());
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, queue2->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2)->getOsContext().getEngineType());
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, queue3->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS1)->getOsContext().getEngineType());
+    EXPECT_EQ(nextLinkedCopyEngine, queue3->getBcsCommandStreamReceiver(nextLinkedCopyEngine)->getOsContext().getEngineType());
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, queue4->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2)->getOsContext().getEngineType());
 
     // Releasing main BCS. Next creation should be able to grab it
     queue1.reset();
     queue1 = std::make_unique<MockCommandQueue>(*context);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queue1->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getOsContext().getEngineType());
+    EXPECT_EQ(defaultCopyEngine, queue1->getBcsCommandStreamReceiver(defaultCopyEngine)->getOsContext().getEngineType());
 
     // Releasing link BCS. Shouldn't change anything
     queue2.reset();
     queue2 = std::make_unique<MockCommandQueue>(*context);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, queue2->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS1)->getOsContext().getEngineType());
+    EXPECT_EQ(nextLinkedCopyEngine, queue2->getBcsCommandStreamReceiver(nextLinkedCopyEngine)->getOsContext().getEngineType());
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsXeHpcCore) {
@@ -791,18 +804,26 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
+    const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+    auto isBCS0Enabled = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
     {
-        auto queue = createQueueWithEngines({
-            aub_stream::ENGINE_BCS,
-            aub_stream::ENGINE_BCS1,
-            aub_stream::ENGINE_BCS2,
-            aub_stream::ENGINE_BCS3,
-            aub_stream::ENGINE_BCS4,
-            aub_stream::ENGINE_BCS5,
-            aub_stream::ENGINE_BCS6,
-            aub_stream::ENGINE_BCS7,
-            aub_stream::ENGINE_BCS8,
-        });
+        auto queue = isBCS0Enabled ? createQueueWithEngines({aub_stream::ENGINE_BCS,
+                                                             aub_stream::ENGINE_BCS1,
+                                                             aub_stream::ENGINE_BCS2,
+                                                             aub_stream::ENGINE_BCS3,
+                                                             aub_stream::ENGINE_BCS4,
+                                                             aub_stream::ENGINE_BCS5,
+                                                             aub_stream::ENGINE_BCS6,
+                                                             aub_stream::ENGINE_BCS7,
+                                                             aub_stream::ENGINE_BCS8})
+                                   : createQueueWithEngines({aub_stream::ENGINE_BCS1,
+                                                             aub_stream::ENGINE_BCS2,
+                                                             aub_stream::ENGINE_BCS3,
+                                                             aub_stream::ENGINE_BCS4,
+                                                             aub_stream::ENGINE_BCS5,
+                                                             aub_stream::ENGINE_BCS6,
+                                                             aub_stream::ENGINE_BCS7,
+                                                             aub_stream::ENGINE_BCS8});
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
     }
@@ -833,23 +854,33 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
+    const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+    auto isBCS0Enabled = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
     {
-        auto queue = createQueueWithEngines({
-            aub_stream::ENGINE_BCS,
-            aub_stream::ENGINE_BCS1,
-            aub_stream::ENGINE_BCS2,
-            aub_stream::ENGINE_BCS3,
-            aub_stream::ENGINE_BCS4,
-            aub_stream::ENGINE_BCS5,
-            aub_stream::ENGINE_BCS6,
-            aub_stream::ENGINE_BCS7,
-            aub_stream::ENGINE_BCS8,
-        });
+        auto queue = isBCS0Enabled ? createQueueWithEngines({aub_stream::ENGINE_BCS,
+                                                             aub_stream::ENGINE_BCS1,
+                                                             aub_stream::ENGINE_BCS2,
+                                                             aub_stream::ENGINE_BCS3,
+                                                             aub_stream::ENGINE_BCS4,
+                                                             aub_stream::ENGINE_BCS5,
+                                                             aub_stream::ENGINE_BCS6,
+                                                             aub_stream::ENGINE_BCS7,
+                                                             aub_stream::ENGINE_BCS8})
+                                   : createQueueWithEngines({aub_stream::ENGINE_BCS1,
+                                                             aub_stream::ENGINE_BCS2,
+                                                             aub_stream::ENGINE_BCS3,
+                                                             aub_stream::ENGINE_BCS4,
+                                                             aub_stream::ENGINE_BCS5,
+                                                             aub_stream::ENGINE_BCS6,
+                                                             aub_stream::ENGINE_BCS7,
+                                                             aub_stream::ENGINE_BCS8});
         queue->bcsInitialized = false;
+
+        const auto nextCopyEngine = isBCS0Enabled ? aub_stream::ENGINE_BCS1 : aub_stream::ENGINE_BCS4;
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2), &queue->selectCsrForBuiltinOperation(args));
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS1), &queue->selectCsrForBuiltinOperation(args));
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(nextCopyEngine), &queue->selectCsrForBuiltinOperation(args));
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2), &queue->selectCsrForBuiltinOperation(args));
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS1), &queue->selectCsrForBuiltinOperation(args));
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(nextCopyEngine), &queue->selectCsrForBuiltinOperation(args));
     }
 }
 

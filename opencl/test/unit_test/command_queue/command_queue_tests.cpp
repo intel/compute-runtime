@@ -2747,6 +2747,13 @@ struct CommandQueueCreateWithMultipleRegularContextsTests : public CommandQueueO
         backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         defaultHwInfo->featureTable.flags.ftrCCSNode = true;
+        {
+            auto productHelper = ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+            auto defaultBcsIndex = EngineHelpers::getBcsIndex(productHelper->getDefaultCopyEngine());
+            if (0u != defaultBcsIndex) {
+                defaultHwInfo->featureTable.ftrBcsInfo.set(defaultBcsIndex, true);
+            }
+        }
 
         CommandQueueOnSpecificEngineTests::SetUp();
 

@@ -844,3 +844,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCor
         EXPECT_EQ(expectedValues, productHelper->getSupportedNumGrfs(releaseHelper));
     }
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultCopyEngineThenEngineBCSIsReturned) {
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, productHelper->getDefaultCopyEngine());
+}

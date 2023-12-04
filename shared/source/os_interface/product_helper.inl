@@ -23,6 +23,8 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 
+#include "aubstream/engine_node.h"
+
 #include <bitset>
 
 namespace NEO {
@@ -822,6 +824,11 @@ std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedNumGrfs(const Rel
         return releaseHelper->getSupportedNumGrfs();
     }
     return {128u};
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+aub_stream::EngineType ProductHelperHw<gfxProduct>::getDefaultCopyEngine() const {
+    return aub_stream::EngineType::ENGINE_BCS;
 }
 
 } // namespace NEO

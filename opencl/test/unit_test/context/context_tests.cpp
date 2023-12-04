@@ -551,6 +551,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenLocalMemoryAllocationWhenB
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    {
+        auto productHelper = ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        auto defaultBcsIndex = EngineHelpers::getBcsIndex(productHelper->getDefaultCopyEngine());
+        if (0u != defaultBcsIndex) {
+            defaultHwInfo->featureTable.ftrBcsInfo.set(defaultBcsIndex, true);
+            defaultHwInfo->featureTable.ftrBcsInfo.set(EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS3), true); // enable BCS3 for internal operations
+        }
+    }
     UltClDeviceFactory deviceFactory{1, 2};
 
     ClDevice *devicesToTest[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1]};
@@ -583,6 +591,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLo
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    {
+        auto productHelper = ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        auto defaultBcsIndex = EngineHelpers::getBcsIndex(productHelper->getDefaultCopyEngine());
+        if (0u != defaultBcsIndex) {
+            defaultHwInfo->featureTable.ftrBcsInfo.set(defaultBcsIndex, true);
+            defaultHwInfo->featureTable.ftrBcsInfo.set(EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS3), true); // enable BCS3 for internal operations
+        }
+    }
     UltClDeviceFactory deviceFactory{1, 2};
 
     auto testedDevice = deviceFactory.rootDevices[0];

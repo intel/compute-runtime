@@ -161,6 +161,7 @@ class ProductHelperHw : public ProductHelper {
     bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const override;
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
+    aub_stream::EngineType getDefaultCopyEngine() const override;
 
     ~ProductHelperHw() override = default;
 

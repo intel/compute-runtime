@@ -123,9 +123,13 @@ aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceE
         enableSelector = debugManager.flags.EnableCopyEngineSelector.get();
     }
 
+    const bool isBCS0Default = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
+
     if (enableSelector) {
         const bool isMainCopyEngineAlreadyUsed = selectorCopyEngine.isMainUsed.exchange(true);
-        if (isMainCopyEngineAlreadyUsed) {
+        if (false == isMainCopyEngineAlreadyUsed && false == isBCS0Default) {
+            return productHelper.getDefaultCopyEngine();
+        } else if (isMainCopyEngineAlreadyUsed) {
             return selectLinkCopyEngine(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine.selector);
         }
     }
@@ -133,8 +137,8 @@ aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceE
     return aub_stream::ENGINE_BCS;
 }
 
-void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine) {
-    if (engineType == aub_stream::EngineType::ENGINE_BCS) {
+void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (auto &productHelper = rootDeviceEnvironment.getProductHelper(); engineType == productHelper.getDefaultCopyEngine()) {
         selectorCopyEngine.isMainUsed.store(false);
     }
 }
@@ -157,6 +161,10 @@ uint32_t getBcsIndex(aub_stream::EngineType engineType) {
     } else {
         return 1 + engineType - aub_stream::ENGINE_BCS1;
     }
+}
+
+aub_stream::EngineType getBcsEngineAtIdx(uint32_t idx) {
+    return static_cast<aub_stream::EngineType>((idx - 1) + aub_stream::ENGINE_BCS1);
 }
 
 aub_stream::EngineType mapBcsIndexToEngineType(uint32_t index, bool includeMainCopyEngine) {
@@ -189,6 +197,7 @@ bool linkCopyEnginesSupported(const RootDeviceEnvironment &rootDeviceEnvironment
 
 aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine) {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto enableCmdQRoundRobindBcsEngineAssign = false;
 
@@ -236,7 +245,7 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
         return engineType;
     }
 
-    const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, deviceBitfield, aub_stream::ENGINE_BCS1)
+    const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, deviceBitfield, aub_stream::ENGINE_BCS1) && aub_stream::ENGINE_BCS1 != productHelper.getDefaultCopyEngine()
                                                ? aub_stream::ENGINE_BCS1
                                                : aub_stream::ENGINE_BCS4;
     const aub_stream::EngineType engine2 = aub_stream::ENGINE_BCS2;

@@ -952,7 +952,13 @@ struct CommandListCreateWithBcs : public CommandListCreate {
     void SetUp() override {
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-        defaultHwInfo->featureTable.ftrBcsInfo.set(0, true);
+        {
+            auto productHelper = ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+            auto defaultBcsIndex = EngineHelpers::getBcsIndex(productHelper->getDefaultCopyEngine());
+            if (0u != defaultBcsIndex) {
+                defaultHwInfo->featureTable.ftrBcsInfo.set(defaultBcsIndex, true);
+            }
+        }
         CommandListCreate::SetUp();
     }
 };

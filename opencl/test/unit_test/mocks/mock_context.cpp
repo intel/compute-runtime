@@ -177,7 +177,9 @@ MockUnrestrictiveContextMultiGPU::MockUnrestrictiveContextMultiGPU() : MockConte
 }
 
 BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
-    bcsOsContext.reset(OsContext::create(nullptr, device->getRootDeviceIndex(), 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, device->getDeviceBitfield())));
+    auto &productHelper = device->getDevice().getProductHelper();
+    auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+    bcsOsContext.reset(OsContext::create(nullptr, device->getRootDeviceIndex(), 0, EngineDescriptorHelper::getDefaultDescriptor({defaultCopyEngine, EngineUsage::regular}, device->getDeviceBitfield())));
     bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     bcsCsr->setupContext(*bcsOsContext);
     bcsCsr->initializeTagAllocation();

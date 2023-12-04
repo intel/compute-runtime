@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 
+#include "aubstream/engine_node.h"
+
 #include <igfxfmid.h>
 #include <memory>
 #include <optional>
@@ -209,6 +211,7 @@ class ProductHelper {
     virtual bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const = 0;
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const = 0;
+    virtual aub_stream::EngineType getDefaultCopyEngine() const = 0;
 
     virtual ~ProductHelper() = default;
 
