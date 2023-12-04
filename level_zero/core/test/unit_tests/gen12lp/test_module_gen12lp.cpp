@@ -24,29 +24,29 @@ HWTEST2_F(KernelPropertyTest, givenKernelExtendedPropertiesStructureWhenKernelPr
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     const auto &fp16Properties = kernelExtendedProperties.fp16Flags;
-    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
-    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
-    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
-    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
+    EXPECT_TRUE(fp16Properties & FpAtomicExtFlags::globalLoadStore);
+    EXPECT_TRUE(fp16Properties & FpAtomicExtFlags::localLoadStore);
+    EXPECT_TRUE(fp16Properties & FpAtomicExtFlags::globalMinMax);
+    EXPECT_TRUE(fp16Properties & FpAtomicExtFlags::localMinMax);
 
-    EXPECT_FALSE(fp16Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
-    EXPECT_FALSE(fp16Properties & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
+    EXPECT_FALSE(fp16Properties & FpAtomicExtFlags::globalAdd);
+    EXPECT_FALSE(fp16Properties & FpAtomicExtFlags::localAdd);
 
     const auto &fp32Properties = kernelExtendedProperties.fp32Flags;
-    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
-    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
-    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
-    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
-    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
-    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
+    EXPECT_TRUE(fp32Properties & FpAtomicExtFlags::globalLoadStore);
+    EXPECT_TRUE(fp32Properties & FpAtomicExtFlags::localLoadStore);
+    EXPECT_TRUE(fp32Properties & FpAtomicExtFlags::globalMinMax);
+    EXPECT_TRUE(fp32Properties & FpAtomicExtFlags::localMinMax);
+    EXPECT_TRUE(fp32Properties & FpAtomicExtFlags::globalAdd);
+    EXPECT_TRUE(fp32Properties & FpAtomicExtFlags::localAdd);
 
     const auto &fp64Properties = kernelExtendedProperties.fp64Flags;
-    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
-    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
-    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
-    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
-    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
-    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
+    EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::globalLoadStore);
+    EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::localLoadStore);
+    EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::globalMinMax);
+    EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::localMinMax);
+    EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::globalAdd);
+    EXPECT_TRUE(fp64Properties & FpAtomicExtFlags::localAdd);
 }
 
 } // namespace ult
