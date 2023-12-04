@@ -31,7 +31,8 @@
 namespace NEO {
 int filterFunction(const struct dirent *file) {
     std::string_view fileName = file->d_name;
-    if (fileName.find(".cl_cache") != fileName.npos || fileName.find(".l0_cache") != fileName.npos) {
+    if (fileName.find(".cl_cache") != fileName.npos ||
+        fileName.find(".l0_cache") != fileName.npos) {
         return 1;
     }
 
@@ -50,38 +51,39 @@ bool compareByLastAccessTime(const ElementsStruct &a, ElementsStruct &b) {
 bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
     struct dirent **files = 0;
 
-    int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
+    const int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
 
     if (filesCount == -1) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Scandir failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
         return false;
     }
 
-    std::vector<ElementsStruct> vec;
-    vec.reserve(static_cast<size_t>(filesCount));
+    std::vector<ElementsStruct> cacheFiles;
+    cacheFiles.reserve(static_cast<size_t>(filesCount));
     for (int i = 0; i < filesCount; ++i) {
         ElementsStruct fileElement = {};
         fileElement.path = joinPath(config.cacheDir, files[i]->d_name);
         if (NEO::SysCalls::stat(fileElement.path.c_str(), &fileElement.statEl) == 0) {
-            vec.push_back(std::move(fileElement));
+            cacheFiles.push_back(std::move(fileElement));
         }
-    }
-
-    for (int i = 0; i < filesCount; ++i) {
         free(files[i]);
     }
+
     free(files);
 
-    std::sort(vec.begin(), vec.end(), compareByLastAccessTime);
+    std::sort(cacheFiles.begin(), cacheFiles.end(), compareByLastAccessTime);
 
-    size_t evictionLimit = config.cacheSize / 3;
+    bytesEvicted = 0;
+    const auto evictionLimit = config.cacheSize / 3;
 
-    size_t evictionSizeCount = 0;
-    for (size_t i = 0; i < vec.size(); ++i) {
-        NEO::SysCalls::unlink(vec[i].path);
-        evictionSizeCount += vec[i].statEl.st_size;
+    for (const auto &file : cacheFiles) {
+        auto res = NEO::SysCalls::unlink(file.path);
+        if (res == -1) {
+            continue;
+        }
 
-        if (evictionSizeCount > evictionLimit) {
+        bytesEvicted += file.statEl.st_size;
+        if (bytesEvicted > evictionLimit) {
             return true;
         }
     }
@@ -146,7 +148,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
         }
     }
 
-    int lockErr = NEO::SysCalls::flock(std::get<int>(fd), LOCK_EX);
+    const int lockErr = NEO::SysCalls::flock(std::get<int>(fd), LOCK_EX);
 
     if (lockErr < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Lock config file failed! errno: %d\n", NEO::SysCalls::getProcessId(), errno);
@@ -159,7 +161,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
     if (countDirectorySize) {
         struct dirent **files = {};
 
-        int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
+        const int filesCount = NEO::SysCalls::scandir(config.cacheDir.c_str(), &files, filterFunction, NULL);
 
         if (filesCount == -1) {
             unlockFileAndClose(std::get<int>(fd));
@@ -168,30 +170,28 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
             return;
         }
 
-        std::vector<ElementsStruct> vec;
-        vec.reserve(static_cast<size_t>(filesCount));
+        std::vector<ElementsStruct> cacheFiles;
+        cacheFiles.reserve(static_cast<size_t>(filesCount));
         for (int i = 0; i < filesCount; ++i) {
             std::string_view fileName = files[i]->d_name;
             if (fileName.find(config.cacheFileExtension) != fileName.npos) {
                 ElementsStruct fileElement = {};
                 fileElement.path = joinPath(config.cacheDir, files[i]->d_name);
                 if (NEO::SysCalls::stat(fileElement.path.c_str(), &fileElement.statEl) == 0) {
-                    vec.push_back(std::move(fileElement));
+                    cacheFiles.push_back(std::move(fileElement));
                 }
             }
-        }
-
-        for (int i = 0; i < filesCount; ++i) {
             free(files[i]);
         }
+
         free(files);
 
-        for (auto &element : vec) {
+        for (const auto &element : cacheFiles) {
             directorySize += element.statEl.st_size;
         }
 
     } else {
-        ssize_t readErr = NEO::SysCalls::pread(std::get<int>(fd), &directorySize, sizeof(directorySize), 0);
+        const ssize_t readErr = NEO::SysCalls::pread(std::get<int>(fd), &directorySize, sizeof(directorySize), 0);
 
         if (readErr < 0) {
             directorySize = 0;
@@ -202,8 +202,22 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
     }
 }
 
+class HandleGuard {
+  public:
+    HandleGuard() = delete;
+    explicit HandleGuard(int &fileDescriptor) : fd(fileDescriptor) {}
+    ~HandleGuard() {
+        if (fd != -1) {
+            unlockFileAndClose(fd);
+        }
+    }
+
+  private:
+    int fd = -1;
+};
+
 bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) {
-    if (pBinary == nullptr || binarySize == 0) {
+    if (pBinary == nullptr || binarySize == 0 || binarySize > config.cacheSize) {
         return false;
     }
 
@@ -211,7 +225,7 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
     constexpr std::string_view configFileName = "config.file";
 
     std::string configFilePath = joinPath(config.cacheDir, configFileName.data());
-    std::string filePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
+    std::string cacheFilePath = joinPath(config.cacheDir, kernelFileHash + config.cacheFileExtension);
 
     UnifiedHandle fd{-1};
     size_t directorySize = 0u;
@@ -222,41 +236,43 @@ bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *p
         return false;
     }
 
+    HandleGuard configGuard(std::get<int>(fd));
+
     struct stat statbuf = {};
-    if (NEO::SysCalls::stat(filePath, &statbuf) == 0) {
-        unlockFileAndClose(std::get<int>(fd));
+    if (NEO::SysCalls::stat(cacheFilePath, &statbuf) == 0) {
         return true;
     }
 
-    size_t maxSize = config.cacheSize;
-
-    if (maxSize < directorySize + binarySize) {
+    const size_t maxSize = config.cacheSize;
+    if (maxSize < (directorySize + binarySize)) {
         uint64_t bytesEvicted{0u};
-        if (!evictCache(bytesEvicted)) {
-            unlockFileAndClose(std::get<int>(fd));
+        const auto evictSuccess = evictCache(bytesEvicted);
+        const auto availableSpace = maxSize - directorySize + bytesEvicted;
+
+        directorySize = std::max<size_t>(0, directorySize - bytesEvicted);
+
+        if (!evictSuccess || binarySize > availableSpace) {
+            if (bytesEvicted > 0) {
+                NEO::SysCalls::pwrite(std::get<int>(fd), &directorySize, sizeof(directorySize), 0);
+            }
             return false;
         }
     }
 
     std::string tmpFileName = "cl_cache.XXXXXX";
-
     std::string tmpFilePath = joinPath(config.cacheDir, tmpFileName);
 
     if (!createUniqueTempFileAndWriteData(tmpFilePath.data(), pBinary, binarySize)) {
-        unlockFileAndClose(std::get<int>(fd));
         return false;
     }
 
-    if (!renameTempFileBinaryToProperName(tmpFilePath, filePath)) {
-        unlockFileAndClose(std::get<int>(fd));
+    if (!renameTempFileBinaryToProperName(tmpFilePath, cacheFilePath)) {
         return false;
     }
 
     directorySize += binarySize;
 
     NEO::SysCalls::pwrite(std::get<int>(fd), &directorySize, sizeof(directorySize), 0);
-
-    unlockFileAndClose(std::get<int>(fd));
 
     return true;
 }
