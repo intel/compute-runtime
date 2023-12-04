@@ -645,7 +645,7 @@ TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProp
 
 // Parameterized test that tests image creation with all flags that should be
 // valid with a nullptr host ptr
-static cl_mem_flags NoHostPtrFlags[] = {
+static cl_mem_flags noHostPtrFlags[] = {
     CL_MEM_READ_WRITE,
     CL_MEM_WRITE_ONLY,
     CL_MEM_READ_ONLY,
@@ -656,7 +656,7 @@ static cl_mem_flags NoHostPtrFlags[] = {
 INSTANTIATE_TEST_CASE_P(
     CreateImageTest_Create,
     CreateImageNoHostPtr,
-    testing::ValuesIn(NoHostPtrFlags));
+    testing::ValuesIn(noHostPtrFlags));
 
 struct CreateImageHostPtr
     : public CreateImageTest,
@@ -1068,7 +1068,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
 
 // Parameterized test that tests image creation with all flags that should be
 // valid with a valid host ptr
-static cl_mem_flags ValidHostPtrFlags[] = {
+static cl_mem_flags validHostPtrFlags[] = {
     0 | CL_MEM_USE_HOST_PTR,
     CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
     CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
@@ -1087,7 +1087,7 @@ static cl_mem_flags ValidHostPtrFlags[] = {
 INSTANTIATE_TEST_CASE_P(
     CreateImageTest_Create,
     CreateImageHostPtr,
-    testing::ValuesIn(ValidHostPtrFlags));
+    testing::ValuesIn(validHostPtrFlags));
 
 TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIsCalledThenReturnsNullptr) {
     MockContext context;

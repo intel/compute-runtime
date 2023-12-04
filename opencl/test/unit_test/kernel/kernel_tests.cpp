@@ -3054,14 +3054,14 @@ TEST_P(ThreadArbitrationPolicyKernelTest, givenThreadArbitrationPolicyAndIFPNotR
     EXPECT_EQ(GetParam(), mockKernel.getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 
-static ThreadArbitrationPolicy ThreadArbitrationPolicies[] = {
+static ThreadArbitrationPolicy threadArbitrationPolicies[] = {
     ThreadArbitrationPolicy::AgeBased,
     ThreadArbitrationPolicy::RoundRobin,
     ThreadArbitrationPolicy::RoundRobinAfterDependency};
 
 INSTANTIATE_TEST_CASE_P(ThreadArbitrationPolicyKernelInitializationTests,
                         ThreadArbitrationPolicyKernelTest,
-                        testing::ValuesIn(ThreadArbitrationPolicies));
+                        testing::ValuesIn(threadArbitrationPolicies));
 
 TEST(KernelTest, givenKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
     UltClDeviceFactory deviceFactory{1, 0};

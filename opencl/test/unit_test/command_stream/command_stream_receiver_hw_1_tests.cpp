@@ -1339,7 +1339,7 @@ struct BcsTestParam {
     size_t dstSlicePitch;
     size_t srcRowPitch;
     size_t srcSlicePitch;
-} BlitterProperties[] = {
+} blitterProperties[] = {
     {{(2 * BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight) + 17, 1, 1},
      {0, 1, 1},
      {BlitterConstants::maxBlitWidth, 1, 1},
@@ -1695,7 +1695,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 INSTANTIATE_TEST_CASE_P(BcsDetaliedTest,
                         BcsDetaliedTestsWithParams,
                         ::testing::Combine(
-                            ::testing::ValuesIn(BlitterProperties),
+                            ::testing::ValuesIn(blitterProperties),
                             ::testing::Values(BlitterConstants::BlitDirection::hostPtrToBuffer, BlitterConstants::BlitDirection::bufferToHostPtr)));
 
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -221,14 +221,14 @@ TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenFinishingComman
     testError(error, "Finish FAILED");
 }
 
-ExecuteEnqueue Enqueues[] =
+ExecuteEnqueue enqueues[] =
     {
         &EnqueueWaitlistTest::enqueueNDRange,
         &EnqueueWaitlistTest::enqueueMapBuffer,
         &EnqueueWaitlistTest::enqueueUnMapBuffer,
         &EnqueueWaitlistTest::enqueueMapImage};
 
-ExecuteEnqueue TwoEnqueueMap[] =
+ExecuteEnqueue twoEnqueueMap[] =
     {
         &EnqueueWaitlistTest::twoEnqueueMapBuffer,
         &EnqueueWaitlistTest::twoEnqueueMapImage};
@@ -236,10 +236,10 @@ ExecuteEnqueue TwoEnqueueMap[] =
 INSTANTIATE_TEST_CASE_P(
     UnblockedEvent,
     EnqueueWaitlistTest,
-    ::testing::ValuesIn(Enqueues));
+    ::testing::ValuesIn(enqueues));
 
 INSTANTIATE_TEST_CASE_P(
     TwoEnqueueMap,
     EnqueueWaitlistTestTwoMapEnqueues,
-    ::testing::ValuesIn(TwoEnqueueMap));
+    ::testing::ValuesIn(twoEnqueueMap));
 } // namespace ULT

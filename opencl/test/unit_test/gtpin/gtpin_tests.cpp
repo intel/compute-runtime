@@ -66,12 +66,12 @@ extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_C
 
 namespace ULT {
 
-int ContextCreateCallbackCount = 0;
-int ContextDestroyCallbackCount = 0;
-int KernelCreateCallbackCount = 0;
-int KernelSubmitCallbackCount = 0;
-int CommandBufferCreateCallbackCount = 0;
-int CommandBufferCompleteCallbackCount = 0;
+int contextCreateCallbackCount = 0;
+int contextDestroyCallbackCount = 0;
+int kernelCreateCallbackCount = 0;
+int kernelSubmitCallbackCount = 0;
+int commandBufferCreateCallbackCount = 0;
+int commandBufferCompleteCallbackCount = 0;
 uint32_t kernelOffset = 0;
 bool returnNullResource = false;
 
@@ -84,7 +84,7 @@ void onContextCreate(context_handle_t context, platform_info_t *platformInfo, ig
     ULT::platformInfo.gen_version = platformInfo->gen_version;
     currContext = context;
     kernelResources.clear();
-    ContextCreateCallbackCount++;
+    contextCreateCallbackCount++;
     *igcInit = reinterpret_cast<igc_init_t *>(0x1234);
 }
 
@@ -92,14 +92,14 @@ void onContextDestroy(context_handle_t context) {
     currContext = nullptr;
     EXPECT_EQ(0u, kernelResources.size());
     kernelResources.clear();
-    ContextDestroyCallbackCount++;
+    contextDestroyCallbackCount++;
 }
 
 void onKernelCreate(context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
     paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
     paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
     paramsOut->kernel_id = paramsIn->igc_hash_id;
-    KernelCreateCallbackCount++;
+    kernelCreateCallbackCount++;
 }
 
 void onKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
@@ -119,11 +119,11 @@ void onKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *ent
     *resource = currResource;
     kernelResources.push_back(currResource);
 
-    KernelSubmitCallbackCount++;
+    kernelSubmitCallbackCount++;
 }
 
 void onCommandBufferCreate(context_handle_t context, command_buffer_handle_t cb) {
-    CommandBufferCreateCallbackCount++;
+    commandBufferCreateCallbackCount++;
 }
 
 void onCommandBufferComplete(command_buffer_handle_t cb) {
@@ -137,7 +137,7 @@ void onCommandBufferComplete(command_buffer_handle_t cb) {
     EXPECT_EQ(GTPIN_DI_SUCCESS, st);
     kernelResources.pop_front();
 
-    CommandBufferCompleteCallbackCount++;
+    commandBufferCompleteCallbackCount++;
 }
 
 class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
@@ -593,17 +593,17 @@ TEST_F(GTPinTests, givenValidArgumentsForBufferUnMapWhenCallSequenceIsCorrectThe
 }
 
 TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinContextCallbackIsNotCalled) {
-    int prevCount = ContextCreateCallbackCount;
+    int prevCount = contextCreateCallbackCount;
     cl_device_id device = (cl_device_id)pDevice;
     auto context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
-    EXPECT_EQ(ContextCreateCallbackCount, prevCount);
+    EXPECT_EQ(contextCreateCallbackCount, prevCount);
 
-    prevCount = ContextDestroyCallbackCount;
+    prevCount = contextDestroyCallbackCount;
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(ContextDestroyCallbackCount, prevCount);
+    EXPECT_EQ(contextDestroyCallbackCount, prevCount);
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextCreationArgumentsAreInvalidThenGTPinContextCallbackIsNotCalled) {
@@ -616,18 +616,18 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextCreationArgumentsAre
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
-    int prevCount = ContextCreateCallbackCount;
+    int prevCount = contextCreateCallbackCount;
     cl_device_id device = (cl_device_id)pDevice;
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
     auto context = clCreateContext(invalidProperties, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
     EXPECT_EQ(nullptr, context);
-    EXPECT_EQ(ContextCreateCallbackCount, prevCount);
+    EXPECT_EQ(contextCreateCallbackCount, prevCount);
 
     context = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
     EXPECT_EQ(nullptr, context);
-    EXPECT_EQ(ContextCreateCallbackCount, prevCount);
+    EXPECT_EQ(contextCreateCallbackCount, prevCount);
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceThenGTPinContextCallbackIsCalled) {
@@ -640,28 +640,28 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceThenGTPinContextCallbackIsCalle
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
-    int prevCount = ContextCreateCallbackCount;
+    int prevCount = contextCreateCallbackCount;
     cl_device_id device = (cl_device_id)pDevice;
     auto context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
-    EXPECT_EQ(ContextCreateCallbackCount, prevCount + 1);
+    EXPECT_EQ(contextCreateCallbackCount, prevCount + 1);
 
-    prevCount = ContextDestroyCallbackCount;
+    prevCount = contextDestroyCallbackCount;
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(ContextDestroyCallbackCount, prevCount + 1);
+    EXPECT_EQ(contextDestroyCallbackCount, prevCount + 1);
 
-    prevCount = ContextCreateCallbackCount;
+    prevCount = contextCreateCallbackCount;
     context = clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
-    EXPECT_EQ(ContextCreateCallbackCount, prevCount + 1);
+    EXPECT_EQ(contextCreateCallbackCount, prevCount + 1);
 
-    prevCount = ContextDestroyCallbackCount;
+    prevCount = contextDestroyCallbackCount;
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(ContextDestroyCallbackCount, prevCount + 1);
+    EXPECT_EQ(contextDestroyCallbackCount, prevCount + 1);
 }
 
 TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallbackIsNotCalled) {
@@ -696,11 +696,11 @@ TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallback
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount = KernelCreateCallbackCount;
+    int prevCount = kernelCreateCallbackCount;
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount, kernelCreateCallbackCount);
 
     // Cleanup
     retVal = clReleaseKernel(kernel);
@@ -793,11 +793,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Create and submit first instance of "CopyBuffer" kernel
-    int prevCount11 = KernelCreateCallbackCount;
+    int prevCount11 = kernelCreateCallbackCount;
     kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount11 + 1, kernelCreateCallbackCount);
 
     MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
     Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
@@ -814,25 +814,25 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount12 = KernelSubmitCallbackCount;
-    int prevCount13 = CommandBufferCreateCallbackCount;
-    int prevCount14 = CommandBufferCompleteCallbackCount;
+    int prevCount12 = kernelSubmitCallbackCount;
+    int prevCount13 = commandBufferCreateCallbackCount;
+    int prevCount14 = commandBufferCompleteCallbackCount;
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
     retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount12 + 1, kernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount13 + 1, commandBufferCreateCallbackCount);
 
     // Create and submit second instance of "CopyBuffer" kernel
-    int prevCount21 = KernelCreateCallbackCount;
+    int prevCount21 = kernelCreateCallbackCount;
     kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
-    EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount21, kernelCreateCallbackCount);
 
     MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
     Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
@@ -848,18 +848,18 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount22 = KernelSubmitCallbackCount;
-    int prevCount23 = CommandBufferCreateCallbackCount;
-    int prevCount24 = CommandBufferCompleteCallbackCount;
+    int prevCount22 = kernelSubmitCallbackCount;
+    int prevCount23 = commandBufferCreateCallbackCount;
+    int prevCount24 = commandBufferCompleteCallbackCount;
     retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount22 + 1, kernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount23 + 1, commandBufferCreateCallbackCount);
 
     retVal = clFinish(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount14 + 2, CommandBufferCompleteCallbackCount);
-    EXPECT_EQ(prevCount24 + 2, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount14 + 2, commandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount24 + 2, commandBufferCompleteCallbackCount);
 
     // Cleanup
     retVal = clReleaseKernel(kernel1);
@@ -949,11 +949,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Create and submit first instance of "CopyBuffer" kernel
-    int prevCount11 = KernelCreateCallbackCount;
+    int prevCount11 = kernelCreateCallbackCount;
     kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount11 + 1, kernelCreateCallbackCount);
 
     MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
     Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
@@ -974,23 +974,23 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     retVal = clSetKernelArg(pMultiDeviceKernel1, 1, sizeof(cl_mem), &buff11);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount12 = KernelSubmitCallbackCount;
-    int prevCount13 = CommandBufferCreateCallbackCount;
-    int prevCount14 = CommandBufferCompleteCallbackCount;
+    int prevCount12 = kernelSubmitCallbackCount;
+    int prevCount13 = commandBufferCreateCallbackCount;
+    int prevCount14 = commandBufferCompleteCallbackCount;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workgroupCount[3] = {n, 1, 1};
     retVal = clEnqueueNDCountKernelINTEL(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount12 + 1, kernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount13 + 1, commandBufferCreateCallbackCount);
 
     // Create and submit second instance of "CopyBuffer" kernel
-    int prevCount21 = KernelCreateCallbackCount;
+    int prevCount21 = kernelCreateCallbackCount;
     kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that GT-Pin Kernel Create callback is not called multiple times for the same kernel
-    EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount21, kernelCreateCallbackCount);
 
     MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
     Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
@@ -1006,18 +1006,18 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount22 = KernelSubmitCallbackCount;
-    int prevCount23 = CommandBufferCreateCallbackCount;
-    int prevCount24 = CommandBufferCompleteCallbackCount;
+    int prevCount22 = kernelSubmitCallbackCount;
+    int prevCount23 = commandBufferCreateCallbackCount;
+    int prevCount24 = commandBufferCompleteCallbackCount;
     retVal = clEnqueueNDCountKernelINTEL(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount22 + 1, kernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount23 + 1, commandBufferCreateCallbackCount);
 
     retVal = clFinish(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount14 + 2, CommandBufferCompleteCallbackCount);
-    EXPECT_EQ(prevCount24 + 2, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount14 + 2, commandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount24 + 2, commandBufferCompleteCallbackCount);
 
     // Cleanup
     retVal = clReleaseKernel(kernel1);
@@ -1107,11 +1107,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Kernel "CopyBuffer" - called for the first time
-    int prevCount11 = KernelCreateCallbackCount;
+    int prevCount11 = kernelCreateCallbackCount;
     kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount11 + 1, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount11 + 1, kernelCreateCallbackCount);
 
     MultiDeviceKernel *pMultiDeviceKernel1 = static_cast<MultiDeviceKernel *>(kernel1);
     Kernel *pKernel1 = pMultiDeviceKernel1->getKernel(rootDeviceIndex);
@@ -1131,26 +1131,26 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     cl_event userEvent = clCreateUserEvent(context, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount12 = KernelSubmitCallbackCount;
-    int prevCount13 = CommandBufferCreateCallbackCount;
-    int prevCount14 = CommandBufferCompleteCallbackCount;
+    int prevCount12 = kernelSubmitCallbackCount;
+    int prevCount13 = commandBufferCreateCallbackCount;
+    int prevCount14 = commandBufferCompleteCallbackCount;
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
     retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel1, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount12 + 1, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount13 + 1, CommandBufferCreateCallbackCount);
-    EXPECT_EQ(prevCount14, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount12 + 1, kernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount13 + 1, commandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount14, commandBufferCompleteCallbackCount);
 
     // The same kernel "CopyBuffer" - called second time
-    int prevCount21 = KernelCreateCallbackCount;
+    int prevCount21 = kernelCreateCallbackCount;
     kernel2 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that Kernel Create callback was not called now
-    EXPECT_EQ(prevCount21, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount21, kernelCreateCallbackCount);
 
     MultiDeviceKernel *pMultiDeviceKernel2 = static_cast<MultiDeviceKernel *>(kernel2);
     Kernel *pKernel2 = pMultiDeviceKernel2->getKernel(rootDeviceIndex);
@@ -1166,16 +1166,16 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     retVal = clSetKernelArg(pMultiDeviceKernel2, 1, sizeof(cl_mem), &buff21);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    int prevCount22 = KernelSubmitCallbackCount;
-    int prevCount23 = CommandBufferCreateCallbackCount;
-    int prevCount24 = CommandBufferCompleteCallbackCount;
+    int prevCount22 = kernelSubmitCallbackCount;
+    int prevCount23 = commandBufferCreateCallbackCount;
+    int prevCount24 = commandBufferCompleteCallbackCount;
     EXPECT_EQ(prevCount14, prevCount24);
     retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel2, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount22 + 1, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount23 + 1, CommandBufferCreateCallbackCount);
-    EXPECT_EQ(prevCount14, CommandBufferCompleteCallbackCount);
-    EXPECT_EQ(prevCount24, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount22 + 1, kernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount23 + 1, commandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount14, commandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount24, commandBufferCompleteCallbackCount);
     EXPECT_EQ(prevCount14, prevCount24);
 
     clSetUserEventStatus(userEvent, CL_COMPLETE);
@@ -1183,8 +1183,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     retVal = clFinish(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // Verify that both kernel instances were completed
-    EXPECT_EQ(prevCount14 + 2, CommandBufferCompleteCallbackCount);
-    EXPECT_EQ(prevCount24 + 2, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount14 + 2, commandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount24 + 2, commandBufferCompleteCallbackCount);
 
     // Cleanup
     retVal = clReleaseKernel(kernel1);
@@ -1404,11 +1404,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Create kernel
-    int prevCount1 = KernelCreateCallbackCount;
+    int prevCount1 = kernelCreateCallbackCount;
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount1 + 1, kernelCreateCallbackCount);
 
     // Simulate that created kernel was sent for execution
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
@@ -1417,11 +1417,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     ASSERT_NE(nullptr, pKernel);
     EXPECT_EQ(0u, kernelExecQueue.size());
     EXPECT_EQ(0u, kernelResources.size());
-    int prevCount2 = CommandBufferCreateCallbackCount;
-    int prevCount3 = KernelSubmitCallbackCount;
+    int prevCount2 = commandBufferCreateCallbackCount;
+    int prevCount3 = kernelSubmitCallbackCount;
     gtpinNotifyKernelSubmit(kernel, pCmdQueue);
-    EXPECT_EQ(prevCount2 + 1, CommandBufferCreateCallbackCount);
-    EXPECT_EQ(prevCount3 + 1, KernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount2 + 1, commandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount3 + 1, kernelSubmitCallbackCount);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_EQ(1u, kernelResources.size());
     EXPECT_EQ(pKernel, kernelExecQueue[0].pKernel);
@@ -1459,11 +1459,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     ASSERT_NE(nullptr, pKernel2);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_EQ(1u, kernelResources.size());
-    int prevCount22 = CommandBufferCreateCallbackCount;
-    int prevCount23 = KernelSubmitCallbackCount;
+    int prevCount22 = commandBufferCreateCallbackCount;
+    int prevCount23 = kernelSubmitCallbackCount;
     gtpinNotifyKernelSubmit(kernel2, pCmdQueue);
-    EXPECT_EQ(prevCount22 + 1, CommandBufferCreateCallbackCount);
-    EXPECT_EQ(prevCount23 + 1, KernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount22 + 1, commandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount23 + 1, kernelSubmitCallbackCount);
     EXPECT_EQ(2u, kernelExecQueue.size());
     EXPECT_EQ(2u, kernelResources.size());
     EXPECT_EQ(pKernel2, kernelExecQueue[1].pKernel);
@@ -1516,17 +1516,17 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
 
     // Verify that if previous task was completed then it does not affect our kernel
     TaskCountType taskCompleted = taskCount - 1;
-    int prevCount4 = CommandBufferCompleteCallbackCount;
+    int prevCount4 = commandBufferCompleteCallbackCount;
     gtpinNotifyTaskCompletion(taskCompleted);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_EQ(1u, kernelResources.size());
-    EXPECT_EQ(prevCount4, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount4, commandBufferCompleteCallbackCount);
 
     // Verify that if current task was completed then it is our kernel
     gtpinNotifyTaskCompletion(taskCompleted + 1);
     EXPECT_EQ(0u, kernelExecQueue.size());
     EXPECT_EQ(0u, kernelResources.size());
-    EXPECT_EQ(prevCount4 + 1, CommandBufferCompleteCallbackCount);
+    EXPECT_EQ(prevCount4 + 1, commandBufferCompleteCallbackCount);
 
     // Cleanup
     retVal = clReleaseKernel(kernel);
@@ -1605,11 +1605,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Create kernel
-    int prevCount1 = KernelCreateCallbackCount;
+    int prevCount1 = kernelCreateCallbackCount;
     kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCount1 + 1, kernelCreateCallbackCount);
 
     // Simulate that created kernel was sent for execution two times in a row
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
@@ -1618,12 +1618,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     ASSERT_NE(nullptr, pKernel);
     EXPECT_EQ(0u, kernelExecQueue.size());
     EXPECT_EQ(0u, kernelResources.size());
-    int prevCount2 = CommandBufferCreateCallbackCount;
-    int prevCount3 = KernelSubmitCallbackCount;
+    int prevCount2 = commandBufferCreateCallbackCount;
+    int prevCount3 = kernelSubmitCallbackCount;
     // First kernel submission
     gtpinNotifyKernelSubmit(kernel, pCmdQueue);
-    EXPECT_EQ(prevCount2 + 1, CommandBufferCreateCallbackCount);
-    EXPECT_EQ(prevCount3 + 1, KernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount2 + 1, commandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount3 + 1, kernelSubmitCallbackCount);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_EQ(1u, kernelResources.size());
     EXPECT_EQ(pKernel, kernelExecQueue[0].pKernel);
@@ -1633,8 +1633,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     EXPECT_FALSE(kernelExecQueue[0].isResourceResident);
     // Second kernel submission
     gtpinNotifyKernelSubmit(kernel, pCmdQueue);
-    EXPECT_EQ(prevCount2 + 2, CommandBufferCreateCallbackCount);
-    EXPECT_EQ(prevCount3 + 2, KernelSubmitCallbackCount);
+    EXPECT_EQ(prevCount2 + 2, commandBufferCreateCallbackCount);
+    EXPECT_EQ(prevCount3 + 2, kernelSubmitCallbackCount);
     EXPECT_EQ(2u, kernelExecQueue.size());
     EXPECT_EQ(2u, kernelResources.size());
     EXPECT_EQ(pKernel, kernelExecQueue[0].pKernel);
@@ -2008,9 +2008,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelCreateIsCalledWithN
     gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
     gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    auto prevCreateCount = KernelCreateCallbackCount;
+    auto prevCreateCount = kernelCreateCallbackCount;
     gtpinNotifyKernelCreate(nullptr);
-    EXPECT_EQ(prevCreateCount, KernelCreateCallbackCount);
+    EXPECT_EQ(prevCreateCount, kernelCreateCallbackCount);
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelDoesNotHaveDebugDataThenPassNullPtrToOnKernelCreate) {

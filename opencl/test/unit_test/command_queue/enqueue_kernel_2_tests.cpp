@@ -36,7 +36,7 @@ using namespace NEO;
 
 struct TestParam2 {
     uint32_t scratchSize;
-} TestParamTable2[] = {{1024u}, {2048u}, {4096u}, {8192u}, {16384u}};
+} testParamTable2[] = {{1024u}, {2048u}, {4096u}, {8192u}, {16384u}};
 
 struct TestParam {
     cl_uint globalWorkSizeX;
@@ -45,7 +45,7 @@ struct TestParam {
     cl_uint localWorkSizeX;
     cl_uint localWorkSizeY;
     cl_uint localWorkSizeZ;
-} TestParamTable[] = {
+} testParamTable[] = {
     {1, 1, 1, 1, 1, 1},
     {16, 1, 1, 1, 1, 1},
     {16, 1, 1, 16, 1, 1},
@@ -59,7 +59,7 @@ struct TestParam {
     {190, 1, 1, 95, 1, 1},
     {510, 1, 1, 255, 1, 1},
     {512, 1, 1, 256, 1, 1}},
-  OneEntryTestParamTable[] = {
+  oneEntryTestParamTable[] = {
       {1, 1, 1, 1, 1, 1},
 };
 template <typename InputType>
@@ -296,11 +296,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueWorkItemTests,
-                        ::testing::ValuesIn(TestParamTable));
+                        ::testing::ValuesIn(testParamTable));
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueWorkItemTestsWithLimitedParamSet,
-                        ::testing::ValuesIn(OneEntryTestParamTable));
+                        ::testing::ValuesIn(oneEntryTestParamTable));
 
 typedef EnqueueKernelTypeTest<TestParam2> EnqueueScratchSpaceTests;
 
@@ -439,7 +439,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueScratchSpaceTests,
-                        ::testing::ValuesIn(TestParamTable2));
+                        ::testing::ValuesIn(testParamTable2));
 
 typedef EnqueueKernelTypeTest<int> EnqueueKernelWithScratch;
 
@@ -531,7 +531,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueKernelWithScratch, testing::Values(1));
 
-TestParam TestParamPrintf[] = {
+TestParam testParamPrintf[] = {
     {1, 1, 1, 1, 1, 1}};
 
 typedef EnqueueKernelTypeTest<TestParam> EnqueueKernelPrintfTest;
@@ -721,7 +721,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueKernelPrintfTest,
-                        ::testing::ValuesIn(TestParamPrintf));
+                        ::testing::ValuesIn(testParamPrintf));
 
 using EnqueueKernelTests = ::testing::Test;
 

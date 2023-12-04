@@ -100,14 +100,14 @@ HWTEST_P(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWi
     delete image;
 }
 
-static cl_mem_object_type ArrayImageTypes[] = {
+static cl_mem_object_type arrayImageTypes[] = {
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
     ImageArraySizeTestCreate,
     CreateImageArraySize,
-    testing::ValuesIn(ArrayImageTypes));
+    testing::ValuesIn(arrayImageTypes));
 
 typedef ImageArraySizeTest CreateImageNonArraySize;
 
@@ -139,7 +139,7 @@ HWTEST_P(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCre
     delete image;
 }
 
-static cl_mem_object_type NonArrayImageTypes[] = {
+static cl_mem_object_type nonArrayImageTypes[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,
     CL_MEM_OBJECT_IMAGE2D,
@@ -148,7 +148,7 @@ static cl_mem_object_type NonArrayImageTypes[] = {
 INSTANTIATE_TEST_CASE_P(
     ImageArraySizeTest_Create,
     CreateImageNonArraySize,
-    testing::ValuesIn(NonArrayImageTypes));
+    testing::ValuesIn(nonArrayImageTypes));
 
 typedef ImageArraySizeTest CreateImageSize;
 
@@ -232,7 +232,7 @@ TEST_P(CheckImageType, GivenImageTypeWhenImageTypeIsCheckedThenProperValueIsRetu
     }
 }
 
-static cl_mem_object_type AllImageTypes[] = {
+static cl_mem_object_type allImageTypes[] = {
     0, // negative scenario
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,
@@ -244,9 +244,9 @@ static cl_mem_object_type AllImageTypes[] = {
 INSTANTIATE_TEST_CASE_P(
     ImageArraySizeTest_Create,
     CreateImageSize,
-    testing::ValuesIn(AllImageTypes));
+    testing::ValuesIn(allImageTypes));
 
-static cl_mem_object_type AllImageTypesWithBadOne[] = {
+static cl_mem_object_type allImageTypesWithBadOne[] = {
     0, // negative scenario
     CL_MEM_OBJECT_BUFFER,
     CL_MEM_OBJECT_IMAGE1D,
@@ -259,4 +259,4 @@ static cl_mem_object_type AllImageTypesWithBadOne[] = {
 INSTANTIATE_TEST_CASE_P(
     ImageArraySizeTest_Create,
     CreateImageOffset,
-    testing::ValuesIn(AllImageTypesWithBadOne));
+    testing::ValuesIn(allImageTypesWithBadOne));

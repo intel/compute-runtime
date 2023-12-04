@@ -982,7 +982,7 @@ TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
 
 // Parameterized test that tests buffer creation with all flags
 // that should be valid with a nullptr host ptr
-cl_mem_flags NoHostPtrFlags[] = {
+cl_mem_flags noHostPtrFlags[] = {
     CL_MEM_READ_WRITE,
     CL_MEM_WRITE_ONLY,
     CL_MEM_READ_ONLY,
@@ -993,7 +993,7 @@ cl_mem_flags NoHostPtrFlags[] = {
 INSTANTIATE_TEST_CASE_P(
     BufferTest_Create,
     NoHostPtr,
-    testing::ValuesIn(NoHostPtrFlags));
+    testing::ValuesIn(noHostPtrFlags));
 
 struct ValidHostPtr
     : public BufferTest,
@@ -1209,7 +1209,7 @@ TEST_P(ValidHostPtr, WhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
 
 // Parameterized test that tests buffer creation with all flags that should be
 // valid with a valid host ptr
-cl_mem_flags ValidHostPtrFlags[] = {
+cl_mem_flags validHostPtrFlags[] = {
     0 | CL_MEM_USE_HOST_PTR,
     CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
     CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
@@ -1228,7 +1228,7 @@ cl_mem_flags ValidHostPtrFlags[] = {
 INSTANTIATE_TEST_CASE_P(
     BufferTest_Create,
     ValidHostPtr,
-    testing::ValuesIn(ValidHostPtrFlags));
+    testing::ValuesIn(validHostPtrFlags));
 
 class BufferCalculateHostPtrSize : public testing::TestWithParam<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t>> {
   public:

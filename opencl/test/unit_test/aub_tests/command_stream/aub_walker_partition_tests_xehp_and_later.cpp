@@ -36,10 +36,10 @@ static uint32_t testWorkingDimensions[] = {3};
 
 extern bool generateRandomInput;
 
-struct DispatchParamters {
+struct DispatchParameters {
     size_t globalWorkSize[3];
     size_t localWorkSize[3];
-} DispatchParamtersForTests[] = {
+} dispatchParametersForTests[] = {
     {{12, 25, 21}, {3, 5, 7}},
     {{8, 16, 20}, {8, 4, 2}},
     {{7, 13, 17}, {1, 1, 1}},
@@ -157,11 +157,11 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     int32_t partitionType;
 
     HardwareParse hwParser;
-    DispatchParamters dispatchParamters;
+    DispatchParameters dispatchParamters;
 };
 
 struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
-                                public ::testing::TestWithParam<std::tuple<int32_t, int32_t, DispatchParamters, uint32_t>> {
+                                public ::testing::TestWithParam<std::tuple<int32_t, int32_t, DispatchParameters, uint32_t>> {
     void SetUp() override {
         AubWalkerPartitionFixture::setUp();
         std::tie(partitionCount, partitionType, dispatchParamters, workingDimensions) = GetParam();
@@ -1187,7 +1187,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::ValuesIn(testPartitionCount),
         ::testing::ValuesIn(testPartitionType),
-        ::testing::ValuesIn(DispatchParamtersForTests),
+        ::testing::ValuesIn(dispatchParametersForTests),
         ::testing::ValuesIn(testWorkingDimensions)));
 
 using AubWparidTests = Test<AubWalkerPartitionFixture>;

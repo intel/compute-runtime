@@ -166,13 +166,13 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
 }
 
 // Parameterized test that tests image creation with tiled types
-static uint32_t TiledImageTypes[] = {
+static uint32_t tiledImageTypes[] = {
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE2D_ARRAY,
     CL_MEM_OBJECT_IMAGE3D};
 
-static uint32_t NonTiledImageTypes[] = {
+static uint32_t nonTiledImageTypes[] = {
     CL_MEM_OBJECT_IMAGE1D};
 
-INSTANTIATE_TEST_CASE_P(CreateTiledImageTest, CreateTiledImageTest, testing::ValuesIn(TiledImageTypes));
-INSTANTIATE_TEST_CASE_P(CreateNonTiledImageTest, CreateNonTiledImageTest, testing::ValuesIn(NonTiledImageTypes));
+INSTANTIATE_TEST_CASE_P(CreateTiledImageTest, CreateTiledImageTest, testing::ValuesIn(tiledImageTypes));
+INSTANTIATE_TEST_CASE_P(CreateNonTiledImageTest, CreateNonTiledImageTest, testing::ValuesIn(nonTiledImageTypes));

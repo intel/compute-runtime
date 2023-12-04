@@ -442,12 +442,12 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, WhenRetrievingLessImageFormatsTha
     delete[] imageFormatList;
 }
 
-cl_mem_flags GetSupportedImageFormatsFlags[] = {
+cl_mem_flags getSupportedImageFormatsFlags[] = {
     CL_MEM_READ_WRITE,
     CL_MEM_WRITE_ONLY,
     CL_MEM_READ_ONLY};
 
-cl_mem_object_type GetSupportedImageFormats[] = {
+cl_mem_object_type getSupportedImageFormats[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
@@ -459,25 +459,25 @@ INSTANTIATE_TEST_CASE_P(
     Context,
     GetSupportedImageFormatsTest,
     ::testing::Combine(
-        ::testing::ValuesIn(GetSupportedImageFormatsFlags),
-        ::testing::ValuesIn(GetSupportedImageFormats)));
+        ::testing::ValuesIn(getSupportedImageFormatsFlags),
+        ::testing::ValuesIn(getSupportedImageFormats)));
 
 INSTANTIATE_TEST_CASE_P(
     Context,
     PackedYuvExtensionSupportedImageFormatsTest,
     ::testing::Combine(
-        ::testing::ValuesIn(GetSupportedImageFormatsFlags),
-        ::testing::ValuesIn(GetSupportedImageFormats)));
+        ::testing::ValuesIn(getSupportedImageFormatsFlags),
+        ::testing::ValuesIn(getSupportedImageFormats)));
 
-cl_mem_flags NV12ExtensionSupportedImageFormatsFlags[] = {
+cl_mem_flags nv12ExtensionSupportedImageFormatsFlags[] = {
     CL_MEM_NO_ACCESS_INTEL,
     CL_MEM_READ_ONLY};
 
-cl_mem_flags NV12ExtensionUnsupportedImageFormatsFlags[] = {
+cl_mem_flags nv12ExtensionUnsupportedImageFormatsFlags[] = {
     CL_MEM_READ_WRITE,
     CL_MEM_WRITE_ONLY};
 
-cl_mem_object_type NV12ExtensionSupportedImageFormats[] = {
+cl_mem_object_type nv12ExtensionSupportedImageFormats[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE2D};
 
@@ -485,12 +485,12 @@ INSTANTIATE_TEST_CASE_P(
     Context,
     NV12ExtensionSupportedImageFormatsTest,
     ::testing::Combine(
-        ::testing::ValuesIn(NV12ExtensionSupportedImageFormatsFlags),
-        ::testing::ValuesIn(NV12ExtensionSupportedImageFormats)));
+        ::testing::ValuesIn(nv12ExtensionSupportedImageFormatsFlags),
+        ::testing::ValuesIn(nv12ExtensionSupportedImageFormats)));
 
 INSTANTIATE_TEST_CASE_P(
     Context,
     NV12ExtensionUnsupportedImageFormatsTest,
     ::testing::Combine(
-        ::testing::ValuesIn(NV12ExtensionUnsupportedImageFormatsFlags),
-        ::testing::ValuesIn(NV12ExtensionSupportedImageFormats)));
+        ::testing::ValuesIn(nv12ExtensionUnsupportedImageFormatsFlags),
+        ::testing::ValuesIn(nv12ExtensionSupportedImageFormats)));

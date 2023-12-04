@@ -215,7 +215,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
               imageNew->getImageDesc().image_height);
 }
 
-static uint32_t ImageTypes[] = {
+static uint32_t imageTypes[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
@@ -227,7 +227,7 @@ INSTANTIATE_TEST_CASE_P(
     ImageRedescribeTest,
     testing::Combine(
         ::testing::Range(readWriteSurfaceFormatsStart, SurfaceFormats::readWrite().size()),
-        ::testing::ValuesIn(ImageTypes)));
+        ::testing::ValuesIn(imageTypes)));
 
 TEST(ImageRedescribeTestSimple, givenImageWhenItIsRedescribedThenCreateFunctionIsSameAsInOriginalImage) {
     MockContext context;

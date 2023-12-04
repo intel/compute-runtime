@@ -133,7 +133,7 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
     delete image;
 }
 
-static cl_mem_object_type Image1DTypes[] = {
+static cl_mem_object_type image1DTypes[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,
     CL_MEM_OBJECT_IMAGE1D_ARRAY};
@@ -141,4 +141,4 @@ static cl_mem_object_type Image1DTypes[] = {
 INSTANTIATE_TEST_CASE_P(
     CreateImage1DTestCreate,
     CreateImage1DType,
-    testing::ValuesIn(Image1DTypes));
+    testing::ValuesIn(image1DTypes));

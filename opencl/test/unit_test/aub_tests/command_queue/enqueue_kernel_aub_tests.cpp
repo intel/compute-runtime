@@ -34,7 +34,7 @@ struct TestParam {
     cl_uint localWorkSizeZ;
 };
 
-static TestParam TestParamTable[] = {
+static TestParam testParamTable[] = {
     {1, 1, 1, 1, 1, 1},
     {16, 1, 1, 16, 1, 1},
     {32, 1, 1, 16, 1, 1},
@@ -42,7 +42,7 @@ static TestParam TestParamTable[] = {
     {64, 1, 1, 16, 1, 1},
     {64, 1, 1, 64, 1, 1}};
 
-cl_uint TestSimdTable[] = {
+cl_uint testSimdTable[] = {
     8, 16, 32};
 
 namespace ULT {
@@ -255,8 +255,8 @@ INSTANTIATE_TEST_CASE_P(
     AUB,
     AUBHelloWorldIntegrateTest,
     ::testing::Combine(
-        ::testing::ValuesIn(TestSimdTable),
-        ::testing::ValuesIn(TestParamTable)));
+        ::testing::ValuesIn(testSimdTable),
+        ::testing::ValuesIn(testParamTable)));
 
 struct AUBSimpleArg
     : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
@@ -423,8 +423,8 @@ INSTANTIATE_TEST_CASE_P(
     AUB,
     AUBSimpleArgIntegrateTest,
     ::testing::Combine(
-        ::testing::ValuesIn(TestSimdTable),
-        ::testing::ValuesIn(TestParamTable)));
+        ::testing::ValuesIn(testSimdTable),
+        ::testing::ValuesIn(testParamTable)));
 } // namespace ULT
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
