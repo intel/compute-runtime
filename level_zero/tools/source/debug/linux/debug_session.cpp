@@ -7,8 +7,10 @@
 
 #include "level_zero/tools/source/debug/debug_session.h"
 
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/debug/linux/debug_session.h"
@@ -32,10 +34,7 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
     } else {
         allocator = debugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_I915];
     }
-    if (!allocator) {
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        return nullptr;
-    }
+    UNRECOVERABLE_IF(!allocator)
 
     auto debugSession = allocator(config, device, result, isRootAttach);
     if (result != ZE_RESULT_SUCCESS) {
@@ -68,6 +67,53 @@ ze_result_t DebugSessionLinux::translateDebuggerOpenErrno(int error) {
         break;
     }
     return result;
+}
+
+bool DebugSessionLinux::closeFd() {
+    if (fd == 0) {
+        return false;
+    }
+
+    auto ret = NEO::SysCalls::close(fd);
+
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, ret);
+        return false;
+    }
+    fd = 0;
+    return true;
+}
+
+void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
+    DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
+    PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread started\n", "");
+    self->internalThreadHasStarted = true;
+
+    while (self->internalEventThread.threadActive) {
+        self->readInternalEventsAsync();
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread closing\n", "");
+
+    return nullptr;
+}
+
+std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
+    std::unique_ptr<uint64_t[]> eventMemory;
+
+    {
+        std::unique_lock<std::mutex> lock(internalEventThreadMutex);
+
+        if (internalEventQueue.empty()) {
+            NEO::waitOnCondition(internalEventCondition, lock, std::chrono::milliseconds(100));
+        }
+
+        if (!internalEventQueue.empty()) {
+            eventMemory = std::move(internalEventQueue.front());
+            internalEventQueue.pop();
+        }
+    }
+    return eventMemory;
 }
 
 } // namespace L0

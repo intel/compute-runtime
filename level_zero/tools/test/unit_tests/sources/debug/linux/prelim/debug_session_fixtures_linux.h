@@ -34,7 +34,7 @@ namespace ult {
 
 using typeOfUUID = std::decay<decltype(prelim_drm_i915_debug_event_vm_bind::uuids[0])>::type;
 
-struct MockIoctlHandler : public L0::DebugSessionLinuxi915::IoctlHandler {
+struct MockIoctlHandler : public L0::DebugSessionLinuxi915::IoctlHandleri915 {
     using EventPair = std::pair<char *, uint64_t>;
     using EventQueue = std::queue<EventPair>;
 

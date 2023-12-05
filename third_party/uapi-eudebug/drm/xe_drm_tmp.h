@@ -23,6 +23,7 @@ extern "C" {
 #define DRM_XE_EUDEBUG_IOCTL_READ_EVENT		_IO('j', 0x0)
 #define DRM_XE_EUDEBUG_IOCTL_EU_CONTROL		_IOWR('j', 0x2, struct drm_xe_eudebug_eu_control)
 #define DRM_XE_EUDEBUG_IOCTL_VM_OPEN		_IOW('j', 0x1, struct drm_xe_eudebug_vm_open)
+#define DRM_XE_EUDEBUG_IOCTL_READ_METADATA	_IOWR('j', 0x3, struct drm_xe_eudebug_read_metadata)
 
 /* XXX: Document events to match their internal counterparts when moved to xe_drm.h */
 struct drm_xe_eudebug_event {
@@ -36,12 +37,15 @@ struct drm_xe_eudebug_event {
 #define DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE 4
 #define DRM_XE_EUDEBUG_EVENT_EU_ATTENTION 5
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND 6
-#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT DRM_XE_EUDEBUG_EVENT_VM_BIND
+#define DRM_XE_EUDEBUG_EVENT_METADATA 7
+#define DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA 8
+#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA
 
 	__u16 flags;
-#define DRM_XE_EUDEBUG_EVENT_CREATE		BIT(0)
-#define DRM_XE_EUDEBUG_EVENT_DESTROY		BIT(1)
-#define DRM_XE_EUDEBUG_EVENT_STATE_CHANGE	BIT(2)
+#define DRM_XE_EUDEBUG_EVENT_CREATE		(1 << 0)
+#define DRM_XE_EUDEBUG_EVENT_DESTROY		(1 << 1)
+#define DRM_XE_EUDEBUG_EVENT_STATE_CHANGE	(1 << 2)
+#define DRM_XE_EUDEBUG_EVENT_NEED_ACK		(1 << 3)
 
 	__u64 seqno;
 	__u64 reserved;
@@ -88,18 +92,19 @@ struct drm_xe_eudebug_event_vm_bind {
 	__u64 vm_handle;
 	__u64 va_start;
 	__u64 va_length;
+
+	__u64 metadata_handle;
+	__u64 metadata_cookie;
 } __attribute__((packed));
 
 struct drm_xe_eudebug_event_metadata {
 	struct drm_xe_eudebug_event base;
 
 	__u64 client_handle;
-
+	__u64 metadata_handle;
 	/* XXX: Refer to xe_drm.h for fields */
 	__u64 type;
-	__u64 user_addr;
 	__u64 len;
-	__u64 id;
 } __attribute__((packed));
 
 struct drm_xe_eudebug_event_vm_set_metadata {
@@ -163,6 +168,15 @@ struct drm_xe_eudebug_vm_open {
 
 	/** @timeout_ns: Timeout value in nanoseconds operations (fsync) */
 	__u64 timeout_ns;
+};
+
+struct drm_xe_eudebug_read_metadata {
+	__u64 client_handle;
+	__u64 metadata_handle;
+	__u32 flags;
+
+	__u64 ptr;
+	__u64 size;
 };
 
 #if defined(__cplusplus)

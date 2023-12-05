@@ -42,6 +42,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
     case DrmIoctl::primeHandleToFd:
         RETURN_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
+    case DrmIoctl::debuggerOpen:
+        return getIoctlRequestValueDebugger(ioctlRequest);
     default:
         UNRECOVERABLE_IF(true);
         return 0;
@@ -76,6 +78,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
     case DrmIoctl::primeHandleToFd:
         STRINGIFY_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
+    case DrmIoctl::debuggerOpen:
+        STRINGIFY_ME(DRM_IOCTL_XE_EUDEBUG_CONNECT);
     default:
         return "???";
     }

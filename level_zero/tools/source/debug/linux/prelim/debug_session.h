@@ -46,9 +46,8 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
 
-    struct IoctlHandler {
-        MOCKABLE_VIRTUAL ~IoctlHandler() = default;
-        MOCKABLE_VIRTUAL int ioctl(int fd, unsigned long request, void *arg) {
+    struct IoctlHandleri915 : DebugSessionLinux::IoctlHandler {
+        int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
             int error = 0;
             bool shouldRetryIoctl = false;
@@ -67,28 +66,9 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
             } while (shouldRetryIoctl);
             return ret;
         }
-
-        MOCKABLE_VIRTUAL int poll(pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
-            return NEO::SysCalls::poll(pollFd, numberOfFds, timeout);
-        }
-
-        MOCKABLE_VIRTUAL int64_t pread(int fd, void *buf, size_t count, off_t offset) {
-            return NEO::SysCalls::pread(fd, buf, count, offset);
-        }
-
-        MOCKABLE_VIRTUAL int64_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
-            return NEO::SysCalls::pwrite(fd, buf, count, offset);
-        }
-
-        MOCKABLE_VIRTUAL void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
-            return NEO::SysCalls::mmap(addr, size, prot, flags, fd, off);
-        }
-
-        MOCKABLE_VIRTUAL int munmap(void *addr, size_t size) {
-            return NEO::SysCalls::munmap(addr, size);
-        }
     };
-    static constexpr size_t maxEventSize = 4096;
+
+    std::unique_ptr<IoctlHandleri915> ioctlHandler;
 
     using ContextHandle = uint64_t;
 
@@ -172,9 +152,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         std::unordered_map<uint64_t, Module> uuidToModule;
     };
 
-    constexpr static uint64_t invalidClientHandle = std::numeric_limits<uint64_t>::max();
-    constexpr static uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
-
   protected:
     enum class ThreadControlCmd {
         interrupt,
@@ -185,6 +162,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);
     bool checkAllEventsCollected();
+    std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
@@ -216,18 +194,8 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     MOCKABLE_VIRTUAL TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession);
 
     static void *asyncThreadFunction(void *arg);
-    static void *readInternalEventsThreadFunction(void *arg);
     void startAsyncThread() override;
     void closeAsyncThread();
-
-    MOCKABLE_VIRTUAL void startInternalEventsThread() {
-        internalEventThread.thread = NEO::Thread::create(readInternalEventsThreadFunction, reinterpret_cast<void *>(this));
-    }
-    void closeInternalEventsThread() {
-        internalEventThread.close();
-    }
-
-    bool closeFd();
 
     virtual std::vector<uint64_t> getAllMemoryHandles() {
         std::vector<uint64_t> allVms;
@@ -240,11 +208,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     }
 
     void handleEventsAsync();
-    void readInternalEventsAsync();
-    MOCKABLE_VIRTUAL std::unique_ptr<uint64_t[]> getInternalEvent();
-    MOCKABLE_VIRTUAL float getThreadStartLimitTime() {
-        return 0.5;
-    }
 
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle);
     bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
@@ -354,26 +317,17 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         return allInstancesRemoved;
     }
 
-    ThreadHelper internalEventThread;
-    std::mutex internalEventThreadMutex;
-    std::condition_variable internalEventCondition;
-    std::queue<std::unique_ptr<uint64_t[]>> internalEventQueue;
     std::vector<std::pair<zet_debug_event_t, uint64_t>> eventsToAck; // debug event, uuid handle to module
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
 
-    int fd = 0;
     uint32_t i915DebuggerVersion = 0;
     virtual int ioctl(unsigned long request, void *arg);
-    std::unique_ptr<IoctlHandler> ioctlHandler;
     std::atomic<bool> detached{false};
 
-    uint64_t clientHandle = invalidClientHandle;
-    uint64_t clientHandleClosed = invalidClientHandle;
     std::unordered_map<uint64_t, uint32_t> uuidL0CommandQueueHandleToDevice;
     uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
+    void readInternalEventsAsync() override;
 
-    std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
-    std::atomic<bool> internalThreadHasStarted{false};
     bool blockOnFenceMode = false; // false - blocking VM_BIND on CPU - autoack events until last blocking event
                                    // true - blocking on fence - do not auto-ack events
 };

@@ -41,8 +41,8 @@ static DebugSessionLinuxPopulateFactory<DEBUG_SESSION_LINUX_TYPE_I915, DebugSess
 
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
-DebugSessionLinuxi915::DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params) : DebugSessionLinux(config, device), fd(debugFd) {
-    ioctlHandler.reset(new IoctlHandler);
+DebugSessionLinuxi915::DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params) : DebugSessionLinux(config, device, debugFd) {
+    ioctlHandler.reset(new IoctlHandleri915);
 
     if (params) {
         this->i915DebuggerVersion = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(params)->version;
@@ -318,20 +318,6 @@ void *DebugSessionLinuxi915::asyncThreadFunction(void *arg) {
     return nullptr;
 }
 
-void *DebugSessionLinuxi915::readInternalEventsThreadFunction(void *arg) {
-    DebugSessionLinuxi915 *self = reinterpret_cast<DebugSessionLinuxi915 *>(arg);
-    PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread started\n", "");
-    self->internalThreadHasStarted = true;
-
-    while (self->internalEventThread.threadActive) {
-        self->readInternalEventsAsync();
-    }
-
-    PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread closing\n", "");
-
-    return nullptr;
-}
-
 void DebugSessionLinuxi915::startAsyncThread() {
     asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
@@ -339,39 +325,6 @@ void DebugSessionLinuxi915::startAsyncThread() {
 void DebugSessionLinuxi915::closeAsyncThread() {
     asyncThread.close();
     internalEventThread.close();
-}
-
-bool DebugSessionLinuxi915::closeFd() {
-    if (fd == 0) {
-        return false;
-    }
-
-    auto ret = NEO::SysCalls::close(fd);
-
-    if (ret != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, ret);
-        return false;
-    }
-    fd = 0;
-    return true;
-}
-
-std::unique_ptr<uint64_t[]> DebugSessionLinuxi915::getInternalEvent() {
-    std::unique_ptr<uint64_t[]> eventMemory;
-
-    {
-        std::unique_lock<std::mutex> lock(internalEventThreadMutex);
-
-        if (internalEventQueue.empty()) {
-            NEO::waitOnCondition(internalEventCondition, lock, std::chrono::milliseconds(100));
-        }
-
-        if (!internalEventQueue.empty()) {
-            eventMemory = std::move(internalEventQueue.front());
-            internalEventQueue.pop();
-        }
-    }
-    return eventMemory;
 }
 
 void DebugSessionLinuxi915::handleEventsAsync() {

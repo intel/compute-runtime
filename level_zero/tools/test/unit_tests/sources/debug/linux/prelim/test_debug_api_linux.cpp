@@ -63,44 +63,6 @@ namespace L0 {
 namespace ult {
 
 extern CreateDebugSessionHelperFunc createDebugSessionFunc;
-
-TEST(IoctlHandler, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
-    L0::DebugSessionLinuxi915::IoctlHandler handler;
-    NEO::SysCalls::preadFuncCalled = 0;
-    auto retVal = handler.pread(0, nullptr, 0, 0);
-
-    EXPECT_EQ(0, retVal);
-    EXPECT_EQ(1u, NEO::SysCalls::preadFuncCalled);
-    NEO::SysCalls::preadFuncCalled = 0;
-}
-
-TEST(IoctlHandler, GivenHandlerWhenPwriteCalledThenSysCallIsCalled) {
-    L0::DebugSessionLinuxi915::IoctlHandler handler;
-    NEO::SysCalls::pwriteFuncCalled = 0;
-    auto retVal = handler.pwrite(0, nullptr, 0, 0);
-
-    EXPECT_EQ(0, retVal);
-    EXPECT_EQ(1u, NEO::SysCalls::pwriteFuncCalled);
-    NEO::SysCalls::pwriteFuncCalled = 0;
-}
-
-TEST(IoctlHandler, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall) {
-    L0::DebugSessionLinuxi915::IoctlHandler handler;
-    NEO::SysCalls::mmapFuncCalled = 0;
-    NEO::SysCalls::munmapFuncCalled = 0;
-    auto mappedPtr = handler.mmap(0, 0, 0, 0, 0, 0);
-
-    EXPECT_EQ(0, mappedPtr);
-
-    auto retVal = handler.munmap(0, 0);
-    EXPECT_EQ(0, retVal);
-
-    EXPECT_EQ(1u, NEO::SysCalls::mmapFuncCalled);
-    EXPECT_EQ(1u, NEO::SysCalls::munmapFuncCalled);
-    NEO::SysCalls::mmapFuncCalled = 0;
-    NEO::SysCalls::munmapFuncCalled = 0;
-}
-
 TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEBUSYThenIoctlIsNotCalledAgain) {
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
     VariableBackup<int> mockErrno(&errno);
@@ -117,7 +79,7 @@ TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEBUSYThenIoctlIsNotCal
         return 0;
     };
 
-    L0::DebugSessionLinuxi915::IoctlHandler handler;
+    L0::DebugSessionLinuxi915::IoctlHandleri915 handler;
 
     auto result = handler.ioctl(0, PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &ioctlCount);
     EXPECT_EQ(-1, result);
@@ -144,7 +106,7 @@ TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEAGAINOrEINTRThenIoctl
         return 0;
     };
 
-    L0::DebugSessionLinuxi915::IoctlHandler handler;
+    L0::DebugSessionLinuxi915::IoctlHandleri915 handler;
 
     auto result = handler.ioctl(0, PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &ioctlCount);
     EXPECT_EQ(0, result);
@@ -490,7 +452,6 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerOpenVersion1AndSuccessfulInitializationWh
     mockDrm->context.debuggerOpenVersion = 1;
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = 0;
-
     auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
 
     EXPECT_NE(nullptr, session);

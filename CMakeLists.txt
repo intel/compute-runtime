@@ -511,15 +511,9 @@ if(UNIX)
   endif()
   message(STATUS "Xe drm detection: ${NEO_ENABLE_XE_DRM_DETECTION}")
 
-  # drm-xe debugger support
-  if(NOT DEFINED NEO_ENABLE_XE_DEBUGGER)
-    set(NEO_ENABLE_XE_DEBUGGER FALSE)
-  endif()
-  if(NEO_ENABLE_XE_DEBUGGER)
-    get_filename_component(XE_DEBUG_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi-eudebug" ABSOLUTE)
-    include_directories(BEFORE ${XE_DEBUG_HEADERS_DIR})
-  endif()
-  message(STATUS "Xe Debugger enabled: ${NEO_ENABLE_XE_DEBUGGER}")
+  get_filename_component(THIRD_PARTY_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}" ABSOLUTE)
+  include_directories(BEFORE ${THIRD_PARTY_DIR})
+
 endif()
 if(NOT DEFINED I915_HEADERS_DIR OR I915_HEADERS_DIR STREQUAL "")
   get_filename_component(I915_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)

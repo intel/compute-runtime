@@ -8,6 +8,7 @@ if(NEO_ENABLE_XE_DRM_DETECTION)
   set(NEO_CORE_OS_INTERFACE_TESTS_LINUX_XE
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_tests.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_debugger_tests.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_vm_export_tests.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_tests.h
   )

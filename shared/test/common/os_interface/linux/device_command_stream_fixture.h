@@ -96,6 +96,7 @@ class DrmMockCustom : public Drm {
     using Drm::ioctlHelper;
     using Drm::memoryInfo;
     using Drm::pageFaultSupported;
+    using Drm::queryTopology;
     using Drm::setupIoctlHelper;
 
     struct IoctlResExt {
@@ -154,6 +155,10 @@ class DrmMockCustom : public Drm {
     void testIoctls();
 
     int ioctl(DrmIoctl request, void *arg) override;
+
+    void setFileDescriptor(int fd) {
+        hwDeviceId = std::make_unique<HwDeviceIdDrm>(fd, "");
+    }
 
     virtual int ioctlExtra(DrmIoctl request, void *arg) {
         return -1;

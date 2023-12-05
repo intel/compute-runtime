@@ -385,8 +385,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyIoctlString(DrmIoctl::primeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::primeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
 
-    verifyIoctlString(DrmIoctl::debuggerOpen, "???");
-
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
     EXPECT_EQ(static_cast<uint32_t>(XE_NEO_VMCREATE_DISABLESCRATCH_FLAG |
@@ -426,8 +424,6 @@ TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) 
     verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY, DrmIoctl::gemContextDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::primeFdToHandle);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::primeHandleToFd);
-
-    EXPECT_THROW(xeIoctlHelper->getIoctlRequestValue(DrmIoctl::debuggerOpen), std::runtime_error);
 }
 
 TEST(IoctlHelperXeTest, verifyPublicFunctions) {
