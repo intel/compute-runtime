@@ -183,8 +183,8 @@ class APITracerCallbackDataImp {
         }                                                                                                                                   \
     }
 
-template <typename TFunction_pointer, typename TParams, typename TTracer, typename TTracerPrologCallbacks, typename TTracerEpilogCallbacks, typename... Args>
-ze_result_t apiTracerWrapperImp(TFunction_pointer zeApiPtr,
+template <typename TFunctionPointer, typename TParams, typename TTracer, typename TTracerPrologCallbacks, typename TTracerEpilogCallbacks, typename... Args>
+ze_result_t apiTracerWrapperImp(TFunctionPointer zeApiPtr,
                                 TParams paramsStruct,
                                 TTracer apiOrdinal,
                                 TTracerPrologCallbacks prologCallbacks,

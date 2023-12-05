@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 // It indicates that the application wants the L0 driver implementation to use
 // memory referenced by **ptr passed in `zeMemAllocHost` or `zeMemAllocShared`.
 // Can be set in `ze_host_mem_alloc_flags_t`.
-constexpr uint32_t ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR = ZE_BIT(30);
+constexpr uint32_t ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR = ZE_BIT(30); // NOLINT(readability-identifier-naming)
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZEX_MEM_IPC_HANDLES_NAME
