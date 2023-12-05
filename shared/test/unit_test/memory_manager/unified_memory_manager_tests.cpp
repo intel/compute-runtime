@@ -337,7 +337,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenUnifiedMemoryAllocationsAr
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize64k));
         };
         SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, alignment, rootDeviceIndices, deviceBitfields);
         unifiedMemoryProperties.device = device;
@@ -362,7 +362,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocatio
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize));
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize));
         };
         SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, alignment, rootDeviceIndices, deviceBitfields);
         unifiedMemoryProperties.device = device;
@@ -391,7 +391,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize64k));
         };
         SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, alignment, rootDeviceIndices, deviceBitfields);
         unifiedMemoryProperties.device = device;

@@ -1695,7 +1695,7 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectlyAndMe
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize64k));
         };
         void *ptr = nullptr;
         ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, alignment, &ptr);
@@ -1722,7 +1722,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryThenAlignmentIsPassedCorrectlyAndMemo
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize));
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize));
         };
         void *ptr = nullptr;
         ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
@@ -1753,7 +1753,7 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryThenAlignmentIsPassedCorrectlyAndMe
     do {
         alignment >>= 1;
         memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
-            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, MemoryConstants::pageSize64k));
         };
         void *ptr = nullptr;
         ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);

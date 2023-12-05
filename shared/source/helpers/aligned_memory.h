@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,15 @@ template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
 constexpr inline TNoRef alignUp(T before, size_t alignment) {
     TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return (before + mask) & ~mask;
+}
+
+template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
+constexpr inline TNoRef alignUpNonZero(T before, size_t alignment) {
+    if (before == 0) {
+        return alignment;
+    } else {
+        return alignUp(before, alignment);
+    }
 }
 
 template <typename T>
