@@ -37,6 +37,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::xeGetClassName;
     using IoctlHelperXe::xeGetengineClassName;
     using IoctlHelperXe::xeShowBindTable;
+    using IoctlHelperXe::xeTimestampFrequency;
 };
 
 inline constexpr int testValueVmId = 0x5764;
@@ -47,27 +48,24 @@ class DrmMockXe : public DrmMockCustom {
   public:
     DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
         auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
-        xeQueryMemUsage->num_regions = 3;
-        xeQueryMemUsage->regions[0] = {
+        xeQueryMemUsage->num_mem_regions = 3;
+        xeQueryMemUsage->mem_regions[0] = {
             DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             1,                             // instance
-            0,                             // padding
             MemoryConstants::pageSize,     // min page size
             2 * MemoryConstants::gigaByte, // total size
             MemoryConstants::megaByte      // used size
         };
-        xeQueryMemUsage->regions[1] = {
+        xeQueryMemUsage->mem_regions[1] = {
             DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
             0,                              // instance
-            0,                              // padding
             MemoryConstants::pageSize,      // min page size
             MemoryConstants::gigaByte,      // total size
             MemoryConstants::kiloByte       // used size
         };
-        xeQueryMemUsage->regions[2] = {
+        xeQueryMemUsage->mem_regions[2] = {
             DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             2,                             // instance
-            0,                             // padding
             MemoryConstants::pageSize,     // min page size
             4 * MemoryConstants::gigaByte, // total size
             MemoryConstants::gigaByte      // used size
@@ -77,22 +75,28 @@ class DrmMockXe : public DrmMockCustom {
         xeQueryGtList->num_gt = 3;
         xeQueryGtList->gt_list[0] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // tile_id
             0,                         // gt_id
-            12500000,                  // clock_freq
+            {0},                       // padding
+            12500000,                  // reference_clock
             0b100,                     // native mem regions
             0x011,                     // slow mem regions
         };
         xeQueryGtList->gt_list[1] = {
             DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+            1,                          // tile_id
             1,                          // gt_id
-            12500000,                   // clock freq
+            {0},                        // padding
+            12500000,                   // reference_clock
             0b001,                      // native mem regions
             0x110,                      // slow mem regions
         };
         xeQueryGtList->gt_list[2] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // tile_id
             0,                         // gt_id
-            12500000,                  // clock freq
+            {0},                       // padding
+            12500000,                  // reference_clock
             0b010,                     // native mem regions
             0x101,                     // slow mem regions
         };
@@ -148,10 +152,11 @@ class DrmMockXe : public DrmMockCustom {
             ioctlCnt.gemCreate++;
             auto createParams = static_cast<drm_xe_gem_create *>(arg);
             this->createParamsSize = createParams->size;
+            this->createParamsPlacement = createParams->placement;
             this->createParamsFlags = createParams->flags;
             this->createParamsHandle = createParams->handle = testValueGemCreate;
             this->createParamsCpuCaching = createParams->cpu_caching;
-            if (0 == this->createParamsSize || 0 == this->createParamsFlags || 0 == this->createParamsCpuCaching) {
+            if (0 == this->createParamsSize || 0 == this->createParamsPlacement || 0 == this->createParamsCpuCaching) {
                 return EINVAL;
             }
             ret = 0;
@@ -257,18 +262,19 @@ class DrmMockXe : public DrmMockCustom {
         {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1},
         {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}};
 
-    static_assert(sizeof(drm_xe_query_mem_region) == 12 * sizeof(uint64_t), "");
-    uint64_t queryMemUsage[37]{}; // 1 qword for num regions and 12 qwords per region
-    static_assert(sizeof(drm_xe_query_gt) == 11 * sizeof(uint64_t), "");
-    StackVec<uint64_t, 34> queryGtList{}; // 1 qword for num gts and 11 qwords per gt
+    static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
+    uint64_t queryMemUsage[34]{}; // 1 qword for num regions and 11 qwords per region
+    static_assert(sizeof(drm_xe_gt) == 12 * sizeof(uint64_t), "");
+    StackVec<uint64_t, 37> queryGtList{}; // 1 qword for num gts and 12 qwords per gt
     alignas(64) std::vector<uint8_t> queryTopology;
-    static_assert(sizeof(drm_xe_query_engine_cycles) == 6 * sizeof(uint64_t), "");
-    uint64_t queryEngineCycles[6]{}; // 1 qword for eci and 5 qwords
+    static_assert(sizeof(drm_xe_query_engine_cycles) == 5 * sizeof(uint64_t), "");
+    uint64_t queryEngineCycles[5]{}; // 1 qword for eci and 4 qwords
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
     StackVec<drm_xe_sync, 1> syncInputs;
     int waitUserFenceReturn = 0;
     uint32_t createParamsFlags = 0u;
     uint16_t createParamsCpuCaching = 0u;
+    uint32_t createParamsPlacement = 0u;
     bool ioctlCalled = false;
 };

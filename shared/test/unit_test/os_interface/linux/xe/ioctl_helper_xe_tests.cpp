@@ -108,8 +108,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm.createParamsSize);
-    EXPECT_EQ(1u, drm.createParamsFlags);
+    EXPECT_EQ(0u, drm.createParamsFlags);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm.createParamsCpuCaching);
+    EXPECT_EQ(1u, drm.createParamsPlacement);
 
     // dummy mock handle
     EXPECT_EQ(handle, drm.createParamsHandle);
@@ -136,8 +137,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm.createParamsSize);
-    EXPECT_EQ(1u, drm.createParamsFlags);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm.createParamsCpuCaching);
+    EXPECT_EQ(0u, drm.createParamsFlags);
+    EXPECT_EQ(1u, drm.createParamsPlacement);
 
     // dummy mock handle
     EXPECT_EQ(handle, drm.createParamsHandle);
@@ -164,8 +166,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm.createParamsSize);
-    EXPECT_EQ(6u, drm.createParamsFlags);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm.createParamsCpuCaching);
+    EXPECT_EQ(0u, drm.createParamsFlags);
+    EXPECT_EQ(6u, drm.createParamsPlacement);
 
     // dummy mock handle
     EXPECT_EQ(handle, drm.createParamsHandle);
@@ -541,7 +544,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         GemVmControl test = {};
         drm.pageFaultSupported = false;
         uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
-                                         DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE;
+                                         DRM_XE_VM_CREATE_FLAG_LR_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
@@ -549,7 +552,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
 
         drm.pageFaultSupported = true;
         expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
-                                DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE |
+                                DRM_XE_VM_CREATE_FLAG_LR_MODE |
                                 DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
@@ -586,7 +589,8 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     {
         drm_xe_gem_create test = {};
         test.handle = 0;
-        test.flags = 1;
+        test.placement = 1;
+        test.flags = 0;
         test.size = 123;
         test.cpu_caching = DRM_XE_GEM_CPU_CACHING_WC;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemCreate, &test);
@@ -671,9 +675,10 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<unsigned int>(dstvalue), 0x80000037);
         test.param = static_cast<int>(DrmParam::paramCsTimestampFrequency);
+        mockXeIoctlHelper->xeTimestampFrequency = 1;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
-        EXPECT_EQ(dstvalue, 0);
+        EXPECT_EQ(dstvalue, 1);
     }
     EXPECT_THROW(mockXeIoctlHelper->ioctl(DrmIoctl::gemContextCreateExt, NULL), std::runtime_error);
     drm.reset();
@@ -787,8 +792,10 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
     xeQueryGtList->num_gt = 1;
     xeQueryGtList->gt_list[0] = {
         DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // tile_id
         0,                          // gt_id
-        12500000,                   // clock freq
+        {0},                        // padding
+        12500000,                   // reference_clock
         0b100,                      // native mem regions
         0x011,                      // slow mem regions
     };
@@ -832,29 +839,37 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
     xeQueryGtList->num_gt = 4;
     xeQueryGtList->gt_list[0] = {
         DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // tile_id
         0,                         // gt_id
-        12500000,                  // clock freq
+        {0},                       // padding
+        12500000,                  // reference_clock
         0b100,                     // native mem regions
         0x011,                     // slow mem regions
     };
     xeQueryGtList->gt_list[1] = {
         DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // tile_id
         0,                          // gt_id
-        12500000,                   // clock freq
+        {0},                        // padding
+        12500000,                   // reference_clock
         0b100,                      // native mem regions
         0x011,                      // slow mem regions
     };
     xeQueryGtList->gt_list[2] = {
         DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // tile_id
         0,                         // gt_id
-        12500000,                  // clock freq
+        {0},                       // padding
+        12500000,                  // reference_clock
         0b010,                     // native mem regions
         0x101,                     // slow mem regions
     };
     xeQueryGtList->gt_list[3] = {
         DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // tile_id
         0,                          // gt_id
-        12500000,                   // clock freq
+        {0},                        // padding
+        12500000,                   // reference_clock
         0b001,                      // native mem regions
         0x100,                      // slow mem regions
     };
@@ -893,27 +908,24 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
 struct DrmMockXe2T : public DrmMockXe {
     DrmMockXe2T(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {
         auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
-        xeQueryMemUsage->num_regions = 3;
-        xeQueryMemUsage->regions[0] = {
+        xeQueryMemUsage->num_mem_regions = 3;
+        xeQueryMemUsage->mem_regions[0] = {
             DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             1,                             // instance
-            0,                             // padding
             MemoryConstants::pageSize,     // min page size
             2 * MemoryConstants::gigaByte, // total size
             MemoryConstants::megaByte      // used size
         };
-        xeQueryMemUsage->regions[1] = {
+        xeQueryMemUsage->mem_regions[1] = {
             DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
             0,                              // instance
-            0,                              // padding
             MemoryConstants::pageSize,      // min page size
             MemoryConstants::gigaByte,      // total size
             MemoryConstants::kiloByte       // used size
         };
-        xeQueryMemUsage->regions[2] = {
+        xeQueryMemUsage->mem_regions[2] = {
             DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             2,                             // instance
-            0,                             // padding
             MemoryConstants::pageSize,     // min page size
             4 * MemoryConstants::gigaByte, // total size
             MemoryConstants::gigaByte      // used size
@@ -923,15 +935,19 @@ struct DrmMockXe2T : public DrmMockXe {
         xeQueryGtList->num_gt = 2;
         xeQueryGtList->gt_list[0] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // tile_id
             0,                         // gt_id
-            12500000,                  // clock freq
+            {0},                       // padding
+            12500000,                  // reference_clock
             0b100,                     // native mem regions
             0x011,                     // slow mem regions
         };
         xeQueryGtList->gt_list[1] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // tile_id
             0,                         // gt_id
-            12500000,                  // clock freq
+            {0},                       // padding
+            12500000,                  // reference_clock
             0b010,                     // native mem regions
             0x101,                     // slow mem regions
         };
@@ -1311,7 +1327,7 @@ TEST(IoctlHelperXeTest, givenNoMemoryRegionsWhenCreatingMemoryInfoThenMemoryInfo
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
     auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm.queryMemUsage);
-    xeQueryMemUsage->num_regions = 0u;
+    xeQueryMemUsage->num_mem_regions = 0u;
     auto memoryInfo = xeIoctlHelper->createMemoryInfo();
     EXPECT_EQ(nullptr, memoryInfo);
 }
@@ -1572,9 +1588,8 @@ TEST(IoctlHelperXeTest, whenGetTimestampFrequencyIsCalledThenProperFrequencyIsSe
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
 
-    uint64_t expectedFrequency = 100;
-    auto xeQueryEngineCycles = reinterpret_cast<drm_xe_query_engine_cycles *>(drm.queryEngineCycles);
-    xeQueryEngineCycles->engine_frequency = expectedFrequency;
+    uint32_t expectedFrequency = 100;
+    xeIoctlHelper->xeTimestampFrequency = expectedFrequency;
 
     uint64_t frequency = 0;
     auto ret = xeIoctlHelper->getTimestampFrequency(frequency);

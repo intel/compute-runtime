@@ -269,7 +269,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
 
-inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_query_mem_region &xeMemRegion) {
+inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &xeMemRegion) {
     MemoryRegion memoryRegion{};
     memoryRegion.region.memoryInstance = xeMemRegion.instance;
     memoryRegion.region.memoryClass = xeMemRegion.mem_class;
@@ -290,10 +290,10 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
     auto xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(gtListData.data());
 
-    std::array<drm_xe_query_mem_region *, 64> memoryRegionInstances{};
+    std::array<drm_xe_mem_region *, 64> memoryRegionInstances{};
 
-    for (auto i = 0u; i < xeMemRegionsData->num_regions; i++) {
-        auto &region = xeMemRegionsData->regions[i];
+    for (auto i = 0u; i < xeMemRegionsData->num_mem_regions; i++) {
+        auto &region = xeMemRegionsData->mem_regions[i];
         memoryRegionInstances[region.instance] = &region;
         if (region.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
             regionsContainer.push_back(createMemoryRegionFromXeMemRegion(region));
@@ -310,7 +310,7 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
             auto regionIndex = Math::log2(nearMemRegions);
             UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
             regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
-            xeTimestampFrequency = xeGtListData->gt_list[i].clock_freq;
+            xeTimestampFrequency = xeGtListData->gt_list[i].reference_clock;
         }
     }
     return std::make_unique<MemoryInfo>(regionsContainer, drm);
@@ -355,31 +355,8 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
 }
 
 bool IoctlHelperXe::getTimestampFrequency(uint64_t &frequency) {
-    drm_xe_device_query deviceQuery = {};
-    deviceQuery.query = DRM_XE_DEVICE_QUERY_ENGINE_CYCLES;
-
-    auto ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
-
-    if (ret != 0) {
-        xeLog(" -> IoctlHelperXe::%s s=0x%lx r=%d\n", __FUNCTION__, deviceQuery.size, ret);
-        return false;
-    }
-
-    std::vector<uint8_t> retVal(deviceQuery.size);
-    deviceQuery.data = castToUint64(retVal.data());
-
-    drm_xe_query_engine_cycles *queryEngineCycles = reinterpret_cast<drm_xe_query_engine_cycles *>(retVal.data());
-    queryEngineCycles->clockid = CLOCK_MONOTONIC_RAW;
-    queryEngineCycles->eci = *defaultEngine;
-
-    ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
-    frequency = queryEngineCycles->engine_frequency;
-
-    xeLog(" -> IoctlHelperXe::%s [%d,%d] clockId=0x%x s=0x%lx frequency=0x%x r=%d\n", __FUNCTION__,
-          queryEngineCycles->eci.engine_class, queryEngineCycles->eci.engine_instance,
-          queryEngineCycles->clockid, deviceQuery.size, frequency, ret);
-
-    return ret == 0;
+    frequency = xeTimestampFrequency;
+    return frequency != 0;
 }
 
 void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss,
@@ -561,15 +538,14 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     for (const auto &memoryClassInstance : memClassInstances) {
         memoryInstances.set(memoryClassInstance.memoryInstance);
     }
-    create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
+    create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode();
-
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
 
-    xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x h=0x%x r=%d\n", __FUNCTION__,
+    xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx p=0x%x f=0x%x h=0x%x r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
-          create.vm_id, create.size, create.flags, handle, ret);
+          create.vm_id, create.size, create.flags, create.placement, handle, ret);
     updateBindInfo(create.handle, 0u, create.size);
     return ret;
 }
@@ -595,7 +571,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
         auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
         memoryInstances.set(regionClassAndInstance.memoryInstance);
     }
-    create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
+    create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode();
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
@@ -725,7 +701,8 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
                       completionGpuAddress, counterValue, engine);
 
                 struct drm_xe_sync sync[1] = {};
-                sync[0].flags = DRM_XE_SYNC_FLAG_USER_FENCE | DRM_XE_SYNC_FLAG_SIGNAL;
+                sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
+                sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
                 sync[0].addr = completionGpuAddress;
                 sync[0].timeline_value = counterValue;
                 struct drm_xe_exec exec = {};
@@ -1079,7 +1056,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         GemVmControl *d = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_create args = {};
         args.flags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
-                     DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE;
+                     DRM_XE_VM_CREATE_FLAG_LR_MODE;
         if (drm.hasPageFaultSupport()) {
             args.flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         }
@@ -1087,7 +1064,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         d->vmId = ret ? 0 : args.vm_id;
         d->flags = ret ? 0 : args.flags;
         xeVmId = d->vmId;
-        xeLog(" -> IoctlHelperXe::ioctl GemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
+        xeLog(" -> IoctlHelperXe::ioctl gemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
 
     } break;
     case DrmIoctl::gemVmDestroy: {
@@ -1130,7 +1107,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemCreate: {
         drm_xe_gem_create *gemCreate = static_cast<drm_xe_gem_create *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
-        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%llx f=0x%x r=%d\n",
+        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%lx p=0x%x f=0x%x r=%d\n",
               gemCreate->handle, gemCreate->size, gemCreate->flags, ret);
     } break;
     default:
@@ -1249,7 +1226,8 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     if (index != invalidIndex) {
 
         drm_xe_sync sync[1] = {};
-        sync[0].flags = DRM_XE_SYNC_FLAG_USER_FENCE | DRM_XE_SYNC_FLAG_SIGNAL;
+        sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
+        sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
         auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.extensions);
         UNRECOVERABLE_IF(!xeBindExtUserFence);
         UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
