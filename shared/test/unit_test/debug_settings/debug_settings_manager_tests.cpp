@@ -59,21 +59,21 @@ TEST(DebugSettingsManager, WhenDebugManagerIsDisabledThenDebugFunctionalityIsNot
 }
 
 TEST(DebugSettingsManager, whenDebugManagerIsDisabledThenDebugFunctionalityIsNotAvailableAtCompileTime) {
-    TestDebugSettingsManager<DebugFunctionalityLevel::None> debugManager;
+    TestDebugSettingsManager<DebugFunctionalityLevel::none> debugManager;
 
     static_assert(debugManager.disabled(), "");
     static_assert(false == debugManager.registryReadAvailable(), "");
 }
 
 TEST(DebugSettingsManager, whenDebugManagerIsFullyEnabledThenAllDebugFunctionalityIsAvailableAtCompileTime) {
-    TestDebugSettingsManager<DebugFunctionalityLevel::Full> debugManager;
+    TestDebugSettingsManager<DebugFunctionalityLevel::full> debugManager;
 
     static_assert(false == debugManager.disabled(), "");
     static_assert(debugManager.registryReadAvailable(), "");
 }
 
 TEST(DebugSettingsManager, whenOnlyRegKeysAreEnabledThenAllOtherDebugFunctionalityIsNotAvailableAtCompileTime) {
-    TestDebugSettingsManager<DebugFunctionalityLevel::RegKeys> debugManager;
+    TestDebugSettingsManager<DebugFunctionalityLevel::regKeys> debugManager;
 
     static_assert(false == debugManager.disabled(), "");
     static_assert(debugManager.registryReadAvailable(), "");
@@ -125,13 +125,13 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::None);
+    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::none);
     debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::None);
+    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::none);
     debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::None);
+    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::none);
     debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::None);
+    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::none);
 
     // Clear dump files and generate new
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -164,13 +164,13 @@ TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixW
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::Neo);
+    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neo);
     debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::Neo);
+    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neo);
     debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::Neo);
+    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::neo);
     debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::Neo);
+    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neo);
 
     // Clear dump files and generate new
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -203,13 +203,13 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::Neo_L0);
+    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neoL0);
     debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::Neo_L0);
+    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neoL0);
     debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::Neo_L0);
+    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::neoL0);
     debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::Neo_L0);
+    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoL0);
 
     // Clear dump files and generate new
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -242,13 +242,13 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
     debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::Neo_Ocl);
+    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neoOcl);
     debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::Neo_Ocl);
+    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neoOcl);
     debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::Neo_Ocl);
+    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::neoOcl);
     debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::Neo_Ocl);
+    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoOcl);
 
     // Clear dump files and generate new
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -281,13 +281,13 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     debugManager.flags.PrintDebugSettings.set(true);
-    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::Neo_L0);
+    debugManager.flags.PrintDebugSettings.setPrefixType(DebugVarPrefix::neoL0);
     debugManager.flags.LoopAtDriverInit.set(true);
-    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::Neo);
+    debugManager.flags.LoopAtDriverInit.setPrefixType(DebugVarPrefix::neo);
     debugManager.flags.Enable64kbpages.set(1);
-    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::None);
+    debugManager.flags.Enable64kbpages.setPrefixType(DebugVarPrefix::none);
     debugManager.flags.TbxServer.set("192.168.0.1");
-    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::Neo_L0);
+    debugManager.flags.TbxServer.setPrefixType(DebugVarPrefix::neoL0);
 
     // Clear dump files and generate new
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);

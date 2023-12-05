@@ -116,7 +116,7 @@ void IoctlHelperUpstream::detectExtSetPatSupport() {
 }
 
 CacheRegion IoctlHelperUpstream::closAlloc() {
-    return CacheRegion::None;
+    return CacheRegion::none;
 }
 
 uint16_t IoctlHelperUpstream::closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
@@ -124,7 +124,7 @@ uint16_t IoctlHelperUpstream::closAllocWays(CacheRegion closIndex, uint16_t cach
 }
 
 CacheRegion IoctlHelperUpstream::closFree(CacheRegion closIndex) {
-    return CacheRegion::None;
+    return CacheRegion::none;
 }
 
 int IoctlHelperUpstream::waitUserFence(uint32_t ctxId, uint64_t address,

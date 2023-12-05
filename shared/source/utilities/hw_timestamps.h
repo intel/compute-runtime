@@ -27,7 +27,7 @@ class HwTimeStamps : public TagTypeBase {
         return AllocationType::PROFILING_TAG_BUFFER;
     }
 
-    static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwTimeStamps; }
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::hwTimeStamps; }
 
     uint64_t getContextStartValue(uint32_t) const { return contextStartTS; }
     uint64_t getGlobalStartValue(uint32_t) const { return globalStartTS; }

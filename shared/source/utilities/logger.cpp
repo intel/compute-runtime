@@ -274,8 +274,8 @@ const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation) {
     return "ILLEGAL_VALUE";
 }
 
-template class FileLogger<DebugFunctionalityLevel::None>;
-template class FileLogger<DebugFunctionalityLevel::RegKeys>;
-template class FileLogger<DebugFunctionalityLevel::Full>;
+template class FileLogger<DebugFunctionalityLevel::none>;
+template class FileLogger<DebugFunctionalityLevel::regKeys>;
+template class FileLogger<DebugFunctionalityLevel::full>;
 
 } // namespace NEO

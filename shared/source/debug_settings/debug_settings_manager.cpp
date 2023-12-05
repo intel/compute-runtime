@@ -61,11 +61,11 @@ void DebugSettingsManager<debugLevel>::getHardwareInfoOverride(std::string &hwIn
 }
 
 static const char *convPrefixToString(DebugVarPrefix prefix) {
-    if (prefix == DebugVarPrefix::Neo) {
+    if (prefix == DebugVarPrefix::neo) {
         return "NEO_";
-    } else if (prefix == DebugVarPrefix::Neo_L0) {
+    } else if (prefix == DebugVarPrefix::neoL0) {
         return "NEO_L0_";
-    } else if (prefix == DebugVarPrefix::Neo_Ocl) {
+    } else if (prefix == DebugVarPrefix::neoOcl) {
         return "NEO_OCL_";
     } else {
         return "";
@@ -164,7 +164,7 @@ void logDebugString(std::string_view debugString) {
     NEO::fileLoggerInstance().logDebugString(true, debugString);
 }
 
-template class DebugSettingsManager<DebugFunctionalityLevel::None>;
-template class DebugSettingsManager<DebugFunctionalityLevel::Full>;
-template class DebugSettingsManager<DebugFunctionalityLevel::RegKeys>;
+template class DebugSettingsManager<DebugFunctionalityLevel::none>;
+template class DebugSettingsManager<DebugFunctionalityLevel::full>;
+template class DebugSettingsManager<DebugFunctionalityLevel::regKeys>;
 }; // namespace NEO

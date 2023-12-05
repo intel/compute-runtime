@@ -235,7 +235,7 @@ CacheRegion IoctlHelperPrelim20::closAlloc() {
         int err = errno;
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(true);
-        return CacheRegion::None;
+        return CacheRegion::none;
     }
 
     return static_cast<CacheRegion>(clos.clos_index);
@@ -268,7 +268,7 @@ CacheRegion IoctlHelperPrelim20::closFree(CacheRegion closIndex) {
         int err = errno;
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_FREE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(true);
-        return CacheRegion::None;
+        return CacheRegion::none;
     }
 
     return closIndex;
@@ -312,16 +312,16 @@ uint32_t IoctlHelperPrelim20::getAtomicAccess(AtomicAccessMode mode) {
     uint32_t retVal = 0;
 
     switch (mode) {
-    case AtomicAccessMode::Device:
+    case AtomicAccessMode::device:
         retVal = PRELIM_I915_VM_ADVISE_ATOMIC_DEVICE;
         break;
-    case AtomicAccessMode::System:
+    case AtomicAccessMode::system:
         retVal = PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
         break;
-    case AtomicAccessMode::None:
+    case AtomicAccessMode::none:
         retVal = PRELIM_I915_VM_ADVISE_ATOMIC_NONE;
         break;
-    case AtomicAccessMode::Host:
+    case AtomicAccessMode::host:
     default:
         break;
     }
@@ -338,20 +338,20 @@ std::optional<MemoryClassInstance> IoctlHelperPrelim20::getPreferredLocationRegi
         memoryLocation = static_cast<PreferredLocation>(NEO::debugManager.flags.SetVmAdvisePreferredLocation.get());
     }
     switch (memoryLocation) {
-    case PreferredLocation::Clear:
+    case PreferredLocation::clear:
         region.memoryClass = -1;
         region.memoryInstance = 0;
         break;
-    case PreferredLocation::System:
+    case PreferredLocation::system:
         region.memoryClass = getDrmParamValue(DrmParam::MemoryClassSystem);
         region.memoryInstance = 0;
         break;
-    case PreferredLocation::Device:
+    case PreferredLocation::device:
     default:
         region.memoryClass = getDrmParamValue(DrmParam::MemoryClassDevice);
         region.memoryInstance = memoryInstance;
         break;
-    case PreferredLocation::None:
+    case PreferredLocation::none:
         return std::nullopt;
     }
     return region;

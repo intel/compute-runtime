@@ -160,7 +160,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     args.dcFlushEnable = this->dcFlushSupport && dcFlushRequired;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdStream,
-        PostSyncMode::ImmediateData,
+        PostSyncMode::immediateData,
         barrierTimestampPacketGpuAddress,
         0,
         peekRootDeviceEnvironment(),

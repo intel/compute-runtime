@@ -140,7 +140,7 @@ bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocat
 }
 
 bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
-    if (regionIndex == CacheRegion::Default) {
+    if (regionIndex == CacheRegion::defaultRegion) {
         return true;
     }
 
@@ -162,7 +162,7 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
         return false;
     }
 
-    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::WriteBack, true, isSystemMemoryPool);
+    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::writeBack, true, isSystemMemoryPool);
 
     if (fragmentsStorage.fragmentCount > 0) {
         for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {
@@ -434,7 +434,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     bool success = true;
 
     if (flags.cachedMemory != enabledMemAdviseFlags.cachedMemory) {
-        CachePolicy memType = flags.cachedMemory ? CachePolicy::WriteBack : CachePolicy::Uncached;
+        CachePolicy memType = flags.cachedMemory ? CachePolicy::writeBack : CachePolicy::uncached;
         setCachePolicy(memType);
     }
 
@@ -448,11 +448,11 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     }
 
     if (flags.devicePreferredLocation != enabledMemAdviseFlags.devicePreferredLocation) {
-        success &= setPreferredLocation(drm, flags.devicePreferredLocation ? PreferredLocation::Device : PreferredLocation::Clear);
+        success &= setPreferredLocation(drm, flags.devicePreferredLocation ? PreferredLocation::device : PreferredLocation::clear);
     }
 
     if (flags.systemPreferredLocation != enabledMemAdviseFlags.systemPreferredLocation) {
-        success &= setPreferredLocation(drm, flags.systemPreferredLocation ? PreferredLocation::System : PreferredLocation::Default);
+        success &= setPreferredLocation(drm, flags.systemPreferredLocation ? PreferredLocation::system : PreferredLocation::defaultLocation);
     }
 
     if (success) {
@@ -465,7 +465,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
 bool DrmAllocation::setAtomicAccess(Drm *drm, size_t size, AtomicAccessMode mode) {
     bool success = true;
 
-    if (mode == AtomicAccessMode::Host) {
+    if (mode == AtomicAccessMode::host) {
         // Host mode not currently supported by KMD
         return success;
     }

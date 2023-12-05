@@ -40,7 +40,7 @@ struct AllocationProperties {
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
-    ColouringPolicy colouringPolicy = ColouringPolicy::DeviceCountBased;
+    ColouringPolicy colouringPolicy = ColouringPolicy::deviceCountBased;
     size_t colouringGranularity = MemoryConstants::pageSize64k;
     DeviceBitfield subDevicesBitfield{};
     uint64_t gpuAddress = 0;

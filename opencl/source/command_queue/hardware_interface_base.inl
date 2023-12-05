@@ -276,7 +276,7 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, commandQueue.getDevice().getRootDeviceEnvironment());
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandStream,
-                PostSyncMode::ImmediateData,
+                PostSyncMode::immediateData,
                 address,
                 static_cast<uint64_t>(confirmationTrigger),
                 commandQueue.getDevice().getRootDeviceEnvironment(),

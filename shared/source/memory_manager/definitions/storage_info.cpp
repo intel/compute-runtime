@@ -126,7 +126,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             granularity = debugManager.flags.MultiStorageGranularity.get() * MemoryConstants::kiloByte;
         }
 
-        DEBUG_BREAK_IF(colouringPolicy == ColouringPolicy::DeviceCountBased && granularity != MemoryConstants::pageSize64k);
+        DEBUG_BREAK_IF(colouringPolicy == ColouringPolicy::deviceCountBased && granularity != MemoryConstants::pageSize64k);
 
         if (this->supportsMultiStorageResources &&
             properties.multiStorageResource &&

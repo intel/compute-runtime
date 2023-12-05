@@ -223,12 +223,12 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args) {
-    addSingleBarrier(commandStream, PostSyncMode::NoWrite, 0, 0, args);
+    addSingleBarrier(commandStream, PostSyncMode::noWrite, 0, 0, args);
 }
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBuffer, PipeControlArgs &args) {
-    setSingleBarrier(commandsBuffer, PostSyncMode::NoWrite, 0, 0, args);
+    setSingleBarrier(commandsBuffer, PostSyncMode::noWrite, 0, 0, args);
 }
 
 template <typename GfxFamily>
@@ -292,14 +292,14 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
         pipeControl.setStateCacheInvalidationEnable(false);
     }
 
-    if (postSyncMode != PostSyncMode::NoWrite) {
+    if (postSyncMode != PostSyncMode::noWrite) {
         pipeControl.setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));
         pipeControl.setAddressHigh(static_cast<uint32_t>(gpuAddress >> 32));
     }
 
-    if (postSyncMode == PostSyncMode::Timestamp) {
+    if (postSyncMode == PostSyncMode::timestamp) {
         pipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
-    } else if (postSyncMode == PostSyncMode::ImmediateData) {
+    } else if (postSyncMode == PostSyncMode::immediateData) {
         pipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
         pipeControl.setImmediateData(immediateData);
     }

@@ -131,7 +131,7 @@ const std::string ClFileLogger<debugLevel>::getMemObjects(const uintptr_t *input
     }
     return os.str();
 }
-template class ClFileLogger<DebugFunctionalityLevel::None>;
-template class ClFileLogger<DebugFunctionalityLevel::RegKeys>;
-template class ClFileLogger<DebugFunctionalityLevel::Full>;
+template class ClFileLogger<DebugFunctionalityLevel::none>;
+template class ClFileLogger<DebugFunctionalityLevel::regKeys>;
+template class ClFileLogger<DebugFunctionalityLevel::full>;
 } // namespace NEO

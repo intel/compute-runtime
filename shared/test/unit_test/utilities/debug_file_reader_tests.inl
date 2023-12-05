@@ -280,19 +280,19 @@ TEST(SettingsFileReader, givenPrefixFileReadCorrectValueReturned) {
     auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getStringTestPath().c_str());
     ASSERT_NE(nullptr, reader.get());
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-    DebugVarPrefix type = DebugVarPrefix::None;
+    DebugVarPrefix type = DebugVarPrefix::none;
     int32_t retValue = 0;
     int32_t returnedIntValue = reader->getSetting("IntTestKey", retValue, type);
-    EXPECT_EQ(DebugVarPrefix::None, type);
+    EXPECT_EQ(DebugVarPrefix::none, type);
     EXPECT_EQ(123, returnedIntValue);
 
     int32_t returnedIntValueHex = reader->getSetting("IntTestKeyHex", 0, type);
-    EXPECT_EQ(DebugVarPrefix::None, type);
+    EXPECT_EQ(DebugVarPrefix::none, type);
     EXPECT_EQ(0xABCD, returnedIntValueHex);
 
     std::string retValueString = "";
     std::string returnedStringValue = reader->getSetting("StringTestKey", retValueString, type);
-    EXPECT_EQ(DebugVarPrefix::None, type);
+    EXPECT_EQ(DebugVarPrefix::none, type);
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 
     auto neoReader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getNeoStringTestPath().c_str());
@@ -300,15 +300,15 @@ TEST(SettingsFileReader, givenPrefixFileReadCorrectValueReturned) {
 
     retValue = 0;
     returnedIntValue = neoReader->getSetting("IntTestKey", retValue, type);
-    EXPECT_EQ(DebugVarPrefix::Neo, type);
+    EXPECT_EQ(DebugVarPrefix::neo, type);
     EXPECT_EQ(123, returnedIntValue);
 
     returnedIntValueHex = neoReader->getSetting("IntTestKeyHex", 0, type);
-    EXPECT_EQ(DebugVarPrefix::Neo, type);
+    EXPECT_EQ(DebugVarPrefix::neo, type);
     EXPECT_EQ(0xABCD, returnedIntValueHex);
 
     retValueString = "";
     returnedStringValue = neoReader->getSetting("StringTestKey", retValueString, type);
-    EXPECT_EQ(DebugVarPrefix::Neo, type);
+    EXPECT_EQ(DebugVarPrefix::neo, type);
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 }

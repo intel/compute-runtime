@@ -58,7 +58,7 @@ const char *ApiSpecificConfig::getRegistryPath() {
 
 void ApiSpecificConfig::initPrefixes() {
     validClPrefixes = {"NEO_OCL_", "NEO_", ""};
-    validClPrefixTypes = {DebugVarPrefix::Neo_Ocl, DebugVarPrefix::Neo, DebugVarPrefix::None};
+    validClPrefixTypes = {DebugVarPrefix::neoOcl, DebugVarPrefix::neo, DebugVarPrefix::none};
 }
 
 const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {

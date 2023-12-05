@@ -43,7 +43,7 @@ struct TimeStamps {
         return AllocationType::PROFILING_TAG_BUFFER;
     }
 
-    static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwTimeStamps; }
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::hwTimeStamps; }
 
     uint64_t getContextStartValue(uint32_t packetIndex) const {
         return start;

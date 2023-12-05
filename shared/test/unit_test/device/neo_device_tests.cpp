@@ -406,7 +406,7 @@ TEST_F(DeviceGetCapsTest, whenDriverModelHasLimitationForMaxMemoryAllocationSize
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenVmeIsEnabled) {
-    DebugSettingsManager<DebugFunctionalityLevel::RegKeys> freshDebugSettingsManager("");
+    DebugSettingsManager<DebugFunctionalityLevel::regKeys> freshDebugSettingsManager("");
     EXPECT_TRUE(freshDebugSettingsManager.flags.EnableIntelVme.get());
 }
 

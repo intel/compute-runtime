@@ -32,59 +32,59 @@ enum class DebugPauseState : uint32_t {
 };
 
 enum class ColouringPolicy : uint32_t {
-    DeviceCountBased,
-    ChunkSizeBased,
-    MappingBased
+    deviceCountBased,
+    chunkSizeBased,
+    mappingBased
 };
 
 class TagTypeBase {
 };
 
 enum class TagNodeType {
-    TimestampPacket,
-    HwTimeStamps,
-    HwPerfCounter
+    timestampPacket,
+    hwTimeStamps,
+    hwPerfCounter
 };
 
 enum class CacheRegion : uint16_t {
-    Default = 0,
-    Region1,
-    Region2,
-    Count,
-    None = 0xFFFF
+    defaultRegion = 0,
+    region1,
+    region2,
+    count,
+    none = 0xFFFF
 };
 
 enum class CacheLevel : uint16_t {
-    Default = 0,
-    Level3 = 3
+    defaultLevel = 0,
+    level3 = 3
 };
 
 enum class CachePolicy : uint32_t {
-    Uncached = 0,
-    WriteCombined = 1,
-    WriteThrough = 2,
-    WriteBack = 3,
+    uncached = 0,
+    writeCombined = 1,
+    writeThrough = 2,
+    writeBack = 3,
 };
 
 enum class PreferredLocation : int16_t {
-    Clear = -1,
-    System = 0,
-    Device = 1,
-    None = 2,
-    Default = Device
+    clear = -1,
+    system = 0,
+    device = 1,
+    none = 2,
+    defaultLocation = device
 };
 
 enum class PostSyncMode : uint32_t {
-    NoWrite = 0,
-    Timestamp = 1,
-    ImmediateData = 2,
+    noWrite = 0,
+    timestamp = 1,
+    immediateData = 2,
 };
 
 enum class AtomicAccessMode : uint32_t {
-    None = 1,
-    Host = 2,
-    Device = 3,
-    System = 4
+    none = 1,
+    host = 2,
+    device = 3,
+    system = 4
 };
 
 } // namespace NEO

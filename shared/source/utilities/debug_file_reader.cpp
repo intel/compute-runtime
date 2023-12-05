@@ -57,7 +57,7 @@ int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultV
         }
         i++;
     }
-    type = DebugVarPrefix::None;
+    type = DebugVarPrefix::none;
     return value;
 }
 
@@ -98,7 +98,7 @@ std::string SettingsFileReader::getSetting(const char *settingName, const std::s
         }
         i++;
     }
-    type = DebugVarPrefix::None;
+    type = DebugVarPrefix::none;
     return returnValue;
 }
 

@@ -219,21 +219,21 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_FALSE(xeIoctlHelper->isSetPairAvailable());
 
-    EXPECT_EQ(CacheRegion::None, xeIoctlHelper->closAlloc());
+    EXPECT_EQ(CacheRegion::none, xeIoctlHelper->closAlloc());
 
-    EXPECT_EQ(0u, xeIoctlHelper->closAllocWays(CacheRegion::None, 0u, 0u));
+    EXPECT_EQ(0u, xeIoctlHelper->closAllocWays(CacheRegion::none, 0u, 0u));
 
-    EXPECT_EQ(CacheRegion::None, xeIoctlHelper->closFree(CacheRegion::None));
+    EXPECT_EQ(CacheRegion::none, xeIoctlHelper->closFree(CacheRegion::none));
 
     EXPECT_EQ(0, xeIoctlHelper->waitUserFence(0, 0, 0, 0, 0, 0));
 
     EXPECT_EQ(0u, xeIoctlHelper->getAtomicAdvise(false));
 
-    EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::None));
+    EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::none));
 
     EXPECT_EQ(0u, xeIoctlHelper->getPreferredLocationAdvise());
 
-    EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(PreferredLocation::None, 0));
+    EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(PreferredLocation::none, 0));
 
     EXPECT_FALSE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
 

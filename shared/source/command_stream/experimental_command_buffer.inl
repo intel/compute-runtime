@@ -75,7 +75,7 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *currentStream,
-        PostSyncMode::Timestamp,
+        PostSyncMode::timestamp,
         timeStampAddress,
         0llu,
         *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()],

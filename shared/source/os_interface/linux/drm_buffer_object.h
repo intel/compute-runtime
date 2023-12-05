@@ -239,8 +239,8 @@ class BufferObject {
     uint64_t unmapSize = 0;
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
 
-    CacheRegion cacheRegion = CacheRegion::Default;
-    CachePolicy cachePolicy = CachePolicy::WriteBack;
+    CacheRegion cacheRegion = CacheRegion::defaultRegion;
+    CachePolicy cachePolicy = CachePolicy::writeBack;
 
     StackVec<uint32_t, 2> bindExtHandles;
 

@@ -53,7 +53,7 @@ int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t d
         }
         i++;
     }
-    type = DebugVarPrefix::None;
+    type = DebugVarPrefix::none;
     return value;
 }
 
@@ -88,7 +88,7 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
         }
         i++;
     }
-    type = DebugVarPrefix::None;
+    type = DebugVarPrefix::none;
     return keyValue;
 }
 

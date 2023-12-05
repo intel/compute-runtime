@@ -451,7 +451,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocThenReturnNoneRegion) {
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closAlloc();
 
-    EXPECT_EQ(CacheRegion::None, cacheRegion);
+    EXPECT_EQ(CacheRegion::none, cacheRegion);
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosFreeThenReturnNoneRegion) {
@@ -459,9 +459,9 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosFreeThenReturnNoneRegion) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::region2);
 
-    EXPECT_EQ(CacheRegion::None, cacheRegion);
+    EXPECT_EQ(CacheRegion::none, cacheRegion);
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocWaysThenReturnZeroWays) {
@@ -469,7 +469,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocWaysThenReturnZeroWays)
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
+    auto cacheRegion = ioctlHelper->closAllocWays(CacheRegion::region2, 3, 10);
 
     EXPECT_EQ(0, cacheRegion);
 }
@@ -482,7 +482,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetAdviseThenReturnCorrectValue)
     EXPECT_EQ(0u, ioctlHelper->getAtomicAdvise(false));
     EXPECT_EQ(0u, ioctlHelper->getAtomicAdvise(true));
     EXPECT_EQ(0u, ioctlHelper->getPreferredLocationAdvise());
-    EXPECT_EQ(std::nullopt, ioctlHelper->getPreferredLocationRegion(PreferredLocation::None, 0));
+    EXPECT_EQ(std::nullopt, ioctlHelper->getPreferredLocationRegion(PreferredLocation::none, 0));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmBoAdviseThenReturnTrue) {

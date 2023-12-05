@@ -405,7 +405,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         args.stateCacheInvalidationEnable = dispatchFlags.stateCacheInvalidation;
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             commandStreamTask,
-            PostSyncMode::ImmediateData,
+            PostSyncMode::immediateData,
             address,
             taskCount + 1,
             rootDeviceEnvironment,
@@ -845,7 +845,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
                 MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
                     epiloguePipeControlLocation,
-                    PostSyncMode::ImmediateData,
+                    PostSyncMode::immediateData,
                     getTagAllocation()->getGpuAddress(),
                     lastTaskCount,
                     peekRootDeviceEnvironment(),
@@ -1334,7 +1334,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
     this->programEnginePrologue(commandStream);
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
-                                                                              PostSyncMode::ImmediateData,
+                                                                              PostSyncMode::immediateData,
                                                                               getTagAllocation()->getGpuAddress(),
                                                                               taskCount + 1,
                                                                               peekRootDeviceEnvironment(),
@@ -2146,7 +2146,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
         args.workloadPartitionOffset = isMultiTileOperationEnabled();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             immediateCommandStream,
-            PostSyncMode::ImmediateData,
+            PostSyncMode::immediateData,
             address,
             this->taskCount + 1,
             peekRootDeviceEnvironment(),

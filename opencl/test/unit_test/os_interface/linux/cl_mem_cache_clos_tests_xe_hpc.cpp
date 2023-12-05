@@ -66,7 +66,7 @@ XE_HPC_CORETEST_F(BuffersWithClMemCacheClosTests, givenDrmBufferWhenItIsCreatedW
     auto allocation = static_cast<DrmAllocation *>(buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation());
     for (auto bo : allocation->getBOs()) {
         if (bo != nullptr) {
-            EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+            EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
         }
     }
 }
@@ -128,7 +128,7 @@ XE_HPC_CORETEST_F(UnifiedMemoryWithClMemCacheClosTests, givenDrmUnifiedSharedMem
     auto bos = static_cast<DrmAllocation *>(allocation)->getBOs();
     for (auto bo : bos) {
         if (bo != nullptr) {
-            EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+            EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
         }
     }
 
@@ -159,7 +159,7 @@ XE_HPC_CORETEST_F(HostPtrAllocationWithClMemCacheClosTests, givenDrmAllocationWi
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
-        EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+        EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
     }
 
     memoryManager->freeGraphicsMemory(allocation);

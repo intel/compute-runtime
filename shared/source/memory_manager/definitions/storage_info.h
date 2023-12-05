@@ -22,7 +22,7 @@ struct StorageInfo {
     bool cloningOfPageTables = true;
     bool tileInstanced = false;
     bool multiStorage = false;
-    ColouringPolicy colouringPolicy = ColouringPolicy::DeviceCountBased;
+    ColouringPolicy colouringPolicy = ColouringPolicy::deviceCountBased;
     size_t colouringGranularity = MemoryConstants::pageSize64k;
     bool readOnlyMultiStorage = false;
     bool cpuVisibleSegment = false;

@@ -59,7 +59,7 @@ const char *ApiSpecificConfig::getRegistryPath() {
 
 void ApiSpecificConfig::initPrefixes() {
     validL0Prefixes = {"NEO_L0_", "NEO_", ""};
-    validL0PrefixTypes = {DebugVarPrefix::Neo_L0, DebugVarPrefix::Neo, DebugVarPrefix::None};
+    validL0PrefixTypes = {DebugVarPrefix::neoL0, DebugVarPrefix::neo, DebugVarPrefix::none};
 }
 
 const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {

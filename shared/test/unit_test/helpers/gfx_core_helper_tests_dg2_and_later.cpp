@@ -250,7 +250,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenPlatformSupportsHdcUntypedCacheFlus
     constexpr uint64_t gpuAddress = 0xABC000;
     constexpr uint64_t immediateValue = 0;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
-                                                                               PostSyncMode::Timestamp,
+                                                                               PostSyncMode::timestamp,
                                                                                gpuAddress,
                                                                                immediateValue,
                                                                                rootDeviceEnvironment,

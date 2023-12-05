@@ -388,11 +388,11 @@ uint64_t GfxCoreHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePoli
     */
 
     if ((debugManager.flags.ForceAllResourcesUncached.get() == true)) {
-        cacheRegion = CacheRegion::Default;
-        cachePolicy = CachePolicy::Uncached;
+        cacheRegion = CacheRegion::defaultRegion;
+        cachePolicy = CachePolicy::uncached;
     }
 
-    UNRECOVERABLE_IF((cacheRegion > CacheRegion::Default) && (cachePolicy < CachePolicy::WriteThrough));
+    UNRECOVERABLE_IF((cacheRegion > CacheRegion::defaultRegion) && (cachePolicy < CachePolicy::writeThrough));
     return (static_cast<uint32_t>(cachePolicy) + (static_cast<uint16_t>(cacheRegion) * 2));
 }
 

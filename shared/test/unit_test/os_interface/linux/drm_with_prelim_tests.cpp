@@ -146,7 +146,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
 
 TEST_F(IoctlHelperPrelimFixture, givenAtomicAccessModeHostWhenCallGetAtomicAccessReturnZero) {
     auto ioctlHelper = drm->getIoctlHelper();
-    uint32_t ret = ioctlHelper->getAtomicAccess(AtomicAccessMode::Host);
+    uint32_t ret = ioctlHelper->getAtomicAccess(AtomicAccessMode::host);
     EXPECT_EQ(0u, ret);
 }
 
@@ -210,7 +210,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegio
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closAlloc();
 
-    EXPECT_EQ(CacheRegion::Region1, cacheRegion);
+    EXPECT_EQ(CacheRegion::region1, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -220,16 +220,16 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closAlloc();
 
-    EXPECT_EQ(CacheRegion::None, cacheRegion);
+    EXPECT_EQ(CacheRegion::none, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion) {
     auto ioctlHelper = drm->getIoctlHelper();
     drm->ioctlCallsCount = 0;
-    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::region2);
 
-    EXPECT_EQ(CacheRegion::Region2, cacheRegion);
+    EXPECT_EQ(CacheRegion::region2, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -238,16 +238,16 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
     drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::region2);
 
-    EXPECT_EQ(CacheRegion::None, cacheRegion);
+    EXPECT_EQ(CacheRegion::none, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto numWays = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
+    auto numWays = ioctlHelper->closAllocWays(CacheRegion::region2, 3, 10);
 
     EXPECT_EQ(10u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -258,7 +258,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto numWays = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
+    auto numWays = ioctlHelper->closAllocWays(CacheRegion::region2, 3, 10);
 
     EXPECT_EQ(0u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -473,19 +473,19 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithModeCa
     allocation.setNumHandles(1);
 
     size_t size = 16;
-    AtomicAccessMode mode = AtomicAccessMode::None;
+    AtomicAccessMode mode = AtomicAccessMode::none;
     EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
-    mode = AtomicAccessMode::Device;
+    mode = AtomicAccessMode::device;
     EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
-    mode = AtomicAccessMode::System;
+    mode = AtomicAccessMode::system;
     EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
     EXPECT_EQ(3u, drm->ioctlCallsCount);
 
-    mode = AtomicAccessMode::Host;
+    mode = AtomicAccessMode::host;
     // No IOCTL call for Host mode
     EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
     EXPECT_EQ(3u, drm->ioctlCallsCount);
@@ -499,7 +499,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithNullBu
     allocation.setNumHandles(1);
 
     size_t size = 16;
-    AtomicAccessMode mode = AtomicAccessMode::None;
+    AtomicAccessMode mode = AtomicAccessMode::none;
     EXPECT_TRUE(allocation.setAtomicAccess(drm.get(), size, mode));
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }

@@ -40,7 +40,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdBuffer,
-        PostSyncMode::ImmediateData,
+        PostSyncMode::immediateData,
         gpuAddress,
         immediateData,
         rootDeviceEnvironment,

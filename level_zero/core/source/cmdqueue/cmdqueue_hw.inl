@@ -1114,7 +1114,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
     NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdStream,
-        NEO::PostSyncMode::ImmediateData,
+        NEO::PostSyncMode::immediateData,
         postSyncAddress,
         postSyncData,
         device->getNEODevice()->getRootDeviceEnvironment(),

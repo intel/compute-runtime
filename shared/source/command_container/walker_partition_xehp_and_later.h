@@ -325,7 +325,7 @@ void programPostSyncPipeControlCommand(void *&inputAddress,
                                        const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
     NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(inputAddress,
-                                                                                   NEO::PostSyncMode::ImmediateData,
+                                                                                   NEO::PostSyncMode::immediateData,
                                                                                    args.postSyncGpuAddress,
                                                                                    args.postSyncImmediateValue,
                                                                                    rootDeviceEnvironment,

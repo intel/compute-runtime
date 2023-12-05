@@ -15,8 +15,8 @@
 
 #include <map>
 
-using FullyEnabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::Full>;
-using FullyDisabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::None>;
+using FullyEnabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::full>;
+using FullyDisabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::none>;
 
 template <bool debugFunctionality>
 class TestLoggerApiEnterWrapper : public NEO::LoggerApiEnterWrapper<debugFunctionality> {

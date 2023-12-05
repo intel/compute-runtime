@@ -33,7 +33,7 @@ class TimestampPackets : public TagTypeBase {
         return AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
 
-    static constexpr TagNodeType getTagNodeType() { return TagNodeType::TimestampPacket; }
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::timestampPacket; }
 
     static constexpr size_t getSinglePacketSize() { return sizeof(Packet); }
 
@@ -165,7 +165,7 @@ struct TimestampPacketHelper {
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-                cmdStream, PostSyncMode::ImmediateData,
+                cmdStream, PostSyncMode::immediateData,
                 cacheFlushTimestampPacketGpuAddress, 0, rootDeviceEnvironment, args);
         }
 

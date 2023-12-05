@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct MockCacheInfo : public CacheInfo {
     ~MockCacheInfo() override = default;
 
     bool getCacheRegion(size_t regionSize, CacheRegion regionIndex) override {
-        if (regionIndex >= CacheRegion::Count) {
+        if (regionIndex >= CacheRegion::count) {
             return false;
         }
         if (regionSize > (maxReservationCacheSize / maxReservationNumCacheRegions)) {

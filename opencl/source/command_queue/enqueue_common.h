@@ -592,7 +592,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getRootDeviceEnvironment());
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandStream,
-                PostSyncMode::ImmediateData,
+                PostSyncMode::immediateData,
                 cacheFlushTimestampPacketGpuAddress,
                 0,
                 device->getRootDeviceEnvironment(),
@@ -695,7 +695,7 @@ void CommandQueueHw<GfxFamily>::processSignalMultiRootDeviceNode(LinearStream *c
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getRootDeviceEnvironment());
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
-        PostSyncMode::ImmediateData,
+        PostSyncMode::immediateData,
         node->getGpuAddress() + node->getContextEndOffset(),
         std::numeric_limits<uint64_t>::max(),
         device->getRootDeviceEnvironment(),

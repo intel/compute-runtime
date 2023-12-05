@@ -69,7 +69,7 @@ void programEventL3Flush(Event *event,
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdListStream,
-        NEO::PostSyncMode::ImmediateData,
+        NEO::PostSyncMode::immediateData,
         eventAddress,
         Event::STATE_SIGNALED,
         commandContainer.getDevice()->getRootDeviceEnvironment(),
@@ -427,7 +427,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
         appendMultiTileBarrier(*neoDevice);
     } else {
         NEO::PipeControlArgs args = createBarrierFlags();
-        NEO::PostSyncMode postSyncMode = NEO::PostSyncMode::NoWrite;
+        NEO::PostSyncMode postSyncMode = NEO::PostSyncMode::noWrite;
         uint64_t gpuWriteAddress = 0;
         uint64_t writeValue = 0;
 

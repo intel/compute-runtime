@@ -15,7 +15,7 @@ namespace NEO {
 
 CacheInfo::~CacheInfo() {
     for (auto const &cacheRegion : cacheRegionsReserved) {
-        cacheReserve.freeCache(CacheLevel::Level3, cacheRegion.first);
+        cacheReserve.freeCache(CacheLevel::level3, cacheRegion.first);
     }
     cacheRegionsReserved.clear();
 }
@@ -26,9 +26,9 @@ CacheRegion CacheInfo::reserveRegion(size_t cacheReservationSize) {
         numWays = debugManager.flags.ClosNumCacheWays.get();
         cacheReservationSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
     }
-    auto regionIndex = cacheReserve.reserveCache(CacheLevel::Level3, numWays);
-    if (regionIndex == CacheRegion::None) {
-        return CacheRegion::None;
+    auto regionIndex = cacheReserve.reserveCache(CacheLevel::level3, numWays);
+    if (regionIndex == CacheRegion::none) {
+        return CacheRegion::none;
     }
     cacheRegionsReserved.insert({regionIndex, cacheReservationSize});
 
@@ -39,9 +39,9 @@ CacheRegion CacheInfo::freeRegion(CacheRegion regionIndex) {
     auto search = cacheRegionsReserved.find(regionIndex);
     if (search != cacheRegionsReserved.end()) {
         cacheRegionsReserved.erase(search);
-        return cacheReserve.freeCache(CacheLevel::Level3, regionIndex);
+        return cacheReserve.freeCache(CacheLevel::level3, regionIndex);
     }
-    return CacheRegion::None;
+    return CacheRegion::none;
 }
 
 bool CacheInfo::isRegionReserved(CacheRegion regionIndex, [[maybe_unused]] size_t regionSize) const {
@@ -58,12 +58,12 @@ bool CacheInfo::isRegionReserved(CacheRegion regionIndex, [[maybe_unused]] size_
 }
 
 bool CacheInfo::getRegion(size_t regionSize, CacheRegion regionIndex) {
-    if (regionIndex == CacheRegion::Default) {
+    if (regionIndex == CacheRegion::defaultRegion) {
         return true;
     }
     if (!isRegionReserved(regionIndex, regionSize)) {
         auto regionIdx = reserveRegion(regionSize);
-        if (regionIdx == CacheRegion::None) {
+        if (regionIdx == CacheRegion::none) {
             return false;
         }
         DEBUG_BREAK_IF(regionIdx != regionIndex);

@@ -146,7 +146,7 @@ void TagAllocator<TagType>::returnTag(TagNodeBase *node) {
 
 template <typename TagType>
 size_t TagNode<TagType>::getGlobalStartOffset() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return TagType::getGlobalStartOffset();
     } else {
         UNRECOVERABLE_IF(true);
@@ -155,7 +155,7 @@ size_t TagNode<TagType>::getGlobalStartOffset() const {
 
 template <typename TagType>
 size_t TagNode<TagType>::getContextStartOffset() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return TagType::getContextStartOffset();
     } else {
         UNRECOVERABLE_IF(true);
@@ -164,7 +164,7 @@ size_t TagNode<TagType>::getContextStartOffset() const {
 
 template <typename TagType>
 size_t TagNode<TagType>::getContextEndOffset() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return TagType::getContextEndOffset();
     } else {
         UNRECOVERABLE_IF(true);
@@ -173,7 +173,7 @@ size_t TagNode<TagType>::getContextEndOffset() const {
 
 template <typename TagType>
 size_t TagNode<TagType>::getGlobalEndOffset() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return TagType::getGlobalEndOffset();
     } else {
         UNRECOVERABLE_IF(true);
@@ -182,7 +182,7 @@ size_t TagNode<TagType>::getGlobalEndOffset() const {
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getContextStartValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
         return tagForCpuAccess->getContextStartValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -191,7 +191,7 @@ uint64_t TagNode<TagType>::getContextStartValue([[maybe_unused]] uint32_t packet
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getGlobalStartValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
         return tagForCpuAccess->getGlobalStartValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -200,7 +200,7 @@ uint64_t TagNode<TagType>::getGlobalStartValue([[maybe_unused]] uint32_t packetI
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getContextEndValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
         return tagForCpuAccess->getContextEndValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -209,7 +209,7 @@ uint64_t TagNode<TagType>::getContextEndValue([[maybe_unused]] uint32_t packetIn
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getGlobalEndValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::HwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
         return tagForCpuAccess->getGlobalEndValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -218,7 +218,7 @@ uint64_t TagNode<TagType>::getGlobalEndValue([[maybe_unused]] uint32_t packetInd
 
 template <typename TagType>
 void const *TagNode<TagType>::getContextEndAddress([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return tagForCpuAccess->getContextEndAddress(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -227,7 +227,7 @@ void const *TagNode<TagType>::getContextEndAddress([[maybe_unused]] uint32_t pac
 
 template <typename TagType>
 uint64_t &TagNode<TagType>::getContextCompleteRef() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::HwTimeStamps) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::hwTimeStamps) {
         return tagForCpuAccess->contextCompleteTS;
     } else {
         UNRECOVERABLE_IF(true);
@@ -236,7 +236,7 @@ uint64_t &TagNode<TagType>::getContextCompleteRef() const {
 
 template <typename TagType>
 uint64_t &TagNode<TagType>::getGlobalEndRef() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::HwTimeStamps) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::hwTimeStamps) {
         return tagForCpuAccess->globalEndTS;
     } else {
         UNRECOVERABLE_IF(true);
@@ -245,7 +245,7 @@ uint64_t &TagNode<TagType>::getGlobalEndRef() const {
 
 template <typename TagType>
 size_t TagNode<TagType>::getSinglePacketSize() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return TagType::getSinglePacketSize();
     } else {
         UNRECOVERABLE_IF(true);
@@ -254,7 +254,7 @@ size_t TagNode<TagType>::getSinglePacketSize() const {
 
 template <typename TagType>
 void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] void *source) {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::TimestampPacket) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
     } else {
         UNRECOVERABLE_IF(true);
@@ -263,7 +263,7 @@ void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packe
 
 template <typename TagType>
 MetricsLibraryApi::QueryHandle_1_0 &TagNode<TagType>::getQueryHandleRef() const {
-    if constexpr (TagType::getTagNodeType() == TagNodeType::HwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::hwPerfCounter) {
         return tagForCpuAccess->query.handle;
     } else {
         UNRECOVERABLE_IF(true);

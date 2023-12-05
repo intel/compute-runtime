@@ -52,5 +52,5 @@ class TestDebugSettingsManager : public DebugSettingsManager<debugLevel> {
     }
 };
 
-using FullyEnabledTestDebugManager = TestDebugSettingsManager<DebugFunctionalityLevel::Full>;
-using FullyDisabledTestDebugManager = TestDebugSettingsManager<DebugFunctionalityLevel::None>;
+using FullyEnabledTestDebugManager = TestDebugSettingsManager<DebugFunctionalityLevel::full>;
+using FullyDisabledTestDebugManager = TestDebugSettingsManager<DebugFunctionalityLevel::none>;

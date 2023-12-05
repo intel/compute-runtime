@@ -18,9 +18,9 @@ ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 bool isStatelessCompressionSupportedForUlts = true;
 
 StackVec<const char *, 4> validUltL0Prefixes = {"NEO_L0_", "NEO_", ""};
-StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::Neo_L0, DebugVarPrefix::Neo, DebugVarPrefix::None};
+StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::neoL0, DebugVarPrefix::neo, DebugVarPrefix::none};
 StackVec<const char *, 4> validUltOclPrefixes = {"NEO_OCL_", "NEO_", ""};
-StackVec<NEO::DebugVarPrefix, 4> validUltOclPrefixTypes = {DebugVarPrefix::Neo_Ocl, DebugVarPrefix::Neo, DebugVarPrefix::None};
+StackVec<NEO::DebugVarPrefix, 4> validUltOclPrefixTypes = {DebugVarPrefix::neoOcl, DebugVarPrefix::neo, DebugVarPrefix::none};
 
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return isStatelessCompressionSupportedForUlts;

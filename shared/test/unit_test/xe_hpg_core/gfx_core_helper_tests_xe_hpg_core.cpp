@@ -213,7 +213,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     uint64_t gpuAddress = 0xABC0;
     uint64_t immediateValue = 0x10;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
-                                                                               PostSyncMode::ImmediateData,
+                                                                               PostSyncMode::immediateData,
                                                                                gpuAddress,
                                                                                immediateValue,
                                                                                rootDeviceEnvironment,
@@ -252,7 +252,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     uint64_t gpuAddress = 0xABC0;
     uint64_t immediateValue = 0x10;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
-                                                                               PostSyncMode::ImmediateData,
+                                                                               PostSyncMode::immediateData,
                                                                                gpuAddress,
                                                                                immediateValue,
                                                                                rootDeviceEnvironment,

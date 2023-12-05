@@ -2710,7 +2710,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
-            NEO::PostSyncMode::Timestamp,
+            NEO::PostSyncMode::timestamp,
             allocationStruct.alignedAllocationPtr,
             0,
             this->device->getNEODevice()->getRootDeviceEnvironment(),
@@ -3441,7 +3441,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
-            NEO::PostSyncMode::ImmediateData,
+            NEO::PostSyncMode::immediateData,
             gpuAddress,
             data,
             device->getNEODevice()->getRootDeviceEnvironment(),
@@ -3563,7 +3563,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
-            NEO::PostSyncMode::ImmediateData,
+            NEO::PostSyncMode::immediateData,
             gpuAddress,
             value,
             device->getNEODevice()->getRootDeviceEnvironment(),

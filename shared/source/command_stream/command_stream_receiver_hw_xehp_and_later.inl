@@ -210,7 +210,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     } else {
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             cmdStream,
-            PostSyncMode::ImmediateData,
+            PostSyncMode::immediateData,
             barrierTimestampPacketGpuAddress,
             0,
             peekRootDeviceEnvironment(),

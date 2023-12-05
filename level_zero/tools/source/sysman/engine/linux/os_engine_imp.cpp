@@ -15,7 +15,8 @@
 
 namespace L0 {
 
-constexpr auto I915_SAMPLE_BUSY = NEO::I915::drm_i915_pmu_engine_sample::I915_SAMPLE_BUSY;
+constexpr auto I915_SAMPLE_BUSY = NEO::I915::drm_i915_pmu_engine_sample::I915_SAMPLE_BUSY; // NOLINT(readability-identifier-naming)
+
 static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},

@@ -884,18 +884,18 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
 
     deviceImp->getMemoryAccessProperties(&memProp);
 
-    NEO::AtomicAccessMode mode = NEO::AtomicAccessMode::None;
+    NEO::AtomicAccessMode mode = NEO::AtomicAccessMode::none;
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS) {
         if (!(memProp.deviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        mode = NEO::AtomicAccessMode::Device;
+        mode = NEO::AtomicAccessMode::device;
     }
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS) {
         if (!(memProp.hostAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        mode = NEO::AtomicAccessMode::Host;
+        mode = NEO::AtomicAccessMode::host;
     }
 
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS) {
@@ -903,7 +903,7 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
             (!(memProp.sharedCrossDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC))) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        mode = NEO::AtomicAccessMode::System;
+        mode = NEO::AtomicAccessMode::system;
     }
 
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());

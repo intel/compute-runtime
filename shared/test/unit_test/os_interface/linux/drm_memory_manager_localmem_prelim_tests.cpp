@@ -1542,7 +1542,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenInvalidCacheRegionWhenMmapRet
         return 0;
     };
     munmapCalledCount = 0;
-    allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::None);
+    allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::none);
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(nullptr, allocation);
@@ -1705,7 +1705,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
     allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
     allocData.storageInfo.multiStorage = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
-    allocData.storageInfo.colouringPolicy = ColouringPolicy::ChunkSizeBased;
+    allocData.storageInfo.colouringPolicy = ColouringPolicy::chunkSizeBased;
     allocData.storageInfo.colouringGranularity = 256 * MemoryConstants::kiloByte;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -1713,7 +1713,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
-    EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::ChunkSizeBased);
+    EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::chunkSizeBased);
     EXPECT_EQ(allocation->storageInfo.colouringGranularity, 256 * MemoryConstants::kiloByte);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
@@ -1745,7 +1745,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWh
     allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
     allocData.storageInfo.multiStorage = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
-    allocData.storageInfo.colouringPolicy = ColouringPolicy::MappingBased;
+    allocData.storageInfo.colouringPolicy = ColouringPolicy::mappingBased;
     allocData.storageInfo.colouringGranularity = 64 * MemoryConstants::kiloByte;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -1753,7 +1753,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWh
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
-    EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::MappingBased);
+    EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::mappingBased);
     EXPECT_EQ(allocation->storageInfo.colouringGranularity, 64 * MemoryConstants::kiloByte);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);

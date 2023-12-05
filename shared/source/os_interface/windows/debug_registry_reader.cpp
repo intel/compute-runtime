@@ -108,7 +108,7 @@ int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue
             i++;
         }
     }
-    type = DebugVarPrefix::None;
+    type = DebugVarPrefix::none;
     return value;
 }
 
@@ -206,7 +206,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
             i++;
         }
     }
-    type = DebugVarPrefix::None;
+    type = DebugVarPrefix::none;
     return keyValue;
 }
 

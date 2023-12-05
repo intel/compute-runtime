@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class HwPerfCounter : public TagTypeBase {
         return AllocationType::PROFILING_TAG_BUFFER;
     }
 
-    static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwPerfCounter; }
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::hwPerfCounter; }
 
     template <typename Type>
     static uint32_t getSize(Type &performanceCounters) {

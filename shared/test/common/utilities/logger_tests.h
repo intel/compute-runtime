@@ -55,5 +55,5 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
     std::map<std::string, std::stringstream> savedFiles;
 };
 
-using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::Full>;
-using FullyDisabledFileLogger = TestFileLogger<DebugFunctionalityLevel::None>;
+using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::full>;
+using FullyDisabledFileLogger = TestFileLogger<DebugFunctionalityLevel::none>;

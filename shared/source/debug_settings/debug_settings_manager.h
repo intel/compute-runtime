@@ -14,17 +14,17 @@
 #include <string_view>
 
 enum class DebugFunctionalityLevel {
-    None,   // Debug functionality disabled
-    Full,   // Debug functionality fully enabled
-    RegKeys // Only registry key reads enabled
+    none,   // Debug functionality disabled
+    full,   // Debug functionality fully enabled
+    regKeys // Only registry key reads enabled
 };
 
 #if defined(_DEBUG)
-constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::Full;
+constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::full;
 #elif defined(_RELEASE_INTERNAL) || defined(_RELEASE_BUILD_WITH_REGKEYS)
-constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::RegKeys;
+constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::regKeys;
 #else
-constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::None;
+constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::none;
 #endif
 
 #define PRINT_DEBUG_STRING(flag, ...) \
@@ -60,10 +60,10 @@ void logDebugString(std::string_view debugString);
 class SettingsReader;
 
 enum class DebugVarPrefix : uint8_t {
-    None = 1,
-    Neo = 2,
-    Neo_L0 = 3,
-    Neo_Ocl = 4
+    none = 1,
+    neo = 2,
+    neoL0 = 3,
+    neoOcl = 4
 };
 
 template <typename T>
@@ -93,7 +93,7 @@ struct DebugVarBase {
   private:
     T value;
     T defaultValue;
-    DebugVarPrefix prefixType = DebugVarPrefix::None;
+    DebugVarPrefix prefixType = DebugVarPrefix::none;
 };
 
 struct DebugVariables {                                 // NOLINT(clang-analyzer-optin.performance.Padding)
@@ -123,11 +123,11 @@ class DebugSettingsManager {
     DebugSettingsManager &operator=(const DebugSettingsManager &) = delete;
 
     static constexpr bool registryReadAvailable() {
-        return (debugLevel == DebugFunctionalityLevel::Full) || (debugLevel == DebugFunctionalityLevel::RegKeys);
+        return (debugLevel == DebugFunctionalityLevel::full) || (debugLevel == DebugFunctionalityLevel::regKeys);
     }
 
     static constexpr bool disabled() {
-        return debugLevel == DebugFunctionalityLevel::None;
+        return debugLevel == DebugFunctionalityLevel::none;
     }
 
     void getHardwareInfoOverride(std::string &hwInfoConfig);

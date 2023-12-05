@@ -574,22 +574,22 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
 
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
-    EXPECT_EQ(std::nullopt, ioctlHelper.getPreferredLocationRegion(PreferredLocation::None, 0));
+    EXPECT_EQ(std::nullopt, ioctlHelper.getPreferredLocationRegion(PreferredLocation::none, 0));
 
-    auto region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::System, 0);
+    auto region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::system, 0);
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), region->memoryClass);
     EXPECT_EQ(0u, region->memoryInstance);
 
-    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::Device, 1);
+    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::device, 1);
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
     EXPECT_EQ(1u, region->memoryInstance);
 
-    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::Clear, 1);
+    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::clear, 1);
     EXPECT_EQ(static_cast<uint16_t>(-1), region->memoryClass);
     EXPECT_EQ(0u, region->memoryInstance);
 
     debugManager.flags.SetVmAdvisePreferredLocation.set(3);
-    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::None, 1);
+    region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::none, 1);
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
     EXPECT_EQ(1u, region->memoryInstance);
 }

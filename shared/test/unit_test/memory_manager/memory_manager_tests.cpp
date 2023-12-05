@@ -64,7 +64,7 @@ TEST(MemoryManagerTest, WhenCallingCloseInternalHandleWithOsAgnosticThenNoChange
 TEST(MemoryManagerTest, WhenCallingSetAtomicAccessWithOsAgnosticThenNoChanges) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    EXPECT_TRUE(memoryManager.setAtomicAccess(nullptr, 16, AtomicAccessMode::None, 1));
+    EXPECT_TRUE(memoryManager.setAtomicAccess(nullptr, 16, AtomicAccessMode::none, 1));
 }
 
 TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {

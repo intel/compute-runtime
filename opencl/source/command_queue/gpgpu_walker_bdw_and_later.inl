@@ -70,7 +70,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *cmdStream,
-        PostSyncMode::ImmediateData,
+        PostSyncMode::immediateData,
         address,
         0,
         rootDeviceEnvironment,
@@ -116,7 +116,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
-        PostSyncMode::Timestamp,
+        PostSyncMode::timestamp,
         timeStampAddress,
         0llu,
         rootDeviceEnvironment,
@@ -149,7 +149,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     PipeControlArgs args;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
-        PostSyncMode::Timestamp,
+        PostSyncMode::timestamp,
         timeStampAddress,
         0llu,
         rootDeviceEnvironment,

@@ -4386,7 +4386,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaul
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_TRUE(allocation.setCacheRegion(&drm, CacheRegion::Default));
+    EXPECT_TRUE(allocation.setCacheRegion(&drm, CacheRegion::defaultRegion));
 }
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCacheRegionIsNotSet) {
@@ -4395,7 +4395,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCach
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Region1));
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::region1));
 }
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThenCacheRegionIsNotSet) {
@@ -4405,7 +4405,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThen
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Region1));
+    EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::region1));
 }
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse) {
@@ -4415,7 +4415,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFa
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::LocalMemory);
 
-    EXPECT_FALSE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::None, false));
+    EXPECT_FALSE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::none, false));
 }
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenReturnTrue) {
@@ -4430,9 +4430,9 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
 
     if ((gfxCoreHelper.getNumCacheRegions() == 0) &&
         productHelper.isVmBindPatIndexProgrammingSupported()) {
-        EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1, false));
+        EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::region1, false));
     } else {
-        EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1, false));
+        EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::region1, false));
     }
 }
 
@@ -4451,13 +4451,13 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
 
     if ((gfxCoreHelper.getNumCacheRegions() == 0) &&
         productHelper.isVmBindPatIndexProgrammingSupported()) {
-        EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1, false));
+        EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::region1, false));
     } else {
-        EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1, false));
+        EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::region1, false));
 
         for (auto bo : allocation.bufferObjects) {
             if (bo != nullptr) {
-                EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+                EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
             }
         }
     }
@@ -4473,7 +4473,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenBufferObjectIsCreatedThenApplyD
 
     for (auto bo : allocation.bufferObjects) {
         if (bo != nullptr) {
-            EXPECT_EQ(CachePolicy::WriteBack, bo->peekCachePolicy());
+            EXPECT_EQ(CachePolicy::writeBack, bo->peekCachePolicy());
         }
     }
 }
@@ -4486,11 +4486,11 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCachePolicyIsCalledThenUpdat
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
-    allocation.setCachePolicy(CachePolicy::Uncached);
+    allocation.setCachePolicy(CachePolicy::uncached);
 
     for (auto bo : allocation.bufferObjects) {
         if (bo != nullptr) {
-            EXPECT_EQ(CachePolicy::Uncached, bo->peekCachePolicy());
+            EXPECT_EQ(CachePolicy::uncached, bo->peekCachePolicy());
         }
     }
 }
@@ -4503,7 +4503,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
-    EXPECT_EQ(CachePolicy::WriteBack, bo.peekCachePolicy());
+    EXPECT_EQ(CachePolicy::writeBack, bo.peekCachePolicy());
 
     MemAdviseFlags memAdviseFlags{};
     EXPECT_TRUE(memAdviseFlags.cachedMemory);
@@ -4513,7 +4513,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
 
         EXPECT_TRUE(allocation.setMemAdvise(&drm, memAdviseFlags));
 
-        EXPECT_EQ(cached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
+        EXPECT_EQ(cached ? CachePolicy::writeBack : CachePolicy::uncached, bo.peekCachePolicy());
 
         EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
@@ -4557,11 +4557,11 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
                                                       nullptr, ptr, castToUint64(ptr), size, MemoryPool::System4KBPages);
     allocation->fragmentsStorage = storage;
 
-    allocation->setCacheAdvice(drm, 1024, CacheRegion::Region1, false);
+    allocation->setCacheAdvice(drm, 1024, CacheRegion::region1, false);
 
     for (uint32_t i = 0; i < storage.fragmentCount; i++) {
         auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
-        EXPECT_EQ(CacheRegion::Region1, bo->peekCacheRegion());
+        EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
     }
 
     storage.fragmentStorageData[0].freeTheFragment = true;
@@ -4993,7 +4993,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
         flags.cachedMemory = isCached;
 
         EXPECT_TRUE(memoryManager.setMemAdvise(&drmAllocation, flags, rootDeviceIndex));
-        EXPECT_EQ(isCached ? CachePolicy::WriteBack : CachePolicy::Uncached, bo.peekCachePolicy());
+        EXPECT_EQ(isCached ? CachePolicy::writeBack : CachePolicy::uncached, bo.peekCachePolicy());
     }
 }
 
@@ -5005,16 +5005,16 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetAtomicAccessIsCalledThe
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     size_t size = 16;
-    AtomicAccessMode mode = AtomicAccessMode::None;
+    AtomicAccessMode mode = AtomicAccessMode::none;
     EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
 
-    mode = AtomicAccessMode::Device;
+    mode = AtomicAccessMode::device;
     EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
 
-    mode = AtomicAccessMode::System;
+    mode = AtomicAccessMode::system;
     EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
 
-    mode = AtomicAccessMode::Host;
+    mode = AtomicAccessMode::host;
     EXPECT_TRUE(memoryManager.setAtomicAccess(&drmAllocation, size, mode, rootDeviceIndex));
 }
 
@@ -6466,7 +6466,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
     EXPECT_EQ(isVmBindPatIndexProgrammingSupported, mock->isVmBindPatIndexProgrammingSupported());
 
     if (isVmBindPatIndexProgrammingSupported) {
-        auto expectedIndex = mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, false);
+        auto expectedIndex = mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
 
         EXPECT_NE(CommonConstants::unsupportedPatIndex, drmAllocation->getBO()->peekPatIndex());
         EXPECT_EQ(expectedIndex, drmAllocation->getBO()->peekPatIndex());
@@ -6502,7 +6502,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
             gmm->isCompressionEnabled = true;
             gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 1;
 
-            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, false);
+            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
 
             EXPECT_TRUE(mockClientContext->passedCachableSettingForGetPatIndexQuery);
             EXPECT_TRUE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
@@ -6512,7 +6512,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
             gmm->isCompressionEnabled = false;
             gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
 
-            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, false);
+            mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
 
             EXPECT_FALSE(mockClientContext->passedCachableSettingForGetPatIndexQuery);
             EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);

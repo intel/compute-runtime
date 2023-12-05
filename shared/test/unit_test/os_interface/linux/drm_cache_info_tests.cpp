@@ -70,9 +70,9 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionSucceedsToReserveC
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
     size_t cacheReservationSize = cacheInfo.getMaxReservationCacheSize();
 
-    EXPECT_TRUE(cacheInfo.getCacheRegion(cacheReservationSize, CacheRegion::Region1));
+    EXPECT_TRUE(cacheInfo.getCacheRegion(cacheReservationSize, CacheRegion::region1));
 
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.freeCacheRegion(CacheRegion::Region1));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionFailsToReserveCacheRegionThenReturnFalse) {
@@ -83,9 +83,9 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionFailsToReserveCach
     size_t cacheReservationSize = cacheInfo.getMaxReservationCacheSize();
 
     drm.context.closIndex = 0xFFFF;
-    EXPECT_FALSE(cacheInfo.getCacheRegion(cacheReservationSize, CacheRegion::Region1));
+    EXPECT_FALSE(cacheInfo.getCacheRegion(cacheReservationSize, CacheRegion::region1));
 
-    EXPECT_EQ(CacheRegion::None, cacheInfo.freeCacheRegion(CacheRegion::Region1));
+    EXPECT_EQ(CacheRegion::none, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoWithReservedCacheRegionWhenGetCacheRegionIsCalledForReservedCacheRegionThenReturnTrue) {
@@ -95,11 +95,11 @@ TEST(DrmCacheInfoTest, givenCacheInfoWithReservedCacheRegionWhenGetCacheRegionIs
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
     size_t cacheReservationSize = cacheInfo.getMaxReservationCacheSize();
 
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.reserveCacheRegion(cacheReservationSize));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.reserveCacheRegion(cacheReservationSize));
 
-    EXPECT_TRUE(cacheInfo.getCacheRegion(cacheReservationSize, CacheRegion::Region1));
+    EXPECT_TRUE(cacheInfo.getCacheRegion(cacheReservationSize, CacheRegion::region1));
 
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.freeCacheRegion(CacheRegion::Region1));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionIsCalledForReservableRegionsWithRegionSizesInverselyProportionalToNumCacheRegionsThenReturnTrue) {
@@ -109,11 +109,11 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenGetCacheRegionIsCalledForReserva
     CacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
     size_t regionSize = cacheInfo.getMaxReservationCacheSize() / cacheInfo.getMaxReservationNumCacheRegions();
 
-    EXPECT_TRUE(cacheInfo.getCacheRegion(regionSize, CacheRegion::Region1));
-    EXPECT_TRUE(cacheInfo.getCacheRegion(regionSize, CacheRegion::Region2));
+    EXPECT_TRUE(cacheInfo.getCacheRegion(regionSize, CacheRegion::region1));
+    EXPECT_TRUE(cacheInfo.getCacheRegion(regionSize, CacheRegion::region2));
 
-    EXPECT_EQ(CacheRegion::Region2, cacheInfo.freeCacheRegion(CacheRegion::Region2));
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.freeCacheRegion(CacheRegion::Region1));
+    EXPECT_EQ(CacheRegion::region2, cacheInfo.freeCacheRegion(CacheRegion::region2));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoWhenSpecificNumCacheWaysIsRequestedThenReserveAppropriateCacheSize) {
@@ -128,14 +128,14 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenSpecificNumCacheWaysIsRequestedThenRese
     MockCacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, maxNumCacheWays);
     size_t maxReservationCacheSize = cacheInfo.getMaxReservationCacheSize();
 
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
-    EXPECT_TRUE(cacheInfo.isRegionReserved(CacheRegion::Region1, maxReservationCacheSize));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
+    EXPECT_TRUE(cacheInfo.isRegionReserved(CacheRegion::region1, maxReservationCacheSize));
 
     auto cacheRegion = cacheInfo.cacheRegionsReserved.begin();
-    EXPECT_EQ(CacheRegion::Region1, cacheRegion->first);
+    EXPECT_EQ(CacheRegion::region1, cacheRegion->first);
     EXPECT_EQ(maxReservationCacheSize / 2, cacheRegion->second);
 
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.freeCacheRegion(CacheRegion::Region1));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoWhenNumCacheWaysIsExceededThenDontReserveCacheRegion) {
@@ -147,11 +147,11 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenNumCacheWaysIsExceededThenDontReserveCa
     MockCacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, maxNumCacheWays);
     size_t maxReservationCacheSize = cacheInfo.getMaxReservationCacheSize();
 
-    EXPECT_EQ(CacheRegion::Region1, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
-    EXPECT_TRUE(cacheInfo.isRegionReserved(CacheRegion::Region1, maxReservationCacheSize));
+    EXPECT_EQ(CacheRegion::region1, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
+    EXPECT_TRUE(cacheInfo.isRegionReserved(CacheRegion::region1, maxReservationCacheSize));
 
-    EXPECT_EQ(CacheRegion::None, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
-    EXPECT_FALSE(cacheInfo.isRegionReserved(CacheRegion::Region2, maxReservationCacheSize));
+    EXPECT_EQ(CacheRegion::none, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
+    EXPECT_FALSE(cacheInfo.isRegionReserved(CacheRegion::region2, maxReservationCacheSize));
 }
 
 TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenFreeCacheRegionIsCalledForNonReservedRegionThenItFails) {
@@ -160,6 +160,6 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenFreeCacheRegionIsCalledForNonRes
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     MockCacheInfo cacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32);
 
-    cacheInfo.cacheRegionsReserved.insert({CacheRegion::Region1, MemoryConstants::kiloByte});
-    EXPECT_EQ(CacheRegion::None, cacheInfo.freeCacheRegion(CacheRegion::Region1));
+    cacheInfo.cacheRegionsReserved.insert({CacheRegion::region1, MemoryConstants::kiloByte});
+    EXPECT_EQ(CacheRegion::none, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }

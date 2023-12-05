@@ -257,7 +257,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
 
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
-        stream, PostSyncMode::Timestamp, address, immediateData, rootDeviceEnvironment, args);
+        stream, PostSyncMode::timestamp, address, immediateData, rootDeviceEnvironment, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
@@ -314,7 +314,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
 
     PipeControlArgs args{};
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
-        stream, PostSyncMode::ImmediateData, address, immediateData, rootDeviceEnvironment, args);
+        stream, PostSyncMode::immediateData, address, immediateData, rootDeviceEnvironment, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
@@ -350,7 +350,7 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
     PipeControlArgs args;
     args.notifyEnable = true;
     MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(
-        stream, PostSyncMode::ImmediateData, address, immediateData, rootDeviceEnvironment, args);
+        stream, PostSyncMode::immediateData, address, immediateData, rootDeviceEnvironment, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
@@ -382,7 +382,7 @@ HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrect
 
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addSingleBarrier(
-        stream, PostSyncMode::Timestamp, address, immediateData, args);
+        stream, PostSyncMode::timestamp, address, immediateData, args);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
@@ -400,7 +400,7 @@ HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncWriteImmediateDataUsedTh
 
     PipeControlArgs args;
     MemorySynchronizationCommands<FamilyType>::addSingleBarrier(
-        stream, PostSyncMode::ImmediateData, address, immediateData, args);
+        stream, PostSyncMode::immediateData, address, immediateData, args);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));

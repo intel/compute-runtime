@@ -19,14 +19,14 @@ namespace NEO {
 
 CacheRegion ClosCacheReservation::reserveCache(CacheLevel cacheLevel, uint16_t numWays) {
     auto closIndex = allocEntry();
-    if (closIndex == CacheRegion::None) {
-        return CacheRegion::None;
+    if (closIndex == CacheRegion::none) {
+        return CacheRegion::none;
     }
 
     auto allocWays = allocCacheWay(closIndex, cacheLevel, numWays);
     if (allocWays != numWays) {
         freeEntry(closIndex);
-        return CacheRegion::None;
+        return CacheRegion::none;
     }
 
     return closIndex;

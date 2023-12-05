@@ -594,7 +594,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
 
 CacheRegion IoctlHelperXe::closAlloc() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return CacheRegion::None;
+    return CacheRegion::none;
 }
 
 uint16_t IoctlHelperXe::closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
@@ -604,7 +604,7 @@ uint16_t IoctlHelperXe::closAllocWays(CacheRegion closIndex, uint16_t cacheLevel
 
 CacheRegion IoctlHelperXe::closFree(CacheRegion closIndex) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return CacheRegion::None;
+    return CacheRegion::none;
 }
 
 int IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value,

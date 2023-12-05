@@ -207,7 +207,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
                 command,
-                NEO::PostSyncMode::ImmediateData,
+                NEO::PostSyncMode::immediateData,
                 csr->getDebugPauseStateGPUAddress(),
                 static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
                 device->getNEODevice()->getRootDeviceEnvironment(),
@@ -222,7 +222,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             auto command = reinterpret_cast<void *>(commandToPatch.pCommand);
             NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
                 command,
-                NEO::PostSyncMode::ImmediateData,
+                NEO::PostSyncMode::immediateData,
                 csr->getDebugPauseStateGPUAddress(),
                 static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
                 device->getNEODevice()->getRootDeviceEnvironment(),

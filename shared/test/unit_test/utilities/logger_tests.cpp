@@ -396,7 +396,7 @@ TEST(FileLogger, givenEnabledPredicateWhenDbgLogLazyEvaluateArgsIsCalledThenInpu
 TEST(FileLogger, whenDisabledThenDebugFunctionalityIsNotAvailableAtCompileTime) {
     std::string testFile = "testfile";
     DebugVariables flags;
-    FileLogger<DebugFunctionalityLevel::None> fileLogger(testFile, flags);
+    FileLogger<DebugFunctionalityLevel::none> fileLogger(testFile, flags);
 
     static_assert(false == fileLogger.enabled(), "");
 }
@@ -404,7 +404,7 @@ TEST(FileLogger, whenDisabledThenDebugFunctionalityIsNotAvailableAtCompileTime) 
 TEST(FileLogger, whenFullyEnabledThenAllDebugFunctionalityIsAvailableAtCompileTime) {
     std::string testFile = "testfile";
     DebugVariables flags;
-    FileLogger<DebugFunctionalityLevel::Full> fileLogger(testFile, flags);
+    FileLogger<DebugFunctionalityLevel::full> fileLogger(testFile, flags);
 
     static_assert(true == fileLogger.enabled(), "");
 }
