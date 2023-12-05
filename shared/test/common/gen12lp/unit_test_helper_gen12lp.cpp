@@ -37,7 +37,7 @@ uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
 }
 
 template <>
-bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::VFE_STATE_TYPE &feCmd) {
+bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
     return feCmd.getDisableSlice0Subslice2();
 }
 

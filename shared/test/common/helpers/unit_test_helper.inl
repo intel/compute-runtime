@@ -61,12 +61,12 @@ void UnitTestHelper<GfxFamily>::validateSbaMocs(uint32_t expectedMocs, CommandSt
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd) {
+bool UnitTestHelper<GfxFamily>::getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd) {
     return false;
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd) {
+bool UnitTestHelper<GfxFamily>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd) {
     return false;
 }
 

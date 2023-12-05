@@ -2934,7 +2934,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDis
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
-    using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
 
     size_t currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
     size_t currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
@@ -3026,7 +3026,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     if (finalStreamState.frontEndState.isDirty()) {
         if (isPatchingVfeStateAllowed) {
             auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
-            auto frontEndStateCmd = new VFE_STATE_TYPE;
+            auto frontEndStateCmd = new FrontEndStateCommand;
             NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
             commandsToPatch.push_back({frontEndStateAddress, frontEndStateCmd, CommandToPatch::FrontEndState});
         }
@@ -3079,13 +3079,13 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
-    using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
 
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
         case CommandList::CommandToPatch::FrontEndState:
             UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
-            delete reinterpret_cast<VFE_STATE_TYPE *>(commandToPatch.pCommand);
+            delete reinterpret_cast<FrontEndStateCommand *>(commandToPatch.pCommand);
             break;
         case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart:
         case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd:

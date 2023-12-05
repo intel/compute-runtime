@@ -1083,7 +1083,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest,
           givenFrontEndTrackingCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
-    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
@@ -1152,16 +1152,16 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     auto nextIt = cmdList.begin();
 
     if (fePropertiesSupport.disableEuFusion) {
-        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        auto feCmdList = findAll<FrontEndStateCommand *>(nextIt, cmdList.end());
         EXPECT_EQ(4u, feCmdList.size());
         auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
         EXPECT_EQ(6u, bbStartCmdList.size());
 
         // initial FE -> requiresDisabledEUFusion = 0
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1181,9 +1181,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
         }
         // reconfiguration FE -> requiresDisabledEUFusion = 1
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1219,9 +1219,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
         // reconfiguration FE -> requiresDisabledEUFusion = 0
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1243,9 +1243,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
         // reconfiguration FE -> requiresDisabledEUFusion = 1
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1277,16 +1277,16 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
         }
     } else {
-        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        auto feCmdList = findAll<FrontEndStateCommand *>(nextIt, cmdList.end());
         EXPECT_EQ(1u, feCmdList.size());
         auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
         EXPECT_EQ(3u, bbStartCmdList.size());
 
         // initial FE
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1333,7 +1333,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest,
           givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
-    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
@@ -1401,16 +1401,16 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     auto nextIt = cmdList.begin();
 
     if (fePropertiesSupport.computeDispatchAllWalker) {
-        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        auto feCmdList = findAll<FrontEndStateCommand *>(nextIt, cmdList.end());
         EXPECT_EQ(4u, feCmdList.size());
         auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
         EXPECT_EQ(6u, bbStartCmdList.size());
 
         // initial FE -> computeDispatchAllWalker = 0
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1431,9 +1431,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
         // reconfiguration FE -> computeDispatchAllWalker = 1
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1455,9 +1455,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
         // reconfiguration FE -> requiresDisabledEUFusion = 0
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1507,9 +1507,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
         // reconfiguration FE -> requiresDisabledEUFusion = 1
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1528,16 +1528,16 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
         }
 
     } else {
-        auto feCmdList = findAll<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+        auto feCmdList = findAll<FrontEndStateCommand *>(nextIt, cmdList.end());
         EXPECT_EQ(1u, feCmdList.size());
         auto bbStartCmdList = findAll<MI_BATCH_BUFFER_START *>(nextIt, cmdList.end());
         EXPECT_EQ(3u, bbStartCmdList.size());
 
         // initial FE
         {
-            auto feStateIt = find<VFE_STATE_TYPE *>(nextIt, cmdList.end());
+            auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
-            auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateIt);
+            auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
             EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
@@ -1583,7 +1583,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 }
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
-    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
@@ -1620,7 +1620,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(regularCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
-    auto feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    auto feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 
     auto &cmdQueueStream = commandQueue->commandStream;
@@ -1647,9 +1647,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
-    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, feStateCmds.size());
-    auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateCmds[0]);
+    auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateCmds[0]);
     if (fePropertiesSupport.disableEuFusion) {
         EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
     } else {
@@ -1682,7 +1682,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(immediateCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
-    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 
     auto immediateCsr = commandListImmediate->csr;
@@ -1701,12 +1701,12 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         (csrUsedAfter - csrUsedBefore)));
-    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 }
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
-    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
@@ -1748,7 +1748,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(immediateCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
-    auto feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    auto feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 
     if (fePropertiesSupport.disableEuFusion) {
@@ -1764,9 +1764,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         (csrUsedAfter - csrUsedBefore)));
-    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, feStateCmds.size());
-    auto &feState = *genCmdCast<VFE_STATE_TYPE *>(*feStateCmds[0]);
+    auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateCmds[0]);
     if (fePropertiesSupport.disableEuFusion) {
         EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
     } else {
@@ -1799,7 +1799,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(regularCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
-    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 
     auto &cmdQueueStream = commandQueue->commandStream;
@@ -1823,7 +1823,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
-    feStateCmds = findAll<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 }
 

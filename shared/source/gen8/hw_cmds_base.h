@@ -94,7 +94,7 @@ struct Gen8Family : public Gen8 {
     using PARSE = CmdParse<Gen8Family>;
     using GfxFamily = Gen8Family;
     using DefaultWalkerType = GPGPU_WALKER;
-    using VFE_STATE_TYPE = MEDIA_VFE_STATE;
+    using FrontEndStateCommand = MEDIA_VFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;

@@ -30,7 +30,7 @@ template <>
 const bool UnitTestHelper<Family>::additionalMiFlushDwRequired = true;
 
 template <>
-bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::VFE_STATE_TYPE &feCmd) {
+bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
     return feCmd.getFusedEuDispatch();
 }
 

@@ -706,7 +706,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
 template <typename FamilyType>
 void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondCommandList() {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     const ze_group_count_t groupCount{1, 1, 1};
@@ -749,7 +749,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
                                                       (cmdQueueStream.getUsed() - queueSize)));
 
     // first is scratch command dispatched globally
-    auto iterFeCmd = find<VFE_STATE_TYPE *>(cmdList.begin(), cmdList.end());
+    auto iterFeCmd = find<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), iterFeCmd);
 
     // find bb start jumping to first command list

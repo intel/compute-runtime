@@ -100,7 +100,7 @@ uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
 
 template <>
 void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
-    VFE_STATE_TYPE *mediaVfeState = static_cast<VFE_STATE_TYPE *>(cmd);
+    FrontEndStateCommand *mediaVfeState = static_cast<FrontEndStateCommand *>(cmd);
     bool disableEUFusion = streamProperties.frontEndState.disableEUFusion.value == 1;
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();

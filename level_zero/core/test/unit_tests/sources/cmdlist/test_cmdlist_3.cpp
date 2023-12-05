@@ -1361,7 +1361,7 @@ HWTEST2_F(CommandListCreate, whenGettingCommandsToPatchThenCorrectValuesAreRetur
 }
 
 HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatchIsCalledThenCommandsAreCorrectlyCleared, IsAtLeastSkl) {
-    using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
@@ -1378,7 +1378,7 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
 
-    commandToPatch.pCommand = new VFE_STATE_TYPE;
+    commandToPatch.pCommand = new FrontEndStateCommand;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());

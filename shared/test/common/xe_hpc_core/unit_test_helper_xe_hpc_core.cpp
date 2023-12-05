@@ -38,7 +38,7 @@ bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const RootDevic
 }
 
 template <>
-bool UnitTestHelper<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename Family::VFE_STATE_TYPE &feCmd) {
+bool UnitTestHelper<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
     return feCmd.getComputeDispatchAllWalkerEnable();
 }
 

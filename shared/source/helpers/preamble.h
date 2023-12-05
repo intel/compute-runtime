@@ -27,7 +27,7 @@ template <typename GfxFamily>
 struct PreambleHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
+    using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
 
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream,

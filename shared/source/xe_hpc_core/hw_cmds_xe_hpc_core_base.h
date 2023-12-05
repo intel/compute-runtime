@@ -82,7 +82,7 @@ struct XeHpcCoreFamily : public XeHpcCore {
     using PARSE = CmdParse<XeHpcCoreFamily>;
     using GfxFamily = XeHpcCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
-    using VFE_STATE_TYPE = CFE_STATE;
+    using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::MEM_COPY;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
