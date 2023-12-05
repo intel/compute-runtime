@@ -11,20 +11,17 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+constexpr uint32_t powerHandleComponentCount = 1u;
 using SysmanDevicePowerFixtureHelper = SysmanDevicePowerFixtureI915;
 
 TEST_F(SysmanDevicePowerFixtureHelper, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
-
-    zes_power_energy_counter_t energyCounter = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-    EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    }
 }
 
 using SysmanDevicePowerMultiDeviceFixtureHelper = SysmanDevicePowerMultiDeviceFixture;

@@ -21,6 +21,7 @@
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
@@ -157,6 +158,13 @@ class PublicLinuxSysmanDriverImp : public L0::Sysman::LinuxSysmanDriverImp {
     PublicLinuxSysmanDriverImp() : LinuxSysmanDriverImp() {}
     using LinuxSysmanDriverImp::pLinuxEventsUtil;
     using LinuxSysmanDriverImp::pUdevLib;
+};
+
+class PublicSysmanKmdInterfaceI915 : public L0::Sysman::SysmanKmdInterfaceI915Upstream {
+  public:
+    PublicSysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) : L0::Sysman::SysmanKmdInterfaceI915Upstream(productFamily) {}
+    ~PublicSysmanKmdInterfaceI915() override = default;
+    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
 };
 
 } // namespace ult

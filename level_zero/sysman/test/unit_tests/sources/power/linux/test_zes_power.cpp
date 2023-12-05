@@ -69,39 +69,41 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenUninitializedPowerHandlesAndWhenGettin
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesWhenhwmonInterfaceExistsThenCallSucceeds) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_properties_t properties{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
-    EXPECT_EQ(properties.canControl, true);
-    EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-    EXPECT_EQ(properties.defaultLimit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
-    EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
-    EXPECT_EQ(properties.minLimit, static_cast<int32_t>(mockMinPowerLimitVal / milliFactor));
+    for (auto handle : handles) {
+        zes_power_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.canControl, true);
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
+        EXPECT_EQ(properties.defaultLimit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, static_cast<int32_t>(mockMinPowerLimitVal / milliFactor));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesWhenHwmonInterfaceExistThenLimitsReturnsUnknown) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->isPowerModuleSupported();
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    zes_power_properties_t properties{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
-    EXPECT_EQ(properties.defaultLimit, -1);
-    EXPECT_EQ(properties.maxLimit, -1);
-    EXPECT_EQ(properties.minLimit, -1);
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto &handle : handles) {
+        zes_power_properties_t properties{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.defaultLimit, -1);
+        EXPECT_EQ(properties.maxLimit, -1);
+        EXPECT_EQ(properties.minLimit, -1);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesWhenHwmonInterfaceExistThenMaxLimitIsUnsupported) {
@@ -134,259 +136,238 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesThenHwmonInterfaceExistAndMinLimitIsUnknown) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->mockReadUnsignedIntValue.push_back(0);
 
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->mockReadUnsignedIntValue.push_back(0);
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    pSysFsAccess->mockReadUnsignedIntValue.push_back(0);
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadUnsignedIntValue.push_back(0);
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
 
-    zes_power_properties_t properties{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
-    EXPECT_EQ(properties.defaultLimit, -1);
-    EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
-    EXPECT_EQ(properties.minLimit, -1);
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.defaultLimit, -1);
+        EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, -1);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyCounterFailedWhenHwmonInterfaceExistThenValidErrorCodeReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
-    pSysFsAccess->isRepeated = true;
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    uint32_t subdeviceId = 0;
+    do {
+        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
+        pPmt->preadFunction = preadMockPower;
+    } while (++subdeviceId < subDeviceCount);
 
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
+    pSysfsAccess->isRepeated = true;
 
-    pPmt->preadFunction = preadMockPower;
-
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
-
-    zes_power_energy_counter_t energyCounter = {};
-    uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-    EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter = {};
+        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHwmonInterfaceExistThenLimitsSetEarlierAreRetrieved) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
-    zes_power_sustained_limit_t sustainedSet = {};
-    zes_power_sustained_limit_t sustainedGet = {};
-    sustainedSet.enabled = 1;
-    sustainedSet.interval = 10;
-    sustainedSet.power = 300000;
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustainedSet = {};
+        zes_power_sustained_limit_t sustainedGet = {};
+        sustainedSet.enabled = 1;
+        sustainedSet.interval = 10;
+        sustainedSet.power = 300000;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handle, &sustainedSet, nullptr, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handle, &sustainedGet, nullptr, nullptr));
+        EXPECT_EQ(sustainedGet.power, sustainedSet.power);
+        EXPECT_EQ(sustainedGet.interval, sustainedSet.interval);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(&sustainedGet, nullptr, nullptr));
-    EXPECT_EQ(sustainedGet.power, sustainedSet.power);
-    EXPECT_EQ(sustainedGet.interval, sustainedSet.interval);
+        zes_power_burst_limit_t burstSet = {};
+        zes_power_burst_limit_t burstGet = {};
+        burstSet.enabled = 1;
+        burstSet.power = 375000;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handle, nullptr, &burstSet, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handle, nullptr, &burstGet, nullptr));
+        EXPECT_EQ(burstSet.enabled, burstGet.enabled);
+        EXPECT_EQ(burstSet.power, burstGet.power);
 
-    zes_power_burst_limit_t burstSet = {};
-    zes_power_burst_limit_t burstGet = {};
-    burstSet.enabled = 1;
-    burstSet.power = 375000;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(nullptr, &burstGet, nullptr));
-    EXPECT_EQ(burstSet.enabled, burstGet.enabled);
-    EXPECT_EQ(burstSet.power, burstGet.power);
+        burstSet.enabled = 0;
+        burstGet.enabled = 0;
+        burstGet.power = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handle, nullptr, &burstSet, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handle, nullptr, &burstGet, nullptr));
+        EXPECT_EQ(burstSet.enabled, burstGet.enabled);
+        EXPECT_EQ(burstGet.power, 0);
 
-    burstSet.enabled = 0;
-    burstGet.enabled = 0;
-    burstGet.power = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(nullptr, &burstGet, nullptr));
-    EXPECT_EQ(burstSet.enabled, burstGet.enabled);
-    EXPECT_EQ(burstGet.power, 0);
-
-    zes_power_peak_limit_t peakGet = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(nullptr, nullptr, &peakGet));
-    EXPECT_EQ(peakGet.powerAC, -1);
-    EXPECT_EQ(peakGet.powerDC, -1);
+        zes_power_peak_limit_t peakGet = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handle, nullptr, nullptr, &peakGet));
+        EXPECT_EQ(peakGet.powerAC, -1);
+        EXPECT_EQ(peakGet.powerDC, -1);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenGetPowerLimitsReturnErrorWhenGettingPowerLimitsWhenHwmonInterfaceExistForBurstPowerLimitThenProperErrorCodesReturned) {
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_burst_limit_t burstSet = {};
-    zes_power_burst_limit_t burstGet = {};
-    burstSet.enabled = 1;
-    burstSet.power = 375000;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimits(nullptr, &burstGet, nullptr));
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    for (auto handle : handles) {
+        zes_power_burst_limit_t burstSet = {};
+        zes_power_burst_limit_t burstGet = {};
+        burstSet.enabled = 1;
+        burstSet.power = 375000;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handle, nullptr, &burstSet, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, nullptr, &burstGet, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenGetPowerLimitsReturnErrorWhenGettingPowerLimitsWhenHwmonInterfaceExistForBurstPowerLimitThenProperErrorCodesIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN);
-    pSysFsAccess->isRepeated = true;
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_burst_limit_t burstSet = {};
-    zes_power_burst_limit_t burstGet = {};
-    burstSet.enabled = 1;
-    burstSet.power = 375000;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxPowerImp->getLimits(nullptr, &burstGet, nullptr));
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN);
+    pSysfsAccess->isRepeated = true;
+
+    for (auto handle : handles) {
+        zes_power_burst_limit_t burstSet = {};
+        zes_power_burst_limit_t burstGet = {};
+        burstSet.enabled = 1;
+        burstSet.power = 375000;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handle, nullptr, &burstSet, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesPowerGetLimits(handle, nullptr, &burstGet, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenSetPowerLimitsReturnErrorWhenSettingPowerLimitsWhenHwmonInterfaceExistForBurstPowerLimitThenProperErrorCodesReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_burst_limit_t burstSet = {};
-    burstSet.enabled = 1;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
+    pSysfsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    for (auto handle : handles) {
+        zes_power_burst_limit_t burstSet = {};
+        burstSet.enabled = 1;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, nullptr, &burstSet, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenSetPowerLimitsReturnErrorWhenSettingPowerLimitsWhenHwmonInterfaceExistForBurstPowerLimitEnabledThenProperErrorCodesReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_burst_limit_t burstSet = {};
-    zes_power_burst_limit_t burstGet = {};
-    burstSet.enabled = 1;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimits(nullptr, &burstGet, nullptr));
+    pSysfsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    for (auto handle : handles) {
+        zes_power_burst_limit_t burstSet = {};
+        zes_power_burst_limit_t burstGet = {};
+        burstSet.enabled = 1;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, nullptr, &burstSet, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, nullptr, &burstGet, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenReadingSustainedPowerLimitNodeReturnErrorWhenSetOrGetPowerLimitsWhenHwmonInterfaceExistForSustainedPowerLimitEnabledThenProperErrorCodesReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_sustained_limit_t sustainedSet = {};
-    zes_power_sustained_limit_t sustainedGet = {};
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimits(&sustainedGet, nullptr, nullptr));
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustainedSet = {};
+        zes_power_sustained_limit_t sustainedGet = {};
+
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, &sustainedSet, nullptr, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, &sustainedGet, nullptr, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenReadingSustainedPowerNodeReturnErrorWhenGetPowerLimitsForSustainedPowerWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_sustained_limit_t sustainedGet = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimits(&sustainedGet, nullptr, nullptr));
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustainedGet = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, &sustainedGet, nullptr, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenReadingSustainedPowerIntervalNodeReturnErrorWhenGetPowerLimitsForSustainedPowerWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_sustained_limit_t sustainedGet = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimits(&sustainedGet, nullptr, nullptr));
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustainedGet = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, &sustainedGet, nullptr, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenwritingSustainedPowerNodeReturnErrorWhenSetPowerLimitsForSustainedPowerWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    pSysfsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     zes_power_sustained_limit_t sustainedSet = {};
     sustainedSet.enabled = 1;
     sustainedSet.interval = 10;
     sustainedSet.power = 300000;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenwritingSustainedPowerIntervalNodeReturnErrorWhenSetPowerLimitsForSustainedPowerIntervalWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    pSysfsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     zes_power_sustained_limit_t sustainedSet = {};
     sustainedSet.enabled = 1;
     sustainedSet.interval = 10;
     sustainedSet.power = 300000;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenValidErrorIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    pSysfsAccess->mockWriteReturnStatus.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
 
     zes_power_sustained_limit_t sustainedSet = {};
     sustainedSet.enabled = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPermissionsThenFirstDisableSustainedPowerLimitAndThenEnableItAndCheckSuccesIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
-
+    auto handles = getPowerHandles(powerHandleComponentCount);
     zes_power_sustained_limit_t sustainedSet = {};
     zes_power_sustained_limit_t sustainedGet = {};
     sustainedSet.enabled = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
     sustainedSet.enabled = 1;
     sustainedSet.interval = 10;
     sustainedSet.power = 300000;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(&sustainedSet, nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(&sustainedGet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handles[0], &sustainedGet, nullptr, nullptr));
     EXPECT_EQ(sustainedGet.enabled, sustainedSet.enabled);
     EXPECT_EQ(sustainedGet.power, sustainedSet.power);
     EXPECT_EQ(sustainedGet.interval, sustainedSet.interval);
@@ -394,27 +375,24 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPermissionsThenFirs
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenGetPowerLimitsWhenPowerLimitsAreDisabledWhenHwmonInterfaceExistThenAllPowerValuesAreIgnored) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
-    pSysFsAccess->mockReadUnsignedLongValue.push_back(0);
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->mockReadUnsignedLongValue.push_back(0);
 
     zes_power_sustained_limit_t sustainedGet = {};
     zes_power_burst_limit_t burstGet = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(&sustainedGet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handles[0], &sustainedGet, nullptr, nullptr));
     EXPECT_EQ(sustainedGet.interval, 0);
     EXPECT_EQ(sustainedGet.power, 0);
     EXPECT_EQ(sustainedGet.enabled, 0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getLimits(nullptr, &burstGet, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimits(handles[0], nullptr, &burstGet, nullptr));
     EXPECT_EQ(burstGet.enabled, 0);
     EXPECT_EQ(burstGet.power, 0);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(&sustainedGet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handles[0], &sustainedGet, nullptr, nullptr));
     zes_power_burst_limit_t burstSet = {};
     burstSet.enabled = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->setLimits(nullptr, &burstSet, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimits(handles[0], nullptr, &burstSet, nullptr));
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenScanDirectoriesFailAndPmtIsNotNullPointerThenPowerModuleIsSupported) {
@@ -487,52 +465,77 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenComponentCountZeroWhenEnumeratingPower
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
+    pSysfsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->isPowerModuleSupported();
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    zes_power_properties_t properties{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
+    for (auto handle : handles) {
+        zes_power_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
+    pSysfsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pPmt->preadFunction = preadMockPower;
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
+    uint32_t subdeviceId = 0;
+    do {
+        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
+        pPmt->preadFunction = preadMockPower;
+    } while (++subdeviceId < subDeviceCount);
 
-    zes_power_energy_counter_t energyCounter;
-    uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-    EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter;
+        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFileReturnsErrorAndPmtFailsThenFailureIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = nullptr;
-    pLinuxPowerImp->isPowerModuleSupported();
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    zes_power_energy_counter_t energyCounter = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+        delete subDeviceIdToPmtEntry.second;
+    }
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    uint32_t subdeviceId = 0;
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    do {
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, nullptr);
+    } while (++subdeviceId < subDeviceCount);
+
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(subDeviceCount);
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetEnergyCounter(handle, &energyCounter));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
@@ -593,71 +596,78 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingPowerEnergy
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
+    pSysfsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    zes_power_sustained_limit_t sustained;
-    zes_power_burst_limit_t burst;
-    zes_power_peak_limit_t peak;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimits(&sustained, &burst, &peak));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustained;
+        zes_power_burst_limit_t burst;
+        zes_power_peak_limit_t peak;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, &sustained, &burst, &peak));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
+    pSysfsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    zes_power_sustained_limit_t sustained;
-    zes_power_burst_limit_t burst;
-    zes_power_peak_limit_t peak;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimits(&sustained, &burst, &peak));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustained;
+        zes_power_burst_limit_t burst;
+        zes_power_peak_limit_t peak;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, &sustained, &burst, &peak));
+    }
 }
 
 TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFailsThenValidPowerReadingsRetrievedFromPmt) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    pSysFsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysFsAccess->isRepeated = true;
+    pSysfsAccess->mockScanDirEntriesReturnStatus.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isRepeated = true;
 
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pPmt->preadFunction = preadMockPower;
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
+    uint32_t subdeviceId = 0;
+    do {
+        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
+        pPmt->preadFunction = preadMockPower;
+    } while (++subdeviceId < subDeviceCount);
 
-    zes_power_energy_counter_t energyCounter;
-    uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-    EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    for (auto handle : handles) {
+        zes_power_energy_counter_t energyCounter;
+        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandlesWhenCallingSetAndGetPowerLimitExtWhenHwmonInterfaceExistThenUnsupportedFeatureIsReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        uint32_t limitCount = 0;
 
-    uint32_t limitCount = 0;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getLimitsExt(&limitCount, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->setLimitsExt(&limitCount, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &limitCount, nullptr));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesExtThenApiReturnsFailure) {
@@ -674,25 +684,21 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesExtWithoutStypeThenExtPropertiesAreNotReturned) {
 
-    auto pSysFsAccess = std::make_unique<MockPowerSysfsAccessInterface>();
-    auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
-    pLinuxPowerImp->pSysfsAccess = pSysFsAccess.get();
-    pLinuxPowerImp->pPmt = pPmt;
-    pLinuxPowerImp->isPowerModuleSupported();
+    auto handles = getPowerHandles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
 
-    zes_power_properties_t properties = {};
-    zes_power_ext_properties_t extProperties = {};
-
-    properties.pNext = &extProperties;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
-    EXPECT_FALSE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
-    EXPECT_EQ(properties.canControl, true);
-    EXPECT_EQ(properties.isEnergyThresholdSupported, false);
-    EXPECT_EQ(properties.defaultLimit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
-    EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
-    EXPECT_EQ(properties.minLimit, static_cast<int32_t>(mockMinPowerLimitVal / milliFactor));
+        properties.pNext = &extProperties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.canControl, true);
+        EXPECT_EQ(properties.isEnergyThresholdSupported, false);
+        EXPECT_EQ(properties.defaultLimit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.maxLimit, static_cast<int32_t>(mockMaxPowerLimitVal / milliFactor));
+        EXPECT_EQ(properties.minLimit, static_cast<int32_t>(mockMinPowerLimitVal / milliFactor));
+    }
 }
 
 TEST_F(SysmanDevicePowerFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesForPowerForXeVersionThenProperPathsAreReturned) {

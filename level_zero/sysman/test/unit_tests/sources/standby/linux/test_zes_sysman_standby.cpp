@@ -5,7 +5,6 @@
  *
  */
 
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/standby/linux/mock_sysfs_standby.h"
 

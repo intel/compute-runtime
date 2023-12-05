@@ -107,13 +107,6 @@ class PublicLinuxStandbyImp : public L0::Sysman::LinuxStandbyImp {
     using L0::Sysman::LinuxStandbyImp::pSysmanKmdInterface;
 };
 
-class PublicSysmanKmdInterfaceI915 : public L0::Sysman::SysmanKmdInterfaceI915Upstream {
-  public:
-    PublicSysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) : L0::Sysman::SysmanKmdInterfaceI915Upstream(productFamily) {}
-    ~PublicSysmanKmdInterfaceI915() override = default;
-    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-};
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
