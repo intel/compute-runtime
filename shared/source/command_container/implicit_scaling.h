@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/vec.h"
 
@@ -52,10 +53,10 @@ struct ImplicitScalingDispatch {
                                  WalkerType &walkerCmd,
                                  void **outWalkerPtr,
                                  const DeviceBitfield &devices,
+                                 RequiredPartitionDim requiredPartitionDim,
                                  uint32_t &partitionCount,
                                  bool useSecondaryBatchBuffer,
                                  bool apiSelfCleanup,
-                                 bool usesImages,
                                  bool dcFlush,
                                  bool forceExecutionOnSingleTile,
                                  uint64_t workPartitionAllocationGpuVa,

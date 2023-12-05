@@ -93,10 +93,10 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                           WalkerType &walkerCmd,
                                                           void **outWalkerPtr,
                                                           const DeviceBitfield &devices,
+                                                          NEO::RequiredPartitionDim requiredPartitionDim,
                                                           uint32_t &partitionCount,
                                                           bool useSecondaryBatchBuffer,
                                                           bool apiSelfCleanup,
-                                                          bool usesImages,
                                                           bool dcFlush,
                                                           bool forceExecutionOnSingleTile,
                                                           uint64_t workPartitionAllocationGpuVa,
@@ -106,7 +106,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
     const bool preferStaticPartitioning = workPartitionAllocationGpuVa != 0u;
 
     bool staticPartitioning = false;
-    partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily, WalkerType>(&walkerCmd, tileCount, preferStaticPartitioning, usesImages, &staticPartitioning);
+    partitionCount = WalkerPartition::computePartitionCountAndSetPartitionType<GfxFamily, WalkerType>(&walkerCmd, requiredPartitionDim, tileCount, preferStaticPartitioning, &staticPartitioning);
 
     WalkerPartition::WalkerPartitionArgs args = prepareWalkerPartitionArgs<GfxFamily>(workPartitionAllocationGpuVa,
                                                                                       tileCount,

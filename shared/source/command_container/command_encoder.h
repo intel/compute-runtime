@@ -11,6 +11,7 @@
 #include "shared/source/command_container/encode_alu_helper.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_execution_type.h"
@@ -52,6 +53,9 @@ struct EncodeDispatchKernelArgs {
     void *outWalkerPtr = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
+    NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::None;
+    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::None;
+    uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t partitionCount = 0u;
     bool isIndirect = false;
     bool isPredicate = false;
@@ -87,6 +91,8 @@ struct EncodeWalkerArgs {
     KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     bool requiredSystemFence = false;
     const KernelDescriptor &kernelDescriptor;
+    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::None;
+    uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
 };
 
 template <typename GfxFamily>

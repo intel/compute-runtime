@@ -37,29 +37,32 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
                                                                                      bool requiresUncachedMocs) {
 
     EncodeDispatchKernelArgs args{
-        0,                        // eventAddress
-        0,                        // postSyncImmValue
-        device,                   // device
-        dispatchInterface,        // dispatchInterface
-        nullptr,                  // surfaceStateHeap
-        nullptr,                  // dynamicStateHeap
-        threadGroupDimensions,    // threadGroupDimensions
-        nullptr,                  // outWalkerPtr
-        nullptr,                  // additionalCommands
-        PreemptionMode::Disabled, // preemptionMode
-        1,                        // partitionCount
-        false,                    // isIndirect
-        false,                    // isPredicate
-        false,                    // isTimestampEvent
-        requiresUncachedMocs,     // requiresUncachedMocs
-        false,                    // useGlobalAtomics
-        false,                    // isInternal
-        false,                    // isCooperative
-        false,                    // isHostScopeSignalEvent
-        false,                    // isKernelUsingSystemAllocation
-        false,                    // isKernelDispatchedFromImmediateCmdList
-        false,                    // isRcs
-        false                     // dcFlushEnable
+        0,                                          // eventAddress
+        0,                                          // postSyncImmValue
+        device,                                     // device
+        dispatchInterface,                          // dispatchInterface
+        nullptr,                                    // surfaceStateHeap
+        nullptr,                                    // dynamicStateHeap
+        threadGroupDimensions,                      // threadGroupDimensions
+        nullptr,                                    // outWalkerPtr
+        nullptr,                                    // additionalCommands
+        PreemptionMode::Disabled,                   // preemptionMode
+        NEO::RequiredPartitionDim::None,            // requiredPartitionDim
+        NEO::RequiredDispatchWalkOrder::None,       // requiredDispatchWalkOrder
+        NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
+        1,                                          // partitionCount
+        false,                                      // isIndirect
+        false,                                      // isPredicate
+        false,                                      // isTimestampEvent
+        requiresUncachedMocs,                       // requiresUncachedMocs
+        false,                                      // useGlobalAtomics
+        false,                                      // isInternal
+        false,                                      // isCooperative
+        false,                                      // isHostScopeSignalEvent
+        false,                                      // isKernelUsingSystemAllocation
+        false,                                      // isKernelDispatchedFromImmediateCmdList
+        false,                                      // isRcs
+        false                                       // dcFlushEnable
     };
 
     return args;

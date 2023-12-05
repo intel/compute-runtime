@@ -635,29 +635,32 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     const uint32_t threadGroupDimensions[3] = {1, 1, 1};
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,                                    // eventAddress
-        0,                                    // postSyncImmValue
-        device->getNEODevice(),               // device
-        kernel.get(),                         // dispatchInterface
-        nullptr,                              // surfaceStateHeap
-        nullptr,                              // dynamicStateHeap
-        threadGroupDimensions,                // threadGroupDimensions
-        nullptr,                              // outWalkerPtr
-        nullptr,                              // additionalCommands
-        PreemptionMode::MidBatch,             // preemptionMode
-        0,                                    // partitionCount
-        false,                                // isIndirect
-        false,                                // isPredicate
-        false,                                // isTimestampEvent
-        false,                                // requiresUncachedMocs
-        false,                                // useGlobalAtomics
-        false,                                // isInternal
-        false,                                // isCooperative
-        false,                                // isHostScopeSignalEvent
-        false,                                // isKernelUsingSystemAllocation
-        false,                                // isKernelDispatchedFromImmediateCmdList
-        false,                                // isRcs
-        commandList->getDcFlushRequired(true) // dcFlushEnable
+        0,                                          // eventAddress
+        0,                                          // postSyncImmValue
+        device->getNEODevice(),                     // device
+        kernel.get(),                               // dispatchInterface
+        nullptr,                                    // surfaceStateHeap
+        nullptr,                                    // dynamicStateHeap
+        threadGroupDimensions,                      // threadGroupDimensions
+        nullptr,                                    // outWalkerPtr
+        nullptr,                                    // additionalCommands
+        PreemptionMode::MidBatch,                   // preemptionMode
+        NEO::RequiredPartitionDim::None,            // requiredPartitionDim
+        NEO::RequiredDispatchWalkOrder::None,       // requiredDispatchWalkOrder
+        NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
+        0,                                          // partitionCount
+        false,                                      // isIndirect
+        false,                                      // isPredicate
+        false,                                      // isTimestampEvent
+        false,                                      // requiresUncachedMocs
+        false,                                      // useGlobalAtomics
+        false,                                      // isInternal
+        false,                                      // isCooperative
+        false,                                      // isHostScopeSignalEvent
+        false,                                      // isKernelUsingSystemAllocation
+        false,                                      // isKernelDispatchedFromImmediateCmdList
+        false,                                      // isRcs
+        commandList->getDcFlushRequired(true)       // dcFlushEnable
     };
     EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs), std::exception);
 }

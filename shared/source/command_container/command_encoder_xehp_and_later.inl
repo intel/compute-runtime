@@ -393,7 +393,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeWalkerArgs walkerArgs{
         args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType,
         args.isHostScopeSignalEvent && args.isKernelUsingSystemAllocation,
-        kernelDescriptor};
+        kernelDescriptor,
+        args.requiredDispatchWalkOrder,
+        args.additionalSizeParam};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
@@ -407,10 +409,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           walkerCmd,
                                                           &args.outWalkerPtr,
                                                           args.device->getDeviceBitfield(),
+                                                          args.requiredPartitionDim,
                                                           args.partitionCount,
                                                           !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),
                                                           !args.isKernelDispatchedFromImmediateCmdList,
-                                                          false,
                                                           args.dcFlushEnable,
                                                           args.isCooperative,
                                                           workPartitionAllocationGpuVa,

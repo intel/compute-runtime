@@ -185,9 +185,9 @@ uint32_t computePartitionCountAndPartitionType(uint32_t preferredMinimalPartitio
 
 template <typename GfxFamily, typename WalkerType>
 uint32_t computePartitionCountAndSetPartitionType(WalkerType *walker,
+                                                  NEO::RequiredPartitionDim requiredPartitionDim,
                                                   uint32_t preferredMinimalPartitionCount,
                                                   bool preferStaticPartitioning,
-                                                  bool usesImages,
                                                   bool *outSelectStaticPartitioning) {
 
     using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
@@ -195,9 +195,22 @@ uint32_t computePartitionCountAndSetPartitionType(WalkerType *walker,
     const Vec3<size_t> groupStart = {walker->getThreadGroupIdStartingX(), walker->getThreadGroupIdStartingY(), walker->getThreadGroupIdStartingZ()};
     const Vec3<size_t> groupCount = {walker->getThreadGroupIdXDimension(), walker->getThreadGroupIdYDimension(), walker->getThreadGroupIdZDimension()};
     std::optional<PARTITION_TYPE> requestedPartitionType{};
-    if (usesImages) {
+
+    switch (requiredPartitionDim) {
+    case NEO::RequiredPartitionDim::X:
         requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_X;
+        break;
+    case NEO::RequiredPartitionDim::Y:
+        requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Y;
+        break;
+    case NEO::RequiredPartitionDim::Z:
+        requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Z;
+        break;
+    default:
+        UNRECOVERABLE_IF(requiredPartitionDim != NEO::RequiredPartitionDim::None);
+        break;
     }
+
     PARTITION_TYPE partitionType{};
     const auto partitionCount = computePartitionCountAndPartitionType<GfxFamily, WalkerType>(preferredMinimalPartitionCount,
                                                                                              preferStaticPartitioning,

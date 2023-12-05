@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -141,7 +142,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor};
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, NEO::RequiredDispatchWalkOrder::None, 0};
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
@@ -159,10 +160,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                                                   walkerCmd,
                                                                                   nullptr,
                                                                                   devices,
+                                                                                  kernel.usesImages() ? RequiredPartitionDim::X : RequiredPartitionDim::None,
                                                                                   partitionCount,
                                                                                   false,
                                                                                   false,
-                                                                                  kernel.usesImages(),
                                                                                   queueCsr.getDcFlushSupport(),
                                                                                   kernel.isSingleSubdevicePreferred(),
                                                                                   workPartitionAllocationGpuVa,

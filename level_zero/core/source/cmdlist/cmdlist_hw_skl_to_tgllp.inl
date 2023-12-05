@@ -200,6 +200,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         nullptr,                                                // outWalkerPtr
         &additionalCommands,                                    // additionalCommands
         commandListPreemptionMode,                              // preemptionMode
+        launchParams.requiredPartitionDim,                      // requiredPartitionDim
+        launchParams.requiredDispatchWalkOrder,                 // requiredDispatchWalkOrder
+        launchParams.additionalSizeParam,                       // additionalSizeParam
         0,                                                      // partitionCount
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate

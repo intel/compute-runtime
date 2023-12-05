@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <limits>
+
 namespace NEO {
 struct RootDeviceEnvironment;
 
@@ -24,4 +27,21 @@ struct MiFlushArgs {
     EncodeDummyBlitWaArgs &waArgs;
     MiFlushArgs(EncodeDummyBlitWaArgs &args) : waArgs(args) {}
 };
+
+enum class RequiredPartitionDim : uint32_t {
+    None = 0,
+    X,
+    Y,
+    Z
+};
+
+enum class RequiredDispatchWalkOrder : uint32_t {
+    None = 0,
+    X,
+    Y,
+    Additional
+};
+
+static constexpr uint32_t additionalKernelLaunchSizeParamNotSet = 0;
+
 } // namespace NEO

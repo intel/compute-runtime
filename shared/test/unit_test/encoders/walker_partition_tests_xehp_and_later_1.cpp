@@ -1288,7 +1288,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     checkForProperCmdBufferAddressOffset = false;
     bool preferredStaticPartitioning = true;
     bool staticPartitioning = false;
-    auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, 4u, preferredStaticPartitioning, false, &staticPartitioning);
+    auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::None, 4u, preferredStaticPartitioning, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
