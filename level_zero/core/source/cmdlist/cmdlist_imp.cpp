@@ -37,6 +37,9 @@ CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPer
     if (NEO::debugManager.flags.SplitBcsSize.get() != -1) {
         this->minimalSizeForBcsSplit = NEO::debugManager.flags.SplitBcsSize.get() * MemoryConstants::kiloByte;
     }
+
+    commandsToPatch.reserve(16);
+    returnPoints.reserve(32);
 }
 
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};

@@ -81,8 +81,8 @@ struct CommandList : _ze_command_list_handle_t {
         void *pCommand = nullptr;
         CommandType type = Invalid;
     };
-    using CommandsToPatch = StackVec<CommandToPatch, 16>;
-    using CmdListReturnPoints = StackVec<CmdListReturnPoint, 32>;
+    using CommandsToPatch = std::vector<CommandToPatch>;
+    using CmdListReturnPoints = std::vector<CmdListReturnPoint>;
 
     virtual ze_result_t close() = 0;
     virtual ze_result_t destroy() = 0;
