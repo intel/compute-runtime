@@ -203,11 +203,20 @@ cl_int Program::createProgramFromBinary(
 
             auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
             bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
-            rebuild |= debugManager.flags.RebuildPrecompiledKernels.get();
+            bool flagRebuild = debugManager.flags.RebuildPrecompiledKernels.get();
 
-            if (rebuild && 0u == this->irBinarySize) {
-                return CL_INVALID_BINARY;
+            if (0u == this->irBinarySize) {
+                if (flagRebuild) {
+                    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Skip rebuild binary. Lack of IR, rebuild impossible.\n");
+                }
+                if (rebuild) {
+                    return CL_INVALID_BINARY;
+                }
+                rebuild = 0;
+            } else {
+                rebuild |= flagRebuild;
             }
+
             if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();

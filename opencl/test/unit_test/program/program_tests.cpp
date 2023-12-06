@@ -2766,9 +2766,10 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingBuiltInProgramT
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, "-abc")) << cip->buildInternalOptions;
 }
 
-TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsNotPresentThenErrorIsReturned) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsNotPresentThenSkipRebuildPrintDebugMssageAndReturnSuccess) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.RebuildPrecompiledKernels.set(true);
+    debugManager.flags.PrintDebugMessages.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
@@ -2779,8 +2780,38 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     pProgram->irBinarySize = 0x10;
+    ::testing::internal::CaptureStderr();
     retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_FALSE(pProgram->requiresRebuild);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    std::string expectedOutput = "Skip rebuild binary. Lack of IR, rebuild impossible.\n";
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(CreateProgramFromBinaryTests, givenCreateProgramFromBinaryWhenIrBinaryIsNotPresentAndIsRebuiltToPatchtokensRequiredThenReturnClInvalidBinary) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.RebuildPrecompiledKernels.set(false);
+    cl_int retVal = CL_INVALID_BINARY;
+
+    ZebinTestData::ValidEmptyProgram zebin;
+
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), zebin.storage.data(), zebin.storage.size(), &retVal));
+    ASSERT_NE(nullptr, pProgram.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pProgram->irBinarySize = 0x10;
+    pProgram->isBuiltIn = false;
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = true;
+
+    pProgram->buildInfos[rootDeviceIndex].kernelInfoArray.push_back(&kernelInfo);
+    retVal = pProgram->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *clDevice);
+    EXPECT_FALSE(pProgram->requiresRebuild);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
+    pProgram->buildInfos[rootDeviceIndex].kernelInfoArray.clear();
 }
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsPresentThenDeviceBinaryIsNotUsed) {
