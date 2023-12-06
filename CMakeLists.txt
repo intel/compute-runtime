@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -427,6 +427,14 @@ if(NOT DISABLE_LIBVA)
         message(STATUS "LibVA include dirs: ${NEO__LIBVA_INCLUDE_DIR}")
       endif()
     endif()
+  endif()
+endif()
+
+if(UNIX)
+  if(NOT DEFINED NUMA_HEADERS_DIR)
+    get_filename_component(NUMA_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/numa" ABSOLUTE)
+    message(STATUS "NUMA config headers dir: ${NUMA_HEADERS_DIR}")
+    include_directories("${NUMA_HEADERS_DIR}")
   endif()
 endif()
 

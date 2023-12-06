@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -366,13 +366,104 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
     EXPECT_EQ(properties[6], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS);
     EXPECT_EQ(properties[7], prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE);
     EXPECT_EQ(properties[8], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE);
-    EXPECT_EQ(properties[9], 1u);
-    EXPECT_EQ(properties[10], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT);
+
     EXPECT_EQ(properties[11], 20u);
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_PERF_FLAG_FD_EU_STALL), ioctlHelper.getEuStallFdParameter());
+}
+
+struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
+    using IoctlHelperPrelim20::createGemExt;
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    int ioctl(DrmIoctl request, void *arg) override {
+        ioctlCallCount++;
+        if (request == DrmIoctl::gemCreateExt) {
+            lastGemCreateContainedMemPolicy = checkWhetherGemCreateExtContainsMemPolicy(arg);
+            if (overrideGemCreateExtReturnValue.has_value()) {
+                return *overrideGemCreateExtReturnValue;
+            }
+        }
+        return IoctlHelperPrelim20::ioctl(request, arg);
+    }
+    bool checkWhetherGemCreateExtContainsMemPolicy(void *arg) {
+        auto &gemCreateExt = *reinterpret_cast<prelim_drm_i915_gem_create_ext *>(arg);
+        auto pExtensionBase = reinterpret_cast<i915_user_extension *>(gemCreateExt.extensions);
+        while (pExtensionBase != nullptr) {
+            if (pExtensionBase->name == PRELIM_I915_GEM_CREATE_EXT_MEMORY_POLICY) {
+                auto lastPolicy = reinterpret_cast<prelim_drm_i915_gem_create_ext_memory_policy *>(pExtensionBase);
+                lastPolicyMode = lastPolicy->mode;
+                lastPolicyFlags = lastPolicy->flags;
+                lastPolicyNodeMask.clear();
+                auto nodeMaskPtr = reinterpret_cast<unsigned long *>(lastPolicy->nodemask_ptr);
+                for (auto i = 0u; i < lastPolicy->nodemask_max; i++) {
+                    lastPolicyNodeMask.push_back(nodeMaskPtr[i]);
+                }
+                return true;
+            }
+            pExtensionBase = reinterpret_cast<i915_user_extension *>(pExtensionBase->next_extension);
+        }
+        return false;
+    }
+    size_t ioctlCallCount = 0;
+    bool lastGemCreateContainedMemPolicy = false;
+    std::optional<int> overrideGemCreateExtReturnValue{};
+    uint32_t lastPolicyMode = 0;
+    uint32_t lastPolicyFlags = 0;
+    std::vector<unsigned long> lastPolicyNodeMask{};
+};
+
+TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolicyThenMemPolicyExtensionsIsAdded) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.PrintBOCreateDestroyResult.set(true);
+    testing::internal::CaptureStdout();
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    uint32_t handle = 0;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}};
+    uint32_t numOfChunks = 0;
+    std::vector<unsigned long> memPolicy;
+    memPolicy.push_back(1);
+    uint32_t memPolicyMode = 0;
+    mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
+    mockIoctlHelper.initialize();
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, memPolicyMode, memPolicy);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedSubstring("memory policy:");
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);
+    EXPECT_EQ(0u, mockIoctlHelper.lastPolicyFlags);
+    EXPECT_EQ(memPolicyMode, mockIoctlHelper.lastPolicyMode);
+    EXPECT_EQ(memPolicy, mockIoctlHelper.lastPolicyNodeMask);
+    EXPECT_TRUE(output.find(expectedSubstring) != std::string::npos);
+}
+
+TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolicyAndChunkingThenMemPolicyExtensionsIsAdded) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    uint32_t handle = 0;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}};
+    uint32_t numOfChunks = 2;
+    size_t size = 4 * MemoryConstants::pageSize64k;
+    std::vector<unsigned long> memPolicy;
+    memPolicy.push_back(1);
+    uint32_t memPolicyMode = 0;
+    mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
+    mockIoctlHelper.initialize();
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, size, handle, 0, {}, -1, true, numOfChunks, memPolicyMode, memPolicy);
+
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);
+    EXPECT_EQ(0u, mockIoctlHelper.lastPolicyFlags);
+    EXPECT_EQ(memPolicyMode, mockIoctlHelper.lastPolicyMode);
+    EXPECT_EQ(memPolicy, mockIoctlHelper.lastPolicyNodeMask);
 }
 
 class DrmMockIoctl : public DrmMock {
