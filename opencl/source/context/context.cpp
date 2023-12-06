@@ -541,6 +541,7 @@ Buffer *Context::BufferPool::allocate(const MemoryProperties &memoryProperties,
         return nullptr;
     }
     bufferRegion.origin -= BufferPool::startingOffset;
+    DEBUG_BREAK_IF(bufferRegion.origin >= BufferPool::aggregatedSmallBuffersPoolSize);
     bufferRegion.size = requestedSize;
     auto bufferFromPool = this->mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
     bufferFromPool->createFunction = this->mainStorage->createFunction;

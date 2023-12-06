@@ -52,6 +52,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         debugManager.flags.RenderCompressedBuffersEnabled.set(true);
         debugManager.flags.RenderCompressedImagesEnabled.set(true);
         debugManager.flags.EnableFreeMemory.set(false);
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
 
         MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, true);
 
@@ -100,7 +101,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
 
         EXPECT_EQ(CL_SUCCESS, retVal);
         if (compressed) {
-            EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);
+            EXPECT_TRUE(graphicsAllocation->isCompressionEnabled());
         }
         EXPECT_EQ(!inLocalMemory, MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()));
 
