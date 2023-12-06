@@ -65,8 +65,10 @@ __kernel void image_copy(__global char *dst, image2d_t img){
     dst[dstOffset + 1] = data.y;
     dst[dstOffset + 2] = data.z;
     dst[dstOffset + 3] = data.w;
-
-    printf("gid(0) = %d gid(1) = %d  dstOffset = %d  data.x = %d\n",  get_global_id(0),  get_global_id(1), dstOffset, data.x);
+    
+    if(get_global_id(0) == 0){
+        printf("gid(0) = %d gid(1) = %d  dstOffset = %d  data.x = %d\n",  get_global_id(0),  get_global_id(1), dstOffset, data.x);
+    }
 }
 
 )===";
@@ -80,12 +82,22 @@ enum class ExecutionMode : uint32_t {
     ImmSyncCmdList
 };
 
-void createModule(const char *sourceCode, bool bindless, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module) {
+enum class AddressingMode : uint32_t {
+    Default,
+    Bindless,
+    BindlessImages
+};
+
+void createModule(const char *sourceCode, AddressingMode addressing, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module) {
     std::string buildLog;
     std::string bindlessOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
+    std::string bindlessImagesOptions = "-cl-intel-use-bindless-images -cl-intel-use-bindless-advanced-mode";
     std::string internalOptions = "";
-    if (bindless) {
+    if (addressing == AddressingMode::Bindless) {
         internalOptions = bindlessOptions;
+    }
+    if (addressing == AddressingMode::BindlessImages) {
+        internalOptions = bindlessImagesOptions;
     }
     auto bin = LevelZeroBlackBoxTests::compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
     if (buildLog.size() > 0) {
@@ -188,8 +200,8 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
 
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
-    createModule(source, true, context, device, deviceId, revisionId, module);
-    createModule(source2, false, context, device, deviceId, revisionId, module2);
+    createModule(source, AddressingMode::Bindless, context, device, deviceId, revisionId, module);
+    createModule(source2, AddressingMode::Default, context, device, deviceId, revisionId, module2);
 
     ExecutionMode executionModes[] = {ExecutionMode::CommandQueue, ExecutionMode::ImmSyncCmdList};
     ze_kernel_handle_t copyKernel = nullptr;
@@ -214,13 +226,14 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
     return outputValidated;
 }
 
-bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId, int imageCount) {
+bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId,
+                        int imageCount, AddressingMode mode) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t copyKernel = nullptr;
 
-    createModule(source3, true, context, device, deviceId, revisionId, module);
+    createModule(source3, mode, context, device, deviceId, revisionId, module);
     createKernel(module, copyKernel, kernelName3.c_str());
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
@@ -351,23 +364,44 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
-    int testCase = 0;
-    testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", 0);
+    int testCase = -1;
+    testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
 
-    switch (testCase) {
-    default:
-    case 0:
-        std::cout << "test case: testBindlessBufferCopy\n"
-                  << std::endl;
-        outputValidated = testBindlessBufferCopy(context, device, ss.str(), revisionId);
-        break;
-    case 1:
-        std::cout << "test case: testBindlessImages\n"
-                  << std::endl;
-        auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", 4 * 4096 + 8);
-        std::cout << "--image-count: " << imageCount << std::endl;
-        outputValidated = testBindlessImages(context, device, ss.str(), revisionId, imageCount);
-        break;
+    for (int i = 0; i < 2; i++) {
+        if (testCase != -1) {
+            i = testCase;
+        }
+
+        switch (i) {
+        default:
+        case 0:
+            std::cout << "test case: testBindlessBufferCopy\n"
+                      << std::endl;
+            outputValidated = testBindlessBufferCopy(context, device, ss.str(), revisionId);
+            break;
+        case 1:
+            if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
+                std::cout << "test case: testBindlessImages\n"
+                          << std::endl;
+                int defaultImageCount = testCase == 1 ? 4 * 4096 + 8 : 4;
+                auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", defaultImageCount);
+                auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
+
+                AddressingMode mode = bindlessImages ? AddressingMode::BindlessImages : AddressingMode::Bindless;
+                std::cout << "--image-count: " << imageCount << std::endl;
+
+                if (bindlessImages) {
+                    std::cout << "--bindless-images " << std::endl;
+                }
+
+                outputValidated = testBindlessImages(context, device, ss.str(), revisionId, imageCount, mode);
+            }
+            break;
+        }
+
+        if (testCase != -1) {
+            break;
+        }
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

@@ -449,6 +449,7 @@ void printDeviceProperties(const ze_device_properties_t &props) {
                   << " * isSubdevice : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE)) << "\n"
                   << " * eccMemorySupported : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_ECC)) << "\n"
                   << " * onDemandPageFaultsSupported : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING)) << "\n"
+                  << " * integrated : " << std::boolalpha << static_cast<bool>(!!(props.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) << "\n"
                   << " * maxCommandQueuePriority  : " << props.maxCommandQueuePriority << "\n"
                   << " * numThreadsPerEU  : " << props.numThreadsPerEU << "\n"
                   << " * numEUsPerSubslice  : " << props.numEUsPerSubslice << "\n"
