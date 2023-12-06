@@ -13,7 +13,7 @@
  * the static hardware configuration for that platform.
  * This header defines the current attribute keys for this KLV.
  */
-enum intel_hwconfig {
+enum intel_hwconfig_keys {
 	INTEL_HWCONFIG_MAX_SLICES_SUPPORTED = 1,
 	INTEL_HWCONFIG_MAX_DUAL_SUBSLICES_SUPPORTED,		/* 2 */
 	INTEL_HWCONFIG_MAX_NUM_EU_PER_DSS,			/* 3 */
@@ -95,6 +95,10 @@ enum intel_hwconfig {
 	INTEL_HWCONFIG_NUM_HBM_STACKS_PER_TILE,			/* 74 */
 	INTEL_HWCONFIG_NUM_CHANNELS_PER_HBM_STACK,		/* 75 */
 	INTEL_HWCONFIG_HBM_CHANNEL_WIDTH_IN_BYTES,		/* 76 */
+	INTEL_HWCONFIG_MIN_TASK_URB_ENTRIES,			/* 77 */
+	INTEL_HWCONFIG_MAX_TASK_URB_ENTRIES,			/* 78 */
+	INTEL_HWCONFIG_MIN_MESH_URB_ENTRIES,			/* 79 */
+	INTEL_HWCONFIG_MAX_MESH_URB_ENTRIES,			/* 80 */
 	__INTEL_HWCONFIG_MAX
 };
 
