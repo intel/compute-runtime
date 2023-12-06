@@ -1,0 +1,31 @@
+#
+# Copyright (C) 2023 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+# by default if not on the list test is run on all platforms
+
+# include: [list] -> list of platfroms on which test will be run
+# exclude: [list] -> list of platfroms on which test will not be run
+# include and exclude are mutually exclusive
+# skip: [boolean] -> flag to skip test on all platforms
+
+zello_ipc_copy_dma_buf:
+  skip: true
+
+zello_ipc_copy_dma_buf_p2p:
+  skip: true
+
+zello_timestamp:
+  skip: true
+
+zello_world_gpu:
+  skip: true
+
+zello_world_usm:
+  skip: true
+
+zello_function_pointers_cl:
+  exclude:
+    - skl
