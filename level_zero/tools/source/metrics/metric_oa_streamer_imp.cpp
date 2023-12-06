@@ -166,21 +166,6 @@ ze_result_t OaMetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports
     return result;
 }
 
-void OaMetricStreamerImp::attachEvent(ze_event_handle_t hNotificationEvent) {
-    // Associate notification event with metric streamer.
-    pNotificationEvent = Event::fromHandle(hNotificationEvent);
-    if (pNotificationEvent != nullptr) {
-        pNotificationEvent->setMetricStreamer(this);
-    }
-}
-
-void OaMetricStreamerImp::detachEvent() {
-    // Release notification event.
-    if (pNotificationEvent != nullptr) {
-        pNotificationEvent->setMetricStreamer(nullptr);
-    }
-}
-
 ze_result_t OaMetricStreamerImp::stopMeasurements() {
     auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
 

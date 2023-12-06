@@ -166,7 +166,16 @@ struct MetricGroupCalculateHeader {
     uint32_t rawDataOffset;
 };
 
-struct MetricStreamer : _zet_metric_streamer_handle_t {
+struct MetricCollectorEventNotify {
+    virtual Event::State getNotificationState() = 0;
+    void attachEvent(ze_event_handle_t hNotificationEvent);
+    void detachEvent();
+
+  protected:
+    Event *pNotificationEvent = nullptr;
+};
+
+struct MetricStreamer : _zet_metric_streamer_handle_t, MetricCollectorEventNotify {
     virtual ~MetricStreamer() = default;
     virtual ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                  uint8_t *pRawData) = 0;
@@ -175,7 +184,6 @@ struct MetricStreamer : _zet_metric_streamer_handle_t {
         return static_cast<MetricStreamer *>(handle);
     }
     virtual ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) = 0;
-    virtual Event::State getNotificationState() = 0;
     inline zet_metric_streamer_handle_t toHandle() { return this; }
 };
 

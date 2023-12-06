@@ -35,7 +35,7 @@ struct RootDeviceEnvironment;
 namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
-struct MetricStreamer;
+struct MetricCollectorEventNotify;
 struct ContextImp;
 struct Context;
 struct CommandQueue;
@@ -235,8 +235,8 @@ struct Event : _ze_event_handle_t {
     bool isWaitScope() const {
         return !!waitScope;
     }
-    void setMetricStreamer(MetricStreamer *metricStreamer) {
-        this->metricStreamer = metricStreamer;
+    void setMetricNotification(MetricCollectorEventNotify *metricNotification) {
+        this->metricNotification = metricNotification;
     }
     void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::ExplicitlyEnabled) || (counterBasedMode == CounterBasedMode::ImplicitlyEnabled)); }
@@ -288,8 +288,8 @@ struct Event : _ze_event_handle_t {
     size_t gpuStartTimestamp = 0u;
     size_t gpuEndTimestamp = 0u;
 
-    // Metric streamer instance associated with the event.
-    MetricStreamer *metricStreamer = nullptr;
+    // Metric instance associated with the event.
+    MetricCollectorEventNotify *metricNotification = nullptr;
     StackVec<NEO::CommandStreamReceiver *, 1> csrs;
     void *hostAddress = nullptr;
     Device *device = nullptr;

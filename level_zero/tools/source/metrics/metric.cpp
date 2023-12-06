@@ -343,4 +343,19 @@ bool MultiDomainDeferredActivationTracker::isMetricGroupActivatedInHw() const {
     return false;
 }
 
+void MetricCollectorEventNotify::attachEvent(ze_event_handle_t hEvent) {
+    // Associate L0 notification event with metric notification.
+    pNotificationEvent = Event::fromHandle(hEvent);
+    if (pNotificationEvent != nullptr) {
+        pNotificationEvent->setMetricNotification(this);
+    }
+}
+
+void MetricCollectorEventNotify::detachEvent() {
+    // Remove association to L0 event.
+    if (pNotificationEvent != nullptr) {
+        pNotificationEvent->setMetricNotification(nullptr);
+    }
+}
+
 } // namespace L0

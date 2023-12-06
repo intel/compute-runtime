@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,6 @@ struct OaMetricStreamerImp : MetricStreamer {
     ze_result_t initialize(ze_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup);
     ze_result_t startMeasurements(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs);
     Event::State getNotificationState() override;
-    void attachEvent(ze_event_handle_t hNotificationEvent);
-    void detachEvent();
 
     ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) override;
     std::vector<zet_metric_streamer_handle_t> &getMetricStreamers();

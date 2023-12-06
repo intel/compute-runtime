@@ -251,8 +251,8 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
-    if (metricStreamer != nullptr) {
-        hostEventSetValue(metricStreamer->getNotificationState());
+    if (metricNotification != nullptr) {
+        hostEventSetValue(metricNotification->getNotificationState());
     }
     if (this->tbxMode) {
         auto &allEngines = this->device->getNEODevice()->getAllEngines();

@@ -17,21 +17,6 @@
 
 namespace L0 {
 
-void IpSamplingMetricStreamerBase::attachEvent(ze_event_handle_t hNotificationEvent) {
-    // Associate notification event with metric streamer.
-    pNotificationEvent = Event::fromHandle(hNotificationEvent);
-    if (pNotificationEvent != nullptr) {
-        pNotificationEvent->setMetricStreamer(this);
-    }
-}
-
-void IpSamplingMetricStreamerBase::detachEvent() {
-    // Release notification event.
-    if (pNotificationEvent != nullptr) {
-        pNotificationEvent->setMetricStreamer(nullptr);
-    }
-}
-
 ze_result_t IpSamplingMetricGroupImp::streamerOpen(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,

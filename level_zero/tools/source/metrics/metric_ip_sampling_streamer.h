@@ -16,11 +16,6 @@ class IpSamplingMetricSourceImp;
 
 struct IpSamplingMetricStreamerBase : public MetricStreamer {
     ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
-    void attachEvent(ze_event_handle_t hNotificationEvent);
-
-  protected:
-    void detachEvent();
-    Event *pNotificationEvent = nullptr;
 };
 
 struct IpSamplingMetricStreamerImp : public IpSamplingMetricStreamerBase {
