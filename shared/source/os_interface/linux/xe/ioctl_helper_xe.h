@@ -119,6 +119,7 @@ class IoctlHelperXe : public IoctlHelper {
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     bool isImmediateVmBindRequired() const override;
+    uint16_t getCpuCachingMode();
 
   private:
     template <typename... XeLogArgs>
