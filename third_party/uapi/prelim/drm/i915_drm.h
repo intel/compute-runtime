@@ -637,6 +637,12 @@ typedef struct drm_i915_irq_wait {
 #define   I915_SCHEDULER_CAP_PRIORITY	(1ul << 1)
 #define   I915_SCHEDULER_CAP_PREEMPTION	(1ul << 2)
 #define   I915_SCHEDULER_CAP_SEMAPHORES	(1ul << 3)
+/*
+ * BUSY_STATS is deprecated on platforms with GuC based submission and will not
+ * be available at all on newer platforms. It has accuracy issues due to the
+ * conversions from tick counts to wall time.
+ * BUSY_TICKS_STATS should be used instead.
+ */
 #define   I915_SCHEDULER_CAP_ENGINE_BUSY_STATS	(1ul << 4)
 /*
  * Indicates the 2k user priority levels are statically mapped into 3 buckets as
