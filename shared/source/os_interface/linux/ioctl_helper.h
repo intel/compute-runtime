@@ -61,6 +61,7 @@ struct VmBindParams {
     uint64_t length;
     uint64_t flags;
     uint64_t extensions;
+    uint64_t patIndex;
 };
 
 struct UuidRegisterResult {
