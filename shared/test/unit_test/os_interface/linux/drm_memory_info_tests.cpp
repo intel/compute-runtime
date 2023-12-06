@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -236,7 +236,7 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemWithExtension
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
     uint32_t numOfChunks = 0;
-    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks);
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, false, nullptr);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -259,7 +259,7 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingle
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
-    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, 0, -1, false, nullptr);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);

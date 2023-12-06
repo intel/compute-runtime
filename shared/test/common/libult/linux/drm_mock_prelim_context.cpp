@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -164,21 +164,38 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
             return EINVAL;
         }
 
+        prelim_drm_i915_gem_create_ext_setparam *pairSetparamRegion = nullptr;
+        prelim_drm_i915_gem_create_ext_setparam *chunkingSetparamRegion = nullptr;
         prelim_drm_i915_gem_create_ext_vm_private *vmPrivateExt = nullptr;
-        if (extension->base.next_extension != 0) {
-
-            prelim_drm_i915_gem_create_ext_setparam *pairSetparamRegion = nullptr;
-            pairSetparamRegion = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(extension->base.next_extension);
-            if (pairSetparamRegion->base.name == PRELIM_I915_GEM_CREATE_EXT_SETPARAM) {
-                if ((pairSetparamRegion->base.name & PRELIM_I915_PARAM_SET_PAIR) == 0) {
+        prelim_drm_i915_gem_create_ext_memory_policy *memPolicyExt = nullptr;
+        void *next_extension = reinterpret_cast<void *>(extension->base.next_extension);
+        while (next_extension != 0) {
+            auto *setparamCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(next_extension);
+            if (setparamCandidate->base.name == PRELIM_I915_GEM_CREATE_EXT_SETPARAM) {
+                if ((setparamCandidate->param.param & PRELIM_I915_PARAM_SET_PAIR) != 0) {
+                    pairSetparamRegion = setparamCandidate;
+                } else if ((setparamCandidate->param.param & PRELIM_I915_PARAM_SET_CHUNK_SIZE) != 0) {
+                    chunkingSetparamRegion = setparamCandidate;
+                } else {
                     return EINVAL;
                 }
-            } else {
-                vmPrivateExt = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(extension->base.next_extension);
-                if (vmPrivateExt->base.name != PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
-                    return EINVAL;
-                }
+                next_extension = reinterpret_cast<void *>(setparamCandidate->base.next_extension);
+                continue;
             }
+            auto *vmPrivateCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(next_extension);
+            if (vmPrivateCandidate->base.name == PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
+                vmPrivateExt = vmPrivateCandidate;
+                next_extension = reinterpret_cast<void *>(vmPrivateCandidate->base.next_extension);
+                continue;
+            }
+            auto *memPolicyCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_memory_policy *>(next_extension);
+            if (memPolicyCandidate->base.name == PRELIM_I915_GEM_CREATE_EXT_MEMORY_POLICY) {
+                memPolicyExt = memPolicyCandidate;
+                next_extension = reinterpret_cast<void *>(memPolicyCandidate->base.next_extension);
+                continue;
+            }
+            // incorrect extension detected
+            return EINVAL;
         }
 
         auto data = reinterpret_cast<MemoryClassInstance *>(extension->param.data);
@@ -192,6 +209,20 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         receivedCreateGemExt->setParamExt = CreateGemExt::SetParam{extension->param.handle, extension->param.size, extension->param.param};
         if (vmPrivateExt != nullptr) {
             receivedCreateGemExt->vmPrivateExt = CreateGemExt::VmPrivate{vmPrivateExt->vm_id};
+        }
+
+        if (memPolicyExt != nullptr) {
+            receivedCreateGemExt->memPolicyExt = CreateGemExt::MemPolicy{memPolicyExt->mode, std::vector<unsigned long>()};
+            auto *memPolicyPtr = reinterpret_cast<unsigned long *>(memPolicyExt->nodemask_ptr);
+            for (auto i = 0u; i < memPolicyExt->nodemask_max; i++) {
+                receivedCreateGemExt->memPolicyExt.nodeMask.value().push_back(memPolicyPtr[i]);
+            }
+        }
+        if (pairSetparamRegion != nullptr) {
+            receivedCreateGemExt->pairSetParamExt = CreateGemExt::SetParam{pairSetparamRegion->param.handle, pairSetparamRegion->param.size, pairSetparamRegion->param.param};
+        }
+        if (chunkingSetparamRegion != nullptr) {
+            receivedCreateGemExt->chunkingSetParamExt = CreateGemExt::SetParam{chunkingSetparamRegion->param.handle, chunkingSetparamRegion->param.size, chunkingSetparamRegion->param.param};
         }
 
         receivedCreateGemExt->memoryRegions.clear();

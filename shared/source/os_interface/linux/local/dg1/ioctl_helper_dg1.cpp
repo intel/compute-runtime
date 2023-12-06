@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@ constexpr static auto gfxProduct = IGFX_DG1;
 extern bool isQueryDrmTip(const std::vector<uint64_t> &queryInfo);
 
 template <>
-int IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
-    auto ret = IoctlHelperUpstream::createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks);
+int IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask) {
+    auto ret = IoctlHelperUpstream::createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, memPolicyMode, memPolicyNodemask);
     if (ret == 0) {
         return ret;
     }

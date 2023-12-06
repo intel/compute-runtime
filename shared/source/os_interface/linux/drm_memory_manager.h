@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ class DrmMemoryManager : public MemoryManager {
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
-                                                                    uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool);
+                                                                    uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation);
 
     bool hasPageFaultsEnabled(const Device &neoDevice) override;
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;

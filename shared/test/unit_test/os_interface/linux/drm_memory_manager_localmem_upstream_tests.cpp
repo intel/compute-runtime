@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
 
-BufferObject *createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount, bool isSystemMemoryPool);
+BufferObject *createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount, bool isSystemMemoryPool, bool isHostUSMAllocation);
 
 class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
   public:
@@ -127,6 +127,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1,
                                                                                             -1,
+                                                                                            false,
                                                                                             false));
     ASSERT_NE(nullptr, bo);
     EXPECT_EQ(1u, mock->ioctlCallsCount);
@@ -449,7 +450,7 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
                                                    uint32_t memoryBanks,
                                                    size_t maxOsContextCount,
                                                    int32_t pairHandle,
-                                                   bool isSystemMemoryPool) override {
+                                                   bool isSystemMemoryPool, bool isUSMHostAllocation) override {
         memoryBankIsOne = (memoryBanks == 1) ? true : false;
         return nullptr;
     }
