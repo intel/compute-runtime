@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,6 +118,9 @@ class DrmAllocation : public GraphicsAllocation {
     size_t getMmapSize() { return this->mmapSize; }
     void setMmapSize(size_t size) { this->mmapSize = size; }
 
+    void setUsmHostAllocation(bool flag) { usmHostAllocation = flag; }
+    bool isUsmHostAllocation() { return usmHostAllocation; }
+
     OsContextLinux *getOsContext() const {
         return this->osContext;
     }
@@ -149,5 +152,7 @@ class DrmAllocation : public GraphicsAllocation {
 
     void *mmapPtr = nullptr;
     size_t mmapSize = 0u;
+
+    bool usmHostAllocation = false;
 };
 } // namespace NEO

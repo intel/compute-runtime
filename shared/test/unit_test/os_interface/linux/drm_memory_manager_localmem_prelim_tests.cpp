@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSup
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1,
                                                                                             -1,
+                                                                                            false,
                                                                                             false));
     ASSERT_NE(nullptr, bo);
 
@@ -1982,6 +1983,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1,
                                                                                             -1,
+                                                                                            false,
                                                                                             false));
     EXPECT_NE(nullptr, bo);
 

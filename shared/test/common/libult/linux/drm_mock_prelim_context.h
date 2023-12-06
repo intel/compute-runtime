@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ struct CreateGemExt {
         uint64_t param{0};
     };
     std::optional<SetParam> setParamExt{};
+    std::optional<SetParam> pairSetParamExt{};
+    std::optional<SetParam> chunkingSetParamExt{};
 
     struct MemoryClassInstance {
         uint16_t memoryClass{0};
@@ -48,6 +50,12 @@ struct CreateGemExt {
         std::optional<uint32_t> vmId{};
     };
     VmPrivate vmPrivateExt{};
+
+    struct MemPolicy {
+        std::optional<uint32_t> mode{};
+        std::optional<std::vector<unsigned long>> nodeMask{};
+    };
+    MemPolicy memPolicyExt{};
 };
 
 struct GemContextParamAcc {

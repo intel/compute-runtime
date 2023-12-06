@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks);
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt);
 
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
@@ -161,7 +161,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGet
     uint32_t handle = 0;
     uint32_t getNumOfChunks = 2;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks);
+    ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks, std::nullopt, std::nullopt);
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("GEM_CREATE_EXT BO-1 with BOChunkingSize 65536, chunkingParamRegion.param.data 65536, numOfChunks 2\n");
     EXPECT_EQ(expectedOutput, output);
@@ -178,7 +178,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllo
     uint32_t handle = 0;
     uint32_t getNumOfChunks = 2;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    EXPECT_THROW(ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks), std::runtime_error);
+    EXPECT_THROW(ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks, std::nullopt, std::nullopt), std::runtime_error);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
@@ -190,7 +190,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
-    ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks);
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, param: 0x1000000010001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 1024\n");

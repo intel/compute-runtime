@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThen
     uint32_t numOfChunks = 0;
 
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt));
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 }
 
@@ -110,7 +110,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
 
     GemVmControl test = {};
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks, std::nullopt, std::nullopt));
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 }
 
@@ -476,7 +476,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     MemRegionsVec memRegions{};
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt));
 
     EXPECT_TRUE(xeIoctlHelper->isVmBindAvailable());
 

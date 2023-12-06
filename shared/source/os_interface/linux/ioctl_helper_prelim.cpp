@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,7 +147,7 @@ bool IoctlHelperPrelim20::isVmBindAvailable() {
     return vmBindSupported;
 }
 
-int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
@@ -166,10 +166,20 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
     prelim_drm_i915_gem_create_ext_vm_private vmPrivate{};
     prelim_drm_i915_gem_create_ext_setparam pairSetparamRegion{};
     prelim_drm_i915_gem_create_ext_setparam chunkingParamRegion{};
+    prelim_drm_i915_gem_create_ext_memory_policy memPolicy{};
 
     if (vmId != std::nullopt) {
         vmPrivate.base.name = PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE;
         vmPrivate.vm_id = vmId.value();
+    }
+
+    if (memPolicyMode != std::nullopt) {
+        UNRECOVERABLE_IF(memPolicyNodemask == std::nullopt);
+        memPolicy.base.name = PRELIM_I915_GEM_CREATE_EXT_MEMORY_POLICY;
+        memPolicy.mode = memPolicyMode.value();
+        memPolicy.flags = 0;
+        memPolicy.nodemask_max = static_cast<uint32_t>(memPolicyNodemask.value().size());
+        memPolicy.nodemask_ptr = reinterpret_cast<uintptr_t>(memPolicyNodemask.value().data());
     }
 
     if (pairHandle != -1) {
@@ -186,17 +196,27 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
         UNRECOVERABLE_IF(chunkingSize & (MemoryConstants::pageSize64k - 1));
         chunkingParamRegion.param.data = chunkingSize;
         setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&chunkingParamRegion);
+        if (memPolicyMode != std::nullopt) {
+            chunkingParamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&memPolicy);
+        }
     } else {
+        auto *lastExtension = &(setparamRegion.base);
         if (vmId != std::nullopt) {
-            vmPrivate.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
             setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&vmPrivate);
-        } else if (pairHandle != -1) {
-            setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
+            lastExtension = &(vmPrivate.base);
+        }
+        if (pairHandle != -1) {
+            lastExtension->next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
+            lastExtension = &(pairSetparamRegion.base);
+        }
+        if (memPolicyMode != std::nullopt) {
+            lastExtension->next_extension = reinterpret_cast<uintptr_t>(&memPolicy);
         }
     }
 
     prelim_drm_i915_gem_create_ext createExt{};
     createExt.size = allocSize;
+
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing GEM_CREATE_EXT with { size: %lu, param: 0x%llX",
@@ -208,10 +228,17 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
             printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, ", memory class: %d, memory instance: %d",
                              region.memory_class, region.memory_instance);
         }
+        if (memPolicyMode != std::nullopt) {
+            printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                             ", memory policy:{ mode: %d, nodemask_max: 0x%d, nodemask_ptr: 0x%llX }",
+                             memPolicy.mode,
+                             memPolicy.nodemask_max,
+                             memPolicy.nodemask_ptr);
+        }
         printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
-    auto ret = IoctlHelper::ioctl(DrmIoctl::GemCreateExt, &createExt);
+    auto ret = ioctl(DrmIoctl::GemCreateExt, &createExt);
 
     if (isChunked) {
         printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,

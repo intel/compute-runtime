@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,7 @@ using NEO::PrelimI915::prelim_drm_i915_gem_clos_free;
 using NEO::PrelimI915::prelim_drm_i915_gem_clos_reserve;
 using NEO::PrelimI915::prelim_drm_i915_gem_context_param_acc;
 using NEO::PrelimI915::prelim_drm_i915_gem_create_ext;
+using NEO::PrelimI915::prelim_drm_i915_gem_create_ext_memory_policy;
 using NEO::PrelimI915::prelim_drm_i915_gem_create_ext_setparam;
 using NEO::PrelimI915::prelim_drm_i915_gem_create_ext_vm_private;
 using NEO::PrelimI915::prelim_drm_i915_gem_engine_class;

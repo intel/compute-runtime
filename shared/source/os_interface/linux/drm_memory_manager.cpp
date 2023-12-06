@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -451,7 +451,7 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
                                         bo->peekAddress(),
                                         cSize,
                                         MemoryPool::System4KBPages);
-
+    allocation->setUsmHostAllocation(true);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), cSize);
     bo.release();
 
@@ -1715,6 +1715,7 @@ inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const 
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setFlushL3Required(allocationData.flags.flushL3);
     allocation->setUncacheable(allocationData.flags.uncacheable);
+    allocation->setUsmHostAllocation(allocationData.flags.isUSMHostAllocation);
 
     return allocation;
 }
@@ -1851,7 +1852,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 }
 
 BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress,
-                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool) {
+                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) {
     auto drm = &getDrm(rootDeviceIndex);
     auto memoryInfo = drm->getMemoryInfo();
     if (!memoryInfo) {
@@ -1865,9 +1866,9 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
 
     auto banks = std::bitset<4>(memoryBanks);
     if (banks.count() > 1) {
-        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex);
+        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation, reinterpret_cast<void *>(gpuAddress));
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle);
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle, isUsmHostAllocation, reinterpret_cast<void *>(gpuAddress));
     }
 
     if (ret != 0) {
@@ -1893,7 +1894,7 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
 
     auto gmm = allocation->getGmm(0u);
     auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, !allocation->isAllocatedInLocalMemoryPool());
-    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks);
+    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks, allocation->isUsmHostAllocation(), reinterpret_cast<void *>(boAddress));
     if (ret != 0) {
         return false;
     }
@@ -1979,7 +1980,7 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         auto gmm = allocation->getGmm(handleId);
         auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
         bos[handleId] = createBufferObjectInMemoryRegion(allocation->getRootDeviceIndex(), gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount, pairHandle,
-                                                         !allocation->isAllocatedInLocalMemoryPool());
+                                                         !allocation->isAllocatedInLocalMemoryPool(), allocation->isUsmHostAllocation());
         if (nullptr == bos[handleId]) {
             return false;
         }
@@ -2119,7 +2120,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, nullptr, allocationData.type,
                                                                                                        reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount, -1,
-                                                                                                       MemoryPoolHelper::isSystemMemoryPool(memoryPool)));
+                                                                                                       MemoryPoolHelper::isSystemMemoryPool(memoryPool), allocationData.flags.isUSMHostAllocation));
 
         if (!bo) {
             releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
@@ -2311,7 +2312,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
 
-        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks);
+        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation, reinterpret_cast<void *>(preferredAddress));
 
         if (ret) {
             this->munmapFunction(cpuPointer, totalSizeToAlloc);
