@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -383,6 +383,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     const std::array<CopyEngineState, bcsInfoMaskSize> &peekActiveBcsStates() const { return bcsStates; }
 
     void handlePostCompletionOperations(bool checkQueueCompletion);
+
+    bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);

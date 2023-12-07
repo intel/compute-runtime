@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
+#include "opencl/source/command_queue/enqueue_common.h"
+#include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -105,19 +107,19 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCo
         baseNumClientsBcs3 = bcsCsr0->getNumClients();
         baseNumClientsBcs7 = bcsCsr0->getNumClients();
 
-        auto retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr0);
+        auto retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr0, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(baseNumClientsBcs0 + 1, bcsCsr0->getNumClients());
         EXPECT_EQ(baseNumClientsBcs3, bcsCsr3->getNumClients());
         EXPECT_EQ(baseNumClientsBcs7, bcsCsr7->getNumClients());
 
-        retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr3);
+        retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr3, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(baseNumClientsBcs0 + 1, bcsCsr0->getNumClients());
         EXPECT_EQ(baseNumClientsBcs3 + 1, bcsCsr3->getNumClients());
         EXPECT_EQ(baseNumClientsBcs7, bcsCsr7->getNumClients());
 
-        retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr7);
+        retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr7, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(baseNumClientsBcs0 + 1, bcsCsr0->getNumClients());
         EXPECT_EQ(baseNumClientsBcs3 + 1, bcsCsr3->getNumClients());
@@ -127,6 +129,62 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCo
     EXPECT_EQ(baseNumClientsBcs0, bcsCsr0->getNumClients());
     EXPECT_EQ(baseNumClientsBcs3, bcsCsr3->getNumClients());
     EXPECT_EQ(baseNumClientsBcs7, bcsCsr7->getNumClients());
+}
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenEnqueueBlitIsCalledWithProfilingEnabledThenSetupEventProfilingInfoCorrectly, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    MockContext context{&clDevice};
+
+    MockCommandQueueHw<FamilyType> queue(&context, &clDevice, nullptr);
+    queue.setProfilingEnabled();
+    queue.bcsSplitInitialized = true;
+    queue.clearBcsEngines();
+
+    queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS);
+    queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS3);
+    queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS7);
+
+    auto bcsCsr0 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+
+    MockGraphicsAllocation mockGraphicsAllocation;
+    MockBuffer mockMemObj(mockGraphicsAllocation);
+
+    BuiltinOpParams params;
+    params.dstPtr = reinterpret_cast<void *>(0x12300);
+    params.dstOffset = {0, 0, 0};
+    params.srcMemObj = &mockMemObj;
+    params.srcOffset = {0, 0, 0};
+    params.size = {1, 0, 0};
+    params.transferAllocation = &mockGraphicsAllocation;
+
+    MultiDispatchInfo dispatchInfo(params);
+
+    cl_event clEvent;
+    auto retVal = queue.template enqueueBlitSplit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, &clEvent, true, *bcsCsr0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(queue.isBcsSplitInitialized());
+    EXPECT_TRUE(queue.isProfilingEnabled());
+
+    uint64_t queuedTime = 0;
+    uint64_t submitTime = 0;
+    uint64_t startTime = 0;
+    auto event = castToObject<Event>(clEvent);
+    event->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(queuedTime), &queuedTime, nullptr);
+    event->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(submitTime), &submitTime, nullptr);
+    event->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(startTime), &startTime, nullptr);
+
+    EXPECT_GE(queuedTime, 0u);
+    EXPECT_GE(submitTime, queuedTime);
+    EXPECT_GE(startTime, submitTime);
+
+    clReleaseEvent(clEvent);
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQueueThenUseCorrectEngine, IsAtLeastXeHpcCore) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -258,6 +258,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::bcsEngineCount;
     using BaseClass::bcsEngines;
     using BaseClass::bcsQueueEngineType;
+    using BaseClass::bcsSplitInitialized;
     using BaseClass::bcsStates;
     using BaseClass::bcsTimestampPacketContainers;
     using BaseClass::blitEnqueueAllowed;
