@@ -142,7 +142,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, NEO::RequiredDispatchWalkOrder::None, 0};
+    auto maxFrontEndThreads = commandQueue.getDevice().getDeviceInfo().maxFrontEndThreads;
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, NEO::RequiredDispatchWalkOrder::None, 0, maxFrontEndThreads};
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();

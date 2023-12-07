@@ -93,6 +93,7 @@ struct EncodeWalkerArgs {
     const KernelDescriptor &kernelDescriptor;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::None;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
+    uint32_t maxFrontEndThreads = 0;
 };
 
 template <typename GfxFamily>
