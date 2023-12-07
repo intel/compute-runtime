@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <sys/stat.h>
@@ -41,6 +42,7 @@ class FdCache {
     std::map<std::string, std::pair<int, uint32_t>> fdMap = {};
 
   private:
+    std::mutex fdMutex{};
     void eraseLeastUsedEntryFromCache();
 };
 

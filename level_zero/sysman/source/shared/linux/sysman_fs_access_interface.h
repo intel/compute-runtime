@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace L0 {
@@ -31,6 +32,7 @@ class FdCacheInterface {
     std::map<std::string, std::pair<int, uint32_t>> fdMap = {};
 
   private:
+    std::mutex fdMutex{};
     void eraseLeastUsedEntryFromCache();
 };
 
