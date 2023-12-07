@@ -1901,5 +1901,109 @@ HWTEST2_F(ContextTest, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+HWTEST2_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsNotMadeResidentAndEvicted, IsAtLeastSkl) {
+    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
+        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.UseBindlessMode.set(0);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockMemoryOperationsInterface = new NEO::MockMemoryOperations();
+    mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    ze_image_handle_t image = {};
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    res = contextImp->createImage(device, &imageDesc, &image);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, image);
+
+    {
+        contextImp->makeImageResident(device, image);
+        EXPECT_EQ(1, mockMemoryOperationsInterface->makeResidentCalledCount);
+        auto allocIter = std::find(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.begin(),
+                                   mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(),
+                                   Image::fromHandle(image)->getImplicitArgsAllocation());
+        EXPECT_EQ(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(), allocIter);
+    }
+
+    {
+        contextImp->evictImage(device, image);
+        EXPECT_EQ(1, mockMemoryOperationsInterface->evictCalledCount);
+        auto allocIter = std::find(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.begin(),
+                                   mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(),
+                                   Image::fromHandle(image)->getImplicitArgsAllocation());
+        EXPECT_EQ(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(), allocIter);
+    }
+
+    Image::fromHandle(image)->destroy();
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+HWTEST2_F(ContextTest, givenBindlessModeEnabledWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsMadeResidentAndEvicted, IsAtLeastSkl) {
+    if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
+        !device->getNEODevice()->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.UseBindlessMode.set(1);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto mockMemoryOperationsInterface = new NEO::MockMemoryOperations();
+    mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    ze_image_handle_t image = {};
+    ze_image_desc_t imageDesc = {};
+    imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    res = contextImp->createImage(device, &imageDesc, &image);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, image);
+
+    {
+        contextImp->makeImageResident(device, image);
+        EXPECT_EQ(2, mockMemoryOperationsInterface->makeResidentCalledCount);
+        auto allocIter = std::find(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.begin(),
+                                   mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(),
+                                   Image::fromHandle(image)->getImplicitArgsAllocation());
+        EXPECT_NE(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(), allocIter);
+    }
+
+    {
+        contextImp->evictImage(device, image);
+        EXPECT_EQ(2, mockMemoryOperationsInterface->evictCalledCount);
+        auto allocIter = std::find(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.begin(),
+                                   mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(),
+                                   Image::fromHandle(image)->getImplicitArgsAllocation());
+        EXPECT_EQ(mockMemoryOperationsInterface->gfxAllocationsForMakeResident.end(), allocIter);
+    }
+
+    Image::fromHandle(image)->destroy();
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 } // namespace ult
 } // namespace L0

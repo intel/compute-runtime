@@ -31,8 +31,13 @@ ImageImp::~ImageImp() {
             this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[this->allocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->releaseSSToReusePool(*bindlessInfo);
         }
     }
-    if (!isImageView() && this->device != nullptr) {
-        this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
+    if (this->device != nullptr) {
+        if (!isImageView()) {
+            this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
+        }
+        if (implicitArgsAllocation) {
+            this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->implicitArgsAllocation);
+        }
     }
 }
 
@@ -100,7 +105,7 @@ ze_result_t ImageImp::allocateBindlessSlot() {
 
     if (bindlessHelper && !bindlessInfo) {
         auto &gfxCoreHelper = this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<NEO::GfxCoreHelper>();
-        const auto surfStateCount = 2;
+        const auto surfStateCount = 3;
         auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);

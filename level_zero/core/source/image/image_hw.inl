@@ -11,23 +11,32 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
+#include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
+
+#include "encode_surface_state_args.h"
 
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+
+    const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    const bool isBindlessMode = rootDeviceEnvironment.getReleaseHelper() ? NEO::ApiSpecificConfig::getBindlessMode(rootDeviceEnvironment.getReleaseHelper()) : false;
 
     StructuresLookupTable lookupTable = {};
 
@@ -104,8 +113,13 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
+    if (isBindlessMode) {
+        NEO::AllocationProperties imgImplicitArgsAllocProperties(device->getRootDeviceIndex(), NEO::ImageImplicitArgs::getSize(), NEO::AllocationType::buffer, device->getNEODevice()->getDeviceBitfield());
+        implicitArgsAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(imgImplicitArgsAllocProperties);
+    }
+
     auto gmm = this->allocation->getDefaultGmm();
-    auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(device->getNEODevice()->getRootDeviceEnvironment()).getGmmHelper();
+    auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(rootDeviceEnvironment).getGmmHelper();
 
     if (gmm != nullptr) {
         NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
@@ -157,6 +171,53 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             NEO::EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(&surfaceState, gmm);
         }
     }
+
+    if (isBindlessMode && implicitArgsAllocation) {
+        implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+        auto clChannelType = getClChannelDataType(imageFormatDesc.format);
+        auto clChannelOrder = getClChannelOrder(imageFormatDesc.format);
+
+        NEO::ImageImplicitArgs imageImplicitArgs{};
+        imageImplicitArgs.structVersion = 0;
+
+        imageImplicitArgs.imageWidth = imgInfo.imgDesc.imageWidth;
+        imageImplicitArgs.imageHeight = imgInfo.imgDesc.imageHeight;
+        imageImplicitArgs.imageDepth = imgInfo.imgDesc.imageDepth;
+        imageImplicitArgs.imageArraySize = imgInfo.imgDesc.imageArraySize;
+        imageImplicitArgs.numSamples = imgInfo.imgDesc.numSamples;
+        imageImplicitArgs.channelType = clChannelType;
+        imageImplicitArgs.channelOrder = clChannelOrder;
+        imageImplicitArgs.numMipLevels = imgInfo.imgDesc.numMipLevels;
+
+        auto pixelSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
+        imageImplicitArgs.flatBaseOffset = implicitArgsAllocation->getGpuAddress();
+        imageImplicitArgs.flatWidth = (imgInfo.imgDesc.imageWidth * pixelSize) - 1u;
+        imageImplicitArgs.flagHeight = (imgInfo.imgDesc.imageHeight * pixelSize) - 1u;
+        imageImplicitArgs.flatPitch = imgInfo.imgDesc.imageRowPitch - 1u;
+
+        const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *implicitArgsAllocation), *this->device->getNEODevice(), implicitArgsAllocation, 0u, &imageImplicitArgs, NEO::ImageImplicitArgs::getSize());
+
+        {
+            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &implicitArgsSurfaceState;
+            args.size = NEO::ImageImplicitArgs::getSize();
+            args.graphicsAddress = implicitArgsAllocation->getGpuAddress();
+            args.gmmHelper = gmmHelper;
+            args.allocation = implicitArgsAllocation;
+            args.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();
+            args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+            args.mocs = gfxCoreHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
+            args.implicitScaling = this->device->isImplicitScalingCapable();
+            args.isDebuggerActive = this->device->getNEODevice()->getDebugger() != nullptr;
+
+            gfxCoreHelper.encodeBufferSurfaceState(args);
+        }
+    }
+
     {
         const uint32_t exponent = Math::log2(imgInfo.surfaceFormat->imageElementSizeInBytes);
         DEBUG_BREAK_IF(exponent >= 5u);
@@ -230,6 +291,18 @@ void ImageCoreFamily<gfxCoreFamily>::copyRedescribedSurfaceStateToSSH(void *surf
     auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
     memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
              &redescribedSurfaceState, sizeof(RENDER_SURFACE_STATE));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void ImageCoreFamily<gfxCoreFamily>::copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap,
+                                                                       const uint32_t surfaceStateOffset) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+
+    // Copy the image's surface state into position in the provided surface state heap
+    auto destSurfaceState = ptrOffset(surfaceStateHeap, surfaceStateOffset);
+    memcpy_s(destSurfaceState, sizeof(RENDER_SURFACE_STATE),
+             &implicitArgsSurfaceState, sizeof(RENDER_SURFACE_STATE));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

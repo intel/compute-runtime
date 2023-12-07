@@ -48,7 +48,7 @@ class BindlessHeapsHelper {
 
     int getReusedSshVectorIndex(size_t ssSize) {
         int index = 0;
-        if (ssSize == 2 * surfaceStateSize) {
+        if (ssSize == 3 * surfaceStateSize) {
             index = 1;
         } else {
             UNRECOVERABLE_IF(ssSize != surfaceStateSize);

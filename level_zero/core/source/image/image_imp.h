@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "level_zero/core/source/image/image.h"
 
@@ -26,6 +27,7 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     ~ImageImp() override;
 
     NEO::GraphicsAllocation *getAllocation() override { return allocation; }
+    NEO::GraphicsAllocation *getImplicitArgsAllocation() override { return implicitArgsAllocation; }
     NEO::ImageInfo getImageInfo() override { return imgInfo; }
     ze_image_desc_t getImageDesc() override {
         return imageFormatDesc;
@@ -52,6 +54,7 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
+    NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
     ze_image_desc_t imageFormatDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;
