@@ -223,6 +223,10 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
     streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, true);
 }
 
+bool CommandListImp::duplicatedInOrderCounterStorageEnabled() const {
+    return (NEO::debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() == 1);
+}
+
 void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderExecInfo.get());
 
@@ -232,9 +236,19 @@ void CommandListImp::enableInOrderExecution() {
 
     auto inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
+    NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
+
+    if (duplicatedInOrderCounterStorageEnabled()) {
+        NEO::AllocationProperties hostAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::BUFFER_HOST_MEMORY, device->getDeviceBitfield()};
+        hostCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(hostAllocationProperties);
+
+        UNRECOVERABLE_IF(!hostCounterAllocation);
+    }
+
     UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
-    inOrderExecInfo = std::make_shared<InOrderExecInfo>(*inOrderDependencyCounterAllocation, *device->getMemoryManager(), this->partitionCount, (this->cmdListType == TYPE_REGULAR), inOrderAtomicSignallingEnabled());
+    inOrderExecInfo = std::make_shared<InOrderExecInfo>(*inOrderDependencyCounterAllocation, hostCounterAllocation, *device->getMemoryManager(), this->partitionCount,
+                                                        (this->cmdListType == TYPE_REGULAR), inOrderAtomicSignallingEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

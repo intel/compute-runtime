@@ -45,6 +45,7 @@ struct CommandListImp : public CommandList {
     ~CommandListImp() override = default;
 
     virtual bool inOrderAtomicSignallingEnabled() const = 0;
+    bool duplicatedInOrderCounterStorageEnabled() const;
 
     static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
     static constexpr bool cmdListDefaultCoherency = false;

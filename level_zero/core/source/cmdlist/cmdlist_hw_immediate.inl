@@ -1297,7 +1297,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     waitStartTime = lastHangCheckTime;
 
     do {
-        this->csr->downloadAllocation(inOrderExecInfo->getDeviceCounterAllocation());
+        if (inOrderExecInfo->isHostStorageDuplicated()) {
+            this->csr->downloadAllocation(*inOrderExecInfo->getHostCounterAllocation());
+        } else {
+            this->csr->downloadAllocation(inOrderExecInfo->getDeviceCounterAllocation());
+        }
 
         bool signaled = true;
 

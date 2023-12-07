@@ -27,9 +27,10 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     InOrderExecInfo() = delete;
 
-    InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
+    InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
 
     NEO::GraphicsAllocation &getDeviceCounterAllocation() const { return deviceCounterAllocation; }
+    NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
     uint64_t *getHostAddress() const { return hostAddress; }
 
     uint64_t getCounterValue() const { return counterValue; }
@@ -40,6 +41,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void addRegularCmdListSubmissionCounter(uint64_t addValue) { regularCmdListSubmissionCounter += addValue; }
 
     bool isRegularCmdList() const { return regularCmdList; }
+    bool isHostStorageDuplicated() const { return duplicatedHostStorage; }
 
     uint32_t getNumDevicePartitionsToWait() const { return numDevicePartitionsToWait; }
     uint32_t getNumHostPartitionsToWait() const { return numHostPartitionsToWait; }
@@ -49,12 +51,14 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
   protected:
     NEO::GraphicsAllocation &deviceCounterAllocation;
     NEO::MemoryManager &memoryManager;
+    NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
     uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
     uint32_t numHostPartitionsToWait = 0;
     bool regularCmdList = false;
+    bool duplicatedHostStorage = false;
 };
 
 namespace InOrderPatchCommandHelpers {

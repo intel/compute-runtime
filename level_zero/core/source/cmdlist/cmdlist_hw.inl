@@ -181,6 +181,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
     this->commandContainer.addToResidencyContainer(&inOrderExecInfo->getDeviceCounterAllocation());
+    this->commandContainer.addToResidencyContainer(inOrderExecInfo->getHostCounterAllocation());
 
     if (signalEvent) {
         if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining) {
@@ -2555,27 +2556,39 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+
+    uint64_t gpuVa = baseGpuVa + this->inOrderAllocationOffset;
+
+    auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)));
+
+    NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
+                                                           isQwordInOrderCounter(), (this->partitionCount > 1));
+
+    addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent) {
-    uint64_t gpuVa = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + this->inOrderAllocationOffset;
+    uint64_t deviceAllocGpuVa = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress();
+    uint64_t signalValue = inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+
     auto cmdStream = commandContainer.getCommandStream();
 
     if (inOrderAtomicSignallingEnabled()) {
         using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
         using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
-        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, gpuVa, ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, deviceAllocGpuVa, ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
                                                       DATA_SIZE::DATA_SIZE_QWORD, 0, 0, 0, 0);
+
     } else {
-        using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+        appendSdiInOrderCounterSignalling(deviceAllocGpuVa, signalValue);
+    }
 
-        uint64_t signalValue = inOrderExecInfo->getCounterValue() + 1;
-
-        auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(cmdStream->getSpace(sizeof(MI_STORE_DATA_IMM)));
-
-        NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
-                                                               isQwordInOrderCounter(), (this->partitionCount > 1));
-
-        addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+    if (inOrderExecInfo->isHostStorageDuplicated()) {
+        appendSdiInOrderCounterSignalling(inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), signalValue);
     }
 
     if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1) && signalEvent && signalEvent->isKmdWaitModeEnabled()) {

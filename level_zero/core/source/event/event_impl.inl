@@ -270,8 +270,10 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
             }
 
             if (!downloadedInOrdedAllocation && inOrderExecInfo) {
-                if (auto &alloc = inOrderExecInfo->getDeviceCounterAllocation(); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
-                    csr->downloadAllocation(alloc);
+                auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : &inOrderExecInfo->getDeviceCounterAllocation();
+
+                if (alloc->isUsedByOsContext(csr->getOsContext().getContextId())) {
+                    csr->downloadAllocation(*alloc);
                     downloadedInOrdedAllocation = true;
                 }
             }

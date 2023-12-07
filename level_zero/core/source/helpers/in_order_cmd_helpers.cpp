@@ -17,15 +17,21 @@ namespace L0 {
 
 InOrderExecInfo::~InOrderExecInfo() {
     memoryManager.freeGraphicsMemory(&deviceCounterAllocation);
+    memoryManager.freeGraphicsMemory(hostCounterAllocation);
 }
 
-InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling)
-    : deviceCounterAllocation(deviceCounterAllocation), memoryManager(memoryManager), regularCmdList(regularCmdList) {
+InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling)
+    : deviceCounterAllocation(deviceCounterAllocation), memoryManager(memoryManager), hostCounterAllocation(hostCounterAllocation), regularCmdList(regularCmdList) {
 
     numDevicePartitionsToWait = atomicDeviceSignalling ? 1 : partitionCount;
     numHostPartitionsToWait = partitionCount;
 
-    hostAddress = reinterpret_cast<uint64_t *>(deviceCounterAllocation.getUnderlyingBuffer());
+    if (hostCounterAllocation) {
+        hostAddress = reinterpret_cast<uint64_t *>(hostCounterAllocation->getUnderlyingBuffer());
+        duplicatedHostStorage = true;
+    } else {
+        hostAddress = reinterpret_cast<uint64_t *>(deviceCounterAllocation.getUnderlyingBuffer());
+    }
 
     reset();
 }
@@ -35,6 +41,10 @@ void InOrderExecInfo::reset() {
     regularCmdListSubmissionCounter = 0;
 
     memset(deviceCounterAllocation.getUnderlyingBuffer(), 0, deviceCounterAllocation.getUnderlyingBufferSize());
+
+    if (hostCounterAllocation) {
+        memset(hostCounterAllocation->getUnderlyingBuffer(), 0, hostCounterAllocation->getUnderlyingBufferSize());
+    }
 }
 
 } // namespace L0

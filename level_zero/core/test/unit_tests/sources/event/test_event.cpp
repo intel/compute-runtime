@@ -3274,7 +3274,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto syncAllocation = new NEO::MockGraphicsAllocation(&storage, sizeof(storage));
 
-    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*syncAllocation, *neoDevice->getMemoryManager(), 1, false, false);
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*syncAllocation, nullptr, *neoDevice->getMemoryManager(), 1, false, false);
     *inOrderExecInfo->getHostAddress() = 1;
 
     event->enableCounterBasedMode(true);
@@ -3300,6 +3300,65 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_NE(0u, downloadAllocationTrack[syncAllocation]);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+}
+
+HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+
+    ASSERT_NE(event, nullptr);
+
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
+    VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
+    ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
+        downloadAllocationTrack[&gfxAllocation]++;
+    };
+
+    uint64_t storage1[2] = {1, 1};
+    uint64_t storage2[2] = {1, 1};
+
+    auto deviceSyncAllocation = new NEO::MockGraphicsAllocation(&storage1, sizeof(storage1));
+    auto hostSyncAllocation = new NEO::MockGraphicsAllocation(&storage2, sizeof(storage2));
+
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*deviceSyncAllocation, hostSyncAllocation, *neoDevice->getMemoryManager(), 1, false, false);
+    *inOrderExecInfo->getHostAddress() = 1;
+
+    event->enableCounterBasedMode(true);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    auto result = event->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, downloadAllocationTrack[deviceSyncAllocation]);
+    EXPECT_EQ(0u, downloadAllocationTrack[hostSyncAllocation]);
+    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+
+    auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+
+    event2->enableCounterBasedMode(true);
+    event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    hostSyncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
+    ultCsr->downloadAllocationsCalledCount = 0;
+    eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
+    *eventAddress = Event::STATE_SIGNALED;
+
+    result = event2->hostSynchronize(timeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, downloadAllocationTrack[deviceSyncAllocation]);
+    EXPECT_NE(0u, downloadAllocationTrack[hostSyncAllocation]);
+    EXPECT_NE(0u, downloadAllocationTrack[hostSyncAllocation]);
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 

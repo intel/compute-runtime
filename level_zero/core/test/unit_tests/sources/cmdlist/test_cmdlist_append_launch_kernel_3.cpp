@@ -2031,6 +2031,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentC
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 
+    EXPECT_EQ(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_EQ(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+
     immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, event0Handle, 0, nullptr, launchParams, false);
 
     EXPECT_EQ(1u, ultCsr->makeResidentAllocations[&immCmdList1->inOrderExecInfo->getDeviceCounterAllocation()]);
@@ -2052,6 +2055,42 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentC
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList1->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), immCmdList1->isQwordInOrderCounter()));
 
     EXPECT_NE(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), immCmdList2->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingThenEnsureHostAllocationResidency, IsAtLeastSkl) {
+    NEO::debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto event0Handle = events[0]->toHandle();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    EXPECT_NE(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_NE(&immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList1->inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_NE(&immCmdList2->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
+    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostAddress(), immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
+    EXPECT_FALSE(immCmdList1->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
+
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
+    EXPECT_EQ(immCmdList2->inOrderExecInfo->getHostAddress(), immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
+    EXPECT_FALSE(immCmdList2->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, event0Handle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation()]);
+
+    immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &event0Handle, launchParams, false);
+
+    // host allocation not used as Device dependency
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation()]);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenClearEventCsrList, IsAtLeastSkl) {
@@ -3792,9 +3831,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    auto hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer(), counterOffset));
+    auto deviceAlloc = &immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(deviceAlloc->getUnderlyingBuffer(), counterOffset));
     *hostAddress = 0;
 
+    GraphicsAllocation *downloadedAlloc = nullptr;
     const uint32_t failCounter = 3;
     uint32_t callCounter = 0;
     bool forceFail = false;
@@ -3804,11 +3845,13 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
         if (callCounter >= failCounter && !forceFail) {
             (*hostAddress)++;
         }
+        downloadedAlloc = &graphicsAllocation;
     };
 
     // single check - not ready
     {
         EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, deviceAlloc);
         EXPECT_EQ(1u, callCounter);
         EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
         EXPECT_EQ(0u, *hostAddress);
@@ -3818,6 +3861,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     {
         forceFail = true;
         EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, deviceAlloc);
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
         EXPECT_EQ(0u, *hostAddress);
@@ -3828,6 +3872,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
         ultCsr->forceReturnGpuHang = true;
 
         EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, deviceAlloc);
 
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
@@ -3840,6 +3885,99 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
         ultCsr->forceReturnGpuHang = false;
         forceFail = false;
         callCounter = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, deviceAlloc);
+
+        EXPECT_EQ(failCounter, callCounter);
+        EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(1u, *hostAddress);
+    }
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    *ultCsr->getTagAddress() = ultCsr->taskCount - 1;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+
+    *ultCsr->getTagAddress() = ultCsr->taskCount + 1;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+}
+
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleCompletionOnHostAlloc, IsAtLeastXeHpCore) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    uint32_t counterOffset = 64;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderAllocationOffset = counterOffset;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto mockAlloc = std::make_unique<MockGraphicsAllocation>();
+
+    auto internalAllocStorage = ultCsr->getInternalAllocationStorage();
+    internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    auto hostAlloc = immCmdList->inOrderExecInfo->getHostCounterAllocation();
+
+    auto hostAddress = static_cast<uint64_t *>(ptrOffset(hostAlloc->getUnderlyingBuffer(), counterOffset));
+    *hostAddress = 0;
+
+    const uint32_t failCounter = 3;
+    uint32_t callCounter = 0;
+    bool forceFail = false;
+
+    GraphicsAllocation *downloadedAlloc = nullptr;
+
+    ultCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+        callCounter++;
+        if (callCounter >= failCounter && !forceFail) {
+            (*hostAddress)++;
+        }
+        downloadedAlloc = &graphicsAllocation;
+    };
+
+    // single check - not ready
+    {
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, hostAlloc);
+        EXPECT_EQ(1u, callCounter);
+        EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(0u, *hostAddress);
+    }
+
+    // timeout - not ready
+    {
+        forceFail = true;
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, hostAlloc);
+        EXPECT_TRUE(callCounter > 1);
+        EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
+        EXPECT_EQ(0u, *hostAddress);
+    }
+
+    // gpu hang
+    {
+        ultCsr->forceReturnGpuHang = true;
+
+        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(downloadedAlloc, hostAlloc);
+        EXPECT_TRUE(callCounter > 1);
+        EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
+        EXPECT_EQ(0u, *hostAddress);
+    }
+
+    // success
+    {
+        ultCsr->checkGpuHangDetectedCalled = 0;
+        ultCsr->forceReturnGpuHang = false;
+        forceFail = false;
+        callCounter = 0;
+        EXPECT_EQ(downloadedAlloc, hostAlloc);
         EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), ultCsr->taskCount, false));
 
         EXPECT_EQ(failCounter, callCounter);
@@ -4169,6 +4307,109 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
     EXPECT_EQ(0u, atomicCmd->getReturnDataControl());
     EXPECT_EQ(0u, atomicCmd->getCsStall());
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicAndSdiCmd, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
+
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    EXPECT_EQ(0u, immCmdList->inOrderExecInfo->getCounterValue());
+
+    auto handle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(partitionCount, immCmdList->inOrderExecInfo->getCounterValue());
+
+    size_t offset = cmdStream->getUsed();
+
+    immCmdList->appendWaitOnEvents(1, &handle, false, false, true);
+
+    EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto miAtomics = findAll<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1u, miAtomics.size());
+
+    auto atomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomics[0]);
+    ASSERT_NE(nullptr, atomicCmd);
+
+    auto gpuAddress = immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress();
+
+    EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
+    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
+    EXPECT_EQ(0u, atomicCmd->getReturnDataControl());
+    EXPECT_EQ(0u, atomicCmd->getCsStall());
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++miAtomics[0]));
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+    EXPECT_EQ(partitionCount * 2, sdiCmd->getDataDword0());
+    EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutAtomicSignallingEnabledWhenSignallingCounterThenUseTwoSdiCmds, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    EXPECT_EQ(0u, immCmdList->inOrderExecInfo->getCounterValue());
+
+    auto handle = events[0]->toHandle();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
+
+    size_t offset = cmdStream->getUsed();
+
+    immCmdList->appendWaitOnEvents(1, &handle, false, false, true);
+
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(2u, sdiCmds.size());
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(sdiCmds[0]));
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
+
+    sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(sdiCmds[1]));
+    ASSERT_NE(nullptr, sdiCmd);
+
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingForDependencyThenUseOnlyOneSemaphore, IsAtLeastXeHpCore) {
