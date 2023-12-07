@@ -31,6 +31,7 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include <algorithm>
+#include <type_traits>
 
 namespace NEO {
 constexpr size_t timestampDestinationAddressAlignment = 16;
@@ -48,6 +49,7 @@ template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
     using SHARED_LOCAL_MEMORY_SIZE = typename WalkerType::InterfaceDescriptorType::SHARED_LOCAL_MEMORY_SIZE;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
+    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
 
     constexpr bool heaplessModeEnabled = Family::template isHeaplessMode<WalkerType>();
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();
@@ -342,7 +344,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    requiredWorkgroupOrder,
                                                    rootDeviceEnvironment);
 
-    using POSTSYNC_DATA = typename Family::POSTSYNC_DATA;
     auto &postSync = walkerCmd.getPostSync();
     if (args.eventAddress != 0) {
         postSync.setDataportPipelineFlush(true);

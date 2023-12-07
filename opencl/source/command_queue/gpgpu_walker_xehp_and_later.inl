@@ -102,6 +102,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
                                                         WalkerType *walkerCmd,
                                                         TagNodeBase *timestampPacketNode,
                                                         const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
 
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &postSyncData = walkerCmd->getPostSync();
@@ -113,12 +114,12 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
     EncodeDispatchKernel<GfxFamily>::template adjustTimestampPacket<WalkerType>(*walkerCmd, hwInfo);
 
     if (debugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
-        postSyncData.setOperation(GfxFamily::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);
+        postSyncData.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);
         auto contextEndAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
         postSyncData.setDestinationAddress(contextEndAddress);
         postSyncData.setImmediateData(0x2'0000'0002);
     } else {
-        postSyncData.setOperation(GfxFamily::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
+        postSyncData.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
         auto contextStartAddress = TimestampPacketHelper::getContextStartGpuAddress(*timestampPacketNode);
         postSyncData.setDestinationAddress(contextStartAddress);
     }
