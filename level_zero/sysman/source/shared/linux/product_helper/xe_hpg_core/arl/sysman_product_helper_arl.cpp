@@ -6,11 +6,14 @@
  */
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
 namespace L0 {
 namespace Sysman {
 
-static EnableSysmanProductHelper<IGFX_ALDERLAKE_P> enableAdlp;
+constexpr static auto gfxProduct = IGFX_ARROWLAKE;
+
+template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman
 } // namespace L0

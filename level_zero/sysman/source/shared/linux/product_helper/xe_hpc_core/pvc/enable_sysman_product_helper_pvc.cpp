@@ -6,7 +6,6 @@
  */
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
 namespace L0 {
 namespace Sysman {

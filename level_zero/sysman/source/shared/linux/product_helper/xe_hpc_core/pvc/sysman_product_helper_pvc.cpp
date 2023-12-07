@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 #include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
@@ -30,6 +31,8 @@ void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(cons
         *pMultiplier = 0.5;
     }
 }
+
+template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman
 } // namespace L0
