@@ -2399,12 +2399,9 @@ HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSame
     }
 
     for (const auto neoDevice : allNeoDevices) {
-        auto &deviceRegularEngines = neoDevice->getRegularEngineGroups();
-        ASSERT_EQ(1u, deviceRegularEngines.size());
-        ASSERT_EQ(1u, deviceRegularEngines[0].engines.size());
+        auto deviceInternalEngine = neoDevice->getInternalEngine();
 
-        auto &deviceEngine = deviceRegularEngines[0].engines[0];
-        auto hwCsr = static_cast<CommandStreamReceiverHw<FamilyType> *>(deviceEngine.commandStreamReceiver);
+        auto hwCsr = static_cast<CommandStreamReceiverHw<FamilyType> *>(deviceInternalEngine.commandStreamReceiver);
         auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(hwCsr);
 
         ultCsr->callBaseWaitForCompletionWithTimeout = false;
@@ -2853,6 +2850,17 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerRet
             *commandList = &this->commandList;
             return ZE_RESULT_SUCCESS;
         }
+        ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                               ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                              ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
 
         MockCommandList commandList;
         Mock<CommandQueue> commandQueue;
@@ -2900,6 +2908,17 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
             *commandList = &this->commandList;
             return ZE_RESULT_SUCCESS;
         }
+        ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                               ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                              ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
 
         MockCommandList commandList;
         MockCommandQueueImp commandQueue;
@@ -2938,6 +2957,17 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
 
         ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                        ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                              ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+        ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                               ze_command_queue_handle_t *commandQueue) override {
             *commandQueue = &this->commandQueue;
             return ZE_RESULT_SUCCESS;
         }
@@ -2993,6 +3023,18 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
 
         ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                       ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                               ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                              ze_command_list_handle_t *commandList) override {
             *commandList = &this->commandList;
             return ZE_RESULT_SUCCESS;
         }

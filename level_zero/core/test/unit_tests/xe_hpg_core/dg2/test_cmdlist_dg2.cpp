@@ -34,7 +34,7 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
 
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     ASSERT_NE(nullptr, commandContainer.getCommandStream());

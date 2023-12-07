@@ -149,7 +149,7 @@ HWTEST_F(CommandListAppendEventResetSecondaryBatchBuffer, whenResetEventIsAppend
 HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppendedThenMiFlushWithPostSyncIsGenerated) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     ze_result_t returnValue;
-    commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false)));
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 

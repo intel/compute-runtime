@@ -149,7 +149,7 @@ TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKerne
 
     Mock<KernelImp> kernel;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -167,7 +167,7 @@ TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKer
     ze_result_t returnValue;
 
     std::unique_ptr<ult::WhiteBox<L0::CommandListImp>> commandList(ult::CommandList::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,
-                                                                                                                      &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
+                                                                                                                      &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
 
     commandList->kernelWithAssertAppended = true;
     EXPECT_TRUE(commandList->hasKernelWithAssert());
@@ -359,7 +359,7 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     Mock<KernelImp> kernel;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;

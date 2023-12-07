@@ -186,7 +186,8 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
 
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
-                               ze_command_list_flags_t flags, ze_result_t &resultValue);
+                               ze_command_list_flags_t flags, ze_result_t &resultValue,
+                               bool internalUsage);
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,

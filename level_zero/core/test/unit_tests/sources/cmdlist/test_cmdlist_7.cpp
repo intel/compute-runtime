@@ -73,7 +73,7 @@ HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenParti
                                                                      device,
                                                                      NEO::EngineGroupType::compute,
                                                                      0u,
-                                                                     returnValue));
+                                                                     returnValue, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(1u, commandList->getPartitionCount());
 
@@ -84,7 +84,7 @@ HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenParti
 
 HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     ASSERT_NE(nullptr, commandList);
     ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
@@ -546,7 +546,7 @@ HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalled
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList0(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false));
     ASSERT_NE(nullptr, commandList0);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -1868,7 +1868,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataT
                                                                      device,
                                                                      NEO::EngineGroupType::compute,
                                                                      0u,
-                                                                     returnValue));
+                                                                     returnValue, false));
     auto &cmdContainer = commandList->getCmdContainer();
     auto heapAlloc = cmdContainer.getIndirectHeapAllocation(HeapType::INDIRECT_OBJECT);
     cmdContainer.getDeallocationContainer().push_back(heapAlloc);

@@ -39,7 +39,7 @@ void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     ze_result_t returnValue;
-    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    commandList = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 

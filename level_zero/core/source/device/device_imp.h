@@ -38,10 +38,14 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
+    MOCKABLE_VIRTUAL ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                                           ze_command_list_handle_t *commandList);
     ze_result_t createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                            ze_command_list_handle_t *phCommandList) override;
     ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                    ze_command_queue_handle_t *commandQueue) override;
+    MOCKABLE_VIRTUAL ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                                            ze_command_queue_handle_t *commandQueue);
     ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) override;
     ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override;
@@ -153,7 +157,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
 
-    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &);
+    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
     ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) override;
 
@@ -162,6 +166,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     uint32_t getEventMaxPacketCount() const override;
     uint32_t getEventMaxKernelCount() const override;
     uint32_t queryDeviceNodeMask();
+    NEO::EngineGroupType getInternalEngineGroupType();
 
   protected:
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);

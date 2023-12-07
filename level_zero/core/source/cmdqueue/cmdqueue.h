@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
 #include <level_zero/ze_api.h>

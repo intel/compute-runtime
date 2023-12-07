@@ -38,7 +38,7 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimest
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
@@ -79,7 +79,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     uint64_t timestampAddress = 0x123456785500;
@@ -113,7 +113,7 @@ HWTEST2_F(CommandListCreate, givenMovedDstptrWhenAppendWriteGlobalTimestampCalle
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     uint64_t timestampAddress = 0x123456785500;
@@ -145,7 +145,7 @@ HWTEST2_F(CommandListCreate, givenMovedDstptrWhenAppendWriteGlobalTimestampCalle
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, IsAtLeastSkl) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     uint64_t timestampAddress = 0x123456785500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
     commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
@@ -856,7 +856,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
 HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
@@ -882,7 +882,7 @@ HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, I
 
     ze_result_t returnValue;
     for (auto flag : flags) {
-        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, flag, returnValue));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, flag, returnValue, false));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         auto pCommandListCoreFamily = static_cast<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> *>(commandList.get());
         EXPECT_EQ(flag, pCommandListCoreFamily->flags);
@@ -1326,7 +1326,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
     {
         debugManager.flags.EnableStateBaseAddressTracking.set(0);
 
-        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         auto &commandContainer = commandList->getCmdContainer();
@@ -1336,7 +1336,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
     {
         debugManager.flags.EnableStateBaseAddressTracking.set(1);
 
-        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         auto &commandContainer = commandList->getCmdContainer();
@@ -1537,5 +1537,22 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
 }
 
+HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForInternalUsageThenInternalEngineGroupIsUsed) {
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    reinterpret_cast<L0::DeviceImp *>(device)->createInternalCommandList(&desc, &commandList);
+    auto whiteboxCommandList = reinterpret_cast<WhiteBox<::L0::CommandListImp> *>(L0::CommandList::fromHandle(commandList));
+    EXPECT_TRUE(whiteboxCommandList->internalUsage);
+    whiteboxCommandList->destroy();
+}
+
+HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForNotInternalUsageThenInternalEngineGroupIsNotUsed) {
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    device->createCommandList(&desc, &commandList);
+    auto whiteboxCommandList = reinterpret_cast<WhiteBox<::L0::CommandListImp> *>(L0::CommandList::fromHandle(commandList));
+    EXPECT_FALSE(whiteboxCommandList->internalUsage);
+    whiteboxCommandList->destroy();
+}
 } // namespace ult
 } // namespace L0

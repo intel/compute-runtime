@@ -27,7 +27,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
     ze_event_handle_t eventHandle = {};
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, deviceImp.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, deviceImp.subDevices[0], NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
     zet_metric_streamer_handle_t streamerHandle = {};
     zet_metric_streamer_desc_t streamerDesc = {};

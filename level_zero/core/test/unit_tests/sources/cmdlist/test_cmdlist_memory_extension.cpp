@@ -28,8 +28,8 @@ class CommandListWaitOnMemFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         ze_result_t returnValue;
-        commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue)));
-        commandListBcs.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue)));
+        commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+        commandListBcs.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false)));
 
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

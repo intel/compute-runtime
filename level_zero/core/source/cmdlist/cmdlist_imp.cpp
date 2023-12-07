@@ -102,7 +102,8 @@ ze_result_t CommandListImp::appendMetricQueryEnd(zet_metric_query_handle_t hMetr
 }
 
 CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
-                                 ze_command_list_flags_t flags, ze_result_t &returnValue) {
+                                 ze_command_list_flags_t flags, ze_result_t &returnValue,
+                                 bool internalUsage) {
     CommandListAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandListFactory[productFamily];
@@ -113,6 +114,7 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
 
     if (allocator) {
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::defaultNumIddsPerBlock));
+        commandList->internalUsage = internalUsage;
         returnValue = commandList->initialize(device, engineGroupType, flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
@@ -147,9 +149,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             } else {
                 auto internalEngine = deviceImp->getActiveDevice()->getInternalEngine();
                 csr = internalEngine.commandStreamReceiver;
-                auto internalEngineType = internalEngine.getEngineType();
-                auto internalEngineUsage = internalEngine.getEngineUsage();
-                engineGroupType = gfxCoreHelper.getEngineGroupType(internalEngineType, internalEngineUsage, hwInfo);
+                engineGroupType = deviceImp->getInternalEngineGroupType();
             }
         } else {
             returnValue = device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);

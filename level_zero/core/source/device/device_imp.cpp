@@ -23,6 +23,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/topology_map.h"
@@ -96,6 +97,7 @@ ze_result_t DeviceImp::getStatus() {
 ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
     DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
     uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
+    *value = false;
 
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t listDescriptor = {};
@@ -114,8 +116,10 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     queueDescriptor.ordinal = 0;
     queueDescriptor.index = 0;
 
-    this->createCommandList(&listDescriptor, &commandList);
-    this->createCommandQueue(&queueDescriptor, &commandQueue);
+    auto ret = this->createInternalCommandList(&listDescriptor, &commandList);
+    UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
+    ret = this->createInternalCommandQueue(&queueDescriptor, &commandQueue);
+    UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
 
     auto driverHandle = this->getDriverHandle();
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
@@ -144,7 +148,7 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     contextImp->allocDeviceMem(this->toHandle(), &deviceDesc, 8, 1, &memory);
     contextImp->allocDeviceMem(hPeerDevice, &peerDeviceDesc, 8, 1, &peerMemory);
 
-    auto ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr, false, false);
+    ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr, false, false);
     L0::CommandList::fromHandle(commandList)->close();
 
     if (ret == ZE_RESULT_SUCCESS) {
@@ -163,9 +167,9 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     contextImp->freeMem(peerMemory);
     contextImp->freeMem(memory);
 
-    L0::Context::fromHandle(context)->destroy();
-    L0::CommandQueue::fromHandle(commandQueue)->destroy();
     L0::CommandList::fromHandle(commandList)->destroy();
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+    L0::Context::fromHandle(context)->destroy();
 
     if (ret == ZE_RESULT_ERROR_DEVICE_LOST) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
@@ -221,7 +225,19 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto createCommandList = getCmdListCreateFunc(desc);
-    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue);
+    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false);
+
+    return returnValue;
+}
+
+ze_result_t DeviceImp::createInternalCommandList(const ze_command_list_desc_t *desc,
+                                                 ze_command_list_handle_t *commandList) {
+    NEO::EngineGroupType engineGroupType = getInternalEngineGroupType();
+
+    auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto createCommandList = getCmdListCreateFunc(desc);
+    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, true);
 
     return returnValue;
 }
@@ -300,7 +316,22 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
+    return returnValue;
+}
 
+ze_result_t DeviceImp::createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                                  ze_command_queue_handle_t *commandQueue) {
+    auto &platform = neoDevice->getHardwareInfo().platform;
+
+    auto internalEngine = this->getActiveDevice()->getInternalEngine();
+    auto csr = internalEngine.commandStreamReceiver;
+    auto engineGroupType = getInternalEngineGroupType();
+    auto isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
+
+    UNRECOVERABLE_IF(csr == nullptr);
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, true, false, returnValue);
     return returnValue;
 }
 
@@ -477,6 +508,14 @@ ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pCom
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+NEO::EngineGroupType DeviceImp::getInternalEngineGroupType() {
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto internalEngine = this->getActiveDevice()->getInternalEngine();
+    auto internalEngineType = internalEngine.getEngineType();
+    auto internalEngineUsage = internalEngine.getEngineUsage();
+    return gfxCoreHelper.getEngineGroupType(internalEngineType, internalEngineUsage, getHwInfo());
 }
 
 void DeviceImp::getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,

@@ -418,7 +418,7 @@ HWTEST_F(CommandListAppendWaitOnUsedPacketSignalEvent, WhenAppendingWaitOnTimest
     NEO::debugManager.flags.UseDynamicEventPacketsCount.set(0);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, result)));
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false)));
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 

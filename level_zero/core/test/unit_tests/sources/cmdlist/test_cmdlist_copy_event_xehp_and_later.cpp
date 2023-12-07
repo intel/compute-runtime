@@ -458,7 +458,7 @@ void testSingleTileAppendMemoryCopySignalScopeEventToSubDevice(CopyTestInput &in
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, input.device, NEO::EngineGroupType::renderCompute, 0u, result));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, input.device, NEO::EngineGroupType::renderCompute, 0u, result, false));
     auto &commandContainer = commandList->getCmdContainer();
 
     ze_event_pool_desc_t eventPoolDesc = {};

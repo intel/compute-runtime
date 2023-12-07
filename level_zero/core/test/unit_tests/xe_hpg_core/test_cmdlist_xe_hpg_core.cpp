@@ -36,7 +36,7 @@ HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAdd
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 

@@ -754,7 +754,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      device,
                                                                      NEO::EngineGroupType::copy,
                                                                      0u,
-                                                                     returnValue));
+                                                                     returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
     res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
@@ -855,7 +855,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      device,
                                                                      NEO::EngineGroupType::copy,
                                                                      0u,
-                                                                     returnValue));
+                                                                     returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 

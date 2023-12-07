@@ -22,7 +22,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWit
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     createKernel();
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     EXPECT_LE(0u, kernel->kernelImmData->getDescriptor().kernelAttributes.slmInlineSize);
