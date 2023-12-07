@@ -45,6 +45,7 @@ void FdCacheInterface::eraseLeastUsedEntryFromCache() {
 }
 
 int FdCacheInterface::getFd(std::string file) {
+    std::unique_lock<std::mutex> lock(fdMutex);
     int fd = -1;
     if (fdMap.find(file) == fdMap.end()) {
         fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
