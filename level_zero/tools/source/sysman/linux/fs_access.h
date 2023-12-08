@@ -42,7 +42,6 @@ class FdCache {
     std::map<std::string, std::pair<int, uint32_t>> fdMap = {};
 
   private:
-    std::mutex fdMutex{};
     void eraseLeastUsedEntryFromCache();
 };
 
@@ -79,11 +78,13 @@ class FsAccess {
     FsAccess();
     decltype(&NEO::SysCalls::access) accessSyscall = NEO::SysCalls::access;
     decltype(&stat) statSyscall = stat;
+    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainMutex();
 
   private:
     template <typename T>
     ze_result_t readValue(const std::string file, T &val);
     std::unique_ptr<FdCache> pFdCache = nullptr;
+    std::mutex fsMutex{};
 };
 
 class ProcfsAccess : private FsAccess {
