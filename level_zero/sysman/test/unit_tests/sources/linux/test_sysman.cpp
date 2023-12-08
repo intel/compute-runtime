@@ -218,6 +218,39 @@ TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMult
     delete tempSysfsAccess;
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidMockMutexFsAccessWhenCallingReadThenMutexLockCounterMatchesNumberOfReadCalls) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string value = "123";
+        memcpy(buf, value.data(), value.size());
+        return value.size();
+    });
+
+    class MockMutexFsAccess : public L0::Sysman::FsAccessInterface {
+      public:
+        uint32_t mutexLockCounter = 0;
+        std::unique_lock<std::mutex> obtainMutex() override {
+            mutexLockCounter++;
+            std::unique_lock<std::mutex> mutexLock = L0::Sysman::FsAccessInterface::obtainMutex();
+            EXPECT_TRUE(mutexLock.owns_lock());
+            return mutexLock;
+        }
+    };
+    MockMutexFsAccess *tempFsAccess = new MockMutexFsAccess();
+    std::string fileName = {};
+    uint32_t iVal32;
+    uint32_t testReadCount = 10;
+    for (uint32_t i = 0; i < testReadCount; i++) {
+        fileName = "mockfile" + std::to_string(i) + ".txt";
+        EXPECT_EQ(ZE_RESULT_SUCCESS, tempFsAccess->read(fileName, iVal32));
+    }
+    EXPECT_EQ(tempFsAccess->mutexLockCounter, testReadCount);
+    delete tempFsAccess;
+}
+
 TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUpdatedProperly) {
 
     class MockFdCache : public FdCache {
@@ -254,35 +287,6 @@ TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnSameFileThenVerifyCacheIsUp
 
     // Verify cache doesn't have an element that is accessed less number of times.
     EXPECT_EQ(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile9.txt"));
-}
-
-TEST(FdCacheTest, GivenValidFdCacheWhenCallingGetFdOnMultipleFilesManyTimesThenVerifyCacheIsUpdatedCorrectly) {
-
-    class MockFdCache : public FdCacheInterface {
-      public:
-        using FdCacheInterface::fdMap;
-    };
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return 1;
-    });
-
-    std::unique_ptr<MockFdCache> pFdCache = std::make_unique<MockFdCache>();
-    std::string fileName = {};
-    for (auto i = 0; i < L0::Sysman::FdCacheInterface::maxSize; i++) {
-        fileName = "mockfile" + std::to_string(i) + ".txt";
-        int j = i + 1;
-        while (j--) {
-            EXPECT_LE(0, pFdCache->getFd(fileName));
-        }
-    }
-
-    // replace a least referred file and add new file
-    fileName = "mockfile100.txt";
-    EXPECT_LE(0, pFdCache->getFd(fileName));
-
-    // Verify cache doesn't have an element that is accessed less number of times.
-    EXPECT_EQ(pFdCache->fdMap.end(), pFdCache->fdMap.find("mockfile0.txt"));
 }
 
 TEST(FdCacheTest, GivenValidFdCacheWhenClearingCacheThenVerifyProperFdsAreClosedAndCacheIsUpdatedProperly) {
