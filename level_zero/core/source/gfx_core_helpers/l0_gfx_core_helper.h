@@ -87,6 +87,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual ze_rtas_format_exp_t getSupportedRTASFormat() const = 0;
     virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
     virtual zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const = 0;
+    virtual uint32_t getCmdListWaitOnMemoryDataSize() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -125,6 +126,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     ze_rtas_format_exp_t getSupportedRTASFormat() const override;
     bool platformSupportsImmediateComputeFlushTask() const override;
     zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const override;
+    uint32_t getCmdListWaitOnMemoryDataSize() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

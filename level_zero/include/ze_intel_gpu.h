@@ -87,10 +87,10 @@ typedef enum _ze_intel_command_list_memory_sync_exp_version_t {
 ///     - Implementation must support ::ZE_intel_experimental_command_list_memory_sync extension
 ///     - May be passed to ze_device_properties_t through pNext.
 typedef struct _ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t {
-    ze_structure_type_t stype = ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC; ///< [in] type of this structure
-    const void *pNext;                                                                                         ///< [in][optional] must be null or a pointer to an extension-specific
-                                                                                                               ///< structure (i.e. contains stype and pNext).
-    uint32_t cmdListWaitOnMemoryDataSizeInBytes;                                                               /// <out> Defines supported data size for zexCommandListAppendWaitOnMemory[64] API
+    ze_structure_type_t stype;                   ///< [in] type of this structure
+    const void *pNext;                           ///< [in][optional] must be null or a pointer to an extension-specific
+                                                 ///< structure (i.e. contains stype and pNext).
+    uint32_t cmdListWaitOnMemoryDataSizeInBytes; /// <out> Defines supported data size for zexCommandListAppendWaitOnMemory[64] API
 } ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t;
 
 #ifndef ZE_INTEL_EVENT_SYNC_MODE
