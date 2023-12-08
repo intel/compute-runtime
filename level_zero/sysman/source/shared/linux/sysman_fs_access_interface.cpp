@@ -45,7 +45,6 @@ void FdCacheInterface::eraseLeastUsedEntryFromCache() {
 }
 
 int FdCacheInterface::getFd(std::string file) {
-    std::unique_lock<std::mutex> lock(fdMutex);
     int fd = -1;
     if (fdMap.find(file) == fdMap.end()) {
         fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
@@ -72,6 +71,7 @@ FdCacheInterface::~FdCacheInterface() {
 
 template <typename T>
 ze_result_t FsAccessInterface::readValue(const std::string file, T &val) {
+    auto lock = this->obtainMutex();
 
     std::string readVal(64, '\0');
     int fd = pFdCacheInterface->getFd(file);
@@ -301,6 +301,10 @@ bool FsAccessInterface::directoryExists(const std::string path) {
         return false;
     }
     return true;
+}
+
+std::unique_lock<std::mutex> FsAccessInterface::obtainMutex() {
+    return std::unique_lock<std::mutex>(this->fsMutex);
 }
 
 // Procfs Access
