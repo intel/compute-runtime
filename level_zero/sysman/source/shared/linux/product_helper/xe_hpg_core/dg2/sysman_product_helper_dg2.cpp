@@ -18,6 +18,8 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
     return RasInterfaceType::pmu;
 }
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

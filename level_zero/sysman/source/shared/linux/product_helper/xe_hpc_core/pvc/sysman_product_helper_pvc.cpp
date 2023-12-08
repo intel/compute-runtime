@@ -16,6 +16,8 @@ namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_PVC;
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
+
 template <>
 void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) {
     if (performanceFactor > halfOfMaxPerformanceFactor) {

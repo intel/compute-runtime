@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -45,11 +46,7 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &p
 
 double LinuxFrequencyImp::osFrequencyGetStepSize() {
     double stepSize;
-    if (productFamily >= IGFX_XE_HP_SDV) {
-        stepSize = 50.0;
-    } else {
-        stepSize = 50.0 / 3; // Step of 16.6666667 Mhz (GEN9 Hardcode)
-    }
+    pSysmanProductHelper->getFrequencyStepSize(&stepSize);
     return stepSize;
 }
 
@@ -437,7 +434,7 @@ void LinuxFrequencyImp::init() {
 LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), frequencyDomainNumber(frequencyDomainNumber) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    productFamily = pLinuxSysmanImp->getProductFamily();
+    pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     init();
 }

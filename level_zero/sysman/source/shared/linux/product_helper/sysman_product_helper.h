@@ -36,6 +36,9 @@ class SysmanProductHelper {
         return productHelper;
     }
 
+    // Frequency
+    virtual void getFrequencyStepSize(double *pStepSize) = 0;
+
     // Memory
     virtual ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) = 0;
     virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) = 0;

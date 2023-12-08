@@ -22,6 +22,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
         return pSysmanProductHelper;
     }
 
+    // Frequency
+    void getFrequencyStepSize(double *pStepSize) override;
+
     // Memory
     ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) override;
     ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) override;

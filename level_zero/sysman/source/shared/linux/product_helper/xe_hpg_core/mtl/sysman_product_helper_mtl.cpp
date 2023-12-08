@@ -13,6 +13,8 @@ namespace Sysman {
 
 constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

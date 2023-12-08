@@ -11,6 +11,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_memory_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_temperature_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_globalops_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_frequency_tests.cpp
   )
 endif()
 

@@ -17,6 +17,11 @@ namespace L0 {
 namespace Sysman {
 
 template <PRODUCT_FAMILY gfxProduct>
+void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) {
+    *pStepSize = (50.0 / 3); // Step of 16.6666667 Mhz
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
