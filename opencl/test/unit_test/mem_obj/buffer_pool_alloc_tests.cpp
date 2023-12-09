@@ -362,8 +362,8 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBuffer
     context->setSpecialQueue(commandQueue, rootDeviceIndex);
 
     flags = CL_MEM_COPY_HOST_PTR;
-    auto dataToCopy = std::unique_ptr<unsigned char[]>(new unsigned char[PoolAllocator::smallBufferThreshold]());
-    hostPtr = dataToCopy.get();
+    unsigned char dataToCopy[PoolAllocator::smallBufferThreshold];
+    hostPtr = dataToCopy;
 
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
@@ -430,6 +430,7 @@ TEST_F(AggregatedSmallBuffersKernelTest, givenBufferFromPoolWhenOffsetSubbufferI
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(buffer, nullptr);
+    EXPECT_GT(buffer->getOffset(), 0u);
     cl_buffer_region region;
     region.origin = 0xc0;
     region.size = 32;
@@ -546,8 +547,8 @@ TEST_F(AggregatedSmallBuffersEnabledApiTest, givenSmallBufferWhenCreatingBufferT
 
 TEST_F(AggregatedSmallBuffersEnabledApiTest, givenUseHostPointerWhenCreatingBufferThenDoNotUsePool) {
     flags |= CL_MEM_USE_HOST_PTR;
-    auto hostData = std::unique_ptr<unsigned char[]>(new unsigned char[PoolAllocator::smallBufferThreshold]());
-    hostPtr = hostData.get();
+    unsigned char hostData[PoolAllocator::smallBufferThreshold];
+    hostPtr = hostData;
     cl_mem smallBuffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(smallBuffer, nullptr);
@@ -633,9 +634,9 @@ TEST_F(AggregatedSmallBuffersEnabledApiTest, givenSubBufferNotFromPoolAndAggrega
 
 TEST_F(AggregatedSmallBuffersEnabledApiTest, givenCopyHostPointerWhenCreatingBufferThenUsePoolAndCopyHostPointer) {
     flags |= CL_MEM_COPY_HOST_PTR;
-    auto dataToCopy = std::unique_ptr<unsigned char[]>(new unsigned char[PoolAllocator::smallBufferThreshold]());
+    unsigned char dataToCopy[PoolAllocator::smallBufferThreshold];
     dataToCopy[0] = 123;
-    hostPtr = dataToCopy.get();
+    hostPtr = dataToCopy;
     auto contextRefCountBefore = context->getRefInternalCount();
     cl_mem smallBuffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
     EXPECT_EQ(context->getRefInternalCount(), contextRefCountBefore + 1);
@@ -671,6 +672,7 @@ TEST_F(AggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubB
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(buffer, nullptr);
     MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
+    EXPECT_GT(mockBuffer->offset, 0u);
     EXPECT_EQ(ptrOffset(poolAllocator->bufferPools[0].mainStorage->getCpuAddress(), mockBuffer->getOffset()), mockBuffer->getCpuAddress());
 
     cl_buffer_region region{};

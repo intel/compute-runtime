@@ -79,10 +79,9 @@ struct MultitileMulticontextTests : public MulticontextAubFixture, public ::test
         for (uint32_t tile = 0; tile < tileDevices.size(); tile++) {
             for (uint32_t tileEngine = 0; tileEngine < commandQueues[tile].size(); tileEngine++) {
                 getSimulatedCsr<FamilyType>(tile, tileEngine)->pollForCompletion();
-                auto regularBufferGpuAddress = static_cast<uintptr_t>(ptrOffset(regularBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), regularBuffers[tile][tileEngine]->getOffset()));
 
-                auto tileOnlyBufferGpuAddress = static_cast<uintptr_t>(ptrOffset(tileOnlyBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), tileOnlyBuffers[tile][tileEngine]->getOffset()));
-
+                auto regularBufferGpuAddress = static_cast<uintptr_t>(regularBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
+                auto tileOnlyBufferGpuAddress = static_cast<uintptr_t>(tileOnlyBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
                 expectMemory<FamilyType>(reinterpret_cast<void *>(regularBufferGpuAddress), writePattern, bufferSize, tile, tileEngine);
                 expectMemory<FamilyType>(reinterpret_cast<void *>(tileOnlyBufferGpuAddress), writePattern, bufferSize, tile, tileEngine);
             }

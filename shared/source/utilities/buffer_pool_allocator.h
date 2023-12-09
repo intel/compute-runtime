@@ -26,7 +26,7 @@ template <typename PoolT>
 struct SmallBuffersParams {
   protected:
     static constexpr auto aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::megaByte;
-    static constexpr auto smallBufferThreshold = 1 * MemoryConstants::megaByte;
+    static constexpr auto smallBufferThreshold = 4 * MemoryConstants::kiloByte;
     static constexpr auto chunkAlignment = 512u;
     static constexpr auto startingOffset = chunkAlignment;
 };
