@@ -75,8 +75,6 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
         0,
         rootDeviceEnvironment,
         args);
-
-    EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, *rootDeviceEnvironment.getHardwareInfo());
 }
 
 template <typename GfxFamily>

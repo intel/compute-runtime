@@ -153,7 +153,7 @@ struct EncodeDispatchKernel {
     static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
 
     template <typename WalkerType>
-    static void adjustTimestampPacket(WalkerType &walkerCmd, const HardwareInfo &hwInfo);
+    static void adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
 
     template <typename WalkerType>
     static void setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);

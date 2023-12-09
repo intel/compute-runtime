@@ -347,6 +347,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto &postSync = walkerCmd.getPostSync();
     if (args.eventAddress != 0) {
         postSync.setDataportPipelineFlush(true);
+        postSync.setDataportSubsliceCacheFlush(true);
+
         if (args.isTimestampEvent) {
             UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(args.eventAddress)));
 
@@ -360,12 +362,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         postSync.setDestinationAddress(args.eventAddress);
 
         EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, args.dcFlushEnable);
-        EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
+        EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
     }
 
     if (debugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {
         postSync.setDataportPipelineFlush(true);
-        EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
+        postSync.setDataportSubsliceCacheFlush(true);
     }
 
     walkerCmd.setPredicateEnable(args.isPredicate);

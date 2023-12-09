@@ -581,7 +581,7 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const HardwareInfo &hwInfo) {}
+void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
 
 template <typename Family>
 void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr) {

@@ -104,14 +104,12 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
                                                         const RootDeviceEnvironment &rootDeviceEnvironment) {
     using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
 
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &postSyncData = walkerCmd->getPostSync();
     postSyncData.setDataportPipelineFlush(true);
+    postSyncData.setDataportSubsliceCacheFlush(true);
 
     EncodeDispatchKernel<GfxFamily>::template setupPostSyncMocs<WalkerType>(*walkerCmd, rootDeviceEnvironment,
                                                                             MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment));
-
-    EncodeDispatchKernel<GfxFamily>::template adjustTimestampPacket<WalkerType>(*walkerCmd, hwInfo);
 
     if (debugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
         postSyncData.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);
