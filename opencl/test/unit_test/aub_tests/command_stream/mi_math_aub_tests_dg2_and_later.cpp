@@ -18,15 +18,15 @@
 
 namespace NEO {
 enum class NewAluOpcodes : uint32_t {
-    OPCODE_LOAD = 0x080,
-    OPCODE_LOAD0 = 0x081,
-    OPCODE_LOAD1 = 0x481,
-    OPCODE_LOADIND = 0x082,
-    OPCODE_STOREIND = 0x181,
-    OPCODE_SHL = 0x105,
-    OPCODE_SHR = 0x106,
-    OPCODE_SAR = 0x107,
-    OPCODE_FENCE = 0x001
+    opcodeLoad = 0x080,
+    opcodeLoad0 = 0x081,
+    opcodeLoad1 = 0x481,
+    opcodeLoadind = 0x082,
+    opcodeStoreind = 0x181,
+    opcodeShl = 0x105,
+    opcodeShr = 0x106,
+    opcodeSar = 0x107,
+    opcodeFence = 0x001
 };
 
 struct MiMath : public AUBFixture, public ::testing::Test {
@@ -100,7 +100,7 @@ struct MiMath : public AUBFixture, public ::testing::Test {
         pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
         pAluParam->DW0.BitField.Operand2 = shiftReg;
         pAluParam++;
-        pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SHL); // shift high part
+        pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeShl); // shift high part
         pAluParam->DW0.BitField.Operand1 = 0;
         pAluParam->DW0.BitField.Operand2 = 0;
         pAluParam++;
@@ -158,15 +158,15 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = numberOfOperationToLoadAddressToMiMathAccu + 13 - 1;
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::R_0), static_cast<uint32_t>(AluRegisters::R_1), static_cast<uint32_t>(AluRegisters::R_2)); // GPU address of buffer load to ACCU register
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(13 * sizeof(MI_MATH_ALU_INST_INLINE)));
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_LOADIND); // load dword from memory address located in ACCU
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeLoadind); // load dword from memory address located in ACCU
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_0);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -194,7 +194,7 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCA);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_LOAD0);
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeLoad0);
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -202,11 +202,11 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_STOREIND); // store to memory from ACCU, value from register R1
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeStoreind); // store to memory from ACCU, value from register R1
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_ACCU);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_1);
 
@@ -248,30 +248,30 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::R_0), static_cast<uint32_t>(AluRegisters::R_1), static_cast<uint32_t>(AluRegisters::R_2)); // GPU address of buffer load to ACCU register
 
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(3 * sizeof(MI_MATH_ALU_INST_INLINE)));
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_LOADIND); // load dword from memory address located in ACCU to R0
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeLoadind); // load dword from memory address located in ACCU to R0
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_0);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
 
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::R_3), static_cast<uint32_t>(AluRegisters::R_4), static_cast<uint32_t>(AluRegisters::R_2)); // GPU address of bufferB load to ACCU register
 
     pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(3 * sizeof(MI_MATH_ALU_INST_INLINE)));
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_STOREIND); // store to memory from ACCU, value from register R0
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeStoreind); // store to memory from ACCU, value from register R0
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_ACCU);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_0);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
 
@@ -317,7 +317,7 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_1);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SHL); // load value to shift to SRCB
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeShl); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -329,7 +329,7 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SHL); // load value to shift to SRCB
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeShl); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -388,7 +388,7 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_1);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SHR); // load value to shift to SRCB
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeShr); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -400,7 +400,7 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SHR); // load value to shift to SRCB
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeShr); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -452,11 +452,11 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = numberOfOperationToLoadAddressToMiMathAccu + 9 - 1;
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::R_0), static_cast<uint32_t>(AluRegisters::R_1), static_cast<uint32_t>(AluRegisters::R_2)); // GPU address of buffer load to ACCU register
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(9 * sizeof(MI_MATH_ALU_INST_INLINE)));
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_LOADIND); // load value from R0 to SRCA
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeLoadind); // load value from R0 to SRCA
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_3);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -468,7 +468,7 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_4);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SAR); // load value to shift to SRCB
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeSar); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;
@@ -480,7 +480,7 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_5);
     pAluParam++;
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_SAR); // load value to shift to SRCB
+    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeSar); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
     pAluParam++;

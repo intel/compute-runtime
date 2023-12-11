@@ -133,35 +133,35 @@ void PrintFormatter::adjustFormatString<int64_t>(std::string &formatString) {
 }
 
 size_t PrintFormatter::printToken(char *output, size_t size, const char *formatString) {
-    PRINTF_DATA_TYPE type(PRINTF_DATA_TYPE::INVALID);
+    PrintfDataType type(PrintfDataType::invalidType);
     read(&type);
 
     switch (type) {
-    case PRINTF_DATA_TYPE::BYTE:
+    case PrintfDataType::byteType:
         return typedPrintToken<int8_t>(output, size, formatString);
-    case PRINTF_DATA_TYPE::SHORT:
+    case PrintfDataType::shortType:
         return typedPrintToken<int16_t>(output, size, formatString);
-    case PRINTF_DATA_TYPE::INT:
+    case PrintfDataType::intType:
         return typedPrintToken<int>(output, size, formatString);
-    case PRINTF_DATA_TYPE::FLOAT:
+    case PrintfDataType::floatType:
         return typedPrintToken<float>(output, size, formatString);
-    case PRINTF_DATA_TYPE::LONG:
+    case PrintfDataType::longType:
         return typedPrintToken<int64_t>(output, size, formatString);
-    case PRINTF_DATA_TYPE::POINTER:
+    case PrintfDataType::pointerType:
         return printPointerToken(output, size, formatString);
-    case PRINTF_DATA_TYPE::DOUBLE:
+    case PrintfDataType::doubleType:
         return typedPrintToken<double>(output, size, formatString);
-    case PRINTF_DATA_TYPE::VECTOR_BYTE:
+    case PrintfDataType::vectorByteType:
         return typedPrintVectorToken<int8_t>(output, size, formatString);
-    case PRINTF_DATA_TYPE::VECTOR_SHORT:
+    case PrintfDataType::vectorShortType:
         return typedPrintVectorToken<int16_t>(output, size, formatString);
-    case PRINTF_DATA_TYPE::VECTOR_INT:
+    case PrintfDataType::vectorIntType:
         return typedPrintVectorToken<int>(output, size, formatString);
-    case PRINTF_DATA_TYPE::VECTOR_LONG:
+    case PrintfDataType::vectorLongType:
         return typedPrintVectorToken<int64_t>(output, size, formatString);
-    case PRINTF_DATA_TYPE::VECTOR_FLOAT:
+    case PrintfDataType::vectorFloatType:
         return typedPrintVectorToken<float>(output, size, formatString);
-    case PRINTF_DATA_TYPE::VECTOR_DOUBLE:
+    case PrintfDataType::vectorDoubleType:
         return typedPrintVectorToken<double>(output, size, formatString);
     default:
         return 0;
@@ -169,7 +169,7 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
 }
 
 size_t PrintFormatter::printStringToken(char *output, size_t size, const char *formatString) {
-    PRINTF_DATA_TYPE type = PRINTF_DATA_TYPE::INVALID;
+    PrintfDataType type = PrintfDataType::invalidType;
     read(&type);
 
     const char *string = nullptr;
@@ -184,8 +184,8 @@ size_t PrintFormatter::printStringToken(char *output, size_t size, const char *f
     switch (type) {
     default:
         return simpleSprintf(output, size, formatString, 0);
-    case PRINTF_DATA_TYPE::STRING:
-    case PRINTF_DATA_TYPE::POINTER:
+    case PrintfDataType::stringType:
+    case PrintfDataType::pointerType:
         return simpleSprintf(output, size, formatString, string);
     }
 }

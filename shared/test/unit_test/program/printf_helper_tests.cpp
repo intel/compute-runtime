@@ -56,43 +56,25 @@ class PrintFormatterTest : public testing::Test {
         delete data;
     }
 
-    enum class PRINTF_DATA_TYPE : int {
-        INVALID,
-        BYTE,
-        SHORT,
-        INT,
-        FLOAT,
-        STRING,
-        LONG,
-        POINTER,
-        DOUBLE,
-        VECTOR_BYTE,
-        VECTOR_SHORT,
-        VECTOR_INT,
-        VECTOR_LONG,
-        VECTOR_FLOAT,
-        VECTOR_DOUBLE
-    };
-
-    PRINTF_DATA_TYPE getPrintfDataType(char value) { return PRINTF_DATA_TYPE::BYTE; };
-    PRINTF_DATA_TYPE getPrintfDataType(int8_t value) { return PRINTF_DATA_TYPE::BYTE; };
-    PRINTF_DATA_TYPE getPrintfDataType(uint8_t value) { return PRINTF_DATA_TYPE::BYTE; };
-    PRINTF_DATA_TYPE getPrintfDataType(int16_t value) { return PRINTF_DATA_TYPE::SHORT; };
-    PRINTF_DATA_TYPE getPrintfDataType(uint16_t value) { return PRINTF_DATA_TYPE::SHORT; };
-    PRINTF_DATA_TYPE getPrintfDataType(int32_t value) { return PRINTF_DATA_TYPE::INT; };
-    PRINTF_DATA_TYPE getPrintfDataType(uint32_t value) { return PRINTF_DATA_TYPE::INT; };
-    PRINTF_DATA_TYPE getPrintfDataType(int64_t value) { return PRINTF_DATA_TYPE::LONG; };
-    PRINTF_DATA_TYPE getPrintfDataType(uint64_t value) { return PRINTF_DATA_TYPE::LONG; };
-    PRINTF_DATA_TYPE getPrintfDataType(float value) { return PRINTF_DATA_TYPE::FLOAT; };
-    PRINTF_DATA_TYPE getPrintfDataType(double value) { return PRINTF_DATA_TYPE::DOUBLE; };
-    PRINTF_DATA_TYPE getPrintfDataType(char *value) { return PRINTF_DATA_TYPE::STRING; };
+    PrintfDataType getPrintfDataType(char value) { return PrintfDataType::byteType; };
+    PrintfDataType getPrintfDataType(int8_t value) { return PrintfDataType::byteType; };
+    PrintfDataType getPrintfDataType(uint8_t value) { return PrintfDataType::byteType; };
+    PrintfDataType getPrintfDataType(int16_t value) { return PrintfDataType::shortType; };
+    PrintfDataType getPrintfDataType(uint16_t value) { return PrintfDataType::shortType; };
+    PrintfDataType getPrintfDataType(int32_t value) { return PrintfDataType::intType; };
+    PrintfDataType getPrintfDataType(uint32_t value) { return PrintfDataType::intType; };
+    PrintfDataType getPrintfDataType(int64_t value) { return PrintfDataType::longType; };
+    PrintfDataType getPrintfDataType(uint64_t value) { return PrintfDataType::longType; };
+    PrintfDataType getPrintfDataType(float value) { return PrintfDataType::floatType; };
+    PrintfDataType getPrintfDataType(double value) { return PrintfDataType::doubleType; };
+    PrintfDataType getPrintfDataType(char *value) { return PrintfDataType::stringType; };
 
     template <class T>
     void injectValue(T value) {
         auto dataType = getPrintfDataType(value);
         storeData(dataType);
-        if (dataType == PRINTF_DATA_TYPE::BYTE ||
-            dataType == PRINTF_DATA_TYPE::SHORT) {
+        if (dataType == PrintfDataType::byteType ||
+            dataType == PrintfDataType::shortType) {
             storeData(static_cast<int>(value));
         } else {
             storeData(value);
@@ -100,7 +82,7 @@ class PrintFormatterTest : public testing::Test {
     }
 
     void injectStringValue(int value) {
-        storeData(PRINTF_DATA_TYPE::STRING);
+        storeData(PrintfDataType::stringType);
         storeData(value);
     }
 
@@ -614,7 +596,7 @@ TEST_F(PrintFormatterTest, GivenNullTokenWhenPrintingThenNullIsInserted) {
     auto stringIndex = injectFormatString("%s");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     storeData(0);
 
     char actualOutput[maxPrintfOutputLength];
@@ -631,7 +613,7 @@ TEST_F(PrintFormatterTest, GivenVector2WhenPrintingThenAllValuesAreInserted) {
     auto stringIndex = injectFormatString("%v2d");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     // channel count
     storeData(channelCount);
 
@@ -652,7 +634,7 @@ TEST_F(PrintFormatterTest, GivenVector4WhenPrintingThenAllValuesAreInserted) {
     auto stringIndex = injectFormatString("%v4d");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     // channel count
     storeData(channelCount);
 
@@ -673,7 +655,7 @@ TEST_F(PrintFormatterTest, GivenVector8WhenPrintingThenAllValuesAreInserted) {
     auto stringIndex = injectFormatString("%v8d");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     // channel count
     storeData(channelCount);
 
@@ -694,7 +676,7 @@ TEST_F(PrintFormatterTest, GivenVector16WhenPrintingThenAllValuesAreInserted) {
     auto stringIndex = injectFormatString("%v16d");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     // channel count
     storeData(channelCount);
 
@@ -716,7 +698,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfBytesWhenPrintingThenAllValuesAreInserte
     auto stringIndex = injectFormatString("%v2hhd");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_BYTE);
+    storeData(PrintfDataType::vectorByteType);
     // channel count
     storeData(channelCount);
 
@@ -736,7 +718,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfShortsWhenPrintingThenAllValuesAreInsert
     auto stringIndex = injectFormatString("%v2hd");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_SHORT);
+    storeData(PrintfDataType::vectorShortType);
     // channel count
     storeData(channelCount);
 
@@ -756,7 +738,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfIntsWhenPrintingThenAllValuesAreInserted
     auto stringIndex = injectFormatString("%v2d");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     // channel count
     storeData(channelCount);
 
@@ -776,7 +758,7 @@ TEST_F(PrintFormatterTest, GivenSpecialVectorWhenPrintingThenAllValuesAreInserte
     auto stringIndex = injectFormatString("%v2hld");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_INT);
+    storeData(PrintfDataType::vectorIntType);
     // channel count
     storeData(channelCount);
 
@@ -795,7 +777,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfLongsWhenPrintingThenAllValuesAreInserte
     auto stringIndex = injectFormatString("%v2ld");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_LONG);
+    storeData(PrintfDataType::vectorLongType);
     // channel count
     storeData(channelCount);
 
@@ -815,7 +797,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfFloatsWhenPrintingThenAllValuesAreInsert
     auto stringIndex = injectFormatString("%v2f");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_FLOAT);
+    storeData(PrintfDataType::vectorFloatType);
     // channel count
     storeData(channelCount);
 
@@ -835,7 +817,7 @@ TEST_F(PrintFormatterTest, GivenVectorOfDoublesWhenPrintingThenAllValuesAreInser
     auto stringIndex = injectFormatString("%v2f");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_DOUBLE);
+    storeData(PrintfDataType::vectorDoubleType);
     // channel count
     storeData(channelCount);
 
@@ -855,7 +837,7 @@ TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
 
     int temp;
 
-    storeData(PRINTF_DATA_TYPE::POINTER);
+    storeData(PrintfDataType::pointerType);
     // channel count
     storeData(reinterpret_cast<void *>(&temp));
 
@@ -881,7 +863,7 @@ TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPoint
     storeData(stringIndex);
     kernelInfo->kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
 
-    storeData(PRINTF_DATA_TYPE::POINTER);
+    storeData(PrintfDataType::pointerType);
 
     // store pointer
     uint32_t addressValue = 0;
@@ -909,7 +891,7 @@ TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProp
     auto stringIndex = injectFormatString("%v4hhd %v4hhd");
     storeData(stringIndex);
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_BYTE);
+    storeData(PrintfDataType::vectorByteType);
     // channel count
     storeData(channelCount);
 
@@ -921,7 +903,7 @@ TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProp
     for (int i = 0; i < 12; i++)
         storeData(static_cast<int8_t>(0));
 
-    storeData(PRINTF_DATA_TYPE::VECTOR_BYTE);
+    storeData(PrintfDataType::vectorByteType);
     // channel count
     storeData(channelCount);
 
@@ -973,10 +955,10 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsT
     storeData(formatString);
 
     const char *string1 = "str1";
-    storeData(PRINTF_DATA_TYPE::POINTER);
+    storeData(PrintfDataType::pointerType);
     storeData(string1);
     const char *string2 = "str2";
-    storeData(PRINTF_DATA_TYPE::POINTER);
+    storeData(PrintfDataType::pointerType);
     storeData(string2);
 
     const char *expectedOutput = "str1 str2";

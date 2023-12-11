@@ -40,8 +40,8 @@ static constexpr std::array<const char *, 2> kernelNames = {"printf_kernel",
                                                             "printf_kernel1"};
 
 enum class PrintfExecutionMode : uint32_t {
-    CommandQueue,
-    ImmSyncCmdList
+    commandQueue,
+    immSyncCmdList
 };
 
 void createModule(const ze_context_handle_t context, const ze_device_handle_t device, ze_module_handle_t &module) {
@@ -72,7 +72,7 @@ void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t 
                      ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, PrintfExecutionMode mode) {
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
-    bool isImmediateCmdList = (mode == PrintfExecutionMode::ImmSyncCmdList);
+    bool isImmediateCmdList = (mode == PrintfExecutionMode::immSyncCmdList);
 
     SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"};
 
-    PrintfExecutionMode executionModes[] = {PrintfExecutionMode::CommandQueue, PrintfExecutionMode::ImmSyncCmdList};
+    PrintfExecutionMode executionModes[] = {PrintfExecutionMode::commandQueue, PrintfExecutionMode::immSyncCmdList};
 
     for (auto mode : executionModes) {
         for (uint32_t i = 0; i < 2; i++) {

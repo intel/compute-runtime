@@ -78,14 +78,14 @@ static std::string kernelName2 = "kernel_fill";
 static std::string kernelName3 = "image_copy";
 
 enum class ExecutionMode : uint32_t {
-    CommandQueue,
-    ImmSyncCmdList
+    commandQueue,
+    immSyncCmdList
 };
 
 enum class AddressingMode : uint32_t {
-    Default,
-    Bindless,
-    BindlessImages
+    defaultMode,
+    bindless,
+    bindlessImages
 };
 
 void createModule(const char *sourceCode, AddressingMode addressing, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module) {
@@ -93,10 +93,10 @@ void createModule(const char *sourceCode, AddressingMode addressing, const ze_co
     std::string bindlessOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
     std::string bindlessImagesOptions = "-cl-intel-use-bindless-images -cl-intel-use-bindless-advanced-mode";
     std::string internalOptions = "";
-    if (addressing == AddressingMode::Bindless) {
+    if (addressing == AddressingMode::bindless) {
         internalOptions = bindlessOptions;
     }
-    if (addressing == AddressingMode::BindlessImages) {
+    if (addressing == AddressingMode::bindlessImages) {
         internalOptions = bindlessImagesOptions;
     }
     auto bin = LevelZeroBlackBoxTests::compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
@@ -125,7 +125,7 @@ void run(const ze_kernel_handle_t &copyKernel, const ze_kernel_handle_t &fillKer
          ze_context_handle_t &context, ze_device_handle_t &device, uint32_t id, ExecutionMode mode, bool &outputValidationSuccessful) {
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
-    bool isImmediateCmdList = (mode == ExecutionMode::ImmSyncCmdList);
+    bool isImmediateCmdList = (mode == ExecutionMode::immSyncCmdList);
 
     SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
 
@@ -200,10 +200,10 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
 
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
-    createModule(source, AddressingMode::Bindless, context, device, deviceId, revisionId, module);
-    createModule(source2, AddressingMode::Default, context, device, deviceId, revisionId, module2);
+    createModule(source, AddressingMode::bindless, context, device, deviceId, revisionId, module);
+    createModule(source2, AddressingMode::defaultMode, context, device, deviceId, revisionId, module2);
 
-    ExecutionMode executionModes[] = {ExecutionMode::CommandQueue, ExecutionMode::ImmSyncCmdList};
+    ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
     ze_kernel_handle_t copyKernel = nullptr;
     ze_kernel_handle_t fillKernel = nullptr;
     createKernel(module, copyKernel, kernelName.c_str());
@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
                 auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", defaultImageCount);
                 auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
 
-                AddressingMode mode = bindlessImages ? AddressingMode::BindlessImages : AddressingMode::Bindless;
+                AddressingMode mode = bindlessImages ? AddressingMode::bindlessImages : AddressingMode::bindless;
                 std::cout << "--image-count: " << imageCount << std::endl;
 
                 if (bindlessImages) {

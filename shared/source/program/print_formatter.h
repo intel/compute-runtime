@@ -24,24 +24,24 @@ namespace NEO {
 
 using StringMap = std::unordered_map<uint32_t, std::string>;
 
-enum class PRINTF_DATA_TYPE : int {
-    INVALID,
-    BYTE,
-    SHORT,
-    INT,
-    FLOAT,
-    STRING,
-    LONG,
-    POINTER,
-    DOUBLE,
-    VECTOR_BYTE,
-    VECTOR_SHORT,
-    VECTOR_INT,
-    VECTOR_LONG,
-    VECTOR_FLOAT,
-    VECTOR_DOUBLE
+enum class PrintfDataType : int {
+    invalidType,
+    byteType,
+    shortType,
+    intType,
+    floatType,
+    stringType,
+    longType,
+    pointerType,
+    doubleType,
+    vectorByteType,
+    vectorShortType,
+    vectorIntType,
+    vectorLongType,
+    vectorFloatType,
+    vectorDoubleType
 };
-static_assert(sizeof(PRINTF_DATA_TYPE) == sizeof(int));
+static_assert(sizeof(PrintfDataType) == sizeof(int));
 
 class PrintFormatter {
   public:

@@ -126,7 +126,7 @@ class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsi
 };
 
 TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThenProgramIsProperlyResolved) {
-    auto mockElf = std::make_unique<MockElfBinaryPatchtokens<enabledIrFormat::ENABLE_SPIRV>>(device->getHardwareInfo());
+    auto mockElf = std::make_unique<MockElfBinaryPatchtokens<enabledIrFormat::enableSpirv>>(device->getHardwareInfo());
     auto pBinary = mockElf->storage;
     auto binarySize = mockElf->storage.size();
 
