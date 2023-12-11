@@ -256,7 +256,9 @@ struct Event : _ze_event_handle_t {
     bool hasKerneMappedTsCapability = false;
     std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
     void enableKmdWaitMode() { kmdWaitMode = true; }
+    void enableInterruptMode() { interruptMode = true; }
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
+    bool isInterruptModeEnabled() const { return interruptMode; }
     void unsetInOrderExecInfo();
 
   protected:
@@ -317,6 +319,7 @@ struct Event : _ze_event_handle_t {
     bool signalAllEventPackets = false;
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
+    bool interruptMode = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 

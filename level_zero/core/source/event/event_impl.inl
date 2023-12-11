@@ -88,8 +88,27 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->enableCounterBasedMode(true);
     }
 
-    if (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1) {
+    auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+
+    bool interruptMode = false;
+    bool kmdWaitMode = false;
+
+    if (extendedDesc && (extendedDesc->stype == ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC)) {
+        auto eventSyncModeDesc = reinterpret_cast<const ze_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
+
+        interruptMode = (eventSyncModeDesc->syncModeFlags & ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
+        kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
+    }
+
+    interruptMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
+    kmdWaitMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
+
+    if (kmdWaitMode) {
         event->enableKmdWaitMode();
+    }
+
+    if (interruptMode) {
+        event->enableInterruptMode();
     }
 
     return event;
