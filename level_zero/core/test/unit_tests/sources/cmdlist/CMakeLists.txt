@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,6 +13,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_5.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_6.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_7.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_8.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_api.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_barrier.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_event_reset.cpp
