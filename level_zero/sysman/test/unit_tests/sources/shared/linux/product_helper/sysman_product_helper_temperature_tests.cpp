@@ -14,14 +14,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-struct SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-    }
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
-    }
-};
+using SysmanProductHelperTemperatureTest = ::testing::Test;
 
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidPmtHandleAndReadSocTemperatureFailsWhenGettingGlobalTemperatureThenFailureIsReturned, IsDG1) {
     uint32_t subdeviceId = 0;

@@ -13,14 +13,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-struct SysmanProductHelperMemoryTest : public SysmanDeviceFixture {
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-    }
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
-    }
-};
+using SysmanProductHelperMemoryTest = SysmanDeviceFixture;
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingMemoryAPIsThenErrorIsReturned, IsPVC) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -52,7 +45,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanProductHelperMemoryTest, GivenInvalidProductFamilyWhenCallingProductHelperCreateThenNullPtrIsReturned) {
+TEST(SysmanProductHelperTest, GivenInvalidProductFamilyWhenCallingProductHelperCreateThenNullPtrIsReturned) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(IGFX_UNKNOWN);
     EXPECT_EQ(nullptr, pSysmanProductHelper);
 }

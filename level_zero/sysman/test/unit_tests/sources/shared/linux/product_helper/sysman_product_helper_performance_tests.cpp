@@ -13,16 +13,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-class SysmanProductHelperPerformanceTest : public SysmanMultiDeviceFixture {
-  protected:
-    void SetUp() override {
-        SysmanMultiDeviceFixture::SetUp();
-    }
-
-    void TearDown() override {
-        SysmanMultiDeviceFixture::TearDown();
-    }
-};
+using SysmanProductHelperPerformanceTest = ::testing::Test;
 
 HWTEST2_F(SysmanProductHelperPerformanceTest, GivenMediaPerformanceFactorWhenGettingMediaPerformanceMultiplierForProductsAtMostDg2ThenValidMultiplierIsReturned, IsAtMostDg2) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
