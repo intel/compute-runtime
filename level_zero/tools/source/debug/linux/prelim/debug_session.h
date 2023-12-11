@@ -189,6 +189,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
     void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
+    MOCKABLE_VIRTUAL bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc);
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         pushApiEvent(debugEvent);
