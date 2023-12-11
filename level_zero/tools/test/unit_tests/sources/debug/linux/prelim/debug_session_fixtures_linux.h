@@ -439,6 +439,13 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
         return L0::DebugSessionLinuxi915::checkThreadIsResumed(threadID);
     }
 
+    bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc) override {
+        if (skipCheckForceExceptionBit) {
+            return false;
+        }
+        return L0::DebugSessionLinuxi915::checkForceExceptionBit(memoryHandle, threadId, cr0, regDesc);
+    }
+
     float getThreadStartLimitTime() override {
         if (threadStartLimit >= 0.0) {
             return threadStartLimit;
@@ -501,6 +508,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     uint32_t writeResumeCommandCalled = 0;
     bool skipcheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
+    bool skipCheckForceExceptionBit = false;
     uint32_t interruptedDevice = std::numeric_limits<uint32_t>::max();
     uint32_t processPendingVmBindEventsCalled = 0;
     uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
