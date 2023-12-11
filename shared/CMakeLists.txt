@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,6 @@ add_subdirectory(source)
 add_subdirectory(generate_cpp_array)
 
 set(SHARED_TEST_PROJECTS_FOLDER "neo shared")
-include(${NEO_SOURCE_DIR}/cmake/setup_ult_global_flags.cmake)
 
 if(NOT NEO_SKIP_UNIT_TESTS)
   add_custom_target(unit_tests)

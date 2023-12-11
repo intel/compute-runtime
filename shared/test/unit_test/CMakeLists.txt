@@ -13,6 +13,8 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
+include(${NEO_SOURCE_DIR}/cmake/setup_ult_global_flags.cmake)
+
 add_executable(neo_shared_tests
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config_ult.cpp
