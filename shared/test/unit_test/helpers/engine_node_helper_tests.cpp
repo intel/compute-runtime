@@ -16,14 +16,14 @@
 using namespace NEO;
 
 TEST(EngineNodeHelperTest, givenValidEngineUsageWhenGettingStringRepresentationThenItIsCorrect) {
-    EXPECT_EQ(std::string{"Regular"}, EngineHelpers::engineUsageToString(EngineUsage::Regular));
-    EXPECT_EQ(std::string{"Internal"}, EngineHelpers::engineUsageToString(EngineUsage::Internal));
-    EXPECT_EQ(std::string{"LowPriority"}, EngineHelpers::engineUsageToString(EngineUsage::LowPriority));
-    EXPECT_EQ(std::string{"Cooperative"}, EngineHelpers::engineUsageToString(EngineUsage::Cooperative));
+    EXPECT_EQ(std::string{"Regular"}, EngineHelpers::engineUsageToString(EngineUsage::regular));
+    EXPECT_EQ(std::string{"Internal"}, EngineHelpers::engineUsageToString(EngineUsage::internal));
+    EXPECT_EQ(std::string{"LowPriority"}, EngineHelpers::engineUsageToString(EngineUsage::lowPriority));
+    EXPECT_EQ(std::string{"Cooperative"}, EngineHelpers::engineUsageToString(EngineUsage::cooperative));
 }
 
 TEST(EngineNodeHelperTest, givenInValidEngineUsageWhenGettingStringRepresentationThenReturnUnknown) {
-    EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineUsageToString(EngineUsage::EngineUsageCount));
+    EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineUsageToString(EngineUsage::engineUsageCount));
     EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineUsageToString(static_cast<EngineUsage>(0xcc)));
 }
 

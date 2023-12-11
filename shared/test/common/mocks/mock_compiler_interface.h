@@ -162,7 +162,7 @@ class MockCompilerInterface : public CompilerInterface {
     std::vector<TranslationOpT> requestedTranslationCtxs;
 
     std::vector<char> sipKernelBinaryOverride;
-    SipKernelType requestedSipKernel = SipKernelType::COUNT;
+    SipKernelType requestedSipKernel = SipKernelType::count;
 
     IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
 };

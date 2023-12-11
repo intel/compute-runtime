@@ -664,7 +664,7 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
         uint32_t numCcs = 0;
 
         for (auto &engine : gpgpuEngines) {
-            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::Regular)) {
+            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::regular)) {
                 numCcs++;
             }
         }

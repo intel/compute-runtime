@@ -138,7 +138,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProg
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
+    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
     commandStreamReceiver.setupContext(ccsOsContext);
 
     configureCSRtoNonDirtyState<FamilyType>(false);

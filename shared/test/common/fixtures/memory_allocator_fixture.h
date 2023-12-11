@@ -33,7 +33,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto engineType = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment())[0].first;
-        auto osContext = memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::Regular},
+        auto osContext = memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular},
                                                                                                                      PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
         csr->setupContext(*osContext);
     }

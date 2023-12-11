@@ -208,7 +208,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingEn
 
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
 
-    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::regular}));
 
     auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto aubCsr2 = std::make_unique<MockAubCsr<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

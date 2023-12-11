@@ -27,7 +27,7 @@
 
 namespace NEO {
 
-SipClassType SipKernel::classType = SipClassType::Init;
+SipClassType SipKernel::classType = SipClassType::init;
 
 std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
     std::vector<char> retBuf;
@@ -108,7 +108,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 
 SipKernelType SipKernel::getSipKernelType(Device &device) {
     if (device.getDebugger() != nullptr) {
-        return SipKernelType::DbgBindless;
+        return SipKernelType::dbgBindless;
     }
     bool debuggingEnabled = device.getDebugger() != nullptr;
     return getSipKernelType(device, debuggingEnabled);
@@ -241,10 +241,10 @@ void SipKernel::selectSipClassType(std::string &fileName, const GfxCoreHelper &g
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
         SipKernel::classType = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()
-                                   ? SipClassType::HexadecimalHeaderFile
-                                   : SipClassType::Builtins;
+                                   ? SipClassType::hexadecimalHeaderFile
+                                   : SipClassType::builtins;
     } else {
-        SipKernel::classType = SipClassType::RawBinaryFromFile;
+        SipKernel::classType = SipClassType::rawBinaryFromFile;
     }
 }
 
@@ -253,9 +253,9 @@ bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext 
     SipKernel::selectSipClassType(fileName, device.getGfxCoreHelper());
 
     switch (SipKernel::classType) {
-    case SipClassType::RawBinaryFromFile:
+    case SipClassType::rawBinaryFromFile:
         return SipKernel::initRawBinaryFromFileKernel(type, device, fileName);
-    case SipClassType::HexadecimalHeaderFile:
+    case SipClassType::hexadecimalHeaderFile:
         return SipKernel::initHexadecimalArraySipKernel(type, device);
     default:
         return SipKernel::initBuiltinsSipKernel(type, device, context);
@@ -266,8 +266,8 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
     auto sipType = SipKernel::getSipKernelType(device);
 
     switch (SipKernel::classType) {
-    case SipClassType::RawBinaryFromFile:
-    case SipClassType::HexadecimalHeaderFile:
+    case SipClassType::rawBinaryFromFile:
+    case SipClassType::hexadecimalHeaderFile:
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
     default:
         return device.getBuiltIns()->getSipKernel(sipType, device);
@@ -275,11 +275,11 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
 }
 
 const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device) {
-    auto debugSipType = SipKernelType::DbgBindless;
+    auto debugSipType = SipKernelType::dbgBindless;
     SipKernel::initSipKernelImpl(debugSipType, device, nullptr);
 
     switch (SipKernel::classType) {
-    case SipClassType::RawBinaryFromFile:
+    case SipClassType::rawBinaryFromFile:
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
     default:
         return device.getBuiltIns()->getSipKernel(debugSipType, device);
@@ -287,11 +287,11 @@ const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device) {
 }
 
 const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device, OsContext *context) {
-    auto debugSipType = SipKernelType::DbgBindless;
+    auto debugSipType = SipKernelType::dbgBindless;
     SipKernel::initSipKernelImpl(debugSipType, device, context);
 
     switch (SipKernel::classType) {
-    case SipClassType::RawBinaryFromFile:
+    case SipClassType::rawBinaryFromFile:
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
     default:
         return device.getBuiltIns()->getSipKernel(device, context);

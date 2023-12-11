@@ -164,7 +164,7 @@ class BuiltIns {
 
   protected:
     // sip builtins
-    std::pair<std::unique_ptr<SipKernel>, std::once_flag> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
+    std::pair<std::unique_ptr<SipKernel>, std::once_flag> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
 
     std::unique_ptr<BuiltinsLib> builtinsLib;
 

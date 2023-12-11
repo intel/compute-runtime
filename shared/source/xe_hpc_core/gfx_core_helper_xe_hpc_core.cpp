@@ -51,37 +51,37 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 
     if (hwInfo.featureTable.flags.ftrCCSNode) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
-            engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Regular});
+            engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::regular});
             if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-                engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Cooperative});
+                engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::cooperative});
             }
         }
     }
 
     if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
         hwInfo.featureTable.flags.ftrRcsNode) {
-        engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::Regular});
+        engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
     }
 
-    engines.push_back({defaultEngine, EngineUsage::LowPriority});
-    engines.push_back({defaultEngine, EngineUsage::Internal});
+    engines.push_back({defaultEngine, EngineUsage::lowPriority});
+    engines.push_back({defaultEngine, EngineUsage::internal});
 
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
         if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
-            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular});  // Main copy engine
-            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal}); // Internal usage
+            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular});  // Main copy engine
+            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}); // Internal usage
         }
 
         for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
             if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
                 auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
-                engines.push_back({engineType, EngineUsage::Regular});
+                engines.push_back({engineType, EngineUsage::regular});
                 uint32_t internalIndex = 3;
                 if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
                     internalIndex = debugManager.flags.ForceBCSForInternalCopyEngine.get();
                 }
                 if (i == internalIndex) {
-                    engines.push_back({engineType, EngineUsage::Internal}); // BCS3 for internal usage
+                    engines.push_back({engineType, EngineUsage::internal}); // BCS3 for internal usage
                 }
             }
         }
@@ -96,7 +96,7 @@ EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineTy
         return EngineGroupType::renderCompute;
     }
     if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
-        if (engineUsage == EngineUsage::Cooperative) {
+        if (engineUsage == EngineUsage::cooperative) {
             return EngineGroupType::cooperativeCompute;
         }
         return EngineGroupType::compute;

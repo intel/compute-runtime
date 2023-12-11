@@ -402,7 +402,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     setUpImpl<FamilyType>(&hwInfo);
-    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
+    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
 
     getCsrHw<FamilyType>()->setupContext(ccsOsContext);
 

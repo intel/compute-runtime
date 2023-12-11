@@ -388,7 +388,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenEnqueueB
     memoryManager->returnFakeAllocation = true;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -396,7 +396,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenEnqueueB
     csr1->initializeTagAllocation();
     EngineControl control1(csr1.get(), osContext1.get());
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -441,7 +441,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskWhenEnqueueReadTh
     memoryManager->returnFakeAllocation = true;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -449,7 +449,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskWhenEnqueueReadTh
     csr1->initializeTagAllocation();
     EngineControl control1(csr1.get(), osContext1.get());
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -494,7 +494,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskGreaterThanAvaila
     memoryManager->returnFakeAllocation = true;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -502,7 +502,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskGreaterThanAvaila
     csr1->initializeTagAllocation();
     EngineControl control1(csr1.get(), osContext1.get());
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -546,7 +546,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteThenEnqueue
     memoryManager->returnFakeAllocation = true;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -554,7 +554,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteThenEnqueue
     csr1->initializeTagAllocation();
     EngineControl control1(csr1.get(), osContext1.get());
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -597,7 +597,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteH2HThenEnqu
     memoryManager->returnFakeAllocation = true;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -605,7 +605,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteH2HThenEnqu
     csr1->initializeTagAllocation();
     EngineControl control1(csr1.get(), osContext1.get());
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -653,7 +653,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -661,7 +661,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -706,7 +706,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitC
     cmdQHw->splitBarrierRequired = true;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -714,7 +714,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitC
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -768,7 +768,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenDoNotEnq
     cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -776,7 +776,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenDoNotEnq
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -822,7 +822,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -830,7 +830,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -876,7 +876,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithNoReques
     cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -884,7 +884,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithNoReques
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -928,7 +928,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBlockingReadThen
     cmdQHw->bcsEngineCount = bcsInfoMaskSize;
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -936,7 +936,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBlockingReadThen
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);
@@ -979,7 +979,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithEventThe
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr1 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr1->setupContext(*osContext1);
@@ -987,7 +987,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithEventThe
     EngineControl control1(csr1.get(), osContext1.get());
 
     std::unique_ptr<OsContext> osContext2(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular},
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::regular},
                                                                                                          PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     auto csr2 = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr2->setupContext(*osContext2);

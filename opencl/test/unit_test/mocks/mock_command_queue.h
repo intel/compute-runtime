@@ -58,7 +58,7 @@ class MockCommandQueue : public CommandQueue {
 
     void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
         const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
-        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
+        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::regular);
         bcsEngines[index] = engine;
         bcsQueueEngineType = bcsEngineType;
         bcsInitialized = true;
@@ -294,7 +294,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
     void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
         const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
-        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
+        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::regular);
         bcsEngines[index] = engine;
         bcsQueueEngineType = bcsEngineType;
     }

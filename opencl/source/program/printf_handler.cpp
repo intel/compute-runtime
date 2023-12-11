@@ -90,7 +90,7 @@ bool PrintfHandler::printEnqueueOutput() {
     if (CompressionSelector::allowStatelessCompression() || productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
         printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
-        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);
+        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::regular);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(

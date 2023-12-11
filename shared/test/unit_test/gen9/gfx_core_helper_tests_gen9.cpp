@@ -42,7 +42,7 @@ GEN9TEST_F(GfxCoreHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueried
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     auto sipType = gfxCoreHelper.getSipKernelType(true);
-    EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
+    EXPECT_EQ(SipKernelType::dbgCsrLocal, sipType);
 }
 
 GEN9TEST_F(GfxCoreHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {

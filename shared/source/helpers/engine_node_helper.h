@@ -21,12 +21,12 @@ struct SelectorCopyEngine;
 struct RootDeviceEnvironment;
 
 enum class EngineUsage : uint32_t {
-    Regular,
-    LowPriority,
-    Internal,
-    Cooperative,
+    regular,
+    lowPriority,
+    internal,
+    cooperative,
 
-    EngineUsageCount,
+    engineUsageCount,
 };
 
 using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;

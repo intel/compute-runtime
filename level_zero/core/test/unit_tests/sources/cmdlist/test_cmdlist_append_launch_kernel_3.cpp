@@ -466,7 +466,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto engineGroupType = NEO::EngineGroupType::compute;
     if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
-        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative, *defaultHwInfo);
+        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
     }
     pCommandList->initialize(device, engineGroupType, 0u);
     auto result = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false);
@@ -790,7 +790,7 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
 
         cmdList->engineGroupType = EngineGroupType::copy;
 
-        mockCopyOsContext = std::make_unique<NEO::MockOsContext>(0, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, DeviceBitfield(1)));
+        mockCopyOsContext = std::make_unique<NEO::MockOsContext>(0, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, DeviceBitfield(1)));
         cmdList->csr->setupContext(*mockCopyOsContext);
         return cmdList;
     }

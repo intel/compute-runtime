@@ -310,7 +310,7 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
     std::unique_ptr<OsContext> bcsOsContext;
 
     auto subDevice = device->getSubDevice(0);
-    auto &bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0, false);
 
@@ -336,7 +336,7 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
 
     for (auto preferInternalBcsEngine : {0, 1}) {
         debugManager.flags.PreferInternalBcsEngine.set(preferInternalBcsEngine);
-        auto engineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto engineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::internal : EngineUsage::regular;
         MockCommandQueue cmdQ(nullptr, device.get(), 0, internalUsage);
         auto &bcsEngine = device->getEngine(expectedEngineType, engineUsage);
 
@@ -903,7 +903,7 @@ HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGra
 
 HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingCommandQueueThenReturnSuccess) {
     DebugManagerStateRestore restore;
-    debugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::EngineUsageCount));
+    debugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::engineUsageCount));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(pDevice.get());
@@ -919,7 +919,7 @@ HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingC
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, pCmdQ);
-    EXPECT_EQ(EngineUsage::Regular, pCmdQ->getGpgpuEngine().getEngineUsage());
+    EXPECT_EQ(EngineUsage::regular, pCmdQ->getGpgpuEngine().getEngineUsage());
     delete pCmdQ;
 }
 
@@ -941,7 +941,7 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, userPropertiesEngineGroupType, CL_QUEUE_INDEX_INTEL, userPropertiesEngineIndex, 0};
 
     const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    EXPECT_NE(gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::Regular, *defaultHwInfo),
+    EXPECT_NE(gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::regular, *defaultHwInfo),
               static_cast<EngineGroupType>(userPropertiesEngineGroupType));
     EXPECT_NE(expectedEngineIndex, userPropertiesEngineIndex);
 
@@ -2552,13 +2552,13 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
         const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
             EngineInstancesContainer result{};
             for (int i = 0; i < rcsCount; i++) {
-                result.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
+                result.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
             }
             for (int i = 0; i < ccsCount; i++) {
-                result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+                result.push_back({aub_stream::ENGINE_CCS, EngineUsage::regular});
             }
             for (int i = 0; i < bcsCount; i++) {
-                result.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
+                result.push_back({aub_stream::ENGINE_BCS, EngineUsage::regular});
             }
 
             return result;
@@ -2601,7 +2601,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
     cl_command_queue_properties properties[5] = {};
 
     fillProperties(properties, 0, 0);
-    EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular);
+    EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular);
     MockCommandQueue queueRcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
     EXPECT_FALSE(queueRcs.isCopyOnly);
@@ -2610,7 +2610,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
     EXPECT_EQ(properties[3], queueRcs.getQueueIndexWithinFamily());
 
     fillProperties(properties, 1, 0);
-    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::regular);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS));
     EXPECT_TRUE(queueBcs.isCopyOnly);
@@ -2651,7 +2651,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
     cl_command_queue_properties properties[5] = {};
 
     fillProperties(properties, 0, 0);
-    EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular);
+    EngineControl &engineCcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular);
     MockCommandQueue queueRcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(&engineCcs, &queueRcs.getGpgpuEngine());
     EXPECT_FALSE(queueRcs.isCopyOnly);
@@ -2660,7 +2660,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
     EXPECT_EQ(properties[3], queueRcs.getQueueIndexWithinFamily());
 
     fillProperties(properties, 1, 0);
-    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::regular);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS));
     EXPECT_TRUE(queueBcs.isCopyOnly);
@@ -2680,7 +2680,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQu
     cl_command_queue_properties properties[5] = {};
 
     fillProperties(properties, 0, 0);
-    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::Regular);
+    EngineControl &engineBcs = context.getDevice(0)->getEngine(aub_stream::ENGINE_BCS, EngineUsage::regular);
     MockCommandQueue queueBcs(&context, context.getDevice(0), properties, false);
     EXPECT_EQ(engineBcs.commandStreamReceiver, queueBcs.getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS));
     EXPECT_TRUE(queueBcs.isCopyOnly);
@@ -2703,7 +2703,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
-    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_RCS, EngineUsage::Regular).osContext;
+    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_RCS, EngineUsage::regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
     debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
@@ -2727,7 +2727,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
-    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::Regular).osContext;
+    OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular).osContext;
     EXPECT_FALSE(osContext.isInitialized());
 
     debugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
@@ -2758,7 +2758,7 @@ struct CommandQueueCreateWithMultipleRegularContextsTests : public CommandQueueO
         device = static_cast<MockDevice *>(&context->getDevice(0)->getDevice());
 
         for (auto &engine : device->getAllEngines()) {
-            if (engine.getEngineUsage() == EngineUsage::Regular) {
+            if (engine.getEngineUsage() == EngineUsage::regular) {
                 if (engine.getEngineType() == aub_stream::EngineType::ENGINE_CCS) {
                     regularCcsCount++;
                 } else if (engine.getEngineType() == aub_stream::EngineType::ENGINE_BCS) {
@@ -2982,8 +2982,8 @@ struct CopyOnlyQueueTests : ::testing::Test {
         properties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::copy);
     }
 
-    EngineTypeUsage typeUsageBcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular};
-    EngineTypeUsage typeUsageRcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular};
+    EngineTypeUsage typeUsageBcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular};
+    EngineTypeUsage typeUsageRcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular};
 
     std::unique_ptr<MockClDevice> clDevice{};
     std::unique_ptr<MockContext> context{};

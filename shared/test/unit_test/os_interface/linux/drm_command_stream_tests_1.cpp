@@ -91,7 +91,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
             }
 
             osContext = std::make_unique<OsContextLinux>(*mock, 0, 0,
-                                                         EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::Regular}, PreemptionMode::ThreadGroup));
+                                                         EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular}, PreemptionMode::ThreadGroup));
 
             osContext->ensureContextInitialized();
 
@@ -773,7 +773,7 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
         executionEnvironment->incRefInternal();
 
         osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
-                                          EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+                                          EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
         osContext->ensureContextInitialized();
 
         device->allEngines.emplace_back(csr, osContext.get());

@@ -50,12 +50,12 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInte
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
     UltDeviceFactory factory{1, 0};
-    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal});
+    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal});
     auto engine = factory.rootDevices[0]->getInternalCopyEngine();
     EXPECT_NE(nullptr, engine);
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine->getEngineType());
-    EXPECT_EQ(EngineUsage::Internal, engine->getEngineUsage());
+    EXPECT_EQ(EngineUsage::internal, engine->getEngineUsage());
 }
 
 TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInternalLinkCopyEngineIsCalledThenInternalLinkCopyEngineOneIsReturned) {
@@ -66,12 +66,12 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInter
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
     UltDeviceFactory factory{1, 0};
-    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS1, EngineUsage::Internal});
+    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS1, EngineUsage::internal});
     auto engine = factory.rootDevices[0]->getInternalCopyEngine();
     EXPECT_NE(nullptr, engine);
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engine->getEngineType());
-    EXPECT_EQ(EngineUsage::Internal, engine->getEngineUsage());
+    EXPECT_EQ(EngineUsage::internal, engine->getEngineUsage());
 }
 
 TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineThenAbort) {
@@ -79,10 +79,10 @@ TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineT
     defaultHwInfo->capabilityTable.blitterOperationsSupported = false;
 
     UltDeviceFactory factory{1, 0};
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}), std::runtime_error);
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Cooperative}), std::runtime_error);
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal}), std::runtime_error);
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::LowPriority}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::cooperative}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::lowPriority}), std::runtime_error);
 }
 
 TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
@@ -909,7 +909,7 @@ TEST_F(DeviceTests, whenInitializingDeviceThenSetCorrectDefaultBcsEngineIndex) {
     auto &engine = device->allEngines[device->defaultBcsEngineIndex];
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine.getEngineType());
-    EXPECT_EQ(EngineUsage::Regular, engine.getEngineUsage());
+    EXPECT_EQ(EngineUsage::regular, engine.getEngineUsage());
 }
 
 TEST_F(DeviceTests, givenDeviceMidThreadPreemptionWhenDebuggerDisabledThenStateSipRequired) {

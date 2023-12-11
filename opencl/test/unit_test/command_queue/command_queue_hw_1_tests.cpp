@@ -48,7 +48,7 @@ HWTEST_F(CommandQueueHwTest, whenCallingIsCompletedThenTestTaskCountValue) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::Disabled, pDevice->getDeviceBitfield())));
 
     auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

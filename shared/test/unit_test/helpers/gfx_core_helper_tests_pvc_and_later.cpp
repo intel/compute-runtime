@@ -93,11 +93,11 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenComputeEngineAndCooperativeUsageWhe
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
     aub_stream::EngineType engineTypes[] = {aub_stream::EngineType::ENGINE_CCS, aub_stream::EngineType::ENGINE_CCS1,
                                             aub_stream::EngineType::ENGINE_CCS2, aub_stream::EngineType::ENGINE_CCS3};
-    EngineUsage engineUsages[] = {EngineUsage::Regular, EngineUsage::LowPriority, EngineUsage::Internal, EngineUsage::Cooperative};
+    EngineUsage engineUsages[] = {EngineUsage::regular, EngineUsage::lowPriority, EngineUsage::internal, EngineUsage::cooperative};
 
     for (auto engineType : engineTypes) {
         for (auto engineUsage : engineUsages) {
-            if (engineUsage == EngineUsage::Cooperative) {
+            if (engineUsage == EngineUsage::cooperative) {
                 EXPECT_EQ(EngineGroupType::cooperativeCompute, gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo));
             } else {
                 EXPECT_EQ(EngineGroupType::compute, gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo));
@@ -192,7 +192,7 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariab
 
     bool found = false;
     for (auto engine : engines) {
-        if ((engine.first == aub_stream::ENGINE_BCS2) && (engine.second == EngineUsage::Internal)) {
+        if ((engine.first == aub_stream::ENGINE_BCS2) && (engine.second == EngineUsage::internal)) {
             found = true;
         }
     }
@@ -221,9 +221,9 @@ HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWh
         size_t cooperativeCcsCount = 0u;
         for (auto &engineInstance : engineInstances) {
             if (EngineHelpers::isCcs(engineInstance.first)) {
-                if (engineInstance.second == EngineUsage::Regular) {
+                if (engineInstance.second == EngineUsage::regular) {
                     ccsCount++;
-                } else if (engineInstance.second == EngineUsage::Cooperative) {
+                } else if (engineInstance.second == EngineUsage::cooperative) {
                     cooperativeCcsCount++;
                 }
             }

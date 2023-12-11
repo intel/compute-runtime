@@ -17,13 +17,13 @@ namespace NEO::EngineHelpers {
 
 std::string engineUsageToString(EngineUsage usage) {
     switch (usage) {
-    case EngineUsage::Regular:
+    case EngineUsage::regular:
         return "Regular";
-    case EngineUsage::LowPriority:
+    case EngineUsage::lowPriority:
         return "LowPriority";
-    case EngineUsage::Internal:
+    case EngineUsage::internal:
         return "Internal";
-    case EngineUsage::Cooperative:
+    case EngineUsage::cooperative:
         return "Cooperative";
     default:
         return "Unknown";

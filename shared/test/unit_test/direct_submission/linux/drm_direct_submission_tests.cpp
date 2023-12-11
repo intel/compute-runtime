@@ -50,7 +50,7 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
                                                                                 executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(&executionEnvironment, 0u));
         osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), device->getRootDeviceIndex(), 0u,
-                                                     EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                     EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                                   PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
         osContext->ensureContextInitialized();
         device->getDefaultEngine().commandStreamReceiver->setupContext(*osContext);
@@ -368,7 +368,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
     {
         DeviceBitfield firstTileBitfield{0b01};
         OsContextLinux osContext(*drm, 0, 0u,
-                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                               PreemptionMode::ThreadGroup, firstTileBitfield));
         osContext.ensureContextInitialized();
         commandStreamReceiver.setupContext(osContext);
@@ -384,7 +384,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
     {
         DeviceBitfield secondTileBitfield{0b10};
         OsContextLinux osContext(*drm, 0, 0u,
-                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                               PreemptionMode::ThreadGroup, secondTileBitfield));
         osContext.ensureContextInitialized();
         commandStreamReceiver.setupContext(osContext);
@@ -401,7 +401,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
     {
         DeviceBitfield twoTilesBitfield{0b11};
         OsContextLinux osContext(*drm, 0, 0u,
-                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                               PreemptionMode::ThreadGroup, twoTilesBitfield));
         osContext.ensureContextInitialized();
         commandStreamReceiver.setupContext(osContext);
@@ -513,7 +513,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
 
     DeviceBitfield firstTileBitfield{0b01};
     OsContextLinux osContextTile0(*drm, 0, 0u,
-                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                PreemptionMode::ThreadGroup, firstTileBitfield));
     osContextTile0.ensureContextInitialized();
     commandStreamReceiver.setupContext(osContextTile0);
@@ -552,7 +552,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
 
     DeviceBitfield secondTileBitfield{0b10};
     OsContextLinux osContextTile1(*drm, 0, 0u,
-                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                PreemptionMode::ThreadGroup, secondTileBitfield));
     osContextTile1.ensureContextInitialized();
     commandStreamReceiver.setupContext(osContextTile1);
@@ -591,7 +591,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
 
     DeviceBitfield twoTilesBitfield{0b11};
     OsContextLinux osContextBothTiles(*drm, 0, 0u,
-                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                    PreemptionMode::ThreadGroup, twoTilesBitfield));
     osContextBothTiles.ensureContextInitialized();
     commandStreamReceiver.setupContext(osContextBothTiles);
@@ -822,7 +822,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     device->numSubDevices = 2;
 
     osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), device->getRootDeviceIndex(), 0u,
-                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                               PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
     osContext->ensureContextInitialized();
     EXPECT_EQ(2u, osContext->getDeviceBitfield().count());
@@ -873,7 +873,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherAndMultiTileDeviceWhenCr
     device->deviceBitfield.set(0b11);
 
     osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), device->getRootDeviceIndex(), 0u,
-                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
+                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                               PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
     osContext->ensureContextInitialized();
     EXPECT_EQ(2u, osContext->getDeviceBitfield().count());

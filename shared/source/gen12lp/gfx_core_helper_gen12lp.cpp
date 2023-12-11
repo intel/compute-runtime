@@ -103,18 +103,18 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
     EngineInstancesContainer engines;
 
     if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.flags.ftrCCSNode && !hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt) {
-        engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+        engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::regular});
     }
 
-    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
-    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}); // low priority
-    engines.push_back({defaultEngine, EngineUsage::Internal});             // internal usage
+    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
+    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}); // low priority
+    engines.push_back({defaultEngine, EngineUsage::internal});             // internal usage
 
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
         if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
-            engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular}); // Main copy engine
+            engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::regular}); // Main copy engine
             if (!hwInfo.capabilityTable.isIntegratedDevice) {
-                engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Internal}); // internal usage
+                engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::internal}); // internal usage
             }
         }
     }

@@ -34,10 +34,10 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     const aub_stream::EngineType &getEngineType() const { return engineType; }
     EngineUsage getEngineUsage() { return engineUsage; }
-    bool isRegular() const { return engineUsage == EngineUsage::Regular; }
-    bool isLowPriority() const { return engineUsage == EngineUsage::LowPriority; }
-    bool isInternalEngine() const { return engineUsage == EngineUsage::Internal; }
-    bool isCooperativeEngine() const { return engineUsage == EngineUsage::Cooperative; }
+    bool isRegular() const { return engineUsage == EngineUsage::regular; }
+    bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
+    bool isInternalEngine() const { return engineUsage == EngineUsage::internal; }
+    bool isCooperativeEngine() const { return engineUsage == EngineUsage::cooperative; }
     bool isRootDevice() const { return rootDevice; }
     bool isEngineInstanced() const { return engineInstancedDevice; }
     virtual bool isDirectSubmissionSupported() const { return false; }

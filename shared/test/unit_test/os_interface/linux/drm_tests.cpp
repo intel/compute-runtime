@@ -460,7 +460,7 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
 
     OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext1.ensureContextInitialized();
-    OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
+    OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
     osContext2.ensureContextInitialized();
 
     EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
@@ -471,7 +471,7 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     osContext3.ensureContextInitialized();
     EXPECT_EQ(6u, drmMock.receivedContextParamRequestCount);
 
-    OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority}));
+    OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
     osContext4.ensureContextInitialized();
     EXPECT_EQ(9u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
@@ -825,7 +825,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextFo
     DrmMockNonFailing drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.contextDebugSupported = true;
 
-    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal}));
+    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::internal}));
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
@@ -846,7 +846,7 @@ TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingConte
 
     EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
 
-    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
@@ -856,7 +856,7 @@ TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingConte
     drmMock.callBaseCreateDrmContext = false;
     drmMock.capturedCooperativeContextRequest = true;
 
-    OsContextLinux osContext2(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext2(drmMock, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext2.ensureContextInitialized();
 
     EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
@@ -1344,7 +1344,7 @@ TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
     uint32_t contextId{0};
-    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
@@ -1358,7 +1358,7 @@ TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCa
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
     uint32_t contextId{0};
-    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
@@ -1381,7 +1381,7 @@ TEST(DrmTest, GivenBatchActiveGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThen
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
     uint32_t contextId{0};
-    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
@@ -1405,7 +1405,7 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
 
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
     uint32_t contextId{0};
-    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
 
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(8);

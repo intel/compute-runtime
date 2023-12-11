@@ -593,7 +593,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     uint8_t memory[1 * MemoryConstants::kiloByte]{};
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(),
                                                             pDevice->getDeviceBitfield());
-    MockOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}, DeviceBitfield(0))};
+    MockOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, DeviceBitfield(0))};
     mockCsr->setupContext(osContext);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};

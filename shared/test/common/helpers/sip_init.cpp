@@ -18,13 +18,13 @@ namespace NEO {
 
 namespace MockSipData {
 std::unique_ptr<MockSipKernel> mockSipKernel;
-SipKernelType calledType = SipKernelType::COUNT;
+SipKernelType calledType = SipKernelType::count;
 bool called = false;
 bool returned = true;
 bool useMockSip = false;
 
 void clearUseFlags() {
-    calledType = SipKernelType::COUNT;
+    calledType = SipKernelType::count;
     called = false;
 }
 
@@ -143,9 +143,9 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
     if (MockSipData::useMockSip) {
         auto &gfxCoreHelper = device.getGfxCoreHelper();
         if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
-            SipKernel::classType = SipClassType::HexadecimalHeaderFile;
+            SipKernel::classType = SipClassType::hexadecimalHeaderFile;
         } else {
-            SipKernel::classType = SipClassType::Builtins;
+            SipKernel::classType = SipClassType::builtins;
         }
         MockSipData::calledType = type;
         MockSipData::called = true;

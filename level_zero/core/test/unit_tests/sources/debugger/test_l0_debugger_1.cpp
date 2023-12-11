@@ -55,7 +55,7 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipTypeThenDebugBindlessIsReturned) {
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
-    EXPECT_EQ(NEO::SipKernelType::DbgBindless, sipType);
+    EXPECT_EQ(NEO::SipKernelType::dbgBindless, sipType);
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {

@@ -152,7 +152,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(createAubCSR, *executionEnvironment, deviceBitfield);
         ASSERT_NE(nullptr, csrWithAubDump);
 
-        auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), EngineUsage::Regular},
+        auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), EngineUsage::regular},
                                                                              PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csrWithAubDump, engineDescriptor);

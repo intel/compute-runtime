@@ -1914,7 +1914,7 @@ struct KernelIsaFixture : ModuleFixture {
         if (createBcsEngine) {
             auto &engine = device->getNEODevice()->getEngine(0);
             bcsOsContext.reset(OsContext::create(nullptr, device->getNEODevice()->getRootDeviceIndex(), 0,
-                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getNEODevice()->getDeviceBitfield())));
+                                                 EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, device->getNEODevice()->getDeviceBitfield())));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);
         }
@@ -1932,7 +1932,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
     debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
     this->createModuleFromMockBinary(ModuleType::User);
 
-    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
+    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
     auto &kernelImmutableData = this->module->kernelImmDatas.back();
@@ -1949,7 +1949,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
     debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
     this->createModuleFromMockBinary(ModuleType::User);
 
-    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
+    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
@@ -1962,7 +1962,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
     this->createModuleFromMockBinary(ModuleType::User);
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
-    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver;
+    auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
@@ -3276,7 +3276,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
         std::string output = testing::internal::GetCapturedStdout();
 
-        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Internal);
+        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
         if (bcsEngine) {
             EXPECT_EQ(0u, output.size()); // memory is not actually copied with blitter in ULTs
             auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
@@ -3299,7 +3299,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
-        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Internal);
+        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
         if (!bcsEngine) {
             GTEST_SKIP();
         }

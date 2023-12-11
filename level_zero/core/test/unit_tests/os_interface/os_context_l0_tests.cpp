@@ -48,7 +48,7 @@ struct DeferredOsContextCreationL0Tests : ::testing::Test {
     }
 
     std::unique_ptr<MockDevice> device;
-    static inline const EngineTypeUsage engineTypeUsageBlitter{aub_stream::ENGINE_BCS, EngineUsage::Regular};
+    static inline const EngineTypeUsage engineTypeUsageBlitter{aub_stream::ENGINE_BCS, EngineUsage::regular};
 };
 
 TEST_F(DeferredOsContextCreationL0Tests, givenBlitterEngineWhenCreatingOsContextThenOsContextInitializationIsDeferred) {

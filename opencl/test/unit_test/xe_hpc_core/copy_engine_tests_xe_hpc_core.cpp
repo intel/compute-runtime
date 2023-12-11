@@ -55,7 +55,7 @@ struct BlitXeHpcCoreTests : public ::testing::Test {
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenProgrammingBltCommandThenSetCompressionFields) {
     using MEM_COPY = typename FamilyType::MEM_COPY;
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
 
     cl_int retVal = CL_SUCCESS;
@@ -107,7 +107,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenProgrammingBltCom
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs) {
     using MEM_COPY = typename FamilyType::MEM_COPY;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -135,7 +135,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsProgrammedThenL3IsDisabled) {
     using MEM_COPY = typename FamilyType::MEM_COPY;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -168,7 +168,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     using MEM_COPY = typename FamilyType::MEM_COPY;
     MockGraphicsAllocation clearColorAlloc;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
 
@@ -196,7 +196,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenResolveBlitIsCalledThenProgramSpecialOperationMode) {
     using MEM_COPY = typename FamilyType::MEM_COPY;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -223,7 +223,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenResolveBlitIsCall
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, given2dBlitCommandWhenDispatchingThenSetValidSurfaceType) {
     using MEM_COPY = typename FamilyType::MEM_COPY;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
 

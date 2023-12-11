@@ -116,7 +116,7 @@ class MockPageFaultManager : public PageFaultManager {
     bool isAubWritable = true;
     bool isCpuAllocEvictable = true;
     aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
-    EngineUsage engineUsage = EngineUsage::EngineUsageCount;
+    EngineUsage engineUsage = EngineUsage::engineUsageCount;
 };
 
 template <class T>

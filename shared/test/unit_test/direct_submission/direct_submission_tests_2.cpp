@@ -396,7 +396,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, 0b11)));
     pDevice->getDefaultEngine().commandStreamReceiver->setupContext(*osContext.get());
 
@@ -2097,7 +2097,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRel
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenCreatingBcsDispatcherThenEnableRelaxedOrdering, IsAtLeastXeHpcCore) {
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
@@ -2147,7 +2147,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
     debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
@@ -2181,7 +2181,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingDisabledW
     debugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(0);
 
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);

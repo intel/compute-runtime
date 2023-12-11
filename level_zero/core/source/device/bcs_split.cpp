@@ -41,7 +41,7 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
     for (uint32_t i = 0; i < NEO::bcsInfoMaskSize; i++) {
         if (this->engines.test(i)) {
             auto engineType = (i == 0u ? aub_stream::EngineType::ENGINE_BCS : aub_stream::EngineType::ENGINE_BCS1 + i - 1);
-            auto engine = this->device.getNEODevice()->getNearestGenericSubDevice(0u)->tryGetEngine(static_cast<aub_stream::EngineType>(engineType), NEO::EngineUsage::Regular);
+            auto engine = this->device.getNEODevice()->getNearestGenericSubDevice(0u)->tryGetEngine(static_cast<aub_stream::EngineType>(engineType), NEO::EngineUsage::regular);
             if (!engine) {
                 continue;
             }

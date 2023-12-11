@@ -82,7 +82,7 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     csr.blitterDirectSubmission.reset(&directSubmission);
     csr.setupContext(*osContext);
@@ -125,7 +125,7 @@ HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompleti
     MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     csr.blitterDirectSubmission.reset(&directSubmission);
     csr.setupContext(*osContext);

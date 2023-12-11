@@ -88,7 +88,7 @@ template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() const {
     uint64_t capabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess;
 
-    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::Device)) {
+    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::device)) {
         capabilities |= UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
     }
 
@@ -99,7 +99,7 @@ template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() const {
     uint64_t capabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess;
 
-    if (isKmdMigrationSupported() || getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedSingleDevice)) {
+    if (isKmdMigrationSupported() || getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::sharedSingleDevice)) {
         capabilities |= UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
     }
 
@@ -121,7 +121,7 @@ uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo 
 
     uint64_t capabilities = getHostMemCapabilitiesValue();
 
-    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::Host)) {
+    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::host)) {
         capabilities |= UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
     }
 

@@ -30,7 +30,7 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
         return true;
     }
 
-    if (engineUsage == EngineUsage::Internal) {
+    if (engineUsage == EngineUsage::internal) {
         return true;
     }
 

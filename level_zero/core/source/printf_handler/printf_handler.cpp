@@ -45,7 +45,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
         auto deviceBitfield = selectedDevice->getDeviceBitfield();
         const auto internalUsage = true;
         auto bcsEngineType = NEO::EngineHelpers::getBcsEngineType(selectedDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
-        auto bcsEngineUsage = NEO::EngineUsage::Internal;
+        auto bcsEngineUsage = NEO::EngineUsage::internal;
         auto bcsEngine = selectedDevice->tryGetEngine(bcsEngineType, bcsEngineUsage);
 
         if (bcsEngine) {

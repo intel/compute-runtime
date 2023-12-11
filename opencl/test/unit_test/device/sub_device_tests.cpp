@@ -428,7 +428,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         uint32_t numCcs = 0;
 
         for (auto &engine : gpgpuEngines) {
-            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::Regular)) {
+            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::regular)) {
                 numCcs++;
             }
         }
@@ -444,7 +444,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
         OsContext *defaultOsContext = device->getDefaultEngine().osContext;
         EXPECT_EQ(engineType, defaultOsContext->getEngineType());
-        EXPECT_EQ(EngineUsage::Regular, defaultOsContext->getEngineUsage());
+        EXPECT_EQ(EngineUsage::regular, defaultOsContext->getEngineUsage());
         EXPECT_TRUE(defaultOsContext->isDefaultContext());
 
         auto &engine = device->getAllEngines()[0];

@@ -30,7 +30,7 @@ BuiltIns::~BuiltIns() = default;
 
 const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
     uint32_t kernelId = static_cast<uint32_t>(type);
-    UNRECOVERABLE_IF(kernelId >= static_cast<uint32_t>(SipKernelType::COUNT));
+    UNRECOVERABLE_IF(kernelId >= static_cast<uint32_t>(SipKernelType::count));
     auto &sipBuiltIn = this->sipKernels[kernelId];
 
     auto initializer = [&] {
@@ -72,7 +72,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
 const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
     const uint32_t contextId = context->getContextId();
-    const SipKernelType type = SipKernelType::DbgBindless;
+    const SipKernelType type = SipKernelType::dbgBindless;
 
     auto &bindlessSip = this->getSipKernel(type, device);
     auto copySuccess = false;

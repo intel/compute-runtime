@@ -688,7 +688,7 @@ struct WddmContextSchedulingPriorityTests : public Wddm20WithMockGdiDllTestsWith
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
 
         auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode);
-        engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::LowPriority : EngineUsage::Regular;
+        engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::lowPriority : EngineUsage::regular;
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, engineDescriptor);
         osContext->ensureContextInitialized();
     }

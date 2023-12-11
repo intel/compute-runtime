@@ -39,6 +39,6 @@ class MockBuiltins : public BuiltIns {
     std::map<SipKernelType, std::unique_ptr<MockSipKernel>> sipKernelsOverride;
     bool getSipKernelCalled = false;
     bool callBaseGetSipKernel = false;
-    SipKernelType getSipKernelType = SipKernelType::COUNT;
+    SipKernelType getSipKernelType = SipKernelType::count;
 };
 } // namespace NEO

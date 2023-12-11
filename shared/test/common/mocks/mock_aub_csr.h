@@ -208,7 +208,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, rootDeviceIndex, deviceBitfield);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
-                                                                                     EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::Regular},
+                                                                                     EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::regular},
                                                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     commandStreamReceiver->setupContext(*osContext);
 

@@ -785,7 +785,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
 
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
 
-    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
@@ -794,7 +794,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
     } else {
     }
 
-    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
     osContext2.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
@@ -806,7 +806,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
     drm->contextDebugSupported = true;
     drm->callBaseCreateDrmContext = false;
 
-    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
@@ -819,13 +819,13 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
 
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Offline);
 
-    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext2.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_FALSE(drm->capturedCooperativeContextRequest);
 
-    OsContextLinux osContext3(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
+    OsContextLinux osContext3(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::cooperative}));
     osContext3.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
@@ -845,7 +845,7 @@ TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenIni
 
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
 
-    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_FALSE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH);

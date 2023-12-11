@@ -38,7 +38,7 @@ HWTEST_F(ClTbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessC
     tbxCsr0.setupContext(osContext0);
     EngineControl engineControl0{&tbxCsr0, &osContext0};
 
-    MockOsContext osContext1(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, pDevice->getDeviceBitfield()));
+    MockOsContext osContext1(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, pDevice->getDeviceBitfield()));
     tbxCsr1.setupContext(osContext1);
     EngineControl engineControl1{&tbxCsr1, &osContext1};
 

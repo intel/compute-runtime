@@ -18,7 +18,7 @@ MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) :
     createMockSipAllocation();
 }
 
-MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr, {'s', 's', 'a', 'h'}) {
+MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::csr, nullptr, {'s', 's', 'a', 'h'}) {
     createMockSipAllocation();
 }
 

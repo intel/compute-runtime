@@ -45,11 +45,11 @@ using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
 
 enum class UsmAccessCapabilities {
-    Host = 0,
-    Device,
-    SharedSingleDevice,
-    SharedCrossDevice,
-    SharedSystemCrossDevice
+    host = 0,
+    device,
+    sharedSingleDevice,
+    sharedCrossDevice,
+    sharedSystemCrossDevice
 };
 
 class ProductHelper {

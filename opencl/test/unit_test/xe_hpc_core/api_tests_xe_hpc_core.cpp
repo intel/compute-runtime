@@ -23,7 +23,7 @@ XE_HPC_CORETEST_F(EnqueueKernelTestGenXeHpcCore, givenCommandQueueWithCCCSEngine
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
-    pCommandQueue->getGpgpuEngine().osContext = pCommandQueue->getDevice().getEngine(aub_stream::ENGINE_CCCS, EngineUsage::Regular).osContext;
+    pCommandQueue->getGpgpuEngine().osContext = pCommandQueue->getDevice().getEngine(aub_stream::ENGINE_CCCS, EngineUsage::regular).osContext;
     retVal = pMultiDeviceKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
     EXPECT_EQ(CL_SUCCESS, retVal);
 

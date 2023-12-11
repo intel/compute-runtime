@@ -57,7 +57,7 @@ struct BlitXeHpgCoreTests : public ::testing::Test {
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocs) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -87,7 +87,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     debugManager.flags.OverrideBlitterMocs.set(0u);
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -115,7 +115,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetValidSurfaceType) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
 
@@ -175,7 +175,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSetTargetMemory) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
 
@@ -226,7 +226,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
 
@@ -298,7 +298,7 @@ HWTEST2_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRevisionB0T
     const auto &productHelper = clDevice->getProductHelper();
     hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
 
@@ -347,7 +347,7 @@ HWTEST2_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRevisionB0T
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenResolveBlitIsCalledThenProgramSpecialOperationMode) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -372,7 +372,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenResolveBlitIsCall
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenNonAuxToAuxBlitIsCalledThenDontProgramSourceCompression) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     MockContext context(clDevice.get());
     MockGraphicsAllocation clearColorAlloc;
@@ -397,7 +397,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenNonAuxToAuxBlitIs
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCommandThenSetCompressionFields) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
 
     cl_int retVal = CL_SUCCESS;
@@ -462,7 +462,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThe
     uint32_t compressionFormat = 3;
     debugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular).commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
 
     cl_int retVal = CL_SUCCESS;

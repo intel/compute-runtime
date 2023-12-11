@@ -638,7 +638,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     executionEnvironment->memoryManager.reset(memoryManager);
     DeviceBitfield deviceBitfield(1);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *executionEnvironment, 0, deviceBitfield));
-    auto osContext = memoryManager->createAndRegisterOsContext(aubCsr.get(), EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::Regular}));
+    auto osContext = memoryManager->createAndRegisterOsContext(aubCsr.get(), EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::regular}));
     aubCsr->setupContext(*osContext);
     aubCsr->initializeEngine();
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{aubCsr->getRootDeviceIndex(), MemoryConstants::pageSize});

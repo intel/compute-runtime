@@ -26,9 +26,9 @@ GEN9TEST_F(gen9SipTests, givenDebugCsrSipKernelWithLocalMemoryWhenAskedForDebugS
     EXPECT_NE(nullptr, mockDevice);
 
     auto &builtins = *mockDevice->getBuiltIns();
-    auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsrLocal, *mockDevice);
+    auto &sipKernel = builtins.getSipKernel(SipKernelType::dbgCsrLocal, *mockDevice);
 
     EXPECT_NE(nullptr, &sipKernel);
-    EXPECT_EQ(SipKernelType::DbgCsrLocal, sipKernel.getType());
+    EXPECT_EQ(SipKernelType::dbgCsrLocal, sipKernel.getType());
 }
 } // namespace SipKernelTests

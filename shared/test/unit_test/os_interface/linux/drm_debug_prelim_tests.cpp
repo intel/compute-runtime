@@ -267,7 +267,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
-    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
+    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
 
@@ -283,7 +283,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
 
     drm.context.receivedVmBindUuidExt[0].reset();
 
-    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
+    OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
 

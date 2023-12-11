@@ -913,7 +913,7 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     TaskCountType csr1GpuTag = taskCountNotReady;
     csr0->tagAddress = &csr0GpuTag;
     csr1->tagAddress = &csr1GpuTag;
-    auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::LowPriority}));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::lowPriority}));
     csr1->setupContext(*osContext);
 
     void *cpuPtr = reinterpret_cast<void *>(0x100004);

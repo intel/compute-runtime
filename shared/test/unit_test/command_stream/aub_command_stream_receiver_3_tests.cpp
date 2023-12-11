@@ -110,7 +110,7 @@ HWTEST_F(AubCsrTest, WhenWriteWithAubManagerIsCalledThenAubManagerIsInvokedWithC
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *executionEnvironment, rootDeviceIndex, deviceBitfield));
     aubCsr->aubManager = &aubManager;
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(aubCsr.get(),
-                                                                                     EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(hwInfo), EngineUsage::Regular},
+                                                                                     EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(hwInfo), EngineUsage::regular},
                                                                                                                                   PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     aubCsr->setupContext(*osContext);
 
@@ -304,7 +304,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenBcsEngineWhenDumpAllocationCalledTh
     debugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}));
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
     aubCsr.setupContext(osContext);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());

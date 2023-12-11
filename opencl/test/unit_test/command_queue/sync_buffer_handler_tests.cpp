@@ -76,7 +76,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         auto &hwInfo = pClDevice->getHardwareInfo();
         auto &productHelper = pClDevice->getProductHelper();
         if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-            commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative);
+            commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative);
         }
     }
 

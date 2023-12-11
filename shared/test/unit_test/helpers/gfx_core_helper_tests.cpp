@@ -130,7 +130,7 @@ TEST_F(GfxCoreHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCs
     EXPECT_NE(nullptr, &gfxCoreHelper);
 
     auto sipType = gfxCoreHelper.getSipKernelType(false);
-    EXPECT_EQ(SipKernelType::Csr, sipType);
+    EXPECT_EQ(SipKernelType::csr, sipType);
 }
 
 TEST_F(GfxCoreHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTraitsIsReturned) {
@@ -1044,8 +1044,8 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForIsaSystemMemoryPlacem
 
 TEST_F(GfxCoreHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenThrow) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::NUM_ENGINES, EngineUsage::Regular, hardwareInfo));
-    EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, EngineUsage::Regular, hardwareInfo));
+    EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::NUM_ENGINES, EngineUsage::regular, hardwareInfo));
+    EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, EngineUsage::regular, hardwareInfo));
 }
 
 HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {

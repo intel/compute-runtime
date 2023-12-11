@@ -95,7 +95,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
         auto hostMemCapabilities = productHelper->getHostMemCapabilities(&pInHwInfo);
         if (hostMemCapabilities > 0) {
-            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::Host))) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::host))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & hostMemCapabilities);
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & hostMemCapabilities);
             }
@@ -103,7 +103,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
         auto deviceMemCapabilities = productHelper->getDeviceMemCapabilities();
         if (deviceMemCapabilities > 0) {
-            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::Device))) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::device))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & deviceMemCapabilities);
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & deviceMemCapabilities);
             }
@@ -111,7 +111,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
         auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities();
         if (singleDeviceSharedMemCapabilities > 0) {
-            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedSingleDevice))) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::sharedSingleDevice))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities);
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & singleDeviceSharedMemCapabilities);
             }
@@ -119,7 +119,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
         auto crossDeviceSharedMemCapabilities = productHelper->getCrossDeviceSharedMemCapabilities();
         if (crossDeviceSharedMemCapabilities > 0) {
-            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedCrossDevice))) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::sharedCrossDevice))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & crossDeviceSharedMemCapabilities);
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & crossDeviceSharedMemCapabilities);
             }
@@ -127,7 +127,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
         auto sharedSystemMemCapabilities = productHelper->getSharedSystemMemCapabilities(&pInHwInfo);
         if (sharedSystemMemCapabilities > 0) {
-            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::SharedSystemCrossDevice))) {
+            if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::sharedSystemCrossDevice))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & sharedSystemMemCapabilities);
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & sharedSystemMemCapabilities);
             }

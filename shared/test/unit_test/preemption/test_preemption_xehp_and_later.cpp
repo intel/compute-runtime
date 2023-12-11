@@ -143,7 +143,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
                                                            device->getRootDeviceIndex(), contextId,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::MidThread, device->getDeviceBitfield())));
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::MidThread, device->getDeviceBitfield())));
     osContext->setDefaultContext(true);
 
     auto csr = device->createCommandStreamReceiver();

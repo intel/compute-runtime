@@ -191,7 +191,7 @@ void CommandQueue::initializeGpgpu() const {
 
             auto defaultEngineType = device->getDefaultEngine().getEngineType();
 
-            if (device->getDevice().isMultiRegularContextSelectionAllowed(defaultEngineType, EngineUsage::Regular)) {
+            if (device->getDevice().isMultiRegularContextSelectionAllowed(defaultEngineType, EngineUsage::regular)) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(defaultEngineType);
             } else if (assignEngineRoundRobin) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
@@ -335,7 +335,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
         auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
         auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
         auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
-        auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::Internal : EngineUsage::Regular;
+        auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::internal : EngineUsage::regular;
 
         if (neoDevice.isMultiRegularContextSelectionAllowed(bcsEngineType, engineUsage)) {
             bcsEngines[bcsIndex] = &neoDevice.getNextEngineForMultiRegularContextMode(bcsEngineType);
@@ -369,7 +369,7 @@ void CommandQueue::constructBcsEnginesForSplit() {
         if (this->splitEngines.test(i) && !bcsEngines[i]) {
             auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
             auto engineType = EngineHelpers::mapBcsIndexToEngineType(i, true);
-            bcsEngines[i] = neoDevice.tryGetEngine(engineType, EngineUsage::Regular);
+            bcsEngines[i] = neoDevice.tryGetEngine(engineType, EngineUsage::regular);
 
             if (bcsEngines[i]) {
                 bcsQueueEngineType = engineType;
@@ -1143,7 +1143,7 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
                     const GfxCoreHelper &gfxCoreHelper = getDevice().getGfxCoreHelper();
 
-                    auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::Regular, hwInfo);
+                    auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::regular, hwInfo);
                     selectedQueueFamilyIndex = static_cast<cl_uint>(getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType));
                     const auto &engines = getDevice().getRegularEngineGroups()[selectedQueueFamilyIndex].engines;
                     for (const auto &engine : engines) {
@@ -1194,7 +1194,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         if (multiRegularContextAllowed) {
             bcsEngines[engineIndex] = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
         } else {
-            bcsEngines[engineIndex] = &device->getEngine(engineType, EngineUsage::Regular);
+            bcsEngines[engineIndex] = &device->getEngine(engineType, EngineUsage::regular);
         }
         if (bcsEngines[engineIndex]) {
             bcsQueueEngineType = engineType;

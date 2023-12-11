@@ -21,9 +21,9 @@ typedef Gen9Family Family;
 template <>
 SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
-        return SipKernelType::Csr;
+        return SipKernelType::csr;
     }
-    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsrLocal;
+    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::dbgBindless : SipKernelType::dbgCsrLocal;
 }
 
 template <>

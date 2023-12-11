@@ -505,11 +505,11 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
     auto multiGraphicsAllocation = timestampPacketAllocator.gfxAllocations[0].get();
 
     auto rootCsr0 = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*executionEnvironment, 0, 1)));
-    auto osContext0 = testMemoryManager->createAndRegisterOsContext(rootCsr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, true));
+    auto osContext0 = testMemoryManager->createAndRegisterOsContext(rootCsr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}, true));
     rootCsr0->setupContext(*osContext0);
 
     auto rootCsr1 = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*executionEnvironment, 1, 1)));
-    auto osContext1 = testMemoryManager->createAndRegisterOsContext(rootCsr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, true));
+    auto osContext1 = testMemoryManager->createAndRegisterOsContext(rootCsr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}, true));
     rootCsr1->setupContext(*osContext1);
 
     rootCsr0->storeMakeResidentAllocations = true;

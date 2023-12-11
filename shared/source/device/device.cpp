@@ -295,7 +295,7 @@ bool Device::createDeviceImpl() {
 
 bool Device::createEngines() {
     if (engineInstanced) {
-        return createEngine(0, {engineInstancedType, EngineUsage::Regular});
+        return createEngine(0, {engineInstancedType, EngineUsage::regular});
     }
 
     auto &gfxCoreHelper = getGfxCoreHelper();
@@ -348,7 +348,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     const auto engineType = engineTypeUsage.first;
     const auto engineUsage = engineTypeUsage.second;
     const auto defaultEngineType = engineInstanced ? this->engineInstancedType : getChosenEngineType(hwInfo);
-    const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::Regular;
+    const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::regular;
     const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
 
     UNRECOVERABLE_IF(EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported);
@@ -358,7 +358,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         return false;
     }
 
-    bool internalUsage = (engineUsage == EngineUsage::Internal);
+    bool internalUsage = (engineUsage == EngineUsage::internal);
     if (internalUsage) {
         commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
@@ -404,13 +404,13 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         }
     }
 
-    if (EngineHelpers::isBcs(engineType) && (defaultBcsEngineIndex == std::numeric_limits<uint32_t>::max()) && (engineUsage == EngineUsage::Regular)) {
+    if (EngineHelpers::isBcs(engineType) && (defaultBcsEngineIndex == std::numeric_limits<uint32_t>::max()) && (engineUsage == EngineUsage::regular)) {
         defaultBcsEngineIndex = deviceCsrIndex;
     }
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
     allEngines.push_back(engine);
-    if (engineUsage == EngineUsage::Regular) {
+    if (engineUsage == EngineUsage::regular) {
         addEngineToEngineGroup(engine);
     }
 
@@ -624,7 +624,7 @@ EngineControl &Device::getInternalEngine() {
 
     auto engineType = getChosenEngineType(getHardwareInfo());
 
-    return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::Internal);
+    return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::internal);
 }
 
 EngineControl &Device::getNextEngineForCommandQueue() {
@@ -988,7 +988,7 @@ EngineControl &Device::getNextEngineForMultiRegularContextMode(aub_stream::Engin
 }
 
 bool Device::isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const {
-    if (this->numberOfRegularContextsPerEngine <= 1 || getNumGenericSubDevices() > 1 || engineUsage != EngineUsage::Regular) {
+    if (this->numberOfRegularContextsPerEngine <= 1 || getNumGenericSubDevices() > 1 || engineUsage != EngineUsage::regular) {
         return false;
     }
 

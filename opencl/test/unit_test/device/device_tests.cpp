@@ -74,16 +74,16 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenReturnIt) {
     auto &gfxCoreHelper = mockClDevice.getGfxCoreHelper();
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(mockClDevice.getRootDeviceEnvironment());
     for (uint32_t i = 0; i < engines.size(); i++) {
-        auto &deviceEngine = mockClDevice.getEngine(engines[i].first, EngineUsage::Regular);
+        auto &deviceEngine = mockClDevice.getEngine(engines[i].first, EngineUsage::regular);
         EXPECT_EQ(deviceEngine.osContext->getEngineType(), engines[i].first);
         EXPECT_EQ(deviceEngine.osContext->isLowPriority(), false);
     }
 
-    auto &deviceEngine = mockClDevice.getEngine(hwInfo.capabilityTable.defaultEngineType, EngineUsage::LowPriority);
+    auto &deviceEngine = mockClDevice.getEngine(hwInfo.capabilityTable.defaultEngineType, EngineUsage::lowPriority);
     EXPECT_EQ(deviceEngine.osContext->getEngineType(), hwInfo.capabilityTable.defaultEngineType);
     EXPECT_EQ(deviceEngine.osContext->isLowPriority(), true);
 
-    EXPECT_THROW(mockClDevice.getEngine(aub_stream::ENGINE_VCS, EngineUsage::Regular), std::exception);
+    EXPECT_THROW(mockClDevice.getEngine(aub_stream::ENGINE_VCS, EngineUsage::regular), std::exception);
 }
 
 TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {
@@ -91,8 +91,8 @@ TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngi
     debugManager.flags.OverrideInvalidEngineWithDefault.set(true);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment());
-    auto &deviceEngine = pDevice->getEngine(engines[0].first, EngineUsage::Regular);
-    auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, EngineUsage::Regular);
+    auto &deviceEngine = pDevice->getEngine(engines[0].first, EngineUsage::regular);
+    auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, EngineUsage::regular);
     EXPECT_EQ(&notExistingEngine, &deviceEngine);
 }
 
@@ -573,10 +573,10 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
     RAIIGfxCoreHelperFactory<MyGfxCoreHelper> overrideGfxCoreHelper{
         *device.executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockOsContext rcsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}));
+    MockOsContext rcsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
     EngineControl rcsEngine{nullptr, &rcsContext};
 
-    MockOsContext ccsContext(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::Regular}));
+    MockOsContext ccsContext(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
     EngineControl ccsEngine{nullptr, &ccsContext};
 
     ASSERT_EQ(0u, device.getRegularEngineGroups().size());

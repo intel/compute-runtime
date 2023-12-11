@@ -558,7 +558,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     auto &selectorCopyEngine = neoDevice->getSelectorCopyEngine();
     auto deviceBitfield = neoDevice->getDeviceBitfield();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-    auto bcsEngine = neoDevice->tryGetEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false), EngineUsage::Regular);
+    auto bcsEngine = neoDevice->tryGetEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false), EngineUsage::regular);
 
     if (!bcsEngine) {
         GTEST_SKIP();

@@ -114,9 +114,9 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGettingDefaultContextThenCorrectCo
     csr1->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr1));
     csr2->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr2));
 
-    auto osContext0 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::LowPriority}));
-    auto osContext1 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}));
-    auto osContext2 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}, DeviceBitfield(0x3)));
+    auto osContext0 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::lowPriority}));
+    auto osContext1 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
+    auto osContext2 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}, DeviceBitfield(0x3)));
     osContext1->setDefaultContext(true);
     osContext2->setDefaultContext(true);
 
@@ -145,14 +145,14 @@ TEST(MemoryManagerTest, givenMultipleDevicesMemoryManagerWhenGettingDefaultConte
     csr3->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr3));
     csr4->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr4));
 
-    auto osContext0 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::LowPriority}));
-    auto osContext1 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}));
-    auto osContext2 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}, DeviceBitfield(0x3)));
+    auto osContext0 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr0.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::lowPriority}));
+    auto osContext1 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
+    auto osContext2 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}, DeviceBitfield(0x3)));
     osContext1->setDefaultContext(true);
     osContext2->setDefaultContext(true);
 
-    auto osContext3 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr3.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}));
-    auto osContext4 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr4.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular}, DeviceBitfield(0x3)));
+    auto osContext3 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr3.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}));
+    auto osContext4 = executionEnvironment.memoryManager->createAndRegisterOsContext(csr4.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular}, DeviceBitfield(0x3)));
     osContext3->setDefaultContext(true);
     osContext4->setDefaultContext(true);
 
@@ -193,7 +193,7 @@ HWTEST_F(MemoryhManagerMultiContextResourceTests, givenAllocationUsedByManyOsCon
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
-    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::LowPriority);
+    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::lowPriority);
 
     auto nonDefaultOsContext = lowPriorityEngine.osContext;
     auto nonDefaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(lowPriorityEngine.commandStreamReceiver);
@@ -2287,7 +2287,7 @@ using GraphicsAllocationDestroyTests = ::testing::Test;
 HWTEST_F(GraphicsAllocationDestroyTests, givenAllocationUsedOnlyByNonDefaultCsrWhenCheckingUsageBeforeDestroyThenStoreItAsTemporaryAllocation) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::LowPriority);
+    auto &lowPriorityEngine = device->getEngine(device->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::lowPriority);
 
     auto nonDefaultOsContext = lowPriorityEngine.osContext;
     auto nonDefaultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(lowPriorityEngine.commandStreamReceiver);
@@ -2816,8 +2816,8 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     auto csr2 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
     auto hwInfo = *defaultHwInfo;
     EngineInstancesContainer regularEngines = {
-        {aub_stream::ENGINE_CCS, EngineUsage::Regular},
-        {aub_stream::ENGINE_BCS, EngineUsage::Regular},
+        {aub_stream::ENGINE_CCS, EngineUsage::regular},
+        {aub_stream::ENGINE_BCS, EngineUsage::regular},
     };
 
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
@@ -2865,7 +2865,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
     auto hwInfo = *defaultHwInfo;
     EngineInstancesContainer regularEngines = {
-        {aub_stream::ENGINE_CCS, EngineUsage::Regular}};
+        {aub_stream::ENGINE_CCS, EngineUsage::regular}};
 
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                       PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
@@ -2899,7 +2899,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
     auto hwInfo = *defaultHwInfo;
     EngineInstancesContainer regularEngines = {
-        {aub_stream::ENGINE_CCS, EngineUsage::Regular},
+        {aub_stream::ENGINE_CCS, EngineUsage::regular},
     };
 
     memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
@@ -3038,7 +3038,7 @@ TEST(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvaila
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
-    auto bcsEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto bcsEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     EXPECT_EQ(nullptr, bcsEngine);
 
     EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelperFunctions::blitMemoryToAllocation(*device, &graphicsAllocation, 0, srcData, {dataSize, 1, 1}));

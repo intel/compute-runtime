@@ -97,7 +97,7 @@ TEST_F(WddmTests, whenftrEuDebugIsFalseThenDebuggingEnabledReturnsFalse) {
 TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineThenDebuggableContextReturnsFalse) {
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     wddm->init();
-    OsContextWin osContext(*wddm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}));
+    OsContextWin osContext(*wddm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}));
     osContext.ensureContextInitialized();
     EXPECT_FALSE(osContext.isDebuggableContext());
 }
@@ -148,7 +148,7 @@ TEST(WddmNewRsourceTest, whenSetNewResourcesBoundToPageTableThenSetInContextFrom
     executionEnvironment.initializeMemoryManager();
     auto csr1 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0, 1));
     auto csr2 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1, 1));
-    EngineDescriptor engineDesc({aub_stream::ENGINE_CCS, EngineUsage::Regular}, 1, PreemptionMode::Disabled, false, false);
+    EngineDescriptor engineDesc({aub_stream::ENGINE_CCS, EngineUsage::regular}, 1, PreemptionMode::Disabled, false, false);
     executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), engineDesc);
     executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), engineDesc);
 

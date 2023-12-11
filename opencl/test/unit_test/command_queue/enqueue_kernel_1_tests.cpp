@@ -354,7 +354,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
     if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
-        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
+        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority).osContext;
     }
 
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
@@ -402,7 +402,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
     if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
-        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
+        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority).osContext;
     }
 
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
@@ -450,7 +450,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
     if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
-        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
+        pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority).osContext;
     }
 
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));

@@ -79,7 +79,7 @@ using LuidDeviceTest = Test<DeviceFixture>;
 TEST_F(LuidDeviceTest, givenOsContextWinAndGetDeviceNodeMaskThenNodeMaskIsAtLeast1) {
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
-    OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::regular}));
     EXPECT_GE(osContext.getDeviceNodeMask(), 1u);
     delete luidMock;
 }
@@ -87,7 +87,7 @@ TEST_F(LuidDeviceTest, givenOsContextWinAndGetDeviceNodeMaskThenNodeMaskIsAtLeas
 TEST_F(LuidDeviceTest, givenOsContextWinAndGetLUIDArrayThenLUIDisValid) {
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
-    OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::regular}));
     std::vector<uint8_t> luidData;
     size_t arraySize = 8;
     osContext.getDeviceLuidArray(luidData, arraySize);
@@ -102,7 +102,7 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndWDDMDriverTypeThenSu
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(luidMock));
-    MockOsContextWin mockContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
+    MockOsContextWin mockContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::regular}));
     auto &deviceRegularEngines = neoDevice->getRegularEngineGroups();
     auto &deviceEngine = deviceRegularEngines[0].engines[0];
     auto csr = deviceEngine.commandStreamReceiver;

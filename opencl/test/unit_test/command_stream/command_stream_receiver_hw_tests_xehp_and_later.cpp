@@ -130,7 +130,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsCont
     executionEnvironment->memoryManager.reset(new MockMemoryManager(false, true, *executionEnvironment));
     uint32_t tileMask = 0b11;
     uint32_t rootDeviceIndex = 0;
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, rootDeviceIndex, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}, PreemptionMode::MidThread, tileMask)));
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, rootDeviceIndex, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::MidThread, tileMask)));
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*executionEnvironment, rootDeviceIndex, tileMask);
     initPlatform();
 
@@ -608,7 +608,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
 
     auto cmdQ0 = clUniquePtr(new MockCommandQueueHw<FamilyType>(&context, pClDevice, nullptr));
 
-    auto &secondEngine = pDevice->getEngine(pDevice->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::LowPriority);
+    auto &secondEngine = pDevice->getEngine(pDevice->getHardwareInfo().capabilityTable.defaultEngineType, EngineUsage::lowPriority);
     static_cast<UltCommandStreamReceiver<FamilyType> *>(secondEngine.commandStreamReceiver)->timestampPacketWriteEnabled = true;
 
     auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(&context, pClDevice, nullptr));
@@ -687,10 +687,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsCont
     uint32_t multiDeviceMask = 0b11;
     uint32_t singleDeviceMask = 0b10;
     std::unique_ptr<OsContext> multiDeviceOsContext(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0u,
-                                                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::MidThread,
+                                                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}, PreemptionMode::MidThread,
                                                                                                                    multiDeviceMask)));
     std::unique_ptr<OsContext> singleDeviceOsContext(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0u,
-                                                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::MidThread,
+                                                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}, PreemptionMode::MidThread,
                                                                                                                     singleDeviceMask)));
 
     EXPECT_EQ(2u, multiDeviceOsContext->getNumSupportedDevices());

@@ -328,16 +328,16 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     bool bindlessSip = false;
     IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
     switch (type) {
-    case SipKernelType::Csr:
+    case SipKernelType::csr:
         typeOfSystemRoutine = IGC::SystemRoutineType::contextSaveRestore;
         break;
-    case SipKernelType::DbgCsr:
+    case SipKernelType::dbgCsr:
         typeOfSystemRoutine = IGC::SystemRoutineType::debug;
         break;
-    case SipKernelType::DbgCsrLocal:
+    case SipKernelType::dbgCsrLocal:
         typeOfSystemRoutine = IGC::SystemRoutineType::debugSlm;
         break;
-    case SipKernelType::DbgBindless:
+    case SipKernelType::dbgBindless:
         typeOfSystemRoutine = IGC::SystemRoutineType::debug;
         bindlessSip = true;
         break;

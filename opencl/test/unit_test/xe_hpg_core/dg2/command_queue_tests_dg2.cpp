@@ -58,7 +58,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndOddWorkGroupWhenenqueueNonBl
     auto hardwareInfo = *defaultHwInfo;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
     std::unique_ptr<OsContext> osContext(OsContext::create(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), mockDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
     auto csr = std::make_unique<MyMockCommandStreamReceiver>(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr->setupContext(*osContext);
@@ -89,7 +89,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndNotOddWorkGroupWhenenqueueNo
     auto hardwareInfo = *defaultHwInfo;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
     std::unique_ptr<OsContext> osContext(OsContext::create(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), mockDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
     auto csr = std::make_unique<MyMockCommandStreamReceiver>(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr->setupContext(*osContext);
@@ -125,7 +125,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithRequiredDisableEuFusionWhenenqueueN
     auto hardwareInfo = *defaultHwInfo;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
     std::unique_ptr<OsContext> osContext(OsContext::create(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), mockDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
     auto csr = std::make_unique<MyMockCommandStreamReceiver>(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr->setupContext(*osContext);
@@ -152,7 +152,7 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithoutRequiredDisableEuFusionWhenenque
     auto hardwareInfo = *defaultHwInfo;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
     std::unique_ptr<OsContext> osContext(OsContext::create(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), mockDevice->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
     auto csr = std::make_unique<MyMockCommandStreamReceiver>(*mockDevice->getExecutionEnvironment(), mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
     csr->setupContext(*osContext);

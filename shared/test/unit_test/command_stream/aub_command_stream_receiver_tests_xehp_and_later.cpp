@@ -72,11 +72,11 @@ class MockAubCsrXeHPAndLater : public AUBCommandStreamReceiverHw<FamilyType> {
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGUCWorkQueueItemHeaderIsCalledThenAppropriateValueDependingOnEngineTypeIsReturned) {
     setUpImpl<FamilyType>();
 
-    MockOsContext rcsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
-    MockOsContext ccs0OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
-    MockOsContext ccs1OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS1, EngineUsage::Regular}));
-    MockOsContext ccs2OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS2, EngineUsage::Regular}));
-    MockOsContext ccs3OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS3, EngineUsage::Regular}));
+    MockOsContext rcsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
+    MockOsContext ccs0OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    MockOsContext ccs1OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS1, EngineUsage::regular}));
+    MockOsContext ccs2OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS2, EngineUsage::regular}));
+    MockOsContext ccs3OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS3, EngineUsage::regular}));
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
     aubCsr->setupContext(ccs0OsContext);
@@ -165,7 +165,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAub
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
     setUpImpl<FamilyType>();
 
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
     AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     aubCsr.setupContext(osContext);
 
@@ -256,11 +256,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAub
     setUpImpl<FamilyType>();
 
     DebugManagerStateRestore debugRestorer;
-    MockOsContext rcsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
-    MockOsContext ccs0OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
-    MockOsContext ccs1OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS1, EngineUsage::Regular}));
-    MockOsContext ccs2OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS2, EngineUsage::Regular}));
-    MockOsContext ccs3OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS3, EngineUsage::Regular}));
+    MockOsContext rcsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
+    MockOsContext ccs0OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    MockOsContext ccs1OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS1, EngineUsage::regular}));
+    MockOsContext ccs2OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS2, EngineUsage::regular}));
+    MockOsContext ccs3OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS3, EngineUsage::regular}));
 
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     EXPECT_NE(nullptr, aubCsr);

@@ -142,10 +142,10 @@ TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGet
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
-    EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
+    EXPECT_EQ(SipKernelType::count, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
     pPlatform->initializeWithNewDevices();
-    EXPECT_EQ(SipKernelType::Csr, MockSipData::calledType);
+    EXPECT_EQ(SipKernelType::csr, MockSipData::calledType);
     EXPECT_TRUE(MockSipData::called);
 }
 
@@ -158,10 +158,10 @@ TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitiali
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
 
-    EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
+    EXPECT_EQ(SipKernelType::count, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
     pPlatform->initializeWithNewDevices();
-    EXPECT_EQ(SipKernelType::COUNT, MockSipData::calledType);
+    EXPECT_EQ(SipKernelType::count, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
 }
 

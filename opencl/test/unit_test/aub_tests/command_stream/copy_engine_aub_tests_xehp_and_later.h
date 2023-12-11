@@ -56,7 +56,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, true);
 
         defaultCommandQueue = commandQueues[0][0].get();
-        bcsCsr = tileDevices[0]->getNearestGenericSubDevice(0)->getEngine(bcsEngineType, EngineUsage::Regular).commandStreamReceiver;
+        bcsCsr = tileDevices[0]->getNearestGenericSubDevice(0)->getEngine(bcsEngineType, EngineUsage::regular).commandStreamReceiver;
 
         compressiblePattern = std::make_unique<uint8_t[]>(bufferSize);
         std::fill(compressiblePattern.get(), ptrOffset(compressiblePattern.get(), bufferSize), 0xC6);

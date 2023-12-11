@@ -28,7 +28,7 @@ void MemoryManagerWithCsrFixture::setUp() {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto engine = gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0];
-    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({engine.first, EngineUsage::Regular},
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({engine.first, EngineUsage::regular},
                                                                                                                        PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
     csr->setupContext(*osContext);
 }

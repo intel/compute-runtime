@@ -469,7 +469,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenQueueWithMainBcsIsReleasedWhenNewQu
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhenCreatingCommandQueueThenCreateQueueWithCooperativeEngine, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyEngineSelector.set(1);
-    debugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::Cooperative));
+    debugManager.flags.EngineUsageHint.set(static_cast<int32_t>(EngineUsage::cooperative));
 
     MockExecutionEnvironment mockExecutionEnvironment{};
 
@@ -495,7 +495,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
             propertiesCooperativeQueue[3] = i;
             auto pCommandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, pDevice.get(), propertiesCooperativeQueue);
             EXPECT_EQ(aub_stream::ENGINE_CCS + i, pCommandQueue->getGpgpuEngine().osContext->getEngineType());
-            EXPECT_EQ(EngineUsage::Cooperative, pCommandQueue->getGpgpuEngine().osContext->getEngineUsage());
+            EXPECT_EQ(EngineUsage::cooperative, pCommandQueue->getGpgpuEngine().osContext->getEngineUsage());
         }
     }
 }

@@ -18,7 +18,7 @@ template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() const {
     uint64_t capabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess;
 
-    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::SharedCrossDevice)) {
+    if (getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::sharedCrossDevice)) {
         capabilities |= UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
     }
 

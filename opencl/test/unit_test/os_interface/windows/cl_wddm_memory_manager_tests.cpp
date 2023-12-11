@@ -46,13 +46,13 @@ void ClWddmMemoryManagerFixture::setUp() {
         auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
         auto hwInfo = *defaultHwInfo;
         EngineInstancesContainer regularEngines = {
-            {aub_stream::ENGINE_CCS, EngineUsage::Regular}};
+            {aub_stream::ENGINE_CCS, EngineUsage::regular}};
 
         memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
                                                                                                           PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
         for (auto engine : memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-            if (engine.getEngineUsage() == EngineUsage::Regular) {
+            if (engine.getEngineUsage() == EngineUsage::regular) {
                 engine.commandStreamReceiver->pageTableManager.reset(GmmPageTableMngr::create(nullptr, 0, &dummyTTCallbacks));
             }
         }

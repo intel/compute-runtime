@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 namespace EngineDescriptorHelper {
 constexpr EngineDescriptor getDefaultDescriptor() {
-    return {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
+    return {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular},
             1 /*deviceBitfield*/,
             PreemptionMode::Disabled,
             false /* isRootDevice*/,
@@ -44,7 +44,7 @@ constexpr EngineDescriptor getDefaultDescriptor(EngineTypeUsage engineTypeUsage,
 }
 
 inline EngineDescriptor getDefaultDescriptor(DeviceBitfield deviceBitfield) {
-    return {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Regular},
+    return {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular},
             deviceBitfield,
             PreemptionMode::Disabled,
             false /* isRootDevice*/,

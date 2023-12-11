@@ -251,7 +251,7 @@ void DeviceImp::adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index) {
         const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
         auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
 
-        auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::regular, hwInfo);
         uint32_t currentEngineIndex = 0u;
         for (const auto &engine : engineGroups) {
             if (engine.engineGroupType == engineGroupType) {

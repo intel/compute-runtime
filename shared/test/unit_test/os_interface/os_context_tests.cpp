@@ -25,7 +25,7 @@ TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
 }
 
 TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
-    auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal});
+    auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::internal});
     descriptor.isRootDevice = true;
 
     OsContext *osContext = OsContext::create(nullptr, 0, 0, descriptor);
@@ -36,7 +36,7 @@ TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThe
 }
 
 TEST(OSContext, givenLowPriorityAndRootDeviceAreTrueWhenCreatingDefaultOsContextThenExpectGettersTrue) {
-    auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority});
+    auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority});
     descriptor.isRootDevice = true;
 
     OsContext *osContext = OsContext::create(nullptr, 0, 0, descriptor);
@@ -56,7 +56,7 @@ TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueRe
 
 TEST(OSContext, givenCooperativeEngineWhenIsCooperativeEngineIsCalledThenReturnTrue) {
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
-    engineDescriptor.engineTypeUsage.second = EngineUsage::Cooperative;
+    engineDescriptor.engineTypeUsage.second = EngineUsage::cooperative;
     auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
     EXPECT_FALSE(pOsContext->isRegular());
     EXPECT_FALSE(pOsContext->isLowPriority());
@@ -136,9 +136,9 @@ struct DeferredOsContextCreationTests : ::testing::Test {
     }
 
     std::unique_ptr<MockDevice> device;
-    static inline const EngineTypeUsage engineTypeUsageRegular{aub_stream::ENGINE_RCS, EngineUsage::Regular};
-    static inline const EngineTypeUsage engineTypeUsageInternal{aub_stream::ENGINE_RCS, EngineUsage::Internal};
-    static inline const EngineTypeUsage engineTypeUsageBlitter{aub_stream::ENGINE_BCS, EngineUsage::Regular};
+    static inline const EngineTypeUsage engineTypeUsageRegular{aub_stream::ENGINE_RCS, EngineUsage::regular};
+    static inline const EngineTypeUsage engineTypeUsageInternal{aub_stream::ENGINE_RCS, EngineUsage::internal};
+    static inline const EngineTypeUsage engineTypeUsageBlitter{aub_stream::ENGINE_BCS, EngineUsage::regular};
 };
 
 TEST_F(DeferredOsContextCreationTests, givenRegularEngineWhenCreatingOsContextThenOsContextIsInitializedDeferred) {

@@ -211,7 +211,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispat
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
-    auto engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::ENGINE_CCS, EngineUsage::Cooperative, hwInfo);
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::ENGINE_CCS, EngineUsage::cooperative, hwInfo);
     auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
     EXPECT_TRUE(retVal);
 }
@@ -225,7 +225,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCoop
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
-    auto engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::ENGINE_CCCS, EngineUsage::Cooperative, hwInfo);
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::ENGINE_CCCS, EngineUsage::cooperative, hwInfo);
     auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
     EXPECT_TRUE(retVal);
 

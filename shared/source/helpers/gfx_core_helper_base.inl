@@ -60,9 +60,9 @@ bool GfxCoreHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
 template <typename Family>
 SipKernelType GfxCoreHelperHw<Family>::getSipKernelType(bool debuggingActive) const {
     if (!debuggingActive) {
-        return SipKernelType::Csr;
+        return SipKernelType::csr;
     }
-    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::DbgBindless : SipKernelType::DbgCsr;
+    return debugManager.flags.UseBindlessDebugSip.get() ? SipKernelType::dbgBindless : SipKernelType::dbgCsr;
 }
 
 template <typename Family>

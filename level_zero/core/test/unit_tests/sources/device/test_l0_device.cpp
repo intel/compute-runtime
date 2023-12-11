@@ -175,7 +175,7 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
-    VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::COUNT);
+    VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::count);
     VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
@@ -184,13 +184,13 @@ TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInit
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
+    EXPECT_EQ(NEO::SipKernelType::count, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
 
-    EXPECT_EQ(NEO::SipKernelType::Csr, NEO::MockSipData::calledType);
+    EXPECT_EQ(NEO::SipKernelType::csr, NEO::MockSipData::calledType);
     EXPECT_TRUE(NEO::MockSipData::called);
 }
 
@@ -223,7 +223,7 @@ TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) 
 TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotInitialized) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
-    VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::COUNT);
+    VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::count);
     VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
@@ -232,13 +232,13 @@ TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotIn
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
-    EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
+    EXPECT_EQ(NEO::SipKernelType::count, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
 
-    EXPECT_EQ(NEO::SipKernelType::COUNT, NEO::MockSipData::calledType);
+    EXPECT_EQ(NEO::SipKernelType::count, NEO::MockSipData::calledType);
     EXPECT_FALSE(NEO::MockSipData::called);
 }
 

@@ -84,7 +84,7 @@ class SipKernel {
     const std::vector<char> binary;
     size_t contextIdOffsets[2] = {0, 0};
     GraphicsAllocation *sipAllocation = nullptr;
-    SipKernelType type = SipKernelType::COUNT;
+    SipKernelType type = SipKernelType::count;
 };
 
 } // namespace NEO
