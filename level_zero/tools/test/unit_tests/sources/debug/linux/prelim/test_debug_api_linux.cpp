@@ -5416,15 +5416,23 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForResumeThenProperIoctlsIsCal
 TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAndGenerateEventsCalledThenThreadStoppedEventsGeneratedOnlyForNewlyStoppedThreads) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
+    const auto memoryHandle = 1u;
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
+    handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
+
+    DebugSessionLinuxi915::BindInfo cssaInfo = {0x1000, sessionMock->stateSaveAreaHeader.size()};
+    sessionMock->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[memoryHandle] = cssaInfo;
+
     EuThread::ThreadId thread = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
-    const auto memoryHandle = 1u;
+
     sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
     sessionMock->allThreads[thread.packed]->reportAsStopped();
 
@@ -5447,7 +5455,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAnd
 
     sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
 
-    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(3, handler->ioctlCalled);
     EXPECT_EQ(1u, handler->euControlArgs.size());
     EXPECT_EQ(2u, sessionMock->numThreadsPassedToThreadControl);
     EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
@@ -5467,6 +5475,61 @@ TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAnd
     EXPECT_EQ(thread1.subslice, event.info.thread.thread.subslice);
     EXPECT_EQ(thread1.eu, event.info.thread.thread.eu);
     EXPECT_EQ(thread1.thread, event.info.thread.thread.thread);
+}
+
+TEST_F(DebugApiLinuxTest, GivenStoppedThreadResumeCausingPageFaultAndFEBitSetWhenCheckStoppedThreadsAndGenerateEventsCalledThenThreadStoppedEventIsNotGenerated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    const auto memoryHandle = 1u;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
+
+    DebugSessionLinuxi915::BindInfo cssaInfo = {0x1000, sessionMock->stateSaveAreaHeader.size()};
+    sessionMock->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[memoryHandle] = cssaInfo;
+
+    EuThread::ThreadId thread = {0, 0, 0, 0, 0};
+
+    sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->allThreads[thread.packed]->reportAsStopped();
+    sessionMock->allThreads[thread.packed]->resumeThread();
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+
+    for (auto thread : threads) {
+        sessionMock->stoppedThreads[thread.packed] = 3;
+    }
+
+    auto regDesc = sessionMock->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+    uint32_t cr0[2] = {};
+    cr0[1] = 1 << 26;
+
+    memcpy_s(sessionMock->stateSaveAreaHeader.data() +
+                 threadSlotOffset(reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data()), thread.slice, thread.subslice, thread.eu, thread.thread) +
+                 regOffsetInThreadSlot(regDesc, 0),
+             regDesc->bytes, cr0, sizeof(cr0));
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+
+    handler->outputBitmaskSize = bitmaskSize;
+    handler->outputBitmask = std::move(bitmask);
+
+    sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+
+    EXPECT_FALSE(sessionMock->allThreads[thread.packed]->isStopped());
+    EXPECT_EQ(0u, sessionMock->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated) {
@@ -5545,6 +5608,7 @@ TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenSingleThreadPassedToCheckStopp
 
     handler->outputBitmaskSize = bitmaskSize;
     handler->outputBitmask = std::move(bitmask);
+    sessionMock->skipCheckForceExceptionBit = true;
 
     sessionMock->checkStoppedThreadsAndGenerateEvents({thread1}, memoryHandle, 0);
 

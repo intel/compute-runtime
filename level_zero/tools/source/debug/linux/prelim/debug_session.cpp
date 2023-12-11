@@ -1555,6 +1555,22 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
     return euControlRetVal;
 }
 
+bool DebugSessionLinuxi915::checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc) {
+
+    auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
+    auto threadSlotOffset = calculateThreadSlotOffset(threadId);
+    auto startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regDesc, 0);
+
+    [[maybe_unused]] int ret = readGpuMemory(memoryHandle, reinterpret_cast<char *>(cr0), 1 * regDesc->bytes, gpuVa + startRegOffset);
+    DEBUG_BREAK_IF(ret != ZE_RESULT_SUCCESS);
+
+    const uint32_t cr0ForcedExcpetionBitmask = 0x04000000;
+    if (cr0[1] & cr0ForcedExcpetionBitmask) {
+        return true;
+    }
+    return false;
+}
+
 void DebugSessionLinuxi915::checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) {
 
     std::vector<EuThread::ThreadId> threadsWithAttention;
@@ -1585,19 +1601,30 @@ void DebugSessionLinuxi915::checkStoppedThreadsAndGenerateEvents(const std::vect
     const auto &threadsToCheck = threadsWithAttention.size() > 0 ? threadsWithAttention : threads;
     stoppedThreadsToReport.reserve(threadsToCheck.size());
 
+    const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
+    auto cr0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+    auto regDesc = typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU);
+
     for (auto &threadId : threadsToCheck) {
         SIP::sr_ident srMagic = {{0}};
         srMagic.count = 0;
 
         if (readSystemRoutineIdent(allThreads[threadId].get(), memoryHandle, srMagic)) {
             bool wasStopped = allThreads[threadId]->isStopped();
+            bool checkIfStopped = true;
 
-            if (allThreads[threadId]->verifyStopped(srMagic.count)) {
+            if (srMagic.count % 2 == 1) {
+                memset(cr0.get(), 0, regSize);
+                checkIfStopped = !checkForceExceptionBit(memoryHandle, threadId, cr0.get(), regDesc);
+            }
+
+            if (checkIfStopped && allThreads[threadId]->verifyStopped(srMagic.count)) {
                 allThreads[threadId]->stopThread(memoryHandle);
                 if (!wasStopped) {
                     stoppedThreadsToReport.push_back(threadId);
                 }
             }
+
         } else {
             break;
         }
