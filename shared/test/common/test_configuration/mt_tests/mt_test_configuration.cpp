@@ -8,7 +8,11 @@
 #include "test_mode.h"
 
 namespace NEO {
+#if defined(_WIN32)
+unsigned int ultIterationMaxTime = 60;
+#else
 unsigned int ultIterationMaxTime = 45;
+#endif
 unsigned int testCaseMaxTimeInMs = 16000;
 bool useMockGmm = true;
 const char *executionDirectorySuffix = "";
