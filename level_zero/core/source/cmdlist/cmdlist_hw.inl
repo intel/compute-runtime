@@ -2589,7 +2589,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         appendSdiInOrderCounterSignalling(inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), signalValue);
     }
 
-    if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1) && signalEvent && signalEvent->isInterruptModeEnabled()) {
+    if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1) && signalEvent && signalEvent->isKmdWaitModeEnabled()) {
         NEO::EnodeUserInterrupt<GfxFamily>::encode(*cmdStream);
     }
 }

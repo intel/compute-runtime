@@ -93,10 +93,10 @@ typedef struct _ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t
     uint32_t cmdListWaitOnMemoryDataSizeInBytes; /// <out> Defines supported data size for zexCommandListAppendWaitOnMemory[64] API
 } ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t;
 
-#ifndef ZE_INTEL_EVENT_SYNC_MODE_EXP_NAME
+#ifndef ZE_INTEL_EVENT_SYNC_MODE
 /// @brief Event sync mode extension name
-#define ZE_INTEL_EVENT_SYNC_MODE_EXP_NAME "ZE_intel_experimental_event_sync_mode"
-#endif // ZE_INTEL_EVENT_SYNC_MODE_EXP_NAME
+#define ZE_INTEL_EVENT_SYNC_MODE "ZE_intel_experimental_event_sync_mode"
+#endif // ZE_INTEL_EVENT_SYNC_MODE
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Event sync mode extension Version(s)

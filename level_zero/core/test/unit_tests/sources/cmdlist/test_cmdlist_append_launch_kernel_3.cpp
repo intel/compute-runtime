@@ -889,68 +889,12 @@ HWTEST2_F(InOrderCmdListTests, givenDriverHandleWhenAskingForExtensionsThenRetur
     it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC) == 0); });
     EXPECT_NE(it, extensionProperties.end());
     EXPECT_EQ((*it).version, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_CURRENT);
-
-    it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZE_INTEL_EVENT_SYNC_MODE_EXP_NAME) == 0); });
-    EXPECT_NE(it, extensionProperties.end());
-    EXPECT_EQ((*it).version, ZE_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     EXPECT_FALSE(immCmdList->isQwordInOrderCounter());
-}
-
-HWTEST2_F(InOrderCmdListTests, givenInvalidPnextStructWhenCreatingEventThenIgnore, IsAtLeastSkl) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 1;
-
-    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    ze_event_desc_t extStruct = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
-    ze_event_desc_t eventDesc = {};
-    eventDesc.pNext = &extStruct;
-
-    auto event0 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-
-    EXPECT_NE(nullptr, event0.get());
-}
-
-HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThenEnableNewModes, IsAtLeastSkl) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 4;
-
-    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    ze_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
-    ze_event_desc_t eventDesc = {};
-    eventDesc.pNext = &syncModeDesc;
-
-    eventDesc.index = 0;
-    syncModeDesc.syncModeFlags = 0;
-    auto event0 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-    EXPECT_FALSE(event0->isInterruptModeEnabled());
-    EXPECT_FALSE(event0->isKmdWaitModeEnabled());
-
-    eventDesc.index = 1;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
-    auto event1 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-    EXPECT_TRUE(event1->isInterruptModeEnabled());
-    EXPECT_FALSE(event1->isKmdWaitModeEnabled());
-
-    eventDesc.index = 2;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
-    auto event2 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-    EXPECT_FALSE(event2->isInterruptModeEnabled());
-    EXPECT_TRUE(event2->isKmdWaitModeEnabled());
-
-    eventDesc.index = 3;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT | ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
-    auto event3 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-    EXPECT_TRUE(event3->isInterruptModeEnabled());
-    EXPECT_TRUE(event3->isKmdWaitModeEnabled());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxedOrdering, IsAtLeastXeHpCore) {
@@ -1100,9 +1044,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
 
     auto eventPool = createEvents<FamilyType>(2, false);
     EXPECT_TRUE(events[0]->isKmdWaitModeEnabled());
-    EXPECT_TRUE(events[0]->isInterruptModeEnabled());
     EXPECT_TRUE(events[1]->isKmdWaitModeEnabled());
-    EXPECT_TRUE(events[1]->isInterruptModeEnabled());
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(2));
 
@@ -1353,7 +1295,6 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
     events[0]->makeCounterBasedInitiallyDisabled();
 
     EXPECT_FALSE(events[1]->isKmdWaitModeEnabled());
-    EXPECT_FALSE(events[1]->isInterruptModeEnabled());
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1396,7 +1337,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenP
 
     // signal Event with kmd wait mode
     offset = cmdStream->getUsed();
-    events[1]->enableInterruptMode();
+    events[1]->enableKmdWaitMode();
     immCmdList->appendBarrier(events[1]->toHandle(), 1, &eventHandle, false);
     validateInterrupt(true);
 }
