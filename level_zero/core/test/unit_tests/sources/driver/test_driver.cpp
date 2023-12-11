@@ -225,7 +225,7 @@ HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithHostBufferMemoryAllocation
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
     uint64_t imageHandle = 0x1;
-    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    NEO::AllocationType allocationType = NEO::AllocationType::bufferHostMemory;
     void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType);
     EXPECT_NE(ptr, nullptr);
 
@@ -244,7 +244,7 @@ HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithBufferMemoryAllocationType
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
     uint64_t imageHandle = 0x1;
-    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER;
+    NEO::AllocationType allocationType = NEO::AllocationType::buffer;
     void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, allocationType);
     EXPECT_NE(ptr, nullptr);
 
@@ -318,7 +318,7 @@ HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHa
     AllocationProperties properties = {device->getRootDeviceIndex(),
                                        true,
                                        MemoryConstants::pageSize,
-                                       AllocationType::BUFFER,
+                                       AllocationType::buffer,
                                        false,
                                        device->getNEODevice()->getDeviceBitfield()};
     bool requireSpecificBitness{};

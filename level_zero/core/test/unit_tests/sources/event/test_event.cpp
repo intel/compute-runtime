@@ -319,9 +319,9 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     if (l0GfxCoreHelper.alwaysAllocateEventInLocalMem()) {
-        EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, eventPool->getAllocation().getAllocationType());
     } else {
-        EXPECT_EQ(NEO::AllocationType::BUFFER_HOST_MEMORY, eventPool->getAllocation().getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::bufferHostMemory, eventPool->getAllocation().getAllocationType());
     }
     eventPool->destroy();
 }
@@ -524,7 +524,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
 
     auto allocation = &eventPool->getAllocation();
 
-    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER);
+    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::gpuTimestampDeviceBuffer);
 
     ze_ipc_event_pool_handle_t ipcHandle = {};
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
@@ -764,7 +764,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithDeviceAllocT
 
     auto allocation = &ipcEventPool->getAllocation();
 
-    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER);
+    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::gpuTimestampDeviceBuffer);
 
     EXPECT_EQ(ipcEventPool->getEventSize(), eventPool->getEventSize());
     EXPECT_EQ(numEvents, static_cast<uint32_t>(ipcEventPool->getNumEvents()));
@@ -1311,7 +1311,7 @@ TEST_F(EventPoolCreate, whenHostVisibleFlagNotSetThenEventAllocationIsOnDevice) 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
 
-    EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, eventPool->getAllocation().getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, eventPool->getAllocation().getAllocationType());
     EXPECT_NE(systemMemoryBitfield, memoryManager->recentlyPassedDeviceBitfield);
     EXPECT_EQ(neoDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
 }
@@ -1887,9 +1887,9 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllo
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     if (l0GfxCoreHelper.alwaysAllocateEventInLocalMem()) {
-        EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, allocation->getAllocationType());
     } else {
-        EXPECT_EQ(NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::timestampPacketTagBuffer, allocation->getAllocationType());
     }
 }
 
@@ -1968,7 +1968,7 @@ TEST_F(TimestampDeviceEventCreate, givenTimestampDeviceEventThenAllocationsIsOfG
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, allocation->getAllocationType());
 }
 
 using EventQueryTimestampExpWithRootDeviceAndSubDevices = Test<MultiDeviceFixture>;

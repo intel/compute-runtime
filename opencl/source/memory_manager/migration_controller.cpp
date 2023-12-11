@@ -59,7 +59,7 @@ void MigrationController::migrateMemory(Context &context, MemoryManager &memoryM
     } else {
 
         auto srcCmdQ = context.getSpecialQueue(sourceRootDeviceIndex);
-        if (srcMemory->getAllocationType() == AllocationType::IMAGE) {
+        if (srcMemory->getAllocationType() == AllocationType::image) {
             auto pImage = static_cast<Image *>(memObj);
             size_t origin[3] = {};
             size_t region[3] = {};
@@ -80,7 +80,7 @@ void MigrationController::migrateMemory(Context &context, MemoryManager &memoryM
     } else {
 
         auto dstCmdQ = context.getSpecialQueue(targetRootDeviceIndex);
-        if (dstMemory->getAllocationType() == AllocationType::IMAGE) {
+        if (dstMemory->getAllocationType() == AllocationType::image) {
             auto pImage = static_cast<Image *>(memObj);
             size_t origin[3] = {};
             size_t region[3] = {};

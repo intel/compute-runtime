@@ -18,7 +18,7 @@ using AlocationHelperTests = Test<ClDeviceFixture>;
 
 HWTEST_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse) {
     HeapAssigner heapAssigner{false};
-    EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::LINEAR_STREAM));
+    EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::linearStream));
 }
 
 } // namespace NEO

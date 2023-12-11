@@ -84,7 +84,7 @@ AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(
     const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty) {
 
     auto deviceBitfield = MemoryPropertiesHelper::adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
-    AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, &imgInfo, AllocationType::IMAGE, deviceBitfield};
+    AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, &imgInfo, AllocationType::image, deviceBitfield};
     MemoryPropertiesHelper::fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo, deviceOnlyVisibilty);
     return allocationProperties;
 }

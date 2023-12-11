@@ -62,7 +62,7 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmG
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::SVM_GPU,
+                                    AllocationType::svmGpu,
                                     deviceBitfield);
 
     EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
@@ -75,7 +75,7 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrin
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::PRINTF_SURFACE,
+                                    AllocationType::printfSurface,
                                     deviceBitfield);
 
     EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));

@@ -101,7 +101,7 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
-    for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
+    for (int type = 0; type < static_cast<int>(AllocationType::count); type++) {
         AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
         AllocationData allocData{};
         allocData.flags.useSystemMemory = true;
@@ -110,9 +110,9 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocati
         gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
 
         if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
-            (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
-             allocProperties.allocationType == AllocationType::RING_BUFFER ||
-             allocProperties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
+            (allocProperties.allocationType == AllocationType::commandBuffer ||
+             allocProperties.allocationType == AllocationType::ringBuffer ||
+             allocProperties.allocationType == AllocationType::semaphoreBuffer)) {
             EXPECT_FALSE(allocData.flags.useSystemMemory);
             EXPECT_TRUE(allocData.flags.requiresCpuAccess);
         } else {

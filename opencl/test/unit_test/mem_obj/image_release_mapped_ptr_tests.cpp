@@ -70,7 +70,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
     cl_map_flags mapFlags = CL_MAP_WRITE;
     image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0, nullptr);
 
-    AllocationProperties properties{0, false, MemoryConstants::cacheLineSize, AllocationType::MAP_ALLOCATION, false, device->getDeviceBitfield()};
+    AllocationProperties properties{0, false, MemoryConstants::cacheLineSize, AllocationType::mapAllocation, false, device->getDeviceBitfield()};
     auto allocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties, ptr);
     image->setMapAllocation(allocation);
 

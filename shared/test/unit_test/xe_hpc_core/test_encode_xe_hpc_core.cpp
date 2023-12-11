@@ -58,7 +58,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenOffsetWhenProgrammingStatePre
     constexpr uint64_t gpuVa = 0x100000;
     constexpr uint32_t gpuVaOffset = 0x10000;
 
-    const GraphicsAllocation allocation(0, AllocationType::BUFFER, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+    const GraphicsAllocation allocation(0, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
 
     memset(buffer, 0, sizeof(buffer));
     LinearStream linearStream(buffer, sizeof(buffer));
@@ -89,7 +89,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
     constexpr uint32_t mocsIndexForL3 = (2 << 1);
     constexpr size_t numCachelines = 3;
 
-    const GraphicsAllocation allocation(0, AllocationType::BUFFER, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+    const GraphicsAllocation allocation(0, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
 
     constexpr std::array<uint32_t, 7> expectedSizes = {{
         MemoryConstants::cacheLineSize - 1,
@@ -145,7 +145,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenIsaAllocationWhenProgrammingP
 
     EXPECT_EQ(sizeof(STATE_PREFETCH), EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(1, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 
-    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType isaTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal};
 
     for (auto &isaType : isaTypes) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
@@ -171,7 +171,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
 
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 
-    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType isaTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal};
 
     for (auto &isaType : isaTypes) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
@@ -203,7 +203,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
     auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0010'1000; // [3:5] - BaseDie != A0
 
-    const GraphicsAllocation allocation(0, AllocationType::BUFFER,
+    const GraphicsAllocation allocation(0, AllocationType::buffer,
                                         nullptr, 1234, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 

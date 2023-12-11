@@ -136,7 +136,7 @@ TEST_F(ValidExportHostPtr, givenPropertiesWithNtHandleWhenValidateInputAndCreate
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);
-    EXPECT_EQ(static_cast<Buffer *>(buffer)->getGraphicsAllocation(0u)->getAllocationType(), NEO::AllocationType::SHARED_BUFFER);
+    EXPECT_EQ(static_cast<Buffer *>(buffer)->getGraphicsAllocation(0u)->getAllocationType(), NEO::AllocationType::sharedBuffer);
     EXPECT_NE(buffer, nullptr);
 
     clReleaseMemObject(buffer);

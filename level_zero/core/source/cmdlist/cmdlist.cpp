@@ -80,7 +80,7 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
         }
     }
     if (this->storeExternalPtrAsTemporary()) {
-        auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::EXTERNAL_HOST_PTR);
+        auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::externalHostPtr);
         if (allocation != nullptr) {
             auto alloc = allocation.get();
             alloc->hostPtrTaskCountAssignment++;
@@ -111,7 +111,7 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
     if (this->storeExternalPtrAsTemporary()) {
         alloc->hostPtrTaskCountAssignment++;
         this->csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, this->csr->peekTaskCount());
-    } else if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
+    } else if (alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) {
         hostPtrMap.insert(std::make_pair(buffer, alloc));
     } else {
         commandContainer.getDeallocationContainer().push_back(alloc);
@@ -130,8 +130,8 @@ void CommandList::removeDeallocationContainerData() {
         if (allocData) {
             device->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(*allocData);
         }
-        if (!((deallocation->getAllocationType() == NEO::AllocationType::INTERNAL_HEAP) ||
-              (deallocation->getAllocationType() == NEO::AllocationType::LINEAR_STREAM))) {
+        if (!((deallocation->getAllocationType() == NEO::AllocationType::internalHeap) ||
+              (deallocation->getAllocationType() == NEO::AllocationType::linearStream))) {
             memoryManager->freeGraphicsMemory(deallocation);
             eraseDeallocationContainerEntry(deallocation);
         }

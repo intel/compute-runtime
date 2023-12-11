@@ -264,9 +264,9 @@ HWTEST_P(L0DebuggerParameterizedTests, givenEnabledDebuggingWhenIsaTypeAllocated
     ASSERT_NE(nullptr, debugger);
 
     size_t kernelIsaSize = 0x1000;
-    NEO::AllocationType allocTypes[] = {NEO::AllocationType::KERNEL_ISA,
-                                        NEO::AllocationType::KERNEL_ISA_INTERNAL,
-                                        NEO::AllocationType::DEBUG_MODULE_AREA};
+    NEO::AllocationType allocTypes[] = {NEO::AllocationType::kernelIsa,
+                                        NEO::AllocationType::kernelIsaInternal,
+                                        NEO::AllocationType::debugModuleArea};
 
     for (int i = 0; i < 3; i++) {
         auto allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(
@@ -561,10 +561,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
@@ -584,10 +584,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 

@@ -590,7 +590,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequ
     auto &productHelper = getHelper<ProductHelper>();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
     hwInfo.platform.usRevId = 0u;

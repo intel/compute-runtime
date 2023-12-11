@@ -148,7 +148,7 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
         AllocationProperties properties = {context->getDevice(0)->getRootDeviceIndex(),
                                            false, // allocateMemory
                                            0u,    // size
-                                           AllocationType::SHARED_BUFFER,
+                                           AllocationType::sharedBuffer,
                                            false, // isMultiStorageAllocation
                                            context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
         // couldn't find allocation for reuse - create new

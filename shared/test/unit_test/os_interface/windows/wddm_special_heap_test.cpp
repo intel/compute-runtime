@@ -53,7 +53,7 @@ class GlobalBindlessWddmMemManagerFixture {
 using WddmGlobalBindlessAllocatorTests = Test<GlobalBindlessWddmMemManagerFixture>;
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
-    AllocationProperties allocationProperties{0u, MemoryConstants::kiloByte, NEO::AllocationType::BUFFER, {}};
+    AllocationProperties allocationProperties{0u, MemoryConstants::kiloByte, NEO::AllocationType::buffer, {}};
     NEO::AllocationData allocData = {};
     allocData.rootDeviceIndex = allocationProperties.rootDeviceIndex;
     allocData.type = allocationProperties.allocationType;
@@ -74,7 +74,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenW
 }
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedThenGpuBaseAddressIsSetToCorrectBaseAddress) {
-    MockAllocationProperties properties(0, true, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM);
+    MockAllocationProperties properties(0, true, MemoryConstants::pageSize64k, AllocationType::linearStream);
     properties.flags.use32BitFrontWindow = true;
 
     memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
@@ -96,7 +96,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToBindlessBaseAddress) {
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
-    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
     auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
@@ -122,7 +122,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreatedInDevicePoolThenGpuAddressIsSetToBindlessBaseAddress) {
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
-    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
     auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
@@ -144,14 +144,14 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreat
 
 TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInPreferredPoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
     AllocationData allocData = {};
-    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
     memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
 
     executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
 
-    AllocationProperties properties = {0, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM, {}};
+    AllocationProperties properties = {0, MemoryConstants::pageSize64k, AllocationType::linearStream, {}};
     auto allocation = memManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
     auto gmmHelper = memManager->getGmmHelper(0);

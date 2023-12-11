@@ -33,16 +33,16 @@ enum DumpFormat {
 };
 
 inline bool isWritableBuffer(GraphicsAllocation &gfxAllocation) {
-    return (gfxAllocation.getAllocationType() == AllocationType::BUFFER ||
-            gfxAllocation.getAllocationType() == AllocationType::BUFFER_HOST_MEMORY ||
-            gfxAllocation.getAllocationType() == AllocationType::EXTERNAL_HOST_PTR ||
-            gfxAllocation.getAllocationType() == AllocationType::MAP_ALLOCATION ||
-            gfxAllocation.getAllocationType() == AllocationType::SVM_GPU) &&
+    return (gfxAllocation.getAllocationType() == AllocationType::buffer ||
+            gfxAllocation.getAllocationType() == AllocationType::bufferHostMemory ||
+            gfxAllocation.getAllocationType() == AllocationType::externalHostPtr ||
+            gfxAllocation.getAllocationType() == AllocationType::mapAllocation ||
+            gfxAllocation.getAllocationType() == AllocationType::svmGpu) &&
            gfxAllocation.isMemObjectsAllocationWithWritableFlags();
 }
 
 inline bool isWritableImage(GraphicsAllocation &gfxAllocation) {
-    return (gfxAllocation.getAllocationType() == AllocationType::IMAGE) &&
+    return (gfxAllocation.getAllocationType() == AllocationType::image) &&
            gfxAllocation.isMemObjectsAllocationWithWritableFlags();
 }
 

@@ -1711,7 +1711,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
@@ -1803,7 +1803,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEven
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
@@ -2075,11 +2075,11 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingThenEnsureHostAll
     EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
     EXPECT_NE(&immCmdList2->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList2->inOrderExecInfo->getHostCounterAllocation());
 
-    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::bufferHostMemory, immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
     EXPECT_EQ(immCmdList1->inOrderExecInfo->getBaseHostAddress(), immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
     EXPECT_FALSE(immCmdList1->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
 
-    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::bufferHostMemory, immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
     EXPECT_EQ(immCmdList2->inOrderExecInfo->getBaseHostAddress(), immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
     EXPECT_FALSE(immCmdList2->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
 
@@ -2113,7 +2113,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDispatchingThenHandleDependen
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     EXPECT_NE(nullptr, immCmdList->inOrderExecInfo.get());
-    EXPECT_EQ(AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getAllocationType());
+    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getAllocationType());
 
     EXPECT_EQ(0u, immCmdList->inOrderExecInfo->getCounterValue());
 

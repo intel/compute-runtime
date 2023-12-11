@@ -47,7 +47,7 @@ void ReleaseHelperTestsBase::whenGettingPreferredAllocationMethodThenNoPreferenc
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+        for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
             auto allocationType = static_cast<AllocationType>(i);
             auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
             EXPECT_FALSE(preferredAllocationMethod.has_value());
@@ -73,11 +73,11 @@ void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmd
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+        for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
             auto allocationType = static_cast<AllocationType>(i);
             auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
-            if (allocationType == AllocationType::TAG_BUFFER ||
-                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
+            if (allocationType == AllocationType::tagBuffer ||
+                allocationType == AllocationType::timestampPacketTagBuffer) {
                 EXPECT_FALSE(preferredAllocationMethod.has_value());
             } else {
                 EXPECT_TRUE(preferredAllocationMethod.has_value());

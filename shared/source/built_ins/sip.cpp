@@ -145,7 +145,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         void *alignedBuffer = alignedMalloc(bytesRead, MemoryConstants::pageSize);
         memcpy_s(alignedBuffer, bytesRead, fileData.data(), bytesRead);
 
-        const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
+        const auto allocType = AllocationType::kernelIsaInternal;
         AllocationProperties properties = {rootDeviceIndex, bytesRead, allocType, device.getDeviceBitfield()};
         properties.flags.use32BitFrontWindow = false;
 
@@ -209,7 +209,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
-    const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
+    const auto allocType = AllocationType::kernelIsaInternal;
     AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
     properties.flags.use32BitFrontWindow = false;
 

@@ -81,7 +81,7 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
     ASSERT_NE(nullptr, imgGfxAlloc);
     EXPECT_EQ(MemoryPool::LocalMemory, imgGfxAlloc->getMemoryPool());
     EXPECT_LE(imageDesc.image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes, imgGfxAlloc->getUnderlyingBufferSize());
-    EXPECT_EQ(AllocationType::IMAGE, imgGfxAlloc->getAllocationType());
+    EXPECT_EQ(AllocationType::image, imgGfxAlloc->getAllocationType());
     EXPECT_EQ(0u, imgGfxAlloc->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
 
     auto gmmHelper = context->getDevice(0)->getGmmHelper();

@@ -284,7 +284,7 @@ TEST_F(MemoryExportImportTest,
                                      size, alignment, &importedPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::BUFFER);
+    EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::buffer);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -334,7 +334,7 @@ TEST_F(MemoryExportImportTest,
                                    size, alignment, &importedPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(driverHandle->allocationTypeRequested, NEO::AllocationType::bufferHostMemory);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

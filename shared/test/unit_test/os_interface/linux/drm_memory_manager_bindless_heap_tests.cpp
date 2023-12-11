@@ -35,7 +35,7 @@ struct GlobalBindlessDrmMemManagerFixture : public DrmMemoryManagerFixtureWithou
 using DrmGlobalBindlessAllocatorTests = Test<GlobalBindlessDrmMemManagerFixture>;
 
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedThenGpuBaseAddressIsSetToCorrectBaseAddress) {
-    MockAllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM);
+    MockAllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::linearStream);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
@@ -52,7 +52,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInDevicePoolThenGpuBaseAddressIsSetToBindlessBaseAddress) {
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
-    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
@@ -72,7 +72,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreatedInDevicePoolThenGpuAddressIsSetToBindlessBaseAddress) {
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     AllocationData allocData = {};
-    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
@@ -89,12 +89,12 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreate
 
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedInPreferredPoolThenGpuBaseAddressIsSetToCorrectBaseAddress) {
     AllocationData allocData = {};
-    allocData.type = AllocationType::LINEAR_STREAM;
+    allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
     executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
 
-    AllocationProperties properties = {rootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::LINEAR_STREAM, {}};
+    AllocationProperties properties = {rootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::linearStream, {}};
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
     auto gmmHelper = memoryManager->getGmmHelper(rootDeviceIndex);

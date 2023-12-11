@@ -55,7 +55,7 @@ struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
         const AllocationProperties properties{
             pDevice->getRootDeviceIndex(),
             SWTagsManager::estimateSpaceForSWTags<GfxFamily>(),
-            AllocationType::LINEAR_STREAM,
+            AllocationType::linearStream,
             pDevice->getDeviceBitfield()};
 
         GraphicsAllocation *allocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);

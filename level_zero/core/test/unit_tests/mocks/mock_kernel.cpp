@@ -27,7 +27,7 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     this->kernelImmData = &immutableData;
 
     auto allocation = new NEO::GraphicsAllocation(0,
-                                                  NEO::AllocationType::KERNEL_ISA,
+                                                  NEO::AllocationType::kernelIsa,
                                                   nullptr,
                                                   0,
                                                   0,

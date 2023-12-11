@@ -1299,7 +1299,7 @@ TEST_F(GlSharingTests, whenGetGlContextHandleIsCalledThenProperHandleIsReturned)
 TEST_F(GlSharingTests, givenClGLBufferWhenCreatedThenSharedBufferAllocatoinTypeIsSet) {
     std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
     ASSERT_NE(nullptr, buffer->getGraphicsAllocation(rootDeviceIndex));
-    EXPECT_EQ(AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedBuffer, buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
 }
 
 using clGetSupportedGLTextureFormatsINTELTests = GlSharingTests;

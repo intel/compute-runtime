@@ -767,12 +767,12 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShar
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::sharedImage, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, graphicsAllocation->getAllocationType());
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
@@ -810,12 +810,12 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedH
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::sharedImage, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, graphicsAllocation->getAllocationType());
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
@@ -852,12 +852,12 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFa
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, &imgInfo, AllocationType::sharedImage, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, graphicsAllocation->getAllocationType());
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);

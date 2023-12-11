@@ -61,7 +61,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
             buffer = alignedMalloc(isaSize, 64);
         }
         auto allocation = new NEO::GraphicsAllocation(0,
-                                                      NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                                      NEO::AllocationType::internalHostMemory,
                                                       buffer,
                                                       reinterpret_cast<uint64_t>(buffer),
                                                       0,

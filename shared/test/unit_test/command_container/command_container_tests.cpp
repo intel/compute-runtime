@@ -101,12 +101,12 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorre
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     ASSERT_NE(0u, cmdContainer.getCmdBufferAllocations().size());
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[0]->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, cmdContainer.getCmdBufferAllocations()[0]->getAllocationType());
 
     cmdContainer.allocateNextCommandBuffer();
 
     ASSERT_LE(2u, cmdContainer.getCmdBufferAllocations().size());
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[1]->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, cmdContainer.getCmdBufferAllocations()[1]->getAllocationType());
 }
 
 TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenInitializeThenCreateAdditionalLinearStream) {
@@ -148,10 +148,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
             EXPECT_EQ(heap, nullptr);
         } else {
             if (HeapType::INDIRECT_OBJECT == heapType) {
-                EXPECT_EQ(AllocationType::INTERNAL_HEAP, heap->getGraphicsAllocation()->getAllocationType());
+                EXPECT_EQ(AllocationType::internalHeap, heap->getGraphicsAllocation()->getAllocationType());
                 EXPECT_NE(0u, heap->getHeapGpuStartOffset());
             } else {
-                EXPECT_EQ(AllocationType::LINEAR_STREAM, heap->getGraphicsAllocation()->getAllocationType());
+                EXPECT_EQ(AllocationType::linearStream, heap->getGraphicsAllocation()->getAllocationType());
                 EXPECT_EQ(0u, heap->getHeapGpuStartOffset());
             }
         }
@@ -212,7 +212,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsN
 
 TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdContainerIsInitializedThenInstructionBaseAddressIsSetToInternalHeap) {
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::kernelIsa) - 1));
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 1;
@@ -915,7 +915,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenSetCmdBufferThenCmdBufferSetCo
     AllocationProperties properties{pDevice->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     2048,
-                                    AllocationType::COMMAND_BUFFER,
+                                    AllocationType::commandBuffer,
                                     (pDevice->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                     false,
                                     pDevice->getDeviceBitfield()};

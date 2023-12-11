@@ -126,14 +126,14 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapForI
     memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
 
     MockGraphicsAllocation alloc;
-    alloc.allocationType = AllocationType::IMAGE;
+    alloc.allocationType = AllocationType::image;
     EXPECT_TRUE(getMemoryManager()->allocateBindlessSlot(&alloc));
     auto ssInHeapInfo1 = alloc.getBindlessInfo();
 
     EXPECT_EQ(surfaceStateSize * 2, ssInHeapInfo1.ssSize);
 
     MockGraphicsAllocation alloc2;
-    alloc2.allocationType = AllocationType::SHARED_IMAGE;
+    alloc2.allocationType = AllocationType::sharedImage;
     EXPECT_TRUE(getMemoryManager()->allocateBindlessSlot(&alloc2));
     auto ssInHeapInfo2 = alloc2.getBindlessInfo();
 
@@ -254,7 +254,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIs
     EXPECT_EQ(ssInHeapInfoFromReuseVector.ssPtr, ssInHeapInfo.ssPtr);
 
     MockGraphicsAllocation *alloc2 = new MockGraphicsAllocation;
-    alloc2->allocationType = AllocationType::IMAGE;
+    alloc2->allocationType = AllocationType::image;
     memManager->allocateBindlessSlot(alloc2);
 
     auto ssInHeapInfo2 = alloc2->getBindlessInfo();

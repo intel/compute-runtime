@@ -18,24 +18,24 @@ class AubHelper : public NonCopyableOrMovableClass {
   public:
     static bool isOneTimeAubWritableAllocationType(const AllocationType &type) {
         switch (type) {
-        case AllocationType::PIPE:
-        case AllocationType::CONSTANT_SURFACE:
-        case AllocationType::GLOBAL_SURFACE:
-        case AllocationType::KERNEL_ISA:
-        case AllocationType::KERNEL_ISA_INTERNAL:
-        case AllocationType::PRIVATE_SURFACE:
-        case AllocationType::SCRATCH_SURFACE:
-        case AllocationType::WORK_PARTITION_SURFACE:
-        case AllocationType::BUFFER:
-        case AllocationType::BUFFER_HOST_MEMORY:
-        case AllocationType::IMAGE:
-        case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
-        case AllocationType::EXTERNAL_HOST_PTR:
-        case AllocationType::MAP_ALLOCATION:
-        case AllocationType::SVM_GPU:
-        case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
-        case AllocationType::ASSERT_BUFFER:
-        case AllocationType::TAG_BUFFER:
+        case AllocationType::pipe:
+        case AllocationType::constantSurface:
+        case AllocationType::globalSurface:
+        case AllocationType::kernelIsa:
+        case AllocationType::kernelIsaInternal:
+        case AllocationType::privateSurface:
+        case AllocationType::scratchSurface:
+        case AllocationType::workPartitionSurface:
+        case AllocationType::buffer:
+        case AllocationType::bufferHostMemory:
+        case AllocationType::image:
+        case AllocationType::timestampPacketTagBuffer:
+        case AllocationType::externalHostPtr:
+        case AllocationType::mapAllocation:
+        case AllocationType::svmGpu:
+        case AllocationType::gpuTimestampDeviceBuffer:
+        case AllocationType::assertBuffer:
+        case AllocationType::tagBuffer:
             return true;
         default:
             return false;

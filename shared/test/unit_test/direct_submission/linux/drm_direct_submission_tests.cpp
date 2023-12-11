@@ -969,7 +969,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     LinearStream stream;
 
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
 
     stream.replaceGraphicsAllocation(commandBuffer);
@@ -1027,7 +1027,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     LinearStream stream;
 
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
 
     stream.replaceGraphicsAllocation(commandBuffer);

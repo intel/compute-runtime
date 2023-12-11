@@ -1261,7 +1261,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(), true,
              debugSurfaceSize,
-             NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+             NEO::AllocationType::debugContextSaveArea,
              false,
              false,
              device->getNEODevice()->getDeviceBitfield()});
@@ -1465,7 +1465,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
     }
 
     allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {getRootDeviceIndex(), false, size, NEO::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
+        {getRootDeviceIndex(), false, size, NEO::AllocationType::bufferHostMemory, false, neoDevice->getDeviceBitfield()},
         buffer);
 
     if (allocation == nullptr) {
@@ -1485,7 +1485,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
 
 NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) {
     NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size,
-                                            NEO::AllocationType::EXTERNAL_HOST_PTR,
+                                            NEO::AllocationType::externalHostPtr,
                                             false, neoDevice->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties,

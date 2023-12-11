@@ -101,7 +101,7 @@ DG2TEST_F(GfxCoreHelperTests, givenAllocationTypeInternalHeapWhenSetExtraAllocat
 
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
 
-    const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::INTERNAL_HEAP, singleTileBitfield);
+    const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::internalHeap, singleTileBitfield);
 
     AllocationData allocData;
     allocData.flags.useSystemMemory = false;

@@ -19,7 +19,7 @@ TEST(PrintfHandler, whenPrintfBufferIscreatedThenCorrectAllocationTypeIsUsed) {
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto allocation = PrintfHandler::createPrintfBuffer(&l0Device);
-    EXPECT_EQ(NEO::AllocationType::PRINTF_SURFACE, allocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::printfSurface, allocation->getAllocationType());
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 

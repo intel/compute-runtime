@@ -241,7 +241,7 @@ Image *Image::create(Context *context,
         }
 
         if (parentBuffer == nullptr) {
-            allocationInfo.memory->setAllocationType(AllocationType::IMAGE);
+            allocationInfo.memory->setAllocationType(AllocationType::image);
         }
 
         if (parentImage) {
@@ -1195,7 +1195,7 @@ void Image::setAllocationInfoFromHostPtr(CreateMemObj::AllocationInfo &allocatio
 
             AllocationProperties properties{rootDeviceIndex,
                                             false, // allocateMemory
-                                            hostPtrMinSize, AllocationType::MAP_ALLOCATION,
+                                            hostPtrMinSize, AllocationType::mapAllocation,
                                             false, // isMultiStorageAllocation
                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
             properties.flags.flushL3RequiredForRead = true;

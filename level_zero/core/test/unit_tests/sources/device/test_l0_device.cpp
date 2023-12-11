@@ -684,7 +684,7 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateManagedMemoryFromHostPtr
     int data;
     auto allocation = device->allocateManagedMemoryFromHostPtr(&data, sizeof(data), nullptr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(NEO::AllocationType::BUFFER_HOST_MEMORY, allocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::bufferHostMemory, allocation->getAllocationType());
     EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
@@ -698,7 +698,7 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
 
     auto allocation = device->allocateMemoryFromHostPtr(data.get(), allocationSize, false);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(NEO::AllocationType::EXTERNAL_HOST_PTR, allocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::externalHostPtr, allocation->getAllocationType());
     EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
 
     auto alignedPtr = alignDown(data.get(), MemoryConstants::pageSize);
@@ -720,11 +720,11 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListWhenRequestingAllocationSmallerOr
 
     auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
                                                                                                            allocationSize,
-                                                                                                           NEO::AllocationType::FILL_PATTERN,
+                                                                                                           NEO::AllocationType::fillPattern,
                                                                                                            neoDevice->getDeviceBitfield()});
     device->storeReusableAllocation(*allocation);
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
-    auto obtaindedAllocation = device->obtainReusableAllocation(dataSize, NEO::AllocationType::FILL_PATTERN);
+    auto obtaindedAllocation = device->obtainReusableAllocation(dataSize, NEO::AllocationType::fillPattern);
     EXPECT_TRUE(deviceImp->allocationsForReuse->peekIsEmpty());
     EXPECT_NE(nullptr, obtaindedAllocation);
     EXPECT_EQ(allocation, obtaindedAllocation);
@@ -740,11 +740,11 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListWhenRequestingAllocationBiggerInS
 
     auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
                                                                                                            allocationSize,
-                                                                                                           NEO::AllocationType::FILL_PATTERN,
+                                                                                                           NEO::AllocationType::fillPattern,
                                                                                                            neoDevice->getDeviceBitfield()});
     device->storeReusableAllocation(*allocation);
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
-    auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::AllocationType::FILL_PATTERN);
+    auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::AllocationType::fillPattern);
     EXPECT_EQ(nullptr, obtaindedAllocation);
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
@@ -758,11 +758,11 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListAndUnproperAllocationTypeWhenRequ
 
     auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
                                                                                                            allocationSize,
-                                                                                                           NEO::AllocationType::BUFFER,
+                                                                                                           NEO::AllocationType::buffer,
                                                                                                            neoDevice->getDeviceBitfield()});
     device->storeReusableAllocation(*allocation);
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
-    auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::AllocationType::FILL_PATTERN);
+    auto obtaindedAllocation = device->obtainReusableAllocation(4 * dataSize + 1u, NEO::AllocationType::fillPattern);
     EXPECT_EQ(nullptr, obtaindedAllocation);
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
@@ -808,7 +808,7 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocati
 
     auto allocation = device->allocateMemoryFromHostPtr(buffer, size, true);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(NEO::AllocationType::INTERNAL_HOST_MEMORY, allocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::internalHostMemory, allocation->getAllocationType());
     EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
     EXPECT_NE(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(buffer));
     EXPECT_EQ(allocation->getUnderlyingBufferSize(), size);

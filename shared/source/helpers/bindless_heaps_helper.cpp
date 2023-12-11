@@ -55,7 +55,7 @@ BindlessHeapsHelper::~BindlessHeapsHelper() {
 }
 
 GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow) {
-    auto allocationType = AllocationType::LINEAR_STREAM;
+    auto allocationType = AllocationType::linearStream;
     NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, deviceBitfield};
     properties.flags.use32BitFrontWindow = allocInFrontWindow;
     properties.alignment = alignment;

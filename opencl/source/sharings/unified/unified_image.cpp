@@ -31,7 +31,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
-    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, &imgInfo, AllocationType::SHARED_IMAGE);
+    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, &imgInfo, AllocationType::sharedImage);
     if (!graphicsAllocation) {
         errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;

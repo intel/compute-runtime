@@ -34,7 +34,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
          maxDbgSurfaceSize,
-         NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+         NEO::AllocationType::debugContextSaveArea,
          false,
          false,
          device->getNEODevice()->getDeviceBitfield()});
@@ -93,7 +93,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
          maxDbgSurfaceSize,
-         NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+         NEO::AllocationType::debugContextSaveArea,
          false,
          false,
          device->getNEODevice()->getDeviceBitfield()});

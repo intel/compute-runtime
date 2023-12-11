@@ -913,8 +913,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory =
-        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
-        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+        (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
+        (dstAllocationType == NEO::AllocationType::externalHostPtr);
     ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                    event, numWaitEvents, phWaitEvents, launchParams, relaxedOrderingDispatch);
     addToMappedEventList(event);
@@ -1193,9 +1193,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     auto dstAllocationType = dstPtrAlloc->getAllocationType();
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory =
-        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
-        (dstAllocationType == NEO::AllocationType::SVM_CPU) ||
-        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+        (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
+        (dstAllocationType == NEO::AllocationType::svmCpu) ||
+        (dstAllocationType == NEO::AllocationType::externalHostPtr);
 
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinKernel, dispatchKernelArgs, signalEvent, launchParams);
 }
@@ -1720,8 +1720,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory =
-        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
-        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+        (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
+        (dstAllocationType == NEO::AllocationType::externalHostPtr);
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, signalEvent, numWaitEvents,
                                                                     phWaitEvents, launchParams, relaxedOrderingDispatch);
 }
@@ -1787,8 +1787,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory =
-        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
-        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+        (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
+        (dstAllocationType == NEO::AllocationType::externalHostPtr);
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(),
                                                                     dispatchKernelArgs, signalEvent,
                                                                     numWaitEvents,
@@ -1978,11 +1978,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
 
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
-        auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::FILL_PATTERN);
+        auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::fillPattern);
         if (patternGfxAlloc == nullptr) {
             NEO::AllocationProperties allocationProperties{device->getNEODevice()->getRootDeviceIndex(),
                                                            patternAllocationSize,
-                                                           NEO::AllocationType::FILL_PATTERN,
+                                                           NEO::AllocationType::fillPattern,
                                                            device->getNEODevice()->getDeviceBitfield()};
             allocationProperties.alignment = MemoryConstants::pageSize;
             patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
@@ -2254,7 +2254,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
                 return {0u, 0, nullptr, false};
             }
             alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
-            if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
+            if (alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) {
                 auto hostAllocCpuPtr = reinterpret_cast<uintptr_t>(alloc->getUnderlyingBuffer());
                 hostAllocCpuPtr = alignDown(hostAllocCpuPtr, NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment());
                 auto allignedPtrOffset = sourcePtr - hostAllocCpuPtr;
@@ -2301,7 +2301,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandListCoreFamily<gfxCoreFamily>::getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation) {
     uint64_t offset;
-    if (gpuAllocation.getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
+    if (gpuAllocation.getAllocationType() == NEO::AllocationType::externalHostPtr) {
         offset = castToUint64(ptr) - castToUint64(gpuAllocation.getUnderlyingBuffer()) + gpuAllocation.getAllocationOffset();
     } else {
         offset = castToUint64(ptr) - gpuAllocation.getGpuAddress();
@@ -2771,7 +2771,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     }
 
     size_t alignedSize = alignUp<size_t>(sizeof(EventData) * numEvents, MemoryConstants::pageSize64k);
-    NEO::AllocationType allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+    NEO::AllocationType allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
     auto devices = device->getNEODevice()->getDeviceBitfield();
     NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(),
                                                    true,
@@ -2840,8 +2840,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory =
-        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
-        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+        (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
+        (dstAllocationType == NEO::AllocationType::externalHostPtr);
     auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams, false);
     if (appendResult != ZE_RESULT_SUCCESS) {
@@ -3403,8 +3403,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto allocType = srcAllocationStruct.alloc->getAllocationType();
     bool isSystemMemoryUsed =
-        (allocType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
-        (allocType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+        (allocType == NEO::AllocationType::bufferHostMemory) ||
+        (allocType == NEO::AllocationType::externalHostPtr);
     if (isSystemMemoryUsed) {
         NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, rootDeviceEnvironment);
     }

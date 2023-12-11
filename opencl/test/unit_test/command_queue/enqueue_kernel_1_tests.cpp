@@ -810,7 +810,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     auto memoryManager = mockCsr->getMemoryManager();
     uint32_t hostPtr[10]{};
 
-    AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::EXTERNAL_HOST_PTR, false, device->getDeviceBitfield()};
+    AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::externalHostPtr, false, device->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     MockKernelWithInternals mockKernel(*device, context);
@@ -834,7 +834,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     auto memoryManager = mockCsr->getMemoryManager();
     uint32_t hostPtr[10]{};
 
-    AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::EXTERNAL_HOST_PTR, false, device->getDeviceBitfield()};
+    AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::externalHostPtr, false, device->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     MockKernelWithInternals mockKernel(*device, context);
@@ -859,7 +859,7 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
     auto memoryManager = mockCsr->getMemoryManager();
     uint32_t hostPtr[10]{};
 
-    AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::EXTERNAL_HOST_PTR, false, device->getDeviceBitfield()};
+    AllocationProperties properties{device->getRootDeviceIndex(), false, 1, AllocationType::externalHostPtr, false, device->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     MockKernelWithInternals mockKernel(*device, context);

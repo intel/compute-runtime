@@ -433,46 +433,46 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     std::array<std::pair<NEO::AllocationType, const char *>, 40> allocationTypeValues = {
-        {{AllocationType::BUFFER, "BUFFER"},
-         {AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
-         {AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
-         {AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
-         {AllocationType::EXTERNAL_HOST_PTR, "EXTERNAL_HOST_PTR"},
-         {AllocationType::FILL_PATTERN, "FILL_PATTERN"},
-         {AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
-         {AllocationType::IMAGE, "IMAGE"},
-         {AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
-         {AllocationType::INSTRUCTION_HEAP, "INSTRUCTION_HEAP"},
-         {AllocationType::INTERNAL_HEAP, "INTERNAL_HEAP"},
-         {AllocationType::INTERNAL_HOST_MEMORY, "INTERNAL_HOST_MEMORY"},
-         {AllocationType::KERNEL_ISA, "KERNEL_ISA"},
-         {AllocationType::KERNEL_ISA_INTERNAL, "KERNEL_ISA_INTERNAL"},
-         {AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
-         {AllocationType::MAP_ALLOCATION, "MAP_ALLOCATION"},
-         {AllocationType::MCS, "MCS"},
-         {AllocationType::PIPE, "PIPE"},
-         {AllocationType::PREEMPTION, "PREEMPTION"},
-         {AllocationType::PRINTF_SURFACE, "PRINTF_SURFACE"},
-         {AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
-         {AllocationType::PROFILING_TAG_BUFFER, "PROFILING_TAG_BUFFER"},
-         {AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
-         {AllocationType::WORK_PARTITION_SURFACE, "WORK_PARTITION_SURFACE"},
-         {AllocationType::SHARED_BUFFER, "SHARED_BUFFER"},
-         {AllocationType::SHARED_IMAGE, "SHARED_IMAGE"},
-         {AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
-         {AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
-         {AllocationType::SVM_CPU, "SVM_CPU"},
-         {AllocationType::SVM_GPU, "SVM_GPU"},
-         {AllocationType::SVM_ZERO_COPY, "SVM_ZERO_COPY"},
-         {AllocationType::TAG_BUFFER, "TAG_BUFFER"},
-         {AllocationType::GLOBAL_FENCE, "GLOBAL_FENCE"},
-         {AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
-         {AllocationType::UNKNOWN, "UNKNOWN"},
-         {AllocationType::WRITE_COMBINED, "WRITE_COMBINED"},
-         {AllocationType::DEBUG_CONTEXT_SAVE_AREA, "DEBUG_CONTEXT_SAVE_AREA"},
-         {AllocationType::DEBUG_SBA_TRACKING_BUFFER, "DEBUG_SBA_TRACKING_BUFFER"},
-         {AllocationType::DEBUG_MODULE_AREA, "DEBUG_MODULE_AREA"},
-         {AllocationType::SW_TAG_BUFFER, "SW_TAG_BUFFER"}}};
+        {{AllocationType::buffer, "BUFFER"},
+         {AllocationType::bufferHostMemory, "BUFFER_HOST_MEMORY"},
+         {AllocationType::commandBuffer, "COMMAND_BUFFER"},
+         {AllocationType::constantSurface, "CONSTANT_SURFACE"},
+         {AllocationType::externalHostPtr, "EXTERNAL_HOST_PTR"},
+         {AllocationType::fillPattern, "FILL_PATTERN"},
+         {AllocationType::globalSurface, "GLOBAL_SURFACE"},
+         {AllocationType::image, "IMAGE"},
+         {AllocationType::indirectObjectHeap, "INDIRECT_OBJECT_HEAP"},
+         {AllocationType::instructionHeap, "INSTRUCTION_HEAP"},
+         {AllocationType::internalHeap, "INTERNAL_HEAP"},
+         {AllocationType::internalHostMemory, "INTERNAL_HOST_MEMORY"},
+         {AllocationType::kernelIsa, "KERNEL_ISA"},
+         {AllocationType::kernelIsaInternal, "KERNEL_ISA_INTERNAL"},
+         {AllocationType::linearStream, "LINEAR_STREAM"},
+         {AllocationType::mapAllocation, "MAP_ALLOCATION"},
+         {AllocationType::mcs, "MCS"},
+         {AllocationType::pipe, "PIPE"},
+         {AllocationType::preemption, "PREEMPTION"},
+         {AllocationType::printfSurface, "PRINTF_SURFACE"},
+         {AllocationType::privateSurface, "PRIVATE_SURFACE"},
+         {AllocationType::profilingTagBuffer, "PROFILING_TAG_BUFFER"},
+         {AllocationType::scratchSurface, "SCRATCH_SURFACE"},
+         {AllocationType::workPartitionSurface, "WORK_PARTITION_SURFACE"},
+         {AllocationType::sharedBuffer, "SHARED_BUFFER"},
+         {AllocationType::sharedImage, "SHARED_IMAGE"},
+         {AllocationType::sharedResourceCopy, "SHARED_RESOURCE_COPY"},
+         {AllocationType::surfaceStateHeap, "SURFACE_STATE_HEAP"},
+         {AllocationType::svmCpu, "SVM_CPU"},
+         {AllocationType::svmGpu, "SVM_GPU"},
+         {AllocationType::svmZeroCopy, "SVM_ZERO_COPY"},
+         {AllocationType::tagBuffer, "TAG_BUFFER"},
+         {AllocationType::globalFence, "GLOBAL_FENCE"},
+         {AllocationType::timestampPacketTagBuffer, "TIMESTAMP_PACKET_TAG_BUFFER"},
+         {AllocationType::unknown, "UNKNOWN"},
+         {AllocationType::writeCombined, "WRITE_COMBINED"},
+         {AllocationType::debugContextSaveArea, "DEBUG_CONTEXT_SAVE_AREA"},
+         {AllocationType::debugSbaTrackingBuffer, "DEBUG_SBA_TRACKING_BUFFER"},
+         {AllocationType::debugModuleArea, "DEBUG_MODULE_AREA"},
+         {AllocationType::swTagBuffer, "SW_TAG_BUFFER"}}};
 
     for (const auto &[type, str] : allocationTypeValues) {
         GraphicsAllocation graphicsAllocation(0, type, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
@@ -499,9 +499,9 @@ TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenS
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
-    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         graphicsAllocation.setAllocationType(static_cast<AllocationType>(i));
 
         auto result = getAllocationTypeString(&graphicsAllocation);
@@ -517,7 +517,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     testing::internal::CaptureStdout();
     fileLogger.logAllocation(&graphicsAllocation);
@@ -535,7 +535,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
@@ -572,7 +572,7 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
          {MemoryPool::SystemCpuInaccessible, "SystemCpuInaccessible"}}};
 
     for (const auto &[pool, str] : memoryPoolValues) {
-        GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, pool, MemoryManager::maxOsContextCount, 0llu);
+        GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, pool, MemoryManager::maxOsContextCount, 0llu);
         auto result = getMemoryPoolString(&graphicsAllocation);
 
         EXPECT_STREQ(result, str);

@@ -633,7 +633,7 @@ TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProp
     ASSERT_NE(nullptr, image);
 
     auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    EXPECT_TRUE(allocation->getAllocationType() == AllocationType::IMAGE);
+    EXPECT_TRUE(allocation->getAllocationType() == AllocationType::image);
 
     auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
     EXPECT_EQ(isImageWritable, allocation->isMemObjectsAllocationWithWritableFlags());

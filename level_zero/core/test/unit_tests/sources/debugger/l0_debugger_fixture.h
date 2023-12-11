@@ -92,7 +92,7 @@ struct L0DebuggerHwFixture : public L0DebuggerFixture {
     }
 
     NEO::GraphicsAllocation *allocateIsaMemory(size_t size, bool internal) {
-        auto allocType = (internal ? NEO::AllocationType::KERNEL_ISA_INTERNAL : NEO::AllocationType::KERNEL_ISA);
+        auto allocType = (internal ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa);
         return neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({neoDevice->getRootDeviceIndex(), size, allocType, neoDevice->getDeviceBitfield()});
     }
 

@@ -22,13 +22,13 @@
 #include "gtest/gtest.h"
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateDebugSurfaceWithUnalignedSizeCalledThenNullptrReturned) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize + 101, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize + 101, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
     auto debugSurface = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
     EXPECT_EQ(nullptr, debugSurface);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateDebugSurfaceAndAlignedMallocFailedThenNullptrReturned) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
     memoryManager->alignedMallocShouldFail = true;
     auto debugSurface = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
     memoryManager->alignedMallocShouldFail = false;
@@ -37,7 +37,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateDebugSurfaceAndAlignedM
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurfaceAndAllocUserptrFailedThenNullptrReturned) {
     mock->ioctlRes = -1;
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
     auto debugSurface = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
     mock->ioctlRes = 0;
     EXPECT_EQ(1, mock->ioctlCnt.gemUserptr);
@@ -45,7 +45,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurf
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurfaceSuccessThenCorrectMultiHostAllocationReturned) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
     auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
 
     EXPECT_NE(nullptr, debugSurface);

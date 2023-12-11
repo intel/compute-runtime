@@ -36,7 +36,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
             batchBuffer.chainedBatchBuffer->setAubWritable(false, GraphicsAllocation::defaultBank);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
             auto alignedMainBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-            AllocationProperties flatBatchBufferProperties(rootDeviceIndex, alignedMainBatchBufferSize, AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
+            AllocationProperties flatBatchBufferProperties(rootDeviceIndex, alignedMainBatchBufferSize, AllocationType::internalHostMemory, deviceBitfield);
             flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
             flatBatchBuffer =
                 getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
@@ -114,7 +114,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        AllocationProperties flatBatchBufferProperties(rootDeviceIndex, static_cast<size_t>(flatBatchBufferSize), AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
+        AllocationProperties flatBatchBufferProperties(rootDeviceIndex, static_cast<size_t>(flatBatchBufferSize), AllocationType::internalHostMemory, deviceBitfield);
         flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
         flatBatchBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);

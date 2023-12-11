@@ -44,16 +44,16 @@ void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {
 
     auto wddmAllocation = static_cast<WddmAllocation *>(allocation);
     switch (wddmAllocation->getAllocationType()) {
-    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::debugContextSaveArea:
         dataType = SIP_CONTEXT_SAVE_AREA;
         break;
-    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::debugSbaTrackingBuffer:
         dataType = SBA_BUFFER_AREA;
         break;
-    case AllocationType::DEBUG_MODULE_AREA:
+    case AllocationType::debugModuleArea:
         dataType = MODULE_HEAP_DEBUG_AREA;
         break;
-    case AllocationType::KERNEL_ISA:
+    case AllocationType::kernelIsa:
         dataType = ISA;
     default:
         break;

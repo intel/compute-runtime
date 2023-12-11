@@ -317,7 +317,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -325,7 +325,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -345,7 +345,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -353,7 +353,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -372,7 +372,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPa
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -380,7 +380,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPa
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -400,7 +400,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledAndErrorOnMi
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -408,7 +408,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledAndErrorOnMi
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -428,7 +428,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -436,7 +436,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -455,7 +455,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -463,7 +463,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -482,7 +482,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -490,7 +490,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -510,7 +510,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -518,7 +518,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1102,7 +1102,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1110,7 +1110,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1151,7 +1151,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1159,7 +1159,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1199,7 +1199,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBli
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1207,7 +1207,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBli
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1253,7 +1253,7 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
     Vec3<size_t> srcSize = {0, 0, 0};
     Vec3<size_t> dstSize = {0, 0, 0};
     NEO::MockGraphicsAllocation mockAllocationPtr = {0,
-                                                     AllocationType::INTERNAL_HOST_MEMORY,
+                                                     AllocationType::internalHostMemory,
                                                      reinterpret_cast<void *>(0x1234),
                                                      1,
                                                      0u,
@@ -1332,7 +1332,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,
@@ -1341,7 +1341,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
                                                   canonizedGpuAddress);
     void *srcPtr = reinterpret_cast<void *>(mockAllocationSrc.getGpuAddress());
     NEO::MockGraphicsAllocation mockAllocationDst(0,
-                                                  AllocationType::INTERNAL_HOST_MEMORY,
+                                                  AllocationType::internalHostMemory,
                                                   ptr,
                                                   size,
                                                   0u,

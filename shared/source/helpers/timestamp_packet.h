@@ -30,7 +30,7 @@ template <typename TSize, uint32_t packetCount>
 class TimestampPackets : public TagTypeBase {
   public:
     static constexpr AllocationType getAllocationType() {
-        return AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+        return AllocationType::timestampPacketTagBuffer;
     }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::timestampPacket; }

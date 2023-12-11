@@ -24,7 +24,7 @@ class HwTimeStamps : public TagTypeBase {
     }
 
     static constexpr AllocationType getAllocationType() {
-        return AllocationType::PROFILING_TAG_BUFFER;
+        return AllocationType::profilingTagBuffer;
     }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::hwTimeStamps; }

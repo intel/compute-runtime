@@ -352,9 +352,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     bool stateBaseAddressDirty = false;
 
     void *surfaceHeap = alignedMalloc(0x1000, 0x1000);
-    NEO::GraphicsAllocation heap1(1u, NEO::AllocationType::BUFFER, surfaceHeap, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
-    NEO::GraphicsAllocation heap2(1u, NEO::AllocationType::BUFFER, surfaceHeap, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
-    NEO::GraphicsAllocation heap3(1u, NEO::AllocationType::BUFFER, surfaceHeap, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+    NEO::GraphicsAllocation heap1(1u, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+    NEO::GraphicsAllocation heap2(1u, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+    NEO::GraphicsAllocation heap3(1u, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
     HeapContainer container;
 
     container.push_back(&heap1);
@@ -393,7 +393,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
                                                                                                                          *pDevice->executionEnvironment,
                                                                                                                          *commandStreamReceiver->getInternalAllocationStorage());
 
-    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::BUFFER, nullptr, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
 
     bool cfeStateDirty = false;
 
@@ -431,7 +431,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
                                                                                                                          *pDevice->executionEnvironment,
                                                                                                                          *commandStreamReceiver->getInternalAllocationStorage());
 
-    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::BUFFER, nullptr, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
+    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::System4KBPages, 0u);
 
     void *surfaceHeap = alignedMalloc(0x1000, 0x1000);
 

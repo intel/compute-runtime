@@ -46,7 +46,7 @@ void DebuggerL0::initialize() {
     auto &engines = device->getMemoryManager()->getRegisteredEngines(device->getRootDeviceIndex());
 
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
-                                         NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                         NEO::AllocationType::debugSbaTrackingBuffer,
                                          false,
                                          device->getDeviceBitfield()};
 
@@ -79,7 +79,7 @@ void DebuggerL0::initialize() {
         auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
 
         NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize64k,
-                                             NEO::AllocationType::DEBUG_MODULE_AREA,
+                                             NEO::AllocationType::debugModuleArea,
                                              false,
                                              device->getDeviceBitfield()};
         moduleDebugArea = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);

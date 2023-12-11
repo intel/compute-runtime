@@ -361,7 +361,7 @@ Buffer *Buffer::create(Context *context,
         }
 
         if (useHostPtr) {
-            if (allocationInfo.allocationType == AllocationType::BUFFER_HOST_MEMORY) {
+            if (allocationInfo.allocationType == AllocationType::bufferHostMemory) {
                 if (allocationInfo.alignementSatisfied) {
                     allocationInfo.zeroCopyAllowed = true;
                     allocationInfo.allocateMemory = false;
@@ -382,7 +382,7 @@ Buffer *Buffer::create(Context *context,
                 if (svmData) {
                     if ((svmData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) && memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
                         allocationInfo.memory = nullptr;
-                        allocationInfo.allocationType = AllocationType::BUFFER;
+                        allocationInfo.allocationType = AllocationType::buffer;
                         allocationInfo.isHostPtrSVM = false;
                         allocationInfo.zeroCopyAllowed = false;
                         allocationInfo.copyMemoryFromHostPtr = true;
@@ -392,7 +392,7 @@ Buffer *Buffer::create(Context *context,
                         allocationInfo.memory = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
                         allocationInfo.allocationType = allocationInfo.memory->getAllocationType();
                         allocationInfo.isHostPtrSVM = true;
-                        allocationInfo.zeroCopyAllowed = allocationInfo.memory->getAllocationType() == AllocationType::SVM_ZERO_COPY;
+                        allocationInfo.zeroCopyAllowed = allocationInfo.memory->getAllocationType() == AllocationType::svmZeroCopy;
                         allocationInfo.copyMemoryFromHostPtr = false;
                         allocationInfo.allocateMemory = false;
                         allocationInfo.mapAllocation = svmData->cpuAllocation;
@@ -446,7 +446,7 @@ Buffer *Buffer::create(Context *context,
 
         // if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
         if (useHostPtr && !allocationInfo.memory && Buffer::isReadOnlyMemoryPermittedByFlags(memoryProperties)) {
-            allocationInfo.allocationType = AllocationType::BUFFER_HOST_MEMORY;
+            allocationInfo.allocationType = AllocationType::bufferHostMemory;
             allocationInfo.zeroCopyAllowed = false;
             allocationInfo.copyMemoryFromHostPtr = true;
             AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
@@ -470,8 +470,8 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo.copyMemoryFromHostPtr = true;
                 }
             }
-        } else if (allocationInfo.allocationType == AllocationType::BUFFER && !compressionEnabled) {
-            allocationInfo.allocationType = AllocationType::BUFFER_HOST_MEMORY;
+        } else if (allocationInfo.allocationType == AllocationType::buffer && !compressionEnabled) {
+            allocationInfo.allocationType = AllocationType::bufferHostMemory;
         }
 
         allocationInfo.memory->setAllocationType(allocationInfo.allocationType);
@@ -522,7 +522,7 @@ Buffer *Buffer::create(Context *context,
             if (!allocationInfo.zeroCopyAllowed && !allocationInfo.isHostPtrSVM) {
                 AllocationProperties properties{rootDeviceIndex,
                                                 false, // allocateMemory
-                                                size, AllocationType::MAP_ALLOCATION,
+                                                size, AllocationType::mapAllocation,
                                                 false, // isMultiStorageAllocation
                                                 context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
                 properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
@@ -638,15 +638,15 @@ AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const M
                                                                          bool &compressionEnabled, bool isLocalMemoryEnabled) {
     if (properties.flags.forceHostMemory) {
         compressionEnabled = false;
-        return AllocationType::BUFFER_HOST_MEMORY;
+        return AllocationType::bufferHostMemory;
     }
 
     if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
         compressionEnabled = false;
-        return AllocationType::BUFFER_HOST_MEMORY;
+        return AllocationType::bufferHostMemory;
     }
 
-    return AllocationType::BUFFER;
+    return AllocationType::buffer;
 }
 
 bool Buffer::isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties) {

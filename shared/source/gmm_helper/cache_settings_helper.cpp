@@ -19,7 +19,7 @@ namespace NEO {
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper) {
     if (debugManager.flags.ForceUncachedGmmUsageType.get()) {
-        UNRECOVERABLE_IF(allocationType == AllocationType::UNKNOWN);
+        UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & debugManager.flags.ForceUncachedGmmUsageType.get()) {
             forceUncached = true;
         }
@@ -49,40 +49,40 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper) {
 
     switch (allocationType) {
-    case AllocationType::IMAGE:
+    case AllocationType::image:
         return GMM_RESOURCE_USAGE_OCL_IMAGE;
-    case AllocationType::INTERNAL_HEAP:
-    case AllocationType::LINEAR_STREAM:
+    case AllocationType::internalHeap:
+    case AllocationType::linearStream:
         if (debugManager.flags.DisableCachingForHeaps.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
-    case AllocationType::CONSTANT_SURFACE:
+    case AllocationType::constantSurface:
         if (debugManager.flags.ForceL1Caching.get() == 0) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
-    case AllocationType::BUFFER:
-    case AllocationType::SHARED_BUFFER:
-    case AllocationType::SVM_GPU:
-    case AllocationType::UNIFIED_SHARED_MEMORY:
-    case AllocationType::EXTERNAL_HOST_PTR:
+    case AllocationType::buffer:
+    case AllocationType::sharedBuffer:
+    case AllocationType::svmGpu:
+    case AllocationType::unifiedSharedMemory:
+    case AllocationType::externalHostPtr:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
-    case AllocationType::BUFFER_HOST_MEMORY:
-    case AllocationType::INTERNAL_HOST_MEMORY:
-    case AllocationType::MAP_ALLOCATION:
-    case AllocationType::FILL_PATTERN:
-    case AllocationType::SVM_CPU:
-    case AllocationType::SVM_ZERO_COPY:
+    case AllocationType::bufferHostMemory:
+    case AllocationType::internalHostMemory:
+    case AllocationType::mapAllocation:
+    case AllocationType::fillPattern:
+    case AllocationType::svmCpu:
+    case AllocationType::svmZeroCopy:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
-    case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case AllocationType::gpuTimestampDeviceBuffer:
+    case AllocationType::timestampPacketTagBuffer:
         if (productHelper.isDcFlushAllowed()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
@@ -94,10 +94,10 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType) {
     switch (allocationType) {
-    case AllocationType::PREEMPTION:
+    case AllocationType::preemption:
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
-    case AllocationType::INTERNAL_HEAP:
-    case AllocationType::LINEAR_STREAM:
+    case AllocationType::internalHeap:
+    case AllocationType::linearStream:
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     default:
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;

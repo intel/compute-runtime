@@ -276,9 +276,9 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
 
     // Make two allocations, since CSR will try to reuse it also
     auto rootDeviceIndex = pDevice->getRootDeviceIndex();
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     MockExperimentalCommandBuffer *mockExCmdBuffer = static_cast<MockExperimentalCommandBuffer *>(commandStreamReceiver.experimentalCmdBuffer.get());

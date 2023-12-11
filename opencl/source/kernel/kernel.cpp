@@ -364,7 +364,7 @@ cl_int Kernel::patchPrivateSurface() {
             privateSurface = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
                 {rootDeviceIndex,
                  static_cast<size_t>(privateSurfaceSize),
-                 AllocationType::PRIVATE_SURFACE,
+                 AllocationType::privateSurface,
                  pClDevice->getDeviceBitfield()});
             if (privateSurface == nullptr) {
                 return CL_OUT_OF_RESOURCES;
@@ -1986,7 +1986,7 @@ bool Kernel::hasDirectStatelessAccessToSharedBuffer() const {
         const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
         if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto buffer = castToObject<Buffer>(getKernelArg(i));
-            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == AllocationType::SHARED_BUFFER) {
+            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == AllocationType::sharedBuffer) {
                 return true;
             }
         }
@@ -1999,13 +1999,13 @@ bool Kernel::hasDirectStatelessAccessToHostMemory() const {
         const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[i];
         if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto buffer = castToObject<Buffer>(getKernelArg(i));
-            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == AllocationType::BUFFER_HOST_MEMORY) {
+            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == AllocationType::bufferHostMemory) {
                 return true;
             }
         }
         if (SVM_ALLOC_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto svmAlloc = reinterpret_cast<const GraphicsAllocation *>(getKernelArg(i));
-            if (svmAlloc && svmAlloc->getAllocationType() == AllocationType::BUFFER_HOST_MEMORY) {
+            if (svmAlloc && svmAlloc->getAllocationType() == AllocationType::bufferHostMemory) {
                 return true;
             }
         }
@@ -2019,7 +2019,7 @@ bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
     }
 
     for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
-        if (gfxAllocation->getAllocationType() == AllocationType::BUFFER_HOST_MEMORY) {
+        if (gfxAllocation->getAllocationType() == AllocationType::bufferHostMemory) {
             return true;
         }
     }
@@ -2270,10 +2270,10 @@ int Kernel::setKernelThreadArbitrationPolicy(uint32_t policy) {
 }
 
 bool Kernel::graphicsAllocationTypeUseSystemMemory(AllocationType type) {
-    return (type == AllocationType::BUFFER_HOST_MEMORY) ||
-           (type == AllocationType::EXTERNAL_HOST_PTR) ||
-           (type == AllocationType::SVM_CPU) ||
-           (type == AllocationType::SVM_ZERO_COPY);
+    return (type == AllocationType::bufferHostMemory) ||
+           (type == AllocationType::externalHostPtr) ||
+           (type == AllocationType::svmCpu) ||
+           (type == AllocationType::svmZeroCopy);
 }
 
 void Kernel::initializeLocalIdsCache() {

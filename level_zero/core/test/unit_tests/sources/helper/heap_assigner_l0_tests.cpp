@@ -25,17 +25,17 @@ using Platforms = IsAtMostProduct<IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUse32BitIsFalse, Platforms) {
     HeapAssigner heapAssigner{false};
-    EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::LINEAR_STREAM));
+    EXPECT_FALSE(heapAssigner.use32BitHeap(AllocationType::linearStream));
 }
 
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUse32BitIsTrue, Platforms) {
     HeapAssigner heapAssigner{true};
-    EXPECT_TRUE(heapAssigner.use32BitHeap(AllocationType::LINEAR_STREAM));
+    EXPECT_TRUE(heapAssigner.use32BitHeap(AllocationType::linearStream));
 }
 
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThenUseHeapExternal, Platforms) {
     HeapAssigner heapAssigner{true};
-    auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::LINEAR_STREAM, true, *defaultHwInfo.get(), false);
+    auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::linearStream, true, *defaultHwInfo.get(), false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
 }
 
@@ -43,7 +43,7 @@ TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUse
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     std::unique_ptr<MemoryManagerMock> mockMemoryManager(new MemoryManagerMock(*device->getNEODevice()->getExecutionEnvironment()));
-    GraphicsAllocation allocation{0, AllocationType::LINEAR_STREAM, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::linearStream, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
 
     allocation.set32BitAllocation(false);
     EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), mockMemoryManager->selectHeap(&allocation, false, false, false));

@@ -44,7 +44,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
 
-        const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
+        const auto allocType = AllocationType::kernelIsaInternal;
 
         AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
         properties.flags.use32BitFrontWindow = false;
@@ -84,7 +84,7 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
         auto binary = std::make_unique<uint32_t[]>(binarySize);
         memcpy_s(binary.get(), binarySize * sizeof(uint32_t), bindlessSip.getBinary().data(), bindlessSip.getBinary().size());
 
-        const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
+        const auto allocType = AllocationType::kernelIsaInternal;
 
         AllocationProperties properties = {device.getRootDeviceIndex(), bindlessSip.getBinary().size(), allocType, device.getDeviceBitfield()};
         properties.flags.use32BitFrontWindow = false;

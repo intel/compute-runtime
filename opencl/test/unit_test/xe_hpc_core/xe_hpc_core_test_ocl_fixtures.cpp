@@ -40,15 +40,15 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpeci
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());
     }
     EXPECT_EQ(singleTileMask, heapAllocation->storageInfo.memoryBanks);
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
@@ -69,15 +69,15 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecif
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());
     }
     EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }

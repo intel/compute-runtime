@@ -41,7 +41,7 @@ CommandContainer::~CommandContainer() {
         }
     }
     for (auto deallocation : deallocationContainer) {
-        if (((deallocation->getAllocationType() == AllocationType::INTERNAL_HEAP) || (deallocation->getAllocationType() == AllocationType::LINEAR_STREAM))) {
+        if (((deallocation->getAllocationType() == AllocationType::internalHeap) || (deallocation->getAllocationType() == AllocationType::linearStream))) {
             getHeapHelper()->storeHeapAllocation(deallocation);
         }
     }
@@ -317,7 +317,7 @@ GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation(bool for
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
         size_t alignedSize = getAlignedCmdBufferSize();
-        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::COMMAND_BUFFER).release();
+        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::commandBuffer).release();
     }
     if (!cmdBufferAllocation) {
         cmdBufferAllocation = this->allocateCommandBuffer(forceHostMemory);
@@ -453,9 +453,9 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory) {
     forceHostMemory &= this->useSecondaryCommandStream;
     size_t alignedSize = getAlignedCmdBufferSize();
-    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
     if (!cmdBufferAllocation) {
-        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::commandBuffer).release();
     }
 
     if (cmdBufferAllocation) {
@@ -487,7 +487,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory
     AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     alignedSize,
-                                    AllocationType::COMMAND_BUFFER,
+                                    AllocationType::commandBuffer,
                                     (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                     false,
                                     device->getDeviceBitfield()};
@@ -554,7 +554,7 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
     auto osContextId = this->immediateCmdListCsr->getOsContext().getContextId();
     allocation->updateTaskCount(taskCount, osContextId);
     allocation->updateResidencyTaskCount(taskCount, osContextId);
-    if (allocation->getAllocationType() == AllocationType::COMMAND_BUFFER) {
+    if (allocation->getAllocationType() == AllocationType::commandBuffer) {
         this->immediateReusableAllocationList->pushTailOne(*allocation);
     } else {
         getHeapHelper()->storeHeapAllocation(allocation);

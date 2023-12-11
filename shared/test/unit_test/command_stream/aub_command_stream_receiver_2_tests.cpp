@@ -280,7 +280,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     constexpr uint64_t initGpuAddress = 1234;
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
-    allocation.setAllocationType(AllocationType::BUFFER);
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -318,7 +318,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     constexpr uint64_t initGpuAddress = 1234;
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
-    allocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    allocation.setAllocationType(AllocationType::bufferHostMemory);
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -615,7 +615,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */,
-                                         &imgInfo, AllocationType::IMAGE, deviceBitfield};
+                                         &imgInfo, AllocationType::image, deviceBitfield};
 
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
@@ -1052,7 +1052,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenTimestampBufferAllocationWhenAubWri
     ASSERT_NE(nullptr, memoryManager);
 
     size_t alignedSize = MemoryConstants::pageSize64k;
-    AllocationType allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+    AllocationType allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
 
     AllocationProperties allocationProperties{pDevice->getRootDeviceIndex(),
                                               true,

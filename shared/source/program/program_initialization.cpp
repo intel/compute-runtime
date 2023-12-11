@@ -29,7 +29,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     if (linkerInput != nullptr) {
         globalsAreExported = constant ? linkerInput->getTraits().exportsGlobalConstants : linkerInput->getTraits().exportsGlobalVariables;
     }
-    const auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
+    const auto allocationType = constant ? AllocationType::constantSurface : AllocationType::globalSurface;
     if (globalsAreExported && (svmAllocManager != nullptr)) {
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.pushUnique(rootDeviceIndex);

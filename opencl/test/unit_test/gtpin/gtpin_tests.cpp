@@ -2123,7 +2123,7 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
     mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 128, ih3);
 
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 128, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 128, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
@@ -2229,11 +2229,11 @@ TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuffe
 
     auto cpuAllocation = allocData->cpuAllocation;
     ASSERT_NE(nullptr, cpuAllocation);
-    EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, cpuAllocation->getAllocationType());
+    EXPECT_NE(AllocationType::unifiedSharedMemory, cpuAllocation->getAllocationType());
 
     auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAllocation);
-    EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, gpuAllocation->getAllocationType());
+    EXPECT_NE(AllocationType::unifiedSharedMemory, gpuAllocation->getAllocationType());
 
     uint8_t *address = nullptr;
     status = gtpinMapBuffer(gtPinContext, resource, &address);
@@ -2270,7 +2270,7 @@ TEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuffe
 
     auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAllocation);
-    EXPECT_NE(AllocationType::UNIFIED_SHARED_MEMORY, gpuAllocation->getAllocationType());
+    EXPECT_NE(AllocationType::unifiedSharedMemory, gpuAllocation->getAllocationType());
 
     uint8_t *address = nullptr;
     status = gtpinMapBuffer(gtPinContext, resource, &address);

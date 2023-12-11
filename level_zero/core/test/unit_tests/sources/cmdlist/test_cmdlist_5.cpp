@@ -90,7 +90,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
                 containsDstPtr = true;
             }
             if (residentGfxAlloc->getAllocationType() ==
-                NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER) {
+                NEO::AllocationType::gpuTimestampDeviceBuffer) {
                 gpuTimeStampAlloc = true;
             }
         }

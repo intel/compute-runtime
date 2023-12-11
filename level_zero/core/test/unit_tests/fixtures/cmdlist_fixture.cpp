@@ -195,7 +195,7 @@ void CommandListPrivateHeapsFixture::setUp() {
 
     for (uint32_t i = 0; i < storeAllocations; i++) {
         auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MemoryConstants::megaByte,
-                                                                                                   NEO::AllocationType::LINEAR_STREAM, false, false,
+                                                                                                   NEO::AllocationType::linearStream, false, false,
                                                                                                    neoDevice->getDeviceBitfield()});
         commandListImmediate->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
     }
@@ -247,7 +247,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
     for (uint32_t i = 0; i < storeAllocations; i++) {
         auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MemoryConstants::megaByte,
-                                                                                                   NEO::AllocationType::LINEAR_STREAM, false, false,
+                                                                                                   NEO::AllocationType::linearStream, false, false,
                                                                                                    neoDevice->getDeviceBitfield()});
         commandListImmediate->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
     }

@@ -48,7 +48,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperwhenAskingForDc
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequested) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::commandBuffer, false, mockDeviceBitfield);
 
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -76,9 +76,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());
     }
     auto &productHelper = clDevice->getProductHelper();
     if (productHelper.isTilePlacementResourceWaRequired(*hwInfo)) {
@@ -87,7 +87,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
@@ -644,7 +644,7 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDefaultProductHelperHwWhenGet
     auto &productHelper = getHelper<ProductHelper>();
     MockGraphicsAllocation allocation;
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
-    allocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    allocation.setAllocationType(AllocationType::bufferHostMemory);
     EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(pDevice->getRootDeviceEnvironment(), allocation));
 }
 
@@ -752,7 +752,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
     constexpr DeviceBitfield tile0Mask = 1;
     constexpr DeviceBitfield allTilesMask = 0b1111;
 
-    const AllocationProperties allocProperties(0, 1, AllocationType::UNKNOWN, allTilesMask);
+    const AllocationProperties allocProperties(0, 1, AllocationType::unknown, allTilesMask);
 
     for (int32_t debugFlag : {-1, 0, 1}) {
         debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.set(debugFlag);
@@ -789,8 +789,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationWhenS
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
     constexpr DeviceBitfield allTilesBitfield = 0b1111;
 
-    const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::COMMAND_BUFFER, singleTileBitfield);
-    const AllocationProperties allTilesAllocProperties(0, 1, AllocationType::COMMAND_BUFFER, allTilesBitfield);
+    const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::commandBuffer, singleTileBitfield);
+    const AllocationProperties allTilesAllocProperties(0, 1, AllocationType::commandBuffer, allTilesBitfield);
 
     AllocationData allocData;
     allocData.flags.useSystemMemory = false;

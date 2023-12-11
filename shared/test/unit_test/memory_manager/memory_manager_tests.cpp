@@ -69,7 +69,7 @@ TEST(MemoryManagerTest, WhenCallingSetAtomicAccessWithOsAgnosticThenNoChanges) {
 
 TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {
     MockMemoryManager memoryManager;
-    for (auto i = 0; i < static_cast<int>(AllocationType::COUNT); i++) {
+    for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
         AllocationProperties allocationProperties{0u, 0u, static_cast<AllocationType>(i), {}};
         EXPECT_EQ(GfxMemoryAllocationMethod::NotDefined, memoryManager.getPreferredAllocationMethod(allocationProperties));
     }
@@ -78,10 +78,10 @@ TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsRetu
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 
-    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::SCRATCH_SURFACE));
-    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::PRIVATE_SURFACE));
-    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::LINEAR_STREAM));
-    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::INTERNAL_HEAP));
+    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::scratchSurface));
+    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::privateSurface));
+    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::linearStream));
+    EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::internalHeap));
 }
 
 TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemoryCopyToAllocationReturnsFalse) {
@@ -169,14 +169,14 @@ TEST(MemoryManagerTest, givenMultipleDevicesMemoryManagerWhenGettingDefaultConte
 }
 
 TEST(MemoryManagerTest, givenFailureOnRegisterSystemMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {
-    AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::buffer, false, mockDeviceBitfield);
     MockMemoryManager memoryManager;
     memoryManager.registerSysMemAllocResult = MemoryManager::AllocationStatus::Error;
     EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
 }
 
 TEST(MemoryManagerTest, givenFailureOnRegisterLocalMemoryAllocationWhenAllocatingMemoryThenNullptrIsReturned) {
-    AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, MemoryConstants::cacheLineSize, AllocationType::buffer, false, mockDeviceBitfield);
     MockMemoryManager memoryManager(true, true);
     memoryManager.registerLocalMemAllocResult = MemoryManager::AllocationStatus::Error;
     EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
@@ -322,7 +322,7 @@ TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSha
     AllocationProperties properties = {mockRootDeviceIndex,
                                        true,
                                        MemoryConstants::pageSize,
-                                       AllocationType::BUFFER,
+                                       AllocationType::buffer,
                                        false,
                                        mockDeviceBitfield};
     bool requireSpecificBitness{};
@@ -339,7 +339,7 @@ TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromSharedHandl
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
-    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::sharedBuffer, false, mockDeviceBitfield);
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_EQ(reinterpret_cast<void *>(1u), sharedAllocation->getUnderlyingBuffer());
@@ -359,7 +359,7 @@ TEST(OsAgnosticMemoryManager, whenCallingCreateGraphicsAllocationFromSharedHandl
     osHandle handle = 1;
     auto size = 4096u;
     uint64_t basePointer = 0x1234;
-    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::sharedBuffer, false, mockDeviceBitfield);
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, reinterpret_cast<void *>(basePointer));
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_EQ(reinterpret_cast<void *>(0x1234), sharedAllocation->getUnderlyingBuffer());
@@ -401,7 +401,7 @@ TEST(MemoryManagerTest, givenLocalMemoryRequiredWhenSelectingHeapThenPickDeviceH
 }
 
 TEST(MemoryManagerTest, whenCreatingAllocPropertiesForMultiStorageResourceThenMultiStorageResourcesFlagIsSetToTrue) {
-    AllocationProperties properties{0, false, 0u, AllocationType::SCRATCH_SURFACE, false, true, 0};
+    AllocationProperties properties{0, false, 0u, AllocationType::scratchSurface, false, true, 0};
     EXPECT_TRUE(properties.multiStorageResource);
 }
 
@@ -451,7 +451,7 @@ TEST(GraphicsAllocationTest, GivenNonSharedResourceHandleWhenAllocationIsCreated
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(cpuPtr));
     osHandle sharedHandle = Sharing::nonSharedResource;
-    GraphicsAllocation gfxAllocation(0, AllocationType::UNKNOWN, cpuPtr, size, sharedHandle, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
+    GraphicsAllocation gfxAllocation(0, AllocationType::unknown, cpuPtr, size, sharedHandle, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
     uint64_t expectedGpuAddr = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(gfxAllocation.getUnderlyingBuffer()));
 
     EXPECT_EQ(expectedGpuAddr, gfxAllocation.getGpuAddress());
@@ -465,7 +465,7 @@ TEST(GraphicsAllocationTest, WhenGettingAddressesThenAddressesAreCorrect) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(0, AllocationType::UNKNOWN, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, 0u);
+    GraphicsAllocation gfxAllocation(0, AllocationType::unknown, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, 0u);
 
     EXPECT_EQ(gpuAddr, gfxAllocation.getGpuAddress());
 
@@ -486,7 +486,7 @@ TEST(GraphicsAllocationTest, WhenGettingGpuAddressToPatchThenOffsetIsCorrect) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(0, AllocationType::UNKNOWN, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, 0u);
+    GraphicsAllocation gfxAllocation(0, AllocationType::unknown, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, 0u);
 
     EXPECT_EQ(gpuAddr - gpuBaseAddr, gfxAllocation.getGpuAddressToPatch());
 }
@@ -497,7 +497,7 @@ TEST(GraphicsAllocationTest, WhenSetSizeThenUnderlyingBufferSizeIsSet) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x2000;
 
-    GraphicsAllocation gfxAllocation(0, AllocationType::UNKNOWN, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, 0u);
+    GraphicsAllocation gfxAllocation(0, AllocationType::unknown, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, 0u);
     EXPECT_EQ(size, gfxAllocation.getUnderlyingBufferSize());
 
     size = 0x3000;
@@ -779,7 +779,7 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32bitGraphicsAllocationIsReturned) {
     size_t size = 10;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, nullptr, AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, nullptr, AllocationType::buffer);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -789,8 +789,8 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32b
 
 TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAllocationThenNullptrIsReturned) {
     size_t size = 0xfffff000;
-    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), 0x5000, nullptr, AllocationType::BUFFER);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, nullptr, AllocationType::BUFFER);
+    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), 0x5000, nullptr, AllocationType::buffer);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, nullptr, AllocationType::buffer);
     EXPECT_EQ(nullptr, allocation);
     memoryManager->freeGraphicsMemory(allocationFirst);
 }
@@ -798,8 +798,8 @@ TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAlloc
 TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAllocationWithHostPtrThenNullptrIsReturned) {
     size_t size = 0xfffff000;
     void *ptr = (void *)0x10000;
-    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), 0x5000, nullptr, AllocationType::BUFFER);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, ptr, AllocationType::BUFFER);
+    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), 0x5000, nullptr, AllocationType::buffer);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, ptr, AllocationType::buffer);
     EXPECT_EQ(nullptr, allocation);
     memoryManager->freeGraphicsMemory(allocationFirst);
 }
@@ -807,7 +807,7 @@ TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAlloc
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationWithPtrThen32bitGraphicsAllocationWithGpuAddressIsReturned) {
     size_t size = 10;
     void *ptr = (void *)0x1000;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, ptr, AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(device->getRootDeviceIndex(), size, ptr, AllocationType::buffer);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -822,7 +822,7 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationWithPtr
 TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsMemoryThenDoNotCallHandleFenceCompletion) {
     auto size = 3u * MemoryConstants::pageSize;
     auto *ptr = reinterpret_cast<void *>(0xbeef1);
-    AllocationProperties properties{device->getRootDeviceIndex(), false, size, AllocationType::BUFFER, false, device->getDeviceBitfield()};
+    AllocationProperties properties{device->getRootDeviceIndex(), false, size, AllocationType::buffer, false, device->getDeviceBitfield()};
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
     EXPECT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
@@ -834,7 +834,7 @@ TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsM
 
 TEST_F(MemoryAllocatorTest, GivenShareableEnabledAndDisabledWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
     AllocationData allocationData;
-    allocationData.type = AllocationType::BUFFER;
+    allocationData.type = AllocationType::buffer;
 
     allocationData.flags.shareable = 1u;
     auto shareableAllocation = memoryManager->allocateGraphicsMemory(allocationData);
@@ -849,7 +849,7 @@ TEST_F(MemoryAllocatorTest, GivenShareableEnabledAndDisabledWhenAskedToCreateGra
 }
 
 TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphicsMemoryThenCallHandleFenceCompletion) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::BUFFER, device->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, device->getDeviceBitfield()});
     EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
 
     EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
@@ -875,7 +875,7 @@ HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAlignmentWhenAllocateGraphicsMem
     auto osAgnosticMemoryManager = std::make_unique<MemoryManagerCreate<MockMemoryManager>>(true, false, *executionEnvironment);
     osAgnosticMemoryManager->failInDevicePool = true;
 
-    MockAllocationProperties properties(mockRootDeviceIndex, true, size, AllocationType::BUFFER, mockDeviceBitfield);
+    MockAllocationProperties properties(mockRootDeviceIndex, true, size, AllocationType::buffer, mockDeviceBitfield);
     properties.flags.preferCompressed = true;
 
     auto allocationWithEnabled1MbAlignment = osAgnosticMemoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
@@ -1004,19 +1004,19 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenIsLimitedGPUOnTypeIsCalledTh
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MyOsAgnosticMemoryManager memoryManager(executionEnvironment);
     memoryManager.is32bit = false;
-    EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::BUFFER));
-    EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::IMAGE));
-    EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::MAP_ALLOCATION));
+    EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::buffer));
+    EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::image));
+    EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::mapAllocation));
 
     memoryManager.is32bit = true;
     if (executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->isFullRangeSvm()) {
-        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::BUFFER));
-        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::IMAGE));
-        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::MAP_ALLOCATION));
+        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::buffer));
+        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::image));
+        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::mapAllocation));
     } else {
-        EXPECT_TRUE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::BUFFER));
-        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::IMAGE));
-        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::MAP_ALLOCATION));
+        EXPECT_TRUE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::buffer));
+        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::image));
+        EXPECT_FALSE(memoryManager.isLimitedGPUOnType(mockRootDeviceIndex, AllocationType::mapAllocation));
     }
 }
 
@@ -1031,7 +1031,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedFor32BitAllocationWhenL
     memoryManager.forceLimitedRangeAllocator(0, 0xFFFFFFFFF);
 
     AllocationData allocationData;
-    memoryManager.getAllocationData(allocationData, {mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::BUFFER, mockDeviceBitfield}, nullptr, StorageInfo{});
+    memoryManager.getAllocationData(allocationData, {mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield}, nullptr, StorageInfo{});
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(gfxAllocation, nullptr);
     EXPECT_NE(gfxAllocation->getGpuBaseAddress(), 0ull);
@@ -1049,7 +1049,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedForNon32BitAllocationWh
     memoryManager.forceLimitedRangeAllocator(0, 0xFFFFFFFFF);
 
     AllocationData allocationData;
-    memoryManager.getAllocationData(allocationData, {mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::BUFFER, mockDeviceBitfield}, nullptr, StorageInfo{});
+    memoryManager.getAllocationData(allocationData, {mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield}, nullptr, StorageInfo{});
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(gfxAllocation, nullptr);
     EXPECT_EQ(gfxAllocation->getGpuBaseAddress(), 0ull);
@@ -1240,7 +1240,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager.allocate32BitGraphicsMemory(mockRootDeviceIndex, size, ptr, AllocationType::BUFFER);
+    auto allocation = memoryManager.allocate32BitGraphicsMemory(mockRootDeviceIndex, size, ptr, AllocationType::buffer);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
@@ -1254,7 +1254,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     void *ptr = nullptr;
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager.allocate32BitGraphicsMemory(mockRootDeviceIndex, size, ptr, AllocationType::BUFFER);
+    auto allocation = memoryManager.allocate32BitGraphicsMemory(mockRootDeviceIndex, size, ptr, AllocationType::buffer);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
@@ -1268,7 +1268,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     if (memoryManager.isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmZeroCopy, mockDeviceBitfield});
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(svmAllocation);
@@ -1281,7 +1281,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocat
     if (memoryManager.isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmZeroCopy, mockDeviceBitfield});
     EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(svmAllocation);
 }
@@ -1291,7 +1291,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
-    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::sharedBuffer, false, mockDeviceBitfield);
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_FALSE(sharedAllocation->isCoherent());
@@ -1308,7 +1308,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     osHandle handle = 1;
     auto size = 4096u;
     void *mapPointer = reinterpret_cast<void *>(0x1234);
-    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::sharedBuffer, false, mockDeviceBitfield);
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, mapPointer);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_FALSE(sharedAllocation->isCoherent());
@@ -1324,7 +1324,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
-    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::sharedBuffer, false, false, mockDeviceBitfield);
     EXPECT_EQ(properties.subDevicesBitfield, mockDeviceBitfield);
     EXPECT_EQ(properties.rootDeviceIndex, 0u);
 
@@ -1344,7 +1344,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
-    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, false, size, AllocationType::sharedBuffer, false, mockDeviceBitfield);
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, true, false, true, nullptr);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_TRUE(sharedAllocation->is32BitAllocation());
@@ -1359,7 +1359,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    auto graphicsAllocation = memoryManager.createGraphicsAllocationFromNTHandle((void *)1, 0, AllocationType::SHARED_IMAGE);
+    auto graphicsAllocation = memoryManager.createGraphicsAllocationFromNTHandle((void *)1, 0, AllocationType::sharedImage);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
@@ -1443,7 +1443,7 @@ TEST(OsAgnosticMemoryManager, givenDebugModuleAreaTypeWhenCreatingAllocationThen
     const auto size = MemoryConstants::pageSize64k;
 
     NEO::AllocationProperties properties{0, true, size,
-                                         NEO::AllocationType::DEBUG_MODULE_AREA,
+                                         NEO::AllocationType::debugModuleArea,
                                          false,
                                          mockDeviceBitfield};
 
@@ -1481,7 +1481,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     const auto size = MemoryConstants::pageSize64k;
 
     NEO::AllocationProperties properties{0, true, size,
-                                         NEO::AllocationType::DEBUG_MODULE_AREA,
+                                         NEO::AllocationType::debugModuleArea,
                                          false,
                                          mockDeviceBitfield};
 
@@ -1507,7 +1507,7 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocatingGraphicsMemor
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     AllocationData allocationData;
-    allocationData.type = AllocationType::KERNEL_ISA;
+    allocationData.type = AllocationType::kernelIsa;
     allocationData.flags.useSystemMemory = 1;
     allocationData.size = 4096;
 
@@ -1524,7 +1524,7 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocatingGraphicsMemor
 
 TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemoryWhenAllocatingGraphicsMemoryThenBaseAddressIsEqualToInternalHeapBaseAddress) {
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
+    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::kernelIsa) - 1));
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->featureTable.flags.ftrLocalMemory = true;
@@ -1532,7 +1532,7 @@ TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemory
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     size_t kernelIsaSize = 4096;
-    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({0, kernelIsaSize, AllocationType::KERNEL_ISA, 1});
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({0, kernelIsaSize, AllocationType::kernelIsa, 1});
     ASSERT_NE(nullptr, allocation);
 
     auto instructionHeapBaseAddress = memoryManager.getInternalHeapBaseAddress(0, false);
@@ -1640,11 +1640,11 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
         GTEST_SKIP();
     }
 
-    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
+    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::bufferHostMemory, mockDeviceBitfield});
     EXPECT_NE(nullptr, galloc);
     memoryManager.freeGraphicsMemory(galloc);
 
-    galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
+    galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::bufferHostMemory, mockDeviceBitfield});
     EXPECT_NE(nullptr, galloc);
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
     size_t size = (executionEnvironment.rootDeviceEnvironments[0u]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled) ? MemoryConstants::pageSize64k : MemoryConstants::pageSize;
@@ -1660,7 +1660,7 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
     MockMemoryManager memoryManager(false, false, executionEnvironment);
     auto ptr = (void *)0x100000;
     size_t allocationSize = 4096;
-    auto graphicsAllocation = memoryManager.allocate32BitGraphicsMemory(mockRootDeviceIndex, allocationSize, ptr, AllocationType::INTERNAL_HEAP);
+    auto graphicsAllocation = memoryManager.allocate32BitGraphicsMemory(mockRootDeviceIndex, allocationSize, ptr, AllocationType::internalHeap);
     EXPECT_EQ(ptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(allocationSize, graphicsAllocation->getUnderlyingBufferSize());
     memoryManager.freeGraphicsMemory(graphicsAllocation);
@@ -1690,7 +1690,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocat
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hostPtr = reinterpret_cast<const void *>(0x5001);
-    AllocationProperties properties{0, false, 13, AllocationType::EXTERNAL_HOST_PTR, false, mockDeviceBitfield};
+    AllocationProperties properties{0, false, 13, AllocationType::externalHostPtr, false, mockDeviceBitfield};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties, hostPtr);
     EXPECT_NE(nullptr, allocation);
@@ -1709,13 +1709,13 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenFullGpuAddressSpaceWhenAllocateGr
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hostPtr = reinterpret_cast<const void *>(0x5001);
-    AllocationProperties properties{0, false, 13, AllocationType::EXTERNAL_HOST_PTR, false, mockDeviceBitfield};
+    AllocationProperties properties{0, false, 13, AllocationType::externalHostPtr, false, mockDeviceBitfield};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties, hostPtr);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
     EXPECT_EQ(requiresL3Flush, allocation->isFlushL3Required());
-    EXPECT_EQ(AllocationType::EXTERNAL_HOST_PTR, allocation->getAllocationType());
+    EXPECT_EQ(AllocationType::externalHostPtr, allocation->getAllocationType());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -1736,7 +1736,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hostPtr = reinterpret_cast<const void *>(0x5001);
 
-    AllocationProperties properties{0, false, 13, AllocationType::EXTERNAL_HOST_PTR, false, mockDeviceBitfield};
+    AllocationProperties properties{0, false, 13, AllocationType::externalHostPtr, false, mockDeviceBitfield};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties, hostPtr);
     EXPECT_NE(nullptr, allocation);
@@ -1781,7 +1781,7 @@ TEST(OsAgnosticMemoryManager, givenFreeMemoryEnabledAndNonExternalHostPtrAllocat
 
     {
         MockAllocationProperties properties{0, MemoryConstants::pageSize};
-        properties.allocationType = AllocationType::EXTERNAL_HOST_PTR;
+        properties.allocationType = AllocationType::externalHostPtr;
 
         auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
         EXPECT_FALSE(mockManager->freeMemoryCalled);
@@ -1908,7 +1908,7 @@ TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAlloc
 
     AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
-    allocationData.type = AllocationType::SHARED_RESOURCE_COPY;
+    allocationData.type = AllocationType::sharedResourceCopy;
 
     auto imageAllocation = memoryManager.allocateGraphicsMemory(allocationData);
     EXPECT_NE(nullptr, imageAllocation);
@@ -1928,7 +1928,7 @@ TEST(MemoryManager, givenImageAndLimitedGPUWhenAllocatingGraphicsMemoryThenAlloc
 
     AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
-    allocationData.type = AllocationType::IMAGE;
+    allocationData.type = AllocationType::image;
 
     auto imageAllocation = memoryManager.allocateGraphicsMemory(allocationData);
     EXPECT_NE(nullptr, imageAllocation);
@@ -1944,7 +1944,7 @@ TEST(MemoryManager, givenBufferAndLimitedGPUWhenAllocatingGraphicsMemoryThenAllo
 
     AllocationData allocationData;
     allocationData.size = 4096u;
-    allocationData.type = AllocationType::BUFFER;
+    allocationData.type = AllocationType::buffer;
 
     auto bufferAllocation = memoryManager.allocateGraphicsMemory(allocationData);
     EXPECT_NE(nullptr, bufferAllocation);
@@ -1965,7 +1965,7 @@ TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledWhenAllocatin
     AllocationData allocationData{};
     allocationData.hostPtr = bufferData;
     allocationData.size = 4096u;
-    allocationData.type = AllocationType::BUFFER_HOST_MEMORY;
+    allocationData.type = AllocationType::bufferHostMemory;
 
     auto bufferAllocation = memoryManager.allocateGraphicsMemory(allocationData);
     EXPECT_NE(nullptr, bufferAllocation);
@@ -1989,7 +1989,7 @@ TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledAndForce32bit
     AllocationData allocationData{};
     allocationData.hostPtr = bufferData;
     allocationData.size = 4096u;
-    allocationData.type = AllocationType::BUFFER_HOST_MEMORY;
+    allocationData.type = AllocationType::bufferHostMemory;
 
     auto bufferAllocation = memoryManager.allocateGraphicsMemory(allocationData);
     EXPECT_NE(nullptr, bufferAllocation);
@@ -2003,7 +2003,7 @@ TEST(MemoryManager, givenShareableWhenAllocatingGraphicsMemoryThenAllocateSharea
 
     AllocationData allocationData;
     allocationData.size = 4096u;
-    allocationData.type = AllocationType::BUFFER;
+    allocationData.type = AllocationType::buffer;
     allocationData.flags.shareable = true;
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocationData);
@@ -2336,7 +2336,7 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
     MockExecutionEnvironment executionEnvironment{};
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(addressWithTrailingBitSet));
-    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, addressWithTrailingBitSet, 1u, sharedHandle, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, addressWithTrailingBitSet, 1u, sharedHandle, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
@@ -2483,19 +2483,19 @@ TEST(MemoryManagerTest, givenExecutionEnvironmentWithCleanedRootDeviceExecutions
 
 TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllocationDataThenFlushL3FlagIsCorrectlySet) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::UNKNOWN, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::unknown, mockDeviceBitfield);
     properties.flags.flushL3RequiredForRead = 1;
     properties.flags.flushL3RequiredForWrite = 1;
 
     AllocationType allocationTypesThatMayNeedL3Flush[] = {
-        AllocationType::BUFFER,
-        AllocationType::BUFFER_HOST_MEMORY, AllocationType::EXTERNAL_HOST_PTR,
-        AllocationType::GLOBAL_SURFACE, AllocationType::IMAGE,
-        AllocationType::PIPE, AllocationType::SHARED_IMAGE,
-        AllocationType::SHARED_BUFFER, AllocationType::SHARED_RESOURCE_COPY,
-        AllocationType::SVM_ZERO_COPY, AllocationType::SVM_GPU,
-        AllocationType::SVM_CPU, AllocationType::WRITE_COMBINED,
-        AllocationType::MAP_ALLOCATION};
+        AllocationType::buffer,
+        AllocationType::bufferHostMemory, AllocationType::externalHostPtr,
+        AllocationType::globalSurface, AllocationType::image,
+        AllocationType::pipe, AllocationType::sharedImage,
+        AllocationType::sharedBuffer, AllocationType::sharedResourceCopy,
+        AllocationType::svmZeroCopy, AllocationType::svmGpu,
+        AllocationType::svmCpu, AllocationType::writeCombined,
+        AllocationType::mapAllocation};
 
     MockMemoryManager mockMemoryManager;
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
@@ -2535,43 +2535,43 @@ class HeapSelectorTest : public ::Test<DeviceFixture> {
 };
 
 TEST_F(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::KERNEL_ISA, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::kernelIsa, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     allocation.set32BitAllocation(true);
     EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
 
-    GraphicsAllocation allocation2{0, AllocationType::KERNEL_ISA_INTERNAL, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation2{0, AllocationType::kernelIsaInternal, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     allocation2.set32BitAllocation(true);
     EXPECT_EQ(MemoryManager::selectInternalHeap(allocation2.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation2, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::KERNEL_ISA, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::kernelIsa, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     allocation.set32BitAllocation(false);
     EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
 
-    GraphicsAllocation allocation2{0, AllocationType::KERNEL_ISA_INTERNAL, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation2{0, AllocationType::kernelIsaInternal, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     allocation2.set32BitAllocation(false);
     EXPECT_EQ(MemoryManager::selectInternalHeap(allocation2.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation2, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     allocation.set32BitAllocation(true);
     EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenStandardHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(&allocation, true, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     EXPECT_EQ(HeapIndex::HEAP_SVM, memoryManager->selectHeap(&allocation, true, true, false));
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2584,7 +2584,7 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
-    GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2605,26 +2605,26 @@ TEST_F(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocat
 }
 
 TEST_F(HeapSelectorTest, givenDebugModuleAreaAllocationAndUseFrontWindowWhenSelectingHeapThenInternalFrontWindowHeapIsReturned) {
-    GraphicsAllocation allocation{0, AllocationType::DEBUG_MODULE_AREA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, 1};
+    GraphicsAllocation allocation{0, AllocationType::debugModuleArea, nullptr, 0, 0, 0, MemoryPool::MemoryNull, 1};
     allocation.set32BitAllocation(true);
     EXPECT_EQ(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW, memoryManager->selectHeap(&allocation, false, false, true));
 }
 
 TEST_F(HeapSelectorTest, givenDebugModuleAreaAllocationInLocalMemoryAndUseFrontWindowWhenSelectingHeapThenInternalDeviceFrontWindowHeapIsReturned) {
-    GraphicsAllocation allocation{0, AllocationType::DEBUG_MODULE_AREA, nullptr, 0, 0, 0, MemoryPool::LocalMemory, 1};
+    GraphicsAllocation allocation{0, AllocationType::debugModuleArea, nullptr, 0, 0, 0, MemoryPool::LocalMemory, 1};
     allocation.set32BitAllocation(true);
     EXPECT_TRUE(allocation.isAllocatedInLocalMemoryPool());
     EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW, memoryManager->selectHeap(&allocation, false, false, true));
 }
 
 TEST(MemoryAllocationTest, givenAllocationTypeWhenPassedToMemoryAllocationConstructorThenAllocationTypeIsStored) {
-    MemoryAllocation allocation{0, AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
+    MemoryAllocation allocation{0, AllocationType::commandBuffer, nullptr, nullptr, 0, 0, 0,
                                 MemoryPool::MemoryNull, false, false, MemoryManager::maxOsContextCount};
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, allocation.getAllocationType());
 }
 
 TEST(MemoryAllocationTest, givenMemoryPoolWhenPassedToMemoryAllocationConstructorThenMemoryPoolIsStored) {
-    MemoryAllocation allocation{0, AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
+    MemoryAllocation allocation{0, AllocationType::commandBuffer, nullptr, nullptr, 0, 0, 0,
                                 MemoryPool::System64KBPages, false, false, MemoryManager::maxOsContextCount};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 }
@@ -2755,19 +2755,19 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhen64BitAndHostPtrTrackingDisab
 
     bool expectedValue = !is32bit;
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::EXTERNAL_HOST_PTR, 0u);
+    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, 0u);
     EXPECT_EQ(expectedValue, result);
 
-    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::MAP_ALLOCATION, 0u);
+    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::mapAllocation, 0u);
     EXPECT_EQ(expectedValue, result);
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSvmHostPtrUsageIsSet) {
     memoryManager->setForceNonSvmForExternalHostPtr(true);
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::EXTERNAL_HOST_PTR, 0u);
+    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, 0u);
     EXPECT_EQ(true, result);
-    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::BUFFER_HOST_MEMORY, 0u);
+    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::bufferHostMemory, 0u);
     EXPECT_EQ(false, result);
 }
 
@@ -2776,8 +2776,8 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSv
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = true;
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
     int buffer = 0;
-    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::EXTERNAL_HOST_PTR, 0u));
-    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::BUFFER_HOST_MEMORY, 0u));
+    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::externalHostPtr, 0u));
+    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::bufferHostMemory, 0u));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingDisabledAnd64bitsThenNonSvmBufferIsSetForBufferHostMemory) {
@@ -2785,18 +2785,18 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingDisabledAnd64
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
     int buffer = 0;
-    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::EXTERNAL_HOST_PTR, 0u));
-    EXPECT_EQ(!is32bit, memoryManager->isNonSvmBuffer(&buffer, AllocationType::BUFFER_HOST_MEMORY, 0u));
+    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::externalHostPtr, 0u));
+    EXPECT_EQ(!is32bit, memoryManager->isNonSvmBuffer(&buffer, AllocationType::bufferHostMemory, 0u));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNonSvmHostPtrUsageDependsOnFullRangeSvm) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableHostPtrTracking.set(1);
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::EXTERNAL_HOST_PTR, 0u);
+    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, 0u);
     EXPECT_EQ(!executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit, result);
 
-    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::MAP_ALLOCATION, 0u);
+    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::mapAllocation, 0u);
     EXPECT_EQ(!executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit, result);
 }
 
@@ -2831,7 +2831,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
     memoryManager->getRegisteredEngines(1)[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
 
-    MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
@@ -2875,7 +2875,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
 
     memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
 
-    MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
@@ -2907,7 +2907,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
 
     memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(nullptr);
 
-    MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
@@ -2936,7 +2936,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenRetur
         engine.commandStreamReceiver->pageTableManager.reset(nullptr);
     }
 
-    MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     bool result = memoryManager->mapAuxGpuVA(&allocation);
     EXPECT_FALSE(result);
@@ -2952,7 +2952,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
 
     auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
-    MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     allocation.setDefaultGmm(&gmm);
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
@@ -2963,7 +2963,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
 
 TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocationDataThenUse32BitFrontWindowsIsSet) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::DEBUG_MODULE_AREA, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::debugModuleArea, mockDeviceBitfield);
 
     MockMemoryManager mockMemoryManager;
 
@@ -2973,7 +2973,7 @@ TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocati
 
 TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForSystemMemoryThenSetSystemMemoryFlag) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::bufferHostMemory, mockDeviceBitfield);
 
     EXPECT_NE(0lu, mockDeviceBitfield.to_ulong());
 
@@ -2988,7 +2988,7 @@ TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForSystemM
 
 TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForLocalMemoryThenClearSystemMemoryFlag) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::BUFFER, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
 
     EXPECT_NE(0lu, mockDeviceBitfield.to_ulong());
 
@@ -3009,7 +3009,7 @@ TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallback
         srcData[i] = i;
     }
     MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
-    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
@@ -3030,7 +3030,7 @@ TEST(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvaila
 
     MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
     graphicsAllocation.storageInfo.memoryBanks = 1;
-    graphicsAllocation.setAllocationType(AllocationType::BUFFER);
+    graphicsAllocation.setAllocationType(AllocationType::buffer);
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -3049,7 +3049,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphi
     executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, true, executionEnvironment);
 
-    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_GPU, systemMemoryBitfield};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, systemMemoryBitfield};
 
     auto localMemoryAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);
 
@@ -3078,7 +3078,7 @@ TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphics
     executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, true, executionEnvironment);
 
-    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_GPU, systemMemoryBitfield};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, systemMemoryBitfield};
 
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(mockRootDeviceIndex);

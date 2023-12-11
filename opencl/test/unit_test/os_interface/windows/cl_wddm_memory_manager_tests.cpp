@@ -512,7 +512,7 @@ TEST_F(PlatformWithFourDevicesTest, whenCreateColoredAllocationAndWddmReturnsCan
     platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrMultiTileArch = true;
 
     GraphicsAllocation *allocation = nullptr;
-    EXPECT_NO_THROW(allocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, 4 * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, mockDeviceBitfield}));
+    EXPECT_NO_THROW(allocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, 4 * MemoryConstants::pageSize64k, AllocationType::buffer, true, mockDeviceBitfield}));
     EXPECT_NE(nullptr, allocation);
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -533,7 +533,7 @@ TEST_F(PlatformWithFourDevicesTest, givenDifferentAllocationSizesWhenColourAlloc
 
     // We are allocating memory from 4 to 12 pages and want to check if remainders (1, 2 or 3 pages in case of 4 devices) are spread equally.
     for (int additionalSize = 0; additionalSize <= 8; additionalSize++) {
-        auto allocation = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, (4 + additionalSize) * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, 0b1111}));
+        auto allocation = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, (4 + additionalSize) * MemoryConstants::pageSize64k, AllocationType::buffer, true, 0b1111}));
         auto handles = allocation->getNumGmms();
 
         EXPECT_EQ(4u, handles);
@@ -572,7 +572,7 @@ TEST_F(PlatformWithFourDevicesTest, givenDifferentAllocationSizesWhenColourAlloc
 TEST_F(PlatformWithFourDevicesTest, whenCreateScratchSpaceInSingleTileQueueThenTheAllocationHasOneHandle) {
     MemoryManagerCreate<WddmMemoryManager> memoryManager(true, true, *platform()->peekExecutionEnvironment());
 
-    AllocationProperties properties{mockRootDeviceIndex, true, 1u, AllocationType::SCRATCH_SURFACE, false, false, mockDeviceBitfield};
+    AllocationProperties properties{mockRootDeviceIndex, true, 1u, AllocationType::scratchSurface, false, false, mockDeviceBitfield};
     auto allocation = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(properties));
     EXPECT_EQ(1u, allocation->getNumGmms());
     memoryManager.freeGraphicsMemory(allocation);

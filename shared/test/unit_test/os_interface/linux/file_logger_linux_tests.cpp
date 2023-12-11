@@ -27,7 +27,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::System64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
@@ -78,7 +78,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::System64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
@@ -128,7 +128,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::System64KBPages);
 
     fileLogger.logAllocation(&allocation);
 
@@ -159,7 +159,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::System64KBPages);
 
     fileLogger.logAllocation(&allocation);
 

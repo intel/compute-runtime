@@ -63,7 +63,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
             if (failAlloc) {
                 return nullptr;
             }
-            AllocationProperties properties(rootDeviceIndex, true, 0, AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
+            AllocationProperties properties(rootDeviceIndex, true, 0, AllocationType::internalHostMemory, false, false, 0);
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false, false, true, nullptr);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;

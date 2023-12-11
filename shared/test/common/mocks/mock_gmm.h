@@ -47,7 +47,7 @@ class MockGmm : public Gmm {
         imgDesc.imageWidth = 5;
         imgDesc.imageHeight = 5;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        return memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, &imgInfo, AllocationType::IMAGE, mockDeviceBitfield});
+        return memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, &imgInfo, AllocationType::image, mockDeviceBitfield});
     }
 };
 } // namespace NEO

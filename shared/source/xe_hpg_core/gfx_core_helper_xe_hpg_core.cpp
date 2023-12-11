@@ -142,13 +142,13 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
     if (LocalMemoryAccessMode::CpuAccessDisallowed == productHelper.getLocalMemoryAccessMode(hwInfo)) {
-        if (properties.allocationType == AllocationType::LINEAR_STREAM ||
-            properties.allocationType == AllocationType::INTERNAL_HEAP ||
-            properties.allocationType == AllocationType::PRINTF_SURFACE ||
-            properties.allocationType == AllocationType::ASSERT_BUFFER ||
-            properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
-            properties.allocationType == AllocationType::RING_BUFFER ||
-            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
+        if (properties.allocationType == AllocationType::linearStream ||
+            properties.allocationType == AllocationType::internalHeap ||
+            properties.allocationType == AllocationType::printfSurface ||
+            properties.allocationType == AllocationType::assertBuffer ||
+            properties.allocationType == AllocationType::gpuTimestampDeviceBuffer ||
+            properties.allocationType == AllocationType::ringBuffer ||
+            properties.allocationType == AllocationType::semaphoreBuffer) {
             allocationData.flags.useSystemMemory = true;
         }
         if (!allocationData.flags.useSystemMemory) {
@@ -156,24 +156,24 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
             allocationData.storageInfo.isLockable = false;
         }
     } else if (hwInfo.featureTable.flags.ftrLocalMemory &&
-               (properties.allocationType == AllocationType::COMMAND_BUFFER ||
-                properties.allocationType == AllocationType::RING_BUFFER ||
-                properties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
+               (properties.allocationType == AllocationType::commandBuffer ||
+                properties.allocationType == AllocationType::ringBuffer ||
+                properties.allocationType == AllocationType::semaphoreBuffer)) {
         allocationData.flags.useSystemMemory = false;
         allocationData.flags.requiresCpuAccess = true;
     }
 
     if (CompressionSelector::allowStatelessCompression()) {
-        if (properties.allocationType == AllocationType::GLOBAL_SURFACE ||
-            properties.allocationType == AllocationType::CONSTANT_SURFACE ||
-            properties.allocationType == AllocationType::PRINTF_SURFACE) {
+        if (properties.allocationType == AllocationType::globalSurface ||
+            properties.allocationType == AllocationType::constantSurface ||
+            properties.allocationType == AllocationType::printfSurface) {
             allocationData.flags.requiresCpuAccess = false;
             allocationData.storageInfo.isLockable = false;
         }
     }
 
     if (productHelper.isStorageInfoAdjustmentRequired()) {
-        if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
+        if (properties.allocationType == AllocationType::buffer && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }
     }

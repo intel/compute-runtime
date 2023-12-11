@@ -37,8 +37,8 @@ TEST_F(AppResourceTests, givenIncorrectGraphicsAllocationTypeWhenGettingResource
 }
 
 TEST_F(AppResourceTests, givenGraphicsAllocationTypeWhenGettingResourceTagThenForEveryDefinedTypeProperTagExist) {
-    auto firstTypeIdx = static_cast<int>(AllocationType::UNKNOWN);
-    auto lastTypeIdx = static_cast<int>(AllocationType::COUNT);
+    auto firstTypeIdx = static_cast<int>(AllocationType::unknown);
+    auto lastTypeIdx = static_cast<int>(AllocationType::count);
 
     for (int typeIdx = firstTypeIdx; typeIdx < lastTypeIdx; typeIdx++) {
         auto allocationType = static_cast<AllocationType>(typeIdx);
@@ -54,54 +54,54 @@ struct AllocationTypeTagTestCase {
     const char *str;
 };
 
-AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationType::COUNT)] = {
-    {AllocationType::BUFFER, "BUFFER"},
-    {AllocationType::BUFFER_HOST_MEMORY, "BFHSTMEM"},
-    {AllocationType::COMMAND_BUFFER, "CMNDBUFF"},
-    {AllocationType::CONSTANT_SURFACE, "CSNTSRFC"},
-    {AllocationType::EXTERNAL_HOST_PTR, "EXHSTPTR"},
-    {AllocationType::FILL_PATTERN, "FILPATRN"},
-    {AllocationType::GLOBAL_SURFACE, "GLBLSRFC"},
-    {AllocationType::IMAGE, "IMAGE"},
-    {AllocationType::INDIRECT_OBJECT_HEAP, "INOBHEAP"},
-    {AllocationType::INSTRUCTION_HEAP, "INSTHEAP"},
-    {AllocationType::INTERNAL_HEAP, "INTLHEAP"},
-    {AllocationType::INTERNAL_HOST_MEMORY, "INHSTMEM"},
-    {AllocationType::KERNEL_ARGS_BUFFER, "KARGBUF"},
-    {AllocationType::KERNEL_ISA, "KERNLISA"},
-    {AllocationType::KERNEL_ISA_INTERNAL, "KRLISAIN"},
-    {AllocationType::LINEAR_STREAM, "LINRSTRM"},
-    {AllocationType::MAP_ALLOCATION, "MAPALLOC"},
-    {AllocationType::MCS, "MCS"},
-    {AllocationType::PIPE, "PIPE"},
-    {AllocationType::PREEMPTION, "PRMPTION"},
-    {AllocationType::PRINTF_SURFACE, "PRNTSRFC"},
-    {AllocationType::PRIVATE_SURFACE, "PRVTSRFC"},
-    {AllocationType::PROFILING_TAG_BUFFER, "PROFTGBF"},
-    {AllocationType::SCRATCH_SURFACE, "SCRHSRFC"},
-    {AllocationType::WORK_PARTITION_SURFACE, "WRPRTSRF"},
-    {AllocationType::SHARED_BUFFER, "SHRDBUFF"},
-    {AllocationType::SHARED_IMAGE, "SHERDIMG"},
-    {AllocationType::SHARED_RESOURCE_COPY, "SRDRSCCP"},
-    {AllocationType::SURFACE_STATE_HEAP, "SRFCSTHP"},
-    {AllocationType::SVM_CPU, "SVM_CPU"},
-    {AllocationType::SVM_GPU, "SVM_GPU"},
-    {AllocationType::SVM_ZERO_COPY, "SVM0COPY"},
-    {AllocationType::TAG_BUFFER, "TAGBUFER"},
-    {AllocationType::GLOBAL_FENCE, "GLBLFENC"},
-    {AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TSPKTGBF"},
-    {AllocationType::UNKNOWN, "UNKNOWN"},
-    {AllocationType::WRITE_COMBINED, "WRTCMBND"},
-    {AllocationType::RING_BUFFER, "RINGBUFF"},
-    {AllocationType::SEMAPHORE_BUFFER, "SMPHRBUF"},
-    {AllocationType::DEBUG_CONTEXT_SAVE_AREA, "DBCXSVAR"},
-    {AllocationType::DEBUG_SBA_TRACKING_BUFFER, "DBSBATRB"},
-    {AllocationType::DEBUG_MODULE_AREA, "DBMDLARE"},
-    {AllocationType::UNIFIED_SHARED_MEMORY, "USHRDMEM"},
-    {AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, "GPUTSDBF"},
-    {AllocationType::SW_TAG_BUFFER, "SWTAGBF"},
-    {AllocationType::DEFERRED_TASKS_LIST, "TSKLIST"},
-    {AllocationType::ASSERT_BUFFER, "ASSRTBUF"}};
+AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationType::count)] = {
+    {AllocationType::buffer, "BUFFER"},
+    {AllocationType::bufferHostMemory, "BFHSTMEM"},
+    {AllocationType::commandBuffer, "CMNDBUFF"},
+    {AllocationType::constantSurface, "CSNTSRFC"},
+    {AllocationType::externalHostPtr, "EXHSTPTR"},
+    {AllocationType::fillPattern, "FILPATRN"},
+    {AllocationType::globalSurface, "GLBLSRFC"},
+    {AllocationType::image, "IMAGE"},
+    {AllocationType::indirectObjectHeap, "INOBHEAP"},
+    {AllocationType::instructionHeap, "INSTHEAP"},
+    {AllocationType::internalHeap, "INTLHEAP"},
+    {AllocationType::internalHostMemory, "INHSTMEM"},
+    {AllocationType::kernelArgsBuffer, "KARGBUF"},
+    {AllocationType::kernelIsa, "KERNLISA"},
+    {AllocationType::kernelIsaInternal, "KRLISAIN"},
+    {AllocationType::linearStream, "LINRSTRM"},
+    {AllocationType::mapAllocation, "MAPALLOC"},
+    {AllocationType::mcs, "MCS"},
+    {AllocationType::pipe, "PIPE"},
+    {AllocationType::preemption, "PRMPTION"},
+    {AllocationType::printfSurface, "PRNTSRFC"},
+    {AllocationType::privateSurface, "PRVTSRFC"},
+    {AllocationType::profilingTagBuffer, "PROFTGBF"},
+    {AllocationType::scratchSurface, "SCRHSRFC"},
+    {AllocationType::workPartitionSurface, "WRPRTSRF"},
+    {AllocationType::sharedBuffer, "SHRDBUFF"},
+    {AllocationType::sharedImage, "SHERDIMG"},
+    {AllocationType::sharedResourceCopy, "SRDRSCCP"},
+    {AllocationType::surfaceStateHeap, "SRFCSTHP"},
+    {AllocationType::svmCpu, "SVM_CPU"},
+    {AllocationType::svmGpu, "SVM_GPU"},
+    {AllocationType::svmZeroCopy, "SVM0COPY"},
+    {AllocationType::tagBuffer, "TAGBUFER"},
+    {AllocationType::globalFence, "GLBLFENC"},
+    {AllocationType::timestampPacketTagBuffer, "TSPKTGBF"},
+    {AllocationType::unknown, "UNKNOWN"},
+    {AllocationType::writeCombined, "WRTCMBND"},
+    {AllocationType::ringBuffer, "RINGBUFF"},
+    {AllocationType::semaphoreBuffer, "SMPHRBUF"},
+    {AllocationType::debugContextSaveArea, "DBCXSVAR"},
+    {AllocationType::debugSbaTrackingBuffer, "DBSBATRB"},
+    {AllocationType::debugModuleArea, "DBMDLARE"},
+    {AllocationType::unifiedSharedMemory, "USHRDMEM"},
+    {AllocationType::gpuTimestampDeviceBuffer, "GPUTSDBF"},
+    {AllocationType::swTagBuffer, "SWTAGBF"},
+    {AllocationType::deferredTasksList, "TSKLIST"},
+    {AllocationType::assertBuffer, "ASSRTBUF"}};
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {

@@ -1520,13 +1520,13 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenAllocatingResourcesThenCreate
 
     auto allocsIter = mockMemoryOperations->gfxAllocationsForMakeResident.rbegin();
 
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, directSubmission.relaxedOrderingSchedulerAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, directSubmission.relaxedOrderingSchedulerAllocation->getAllocationType());
     EXPECT_NE(nullptr, directSubmission.relaxedOrderingSchedulerAllocation);
     EXPECT_EQ(directSubmission.relaxedOrderingSchedulerAllocation, *allocsIter);
 
     allocsIter++;
 
-    EXPECT_EQ(AllocationType::DEFERRED_TASKS_LIST, directSubmission.deferredTasksListAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::deferredTasksList, directSubmission.deferredTasksListAllocation->getAllocationType());
     EXPECT_NE(nullptr, directSubmission.deferredTasksListAllocation);
     EXPECT_EQ(directSubmission.deferredTasksListAllocation, *allocsIter);
 }

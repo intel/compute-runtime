@@ -119,7 +119,7 @@ using UnifiedMemoryWithClMemCacheClosTests = BuffersWithClMemCacheClosTests;
 XE_HPC_CORETEST_F(UnifiedMemoryWithClMemCacheClosTests, givenDrmUnifiedSharedMemoryWhenItIsCreatedWithCacheClosSpecifiedInMemoryPropertiesThenSetCacheRegionInBufferObjects) {
     AllocationProperties gpuProperties{0u,
                                        MemoryConstants::pageSize64k,
-                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       AllocationType::unifiedSharedMemory,
                                        1u};
     gpuProperties.cacheRegion = 1;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
@@ -138,7 +138,7 @@ XE_HPC_CORETEST_F(UnifiedMemoryWithClMemCacheClosTests, givenDrmUnifiedSharedMem
 XE_HPC_CORETEST_F(UnifiedMemoryWithClMemCacheClosTests, givenDrmUnifiedSharedMemoryWhenItIsCreatedWithIncorrectCacheClosSpecifiedInMemoryPropertiesThenReturnNull) {
     AllocationProperties gpuProperties{0u,
                                        MemoryConstants::pageSize64k,
-                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       AllocationType::unifiedSharedMemory,
                                        1u};
     gpuProperties.cacheRegion = 0xFFFF;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);

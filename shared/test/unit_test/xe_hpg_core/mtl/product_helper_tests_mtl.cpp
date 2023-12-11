@@ -87,9 +87,9 @@ MTLTEST_F(MtlProductHelper, givenMtlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
 
 MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckOverrideAllocationCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
-    allocationData.type = AllocationType::COMMAND_BUFFER;
+    allocationData.type = AllocationType::commandBuffer;
     EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
 
-    allocationData.type = AllocationType::BUFFER;
+    allocationData.type = AllocationType::buffer;
     EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
 }

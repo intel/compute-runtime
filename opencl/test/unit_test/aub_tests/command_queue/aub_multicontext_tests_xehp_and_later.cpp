@@ -367,7 +367,7 @@ struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTiles
         const AllocationProperties commandStreamAllocationProperties{rootDevice->getRootDeviceIndex(),
                                                                      true,
                                                                      MemoryConstants::pageSize,
-                                                                     AllocationType::COMMAND_BUFFER,
+                                                                     AllocationType::commandBuffer,
                                                                      true,
                                                                      false,
                                                                      rootDevice->getDeviceBitfield()};

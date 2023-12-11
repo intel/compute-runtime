@@ -37,43 +37,43 @@ HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenI
     auto memoryManager = pDevice->getMemoryManager();
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    gfxAllocation->setAllocationType(AllocationType::BUFFER);
+    gfxAllocation->setAllocationType(AllocationType::buffer);
     EXPECT_FALSE(gfxAllocation->isMemObjectsAllocationWithWritableFlags());
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::BUFFER);
+    gfxAllocation->setAllocationType(AllocationType::buffer);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation->setAllocationType(AllocationType::bufferHostMemory);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation->setAllocationType(AllocationType::bufferHostMemory);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::EXTERNAL_HOST_PTR);
+    gfxAllocation->setAllocationType(AllocationType::externalHostPtr);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::EXTERNAL_HOST_PTR);
+    gfxAllocation->setAllocationType(AllocationType::externalHostPtr);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::MAP_ALLOCATION);
+    gfxAllocation->setAllocationType(AllocationType::mapAllocation);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::MAP_ALLOCATION);
+    gfxAllocation->setAllocationType(AllocationType::mapAllocation);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::IMAGE);
+    gfxAllocation->setAllocationType(AllocationType::image);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableImage(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::IMAGE);
+    gfxAllocation->setAllocationType(AllocationType::image);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableImage(*gfxAllocation));
 
@@ -120,7 +120,7 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndD
     debugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::BUFFER, pDevice->getDeviceBitfield()});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, pDevice->getDeviceBitfield()});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);

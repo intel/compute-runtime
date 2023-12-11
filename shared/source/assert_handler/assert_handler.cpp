@@ -16,7 +16,7 @@
 namespace NEO {
 AssertHandler::AssertHandler(Device *device) : device(device) {
     auto rootDeviceIndex = device->getRootDeviceIndex();
-    assertBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, assertBufferSize, AllocationType::ASSERT_BUFFER, device->getDeviceBitfield()});
+    assertBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, assertBufferSize, AllocationType::assertBuffer, device->getDeviceBitfield()});
 
     AssertBufferHeader initialHeader = {};
     initialHeader.size = assertBufferSize;

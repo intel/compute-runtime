@@ -33,7 +33,7 @@ struct MiMath : public AUBFixture, public ::testing::Test {
     void SetUp() override {
         AUBFixture::setUp(defaultHwInfo.get());
 
-        streamAllocation = this->device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()});
+        streamAllocation = this->device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::commandBuffer, device->getDeviceBitfield()});
         taskStream = std::make_unique<LinearStream>(streamAllocation);
     }
     void TearDown() override {

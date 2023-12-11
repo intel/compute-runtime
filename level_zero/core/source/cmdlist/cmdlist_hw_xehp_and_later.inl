@@ -208,7 +208,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             if (allocation == nullptr) {
                 continue;
             }
-            if (allocation->getAllocationType() == NEO::AllocationType::BUFFER_HOST_MEMORY) {
+            if (allocation->getAllocationType() == NEO::AllocationType::bufferHostMemory) {
                 isKernelUsingSystemAllocation = true;
             }
         }

@@ -94,7 +94,7 @@ bool ProductHelperHw<gfxProduct>::isPlatformDp4aSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
-    return allocationData.type == AllocationType::COMMAND_BUFFER;
+    return allocationData.type == AllocationType::commandBuffer;
 }
 
 template <>

@@ -64,7 +64,7 @@ Pipe *Pipe::create(Context *context,
         AllocationProperties allocProperties =
             MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                             true, // allocateMemory
-                                                            size, AllocationType::PIPE,
+                                                            size, AllocationType::pipe,
                                                             false, // isMultiStorageAllocation
                                                             context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation(rootDeviceIndex),
                                                             context->isSingleDeviceContext());

@@ -429,7 +429,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        true,
                                        alignedSize,
-                                       AllocationType::UNIFIED_SHARED_MEMORY,
+                                       AllocationType::unifiedSharedMemory,
                                        false,
                                        false,
                                        deviceBitfield};
@@ -551,7 +551,7 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
     if (svmData->cpuAllocation && pageFaultManager) {
         pageFaultManager->removeAllocation(svmData->cpuAllocation->getUnderlyingBuffer());
     }
-    if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
+    if (svmData->gpuAllocations.getAllocationType() == AllocationType::svmZeroCopy) {
         freeZeroCopySvmAllocation(svmData);
     } else {
         freeSvmAllocationWithDeviceStorage(svmData);
@@ -586,7 +586,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
     AllocationProperties properties{rootDeviceIndex,
                                     true, // allocateMemory
                                     size,
-                                    AllocationType::SVM_ZERO_COPY,
+                                    AllocationType::svmZeroCopy,
                                     false, // isMultiStorageAllocation
                                     deviceBitfield};
     MemoryPropertiesHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false, properties.cacheRegion);
@@ -622,7 +622,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     auto cpuAlignment = std::max(pageSizeForAlignment, memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment());
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        !useExternalHostPtrForCpu, // allocateMemory
-                                       alignUp(alignedSize, cpuAlignment), AllocationType::SVM_CPU,
+                                       alignUp(alignedSize, cpuAlignment), AllocationType::svmCpu,
                                        false, // isMultiStorageAllocation
                                        subDevices};
     cpuProperties.alignment = cpuAlignment;
@@ -653,7 +653,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
                                        alignedSize,
-                                       AllocationType::SVM_GPU,
+                                       AllocationType::svmGpu,
                                        false,
                                        multiStorageAllocation,
                                        subDevices};
@@ -796,19 +796,19 @@ void SVMAllocsManager::removeSvmMapOperation(const void *regionSvmPtr) {
 AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreference(const UnifiedMemoryProperties &unifiedMemoryProperties, bool &compressionEnabled) const {
     compressionEnabled = false;
 
-    AllocationType allocationType = AllocationType::BUFFER_HOST_MEMORY;
+    AllocationType allocationType = AllocationType::bufferHostMemory;
     if (unifiedMemoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
         if (unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
-            allocationType = AllocationType::WRITE_COMBINED;
+            allocationType = AllocationType::writeCombined;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
             if (CompressionSelector::allowStatelessCompression()) {
                 compressionEnabled = true;
             }
-            if (unifiedMemoryProperties.requestedAllocationType != AllocationType::UNKNOWN) {
+            if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {
                 allocationType = unifiedMemoryProperties.requestedAllocationType;
             } else {
-                allocationType = AllocationType::BUFFER;
+                allocationType = AllocationType::buffer;
             }
         }
     }

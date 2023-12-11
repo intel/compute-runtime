@@ -41,7 +41,7 @@ class MockMM : public OsAgnosticMemoryManager {
     }
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), *allocationData.imgInfo, StorageInfo{}, false);
-        AllocationProperties properties(allocationData.rootDeviceIndex, false, nullptr, AllocationType::SHARED_IMAGE, DeviceBitfield{});
+        AllocationProperties properties(allocationData.rootDeviceIndex, false, nullptr, AllocationType::sharedImage, DeviceBitfield{});
         auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false, false, true, nullptr);
         alloc->setDefaultGmm(forceGmm);
         gmmOwnershipPassed = true;
@@ -256,7 +256,7 @@ TEST_F(D3D9Tests, givenD3DHandleWhenCreatingSharedSurfaceThenAllocationTypeImage
     ASSERT_NE(nullptr, sharedImg.get());
     auto graphicsAllocation = sharedImg->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, graphicsAllocation);
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, graphicsAllocation->getAllocationType());
 
     EXPECT_EQ(1u, mockSharingFcns->getTexture2dDescCalled);
 }

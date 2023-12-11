@@ -111,10 +111,10 @@ TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrat
 
     EXPECT_LE(3u, wddm->registerAllocationTypeCalled); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
     uint32_t registerAllocationTypeCalled = wddm->registerAllocationTypeCalled;
-    for (auto allocationType : {AllocationType::DEBUG_CONTEXT_SAVE_AREA,
-                                AllocationType::DEBUG_SBA_TRACKING_BUFFER,
-                                AllocationType::DEBUG_MODULE_AREA,
-                                AllocationType::KERNEL_ISA}) {
+    for (auto allocationType : {AllocationType::debugContextSaveArea,
+                                AllocationType::debugSbaTrackingBuffer,
+                                AllocationType::debugModuleArea,
+                                AllocationType::kernelIsa}) {
         auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize, allocationType}));
         EXPECT_EQ(++registerAllocationTypeCalled, wddm->registerAllocationTypeCalled);
 
@@ -132,7 +132,7 @@ TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrat
 
     EXPECT_LE(3u, wddm->registerAllocationTypeCalled); // At least 1xSBA + 1xMODULE_DEBUG + 1xSTATE_SAVE_AREA during DebuggerL0 init
     uint32_t registerAllocationTypeCalled = wddm->registerAllocationTypeCalled;
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize, AllocationType::BUFFER}));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize, AllocationType::buffer}));
     EXPECT_EQ(registerAllocationTypeCalled, wddm->registerAllocationTypeCalled);
     memoryManager->freeGraphicsMemory(wddmAlloc);
 }

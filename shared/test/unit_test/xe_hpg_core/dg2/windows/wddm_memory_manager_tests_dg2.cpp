@@ -39,11 +39,11 @@ DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValu
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
 
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::LINEAR_STREAM, mockDeviceBitfield});
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::linearStream, mockDeviceBitfield});
 
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::LINEAR_STREAM);
+    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::linearStream);
     auto gpuAddress = graphicsAllocation->getGpuAddress();
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
@@ -73,11 +73,11 @@ DG2TEST_F(Dg2WddmTest, givenG10B0WhenGettingLocalMemoryAccessModeThenCorrectValu
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G10DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::LINEAR_STREAM, mockDeviceBitfield});
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::linearStream, mockDeviceBitfield});
 
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::LINEAR_STREAM);
+    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::linearStream);
     auto gpuAddress = graphicsAllocation->getGpuAddress();
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
@@ -112,11 +112,11 @@ DG2TEST_F(Dg2WddmTest, givenG11WhenGettingLocalMemoryAccessModeThenCorrectValueI
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G11DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::LINEAR_STREAM, mockDeviceBitfield});
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::linearStream, mockDeviceBitfield});
 
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::LINEAR_STREAM);
+    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::linearStream);
     auto gpuAddress = graphicsAllocation->getGpuAddress();
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
@@ -151,11 +151,11 @@ DG2TEST_F(Dg2WddmTest, givenG12WhenGettingLocalMemoryAccessModeThenCorrectValueI
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G12DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::LINEAR_STREAM, mockDeviceBitfield});
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::linearStream, mockDeviceBitfield});
 
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::LINEAR_STREAM);
+    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::linearStream);
     auto gpuAddress = graphicsAllocation->getGpuAddress();
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());

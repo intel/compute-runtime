@@ -361,14 +361,14 @@ TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaulta
     drm.pageFaultSupported = true;
 
     AllocationType allocationTypesThatShouldFault[] = {
-        AllocationType::UNIFIED_SHARED_MEMORY};
+        AllocationType::unifiedSharedMemory};
 
     for (auto allocationType : allocationTypesThatShouldFault) {
         MockDrmAllocation allocation(0u, allocationType, MemoryPool::MemoryNull);
         EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
     }
 
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::MemoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }
 
@@ -388,7 +388,7 @@ TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledOnNonFault
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = false;
 
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::MemoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }
 
@@ -400,7 +400,7 @@ TEST(DrmQueryTest, givenEnableImplicitMigrationOnFaultableHardwareWhenShouldAllo
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = true;
 
-    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::MemoryNull);
     EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
 }
 
@@ -434,7 +434,7 @@ TEST(DrmQueryTest, givenKmdMigrationSupportedWhenShouldAllocationPageFaultIsCall
     drm.pageFaultSupported = true;
 
     MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     EXPECT_EQ(drm.hasKmdMigrationSupport(), allocation.shouldAllocationPageFault(&drm));

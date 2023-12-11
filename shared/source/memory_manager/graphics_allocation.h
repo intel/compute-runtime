@@ -201,47 +201,47 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     }
 
     static bool isCpuAccessRequired(AllocationType allocationType) {
-        return allocationType == AllocationType::COMMAND_BUFFER ||
-               allocationType == AllocationType::CONSTANT_SURFACE ||
-               allocationType == AllocationType::GLOBAL_SURFACE ||
-               allocationType == AllocationType::INTERNAL_HEAP ||
-               allocationType == AllocationType::LINEAR_STREAM ||
-               allocationType == AllocationType::PIPE ||
-               allocationType == AllocationType::PRINTF_SURFACE ||
-               allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
-               allocationType == AllocationType::RING_BUFFER ||
-               allocationType == AllocationType::SEMAPHORE_BUFFER ||
-               allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-               allocationType == AllocationType::DEBUG_SBA_TRACKING_BUFFER ||
-               allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
-               allocationType == AllocationType::DEBUG_MODULE_AREA ||
-               allocationType == AllocationType::ASSERT_BUFFER;
+        return allocationType == AllocationType::commandBuffer ||
+               allocationType == AllocationType::constantSurface ||
+               allocationType == AllocationType::globalSurface ||
+               allocationType == AllocationType::internalHeap ||
+               allocationType == AllocationType::linearStream ||
+               allocationType == AllocationType::pipe ||
+               allocationType == AllocationType::printfSurface ||
+               allocationType == AllocationType::timestampPacketTagBuffer ||
+               allocationType == AllocationType::ringBuffer ||
+               allocationType == AllocationType::semaphoreBuffer ||
+               allocationType == AllocationType::debugContextSaveArea ||
+               allocationType == AllocationType::debugSbaTrackingBuffer ||
+               allocationType == AllocationType::gpuTimestampDeviceBuffer ||
+               allocationType == AllocationType::debugModuleArea ||
+               allocationType == AllocationType::assertBuffer;
     }
     static bool isLockable(AllocationType allocationType) {
         return isCpuAccessRequired(allocationType) ||
                isIsaAllocationType(allocationType) ||
-               allocationType == AllocationType::BUFFER_HOST_MEMORY ||
-               allocationType == AllocationType::SHARED_RESOURCE_COPY;
+               allocationType == AllocationType::bufferHostMemory ||
+               allocationType == AllocationType::sharedResourceCopy;
     }
 
     static bool isKernelIsaAllocationType(AllocationType type) {
-        return type == AllocationType::KERNEL_ISA ||
-               type == AllocationType::KERNEL_ISA_INTERNAL;
+        return type == AllocationType::kernelIsa ||
+               type == AllocationType::kernelIsaInternal;
     }
 
     static bool isIsaAllocationType(AllocationType type) {
         return isKernelIsaAllocationType(type) ||
-               type == AllocationType::DEBUG_MODULE_AREA;
+               type == AllocationType::debugModuleArea;
     }
 
     static bool isDebugSurfaceAllocationType(AllocationType type) {
-        return type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-               type == AllocationType::DEBUG_SBA_TRACKING_BUFFER;
+        return type == AllocationType::debugContextSaveArea ||
+               type == AllocationType::debugSbaTrackingBuffer;
     }
 
     static bool isConstantOrGlobalSurfaceAllocationType(AllocationType type) {
-        return type == AllocationType::CONSTANT_SURFACE ||
-               type == AllocationType::GLOBAL_SURFACE;
+        return type == AllocationType::constantSurface ||
+               type == AllocationType::globalSurface;
     }
 
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
@@ -374,7 +374,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void *lockedPtr = nullptr;
 
     MemoryPool memoryPool = MemoryPool::MemoryNull;
-    AllocationType allocationType = AllocationType::UNKNOWN;
+    AllocationType allocationType = AllocationType::unknown;
 
     StackVec<UsageInfo, 32> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};

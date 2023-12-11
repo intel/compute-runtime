@@ -256,7 +256,7 @@ class MemoryManager {
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, AllocationType allocationType, uint32_t rootDeviceIndex) {
-        return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::BUFFER_HOST_MEMORY);
+        return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::bufferHostMemory);
     }
 
     virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};

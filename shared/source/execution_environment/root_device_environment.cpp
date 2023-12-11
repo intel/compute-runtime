@@ -244,7 +244,7 @@ void RootDeviceEnvironment::setDummyBlitProperties(uint32_t rootDeviceIndex) {
         rootDeviceIndex,
         true,
         size,
-        NEO::AllocationType::BUFFER,
+        NEO::AllocationType::buffer,
         false,
         false,
         systemMemoryBitfield);

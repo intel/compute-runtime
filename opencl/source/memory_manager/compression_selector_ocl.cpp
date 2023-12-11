@@ -13,10 +13,10 @@
 namespace NEO {
 bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
     switch (properties.allocationType) {
-    case AllocationType::GLOBAL_SURFACE:
-    case AllocationType::CONSTANT_SURFACE:
-    case AllocationType::SVM_GPU:
-    case AllocationType::PRINTF_SURFACE: {
+    case AllocationType::globalSurface:
+    case AllocationType::constantSurface:
+    case AllocationType::svmGpu:
+    case AllocationType::printfSurface: {
         return CompressionSelector::allowStatelessCompression();
     }
     default:

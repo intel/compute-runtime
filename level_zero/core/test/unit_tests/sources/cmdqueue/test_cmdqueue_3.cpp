@@ -959,7 +959,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
                                                           returnValue);
     ResidencyContainer container;
     MockGraphicsAllocation mockGA;
-    mockGA.allocationType = NEO::AllocationType::SVM_GPU;
+    mockGA.allocationType = NEO::AllocationType::svmGpu;
     container.push_back(&mockGA);
     commandQueue->makeResidentAndMigrate(true, container);
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 1);
@@ -984,7 +984,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
                                                           returnValue);
     ResidencyContainer container;
     MockGraphicsAllocation mockGA;
-    mockGA.allocationType = NEO::AllocationType::SVM_CPU;
+    mockGA.allocationType = NEO::AllocationType::svmCpu;
     container.push_back(&mockGA);
     commandQueue->makeResidentAndMigrate(true, container);
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 1);
@@ -1009,7 +1009,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
                                                           returnValue);
     ResidencyContainer container;
     MockGraphicsAllocation mockGA;
-    mockGA.allocationType = NEO::AllocationType::TAG_BUFFER;
+    mockGA.allocationType = NEO::AllocationType::tagBuffer;
     container.push_back(&mockGA);
     commandQueue->makeResidentAndMigrate(true, container);
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 0);

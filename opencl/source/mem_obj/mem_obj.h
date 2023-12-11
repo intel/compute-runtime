@@ -39,7 +39,7 @@ namespace CreateMemObj {
 struct AllocationInfo {
     GraphicsAllocation *mapAllocation = nullptr;
     GraphicsAllocation *memory = nullptr;
-    AllocationType allocationType = AllocationType::UNKNOWN;
+    AllocationType allocationType = AllocationType::unknown;
 
     bool zeroCopyAllowed = true;
     bool isHostPtrSVM = false;

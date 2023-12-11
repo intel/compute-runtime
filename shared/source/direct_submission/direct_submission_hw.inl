@@ -328,7 +328,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
     const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
                                                                  true, allocationSize,
-                                                                 AllocationType::RING_BUFFER,
+                                                                 AllocationType::ringBuffer,
                                                                  isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
 
     for (uint32_t ringBufferIndex = 0; ringBufferIndex < RingBufferUse::initialRingBufferCount; ringBufferIndex++) {
@@ -341,7 +341,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
     const AllocationProperties semaphoreAllocationProperties{rootDeviceIndex,
                                                              true, MemoryConstants::pageSize,
-                                                             AllocationType::SEMAPHORE_BUFFER,
+                                                             AllocationType::semaphoreBuffer,
                                                              isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
     semaphores = memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
     UNRECOVERABLE_IF(semaphores == nullptr);
@@ -358,7 +358,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     if (this->relaxedOrderingEnabled) {
         const AllocationProperties allocationProperties(rootDeviceIndex,
                                                         true, MemoryConstants::pageSize64k,
-                                                        AllocationType::DEFERRED_TASKS_LIST,
+                                                        AllocationType::deferredTasksList,
                                                         isMultiOsContextCapable, false, osContext.getDeviceBitfield());
 
         deferredTasksListAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
@@ -368,7 +368,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
         const AllocationProperties relaxedOrderingSchedulerAllocationProperties(rootDeviceIndex,
                                                                                 true, MemoryConstants::pageSize64k,
-                                                                                AllocationType::COMMAND_BUFFER,
+                                                                                AllocationType::commandBuffer,
                                                                                 isMultiOsContextCapable, false, osContext.getDeviceBitfield());
 
         relaxedOrderingSchedulerAllocation = memoryManager->allocateGraphicsMemoryWithProperties(relaxedOrderingSchedulerAllocationProperties);
@@ -1095,7 +1095,7 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
             const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
             const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
                                                                          true, allocationSize,
-                                                                         AllocationType::RING_BUFFER,
+                                                                         AllocationType::ringBuffer,
                                                                          isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
             nextAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
             this->currentRingBuffer = static_cast<uint32_t>(this->ringBuffers.size());

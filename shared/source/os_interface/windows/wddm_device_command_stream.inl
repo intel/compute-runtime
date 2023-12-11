@@ -180,9 +180,9 @@ void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence() {
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer &allocationsForResidency) {
     for (auto &graphicsAllocation : allocationsForResidency) {
-        if ((AllocationType::LINEAR_STREAM == graphicsAllocation->getAllocationType()) ||
-            (AllocationType::FILL_PATTERN == graphicsAllocation->getAllocationType()) ||
-            (AllocationType::COMMAND_BUFFER == graphicsAllocation->getAllocationType())) {
+        if ((AllocationType::linearStream == graphicsAllocation->getAllocationType()) ||
+            (AllocationType::fillPattern == graphicsAllocation->getAllocationType()) ||
+            (AllocationType::commandBuffer == graphicsAllocation->getAllocationType())) {
             wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation)->getDefaultHandle());
         }
     }

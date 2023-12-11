@@ -86,7 +86,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         AllocationProperties allocProperties(rootDeviceIndex,
                                              false, // allocateMemory
                                              0u,    // size
-                                             AllocationType::SHARED_IMAGE,
+                                             AllocationType::sharedImage,
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(toOsHandle(surfaceInfo->shared_handle), allocProperties,
@@ -108,7 +108,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
                                                                                                   memoryProperties, context->getDevice(0)->getHardwareInfo(),
                                                                                                   context->getDeviceBitfieldForAllocation(rootDeviceIndex),
                                                                                                   context->isSingleDeviceContext());
-        allocProperties.allocationType = AllocationType::SHARED_RESOURCE_COPY;
+        allocProperties.allocationType = AllocationType::sharedResourceCopy;
 
         alloc = context->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 

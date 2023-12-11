@@ -55,7 +55,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
         ASSERT_NE(nullptr, sbaAllocation);
         allocations.push_back(sbaAllocation);
 
-        EXPECT_EQ(NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::debugSbaTrackingBuffer, sbaAllocation->getAllocationType());
         EXPECT_EQ(MemoryPool::System4KBPages, sbaAllocation->getMemoryPool());
     }
 
@@ -102,7 +102,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
         ASSERT_NE(nullptr, sbaAllocation);
         allocations.push_back(sbaAllocation);
 
-        EXPECT_EQ(NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::debugSbaTrackingBuffer, sbaAllocation->getAllocationType());
         if (sbaAllocation->isAllocatedInLocalMemoryPool()) {
             EXPECT_EQ(neoDevice->getDeviceBitfield(), sbaAllocation->storageInfo.pageTablesVisibility);
         }

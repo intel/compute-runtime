@@ -51,7 +51,7 @@ XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, givenL3ToL1DebugFlagWhenStatele
 XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, whenAppendingRssThenProgramWtL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::buffer, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     auto rssCmd = FamilyType::cmdInitRenderSurfaceState;

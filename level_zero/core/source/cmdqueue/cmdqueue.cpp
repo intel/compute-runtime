@@ -268,17 +268,17 @@ void CommandQueueImp::registerCsrClient() {
 ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,
-                                         NEO::AllocationType::COMMAND_BUFFER,
+                                         NEO::AllocationType::commandBuffer,
                                          (device->getNEODevice()->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                          false,
                                          device->getNEODevice()->getDeviceBitfield()};
 
-    auto firstBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::COMMAND_BUFFER);
+    auto firstBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::commandBuffer);
     if (!firstBuffer) {
         firstBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
 
-    auto secondBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::COMMAND_BUFFER);
+    auto secondBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::commandBuffer);
     if (!secondBuffer) {
         secondBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
@@ -348,8 +348,8 @@ void CommandQueueImp::makeResidentAndMigrate(bool performMigration, const NEO::R
         alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);
         if (performMigration &&
-            (alloc->getAllocationType() == NEO::AllocationType::SVM_GPU ||
-             alloc->getAllocationType() == NEO::AllocationType::SVM_CPU)) {
+            (alloc->getAllocationType() == NEO::AllocationType::svmGpu ||
+             alloc->getAllocationType() == NEO::AllocationType::svmCpu)) {
             auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
             pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
         }

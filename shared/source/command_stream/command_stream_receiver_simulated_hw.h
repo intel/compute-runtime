@@ -95,7 +95,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         void *cpuAddress;
         size_t allocSize;
         this->getParametersForMemory(graphicsAllocation, gpuAddress, cpuAddress, allocSize);
-        int hint = graphicsAllocation.getAllocationType() == AllocationType::COMMAND_BUFFER
+        int hint = graphicsAllocation.getAllocationType() == AllocationType::commandBuffer
                        ? AubMemDump::DataTypeHintValues::TraceBatchBuffer
                        : AubMemDump::DataTypeHintValues::TraceNotype;
 

@@ -69,7 +69,7 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationD
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
-    AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
+    AllocationProperties allocProperties(0, 1, AllocationType::buffer, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = false;
     gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
@@ -80,7 +80,7 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationD
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
-    AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
+    AllocationProperties allocProperties(0, 1, AllocationType::buffer, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = true;
     gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());

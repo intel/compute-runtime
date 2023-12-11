@@ -53,7 +53,7 @@ struct MemoryManagerDirectSubmissionImplicitScalingPvcTest : public ::testing::T
         executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
         auto allTilesMask = executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask();
 
-        allocationProperties = std::make_unique<AllocationProperties>(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::UNKNOWN, allTilesMask);
+        allocationProperties = std::make_unique<AllocationProperties>(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::unknown, allTilesMask);
         allocationProperties->flags.multiOsContextCapable = true;
 
         constexpr auto enableLocalMemory = true;
@@ -93,7 +93,7 @@ PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmis
                 expectedPlacement = static_cast<uint32_t>(firstTileMask.to_ulong());
             }
 
-            for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            for (auto &allocationType : {AllocationType::commandBuffer, AllocationType::ringBuffer, AllocationType::semaphoreBuffer}) {
                 allocationProperties->allocationType = allocationType;
                 allocationProperties->flags.multiOsContextCapable = multiTile;
                 auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
@@ -130,7 +130,7 @@ PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmis
                 expectedPlacement = static_cast<uint32_t>(firstTileMask.to_ulong());
             }
 
-            for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            for (auto &allocationType : {AllocationType::commandBuffer, AllocationType::ringBuffer, AllocationType::semaphoreBuffer}) {
                 allocationProperties->allocationType = allocationType;
                 allocationProperties->flags.multiOsContextCapable = multiTile;
                 auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);

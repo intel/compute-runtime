@@ -300,7 +300,7 @@ GEN12LPTEST_F(GfxCoreHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompa
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
-    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(AllocationType::buffer);
 
     EXPECT_TRUE(gfxCoreHelper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }
@@ -397,16 +397,16 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequired
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
 
     const AllocationType allocationTypesToUseSystemMemory[] = {
-        AllocationType::COMMAND_BUFFER,
-        AllocationType::CONSTANT_SURFACE,
-        AllocationType::GLOBAL_SURFACE,
-        AllocationType::INTERNAL_HEAP,
-        AllocationType::LINEAR_STREAM,
-        AllocationType::PIPE,
-        AllocationType::PRINTF_SURFACE,
-        AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
-        AllocationType::RING_BUFFER,
-        AllocationType::SEMAPHORE_BUFFER};
+        AllocationType::commandBuffer,
+        AllocationType::constantSurface,
+        AllocationType::globalSurface,
+        AllocationType::internalHeap,
+        AllocationType::linearStream,
+        AllocationType::pipe,
+        AllocationType::printfSurface,
+        AllocationType::timestampPacketTagBuffer,
+        AllocationType::ringBuffer,
+        AllocationType::semaphoreBuffer};
 
     MockMemoryManager mockMemoryManager;
     for (auto allocationType : allocationTypesToUseSystemMemory) {
@@ -419,7 +419,7 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequired
     }
 
     AllocationData allocData{};
-    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::buffer, false, mockDeviceBitfield);
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.requiresCpuAccess);
     EXPECT_FALSE(allocData.flags.useSystemMemory);

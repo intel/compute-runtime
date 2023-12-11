@@ -223,7 +223,7 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
         debugManager.flags.ExperimentalSetWalkerPartitionCount.set(0);
         debugManager.flags.ExperimentalSetWalkerPartitionType.set(0);
 
-        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, false, device->getDeviceBitfield());
+        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::commandBuffer, false, device->getDeviceBitfield());
         auto memoryManager = this->device->getMemoryManager();
         streamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         helperSurface = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
@@ -600,7 +600,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
 
         auto memoryManager = this->device->getMemoryManager();
 
-        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, false, device->getDeviceBitfield());
+        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::commandBuffer, false, device->getDeviceBitfield());
         streamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         helperSurface = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         memset(helperSurface->getUnderlyingBuffer(), 0, MemoryConstants::pageSize);

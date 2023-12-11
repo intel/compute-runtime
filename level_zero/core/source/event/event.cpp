@@ -87,14 +87,14 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 
     initializeSizeParameters(numDevices, deviceHandles, *driverHandleImp, rootDeviceEnvironment);
 
-    NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
-                                                                       : NEO::AllocationType::BUFFER_HOST_MEMORY;
+    NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::timestampPacketTagBuffer
+                                                                       : NEO::AllocationType::bufferHostMemory;
     if (this->devices.size() > 1) {
         this->isDeviceEventPoolAllocation = false;
     }
 
     if (this->isDeviceEventPoolAllocation) {
-        allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+        allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
     }
 
     eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(maxRootDeviceIndex);
@@ -287,9 +287,9 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    NEO::AllocationType allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
+    NEO::AllocationType allocationType = NEO::AllocationType::bufferHostMemory;
     if (eventPool->isDeviceEventPoolAllocation) {
-        allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+        allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
     }
 
     NEO::AllocationProperties unifiedMemoryProperties{poolData.rootDeviceIndex,

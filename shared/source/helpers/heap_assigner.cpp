@@ -18,7 +18,7 @@ HeapAssigner::HeapAssigner(bool allowExternalHeap) {
 }
 bool HeapAssigner::useInternal32BitHeap(AllocationType allocType) {
     return GraphicsAllocation::isIsaAllocationType(allocType) ||
-           allocType == AllocationType::INTERNAL_HEAP;
+           allocType == AllocationType::internalHeap;
 }
 bool HeapAssigner::use32BitHeap(AllocationType allocType) {
     return useExternal32BitHeap(allocType) || useInternal32BitHeap(allocType);
@@ -31,7 +31,7 @@ HeapIndex HeapAssigner::get32BitHeapIndex(AllocationType allocType, bool useLoca
 }
 bool HeapAssigner::useExternal32BitHeap(AllocationType allocType) {
     if (apiAllowExternalHeapForSshAndDsh) {
-        return allocType == AllocationType::LINEAR_STREAM;
+        return allocType == AllocationType::linearStream;
     }
     return false;
 }

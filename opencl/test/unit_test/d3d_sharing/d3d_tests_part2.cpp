@@ -503,7 +503,7 @@ TYPED_TEST_P(D3DTests, givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllo
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
     ASSERT_NE(nullptr, image->getGraphicsAllocation(this->rootDeviceIndex));
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(this->rootDeviceIndex)->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, image->getGraphicsAllocation(this->rootDeviceIndex)->getAllocationType());
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -520,7 +520,7 @@ TYPED_TEST_P(D3DTests, givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllo
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<typename TestFixture::D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
     ASSERT_NE(nullptr, image->getGraphicsAllocation(this->rootDeviceIndex));
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(this->rootDeviceIndex)->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, image->getGraphicsAllocation(this->rootDeviceIndex)->getAllocationType());
 
     EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);

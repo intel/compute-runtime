@@ -36,7 +36,7 @@ struct AllocationProperties {
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     size_t size = 0;
     size_t alignment = 0;
-    AllocationType allocationType = AllocationType::UNKNOWN;
+    AllocationType allocationType = AllocationType::unknown;
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
@@ -115,7 +115,7 @@ struct AllocationData {
         uint32_t allFlags = 0;
     };
     static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
-    AllocationType type = AllocationType::UNKNOWN;
+    AllocationType type = AllocationType::unknown;
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     GfxMemoryAllocationMethod allocationMethod = GfxMemoryAllocationMethod::NotDefined;
     const void *hostPtr = nullptr;

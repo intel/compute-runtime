@@ -42,7 +42,7 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         DirectSubmissionFixture::setUp();
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
         const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,
-                                                           AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()};
+                                                           AllocationType::commandBuffer, pDevice->getDeviceBitfield()};
         commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
         stream = std::make_unique<LinearStream>(commandBuffer);
         stream->getSpace(0x40);

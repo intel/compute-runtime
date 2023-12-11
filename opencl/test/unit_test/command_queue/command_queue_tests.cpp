@@ -506,7 +506,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
 
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100 + CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), requiredSize, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), requiredSize, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
@@ -563,7 +563,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenComm
     auto commandStreamAllocation = commandStream.getGraphicsAllocation();
     ASSERT_NE(nullptr, commandStreamAllocation);
 
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, commandStreamAllocation->getAllocationType());
 }
 
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
@@ -672,9 +672,9 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
     GraphicsAllocation *allocation = nullptr;
 
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto allocationType = AllocationType::LINEAR_STREAM;
+    auto allocationType = AllocationType::linearStream;
     if (this->GetParam() == IndirectHeap::Type::INDIRECT_OBJECT && commandStreamReceiver.canUse4GbHeaps) {
-        allocationType = AllocationType::INTERNAL_HEAP;
+        allocationType = AllocationType::internalHeap;
     }
     allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType, pDevice->getDeviceBitfield()});
     if (this->GetParam() == IndirectHeap::Type::SURFACE_STATE) {
@@ -825,9 +825,9 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCal
     const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
     auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
     ASSERT_NE(nullptr, indirectHeapAllocation);
-    auto expectedAllocationType = AllocationType::LINEAR_STREAM;
+    auto expectedAllocationType = AllocationType::linearStream;
     if (requireInternalHeap) {
-        expectedAllocationType = AllocationType::INTERNAL_HEAP;
+        expectedAllocationType = AllocationType::internalHeap;
     }
     EXPECT_EQ(expectedAllocationType, indirectHeapAllocation->getAllocationType());
 }

@@ -181,7 +181,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(), allocationSize,
-                                                                 AllocationType::RING_BUFFER, device->getDeviceBitfield()};
+                                                                 AllocationType::ringBuffer, device->getDeviceBitfield()};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -718,7 +718,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     auto memoryManager = executionEnvironment->memoryManager.get();
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, clientCommandBuffer);
 
@@ -784,7 +784,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     auto memoryManager = executionEnvironment->memoryManager.get();
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, clientCommandBuffer);
 
@@ -893,7 +893,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     auto memoryManager = executionEnvironment->memoryManager.get();
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, clientCommandBuffer);
 
@@ -956,7 +956,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     auto memoryManager = executionEnvironment->memoryManager.get();
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, clientCommandBuffer);
 
@@ -1015,7 +1015,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     auto memoryManager = executionEnvironment->memoryManager.get();
     const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
-                                                       AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()};
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
     clientCommandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
     ASSERT_NE(nullptr, clientCommandBuffer);
 

@@ -52,7 +52,7 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
 
     auto allocation = &eventPool->getAllocation();
 
-    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER);
+    EXPECT_EQ(allocation->getAllocationType(), NEO::AllocationType::gpuTimestampDeviceBuffer);
 
     ze_ipc_event_pool_handle_t ipcHandle = {};
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);

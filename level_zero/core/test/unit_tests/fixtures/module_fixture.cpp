@@ -35,7 +35,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
 
     auto ptr = reinterpret_cast<void *>(0x1234);
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
-                                                                NEO::AllocationType::KERNEL_ISA,
+                                                                NEO::AllocationType::kernelIsa,
                                                                 ptr,
                                                                 0x1000,
                                                                 0u,
@@ -229,7 +229,7 @@ ModuleWithZebinFixture::MockImmutableData::MockImmutableData(L0::Device *device)
     this->device = device;
     auto ptr = reinterpret_cast<void *>(0x1234);
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
-                                                                NEO::AllocationType::KERNEL_ISA,
+                                                                NEO::AllocationType::kernelIsa,
                                                                 ptr,
                                                                 0x1000,
                                                                 0u,
@@ -250,7 +250,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
     auto ptr = reinterpret_cast<void *>(0x1234);
     auto canonizedGpuAddress = castToUint64(ptr);
     translationUnit->globalVarBuffer = new NEO::MockGraphicsAllocation(0,
-                                                                       NEO::AllocationType::GLOBAL_SURFACE,
+                                                                       NEO::AllocationType::globalSurface,
                                                                        ptr,
                                                                        0x1000,
                                                                        0u,
@@ -258,7 +258,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
                                                                        MemoryManager::maxOsContextCount,
                                                                        canonizedGpuAddress);
     translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
-                                                                         NEO::AllocationType::GLOBAL_SURFACE,
+                                                                         NEO::AllocationType::globalSurface,
                                                                          ptr,
                                                                          0x1000,
                                                                          0u,

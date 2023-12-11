@@ -18,8 +18,8 @@ bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
 template <>
 std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<release>::getPreferredAllocationMethod(AllocationType allocationType) const {
     switch (allocationType) {
-    case AllocationType::TAG_BUFFER:
-    case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case AllocationType::tagBuffer:
+    case AllocationType::timestampPacketTagBuffer:
         return {};
     default:
         return GfxMemoryAllocationMethod::AllocateByKmd;

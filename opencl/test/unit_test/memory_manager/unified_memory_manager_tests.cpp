@@ -60,7 +60,7 @@ TEST_F(MultiDeviceSVMMemoryAllocatorTest, givenMultipleDevicesWhenCreatingSVMAll
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
         EXPECT_NE(nullptr, svmAllocation);
-        EXPECT_EQ(AllocationType::SVM_ZERO_COPY, svmAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::svmZeroCopy, svmAllocation->getAllocationType());
         EXPECT_FALSE(svmAllocation->isCoherent());
     }
 
@@ -90,7 +90,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
 TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocationIsInsertedReturnedAndRemoved) {
     int data;
     size_t size = sizeof(data);
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, size, AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, size, AllocationType::bufferHostMemory, mockDeviceBitfield});
 
     NEO::SvmAllocationData svmData(mockRootDeviceIndex);
     svmData.gpuAllocations.addAllocation(allocation);
@@ -223,7 +223,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(AllocationType::WRITE_COMBINED, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::writeCombined, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
 }
@@ -248,7 +248,7 @@ TEST_F(SVMMemoryAllocatorTest, givenNoWriteCombinedFlagwhenDeviceAllocationIsCre
     EXPECT_EQ(allocationSize, allocation->size);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(AllocationType::BUFFER, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::buffer, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
 }
@@ -266,7 +266,7 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
     EXPECT_EQ(allocationSize, allocation->size);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::bufferHostMemory, gpuAllocation->getAllocationType());
     EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
@@ -301,7 +301,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
     EXPECT_EQ(allocationSize, allocation->size);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::bufferHostMemory, gpuAllocation->getAllocationType());
     EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
@@ -331,8 +331,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(alignUp(allocationSize, alignment), allocation->cpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
-    EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::svmGpu, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::svmCpu, allocation->cpuAllocation->getAllocationType());
 
     EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
     EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
@@ -361,8 +361,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(alignUp(allocationSize, alignment), allocation->cpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
-    EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::svmGpu, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::svmCpu, allocation->cpuAllocation->getAllocationType());
 
     EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
     EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
@@ -390,7 +390,7 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
     EXPECT_EQ(allocationSize, allocation->size);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(AllocationType::BUFFER, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::buffer, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
 }

@@ -899,7 +899,7 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
 
     UNRECOVERABLE_IF(privateSurfaceSize == 0);
     auto privateMemoryGraphicsAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()});
+        {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::AllocationType::privateSurface, neoDevice->getDeviceBitfield()});
 
     UNRECOVERABLE_IF(privateMemoryGraphicsAllocation == nullptr);
     return privateMemoryGraphicsAllocation;
@@ -953,7 +953,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
-    if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL && this->kernelImmData->getIsaParentAllocation() == nullptr) {
+    if (isaAllocation->getAllocationType() == NEO::AllocationType::kernelIsaInternal && this->kernelImmData->getIsaParentAllocation() == nullptr) {
         isaAllocation->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
         isaAllocation->setAubWritable(true, std::numeric_limits<uint32_t>::max());
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(neoDevice->getRootDeviceEnvironment(), *isaAllocation),

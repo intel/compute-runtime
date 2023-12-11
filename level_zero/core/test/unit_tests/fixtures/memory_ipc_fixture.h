@@ -30,7 +30,7 @@ struct DriverHandleGetFdMock : public L0::DriverHandleImp {
 
     const int mockFd = 57;
     std::pair<void *, int> allocationMap;
-    NEO::AllocationType allocationTypeRequested = NEO::AllocationType::UNKNOWN;
+    NEO::AllocationType allocationTypeRequested = NEO::AllocationType::unknown;
 };
 
 struct ContextFdMock : public L0::ContextImp {
@@ -242,16 +242,16 @@ class IpcImplicitScalingMockGraphicsAllocation : public NEO::MemoryAllocation {
     using MemoryAllocation::usageInfos;
 
     IpcImplicitScalingMockGraphicsAllocation()
-        : NEO::MemoryAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+        : NEO::MemoryAllocation(0, AllocationType::unknown, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
     IpcImplicitScalingMockGraphicsAllocation(void *buffer, size_t sizeIn)
-        : NEO::MemoryAllocation(0, AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
+        : NEO::MemoryAllocation(0, AllocationType::unknown, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
 
     IpcImplicitScalingMockGraphicsAllocation(void *buffer, uint64_t gpuAddr, size_t sizeIn)
-        : NEO::MemoryAllocation(0, AllocationType::UNKNOWN, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
+        : NEO::MemoryAllocation(0, AllocationType::unknown, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
 
     IpcImplicitScalingMockGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn)
-        : NEO::MemoryAllocation(rootDeviceIndex, AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
+        : NEO::MemoryAllocation(rootDeviceIndex, AllocationType::unknown, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
 
     uint32_t getNumHandles() override {
         return 2u;

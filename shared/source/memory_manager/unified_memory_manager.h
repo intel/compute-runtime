@@ -147,7 +147,7 @@ class SVMAllocsManager {
         size_t alignment;
         const RootDeviceIndicesContainer &rootDeviceIndices;
         const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
-        AllocationType requestedAllocationType = AllocationType::UNKNOWN;
+        AllocationType requestedAllocationType = AllocationType::unknown;
     };
 
     struct SvmCacheAllocationInfo {

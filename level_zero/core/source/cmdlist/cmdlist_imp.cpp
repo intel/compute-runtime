@@ -232,14 +232,14 @@ void CommandListImp::enableInOrderExecution() {
 
     auto device = this->device->getNEODevice();
 
-    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, device->getDeviceBitfield()};
+    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::timestampPacketTagBuffer, device->getDeviceBitfield()};
 
     auto inOrderDependencyCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
 
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
 
     if (duplicatedInOrderCounterStorageEnabled()) {
-        NEO::AllocationProperties hostAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::BUFFER_HOST_MEMORY, device->getDeviceBitfield()};
+        NEO::AllocationProperties hostAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::bufferHostMemory, device->getDeviceBitfield()};
         hostCounterAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(hostAllocationProperties);
 
         UNRECOVERABLE_IF(!hostCounterAllocation);

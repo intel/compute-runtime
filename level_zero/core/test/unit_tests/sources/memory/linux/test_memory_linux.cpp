@@ -105,7 +105,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         size_t size = 0x1000;
         auto alloc = new IpcImplicitScalingObtainFdMockGraphicsAllocation(0u,
-                                                                          NEO::AllocationType::BUFFER,
+                                                                          NEO::AllocationType::buffer,
                                                                           nullptr,
                                                                           ptr,
                                                                           size,
@@ -133,7 +133,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         size_t size = 0x1000;
         auto alloc = new IpcImplicitScalingObtainFdMockGraphicsAllocation(0u,
-                                                                          NEO::AllocationType::BUFFER,
+                                                                          NEO::AllocationType::buffer,
                                                                           nullptr,
                                                                           ptr,
                                                                           size,
@@ -521,7 +521,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         size_t size = 0x1000;
         auto alloc = new IpcObtainFdMockGraphicsAllocation(0u,
-                                                           NEO::AllocationType::BUFFER,
+                                                           NEO::AllocationType::buffer,
                                                            nullptr,
                                                            ptr,
                                                            size,
@@ -548,7 +548,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         size_t size = 0x1000;
         auto alloc = new IpcObtainFdMockGraphicsAllocation(0u,
-                                                           NEO::AllocationType::BUFFER,
+                                                           NEO::AllocationType::buffer,
                                                            nullptr,
                                                            ptr,
                                                            size,
@@ -583,7 +583,7 @@ struct DriverHandleObtaindFdMock : public L0::DriverHandleImp {
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override {
         DeviceBitfield deviceBitfield{0x0};
         AllocationProperties properties(0, MemoryConstants::pageSize,
-                                        AllocationType::BUFFER,
+                                        AllocationType::buffer,
                                         deviceBitfield);
         auto alloc = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         return reinterpret_cast<void *>(alloc->getGpuAddress());

@@ -322,16 +322,16 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     DrmResourceClass resourceClass = DrmResourceClass::MaxSize;
 
     switch (this->allocationType) {
-    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::debugContextSaveArea:
         resourceClass = DrmResourceClass::ContextSaveArea;
         break;
-    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::debugSbaTrackingBuffer:
         resourceClass = DrmResourceClass::SbaTrackingBuffer;
         break;
-    case AllocationType::KERNEL_ISA:
+    case AllocationType::kernelIsa:
         resourceClass = DrmResourceClass::Isa;
         break;
-    case AllocationType::DEBUG_MODULE_AREA:
+    case AllocationType::debugModuleArea:
         resourceClass = DrmResourceClass::ModuleHeapDebugArea;
         break;
     default:
@@ -421,9 +421,9 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
     }
 
     switch (this->allocationType) {
-    case AllocationType::UNIFIED_SHARED_MEMORY:
+    case AllocationType::unifiedSharedMemory:
         return drm->hasKmdMigrationSupport();
-    case AllocationType::BUFFER:
+    case AllocationType::buffer:
         return debugManager.flags.UseKmdMigrationForBuffers.get() > 0;
     default:
         return false;

@@ -49,7 +49,7 @@ class MockDriverHandle : public L0::DriverHandleImp {
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
                                     NEO::SvmAllocationData *&allocData) override {
-        mockAllocation.reset(new NEO::MockGraphicsAllocation(rootDeviceIndex, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(rootDeviceIndex, NEO::AllocationType::internalHostMemory,
                                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount));
         data.gpuAllocations.addAllocation(mockAllocation.get());
@@ -119,7 +119,7 @@ HWTEST2_F(AppendMemoryCopy,
 
     auto gpuAllocation = device->getDriverHandle()->findHostPointerAllocation(hostPointer.get(), size, 0);
     ASSERT_NE(nullptr, gpuAllocation);
-    EXPECT_EQ(NEO::AllocationType::EXTERNAL_HOST_PTR, gpuAllocation->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::externalHostPtr, gpuAllocation->getAllocationType());
 
     MockCommandListForMemFill<gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -202,10 +202,10 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListThenDcFlushIsNotAddedAfterBl
     uint64_t srcOffset = 0x101;
     uint64_t dstOffset = 0x201;
     uint64_t copySize = 0x301;
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(srcPtr), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(dstPtr), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize);
@@ -239,10 +239,10 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyR
 
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
@@ -300,10 +300,10 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToImageCopyBl
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 

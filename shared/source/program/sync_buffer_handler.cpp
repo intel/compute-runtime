@@ -32,7 +32,7 @@ void SyncBufferHandler::makeResident(CommandStreamReceiver &csr) {
 
 void SyncBufferHandler::allocateNewBuffer() {
     AllocationProperties allocationProperties{device.getRootDeviceIndex(), true, bufferSize,
-                                              AllocationType::LINEAR_STREAM,
+                                              AllocationType::linearStream,
                                               (device.getNumGenericSubDevices() > 1u), /* multiOsContextCapable */
                                               false, device.getDeviceBitfield()};
     graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);

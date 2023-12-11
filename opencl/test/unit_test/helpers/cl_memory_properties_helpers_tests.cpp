@@ -34,7 +34,7 @@ TEST(MemoryProperties, givenResource48BitMemoryPropertySetWhenGetAllocationPrope
 
     HardwareInfo hwInfo(*defaultHwInfo);
 
-    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, AllocationType::BUFFER,
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, AllocationType::buffer,
                                                                                 false, hwInfo, deviceBitfield, false);
 
     EXPECT_EQ(1u, allocationProperties.flags.resource48Bit);
@@ -367,7 +367,7 @@ TEST_F(MemoryPropertiesHelperTests, givenInvalidFlagsIntelWhenParsingMemoryPrope
 }
 
 TEST_F(MemoryPropertiesHelperTests, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {
-    AllocationProperties allocationProperties{mockRootDeviceIndex, 0, AllocationType::BUFFER, mockDeviceBitfield};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, 0, AllocationType::buffer, mockDeviceBitfield};
 
     for (auto uncached : ::testing::Bool()) {
         for (auto readOnly : ::testing::Bool()) {
@@ -550,7 +550,7 @@ TEST_F(MemoryPropertiesHelperTests, givenUsmInitialPlacementSetWhenCallingHasIni
 }
 
 TEST_F(MemoryPropertiesHelperTests, WhenCallingSetInitialPlacementThenCorrectValueIsSetInAllocationProperties) {
-    AllocationProperties allocationProperties{mockRootDeviceIndex, 0, AllocationType::UNIFIED_SHARED_MEMORY, mockDeviceBitfield};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, 0, AllocationType::unifiedSharedMemory, mockDeviceBitfield};
 
     for (auto initialPlacement : {GraphicsAllocation::UsmInitialPlacement::CPU, GraphicsAllocation::UsmInitialPlacement::GPU}) {
         MemoryPropertiesHelper::setUSMInitialPlacement(allocationProperties, initialPlacement);

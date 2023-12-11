@@ -111,7 +111,7 @@ class MockProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
 
 struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryManager<true> {
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
-        auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex, AllocationType::SHARED_IMAGE);
+        auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex, AllocationType::sharedImage);
 
         auto gmm = allocation->getDefaultGmm();
         auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekGmmResourceInfo());

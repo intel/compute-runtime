@@ -569,7 +569,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
     EXPECT_TRUE(csr.isMadeNonResident(csr.globalFenceAllocation));
 
     ASSERT_NE(nullptr, csr.globalFenceAllocation);
-    EXPECT_EQ(AllocationType::GLOBAL_FENCE, csr.globalFenceAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::globalFence, csr.globalFenceAllocation->getAllocationType());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredButNotCreatedThenItIsNotMadeResidentDuringFlushSmallTask) {
@@ -957,7 +957,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
     auto newScratchAllocation = commandStreamReceiver->getScratchAllocation();
     EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
-    std::unique_ptr<GraphicsAllocation> allocationReusable = commandStreamReceiver->getInternalAllocationStorage()->obtainReusableAllocation(4096, AllocationType::LINEAR_STREAM);
+    std::unique_ptr<GraphicsAllocation> allocationReusable = commandStreamReceiver->getInternalAllocationStorage()->obtainReusableAllocation(4096, AllocationType::linearStream);
 
     if (allocationReusable.get() != nullptr) {
         if constexpr (is64bit) {
@@ -992,7 +992,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
         EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
         CommandStreamReceiver *csrPtr = reinterpret_cast<CommandStreamReceiver *>(commandStreamReceiver);
-        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, nullptr, csrPtr, AllocationType::SCRATCH_SURFACE);
+        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, nullptr, csrPtr, AllocationType::scratchSurface);
 
         EXPECT_EQ(scratchAllocation, allocationTemporary.get());
         pDevice->getMemoryManager()->freeGraphicsMemory(allocationTemporary.release());

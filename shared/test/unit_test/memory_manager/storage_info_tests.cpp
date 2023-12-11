@@ -43,7 +43,7 @@ struct MultiDeviceStorageInfoTest : public ::testing::Test {
 TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceMultiTileAllocPlacementWhenCreatingStorageInfoForAllocationThenAllMemoryBanksAreOnAndPageTableClonningIsNotRequired) {
     DebugManagerStateRestore restorer;
 
-    AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
+    AllocationType allocTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal, AllocationType::constantSurface};
 
     for (uint32_t i = 0; i < 2; i++) {
         debugManager.flags.ForceMultiTileAllocPlacement.set(1ull << (static_cast<uint64_t>(allocTypes[i]) - 1));
@@ -65,7 +65,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceMultiTileAllocPlaceme
 
 TEST_F(MultiDeviceStorageInfoTest, givenDefaultFlagForForceMultiTileAllocPlacementWhenCreatingStorageInfoForAllocationThenSingleMemoryBanksIsOnAndPageTableClonningIsRequired) {
 
-    AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
+    AllocationType allocTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal, AllocationType::constantSurface};
 
     for (uint32_t i = 0; i < 2; i++) {
         AllocationProperties properties{mockRootDeviceIndex, false, 0u, allocTypes[i], false, false, singleTileMask};
@@ -88,7 +88,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDefaultFlagForForceMultiTileAllocPlaceme
 TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceSingleTileAllocPlacementWhenCreatingStorageInfoForAllocationThenSingleMemoryBanksIsOnAndPageTableClonningIsRequired) {
     DebugManagerStateRestore restorer;
 
-    AllocationType allocTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL, AllocationType::CONSTANT_SURFACE};
+    AllocationType allocTypes[] = {AllocationType::kernelIsa, AllocationType::kernelIsaInternal, AllocationType::constantSurface};
 
     for (uint32_t i = 0; i < 2; i++) {
         debugManager.flags.ForceSingleTileAllocPlacement.set(1ull << (static_cast<uint64_t>(allocTypes[i]) - 1));
@@ -109,7 +109,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenEnabledFlagForForceSingleTileAllocPlacem
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceWithOneTileThenOnlySingleBankIsUsed) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::PRIVATE_SURFACE, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::privateSurface, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -119,7 +119,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceWithO
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceThenAllMemoryBanksAreOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::PRIVATE_SURFACE, false, false, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::privateSurface, false, false, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -129,7 +129,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForPrivateSurfaceThenA
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForInternalHeapThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::INTERNAL_HEAP, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::internalHeap, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -137,7 +137,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForIn
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForInternalHeapThenSingleMemoryBankIsOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::INTERNAL_HEAP, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::internalHeap, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -146,7 +146,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForI
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForLinearStreamThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::LINEAR_STREAM, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::linearStream, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -154,7 +154,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForLi
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForLinearStreamThenSingleMemoryBankIsOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::LINEAR_STREAM, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::linearStream, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -164,7 +164,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForL
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForCommandBufferThenFirstAvailableMemoryBankIsOnAndPageTableClonningIsRequired) {
     const DeviceBitfield firstTileMask{static_cast<uint32_t>(1u)};
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::COMMAND_BUFFER, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::commandBuffer, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(firstTileMask, storageInfo.memoryBanks);
@@ -172,7 +172,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForCo
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForCommandBufferThenSingleMemoryBankIsOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::COMMAND_BUFFER, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::commandBuffer, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_FALSE(storageInfo.tileInstanced);
@@ -181,7 +181,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForC
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForScratchSpaceThenAllMemoryBankAreOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::SCRATCH_SURFACE, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::scratchSurface, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_TRUE(storageInfo.tileInstanced);
@@ -190,7 +190,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForSc
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForScratchSpaceThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::SCRATCH_SURFACE, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::scratchSurface, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -198,7 +198,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForS
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForPreemptionAllocationThenAllMemoryBankAreOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::PREEMPTION, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::preemption, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_TRUE(storageInfo.tileInstanced);
@@ -207,7 +207,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForPr
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForPreemptionAllocationThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::PREEMPTION, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::preemption, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -215,7 +215,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForP
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForDeferredTasksListAllocationThenAllMemoryBankAreOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::DEFERRED_TASKS_LIST, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::deferredTasksList, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_TRUE(storageInfo.tileInstanced);
@@ -224,7 +224,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForDe
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForDeferredTasksListAllocationThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::DEFERRED_TASKS_LIST, false, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::deferredTasksList, false, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -232,7 +232,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForD
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForWorkPartitionSurfaceThenAllMemoryBankAreOnAndPageTableClonningIsNotRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::WORK_PARTITION_SURFACE, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::workPartitionSurface, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_TRUE(storageInfo.tileInstanced);
@@ -245,20 +245,20 @@ HWTEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenAllocatingCsrSpecific
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());
     }
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_NE(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, true, allTilesMask};
     properties.flags.preferCompressed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
@@ -270,7 +270,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThe
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, true, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -281,7 +281,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenAllMemory
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSVMGPUThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SVM_GPU, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, true, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -296,7 +296,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiStorageGranularityWhenCreatingStora
     debugManager.flags.MultiStorageGranularity.set(128);
     debugManager.flags.MultiStoragePolicy.set(1);
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 10 * MemoryConstants::pageSize64k, AllocationType::SVM_GPU, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 10 * MemoryConstants::pageSize64k, AllocationType::svmGpu, true, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -307,7 +307,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiStorageGranularityWhenCreatingStora
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenTwoPagesAllocationSizeWhenCreatingStorageInfoForBufferThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 2 * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 2 * MemoryConstants::pageSize64k, AllocationType::buffer, true, allTilesMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(1lu, storageInfo.memoryBanks.to_ulong());
@@ -316,7 +316,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenTwoPagesAllocationSizeWhenCreatingStorag
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSpecifiedDeviceIndexWhenCreatingStorageInfoForBufferThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, true, false, singleTileMask};
     properties.multiStorageResource = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
@@ -327,7 +327,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenSpecifiedDeviceIndexWhenCreatingStorageI
 
 TEST_F(MultiDeviceStorageInfoTest, givenResourceColouringNotSupportedWhenCreatingStorageInfoForBufferThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
     memoryManager->supportsMultiStorageResources = false;
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, true, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, true, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(1lu, storageInfo.memoryBanks.count());
@@ -336,7 +336,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenResourceColouringNotSupportedWhenCreatin
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenNonMultiStorageResourceWhenCreatingStorageInfoForBufferThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_EQ(1lu, storageInfo.memoryBanks.count());
@@ -345,26 +345,26 @@ TEST_F(MultiDeviceStorageInfoTest, givenNonMultiStorageResourceWhenCreatingStora
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenLocalOnlyFlagIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenLocalOnlyFlagIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
     properties.flags.preferCompressed = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSvmGpuThenLocalOnlyFlagIsRequired) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SVM_GPU, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForShareableSvmGpuThenLocalOnlyFlagIsRequiredAndIsNotLocable) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SVM_GPU, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
     properties.flags.shareable = 1u;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
@@ -372,7 +372,7 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForShareableSvmGpuThen
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenCreatingStorageInfoThenCorrectValuesAreSet) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::buffer, false, singleTileMask};
     properties.flags.readOnlyMultiStorage = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
@@ -388,7 +388,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenD
 
     debugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 64 * MemoryConstants::kiloByte * 40, AllocationType::BUFFER, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 64 * MemoryConstants::kiloByte * 40, AllocationType::buffer, true, allTilesMask};
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(proposedTiles, storageInfo.memoryBanks);
@@ -404,7 +404,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlace
 
     debugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 512 * MemoryConstants::kiloByte, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 512 * MemoryConstants::kiloByte, AllocationType::unifiedSharedMemory, true, allTilesMask};
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
 
@@ -415,7 +415,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryOnMultiTileWhenKmdMig
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
 
-    AllocationProperties properties{mockRootDeviceIndex, false, 512 * MemoryConstants::kiloByte, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 512 * MemoryConstants::kiloByte, AllocationType::unifiedSharedMemory, true, allTilesMask};
 
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
 
@@ -425,7 +425,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryOnMultiTileWhenKmdMig
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenLeastOccupiedBankAndOtherBitsEnabledInSubDeviceBitfieldWhenCreateStorageInfoThenTakeLeastOccupiedBankAsMemoryBank) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::UNKNOWN, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::unknown, false, singleTileMask};
     auto leastOccupiedBank = memoryManager->getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
     properties.subDevicesBitfield.set(leastOccupiedBank);
     properties.subDevicesBitfield.set(leastOccupiedBank + 1);
@@ -436,7 +436,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenLeastOccupiedBankAndOtherBitsEnabledInSu
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfoForNonLockableAllocationThenReturnEmptyStorageInfo) {
-    AllocationType allocationType = AllocationType::BUFFER;
+    AllocationType allocationType = AllocationType::buffer;
     EXPECT_FALSE(GraphicsAllocation::isLockable(allocationType));
     AllocationProperties properties{mockRootDeviceIndex, false, 1u, allocationType, false, {}};
     StorageInfo emptyInfo{};
@@ -446,7 +446,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfo
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfoForNonLockableAllocationThenReturnEmptyStorageInfoWithLockableFlag) {
-    AllocationType allocationType = AllocationType::BUFFER_HOST_MEMORY;
+    AllocationType allocationType = AllocationType::bufferHostMemory;
     EXPECT_TRUE(GraphicsAllocation::isLockable(allocationType));
     AllocationProperties properties{mockRootDeviceIndex, false, 1u, allocationType, false, {}};
     StorageInfo emptyInfo{};
@@ -456,8 +456,8 @@ TEST_F(MultiDeviceStorageInfoTest, givenNoSubdeviceBitfieldWhenCreateStorageInfo
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredWhenCreatingStorageInfoThenSetCpuVisibleSegmentIsRequiredAndIsLockableFlagIsEnabled) {
-    auto firstAllocationIdx = static_cast<int>(AllocationType::UNKNOWN);
-    auto lastAllocationIdx = static_cast<int>(AllocationType::COUNT);
+    auto firstAllocationIdx = static_cast<int>(AllocationType::unknown);
+    auto lastAllocationIdx = static_cast<int>(AllocationType::count);
 
     for (int allocationIdx = firstAllocationIdx; allocationIdx != lastAllocationIdx; allocationIdx++) {
         auto allocationType = static_cast<AllocationType>(allocationIdx);
@@ -473,8 +473,8 @@ TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationWithCpuAccessRequiredW
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationThatIsLockableWhenCreatingStorageInfoThenIsLockableFlagIsEnabled) {
-    auto firstAllocationIdx = static_cast<int>(AllocationType::UNKNOWN);
-    auto lastAllocationIdx = static_cast<int>(AllocationType::COUNT);
+    auto firstAllocationIdx = static_cast<int>(AllocationType::unknown);
+    auto lastAllocationIdx = static_cast<int>(AllocationType::count);
 
     for (int allocationIdx = firstAllocationIdx; allocationIdx != lastAllocationIdx; allocationIdx++) {
         auto allocationType = static_cast<AllocationType>(allocationIdx);
@@ -489,7 +489,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenGraphicsAllocationThatIsLockableWhenCrea
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenAllocationTypeBufferWhenCreatingStorageInfoThenIsLockableFlagIsSetCorrectly) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::buffer, false, singleTileMask};
     {
         properties.makeDeviceBufferLockable = false;
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
@@ -501,7 +501,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenAllocationTypeBufferWhenCreatingStorageI
         EXPECT_TRUE(storageInfo.isLockable);
     }
     {
-        properties.allocationType = AllocationType::IMAGE;
+        properties.allocationType = AllocationType::image;
         auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
         EXPECT_FALSE(storageInfo.isLockable);
     }
@@ -511,7 +511,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenGpuTimestampAllocationWhenUsingSingleTil
     AllocationProperties properties{mockRootDeviceIndex,
                                     false,
                                     1u,
-                                    AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER,
+                                    AllocationType::gpuTimestampDeviceBuffer,
                                     singleTileMask.count() > 1u,
                                     false,
                                     singleTileMask};
@@ -527,7 +527,7 @@ TEST_F(MultiDeviceStorageInfoTest,
     AllocationProperties properties{mockRootDeviceIndex,
                                     false,
                                     1u,
-                                    AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER,
+                                    AllocationType::gpuTimestampDeviceBuffer,
                                     allTilesMask.count() > 1u,
                                     false,
                                     allTilesMask};
@@ -544,21 +544,21 @@ TEST_F(MultiDeviceStorageInfoTest,
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForSemaphoreBufferThenProvidedMemoryBankIsSelected) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SEMAPHORE_BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::semaphoreBuffer, false, singleTileMask};
     properties.flags.multiOsContextCapable = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForCommandBufferThenProvidedMemoryBankIsSelected) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::commandBuffer, false, singleTileMask};
     properties.flags.multiOsContextCapable = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForRingBufferThenProvidedMemoryBankIsSelected) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::RING_BUFFER, false, singleTileMask};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::ringBuffer, false, singleTileMask};
     properties.flags.multiOsContextCapable = false;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
@@ -577,7 +577,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForSemap
 
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
 
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SEMAPHORE_BUFFER, false, affinityMaskHelper.getGenericSubDevicesMask()};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::semaphoreBuffer, false, affinityMaskHelper.getGenericSubDevicesMask()};
     properties.flags.multiOsContextCapable = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
@@ -596,7 +596,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForComma
 
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
 
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, false, affinityMaskHelper.getGenericSubDevicesMask()};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::commandBuffer, false, affinityMaskHelper.getGenericSubDevicesMask()};
     properties.flags.multiOsContextCapable = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
@@ -615,7 +615,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForRingB
 
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
 
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::RING_BUFFER, false, affinityMaskHelper.getGenericSubDevicesMask()};
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::ringBuffer, false, affinityMaskHelper.getGenericSubDevicesMask()};
     properties.flags.multiOsContextCapable = true;
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
@@ -637,7 +637,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageD
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
 
     for (auto &multiTile : ::testing::Bool()) {
-        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+        for (auto &allocationType : {AllocationType::commandBuffer, AllocationType::ringBuffer, AllocationType::semaphoreBuffer}) {
             AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
             properties.flags.multiOsContextCapable = multiTile;
             auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
@@ -662,7 +662,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
 
     for (auto &multiTile : ::testing::Bool()) {
-        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+        for (auto &allocationType : {AllocationType::commandBuffer, AllocationType::ringBuffer, AllocationType::semaphoreBuffer}) {
             AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
             properties.flags.multiOsContextCapable = multiTile;
             auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
@@ -692,7 +692,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
     memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
 
     for (auto &multiTile : ::testing::Bool()) {
-        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+        for (auto &allocationType : {AllocationType::commandBuffer, AllocationType::ringBuffer, AllocationType::semaphoreBuffer}) {
             AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
             properties.flags.multiOsContextCapable = multiTile;
             auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);

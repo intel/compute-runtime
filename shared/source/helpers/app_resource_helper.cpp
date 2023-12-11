@@ -22,99 +22,99 @@ void AppResourceHelper::copyResourceTagStr(char *dst, AllocationType type, size_
 
 const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
     switch (type) {
-    case AllocationType::UNKNOWN:
+    case AllocationType::unknown:
         return "UNKNOWN";
-    case AllocationType::BUFFER:
+    case AllocationType::buffer:
         return "BUFFER";
-    case AllocationType::BUFFER_HOST_MEMORY:
+    case AllocationType::bufferHostMemory:
         return "BFHSTMEM";
-    case AllocationType::COMMAND_BUFFER:
+    case AllocationType::commandBuffer:
         return "CMNDBUFF";
-    case AllocationType::CONSTANT_SURFACE:
+    case AllocationType::constantSurface:
         return "CSNTSRFC";
-    case AllocationType::EXTERNAL_HOST_PTR:
+    case AllocationType::externalHostPtr:
         return "EXHSTPTR";
-    case AllocationType::FILL_PATTERN:
+    case AllocationType::fillPattern:
         return "FILPATRN";
-    case AllocationType::GLOBAL_SURFACE:
+    case AllocationType::globalSurface:
         return "GLBLSRFC";
-    case AllocationType::IMAGE:
+    case AllocationType::image:
         return "IMAGE";
-    case AllocationType::INDIRECT_OBJECT_HEAP:
+    case AllocationType::indirectObjectHeap:
         return "INOBHEAP";
-    case AllocationType::INSTRUCTION_HEAP:
+    case AllocationType::instructionHeap:
         return "INSTHEAP";
-    case AllocationType::INTERNAL_HEAP:
+    case AllocationType::internalHeap:
         return "INTLHEAP";
-    case AllocationType::INTERNAL_HOST_MEMORY:
+    case AllocationType::internalHostMemory:
         return "INHSTMEM";
-    case AllocationType::KERNEL_ARGS_BUFFER:
+    case AllocationType::kernelArgsBuffer:
         return "KARGBUF";
-    case AllocationType::KERNEL_ISA:
+    case AllocationType::kernelIsa:
         return "KERNLISA";
-    case AllocationType::KERNEL_ISA_INTERNAL:
+    case AllocationType::kernelIsaInternal:
         return "KRLISAIN";
-    case AllocationType::LINEAR_STREAM:
+    case AllocationType::linearStream:
         return "LINRSTRM";
-    case AllocationType::MAP_ALLOCATION:
+    case AllocationType::mapAllocation:
         return "MAPALLOC";
-    case AllocationType::MCS:
+    case AllocationType::mcs:
         return "MCS";
-    case AllocationType::PIPE:
+    case AllocationType::pipe:
         return "PIPE";
-    case AllocationType::PREEMPTION:
+    case AllocationType::preemption:
         return "PRMPTION";
-    case AllocationType::PRINTF_SURFACE:
+    case AllocationType::printfSurface:
         return "PRNTSRFC";
-    case AllocationType::PRIVATE_SURFACE:
+    case AllocationType::privateSurface:
         return "PRVTSRFC";
-    case AllocationType::PROFILING_TAG_BUFFER:
+    case AllocationType::profilingTagBuffer:
         return "PROFTGBF";
-    case AllocationType::SCRATCH_SURFACE:
+    case AllocationType::scratchSurface:
         return "SCRHSRFC";
-    case AllocationType::SHARED_BUFFER:
+    case AllocationType::sharedBuffer:
         return "SHRDBUFF";
-    case AllocationType::SHARED_IMAGE:
+    case AllocationType::sharedImage:
         return "SHERDIMG";
-    case AllocationType::SHARED_RESOURCE_COPY:
+    case AllocationType::sharedResourceCopy:
         return "SRDRSCCP";
-    case AllocationType::SURFACE_STATE_HEAP:
+    case AllocationType::surfaceStateHeap:
         return "SRFCSTHP";
-    case AllocationType::SVM_CPU:
+    case AllocationType::svmCpu:
         return "SVM_CPU";
-    case AllocationType::SVM_GPU:
+    case AllocationType::svmGpu:
         return "SVM_GPU";
-    case AllocationType::SVM_ZERO_COPY:
+    case AllocationType::svmZeroCopy:
         return "SVM0COPY";
-    case AllocationType::TAG_BUFFER:
+    case AllocationType::tagBuffer:
         return "TAGBUFER";
-    case AllocationType::GLOBAL_FENCE:
+    case AllocationType::globalFence:
         return "GLBLFENC";
-    case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case AllocationType::timestampPacketTagBuffer:
         return "TSPKTGBF";
-    case AllocationType::WRITE_COMBINED:
+    case AllocationType::writeCombined:
         return "WRTCMBND";
-    case AllocationType::RING_BUFFER:
+    case AllocationType::ringBuffer:
         return "RINGBUFF";
-    case AllocationType::SEMAPHORE_BUFFER:
+    case AllocationType::semaphoreBuffer:
         return "SMPHRBUF";
-    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::debugContextSaveArea:
         return "DBCXSVAR";
-    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::debugSbaTrackingBuffer:
         return "DBSBATRB";
-    case AllocationType::DEBUG_MODULE_AREA:
+    case AllocationType::debugModuleArea:
         return "DBMDLARE";
-    case AllocationType::UNIFIED_SHARED_MEMORY:
+    case AllocationType::unifiedSharedMemory:
         return "USHRDMEM";
-    case AllocationType::WORK_PARTITION_SURFACE:
+    case AllocationType::workPartitionSurface:
         return "WRPRTSRF";
-    case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+    case AllocationType::gpuTimestampDeviceBuffer:
         return "GPUTSDBF";
-    case AllocationType::SW_TAG_BUFFER:
+    case AllocationType::swTagBuffer:
         return "SWTAGBF";
-    case AllocationType::DEFERRED_TASKS_LIST:
+    case AllocationType::deferredTasksList:
         return "TSKLIST";
-    case AllocationType::ASSERT_BUFFER:
+    case AllocationType::assertBuffer:
         return "ASSRTBUF";
     default:
         return "NOTFOUND";

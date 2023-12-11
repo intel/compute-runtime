@@ -23,7 +23,7 @@ StorageInfo::StorageInfo() = default;
 
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     StorageInfo storageInfo{};
-    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::BUFFER);
+    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::buffer);
     if (properties.subDevicesBitfield.count() == 0) {
         return storageInfo;
     }
@@ -53,10 +53,10 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
                                           sizeof(storageInfo.resourceTag));
 
     switch (properties.allocationType) {
-    case AllocationType::CONSTANT_SURFACE:
-    case AllocationType::KERNEL_ISA:
-    case AllocationType::KERNEL_ISA_INTERNAL:
-    case AllocationType::DEBUG_MODULE_AREA: {
+    case AllocationType::constantSurface:
+    case AllocationType::kernelIsa:
+    case AllocationType::kernelIsaInternal:
+    case AllocationType::debugModuleArea: {
         auto placeAllocOnMultiTile = (properties.subDevicesBitfield.count() != 1);
         if (placeAllocOnMultiTile) {
             storageInfo.cloningOfPageTables = false;
@@ -68,14 +68,14 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.tileInstanced = false;
         }
     } break;
-    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
-    case AllocationType::WORK_PARTITION_SURFACE:
+    case AllocationType::debugContextSaveArea:
+    case AllocationType::workPartitionSurface:
         storageInfo.cloningOfPageTables = false;
         storageInfo.memoryBanks = allTilesValue;
         storageInfo.tileInstanced = true;
         break;
-    case AllocationType::PRIVATE_SURFACE:
-    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::privateSurface:
+    case AllocationType::debugSbaTrackingBuffer:
         storageInfo.cloningOfPageTables = false;
 
         if (properties.subDevicesBitfield.count() == 1) {
@@ -86,18 +86,18 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.tileInstanced = true;
         }
         break;
-    case AllocationType::COMMAND_BUFFER:
-    case AllocationType::INTERNAL_HEAP:
-    case AllocationType::LINEAR_STREAM:
+    case AllocationType::commandBuffer:
+    case AllocationType::internalHeap:
+    case AllocationType::linearStream:
         storageInfo.cloningOfPageTables = properties.flags.multiOsContextCapable;
         storageInfo.memoryBanks = preferredTile;
         if (!properties.flags.multiOsContextCapable) {
             storageInfo.pageTablesVisibility = preferredTile;
         }
         break;
-    case AllocationType::SCRATCH_SURFACE:
-    case AllocationType::PREEMPTION:
-    case AllocationType::DEFERRED_TASKS_LIST:
+    case AllocationType::scratchSurface:
+    case AllocationType::preemption:
+    case AllocationType::deferredTasksList:
         if (properties.flags.multiOsContextCapable) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
@@ -107,14 +107,14 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.pageTablesVisibility = preferredTile;
         }
         break;
-    case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+    case AllocationType::gpuTimestampDeviceBuffer:
         storageInfo.cloningOfPageTables = true;
         if (!properties.flags.multiOsContextCapable) {
             storageInfo.pageTablesVisibility = preferredTile;
         }
         break;
-    case AllocationType::BUFFER:
-    case AllocationType::SVM_GPU: {
+    case AllocationType::buffer:
+    case AllocationType::svmGpu: {
         auto colouringPolicy = properties.colouringPolicy;
         auto granularity = properties.colouringGranularity;
 
@@ -153,7 +153,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
         break;
     }
-    case AllocationType::UNIFIED_SHARED_MEMORY:
+    case AllocationType::unifiedSharedMemory:
         storageInfo.memoryBanks = allTilesValue;
         if (debugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
             storageInfo.memoryBanks = debugManager.flags.OverrideMultiStoragePlacement.get();
@@ -176,9 +176,9 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     }
 
     if (forceLocalMemoryForDirectSubmission) {
-        if (properties.allocationType == AllocationType::COMMAND_BUFFER ||
-            properties.allocationType == AllocationType::RING_BUFFER ||
-            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
+        if (properties.allocationType == AllocationType::commandBuffer ||
+            properties.allocationType == AllocationType::ringBuffer ||
+            properties.allocationType == AllocationType::semaphoreBuffer) {
             if (properties.flags.multiOsContextCapable) {
                 storageInfo.memoryBanks = {};
                 for (auto bank = 0u; bank < deviceCount; bank++) {
@@ -192,7 +192,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
     }
     if (debugManager.flags.ForceMultiTileAllocPlacement.get()) {
-        UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
+        UNRECOVERABLE_IF(properties.allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceMultiTileAllocPlacement.get()) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
@@ -200,7 +200,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
     }
     if (debugManager.flags.ForceSingleTileAllocPlacement.get()) {
-        UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
+        UNRECOVERABLE_IF(properties.allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceSingleTileAllocPlacement.get()) {
             storageInfo.cloningOfPageTables = true;
             storageInfo.memoryBanks = preferredTile;

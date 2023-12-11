@@ -69,7 +69,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreated
         auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());
         ASSERT_NE(nullptr, sbaAllocation);
         allocations.push_back(sbaAllocation);
-        EXPECT_EQ(NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::debugSbaTrackingBuffer, sbaAllocation->getAllocationType());
     }
 
     for (uint32_t i = 0; i < allocations.size() - 1; i++) {
@@ -119,7 +119,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
     AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,
-                                                    AllocationType::COMMAND_BUFFER,
+                                                    AllocationType::commandBuffer,
                                                     false,
                                                     pDevice->getDeviceBitfield()};
     auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
@@ -239,7 +239,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,
-                                                    AllocationType::COMMAND_BUFFER,
+                                                    AllocationType::commandBuffer,
                                                     false,
                                                     pDevice->getDeviceBitfield()};
     auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);
@@ -345,7 +345,7 @@ HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaT
     AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,
-                                                    AllocationType::COMMAND_BUFFER,
+                                                    AllocationType::commandBuffer,
                                                     false,
                                                     pDevice->getDeviceBitfield()};
     auto streamAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandBufferProperties);

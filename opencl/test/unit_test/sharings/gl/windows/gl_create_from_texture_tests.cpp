@@ -344,6 +344,6 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureWhenCreateIsCalledThenAllocationT
 
     auto graphicsAllocation = glImage->getGraphicsAllocation(clContext.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, graphicsAllocation);
-    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::sharedImage, graphicsAllocation->getAllocationType());
 }
 } // namespace NEO

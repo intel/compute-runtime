@@ -15,7 +15,7 @@ namespace NEO {
 class MockWddmAllocation : public WddmAllocation {
   public:
     MockWddmAllocation(GmmHelper *gmmHelper) : MockWddmAllocation(gmmHelper, EngineLimits::maxHandleCount) {}
-    MockWddmAllocation(GmmHelper *gmmHelper, uint32_t numGmms) : WddmAllocation(0, numGmms, AllocationType::UNKNOWN,
+    MockWddmAllocation(GmmHelper *gmmHelper, uint32_t numGmms) : WddmAllocation(0, numGmms, AllocationType::unknown,
                                                                                 nullptr, 0, 0, nullptr, MemoryPool::MemoryNull, 0u, 3u),
                                                                  gpuPtr(gpuAddress), handle(handles[0]) {
         for (uint32_t i = 0; i < numGmms; i++) {

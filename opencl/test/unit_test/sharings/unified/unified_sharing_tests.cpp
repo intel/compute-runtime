@@ -200,7 +200,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsNtHandleWhenCreateGraphi
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::Win32Nt;
-    AllocationType allocationType = AllocationType::SHARED_IMAGE;
+    AllocationType allocationType = AllocationType::sharedImage;
     MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
 
     EXPECT_TRUE(memoryManager->createFromNTHandleCalled);
@@ -212,7 +212,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGr
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::Win32Shared;
-    AllocationType allocationType = AllocationType::SHARED_IMAGE;
+    AllocationType allocationType = AllocationType::sharedImage;
     MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
 
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
@@ -226,7 +226,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenLinuxSharedHandleWhenCreateGrap
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
     desc.type = UnifiedSharingHandleType::LinuxFd;
-    AllocationType allocationType = AllocationType::SHARED_IMAGE;
+    AllocationType allocationType = AllocationType::sharedImage;
     MockSharingHandler::createGraphicsAllocation(this->context.get(), desc, allocationType);
 
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);

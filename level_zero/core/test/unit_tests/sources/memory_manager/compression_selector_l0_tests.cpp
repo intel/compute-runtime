@@ -17,7 +17,7 @@ namespace ult {
 TEST(CompressionSelectorL0Tests, GivenDefaultDebugFlagWhenProvidingUsmAllocationThenExpectCompressionDisabled) {
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::BUFFER,
+                                    AllocationType::buffer,
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
@@ -30,7 +30,7 @@ TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocatio
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::BUFFER,
+                                    AllocationType::buffer,
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
@@ -43,7 +43,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocation
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::BUFFER,
+                                    AllocationType::buffer,
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
@@ -56,7 +56,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocat
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::SVM_GPU,
+                                    AllocationType::svmGpu,
                                     deviceBitfield);
 
     EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
@@ -68,7 +68,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocati
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::BUFFER_HOST_MEMORY,
+                                    AllocationType::bufferHostMemory,
                                     deviceBitfield);
 
     EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties));

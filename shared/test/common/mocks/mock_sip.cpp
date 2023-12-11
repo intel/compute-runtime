@@ -41,7 +41,7 @@ const std::vector<char> &MockSipKernel::getStateSaveAreaHeader() const {
 void MockSipKernel::createMockSipAllocation() {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
-                                           AllocationType::KERNEL_ISA_INTERNAL,
+                                           AllocationType::kernelIsaInternal,
                                            nullptr,
                                            MemoryConstants::pageSize * 10u,
                                            0u,

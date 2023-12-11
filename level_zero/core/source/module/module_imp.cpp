@@ -840,7 +840,7 @@ size_t ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding(size_t isaSiz
 }
 
 NEO::GraphicsAllocation *ModuleImp::allocateKernelsIsaMemory(size_t size) {
-    auto allocType = (this->type == ModuleType::Builtin ? NEO::AllocationType::KERNEL_ISA_INTERNAL : NEO::AllocationType::KERNEL_ISA);
+    auto allocType = (this->type == ModuleType::Builtin ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa);
     auto neoDevice = this->device->getNEODevice();
     return neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({neoDevice->getRootDeviceIndex(),
                                                                                 size,

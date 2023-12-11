@@ -283,8 +283,8 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
     MockBuffer &src = *srcPtr;
     MockBuffer &dst = *dstPtr;
 
-    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
-    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     BuiltinOpParams builtinOpsParams;
 
@@ -350,8 +350,8 @@ TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreated
     MockBuffer &src = *srcPtr;
     MockBuffer &dst = *dstPtr;
 
-    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
-    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
     BuiltinOpParams builtinOpsParams;
 
@@ -916,8 +916,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToSystemBufferRec
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -956,8 +956,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRect
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -996,8 +996,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIs
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -1031,8 +1031,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -1094,7 +1094,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
 
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
     std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
@@ -1132,7 +1132,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
 
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::BUFFER);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
     std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 

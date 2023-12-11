@@ -842,7 +842,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc(0, AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
     uint64_t bufferAddress = (uint64_t)gfxAlloc.getUnderlyingBuffer();
 
     // create kernel
@@ -870,7 +870,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
     char buffer[16];
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(buffer));
-    GraphicsAllocation gfxAlloc(0, AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel
@@ -963,7 +963,7 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc(0, AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
     uint64_t bufferAddress = (uint64_t)gfxAlloc.getUnderlyingBuffer();
 
     // create kernel
@@ -990,7 +990,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
     char buffer[16];
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(buffer));
-    GraphicsAllocation gfxAlloc(0, AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel
@@ -3272,7 +3272,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
     char buffer[MemoryConstants::pageSize64k];
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(buffer));
-    GraphicsAllocation gfxAlloc(0, AllocationType::CONSTANT_SURFACE, buffer, MemoryConstants::pageSize64k,
+    GraphicsAllocation gfxAlloc(0, AllocationType::constantSurface, buffer, MemoryConstants::pageSize64k,
                                 static_cast<osHandle>(8), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, canonizedGpuAddress);
 
     MockContext context(pClDevice);
@@ -3434,13 +3434,13 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithoutImplicitArgsWhenSettingKernelPa
 
 TEST_F(KernelTests, GivenCorrectAllocationTypeThenFunctionCheckingSystemMemoryReturnsTrue) {
     std::vector<NEO::AllocationType> systemMemoryAllocationType = {
-        NEO::AllocationType::BUFFER_HOST_MEMORY,
-        NEO::AllocationType::EXTERNAL_HOST_PTR,
-        NEO::AllocationType::SVM_CPU,
-        NEO::AllocationType::SVM_ZERO_COPY};
+        NEO::AllocationType::bufferHostMemory,
+        NEO::AllocationType::externalHostPtr,
+        NEO::AllocationType::svmCpu,
+        NEO::AllocationType::svmZeroCopy};
 
-    for (uint32_t allocationTypeIndex = static_cast<uint32_t>(NEO::AllocationType::UNKNOWN);
-         allocationTypeIndex < static_cast<uint32_t>(NEO::AllocationType::COUNT);
+    for (uint32_t allocationTypeIndex = static_cast<uint32_t>(NEO::AllocationType::unknown);
+         allocationTypeIndex < static_cast<uint32_t>(NEO::AllocationType::count);
          allocationTypeIndex++) {
         auto currentAllocationType = static_cast<NEO::AllocationType>(allocationTypeIndex);
         bool ret = Kernel::graphicsAllocationTypeUseSystemMemory(currentAllocationType);

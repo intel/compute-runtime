@@ -1105,7 +1105,7 @@ TEST(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocInt
     auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(AllocationType::BUFFER, gpuAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::buffer, gpuAllocation->getAllocationType());
     EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryDeviceAllocation));
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
 
@@ -1128,7 +1128,7 @@ TEST(clUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocInte
     auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(gpuAllocation->getAllocationType(), AllocationType::WRITE_COMBINED);
+    EXPECT_EQ(gpuAllocation->getAllocationType(), AllocationType::writeCombined);
     EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryDeviceAllocation));
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
 
@@ -1294,8 +1294,8 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalle
     EXPECT_EQ(graphicsAllocation1->getRootDeviceIndex(), 1u);
     EXPECT_EQ(graphicsAllocation2->getRootDeviceIndex(), 2u);
 
-    EXPECT_EQ(graphicsAllocation1->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_EQ(graphicsAllocation2->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation1->getAllocationType(), AllocationType::bufferHostMemory);
+    EXPECT_EQ(graphicsAllocation2->getAllocationType(), AllocationType::bufferHostMemory);
 
     EXPECT_EQ(graphicsAllocation1->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
     EXPECT_EQ(graphicsAllocation2->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
@@ -1331,8 +1331,8 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     EXPECT_EQ(graphicsAllocation1->getRootDeviceIndex(), 1u);
     EXPECT_EQ(graphicsAllocation2->getRootDeviceIndex(), 2u);
 
-    EXPECT_EQ(graphicsAllocation1->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_EQ(graphicsAllocation2->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation1->getAllocationType(), AllocationType::bufferHostMemory);
+    EXPECT_EQ(graphicsAllocation2->getAllocationType(), AllocationType::bufferHostMemory);
 
     EXPECT_EQ(graphicsAllocation1->getGpuAddress(), castToUint64(unifiedMemorySharedAllocation));
     EXPECT_EQ(graphicsAllocation2->getGpuAddress(), castToUint64(unifiedMemorySharedAllocation));

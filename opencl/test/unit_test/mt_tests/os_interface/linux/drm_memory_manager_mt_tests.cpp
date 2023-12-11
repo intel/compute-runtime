@@ -54,7 +54,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
-        AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
+        AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
         createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
         EXPECT_GE(1u, memoryManager->peekSharedBosSize());
@@ -125,7 +125,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
-        AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
+        AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
         createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
 

@@ -57,7 +57,7 @@ int32_t KernelInfo::getArgNumByName(const char *name) const {
 bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.kernelHeapSize;
-    const auto allocType = internalIsa ? AllocationType::KERNEL_ISA_INTERNAL : AllocationType::KERNEL_ISA;
+    const auto allocType = internalIsa ? AllocationType::kernelIsaInternal : AllocationType::kernelIsa;
 
     if (device.getMemoryManager()->isKernelBinaryReuseEnabled()) {
         auto lock = device.getMemoryManager()->lockKernelAllocationMap();

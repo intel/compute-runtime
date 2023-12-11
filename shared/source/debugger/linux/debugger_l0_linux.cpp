@@ -75,7 +75,7 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
     for (auto &allocation : allocs) {
         auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
 
-        DEBUG_BREAK_IF(allocation->getAllocationType() == AllocationType::KERNEL_ISA_INTERNAL);
+        DEBUG_BREAK_IF(allocation->getAllocationType() == AllocationType::kernelIsaInternal);
         drmAllocation->linkWithRegisteredHandle(elfHandle);
         drmAllocation->linkWithRegisteredHandle(moduleHandle);
     }

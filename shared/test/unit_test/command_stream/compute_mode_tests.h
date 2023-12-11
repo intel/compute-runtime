@@ -83,7 +83,7 @@ struct ComputeModeRequirements : public ::testing::Test {
         csr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
 
         device->resetCommandStreamReceiver(csr);
-        AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
+        AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
 
         alloc = device->getMemoryManager()->createGraphicsAllocationFromSharedHandle(static_cast<osHandle>(123), properties, false, false, true, nullptr);
     }

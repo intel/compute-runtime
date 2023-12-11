@@ -76,7 +76,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     if (textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE) {
         sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle);
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, true)) {
-            alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex, AllocationType::SHARED_IMAGE);
+            alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex, AllocationType::sharedImage);
         } else {
             err.set(CL_INVALID_D3D11_RESOURCE_KHR);
             return nullptr;
@@ -86,7 +86,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         AllocationProperties allocProperties(rootDeviceIndex,
                                              false, // allocateMemory
                                              0u,    // size
-                                             AllocationType::SHARED_IMAGE,
+                                             AllocationType::sharedImage,
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
@@ -169,7 +169,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     if (textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE) {
         sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle);
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, true)) {
-            alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex, AllocationType::SHARED_IMAGE);
+            alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex, AllocationType::sharedImage);
         } else {
             err.set(CL_INVALID_D3D11_RESOURCE_KHR);
             return nullptr;
@@ -179,7 +179,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
         AllocationProperties allocProperties(rootDeviceIndex,
                                              false, // allocateMemory
                                              0u,    // size
-                                             AllocationType::SHARED_IMAGE,
+                                             AllocationType::sharedImage,
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {

@@ -694,7 +694,7 @@ void Device::initializeRayTracing(uint32_t maxBvhLevels) {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
 
-        AllocationProperties allocProps(getRootDeviceIndex(), true, size, AllocationType::BUFFER, true, getDeviceBitfield());
+        AllocationProperties allocProps(getRootDeviceIndex(), true, size, AllocationType::buffer, true, getDeviceBitfield());
         auto &productHelper = getProductHelper();
         allocProps.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
         allocProps.flags.isUSMDeviceAllocation = true;
@@ -890,7 +890,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
 
     AllocationProperties arrayAllocProps(getRootDeviceIndex(), true, dispatchGlobalsSize,
-                                         AllocationType::GLOBAL_SURFACE, true, getDeviceBitfield());
+                                         AllocationType::globalSurface, true, getDeviceBitfield());
     arrayAllocProps.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
     arrayAllocProps.flags.isUSMDeviceAllocation = true;
     dispatchGlobalsArrayAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(arrayAllocProps);
@@ -905,7 +905,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
                 ? this->getDeviceBitfield()
                 : subdevices[tile]->getDeviceBitfield();
 
-        AllocationProperties allocProps(getRootDeviceIndex(), true, rtStackSize, AllocationType::BUFFER, true, deviceBitfield);
+        AllocationProperties allocProps(getRootDeviceIndex(), true, rtStackSize, AllocationType::buffer, true, deviceBitfield);
         allocProps.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
         allocProps.flags.isUSMDeviceAllocation = true;
 

@@ -732,22 +732,22 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     const AllocationType onlyOneTimeAubWritableTypes[] = {
-        AllocationType::PIPE,
-        AllocationType::CONSTANT_SURFACE,
-        AllocationType::GLOBAL_SURFACE,
-        AllocationType::KERNEL_ISA,
-        AllocationType::KERNEL_ISA_INTERNAL,
-        AllocationType::PRIVATE_SURFACE,
-        AllocationType::SCRATCH_SURFACE,
-        AllocationType::WORK_PARTITION_SURFACE,
-        AllocationType::BUFFER,
-        AllocationType::BUFFER_HOST_MEMORY,
-        AllocationType::IMAGE,
-        AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
-        AllocationType::MAP_ALLOCATION,
-        AllocationType::SVM_GPU,
-        AllocationType::EXTERNAL_HOST_PTR,
-        AllocationType::ASSERT_BUFFER};
+        AllocationType::pipe,
+        AllocationType::constantSurface,
+        AllocationType::globalSurface,
+        AllocationType::kernelIsa,
+        AllocationType::kernelIsaInternal,
+        AllocationType::privateSurface,
+        AllocationType::scratchSurface,
+        AllocationType::workPartitionSurface,
+        AllocationType::buffer,
+        AllocationType::bufferHostMemory,
+        AllocationType::image,
+        AllocationType::timestampPacketTagBuffer,
+        AllocationType::mapAllocation,
+        AllocationType::svmGpu,
+        AllocationType::externalHostPtr,
+        AllocationType::assertBuffer};
 
     for (auto allocationType : onlyOneTimeAubWritableTypes) {
         gfxAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
@@ -766,7 +766,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     aubCsr->initializeEngine();
 
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::BUFFER, pDevice->getDeviceBitfield()});
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, pDevice->getDeviceBitfield()});
 
     auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
 
@@ -787,7 +787,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::BUFFER, pDevice->getDeviceBitfield()});
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, pDevice->getDeviceBitfield()});
     aubCsr->setAubWritable(false, *gfxBufferAllocation);
 
     auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
@@ -812,7 +812,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::BUFFER, pDevice->getDeviceBitfield()});
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, pDevice->getDeviceBitfield()});
     aubCsr->setAubWritable(false, *gfxBufferAllocation);
 
     auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);

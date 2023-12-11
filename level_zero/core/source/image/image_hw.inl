@@ -81,7 +81,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
             if (lookupTable.sharedHandleType.isDMABUFHandle) {
-                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::SHARED_IMAGE, device->getNEODevice()->getDeviceBitfield());
+                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(lookupTable.sharedHandleType.fd, properties, false, false, true, nullptr);
                 device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
             } else if (lookupTable.sharedHandleType.isNTHandle) {
@@ -89,11 +89,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 if (!verifyResult) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
-                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(lookupTable.sharedHandleType.ntHnadle, device->getNEODevice()->getRootDeviceIndex(), NEO::AllocationType::SHARED_IMAGE);
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(lookupTable.sharedHandleType.ntHnadle, device->getNEODevice()->getRootDeviceIndex(), NEO::AllocationType::sharedImage);
                 allocation->getDefaultGmm()->queryImageParams(imgInfo);
             }
         } else {
-            NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
+            NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::image, device->getNEODevice()->getDeviceBitfield());
 
             properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
 

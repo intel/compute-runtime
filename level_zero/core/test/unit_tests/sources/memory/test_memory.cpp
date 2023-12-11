@@ -506,7 +506,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     NEO::GraphicsAllocation *ipcAlloc = nullptr;
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ipcPtr = driverHandleImp->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, &ipcAlloc, allocDataInternal);
+    void *ipcPtr = driverHandleImp->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, &ipcAlloc, allocDataInternal);
     EXPECT_EQ(ipcPtr, nullptr);
 
     result = context->freeMem(ptr);
@@ -3160,7 +3160,7 @@ TEST_F(MemoryExportImportTest,
        givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNoFdHandleThenErrorIsReturned) {
     class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
       public:
-        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
         int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
             return -1;
@@ -3183,7 +3183,7 @@ TEST_F(MemoryExportImportTest,
        givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNoFdHandleForWin32FormatThenErrorIsReturned) {
     class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
       public:
-        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
         int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
             return -1;
@@ -5378,7 +5378,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5392,7 +5392,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5406,7 +5406,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED | ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5420,7 +5420,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5434,7 +5434,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER_HOST_MEMORY, nullptr, nullptr, allocDataInternal);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::bufferHostMemory, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5449,7 +5449,7 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::BUFFER, nullptr, nullptr, allocDataInternal);
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
     EXPECT_NE(nullptr, ptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -5718,7 +5718,7 @@ TEST_F(MemAllocMultiSubDeviceTestsEnabledImplicitScaling, GivenImplicitScalingDi
 
 class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
   public:
-    ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+    ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
     int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
         return -1;

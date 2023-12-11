@@ -596,7 +596,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
                                                       allocationType,
                                                       neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
-    bool isHostIpcAllocation = (allocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ? true : false;
+    bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                            unifiedMemoryProperties,
@@ -646,7 +646,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
 void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData) {
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
-                                                      NEO::AllocationType::BUFFER,
+                                                      NEO::AllocationType::buffer,
                                                       neoDevice->getDeviceBitfield()};
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
 
@@ -799,7 +799,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
             peerPtr = this->importFdHandle(device->getNEODevice(),
                                            flags,
                                            handle,
-                                           NEO::AllocationType::BUFFER,
+                                           NEO::AllocationType::buffer,
                                            peerMapAddress,
                                            &alloc,
                                            allocDataInternal);
@@ -834,9 +834,9 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
 void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
-    bool isHostIpcAllocation = (allocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ? true : false;
+    bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
 
-    auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, neoDevice->getRootDeviceIndex(), NEO::AllocationType::SHARED_BUFFER);
+    auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, neoDevice->getRootDeviceIndex(), NEO::AllocationType::sharedBuffer);
 
     if (alloc == nullptr) {
         return nullptr;

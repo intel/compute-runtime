@@ -206,7 +206,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAre
 
 TEST_F(KernelArgBufferTest, givenBufferWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -223,7 +223,7 @@ TEST_F(KernelArgBufferTest, givenBufferWhenHasDirectStatelessAccessToHostMemoryI
 
 TEST_F(KernelArgBufferTest, givenSharedBufferWhenHasDirectStatelessAccessToSharedBufferIsCalledThenReturnCorrectValue) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::SHARED_BUFFER);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::sharedBuffer);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -240,7 +240,7 @@ TEST_F(KernelArgBufferTest, givenSharedBufferWhenHasDirectStatelessAccessToShare
 
 TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -264,7 +264,7 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHost
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(AllocationType::BUFFER);
+    gfxAllocation.setAllocationType(AllocationType::buffer);
 
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
@@ -285,7 +285,7 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStateless
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
@@ -324,15 +324,15 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
     MockKernel kernelWithNoIndirectHostAllocations(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectHostAllocations.hasIndirectStatelessAccessToHostMemory());
 
-    const auto allocationTypes = {AllocationType::BUFFER,
-                                  AllocationType::BUFFER_HOST_MEMORY};
+    const auto allocationTypes = {AllocationType::buffer,
+                                  AllocationType::bufferHostMemory};
 
     MockKernel kernelWithIndirectUnifiedMemoryAllocation(pProgram, kernelInfo, *pClDevice);
     MockGraphicsAllocation gfxAllocation;
     for (const auto type : allocationTypes) {
         gfxAllocation.setAllocationType(type);
         kernelWithIndirectUnifiedMemoryAllocation.setUnifiedMemoryExecInfo(&gfxAllocation);
-        if (type == AllocationType::BUFFER_HOST_MEMORY) {
+        if (type == AllocationType::bufferHostMemory) {
             EXPECT_TRUE(kernelWithIndirectUnifiedMemoryAllocation.hasIndirectStatelessAccessToHostMemory());
         } else {
             EXPECT_FALSE(kernelWithIndirectUnifiedMemoryAllocation.hasIndirectStatelessAccessToHostMemory());
@@ -383,7 +383,7 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessTo
     debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::SHARED_BUFFER);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::sharedBuffer);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -405,7 +405,7 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessTo
     debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -455,7 +455,7 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccess
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -501,7 +501,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectS
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
     MockGraphicsAllocation gfxAllocation;
-    gfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
@@ -520,8 +520,8 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
-    const auto allocationTypes = {AllocationType::BUFFER,
-                                  AllocationType::BUFFER_HOST_MEMORY};
+    const auto allocationTypes = {AllocationType::buffer,
+                                  AllocationType::bufferHostMemory};
 
     MockGraphicsAllocation gfxAllocation;
 
@@ -530,7 +530,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
-        if (type == AllocationType::BUFFER_HOST_MEMORY) {
+        if (type == AllocationType::bufferHostMemory) {
             EXPECT_TRUE(pKernel->hasIndirectStatelessAccessToHostMemory());
         } else {
             EXPECT_FALSE(pKernel->hasIndirectStatelessAccessToHostMemory());
@@ -540,7 +540,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
         pKernel->updateAuxTranslationRequired();
 
-        if (type == AllocationType::BUFFER_HOST_MEMORY) {
+        if (type == AllocationType::bufferHostMemory) {
             EXPECT_TRUE(pKernel->isAuxTranslationRequired());
         } else {
             EXPECT_FALSE(pKernel->isAuxTranslationRequired());
@@ -557,10 +557,10 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
-    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::BUFFER, false},
-                                                                      {AllocationType::BUFFER, true},
-                                                                      {AllocationType::BUFFER_HOST_MEMORY, false},
-                                                                      {AllocationType::SVM_GPU, true}}};
+    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
+                                                                      {AllocationType::buffer, true},
+                                                                      {AllocationType::bufferHostMemory, false},
+                                                                      {AllocationType::svmGpu, true}}};
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -599,10 +599,10 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.EnableStatelessCompression.set(1);
 
-    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::BUFFER, false},
-                                                                      {AllocationType::BUFFER, true},
-                                                                      {AllocationType::BUFFER_HOST_MEMORY, false},
-                                                                      {AllocationType::SVM_GPU, true}}};
+    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
+                                                                      {AllocationType::buffer, true},
+                                                                      {AllocationType::bufferHostMemory, false},
+                                                                      {AllocationType::svmGpu, true}}};
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -691,7 +691,7 @@ HWTEST_F(KernelArgBufferTestBindless, givenBindlessBuffersWhenPatchBindlessOffse
 
 TEST_F(KernelArgBufferTest, givenBufferAsHostMemoryWhenSettingKernelArgThenKernelUsesSystemMemory) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory);
 
     auto memVal = (cl_mem)&buffer;
     auto val = &memVal;
@@ -706,7 +706,7 @@ TEST_F(KernelArgBufferTest, givenBufferAsHostMemoryWhenSettingKernelArgThenKerne
 
 TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryWhenSettingKernelArgThenKernelNotUsesSystemMemory) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer);
 
     auto memVal = (cl_mem)&buffer;
     auto val = &memVal;
@@ -721,7 +721,7 @@ TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryWhenSettingKernelArgThenKer
 
 TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryAndKernelIsAlreadySetToUseSystemWhenSettingKernelArgThenKernelUsesSystemMemory) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer);
 
     auto memVal = (cl_mem)&buffer;
     auto val = &memVal;

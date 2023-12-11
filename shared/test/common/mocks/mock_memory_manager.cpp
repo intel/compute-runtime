@@ -230,7 +230,7 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(
 
 GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
     if (toOsHandle(handle) != invalidSharedHandle) {
-        auto graphicsAllocation = createMemoryAllocation(NEO::AllocationType::SHARED_BUFFER, nullptr, reinterpret_cast<void *>(1), 1,
+        auto graphicsAllocation = createMemoryAllocation(NEO::AllocationType::sharedBuffer, nullptr, reinterpret_cast<void *>(1), 1,
                                                          4096u, toOsHandle(handle), MemoryPool::SystemCpuInaccessible, rootDeviceIndex,
                                                          false, false, false);
         graphicsAllocation->setSharedHandle(toOsHandle(handle));

@@ -211,7 +211,7 @@ void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family:
 
 template <>
 void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
+    if (properties.allocationType == AllocationType::timestampPacketTagBuffer || properties.allocationType == AllocationType::commandBuffer) {
         allocationData.flags.useSystemMemory = false;
     }
 
@@ -228,9 +228,9 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     }
 
     if (forceLocalMemoryForDirectSubmission) {
-        if (properties.allocationType == AllocationType::COMMAND_BUFFER ||
-            properties.allocationType == AllocationType::RING_BUFFER ||
-            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
+        if (properties.allocationType == AllocationType::commandBuffer ||
+            properties.allocationType == AllocationType::ringBuffer ||
+            properties.allocationType == AllocationType::semaphoreBuffer) {
             allocationData.flags.useSystemMemory = false;
             allocationData.flags.requiresCpuAccess = true;
         }

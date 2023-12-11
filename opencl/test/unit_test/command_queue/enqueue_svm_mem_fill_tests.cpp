@@ -80,7 +80,7 @@ HWTEST_F(BaseEnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBui
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder, pattern, patternSize)));
 
     size_t patternSize = 0x10u;
-    auto patternAllocation = static_cast<MockGraphicsAllocation *>(context->getMemoryManager()->allocateGraphicsMemoryWithProperties({pCmdQ->getDevice().getRootDeviceIndex(), 2 * patternSize, AllocationType::FILL_PATTERN, pCmdQ->getDevice().getDeviceBitfield()}));
+    auto patternAllocation = static_cast<MockGraphicsAllocation *>(context->getMemoryManager()->allocateGraphicsMemoryWithProperties({pCmdQ->getDevice().getRootDeviceIndex(), 2 * patternSize, AllocationType::fillPattern, pCmdQ->getDevice().getDeviceBitfield()}));
 
     // offset cpuPtr so cpuPtr != gpuAddress (for patching) in order to ensure that setArgSVM will be called using gpu address of the pattern allocation
     auto origCpuPtr = patternAllocation->cpuPtr;
@@ -258,7 +258,7 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
     auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     svmData->size = static_cast<size_t>(bigSize);
-    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::SVM_ZERO_COPY);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmZeroCopy);
 
     cmdQ->validateKernelSystemMemory = true;
     cmdQ->expectedKernelSystemMemory = true;
@@ -278,7 +278,7 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
 HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
-    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::SVM_GPU);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmGpu);
 
     cmdQ->validateKernelSystemMemory = true;
     cmdQ->expectedKernelSystemMemory = false;

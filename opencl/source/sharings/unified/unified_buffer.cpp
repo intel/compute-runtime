@@ -17,7 +17,7 @@ using namespace NEO;
 Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription extMem, cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
 
-    auto graphicsAllocation = UnifiedBuffer::createGraphicsAllocation(context, extMem, AllocationType::SHARED_BUFFER);
+    auto graphicsAllocation = UnifiedBuffer::createGraphicsAllocation(context, extMem, AllocationType::sharedBuffer);
     if (!graphicsAllocation) {
         errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;

@@ -49,7 +49,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     }
     auto rootDeviceIndex = device.getRootDeviceIndex();
     kernel = multiDispatchInfo.peekMainKernel();
-    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
+    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::printfSurface, device.getDeviceBitfield()});
 
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     const auto &productHelper = device.getProductHelper();

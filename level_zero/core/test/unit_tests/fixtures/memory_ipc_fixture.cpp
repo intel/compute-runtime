@@ -318,7 +318,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithPro
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -338,7 +338,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromS
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -357,7 +357,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -373,7 +373,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromN
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -433,7 +433,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -450,7 +450,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -470,7 +470,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -491,7 +491,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
@@ -510,7 +510,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
-                                                              NEO::AllocationType::BUFFER,
+                                                              NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
                                                               0u,
