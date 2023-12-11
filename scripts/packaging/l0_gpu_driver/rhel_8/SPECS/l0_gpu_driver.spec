@@ -92,6 +92,10 @@ rm -rvf %{buildroot}/usr/lib/debug/
 mkdir -p %{buildroot}/usr/share/doc/intel-level-zero-gpu/
 cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu/.
 
+if [ -d "${NEO_NINJA_DUMP}" ]; then
+    cp -v .ninja* ${NEO_NINJA_DUMP}/
+fi
+
 %files
 %defattr(-,root,root)
 %{_libdir}/libze_intel_gpu.so.*

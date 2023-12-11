@@ -84,6 +84,10 @@ cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl/.
 mkdir -p %{buildroot}/usr/share/doc/intel-ocloc/
 cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc/.
 
+if [ -d "${NEO_NINJA_DUMP}" ]; then
+    cp -v .ninja* ${NEO_NINJA_DUMP}/
+fi
+
 %files
 %defattr(-,root,root)
 %{_libdir}/intel-opencl/libigdrcl.so

@@ -92,6 +92,10 @@ cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl%{?name_s
 mkdir -p %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/
 cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/.
 
+if [ -d "${NEO_NINJA_DUMP}" ]; then
+    cp -v .ninja* ${NEO_NINJA_DUMP}/
+fi
+
 %files -n intel-opencl%{?name_suffix}
 %defattr(-,root,root)
 %{_sysconfdir}/OpenCL
