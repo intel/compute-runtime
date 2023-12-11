@@ -20,6 +20,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
@@ -345,21 +346,31 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    rootDeviceEnvironment);
 
     auto &postSync = walkerCmd.getPostSync();
-    if (args.eventAddress != 0) {
+    if (args.eventAddress != 0 || args.inOrderExecInfo) {
         postSync.setDataportPipelineFlush(true);
         postSync.setDataportSubsliceCacheFlush(true);
 
-        if (args.isTimestampEvent) {
-            UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(args.eventAddress)));
+        auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
+        uint64_t gpuVa = args.eventAddress;
+        uint64_t immData = args.postSyncImmValue;
 
-            postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
-        } else {
-            UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(args.eventAddress)));
+        if (args.inOrderExecInfo) {
+            gpuVa = args.inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + args.inOrderExecInfo->getAllocationOffset();
+            immData = args.inOrderCounterValue;
+        } else if (args.isTimestampEvent) {
+            operationType = POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP;
+            immData = 0;
 
-            postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
-            postSync.setImmediateData(args.postSyncImmValue);
+            UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(gpuVa)));
         }
-        postSync.setDestinationAddress(args.eventAddress);
+
+        if (operationType == POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA) {
+            UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
+        }
+
+        postSync.setOperation(operationType);
+        postSync.setImmediateData(immData);
+        postSync.setDestinationAddress(gpuVa);
 
         EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, args.dcFlushEnable);
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);

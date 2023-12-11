@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/helpers/in_order_cmd_helpers.h"
 
 #include <memory>
 
@@ -39,7 +39,7 @@ struct CommandListImp : public CommandList {
     virtual void patchInOrderCmds() = 0;
 
   protected:
-    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
+    std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
 
     ~CommandListImp() override = default;
 

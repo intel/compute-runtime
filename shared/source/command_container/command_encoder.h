@@ -26,6 +26,7 @@ class BindlessHeapsHelper;
 class Gmm;
 class GmmHelper;
 class IndirectHeap;
+class InOrderExecInfo;
 class ProductHelper;
 
 struct DeviceInfo;
@@ -43,9 +44,11 @@ struct StateBaseAddressProperties;
 struct StateComputeModeProperties;
 
 struct EncodeDispatchKernelArgs {
-    uint64_t eventAddress = 0ull;
+    uint64_t eventAddress = 0;
     uint64_t postSyncImmValue = 0;
+    uint64_t inOrderCounterValue = 0;
     Device *device = nullptr;
+    NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
     DispatchKernelEncoderI *dispatchInterface = nullptr;
     IndirectHeap *surfaceStateHeap = nullptr;
     IndirectHeap *dynamicStateHeap = nullptr;

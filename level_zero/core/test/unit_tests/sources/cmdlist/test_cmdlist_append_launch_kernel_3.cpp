@@ -637,7 +637,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                          // eventAddress
         0,                                          // postSyncImmValue
+        0,                                          // inOrderCounterValue
         device->getNEODevice(),                     // device
+        nullptr,                                    // inOrderExecInfo
         kernel.get(),                               // dispatchInterface
         nullptr,                                    // surfaceStateHeap
         nullptr,                                    // dynamicStateHeap
@@ -2628,11 +2630,11 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonPostSyncWalkerMatcher) {
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::None);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::Walker);
 
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }
@@ -3022,9 +3024,9 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
     ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size());
 
     if (NonPostSyncWalkerMatcher::isMatched<productFamily>()) {
-        EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::Sdi, regularCmdList->inOrderPatchCmds[0].patchCmdType);
+        EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::Sdi, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     } else {
-        EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::Walker, regularCmdList->inOrderPatchCmds[0].patchCmdType);
+        EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::Walker, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     }
 
     GenCmdList cmdList;

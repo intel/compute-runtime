@@ -186,7 +186,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                          // eventAddress
         0,                                          // postSyncImmValue
+        0,                                          // inOrderCounterValue
         device->getNEODevice(),                     // device
+        nullptr,                                    // inOrderExecInfo
         kernel.get(),                               // dispatchInterface
         nullptr,                                    // surfaceStateHeap
         nullptr,                                    // dynamicStateHeap

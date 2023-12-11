@@ -423,7 +423,7 @@ void Event::setIsCompleted() {
     unsetCmdQueue();
 }
 
-void Event::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
+void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
     resetCompletionStatus();
 
     if (this->inOrderExecInfo.get() != newInOrderExecInfo.get()) {
@@ -435,7 +435,7 @@ void Event::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderE
 }
 
 uint64_t Event::getInOrderExecSignalValueWithSubmissionCounter() const {
-    return (inOrderExecSignalValue + InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
+    return (inOrderExecSignalValue + NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
 }
 
 void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {

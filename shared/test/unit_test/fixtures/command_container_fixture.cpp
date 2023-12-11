@@ -39,7 +39,9 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
     EncodeDispatchKernelArgs args{
         0,                                          // eventAddress
         0,                                          // postSyncImmValue
+        0,                                          // inOrderCounterValue
         device,                                     // device
+        nullptr,                                    // inOrderExecInfo
         dispatchInterface,                          // dispatchInterface
         nullptr,                                    // surfaceStateHeap
         nullptr,                                    // dynamicStateHeap

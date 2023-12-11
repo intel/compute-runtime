@@ -11,8 +11,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0.h
                ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_l0.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/in_order_cmd_helpers.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/in_order_cmd_helpers.h
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_factory_init.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_populate_factory.h
                ${CMAKE_CURRENT_SOURCE_DIR}/properties_parser.h

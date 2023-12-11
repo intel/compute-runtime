@@ -171,7 +171,7 @@ struct CommandListCoreFamily : public CommandListImp {
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest) override;
-    void appendWaitOnInOrderDependency(std::shared_ptr<InOrderExecInfo> &inOrderExecInfo, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency);
+    void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency);
     void appendSignalInOrderDependencyCounter(Event *signalEvent);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining);
 
@@ -340,12 +340,12 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;
 
-    void addCmdForPatching(std::shared_ptr<InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
+    void addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 
     bool inOrderAtomicSignallingEnabled() const override;
     uint64_t getInOrderIncrementValue() const;
 
-    InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
+    NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     uint64_t latestHostWaitedInOrderSyncValue = 0;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;

@@ -247,8 +247,8 @@ void CommandListImp::enableInOrderExecution() {
 
     UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
-    inOrderExecInfo = std::make_shared<InOrderExecInfo>(*inOrderDependencyCounterAllocation, hostCounterAllocation, *device->getMemoryManager(), this->partitionCount,
-                                                        (this->cmdListType == TYPE_REGULAR), inOrderAtomicSignallingEnabled());
+    inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(*inOrderDependencyCounterAllocation, hostCounterAllocation, *device->getMemoryManager(), this->partitionCount,
+                                                             (this->cmdListType == TYPE_REGULAR), inOrderAtomicSignallingEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

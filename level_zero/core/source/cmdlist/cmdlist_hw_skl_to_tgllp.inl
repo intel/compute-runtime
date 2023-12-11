@@ -192,7 +192,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                                      // eventAddress
         static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
+        0,                                                      // inOrderCounterValue
         neoDevice,                                              // device
+        nullptr,                                                // inOrderExecInfo
         kernel,                                                 // dispatchInterface
         ssh,                                                    // surfaceStateHeap
         dsh,                                                    // dynamicStateHeap

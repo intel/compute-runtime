@@ -30,6 +30,7 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class MultiGraphicsAllocation;
 struct RootDeviceEnvironment;
+class InOrderExecInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -43,7 +44,6 @@ struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
 struct Kernel;
-class InOrderExecInfo;
 
 #pragma pack(1)
 struct IpcEventPoolData {
@@ -238,7 +238,7 @@ struct Event : _ze_event_handle_t {
     void setMetricNotification(MetricCollectorEventNotify *metricNotification) {
         this->metricNotification = metricNotification;
     }
-    void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
+    void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::ExplicitlyEnabled) || (counterBasedMode == CounterBasedMode::ImplicitlyEnabled)); }
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::ExplicitlyEnabled); }
     void enableCounterBasedMode(bool apiRequest);
@@ -254,7 +254,7 @@ struct Event : _ze_event_handle_t {
     void setReferenceTs(uint64_t currentCpuTimeStamp);
     const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
     bool hasKerneMappedTsCapability = false;
-    std::shared_ptr<InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
+    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
     void enableKmdWaitMode() { kmdWaitMode = true; }
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
     void unsetInOrderExecInfo();
@@ -296,7 +296,7 @@ struct Event : _ze_event_handle_t {
     EventPool *eventPool = nullptr;
     std::weak_ptr<Kernel> kernelWithPrintf = std::weak_ptr<Kernel>{};
     std::mutex *kernelWithPrintfDeviceMutex = nullptr;
-    std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
+    std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
     CommandQueue *latestUsedCmdQueue = nullptr;
 
     uint32_t maxKernelCount = 0;

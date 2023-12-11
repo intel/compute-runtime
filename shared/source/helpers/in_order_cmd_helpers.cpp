@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -13,7 +13,7 @@
 #include <string.h>
 #include <vector>
 
-namespace L0 {
+namespace NEO {
 
 InOrderExecInfo::~InOrderExecInfo() {
     memoryManager.freeGraphicsMemory(&deviceCounterAllocation);
@@ -37,7 +37,7 @@ InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocatio
 }
 
 void InOrderExecInfo::reset() {
-    counterValue = 0;
+    resetCounterValue();
     regularCmdListSubmissionCounter = 0;
     allocationOffset = 0;
 
@@ -48,4 +48,4 @@ void InOrderExecInfo::reset() {
     }
 }
 
-} // namespace L0
+} // namespace NEO

@@ -20,6 +20,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -33,7 +34,6 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
-#include "level_zero/core/source/helpers/in_order_cmd_helpers.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 

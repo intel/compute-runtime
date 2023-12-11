@@ -275,10 +275,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         appendEventForProfilingAllWalkers(compactEvent, true, true);
     }
 
+    bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation);
+    bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
+
+    uint64_t inOrderCounterValue = 0;
+    NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
+
+    if (inOrderExecSignalRequired) {
+        if (inOrderNonWalkerSignalling) {
+            dispatchEventPostSyncOperation(eventForInOrderExec, Event::STATE_CLEARED, false, false, false, false);
+        } else {
+            inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+            inOrderExecInfo = this->inOrderExecInfo.get();
+        }
+    }
+
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         eventAddress,                                           // eventAddress
         static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
+        inOrderCounterValue,                                    // inOrderCounterValue
         neoDevice,                                              // device
+        inOrderExecInfo,                                        // inOrderExecInfo
         kernel,                                                 // dispatchInterface
         ssh,                                                    // surfaceStateHeap
         dsh,                                                    // dynamicStateHeap
@@ -302,20 +319,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport,                                   // dcFlushEnable
-        this->heaplessModeEnabled                               // isHeaplessModeEnabled
+        this->heaplessModeEnabled,                              // isHeaplessModeEnabled
     };
-
-    bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation);
-    bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
-
-    if (inOrderExecSignalRequired) {
-        if (inOrderNonWalkerSignalling) {
-            dispatchEventPostSyncOperation(eventForInOrderExec, Event::STATE_CLEARED, false, false, false, false);
-        } else {
-            dispatchKernelArgs.eventAddress = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + inOrderExecInfo->getAllocationOffset();
-            dispatchKernelArgs.postSyncImmValue = inOrderExecInfo->getCounterValue() + 1;
-        }
-    }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
 
@@ -343,7 +348,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
-            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, dispatchKernelArgs.postSyncImmValue, InOrderPatchCommandHelpers::PatchCmdType::Walker);
+            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::Walker);
         }
     }
 

@@ -17,9 +17,6 @@
 namespace NEO {
 class GraphicsAllocation;
 class MemoryManager;
-} // namespace NEO
-
-namespace L0 {
 
 class InOrderExecInfo : public NEO::NonCopyableClass {
   public:
@@ -171,6 +168,6 @@ struct PatchCmd {
 } // namespace InOrderPatchCommandHelpers
 
 template <typename GfxFamily>
-using InOrderPatchCommandsContainer = std::vector<InOrderPatchCommandHelpers::PatchCmd<GfxFamily>>;
+using InOrderPatchCommandsContainer = std::vector<NEO::InOrderPatchCommandHelpers::PatchCmd<GfxFamily>>;
 
-} // namespace L0
+} // namespace NEO
