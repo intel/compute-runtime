@@ -139,8 +139,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     mappedTsEventList.clear();
 
-    inOrderAllocationOffset = 0;
-
     if (inOrderExecInfo) {
         inOrderExecInfo->reset();
     }
@@ -164,16 +162,16 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
     }
 
     if (!isQwordInOrderCounter() && ((inOrderExecInfo->getCounterValue() + 1) == std::numeric_limits<uint32_t>::max())) {
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->getCounterValue() + 1, inOrderAllocationOffset, false, true);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->getCounterValue() + 1, inOrderExecInfo->getAllocationOffset(), false, true);
 
         inOrderExecInfo->resetCounterValue();
 
         // multitile immediate writes are uint64_t aligned
         uint32_t offset = this->partitionCount * static_cast<uint32_t>(sizeof(uint64_t));
 
-        inOrderAllocationOffset += offset;
+        inOrderExecInfo->addAllocationOffset(offset);
 
-        UNRECOVERABLE_IF(inOrderAllocationOffset + offset >= inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBufferSize());
+        UNRECOVERABLE_IF(inOrderExecInfo->getAllocationOffset() + offset >= inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBufferSize());
 
         CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr); // signal counter on new offset
     }
@@ -185,7 +183,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     if (signalEvent) {
         if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining) {
-            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), this->inOrderAllocationOffset);
+            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
         } else {
             signalEvent->unsetInOrderExecInfo();
         }
@@ -2329,7 +2327,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
             NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
         }
 
-        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->getCounterValue(), this->inOrderAllocationOffset, relaxedOrderingAllowed, true);
+        CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true);
 
         return true;
     }
@@ -2559,7 +2557,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
 
-    uint64_t gpuVa = baseGpuVa + this->inOrderAllocationOffset;
+    uint64_t gpuVa = baseGpuVa + inOrderExecInfo->getAllocationOffset();
 
     auto miStoreCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_STORE_DATA_IMM)));
 

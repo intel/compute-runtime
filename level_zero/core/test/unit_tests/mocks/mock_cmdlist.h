@@ -80,7 +80,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
-    using BaseClass::inOrderAllocationOffset;
     using BaseClass::inOrderAtomicSignallingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;

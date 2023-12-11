@@ -45,7 +45,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::BaseClass;
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::executeCommandListImmediate;
-    using BaseClass::inOrderAllocationOffset;
     using BaseClass::isCopyOnly;
     using BaseClass::isInOrderExecutionEnabled;
 

@@ -312,7 +312,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (inOrderNonWalkerSignalling) {
             dispatchEventPostSyncOperation(eventForInOrderExec, Event::STATE_CLEARED, false, false, false, false);
         } else {
-            dispatchKernelArgs.eventAddress = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + this->inOrderAllocationOffset;
+            dispatchKernelArgs.eventAddress = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + inOrderExecInfo->getAllocationOffset();
             dispatchKernelArgs.postSyncImmValue = inOrderExecInfo->getCounterValue() + 1;
         }
     }

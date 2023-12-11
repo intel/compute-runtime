@@ -39,6 +39,7 @@ InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocatio
 void InOrderExecInfo::reset() {
     counterValue = 0;
     regularCmdListSubmissionCounter = 0;
+    allocationOffset = 0;
 
     memset(deviceCounterAllocation.getUnderlyingBuffer(), 0, deviceCounterAllocation.getUnderlyingBufferSize());
 

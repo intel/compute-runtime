@@ -31,7 +31,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     NEO::GraphicsAllocation &getDeviceCounterAllocation() const { return deviceCounterAllocation; }
     NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
-    uint64_t *getHostAddress() const { return hostAddress; }
+    uint64_t *getBaseHostAddress() const { return hostAddress; }
 
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
@@ -46,6 +46,9 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t getNumDevicePartitionsToWait() const { return numDevicePartitionsToWait; }
     uint32_t getNumHostPartitionsToWait() const { return numHostPartitionsToWait; }
 
+    void addAllocationOffset(uint32_t addValue) { allocationOffset += addValue; }
+    uint32_t getAllocationOffset() const { return allocationOffset; }
+
     void reset();
 
   protected:
@@ -57,6 +60,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
     uint32_t numHostPartitionsToWait = 0;
+    uint32_t allocationOffset = 0;
     bool regularCmdList = false;
     bool duplicatedHostStorage = false;
 };

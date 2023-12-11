@@ -40,7 +40,6 @@ struct CommandListImp : public CommandList {
 
   protected:
     std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
-    uint32_t inOrderAllocationOffset = 0;
 
     ~CommandListImp() override = default;
 

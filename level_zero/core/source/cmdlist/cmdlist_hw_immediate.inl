@@ -526,7 +526,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
-                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), this->inOrderAllocationOffset);
+                Event::fromHandle(hSignalEvent)->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
             }
 
             return ZE_RESULT_SUCCESS;
@@ -1091,7 +1091,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         signalEvent->setGpuEndTimestamp();
 
         if (signalEvent->isCounterBased()) {
-            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderAllocationOffset);
+            signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
             signalEvent->setIsCompleted();
         } else {
             signalEvent->hostSignal();
@@ -1305,7 +1305,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
         bool signaled = true;
 
-        const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getHostAddress(), this->inOrderAllocationOffset);
+        const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
 
         for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
             if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {

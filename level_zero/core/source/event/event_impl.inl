@@ -182,7 +182,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
         return ZE_RESULT_NOT_READY;
     }
 
-    const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getHostAddress(), this->inOrderAllocationOffset);
+    const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
     bool signaled = true;
 
@@ -459,7 +459,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
         return ZE_RESULT_NOT_READY;
     }
 
-    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getHostAddress(), this->inOrderAllocationOffset));
+    uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset));
 
     if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout)) {
         return ZE_RESULT_NOT_READY;
