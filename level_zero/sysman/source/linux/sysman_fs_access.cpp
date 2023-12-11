@@ -74,7 +74,6 @@ FdCache::~FdCache() {
 
 template <typename T>
 ze_result_t FsAccess::readValue(const std::string file, T &val) {
-    auto lock = this->obtainMutex();
 
     std::string readVal(64, '\0');
     int fd = pFdCache->getFd(file);
@@ -302,10 +301,6 @@ bool FsAccess::directoryExists(const std::string path) {
         return false;
     }
     return true;
-}
-
-std::unique_lock<std::mutex> FsAccess::obtainMutex() {
-    return std::unique_lock<std::mutex>(this->fsMutex);
 }
 
 // Procfs Access
