@@ -18,7 +18,6 @@
 #include <list>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <sys/stat.h>
@@ -78,13 +77,11 @@ class FsAccess : NEO::NonAssignableClass {
     FsAccess();
     decltype(&NEO::SysCalls::access) accessSyscall = NEO::SysCalls::access;
     decltype(&stat) statSyscall = stat;
-    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainMutex();
 
   private:
     template <typename T>
     ze_result_t readValue(const std::string file, T &val);
     std::unique_ptr<FdCache> pFdCache = nullptr;
-    std::mutex fsMutex{};
 };
 
 class ProcfsAccess : private FsAccess {
