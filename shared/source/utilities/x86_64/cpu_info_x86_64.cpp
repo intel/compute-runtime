@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,31 +13,42 @@
 
 namespace NEO {
 void CpuInfo::detect() const {
+    constexpr uint32_t processorInfo = 1;
+    constexpr uint32_t extendedFeatures = 0x7;
+    constexpr uint32_t extendedFunctionId = 0x80000000;
+    constexpr uint32_t addressSize = 0x80000008;
+    constexpr size_t eax = 0;
+    constexpr size_t ebx = 1;
+    constexpr size_t ecx = 2;
+    constexpr size_t edx = 3;
+
     uint32_t cpuInfo[4] = {};
 
     cpuid(cpuInfo, 0u);
-    auto numFunctionIds = cpuInfo[0];
-    if (numFunctionIds >= 1u) {
-        cpuid(cpuInfo, 1u);
+    auto numFunctionIds = cpuInfo[eax];
+    if (numFunctionIds >= processorInfo) {
+        cpuid(cpuInfo, processorInfo);
         {
-            features |= cpuInfo[3] & BIT(19) ? featureClflush : featureNone;
+            features |= cpuInfo[edx] & BIT(19) ? featureClflush : featureNone;
         }
     }
 
-    if (numFunctionIds >= 7u) {
-        cpuid(cpuInfo, 7u);
+    if (numFunctionIds >= extendedFeatures) {
+        cpuid(cpuInfo, extendedFeatures);
         {
             auto mask = BIT(5) | BIT(3) | BIT(8);
-            features |= (cpuInfo[1] & mask) == mask ? featureAvX2 : featureNone;
+            features |= (cpuInfo[ebx] & mask) == mask ? featureAvX2 : featureNone;
+
+            features |= (cpuInfo[ecx] & BIT(5)) ? featureWaitPkg : featureNone;
         }
     }
 
-    cpuid(cpuInfo, 0x80000000);
-    auto maxExtendedId = cpuInfo[0];
-    if (maxExtendedId >= 0x80000008) {
-        cpuid(cpuInfo, 0x80000008);
+    cpuid(cpuInfo, extendedFunctionId);
+    auto maxExtendedId = cpuInfo[eax];
+    if (maxExtendedId >= addressSize) {
+        cpuid(cpuInfo, addressSize);
         {
-            virtualAddressSize = (cpuInfo[0] >> 8) & 0xFF;
+            virtualAddressSize = (cpuInfo[eax] >> 8) & 0xFF;
         }
     }
 }

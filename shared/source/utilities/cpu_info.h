@@ -18,6 +18,7 @@
 namespace NEO {
 struct CpuInfo {
     static const uint64_t featureNone = 0x000000000ULL;
+    static const uint64_t featureWaitPkg = 0x000000001ULL;
     static const uint64_t featureAvX2 = 0x000800000ULL;
     static const uint64_t featureNeon = 0x001000000ULL;
     static const uint64_t featureClflush = 0x2000000000ULL;
