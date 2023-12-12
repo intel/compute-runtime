@@ -75,7 +75,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
 
     // store flags
     switch (request) {
-    case DrmIoctl::GemExecbuffer2: {
+    case DrmIoctl::gemExecbuffer2: {
         auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
         this->execBuffer = *execbuf;
         this->execBufferBufferObjects =
@@ -84,33 +84,33 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         execBufferExtensions(execbuf);
     } break;
 
-    case DrmIoctl::GemUserptr: {
+    case DrmIoctl::gemUserptr: {
         auto *userPtrParams = static_cast<NEO::GemUserPtr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
         ioctlCnt.gemUserptr++;
     } break;
 
-    case DrmIoctl::GemCreate: {
+    case DrmIoctl::gemCreate: {
         auto *createParams = static_cast<NEO::GemCreate *>(arg);
         this->createParamsSize = createParams->size;
         this->createParamsHandle = createParams->handle = 1u;
         ioctlCnt.gemCreate++;
     } break;
-    case DrmIoctl::GemSetTiling: {
+    case DrmIoctl::gemSetTiling: {
         auto *setTilingParams = static_cast<NEO::GemSetTiling *>(arg);
         setTilingMode = setTilingParams->tilingMode;
         setTilingHandle = setTilingParams->handle;
         setTilingStride = setTilingParams->stride;
         ioctlCnt.gemSetTiling++;
     } break;
-    case DrmIoctl::GemGetTiling: {
+    case DrmIoctl::gemGetTiling: {
         auto *getTilingParams = static_cast<NEO::GemGetTiling *>(arg);
         getTilingParams->tilingMode = getTilingModeOut;
         getTilingHandleIn = getTilingParams->handle;
         ioctlCnt.gemGetTiling++;
     } break;
-    case DrmIoctl::PrimeFdToHandle: {
+    case DrmIoctl::primeFdToHandle: {
         auto *primeToHandleParams = static_cast<NEO::PrimeHandle *>(arg);
         // return BO
         primeToHandleParams->handle = outputHandle;
@@ -120,7 +120,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
             return -1;
         }
     } break;
-    case DrmIoctl::PrimeHandleToFd: {
+    case DrmIoctl::primeHandleToFd: {
         auto *handleToPrimeParams = static_cast<NEO::PrimeHandle *>(arg);
         // return FD
         inputHandle = handleToPrimeParams->handle;
@@ -131,7 +131,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
         ioctlCnt.handleToPrimeFd++;
     } break;
-    case DrmIoctl::GemSetDomain: {
+    case DrmIoctl::gemSetDomain: {
         auto setDomainParams = static_cast<NEO::GemSetDomain *>(arg);
         setDomainHandle = setDomainParams->handle;
         setDomainReadDomains = setDomainParams->readDomains;
@@ -139,45 +139,45 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         ioctlCnt.gemSetDomain++;
     } break;
 
-    case DrmIoctl::GemWait: {
+    case DrmIoctl::gemWait: {
         auto gemWaitParams = static_cast<NEO::GemWait *>(arg);
         gemWaitTimeout = gemWaitParams->timeoutNs;
         ioctlCnt.gemWait++;
     } break;
 
-    case DrmIoctl::GemClose:
+    case DrmIoctl::gemClose:
         ioctlCnt.gemClose++;
         break;
 
-    case DrmIoctl::RegRead:
+    case DrmIoctl::regRead:
         ioctlCnt.regRead++;
         break;
 
-    case DrmIoctl::Getparam: {
+    case DrmIoctl::getparam: {
         ioctlCnt.contextGetParam++;
         auto getParam = static_cast<NEO::GetParam *>(arg);
         recordedGetParam = *getParam;
         *getParam->value = getParamRetValue;
     } break;
 
-    case DrmIoctl::GemContextSetparam: {
+    case DrmIoctl::gemContextSetparam: {
     } break;
 
-    case DrmIoctl::GemContextGetparam: {
+    case DrmIoctl::gemContextGetparam: {
         ioctlCnt.contextGetParam++;
         auto getContextParam = static_cast<NEO::GemContextParam *>(arg);
         recordedGetContextParam = *getContextParam;
         getContextParam->value = getContextParamRetValue;
     } break;
 
-    case DrmIoctl::GemContextCreateExt: {
+    case DrmIoctl::gemContextCreateExt: {
         auto contextCreateParam = static_cast<NEO::GemContextCreateExt *>(arg);
         contextCreateParam->contextId = ++ioctlCnt.contextCreate;
     } break;
-    case DrmIoctl::GemContextDestroy: {
+    case DrmIoctl::gemContextDestroy: {
         ioctlCnt.contextDestroy++;
     } break;
-    case DrmIoctl::GemMmapOffset: {
+    case DrmIoctl::gemMmapOffset: {
         auto mmapOffsetParams = reinterpret_cast<NEO::GemMmapOffset *>(arg);
         mmapOffsetHandle = mmapOffsetParams->handle;
         mmapOffsetParams->offset = mmapOffsetExpected;
@@ -187,7 +187,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
             return -1;
         }
     } break;
-    case DrmIoctl::GemCreateExt: {
+    case DrmIoctl::gemCreateExt: {
         auto createExtParams = reinterpret_cast<NEO::I915::drm_i915_gem_create_ext *>(arg);
         createExtSize = createExtParams->size;
         createExtHandle = createExtParams->handle;
@@ -197,11 +197,11 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
             return -1;
         }
     } break;
-    case DrmIoctl::GemVmBind: {
+    case DrmIoctl::gemVmBind: {
     } break;
-    case DrmIoctl::GemVmUnbind: {
+    case DrmIoctl::gemVmUnbind: {
     } break;
-    case DrmIoctl::GemVmCreate: {
+    case DrmIoctl::gemVmCreate: {
         auto vmCreate = reinterpret_cast<NEO::GemVmControl *>(arg);
         vmCreate->vmId = vmIdToCreate;
         break;

@@ -154,7 +154,7 @@ bool IoctlHelper::setDomainCpu(uint32_t handle, bool writeEnable) {
     setDomain.handle = handle;
     setDomain.read_domains = I915_GEM_DOMAIN_CPU;
     setDomain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
-    return this->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0;
+    return this->ioctl(DrmIoctl::gemSetDomain, &setDomain) == 0;
 }
 
 uint32_t IoctlHelper::getFlagsForPrimeHandleToFd() const {
@@ -163,47 +163,47 @@ uint32_t IoctlHelper::getFlagsForPrimeHandleToFd() const {
 
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::Getparam:
+    case DrmIoctl::getparam:
         return DRM_IOCTL_I915_GETPARAM;
-    case DrmIoctl::GemExecbuffer2:
+    case DrmIoctl::gemExecbuffer2:
         return DRM_IOCTL_I915_GEM_EXECBUFFER2;
-    case DrmIoctl::GemWait:
+    case DrmIoctl::gemWait:
         return DRM_IOCTL_I915_GEM_WAIT;
-    case DrmIoctl::GemClose:
+    case DrmIoctl::gemClose:
         return DRM_IOCTL_GEM_CLOSE;
-    case DrmIoctl::GemUserptr:
+    case DrmIoctl::gemUserptr:
         return DRM_IOCTL_I915_GEM_USERPTR;
-    case DrmIoctl::GemCreate:
+    case DrmIoctl::gemCreate:
         return DRM_IOCTL_I915_GEM_CREATE;
-    case DrmIoctl::GemSetDomain:
+    case DrmIoctl::gemSetDomain:
         return DRM_IOCTL_I915_GEM_SET_DOMAIN;
-    case DrmIoctl::GemSetTiling:
+    case DrmIoctl::gemSetTiling:
         return DRM_IOCTL_I915_GEM_SET_TILING;
-    case DrmIoctl::GemGetTiling:
+    case DrmIoctl::gemGetTiling:
         return DRM_IOCTL_I915_GEM_GET_TILING;
-    case DrmIoctl::GemContextCreateExt:
+    case DrmIoctl::gemContextCreateExt:
         return DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT;
-    case DrmIoctl::GemContextDestroy:
+    case DrmIoctl::gemContextDestroy:
         return DRM_IOCTL_I915_GEM_CONTEXT_DESTROY;
-    case DrmIoctl::RegRead:
+    case DrmIoctl::regRead:
         return DRM_IOCTL_I915_REG_READ;
-    case DrmIoctl::GetResetStats:
+    case DrmIoctl::getResetStats:
         return DRM_IOCTL_I915_GET_RESET_STATS;
-    case DrmIoctl::GemContextGetparam:
+    case DrmIoctl::gemContextGetparam:
         return DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM;
-    case DrmIoctl::GemContextSetparam:
+    case DrmIoctl::gemContextSetparam:
         return DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM;
-    case DrmIoctl::Query:
+    case DrmIoctl::query:
         return DRM_IOCTL_I915_QUERY;
-    case DrmIoctl::PrimeFdToHandle:
+    case DrmIoctl::primeFdToHandle:
         return DRM_IOCTL_PRIME_FD_TO_HANDLE;
-    case DrmIoctl::PrimeHandleToFd:
+    case DrmIoctl::primeHandleToFd:
         return DRM_IOCTL_PRIME_HANDLE_TO_FD;
-    case DrmIoctl::GemMmapOffset:
+    case DrmIoctl::gemMmapOffset:
         return DRM_IOCTL_I915_GEM_MMAP_OFFSET;
-    case DrmIoctl::GemVmCreate:
+    case DrmIoctl::gemVmCreate:
         return DRM_IOCTL_I915_GEM_VM_CREATE;
-    case DrmIoctl::GemVmDestroy:
+    case DrmIoctl::gemVmDestroy:
         return DRM_IOCTL_I915_GEM_VM_DESTROY;
     default:
         UNRECOVERABLE_IF(true);
@@ -329,47 +329,47 @@ std::string IoctlHelper::getDrmParamStringBase(DrmParam drmParam) const {
 
 std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::GemExecbuffer2:
+    case DrmIoctl::gemExecbuffer2:
         return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
-    case DrmIoctl::GemWait:
+    case DrmIoctl::gemWait:
         return "DRM_IOCTL_I915_GEM_WAIT";
-    case DrmIoctl::GemClose:
+    case DrmIoctl::gemClose:
         return "DRM_IOCTL_GEM_CLOSE";
-    case DrmIoctl::GemUserptr:
+    case DrmIoctl::gemUserptr:
         return "DRM_IOCTL_I915_GEM_USERPTR";
-    case DrmIoctl::Getparam:
+    case DrmIoctl::getparam:
         return "DRM_IOCTL_I915_GETPARAM";
-    case DrmIoctl::GemCreate:
+    case DrmIoctl::gemCreate:
         return "DRM_IOCTL_I915_GEM_CREATE";
-    case DrmIoctl::GemSetDomain:
+    case DrmIoctl::gemSetDomain:
         return "DRM_IOCTL_I915_GEM_SET_DOMAIN";
-    case DrmIoctl::GemSetTiling:
+    case DrmIoctl::gemSetTiling:
         return "DRM_IOCTL_I915_GEM_SET_TILING";
-    case DrmIoctl::GemGetTiling:
+    case DrmIoctl::gemGetTiling:
         return "DRM_IOCTL_I915_GEM_GET_TILING";
-    case DrmIoctl::GemContextCreateExt:
+    case DrmIoctl::gemContextCreateExt:
         return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT";
-    case DrmIoctl::GemContextDestroy:
+    case DrmIoctl::gemContextDestroy:
         return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
-    case DrmIoctl::RegRead:
+    case DrmIoctl::regRead:
         return "DRM_IOCTL_I915_REG_READ";
-    case DrmIoctl::GetResetStats:
+    case DrmIoctl::getResetStats:
         return "DRM_IOCTL_I915_GET_RESET_STATS";
-    case DrmIoctl::GemContextGetparam:
+    case DrmIoctl::gemContextGetparam:
         return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";
-    case DrmIoctl::GemContextSetparam:
+    case DrmIoctl::gemContextSetparam:
         return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
-    case DrmIoctl::Query:
+    case DrmIoctl::query:
         return "DRM_IOCTL_I915_QUERY";
-    case DrmIoctl::PrimeFdToHandle:
+    case DrmIoctl::primeFdToHandle:
         return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
-    case DrmIoctl::PrimeHandleToFd:
+    case DrmIoctl::primeHandleToFd:
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
-    case DrmIoctl::GemMmapOffset:
+    case DrmIoctl::gemMmapOffset:
         return "DRM_IOCTL_I915_GEM_MMAP_OFFSET";
-    case DrmIoctl::GemVmCreate:
+    case DrmIoctl::gemVmCreate:
         return "DRM_IOCTL_I915_GEM_VM_CREATE";
-    case DrmIoctl::GemVmDestroy:
+    case DrmIoctl::gemVmDestroy:
         return "DRM_IOCTL_I915_GEM_VM_DESTROY";
     default:
         UNRECOVERABLE_IF(true);
@@ -568,24 +568,24 @@ bool IoctlHelper::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) 
 uint32_t IoctlHelper::createGem(uint64_t size, uint32_t memoryBanks) {
     GemCreate gemCreate = {};
     gemCreate.size = size;
-    [[maybe_unused]] auto ret = ioctl(DrmIoctl::GemCreate, &gemCreate);
+    [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &gemCreate);
     DEBUG_BREAK_IF(ret != 0);
     return gemCreate.handle;
 }
 
 bool IoctlHelper::setGemTiling(void *setTiling) {
-    return this->ioctl(DrmIoctl::GemSetTiling, setTiling) == 0;
+    return this->ioctl(DrmIoctl::gemSetTiling, setTiling) == 0;
 }
 
 bool IoctlHelper::getGemTiling(void *setTiling) {
-    return this->ioctl(DrmIoctl::GemGetTiling, setTiling) == 0;
+    return this->ioctl(DrmIoctl::gemGetTiling, setTiling) == 0;
 }
 
 bool getGpuTime32(::NEO::Drm &drm, uint64_t *timestamp) {
     RegisterRead reg = {};
     reg.offset = RegisterOffsets::globalTimestampLdw;
 
-    if (drm.ioctl(DrmIoctl::RegRead, &reg)) {
+    if (drm.ioctl(DrmIoctl::regRead, &reg)) {
         return false;
     }
     *timestamp = reg.value >> 32;
@@ -596,7 +596,7 @@ bool getGpuTime36(::NEO::Drm &drm, uint64_t *timestamp) {
     RegisterRead reg = {};
     reg.offset = RegisterOffsets::globalTimestampLdw | 1;
 
-    if (drm.ioctl(DrmIoctl::RegRead, &reg)) {
+    if (drm.ioctl(DrmIoctl::regRead, &reg)) {
         return false;
     }
     *timestamp = reg.value;
@@ -612,11 +612,11 @@ bool getGpuTimeSplitted(::NEO::Drm &drm, uint64_t *timestamp) {
     regHi.offset = RegisterOffsets::globalTimestampUn;
     regLo.offset = RegisterOffsets::globalTimestampLdw;
 
-    err += drm.ioctl(DrmIoctl::RegRead, &regHi);
+    err += drm.ioctl(DrmIoctl::regRead, &regHi);
     do {
         tmpHi = regHi.value;
-        err += drm.ioctl(DrmIoctl::RegRead, &regLo);
-        err += drm.ioctl(DrmIoctl::RegRead, &regHi);
+        err += drm.ioctl(DrmIoctl::regRead, &regLo);
+        err += drm.ioctl(DrmIoctl::regRead, &regHi);
     } while (err == 0 && regHi.value != tmpHi && --loop);
 
     if (err) {
@@ -632,10 +632,10 @@ void IoctlHelper::initializeGetGpuTimeFunction() {
     int err;
 
     reg.offset = (RegisterOffsets::globalTimestampLdw | 1);
-    err = this->ioctl(DrmIoctl::RegRead, &reg);
+    err = this->ioctl(DrmIoctl::regRead, &reg);
     if (err) {
         reg.offset = RegisterOffsets::globalTimestampUn;
-        err = this->ioctl(DrmIoctl::RegRead, &reg);
+        err = this->ioctl(DrmIoctl::regRead, &reg);
         if (err) {
             this->getGpuTime = &getGpuTime32;
         } else {

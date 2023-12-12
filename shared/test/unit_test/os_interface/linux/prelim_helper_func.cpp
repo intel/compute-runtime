@@ -17,7 +17,7 @@
 using namespace NEO;
 
 int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal) {
-    if (request == DrmIoctl::GemCreateExt) {
+    if (request == DrmIoctl::gemCreateExt) {
         auto createExtParams = static_cast<prelim_drm_i915_gem_create_ext *>(arg);
         if (createExtParams->size == 0) {
             return EINVAL;
@@ -49,10 +49,10 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
         if ((data->memoryClass != prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memoryClass != prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
-    } else if (request == DrmIoctl::GemClosReserve) {
+    } else if (request == DrmIoctl::gemClosReserve) {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closReserveArg->clos_index = 1u;
-    } else if (request == DrmIoctl::Query) {
+    } else if (request == DrmIoctl::query) {
         auto query = static_cast<Query *>(arg);
         if (query->itemsPtr == 0) {
             return EINVAL;
@@ -89,7 +89,7 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
                 break;
             }
         }
-    } else if (request == DrmIoctl::GemVmPrefetch) {
+    } else if (request == DrmIoctl::gemVmPrefetch) {
         auto vmPrefetchParams = static_cast<prelim_drm_i915_gem_vm_prefetch *>(arg);
         // Valid vm_id must be nonzero
         EXPECT_NE(0u, vmPrefetchParams->vm_id);

@@ -78,7 +78,7 @@ int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, si
         printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
-    auto ret = ioctl(DrmIoctl::GemCreateExt, &createExt);
+    auto ret = ioctl(DrmIoctl::gemCreateExt, &createExt);
     handle = createExt.handle;
 
     printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS%s has returned: %d BO-%u with size: %lu\n",
@@ -100,13 +100,13 @@ void IoctlHelperUpstream::detectExtSetPatSupport() {
     auto isSetPatDisabled = debugManager.flags.DisableGemCreateExtSetPat.get();
 
     if (!isSetPatDisabled) {
-        int returnValue = ioctl(DrmIoctl::GemCreateExt, &createExt);
+        int returnValue = ioctl(DrmIoctl::gemCreateExt, &createExt);
         this->isSetPatSupported = (returnValue == 0);
 
         if (returnValue == 0) {
             GemClose close{};
             close.handle = createExt.handle;
-            returnValue = ioctl(DrmIoctl::GemClose, &close);
+            returnValue = ioctl(DrmIoctl::gemClose, &close);
             UNRECOVERABLE_IF(returnValue);
         }
     }
@@ -184,7 +184,7 @@ uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
 }
 
 int IoctlHelperUpstream::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
-    return ioctl(DrmIoctl::GemExecbuffer2, execBuffer);
+    return ioctl(DrmIoctl::gemExecbuffer2, execBuffer);
 }
 
 bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindAvailable) {
@@ -271,7 +271,7 @@ bool IoctlHelperUpstream::isDebugAttachAvailable() {
 
 unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::GemCreateExt:
+    case DrmIoctl::gemCreateExt:
         return DRM_IOCTL_I915_GEM_CREATE_EXT;
     default:
         return getIoctlRequestValueBase(ioctlRequest);
@@ -295,7 +295,7 @@ std::string IoctlHelperUpstream::getDrmParamString(DrmParam param) const {
 }
 std::string IoctlHelperUpstream::getIoctlString(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::GemCreateExt:
+    case DrmIoctl::gemCreateExt:
         return "DRM_IOCTL_I915_GEM_CREATE_EXT";
     default:
         return getIoctlStringBase(ioctlRequest);

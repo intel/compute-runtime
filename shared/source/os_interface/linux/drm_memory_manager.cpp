@@ -287,7 +287,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    if (ioctlHelper->ioctl(DrmIoctl::GemUserptr, &userptr) != 0) {
+    if (ioctlHelper->ioctl(DrmIoctl::gemUserptr, &userptr) != 0) {
         return nullptr;
     }
 
@@ -809,7 +809,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         PrimeHandle openFd = {0, 0, 0};
         openFd.fileDescriptor = handle;
 
-        auto ret = ioctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
+        auto ret = ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd);
 
         if (ret != 0) {
             [[maybe_unused]] int err = errno;
@@ -963,7 +963,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    auto ret = ioctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd);
 
     if (ret != 0) {
         [[maybe_unused]] int err = errno;
@@ -1325,7 +1325,7 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex)
     openFd.flags = ioctlHelper->getFlagsForPrimeHandleToFd();
     openFd.handle = boHandle;
 
-    int ret = ioctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
+    int ret = ioctlHelper->ioctl(DrmIoctl::primeHandleToFd, &openFd);
     if (ret < 0) {
         return -1;
     }
@@ -2068,10 +2068,10 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
     mmapOffset.flags = isLocalMemorySupported(rootDeviceIndex) ? mmapOffsetFixed : flags;
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
-    auto ret = ioctlHelper->ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
     if (ret != 0 && isLocalMemorySupported(rootDeviceIndex)) {
         mmapOffset.flags = flags;
-        ret = ioctlHelper->ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
+        ret = ioctlHelper->ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
     }
     if (ret != 0) {
         int err = drm.getErrno();
@@ -2439,7 +2439,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
     auto ioctlHelper = drm.getIoctlHelper();
 
-    auto ret = ioctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd);
     if (ret != 0) {
         int err = drm.getErrno();
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));

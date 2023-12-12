@@ -28,7 +28,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
         MockDrm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {}
 
         int ioctl(DrmIoctl request, void *arg) override {
-            if (request == DrmIoctl::PrimeFdToHandle) {
+            if (request == DrmIoctl::primeFdToHandle) {
                 auto *primeToHandleParams = static_cast<PrimeHandle *>(arg);
                 primeToHandleParams->handle = 10;
             }
@@ -87,7 +87,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
         std::atomic<int> closeHandle;
 
         int ioctl(DrmIoctl request, void *arg) override {
-            if (request == DrmIoctl::PrimeFdToHandle) {
+            if (request == DrmIoctl::primeFdToHandle) {
                 auto *primeToHandleParams = static_cast<PrimeHandle *>(arg);
                 primeToHandleParams->handle = primeFdHandle;
 
@@ -96,7 +96,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
                 EXPECT_EQ(closeHandle.load(), primeFdHandle.load());
             }
 
-            else if (request == DrmIoctl::GemClose) {
+            else if (request == DrmIoctl::gemClose) {
                 closeHandle++;
                 std::this_thread::yield();
 

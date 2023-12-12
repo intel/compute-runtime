@@ -1336,7 +1336,7 @@ TEST(DrmTest, GivenMinusEbusyIoctlErrorWhenCallingExecbufferThenCallIoctlAgain) 
         return 0;
     };
 
-    EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::GemExecbuffer2, nullptr));
+    EXPECT_EQ(0, drm.Drm::ioctl(DrmIoctl::gemExecbuffer2, nullptr));
 }
 
 TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
@@ -1459,12 +1459,12 @@ TEST(DrmTest, GivenDrmWhenDiscoveringDevicesThenCloseOnExecFlagIsPassedToFdOpen)
 }
 
 TEST(DrmWrapperTest, WhenGettingDrmIoctlGetparamValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Getparam, nullptr), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
-    EXPECT_THROW(getIoctlRequestValue(DrmIoctl::DG1GemCreateExt, nullptr), std::runtime_error);
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, nullptr), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
+    EXPECT_THROW(getIoctlRequestValue(DrmIoctl::dg1GemCreateExt, nullptr), std::runtime_error);
 }
 
 TEST(DrmWrapperTest, WhenGettingDrmIoctlVersionValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Version, nullptr), static_cast<unsigned int>(DRM_IOCTL_VERSION));
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::version, nullptr), static_cast<unsigned int>(DRM_IOCTL_VERSION));
 }
 
 TEST(DrmWrapperTest, WhenGettingChipsetIdParamValueThenIoctlHelperIsNotNeeded) {
@@ -1480,8 +1480,8 @@ TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhe
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockIoctlHelper ioctlHelper{drm};
-    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Getparam, &ioctlHelper), ioctlHelper.ioctlRequestValue);
-    EXPECT_NE(getIoctlRequestValue(DrmIoctl::Getparam, nullptr), getIoctlRequestValue(DrmIoctl::Getparam, &ioctlHelper));
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper), ioctlHelper.ioctlRequestValue);
+    EXPECT_NE(getIoctlRequestValue(DrmIoctl::getparam, nullptr), getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper));
 
     EXPECT_EQ(getDrmParamValue(DrmParam::ParamChipsetId, &ioctlHelper), ioctlHelper.drmParamValue);
     EXPECT_NE(getDrmParamValue(DrmParam::ParamChipsetId, nullptr), getDrmParamValue(DrmParam::ParamChipsetId, &ioctlHelper));
@@ -1492,8 +1492,8 @@ TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockIoctlHelper ioctlHelper{drm};
-    EXPECT_STREQ(getIoctlString(DrmIoctl::Getparam, &ioctlHelper).c_str(), "DRM_IOCTL_I915_GETPARAM");
-    EXPECT_STREQ(getIoctlString(DrmIoctl::Getparam, nullptr).c_str(), "DRM_IOCTL_I915_GETPARAM");
+    EXPECT_STREQ(getIoctlString(DrmIoctl::getparam, &ioctlHelper).c_str(), "DRM_IOCTL_I915_GETPARAM");
+    EXPECT_STREQ(getIoctlString(DrmIoctl::getparam, nullptr).c_str(), "DRM_IOCTL_I915_GETPARAM");
 }
 TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1526,20 +1526,20 @@ TEST(DrmWrapperTest, givenEAgainOrEIntrOrEBusyWhenCheckingIfReinvokeRequiredThen
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockIoctlHelper ioctlHelper{drm};
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::Getparam, &ioctlHelper));
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EINTR, DrmIoctl::Getparam, &ioctlHelper));
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::Getparam, &ioctlHelper));
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::Getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EINTR, DrmIoctl::getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::getparam, &ioctlHelper));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::getparam, &ioctlHelper));
 }
 
 TEST(DrmWrapperTest, givenNoIoctlHelperAndEAgainOrEIntrOrEBusyWhenCheckingIfReinvokeRequiredThenTrueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::Getparam, nullptr));
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EINTR, DrmIoctl::Getparam, nullptr));
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::Getparam, nullptr));
-    EXPECT_TRUE(checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::Getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EAGAIN, DrmIoctl::getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EINTR, DrmIoctl::getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::getparam, nullptr));
+    EXPECT_TRUE(checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::getparam, nullptr));
 }
 
 TEST(DrmWrapperTest, givenErrorWhenCheckingIfReinvokeRequiredThenFalseIsReturned) {
@@ -1547,8 +1547,8 @@ TEST(DrmWrapperTest, givenErrorWhenCheckingIfReinvokeRequiredThenFalseIsReturned
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockIoctlHelper ioctlHelper{drm};
-    EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::Getparam, &ioctlHelper));
-    EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::Getparam, nullptr));
+    EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::getparam, &ioctlHelper));
+    EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::getparam, nullptr));
 }
 
 TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {

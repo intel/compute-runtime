@@ -53,7 +53,7 @@ bool IoctlHelperPrelim20::isSetPairAvailable() {
     GetParam getParam{};
     getParam.param = PRELIM_I915_PARAM_HAS_SET_PAIR;
     getParam.value = &setPairSupported;
-    int retVal = IoctlHelper::ioctl(DrmIoctl::Getparam, &getParam);
+    int retVal = IoctlHelper::ioctl(DrmIoctl::getparam, &getParam);
     if (retVal) {
         return false;
     }
@@ -65,7 +65,7 @@ bool IoctlHelperPrelim20::isChunkingAvailable() {
     GetParam getParam{};
     getParam.param = PRELIM_I915_PARAM_HAS_CHUNK_SIZE;
     getParam.value = &chunkSupported;
-    int retVal = IoctlHelper::ioctl(DrmIoctl::Getparam, &getParam);
+    int retVal = IoctlHelper::ioctl(DrmIoctl::getparam, &getParam);
     if (retVal) {
         return false;
     }
@@ -140,7 +140,7 @@ bool IoctlHelperPrelim20::isVmBindAvailable() {
     GetParam getParam{};
     getParam.param = PRELIM_I915_PARAM_HAS_VM_BIND;
     getParam.value = &vmBindSupported;
-    int retVal = IoctlHelper::ioctl(DrmIoctl::Getparam, &getParam);
+    int retVal = IoctlHelper::ioctl(DrmIoctl::getparam, &getParam);
     if (retVal) {
         return false;
     }
@@ -211,7 +211,7 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
         printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
-    auto ret = IoctlHelper::ioctl(DrmIoctl::GemCreateExt, &createExt);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreateExt, &createExt);
 
     if (isChunked) {
         printDebugString(debugManager.flags.PrintBOChunkingLogs.get(), stdout,
@@ -230,7 +230,7 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
 CacheRegion IoctlHelperPrelim20::closAlloc() {
     struct prelim_drm_i915_gem_clos_reserve clos = {};
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemClosReserve, &clos);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemClosReserve, &clos);
     if (ret != 0) {
         int err = errno;
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -248,7 +248,7 @@ uint16_t IoctlHelperPrelim20::closAllocWays(CacheRegion closIndex, uint16_t cach
     cache.cache_level = cacheLevel;
     cache.num_ways = numWays;
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemCacheReserve, &cache);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemCacheReserve, &cache);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CACHE_RESERVE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -263,7 +263,7 @@ CacheRegion IoctlHelperPrelim20::closFree(CacheRegion closIndex) {
 
     clos.clos_index = static_cast<uint16_t>(closIndex);
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemClosFree, &clos);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemClosFree, &clos);
     if (ret != 0) {
         int err = errno;
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_CLOS_FREE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -301,7 +301,7 @@ int IoctlHelperPrelim20::waitUserFence(uint32_t ctxId, uint64_t address,
     wait.value = value;
     wait.timeout = timeout;
 
-    return IoctlHelper::ioctl(DrmIoctl::GemWaitUserFence, &wait);
+    return IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &wait);
 }
 
 uint32_t IoctlHelperPrelim20::getAtomicAdvise(bool isNonAtomic) {
@@ -366,7 +366,7 @@ bool IoctlHelperPrelim20::setVmBoAdviseForChunking(int32_t handle, uint64_t star
     UNRECOVERABLE_IF(region == nullptr);
     vmAdvise.region = *reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(region);
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemVmAdvise, &vmAdvise);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemVmAdvise, &vmAdvise);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -385,7 +385,7 @@ bool IoctlHelperPrelim20::setVmBoAdvise(int32_t handle, uint32_t attribute, void
         vmAdvise.region = *reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(region);
     }
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemVmAdvise, &vmAdvise);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemVmAdvise, &vmAdvise);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -403,7 +403,7 @@ bool IoctlHelperPrelim20::setVmPrefetch(uint64_t start, uint64_t length, uint32_
     vmPrefetch.start = start;
     vmPrefetch.vm_id = vmId;
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemVmPrefetch, &vmPrefetch);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemVmPrefetch, &vmPrefetch);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_PREFETCH) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -440,7 +440,7 @@ int IoctlHelperPrelim20::execBuffer(ExecBuffer *execBuffer, uint64_t completionG
         }
     }
 
-    return IoctlHelper::ioctl(DrmIoctl::GemExecbuffer2, execBuffer);
+    return IoctlHelper::ioctl(DrmIoctl::gemExecbuffer2, execBuffer);
 }
 
 bool IoctlHelperPrelim20::completionFenceExtensionSupported(const bool isVmBindAvailable) {
@@ -509,7 +509,7 @@ int IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std:
     Query query{};
     query.itemsPtr = reinterpret_cast<uint64_t>(queryItems.data());
     query.numItems = static_cast<uint32_t>(queryItems.size());
-    auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &query);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::query, &query);
     for (auto i = 0u; i < i915Distances.size(); i++) {
         queryItems[i].dataPtr = 0u;
         distanceInfos[i].distance = i915Distances[i].distance;
@@ -582,7 +582,7 @@ uint32_t gemCreateContextExt(IoctlHelper &ioctlHelper, GemContextCreateExt &gcc,
     extSetparam.base.nextExtension = gcc.extensions;
     gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
 
-    auto ioctlResult = ioctlHelper.ioctl(DrmIoctl::GemContextCreateExt, &gcc);
+    auto ioctlResult = ioctlHelper.ioctl(DrmIoctl::gemContextCreateExt, &gcc);
     UNRECOVERABLE_IF(ioctlResult != 0);
     return gcc.contextId;
 }
@@ -681,12 +681,12 @@ prelim_drm_i915_gem_vm_bind translateVmBindParamsToPrelimStruct(const VmBindPara
 
 int IoctlHelperPrelim20::vmBind(const VmBindParams &vmBindParams) {
     auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
-    return IoctlHelper::ioctl(DrmIoctl::GemVmBind, &prelimVmBind);
+    return IoctlHelper::ioctl(DrmIoctl::gemVmBind, &prelimVmBind);
 }
 
 int IoctlHelperPrelim20::vmUnbind(const VmBindParams &vmBindParams) {
     auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
-    return IoctlHelper::ioctl(DrmIoctl::GemVmUnbind, &prelimVmBind);
+    return IoctlHelper::ioctl(DrmIoctl::gemVmUnbind, &prelimVmBind);
 }
 
 UuidRegisterResult IoctlHelperPrelim20::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
@@ -696,7 +696,7 @@ UuidRegisterResult IoctlHelperPrelim20::registerUuid(const std::string &uuid, ui
     uuidControl.ptr = ptr;
     uuidControl.size = size;
 
-    const auto retVal = IoctlHelper::ioctl(DrmIoctl::UuidRegister, &uuidControl);
+    const auto retVal = IoctlHelper::ioctl(DrmIoctl::uuidRegister, &uuidControl);
 
     return {
         retVal,
@@ -712,7 +712,7 @@ int IoctlHelperPrelim20::unregisterUuid(uint32_t handle) {
     prelim_drm_i915_uuid_control uuidControl = {};
     uuidControl.handle = handle;
 
-    return IoctlHelper::ioctl(DrmIoctl::UuidUnregister, &uuidControl);
+    return IoctlHelper::ioctl(DrmIoctl::uuidUnregister, &uuidControl);
 }
 
 bool IoctlHelperPrelim20::isContextDebugSupported() {
@@ -722,7 +722,7 @@ bool IoctlHelperPrelim20::isContextDebugSupported() {
     ctxParam.ctx_id = 0;
     ctxParam.value = 0;
 
-    const auto retVal = IoctlHelper::ioctl(DrmIoctl::GemContextGetparam, &ctxParam);
+    const auto retVal = IoctlHelper::ioctl(DrmIoctl::gemContextGetparam, &ctxParam);
     return retVal == 0 && ctxParam.value == (PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32);
 }
 
@@ -733,7 +733,7 @@ int IoctlHelperPrelim20::setContextDebugFlag(uint32_t drmContextId) {
     ctxParam.ctx_id = drmContextId;
     ctxParam.value = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32 | PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP;
 
-    return IoctlHelper::ioctl(DrmIoctl::GemContextSetparam, &ctxParam);
+    return IoctlHelper::ioctl(DrmIoctl::gemContextSetparam, &ctxParam);
 }
 
 bool IoctlHelperPrelim20::isDebugAttachAvailable() {
@@ -742,29 +742,29 @@ bool IoctlHelperPrelim20::isDebugAttachAvailable() {
 
 unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::GemVmBind:
+    case DrmIoctl::gemVmBind:
         return PRELIM_DRM_IOCTL_I915_GEM_VM_BIND;
-    case DrmIoctl::GemVmUnbind:
+    case DrmIoctl::gemVmUnbind:
         return PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND;
-    case DrmIoctl::GemWaitUserFence:
+    case DrmIoctl::gemWaitUserFence:
         return PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE;
-    case DrmIoctl::GemCreateExt:
+    case DrmIoctl::gemCreateExt:
         return PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT;
-    case DrmIoctl::GemVmAdvise:
+    case DrmIoctl::gemVmAdvise:
         return PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE;
-    case DrmIoctl::GemVmPrefetch:
+    case DrmIoctl::gemVmPrefetch:
         return PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH;
-    case DrmIoctl::UuidRegister:
+    case DrmIoctl::uuidRegister:
         return PRELIM_DRM_IOCTL_I915_UUID_REGISTER;
-    case DrmIoctl::UuidUnregister:
+    case DrmIoctl::uuidUnregister:
         return PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER;
-    case DrmIoctl::DebuggerOpen:
+    case DrmIoctl::debuggerOpen:
         return PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN;
-    case DrmIoctl::GemClosReserve:
+    case DrmIoctl::gemClosReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE;
-    case DrmIoctl::GemClosFree:
+    case DrmIoctl::gemClosFree:
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE;
-    case DrmIoctl::GemCacheReserve:
+    case DrmIoctl::gemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
     default:
         return getIoctlRequestValueBase(ioctlRequest);
@@ -800,29 +800,29 @@ std::string IoctlHelperPrelim20::getDrmParamString(DrmParam drmParam) const {
 
 std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::GemVmBind:
+    case DrmIoctl::gemVmBind:
         return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
-    case DrmIoctl::GemVmUnbind:
+    case DrmIoctl::gemVmUnbind:
         return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
-    case DrmIoctl::GemWaitUserFence:
+    case DrmIoctl::gemWaitUserFence:
         return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
-    case DrmIoctl::GemCreateExt:
+    case DrmIoctl::gemCreateExt:
         return "PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::GemVmAdvise:
+    case DrmIoctl::gemVmAdvise:
         return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
-    case DrmIoctl::GemVmPrefetch:
+    case DrmIoctl::gemVmPrefetch:
         return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
-    case DrmIoctl::UuidRegister:
+    case DrmIoctl::uuidRegister:
         return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
-    case DrmIoctl::UuidUnregister:
+    case DrmIoctl::uuidUnregister:
         return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
-    case DrmIoctl::DebuggerOpen:
+    case DrmIoctl::debuggerOpen:
         return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
-    case DrmIoctl::GemClosReserve:
+    case DrmIoctl::gemClosReserve:
         return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
-    case DrmIoctl::GemClosFree:
+    case DrmIoctl::gemClosFree:
         return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
-    case DrmIoctl::GemCacheReserve:
+    case DrmIoctl::gemCacheReserve:
         return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
     default:
         return getIoctlStringBase(ioctlRequest);
@@ -831,9 +831,9 @@ std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
 
 bool IoctlHelperPrelim20::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::DebuggerOpen:
+    case DrmIoctl::debuggerOpen:
         return (error == EINTR || error == EAGAIN);
-    case DrmIoctl::GemExecbuffer2:
+    case DrmIoctl::gemExecbuffer2:
         if (handleExecBufferInNonBlockMode) {
             return (error == EINTR || error == EBUSY || error == -EBUSY);
         } else {
@@ -858,7 +858,7 @@ bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency,
 
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1;
-    auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &query);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::query, &query);
     if (ret != 0) {
         return false;
     }
@@ -890,7 +890,7 @@ bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, Hard
     Query query{};
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1u;
-    ret = ioctl(DrmIoctl::Query, &query);
+    ret = ioctl(DrmIoctl::query, &query);
 
     if (ret != 0) {
         return false;
@@ -907,7 +907,7 @@ bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, Hard
     queryHwIpVersion.engine.engine_instance = engineInfo.engineInstance;
     queryItem.dataPtr = reinterpret_cast<uint64_t>(&queryHwIpVersion);
 
-    ret = ioctl(DrmIoctl::Query, &query);
+    ret = ioctl(DrmIoctl::query, &query);
     if (ret != 0) {
         return false;
     }

@@ -239,7 +239,7 @@ TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEbusyReturnedThenErrorIsRetur
     drm.context.debuggerOpenRetval = -1;
     drm.errnoRetVal = EBUSY;
 
-    auto ret = drm.Drm::ioctl(DrmIoctl::DebuggerOpen, &open);
+    auto ret = drm.Drm::ioctl(DrmIoctl::debuggerOpen, &open);
     EXPECT_EQ(-1, ret);
 }
 
@@ -265,7 +265,7 @@ TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEAgainOrEIntrReturnedThenIoct
 
         drm.errnoRetVal = EAGAIN;
 
-        auto ret = drm.Drm::ioctl(DrmIoctl::DebuggerOpen, &open);
+        auto ret = drm.Drm::ioctl(DrmIoctl::debuggerOpen, &open);
         EXPECT_EQ(0, ret);
     }
 
@@ -282,7 +282,7 @@ TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEAgainOrEIntrReturnedThenIoct
         drm.ioctlCallsCount = 0;
         drm.errnoRetVal = EINTR;
 
-        auto ret = drm.Drm::ioctl(DrmIoctl::DebuggerOpen, &open);
+        auto ret = drm.Drm::ioctl(DrmIoctl::debuggerOpen, &open);
         EXPECT_EQ(0, ret);
     }
 }

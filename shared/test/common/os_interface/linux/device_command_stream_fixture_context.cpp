@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 int DrmMockCustomPrelimContext::ioctlExtra(DrmIoctl request, void *arg) {
     switch (request) {
-    case DrmIoctl::GemWaitUserFence: {
+    case DrmIoctl::gemWaitUserFence: {
         const auto wait = reinterpret_cast<prelim_drm_i915_gem_wait_user_fence *>(arg);
         receivedGemWaitUserFence = WaitUserFence{
             wait->extensions,

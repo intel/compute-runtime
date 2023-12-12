@@ -50,7 +50,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
     ioctlCallsCount++;
     ioctlCount.total++;
 
-    if ((request == DrmIoctl::Getparam) && (arg != nullptr)) {
+    if ((request == DrmIoctl::getparam) && (arg != nullptr)) {
         ioctlCount.contextGetParam++;
         auto gp = static_cast<GetParam *>(arg);
         if (gp->param == I915_PARAM_EU_TOTAL) {
@@ -107,7 +107,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
     }
 
-    if ((request == DrmIoctl::GemContextCreateExt) && (arg != nullptr)) {
+    if ((request == DrmIoctl::gemContextCreateExt) && (arg != nullptr)) {
         ioctlCount.contextCreate++;
         auto create = static_cast<GemContextCreateExt *>(arg);
         create->contextId = this->storedDrmContextId;
@@ -127,7 +127,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
     }
 
-    if ((request == DrmIoctl::GemVmCreate) && (arg != nullptr)) {
+    if ((request == DrmIoctl::gemVmCreate) && (arg != nullptr)) {
         ioctlCount.gemVmCreate++;
         auto gemVmControl = static_cast<GemVmControl *>(arg);
         receivedGemVmControl = *gemVmControl;
@@ -135,20 +135,20 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         return storedRetValForVmCreate;
     }
 
-    if ((request == DrmIoctl::GemVmDestroy) && (arg != nullptr)) {
+    if ((request == DrmIoctl::gemVmDestroy) && (arg != nullptr)) {
         ioctlCount.gemVmDestroy++;
 
         return 0;
     }
 
-    if ((request == DrmIoctl::GemContextDestroy) && (arg != nullptr)) {
+    if ((request == DrmIoctl::gemContextDestroy) && (arg != nullptr)) {
         ioctlCount.contextDestroy++;
         auto destroy = static_cast<GemContextDestroy *>(arg);
         this->receivedDestroyContextId = destroy->contextId;
         return this->storedRetVal;
     }
 
-    if ((request == DrmIoctl::GemContextSetparam) && (arg != nullptr)) {
+    if ((request == DrmIoctl::gemContextSetparam) && (arg != nullptr)) {
         ioctlCount.contextSetParam++;
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<GemContextParam *>(arg);
@@ -178,7 +178,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
     }
 
-    if ((request == DrmIoctl::GemContextGetparam) && (arg != nullptr)) {
+    if ((request == DrmIoctl::gemContextGetparam) && (arg != nullptr)) {
         ioctlCount.contextGetParam++;
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<GemContextParam *>(arg);
@@ -206,7 +206,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
     }
 
-    if (request == DrmIoctl::GemExecbuffer2) {
+    if (request == DrmIoctl::gemExecbuffer2) {
         ioctlCount.execbuffer2++;
         auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
         auto execObjects = reinterpret_cast<const MockExecObject *>(execbuf->getBuffersPtr());
@@ -216,14 +216,14 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
         return execBufferResult;
     }
-    if (request == DrmIoctl::GemUserptr) {
+    if (request == DrmIoctl::gemUserptr) {
         ioctlCount.gemUserptr++;
         auto userPtrParams = static_cast<NEO::GemUserPtr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
         return 0;
     }
-    if (request == DrmIoctl::GemCreate) {
+    if (request == DrmIoctl::gemCreate) {
         ioctlCount.gemCreate++;
         auto createParams = static_cast<NEO::GemCreate *>(arg);
         this->createParamsSize = createParams->size;
@@ -233,7 +233,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
         return 0;
     }
-    if (request == DrmIoctl::GemSetTiling) {
+    if (request == DrmIoctl::gemSetTiling) {
         ioctlCount.gemSetTiling++;
         auto setTilingParams = static_cast<NEO::GemSetTiling *>(arg);
         setTilingMode = setTilingParams->tilingMode;
@@ -241,7 +241,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         setTilingStride = setTilingParams->stride;
         return 0;
     }
-    if (request == DrmIoctl::PrimeFdToHandle) {
+    if (request == DrmIoctl::primeFdToHandle) {
         ioctlCount.primeFdToHandle++;
         auto primeToHandleParams = static_cast<PrimeHandle *>(arg);
         // return BO
@@ -249,22 +249,22 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         inputFd = primeToHandleParams->fileDescriptor;
         return fdToHandleRetVal;
     }
-    if (request == DrmIoctl::PrimeHandleToFd) {
+    if (request == DrmIoctl::primeHandleToFd) {
         ioctlCount.handleToPrimeFd++;
         auto primeToFdParams = static_cast<PrimeHandle *>(arg);
         primeToFdParams->fileDescriptor = outputFd;
         return 0;
     }
-    if (request == DrmIoctl::GemWait) {
+    if (request == DrmIoctl::gemWait) {
         ioctlCount.gemWait++;
         receivedGemWait = *static_cast<GemWait *>(arg);
         return 0;
     }
-    if (request == DrmIoctl::GemClose) {
+    if (request == DrmIoctl::gemClose) {
         ioctlCount.gemClose++;
         return storedRetValForGemClose;
     }
-    if (request == DrmIoctl::GetResetStats && arg != nullptr) {
+    if (request == DrmIoctl::getResetStats && arg != nullptr) {
         ioctlCount.gemResetStats++;
         auto outResetStats = static_cast<ResetStats *>(arg);
         for (const auto &resetStats : resetStatsToReturn) {
@@ -277,7 +277,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         return -1;
     }
 
-    if (request == DrmIoctl::Query && arg != nullptr) {
+    if (request == DrmIoctl::query && arg != nullptr) {
         ioctlCount.query++;
         auto queryArg = static_cast<Query *>(arg);
         auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->itemsPtr);
@@ -319,7 +319,7 @@ int DrmMock::waitUserFence(uint32_t ctxIdx, uint64_t address, uint64_t value, Va
     return Drm::waitUserFence(ctxIdx, address, value, dataWidth, timeout, flags);
 }
 int DrmMockEngine::handleRemainingRequests(DrmIoctl request, void *arg) {
-    if ((request == DrmIoctl::Query) && (arg != nullptr)) {
+    if ((request == DrmIoctl::query) && (arg != nullptr)) {
         if (i915QuerySuccessCount == 0) {
             return EINVAL;
         }

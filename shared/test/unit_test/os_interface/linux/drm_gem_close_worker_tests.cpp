@@ -39,7 +39,7 @@ class DrmMockForWorker : public Drm {
     DrmMockForWorker(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     }
     int ioctl(DrmIoctl request, void *arg) override {
-        if (request == DrmIoctl::GemClose)
+        if (request == DrmIoctl::gemClose)
             gemCloseCnt++;
 
         ioctlCallerThreadId = std::this_thread::get_id();

@@ -16,31 +16,31 @@ namespace NEO {
 unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x\n", __FUNCTION__, ioctlRequest);
     switch (ioctlRequest) {
-    case DrmIoctl::GemClose:
+    case DrmIoctl::gemClose:
         RETURN_ME(DRM_IOCTL_GEM_CLOSE);
-    case DrmIoctl::GemVmCreate:
+    case DrmIoctl::gemVmCreate:
         RETURN_ME(DRM_IOCTL_XE_VM_CREATE);
-    case DrmIoctl::GemVmDestroy:
+    case DrmIoctl::gemVmDestroy:
         RETURN_ME(DRM_IOCTL_XE_VM_DESTROY);
-    case DrmIoctl::GemMmapOffset:
+    case DrmIoctl::gemMmapOffset:
         RETURN_ME(DRM_IOCTL_XE_GEM_MMAP_OFFSET);
-    case DrmIoctl::GemCreate:
+    case DrmIoctl::gemCreate:
         RETURN_ME(DRM_IOCTL_XE_GEM_CREATE);
-    case DrmIoctl::GemExecbuffer2:
+    case DrmIoctl::gemExecbuffer2:
         RETURN_ME(DRM_IOCTL_XE_EXEC);
-    case DrmIoctl::GemVmBind:
+    case DrmIoctl::gemVmBind:
         RETURN_ME(DRM_IOCTL_XE_VM_BIND);
-    case DrmIoctl::Query:
+    case DrmIoctl::query:
         RETURN_ME(DRM_IOCTL_XE_DEVICE_QUERY);
-    case DrmIoctl::GemContextCreateExt:
+    case DrmIoctl::gemContextCreateExt:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
-    case DrmIoctl::GemContextDestroy:
+    case DrmIoctl::gemContextDestroy:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
-    case DrmIoctl::GemWaitUserFence:
+    case DrmIoctl::gemWaitUserFence:
         RETURN_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
-    case DrmIoctl::PrimeFdToHandle:
+    case DrmIoctl::primeFdToHandle:
         RETURN_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
-    case DrmIoctl::PrimeHandleToFd:
+    case DrmIoctl::primeHandleToFd:
         RETURN_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
     default:
         UNRECOVERABLE_IF(true);
@@ -50,31 +50,31 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
 
 std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
-    case DrmIoctl::GemClose:
+    case DrmIoctl::gemClose:
         STRINGIFY_ME(DRM_IOCTL_GEM_CLOSE);
-    case DrmIoctl::GemVmCreate:
+    case DrmIoctl::gemVmCreate:
         STRINGIFY_ME(DRM_IOCTL_XE_VM_CREATE);
-    case DrmIoctl::GemVmDestroy:
+    case DrmIoctl::gemVmDestroy:
         STRINGIFY_ME(DRM_IOCTL_XE_VM_DESTROY);
-    case DrmIoctl::GemMmapOffset:
+    case DrmIoctl::gemMmapOffset:
         STRINGIFY_ME(DRM_IOCTL_XE_GEM_MMAP_OFFSET);
-    case DrmIoctl::GemCreate:
+    case DrmIoctl::gemCreate:
         STRINGIFY_ME(DRM_IOCTL_XE_GEM_CREATE);
-    case DrmIoctl::GemExecbuffer2:
+    case DrmIoctl::gemExecbuffer2:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC);
-    case DrmIoctl::GemVmBind:
+    case DrmIoctl::gemVmBind:
         STRINGIFY_ME(DRM_IOCTL_XE_VM_BIND);
-    case DrmIoctl::Query:
+    case DrmIoctl::query:
         STRINGIFY_ME(DRM_IOCTL_XE_DEVICE_QUERY);
-    case DrmIoctl::GemContextCreateExt:
+    case DrmIoctl::gemContextCreateExt:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
-    case DrmIoctl::GemContextDestroy:
+    case DrmIoctl::gemContextDestroy:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
-    case DrmIoctl::GemWaitUserFence:
+    case DrmIoctl::gemWaitUserFence:
         STRINGIFY_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
-    case DrmIoctl::PrimeFdToHandle:
+    case DrmIoctl::primeFdToHandle:
         STRINGIFY_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
-    case DrmIoctl::PrimeHandleToFd:
+    case DrmIoctl::primeHandleToFd:
         STRINGIFY_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
     default:
         return "???";

@@ -46,7 +46,7 @@ class DrmTipMock : public DrmMock {
     }
 
     int handleRemainingRequests(DrmIoctl request, void *arg) override {
-        if ((request == DrmIoctl::Query) && (arg != nullptr)) {
+        if ((request == DrmIoctl::query) && (arg != nullptr)) {
             if (i915QuerySuccessCount == 0) {
                 return EINVAL;
             }
@@ -59,7 +59,7 @@ class DrmTipMock : public DrmMock {
                 handleQueryItem(reinterpret_cast<QueryItem *>(query->itemsPtr) + i);
             }
             return 0;
-        } else if (request == DrmIoctl::GemMmapOffset) {
+        } else if (request == DrmIoctl::gemMmapOffset) {
             auto mmapArg = static_cast<GemMmapOffset *>(arg);
             mmapOffsetFlagsReceived = mmapArg->flags;
             mmapArg->offset = offset;
@@ -98,7 +98,7 @@ class DrmTipMock : public DrmMock {
     }
 
     virtual int handleKernelSpecificRequests(DrmIoctl request, void *arg) {
-        if (request == DrmIoctl::GemCreateExt) {
+        if (request == DrmIoctl::gemCreateExt) {
             auto createExtParams = static_cast<drm_i915_gem_create_ext *>(arg);
             if (createExtParams->size == 0) {
                 return EINVAL;

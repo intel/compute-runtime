@@ -141,14 +141,14 @@ bool IoctlHelperXe::initialize() {
     drm_xe_device_query queryConfig = {};
     queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
 
-    auto retVal = IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    auto retVal = IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
     if (retVal != 0 || queryConfig.size == 0) {
         return false;
     }
     auto data = std::vector<uint64_t>(Math::divideAndRoundUp(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, sizeof(uint64_t)), 0);
     struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(data.data());
     queryConfig.data = castToUint64(config);
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
     xeLog("DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID\t%#llx\n",
           config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID]);
     xeLog("  REV_ID\t\t\t\t%#llx\n",
@@ -173,11 +173,11 @@ bool IoctlHelperXe::initialize() {
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
     auto newSize = queryConfig.size / sizeof(uint32_t);
     hwconfigFakei915.resize(newSize);
     queryConfig.data = castToUint64(hwconfigFakei915.data());
-    IoctlHelper::ioctl(DrmIoctl::Query, &queryConfig);
+    IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
 
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = chipsetId;
@@ -207,12 +207,12 @@ std::vector<DataType> IoctlHelperXe::queryData(uint32_t queryId) {
     struct drm_xe_device_query deviceQuery = {};
     deviceQuery.query = queryId;
 
-    IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+    IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     std::vector<DataType> retVal(Math::divideAndRoundUp(deviceQuery.size, sizeof(DataType)));
 
     deviceQuery.data = castToUint64(retVal.data());
-    IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+    IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     return retVal;
 }
@@ -324,7 +324,7 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     drm_xe_device_query deviceQuery = {};
     deviceQuery.query = DRM_XE_DEVICE_QUERY_ENGINE_CYCLES;
 
-    auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     if (ret != 0) {
         xeLog(" -> IoctlHelperXe::%s s=0x%lx r=%d\n", __FUNCTION__, deviceQuery.size, ret);
@@ -338,7 +338,7 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     queryEngineCycles->clockid = CLOCK_MONOTONIC_RAW;
     queryEngineCycles->eci = *this->defaultEngine;
 
-    ret = IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+    ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     auto nValidBits = queryEngineCycles->width;
     auto gpuTimestampValidBits = maxNBitValue(nValidBits);
@@ -358,7 +358,7 @@ bool IoctlHelperXe::getTimestampFrequency(uint64_t &frequency) {
     drm_xe_device_query deviceQuery = {};
     deviceQuery.query = DRM_XE_DEVICE_QUERY_ENGINE_CYCLES;
 
-    auto ret = IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     if (ret != 0) {
         xeLog(" -> IoctlHelperXe::%s s=0x%lx r=%d\n", __FUNCTION__, deviceQuery.size, ret);
@@ -372,7 +372,7 @@ bool IoctlHelperXe::getTimestampFrequency(uint64_t &frequency) {
     queryEngineCycles->clockid = CLOCK_MONOTONIC_RAW;
     queryEngineCycles->eci = *defaultEngine;
 
-    ret = IoctlHelper::ioctl(DrmIoctl::Query, &deviceQuery);
+    ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
     frequency = queryEngineCycles->engine_frequency;
 
     xeLog(" -> IoctlHelperXe::%s [%d,%d] clockId=0x%x s=0x%lx frequency=0x%x r=%d\n", __FUNCTION__,
@@ -554,7 +554,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     }
     create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
 
-    auto ret = IoctlHelper::ioctl(DrmIoctl::GemCreate, &create);
+    auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
 
     xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x h=0x%x r=%d\n", __FUNCTION__,
@@ -586,7 +586,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
         memoryInstances.set(regionClassAndInstance.memoryInstance);
     }
     create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
-    [[maybe_unused]] auto ret = ioctl(DrmIoctl::GemCreate, &create);
+    [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
     updateBindInfo(create.handle, 0u, create.size);
     return create.handle;
@@ -618,7 +618,7 @@ int IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, ui
     wait.timeout = timeout;
     wait.num_engines = 0;
     wait.instances = 0;
-    auto retVal = IoctlHelper::ioctl(DrmIoctl::GemWaitUserFence, &wait);
+    auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &wait);
     xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
           timeout, wait.flags, retVal);
     return retVal;
@@ -725,7 +725,7 @@ int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddr
                 exec.address = obj->offset + d->batch_start_offset;
                 exec.num_batch_buffer = 1;
 
-                ret = IoctlHelper::ioctl(DrmIoctl::GemExecbuffer2, &exec);
+                ret = IoctlHelper::ioctl(DrmIoctl::gemExecbuffer2, &exec);
                 xeLog("r=0x%x batch=0x%lx\n", ret, exec.address);
 
                 if (debugManager.flags.PrintCompletionFenceUsage.get()) {
@@ -912,7 +912,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     int ret = -1;
     xeLog(" => IoctlHelperXe::%s 0x%x\n", __FUNCTION__, request);
     switch (request) {
-    case DrmIoctl::Getparam: {
+    case DrmIoctl::getparam: {
         struct GetParam *d = (struct GetParam *)arg;
         ret = 0;
         switch (d->param) {
@@ -943,7 +943,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl Getparam 0x%x/0x%x r=%d\n", d->param, *d->value, ret);
     } break;
 
-    case DrmIoctl::Query: {
+    case DrmIoctl::query: {
 
         Query *q = static_cast<Query *>(arg);
         ret = xeGetQuery(q);
@@ -956,7 +956,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             xeLog(" -> IoctlHelperXe::ioctl Query r=%d\n", ret);
         }
     } break;
-    case DrmIoctl::GemUserptr: {
+    case DrmIoctl::gemUserptr: {
         GemUserPtr *d = static_cast<GemUserPtr *>(arg);
         d->handle = userPtrHandle++ | XE_USERPTR_FAKE_FLAG;
         updateBindInfo(d->handle, d->userPtr, d->userSize);
@@ -965,10 +965,10 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
               d->userSize, d->flags, d->handle, ret);
         xeShowBindTable();
     } break;
-    case DrmIoctl::GemContextCreateExt: {
+    case DrmIoctl::gemContextCreateExt: {
         UNRECOVERABLE_IF(true);
     } break;
-    case DrmIoctl::GemContextDestroy: {
+    case DrmIoctl::gemContextDestroy: {
         GemContextDestroy *d = static_cast<GemContextDestroy *>(arg);
         struct drm_xe_exec_queue_destroy destroy = {};
         destroy.exec_queue_id = d->contextId;
@@ -979,7 +979,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemContextDestroryExt ctx=0x%x r=%d\n",
               d->contextId, ret);
     } break;
-    case DrmIoctl::GemContextGetparam: {
+    case DrmIoctl::gemContextGetparam: {
         GemContextParam *d = static_cast<GemContextParam *>(arg);
 
         auto addressSpace = drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.gpuAddressSpace;
@@ -1000,7 +1000,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         }
         xeLog(" -> IoctlHelperXe::ioctl GemContextGetparam r=%d\n", ret);
     } break;
-    case DrmIoctl::GemContextSetparam: {
+    case DrmIoctl::gemContextSetparam: {
         GemContextParam *d = static_cast<GemContextParam *>(arg);
         switch (d->param) {
         case static_cast<int>(DrmParam::ContextParamPersistence):
@@ -1033,7 +1033,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         }
         xeLog(" -> IoctlHelperXe::ioctl GemContextSetparam r=%d\n", ret);
     } break;
-    case DrmIoctl::GemClose: {
+    case DrmIoctl::gemClose: {
         struct GemClose *d = static_cast<struct GemClose *>(arg);
         int found = -1;
         xeShowBindTable();
@@ -1064,7 +1064,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         }
         xeLog(" -> IoctlHelperXe::ioctl GemClose found=%d h=0x%x r=%d\n", found, d->handle, ret);
     } break;
-    case DrmIoctl::GemVmCreate: {
+    case DrmIoctl::gemVmCreate: {
         GemVmControl *d = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_create args = {};
         args.flags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
@@ -1079,7 +1079,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
 
     } break;
-    case DrmIoctl::GemVmDestroy: {
+    case DrmIoctl::gemVmDestroy: {
         GemVmControl *d = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_destroy args = {};
         args.vm_id = d->vmId;
@@ -1088,7 +1088,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 
     } break;
 
-    case DrmIoctl::GemMmapOffset: {
+    case DrmIoctl::gemMmapOffset: {
         GemMmapOffset *d = static_cast<GemMmapOffset *>(arg);
         struct drm_xe_gem_mmap_offset mmo = {};
         mmo.handle = d->handle;
@@ -1097,26 +1097,26 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x r=%d\n",
               d->handle, d->offset, ret);
     } break;
-    case DrmIoctl::GetResetStats: {
+    case DrmIoctl::getResetStats: {
         ResetStats *d = static_cast<ResetStats *>(arg);
         //    d->batchActive = 1; // fake gpu hang
         ret = 0;
         xeLog(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=%d\n",
               d->contextId, ret);
     } break;
-    case DrmIoctl::PrimeFdToHandle: {
+    case DrmIoctl::primeFdToHandle: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
         xeLog(" ->PrimeFdToHandle  h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
     } break;
-    case DrmIoctl::PrimeHandleToFd: {
+    case DrmIoctl::primeHandleToFd: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
         xeLog(" ->PrimeHandleToFd h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
     } break;
-    case DrmIoctl::GemCreate: {
+    case DrmIoctl::gemCreate: {
         drm_xe_gem_create *gemCreate = static_cast<drm_xe_gem_create *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
         xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%llx f=0x%x r=%d\n",
@@ -1200,7 +1200,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     create.instances = castToUint64(engine.data());
     create.num_placements = engine.size();
 
-    int ret = IoctlHelper::ioctl(DrmIoctl::GemContextCreateExt, &create);
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
     drmContextId = create.exec_queue_id;
     xeLog("%s:%d (%d) vmid=0x%x ctx=0x%x r=0x%x\n", xeGetClassName(engine[0].engine_class),
           engine[0].engine_instance, create.num_placements, drmVmId, drmContextId, ret);
@@ -1273,7 +1273,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
         bindInfo[index].addr = bind.bind.addr;
 
-        ret = IoctlHelper::ioctl(DrmIoctl::GemVmBind, &bind);
+        ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
 
         xeLog(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d ret=%d\n",
               bind.vm_id,

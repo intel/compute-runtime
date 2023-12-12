@@ -39,7 +39,7 @@ constexpr std::array<uint64_t, 9> copyEnginesCapsMap = {{
 
 int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
     switch (request) {
-    case DrmIoctl::Getparam: {
+    case DrmIoctl::getparam: {
         auto gp = static_cast<GetParam *>(arg);
         if (gp->param == PRELIM_I915_PARAM_HAS_PAGE_FAULT) {
             *gp->value = hasPageFaultQueryValue;
@@ -58,14 +58,14 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
             return chunkingQueryReturn;
         }
     } break;
-    case DrmIoctl::GemContextGetparam: {
+    case DrmIoctl::gemContextGetparam: {
         auto gp = static_cast<GemContextParam *>(arg);
         if (gp->param == PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS) {
             gp->value = contextDebugSupported ? PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32 : 0;
             return 0;
         }
     } break;
-    case DrmIoctl::GemContextCreateExt: {
+    case DrmIoctl::gemContextCreateExt: {
         auto create = static_cast<GemContextCreateExt *>(arg);
         auto setParam = reinterpret_cast<GemContextCreateExtSetParam *>(create->extensions);
         if (setParam->param.param == PRELIM_I915_CONTEXT_PARAM_ACC) {
@@ -76,12 +76,12 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         }
         return 0;
     } break;
-    case DrmIoctl::GemMmapOffset: {
+    case DrmIoctl::gemMmapOffset: {
         auto mmapArg = static_cast<GemMmapOffset *>(arg);
         mmapArg->offset = 0;
         return mmapOffsetReturn;
     } break;
-    case DrmIoctl::GemClosReserve: {
+    case DrmIoctl::gemClosReserve: {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closIndex++;
         if (closIndex == 0) {
@@ -90,7 +90,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         closReserveArg->clos_index = closIndex;
         return 0;
     } break;
-    case DrmIoctl::GemClosFree: {
+    case DrmIoctl::gemClosFree: {
         auto closFreeArg = static_cast<prelim_drm_i915_gem_clos_free *>(arg);
         if (closFreeArg->clos_index > closIndex) {
             return EINVAL;
@@ -98,7 +98,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         closIndex--;
         return 0;
     } break;
-    case DrmIoctl::GemCacheReserve: {
+    case DrmIoctl::gemCacheReserve: {
         auto cacheReserveArg = static_cast<prelim_drm_i915_gem_cache_reserve *>(arg);
         if (cacheReserveArg->clos_index > closIndex) {
             return EINVAL;
@@ -114,7 +114,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         allocNumWays += cacheReserveArg->num_ways;
         return 0;
     } break;
-    case DrmIoctl::GemVmBind: {
+    case DrmIoctl::gemVmBind: {
         vmBindCalled++;
         const auto vmBind = reinterpret_cast<prelim_drm_i915_gem_vm_bind *>(arg);
         receivedVmBind = VmBindParams{
@@ -129,7 +129,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         storeVmBindExtensions(vmBind->extensions, true);
         return vmBindReturn;
     } break;
-    case DrmIoctl::GemVmUnbind: {
+    case DrmIoctl::gemVmUnbind: {
         vmUnbindCalled++;
         const auto vmBind = reinterpret_cast<prelim_drm_i915_gem_vm_bind *>(arg);
         receivedVmUnbind = VmBindParams{
@@ -144,7 +144,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         storeVmBindExtensions(vmBind->extensions, false);
         return vmUnbindReturn;
     } break;
-    case DrmIoctl::GemCreateExt: {
+    case DrmIoctl::gemCreateExt: {
         auto createExt = static_cast<prelim_drm_i915_gem_create_ext *>(arg);
         if (createExt->size == 0) {
             return EINVAL;
@@ -206,7 +206,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
 
         return gemCreateExtReturn;
     } break;
-    case DrmIoctl::GemWaitUserFence: {
+    case DrmIoctl::gemWaitUserFence: {
         waitUserFenceCalled++;
         const auto wait = reinterpret_cast<prelim_drm_i915_gem_wait_user_fence *>(arg);
         receivedWaitUserFence = WaitUserFence{
@@ -221,7 +221,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         };
         return 0;
     } break;
-    case DrmIoctl::GemContextSetparam: {
+    case DrmIoctl::gemContextSetparam: {
         const auto req = reinterpret_cast<GemContextParam *>(arg);
         if (req->param == PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS) {
             receivedSetContextParamValue = req->value;
@@ -230,7 +230,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
 
         return !contextDebugSupported ? EINVAL : 0;
     } break;
-    case DrmIoctl::GemVmAdvise: {
+    case DrmIoctl::gemVmAdvise: {
         const auto req = reinterpret_cast<prelim_drm_i915_gem_vm_advise *>(arg);
         switch (req->attribute) {
         case PRELIM_I915_VM_ADVISE_ATOMIC_NONE:
@@ -244,13 +244,13 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         }
         return vmAdviseReturn;
     } break;
-    case DrmIoctl::GemVmPrefetch: {
+    case DrmIoctl::gemVmPrefetch: {
         const auto req = static_cast<prelim_drm_i915_gem_vm_prefetch *>(arg);
         vmPrefetchCalled++;
         receivedVmPrefetch.push_back(VmPrefetch{req->vm_id, req->region});
         return 0;
     } break;
-    case DrmIoctl::UuidRegister: {
+    case DrmIoctl::uuidRegister: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
 
         if (uuidControl->uuid_class != uint32_t(PRELIM_I915_UUID_CLASS_STRING) && uuidControl->uuid_class > uuidHandle) {
@@ -271,7 +271,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         memcpy_s(receivedRegisterUuid->uuid, sizeof(receivedRegisterUuid->uuid), uuidControl->uuid, sizeof(uuidControl->uuid));
         return uuidControlReturn;
     } break;
-    case DrmIoctl::UuidUnregister: {
+    case DrmIoctl::uuidUnregister: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
         receivedUnregisterUuid = UuidControl{
             {},
@@ -286,7 +286,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         return uuidControlReturn;
     } break;
 
-    case DrmIoctl::DebuggerOpen: {
+    case DrmIoctl::debuggerOpen: {
         auto debuggerOpen = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(arg);
         if (debuggerOpen->pid != 0 && debuggerOpen->events == 0) {
             if (debuggerOpen->version != 0) {

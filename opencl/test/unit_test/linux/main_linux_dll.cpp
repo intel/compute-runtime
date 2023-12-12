@@ -251,9 +251,9 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     drm->setLowPriorityContextParam(contextId);
     EXPECT_EQ(2u, drm->ioctlStatistics.size());
 
-    auto euTotalData = drm->ioctlStatistics.find(DrmIoctl::Getparam);
+    auto euTotalData = drm->ioctlStatistics.find(DrmIoctl::getparam);
     ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::Getparam, euTotalData->first);
+    EXPECT_EQ(DrmIoctl::getparam, euTotalData->first);
     EXPECT_EQ(2u, euTotalData->second.count);
     EXPECT_NE(0, euTotalData->second.totalTime);
     EXPECT_NE(initialMin, euTotalData->second.minTime);
@@ -263,9 +263,9 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     EXPECT_NE(initialMax, euTotalData->second.maxTime);
     auto firstTime = euTotalData->second.totalTime;
 
-    auto lowPriorityData = drm->ioctlStatistics.find(DrmIoctl::GemContextSetparam);
+    auto lowPriorityData = drm->ioctlStatistics.find(DrmIoctl::gemContextSetparam);
     ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::GemContextSetparam, lowPriorityData->first);
+    EXPECT_EQ(DrmIoctl::gemContextSetparam, lowPriorityData->first);
     EXPECT_EQ(1u, lowPriorityData->second.count);
     EXPECT_NE(0, lowPriorityData->second.totalTime);
     EXPECT_NE(initialMin, lowPriorityData->second.minTime);
@@ -276,39 +276,39 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     drm->getEuTotal(euTotal);
     EXPECT_EQ(drm->ioctlStatistics.size(), 2u);
 
-    euTotalData = drm->ioctlStatistics.find(DrmIoctl::Getparam);
+    euTotalData = drm->ioctlStatistics.find(DrmIoctl::getparam);
     ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::Getparam, euTotalData->first);
+    EXPECT_EQ(DrmIoctl::getparam, euTotalData->first);
     EXPECT_EQ(3u, euTotalData->second.count);
     EXPECT_NE(0u, euTotalData->second.totalTime);
 
     auto secondTime = euTotalData->second.totalTime;
     EXPECT_GT(secondTime, firstTime);
 
-    lowPriorityData = drm->ioctlStatistics.find(DrmIoctl::GemContextSetparam);
+    lowPriorityData = drm->ioctlStatistics.find(DrmIoctl::gemContextSetparam);
     ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::GemContextSetparam, lowPriorityData->first);
+    EXPECT_EQ(DrmIoctl::gemContextSetparam, lowPriorityData->first);
     EXPECT_EQ(1u, lowPriorityData->second.count);
     EXPECT_NE(0, lowPriorityData->second.totalTime);
 
     drm->destroyDrmContext(contextId);
     EXPECT_EQ(3u, drm->ioctlStatistics.size());
 
-    euTotalData = drm->ioctlStatistics.find(DrmIoctl::Getparam);
+    euTotalData = drm->ioctlStatistics.find(DrmIoctl::getparam);
     ASSERT_TRUE(euTotalData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::Getparam, euTotalData->first);
+    EXPECT_EQ(DrmIoctl::getparam, euTotalData->first);
     EXPECT_EQ(3u, euTotalData->second.count);
     EXPECT_NE(0, euTotalData->second.totalTime);
 
-    lowPriorityData = drm->ioctlStatistics.find(DrmIoctl::GemContextSetparam);
+    lowPriorityData = drm->ioctlStatistics.find(DrmIoctl::gemContextSetparam);
     ASSERT_TRUE(lowPriorityData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::GemContextSetparam, lowPriorityData->first);
+    EXPECT_EQ(DrmIoctl::gemContextSetparam, lowPriorityData->first);
     EXPECT_EQ(1u, lowPriorityData->second.count);
     EXPECT_NE(0, lowPriorityData->second.totalTime);
 
-    auto destroyData = drm->ioctlStatistics.find(DrmIoctl::GemContextDestroy);
+    auto destroyData = drm->ioctlStatistics.find(DrmIoctl::gemContextDestroy);
     ASSERT_TRUE(destroyData != drm->ioctlStatistics.end());
-    EXPECT_EQ(DrmIoctl::GemContextDestroy, destroyData->first);
+    EXPECT_EQ(DrmIoctl::gemContextDestroy, destroyData->first);
     EXPECT_EQ(1u, destroyData->second.count);
     EXPECT_NE(0, destroyData->second.totalTime);
 
@@ -446,7 +446,7 @@ TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErro
     // check if device works, although there was EINTR error from KMD
     getParam.param = I915_PARAM_CHIPSET_ID;
     getParam.value = &lDeviceId;
-    auto ret = drm->ioctl(DrmIoctl::Getparam, &getParam);
+    auto ret = drm->ioctl(DrmIoctl::getparam, &getParam);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(deviceId, lDeviceId);
 
@@ -456,7 +456,7 @@ TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErro
     // check if device works, although there was EAGAIN error from KMD
     getParam.param = I915_PARAM_CHIPSET_ID;
     getParam.value = &lDeviceId;
-    ret = drm->ioctl(DrmIoctl::Getparam, &getParam);
+    ret = drm->ioctl(DrmIoctl::getparam, &getParam);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(deviceId, lDeviceId);
 
@@ -466,7 +466,7 @@ TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErro
     // check if device works, although there was EBUSY error from KMD
     getParam.param = I915_PARAM_CHIPSET_ID;
     getParam.value = &lDeviceId;
-    ret = drm->ioctl(DrmIoctl::Getparam, &getParam);
+    ret = drm->ioctl(DrmIoctl::getparam, &getParam);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(deviceId, lDeviceId);
 
@@ -476,7 +476,7 @@ TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErro
     // we failed with any other error code
     getParam.param = I915_PARAM_CHIPSET_ID;
     getParam.value = &lDeviceId;
-    ret = drm->ioctl(DrmIoctl::Getparam, &getParam);
+    ret = drm->ioctl(DrmIoctl::getparam, &getParam);
     EXPECT_EQ(-1, ret);
     EXPECT_EQ(deviceId, lDeviceId);
 }

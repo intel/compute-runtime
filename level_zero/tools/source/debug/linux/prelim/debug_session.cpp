@@ -71,7 +71,7 @@ DebugSession *DebugSessionLinuxi915::createLinuxSession(const zet_debug_config_t
     open.pid = config.pid;
     open.events = 0;
     open.version = 0;
-    auto debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::DebuggerOpen, &open);
+    auto debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::debuggerOpen, &open);
     if (debugFd >= 0) {
         PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: %d, open.events: %d, debugFd: %d\n",
                                 open.pid, open.events, debugFd);

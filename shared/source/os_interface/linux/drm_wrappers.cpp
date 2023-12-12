@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,9 +19,9 @@ unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelpe
         return ioctlHelper->getIoctlRequestValue(ioctlRequest);
     }
     switch (ioctlRequest) {
-    case DrmIoctl::Getparam:
+    case DrmIoctl::getparam:
         return DRM_IOCTL_I915_GETPARAM;
-    case DrmIoctl::Version:
+    case DrmIoctl::version:
         return DRM_IOCTL_VERSION;
     default:
         UNRECOVERABLE_IF(true);
@@ -71,7 +71,7 @@ std::string getIoctlString(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper) {
         return ioctlHelper->getIoctlString(ioctlRequest);
     }
     switch (ioctlRequest) {
-    case DrmIoctl::Getparam:
+    case DrmIoctl::getparam:
         return "DRM_IOCTL_I915_GETPARAM";
     default:
         UNRECOVERABLE_IF(true);

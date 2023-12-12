@@ -37,7 +37,7 @@ class DrmPrelimMock : public DrmMock {
         prelimVersion = "2.0";
     }
     int handleRemainingRequests(DrmIoctl request, void *arg) override {
-        if (request == DrmIoctl::Query && arg != nullptr) {
+        if (request == DrmIoctl::query && arg != nullptr) {
             auto queryArg = static_cast<Query *>(arg);
             for (auto i = 0u; i < queryArg->numItems; i++) {
                 auto queryItemArg = (reinterpret_cast<QueryItem *>(queryArg->itemsPtr) + i);
@@ -200,7 +200,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
-    auto ret = drm->ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &arg);
+    auto ret = drm->ioctlHelper->ioctl(DrmIoctl::gemContextCreateExt, &arg);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }

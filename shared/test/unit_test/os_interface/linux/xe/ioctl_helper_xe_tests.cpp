@@ -370,22 +370,22 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmParamString("TilingNone", DrmParam::TilingNone);
     verifyDrmParamString("TilingY", DrmParam::TilingY);
 
-    verifyIoctlString(DrmIoctl::GemClose, "DRM_IOCTL_GEM_CLOSE");
-    verifyIoctlString(DrmIoctl::GemCreate, "DRM_IOCTL_XE_GEM_CREATE");
-    verifyIoctlString(DrmIoctl::GemVmCreate, "DRM_IOCTL_XE_VM_CREATE");
-    verifyIoctlString(DrmIoctl::GemVmDestroy, "DRM_IOCTL_XE_VM_DESTROY");
-    verifyIoctlString(DrmIoctl::GemMmapOffset, "DRM_IOCTL_XE_GEM_MMAP_OFFSET");
-    verifyIoctlString(DrmIoctl::GemCreate, "DRM_IOCTL_XE_GEM_CREATE");
-    verifyIoctlString(DrmIoctl::GemExecbuffer2, "DRM_IOCTL_XE_EXEC");
-    verifyIoctlString(DrmIoctl::GemVmBind, "DRM_IOCTL_XE_VM_BIND");
-    verifyIoctlString(DrmIoctl::Query, "DRM_IOCTL_XE_DEVICE_QUERY");
-    verifyIoctlString(DrmIoctl::GemContextCreateExt, "DRM_IOCTL_XE_EXEC_QUEUE_CREATE");
-    verifyIoctlString(DrmIoctl::GemContextDestroy, "DRM_IOCTL_XE_EXEC_QUEUE_DESTROY");
-    verifyIoctlString(DrmIoctl::GemWaitUserFence, "DRM_IOCTL_XE_WAIT_USER_FENCE");
-    verifyIoctlString(DrmIoctl::PrimeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
-    verifyIoctlString(DrmIoctl::PrimeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
+    verifyIoctlString(DrmIoctl::gemClose, "DRM_IOCTL_GEM_CLOSE");
+    verifyIoctlString(DrmIoctl::gemCreate, "DRM_IOCTL_XE_GEM_CREATE");
+    verifyIoctlString(DrmIoctl::gemVmCreate, "DRM_IOCTL_XE_VM_CREATE");
+    verifyIoctlString(DrmIoctl::gemVmDestroy, "DRM_IOCTL_XE_VM_DESTROY");
+    verifyIoctlString(DrmIoctl::gemMmapOffset, "DRM_IOCTL_XE_GEM_MMAP_OFFSET");
+    verifyIoctlString(DrmIoctl::gemCreate, "DRM_IOCTL_XE_GEM_CREATE");
+    verifyIoctlString(DrmIoctl::gemExecbuffer2, "DRM_IOCTL_XE_EXEC");
+    verifyIoctlString(DrmIoctl::gemVmBind, "DRM_IOCTL_XE_VM_BIND");
+    verifyIoctlString(DrmIoctl::query, "DRM_IOCTL_XE_DEVICE_QUERY");
+    verifyIoctlString(DrmIoctl::gemContextCreateExt, "DRM_IOCTL_XE_EXEC_QUEUE_CREATE");
+    verifyIoctlString(DrmIoctl::gemContextDestroy, "DRM_IOCTL_XE_EXEC_QUEUE_DESTROY");
+    verifyIoctlString(DrmIoctl::gemWaitUserFence, "DRM_IOCTL_XE_WAIT_USER_FENCE");
+    verifyIoctlString(DrmIoctl::primeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
+    verifyIoctlString(DrmIoctl::primeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
 
-    verifyIoctlString(DrmIoctl::DebuggerOpen, "???");
+    verifyIoctlString(DrmIoctl::debuggerOpen, "???");
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
@@ -413,21 +413,21 @@ TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) 
         EXPECT_EQ(xeIoctlHelper->getIoctlRequestValue(drmIoctl), static_cast<unsigned int>(value));
     };
 
-    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC, DrmIoctl::GemExecbuffer2);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_WAIT_USER_FENCE, DrmIoctl::GemWaitUserFence);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_CREATE, DrmIoctl::GemCreate);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_BIND, DrmIoctl::GemVmBind);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_CREATE, DrmIoctl::GemVmCreate);
-    verifyIoctlRequestValue(DRM_IOCTL_GEM_CLOSE, DrmIoctl::GemClose);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_DESTROY, DrmIoctl::GemVmDestroy);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_MMAP_OFFSET, DrmIoctl::GemMmapOffset);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_DEVICE_QUERY, DrmIoctl::Query);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_CREATE, DrmIoctl::GemContextCreateExt);
-    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY, DrmIoctl::GemContextDestroy);
-    verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::PrimeFdToHandle);
-    verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::PrimeHandleToFd);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC, DrmIoctl::gemExecbuffer2);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_WAIT_USER_FENCE, DrmIoctl::gemWaitUserFence);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_CREATE, DrmIoctl::gemCreate);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_BIND, DrmIoctl::gemVmBind);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_CREATE, DrmIoctl::gemVmCreate);
+    verifyIoctlRequestValue(DRM_IOCTL_GEM_CLOSE, DrmIoctl::gemClose);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_VM_DESTROY, DrmIoctl::gemVmDestroy);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_GEM_MMAP_OFFSET, DrmIoctl::gemMmapOffset);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_DEVICE_QUERY, DrmIoctl::query);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_CREATE, DrmIoctl::gemContextCreateExt);
+    verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY, DrmIoctl::gemContextDestroy);
+    verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::primeFdToHandle);
+    verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::primeHandleToFd);
 
-    EXPECT_THROW(xeIoctlHelper->getIoctlRequestValue(DrmIoctl::DebuggerOpen), std::runtime_error);
+    EXPECT_THROW(xeIoctlHelper->getIoctlRequestValue(DrmIoctl::debuggerOpen), std::runtime_error);
 }
 
 TEST(IoctlHelperXeTest, verifyPublicFunctions) {
@@ -487,19 +487,19 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1;
 
-    EXPECT_EQ(-1, mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query));
+    EXPECT_EQ(-1, mockXeIoctlHelper->ioctl(DrmIoctl::query, &query));
     queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::QueryHwconfigTable);
-    mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query);
+    mockXeIoctlHelper->ioctl(DrmIoctl::query, &query);
     EXPECT_EQ(0, queryItem.length);
 
     memset(&queryItem, 0, sizeof(queryItem));
     queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::QueryEngineInfo);
-    mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query);
+    mockXeIoctlHelper->ioctl(DrmIoctl::query, &query);
     EXPECT_EQ(0, queryItem.length);
 
     memset(&queryItem, 0, sizeof(queryItem));
     queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::QueryTopologyInfo);
-    mockXeIoctlHelper->ioctl(DrmIoctl::Query, &query);
+    mockXeIoctlHelper->ioctl(DrmIoctl::query, &query);
     EXPECT_EQ(0, queryItem.length);
 }
 
@@ -529,11 +529,11 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     {
         GemUserPtr test = {};
         test.handle = 1;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemUserptr, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemUserptr, &test);
         EXPECT_EQ(0, ret);
         GemClose cl = {};
         cl.handle = test.handle;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemClose, &cl);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &cl);
         EXPECT_EQ(0, ret);
     }
     {
@@ -541,7 +541,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         drm.pageFaultSupported = false;
         uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
                                          DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmCreate, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
         EXPECT_EQ(test.flags, expectedVmCreateFlags);
@@ -550,7 +550,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
                                 DRM_XE_VM_CREATE_FLAG_COMPUTE_MODE |
                                 DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmCreate, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
         EXPECT_EQ(test.flags, expectedVmCreateFlags);
@@ -558,27 +558,27 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     {
         GemVmControl test = {};
         test.vmId = testValueVmId;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemVmDestroy, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmDestroy, &test);
         EXPECT_EQ(0, ret);
     }
     {
         GemMmapOffset test = {};
         test.handle = testValueMapOff;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemMmapOffset, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemMmapOffset, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.offset), testValueMapOff);
     }
     {
         PrimeHandle test = {};
         test.fileDescriptor = testValuePrime;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::primeFdToHandle, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.handle), testValuePrime);
     }
     {
         PrimeHandle test = {};
         test.handle = testValuePrime;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::primeHandleToFd, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.fileDescriptor), testValuePrime);
     }
@@ -587,57 +587,57 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         test.handle = 0;
         test.flags = 1;
         test.size = 123;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemCreate, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemCreate, &test);
         EXPECT_EQ(0, ret);
     }
     {
         ResetStats test = {};
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GetResetStats, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getResetStats, &test);
         EXPECT_EQ(0, ret);
     }
     {
         Query test = {};
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Query, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::query, &test);
         EXPECT_EQ(-1, ret);
     }
     {
         GemContextParam test = {};
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextSetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::ContextParamPersistence);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextSetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
         EXPECT_EQ(0, ret);
         test.param = contextPrivateParamBoost;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextSetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
         EXPECT_EQ(0, ret);
         test.param = static_cast<int>(DrmParam::ContextParamEngines);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextSetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
         EXPECT_EQ(-1, ret);
     }
     {
         auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
 
         GemContextParam test = {};
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextGetparam, &test);
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::ContextParamGttSize);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextGetparam, &test);
         EXPECT_EQ(0, ret);
 
         auto expectedAddressWidth = hwInfo->capabilityTable.gpuAddressSpace + 1u;
         EXPECT_EQ(expectedAddressWidth, test.value);
         test.param = static_cast<int>(DrmParam::ContextParamSseu);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextGetparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(0x55fdd94d4e40ull, test.value);
         test.param = static_cast<int>(DrmParam::ContextParamPersistence);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemContextGetparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextGetparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(0x1ull, test.value);
     }
     {
         GemClose test = {};
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemClose, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &test);
         EXPECT_EQ(0, ret);
     }
     auto engineInfo = mockXeIoctlHelper->createEngineInfo(false);
@@ -646,34 +646,34 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         GetParam test = {};
         int dstvalue;
         test.value = &dstvalue;
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::ParamChipsetId);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 0);
         test.param = static_cast<int>(DrmParam::ParamRevision);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 0);
         test.param = static_cast<int>(DrmParam::ParamHasPageFault);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 0);
         test.param = static_cast<int>(DrmParam::ParamHasExecSoftpin);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 1);
         test.param = static_cast<int>(DrmParam::ParamHasScheduler);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<unsigned int>(dstvalue), 0x80000037);
         test.param = static_cast<int>(DrmParam::ParamCsTimestampFrequency);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::Getparam, &test);
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 0);
     }
-    EXPECT_THROW(mockXeIoctlHelper->ioctl(DrmIoctl::GemContextCreateExt, NULL), std::runtime_error);
+    EXPECT_THROW(mockXeIoctlHelper->ioctl(DrmIoctl::gemContextCreateExt, NULL), std::runtime_error);
     drm.reset();
 }
 

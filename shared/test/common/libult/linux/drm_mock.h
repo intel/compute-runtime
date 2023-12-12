@@ -337,7 +337,7 @@ class DrmMockReturnErrorNotSupported : public DrmMock {
   public:
     using DrmMock::DrmMock;
     int ioctl(DrmIoctl request, void *arg) override {
-        if (request == DrmIoctl::GemExecbuffer2) {
+        if (request == DrmIoctl::gemExecbuffer2) {
             return -1;
         }
         return 0;

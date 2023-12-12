@@ -710,7 +710,7 @@ void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
     auto pDrm = pLinuxSysmanImp->getDrm();
     // Device is said to be in wedged if context creation returns EIO.
-    auto ret = pDrm->getIoctlHelper()->ioctl(NEO::DrmIoctl::GemContextCreateExt, &gcc);
+    auto ret = pDrm->getIoctlHelper()->ioctl(NEO::DrmIoctl::gemContextCreateExt, &gcc);
     if (ret == 0) {
         pDrm->destroyDrmContext(gcc.contextId);
         return;

@@ -110,42 +110,42 @@ class DrmMockXe : public DrmMockCustom {
             return setIoctlAnswer;
         }
         switch (request) {
-        case DrmIoctl::GemVmCreate: {
+        case DrmIoctl::gemVmCreate: {
             struct drm_xe_vm_create *v = static_cast<struct drm_xe_vm_create *>(arg);
             v->vm_id = testValueVmId;
             ret = 0;
         } break;
-        case DrmIoctl::GemUserptr:
-        case DrmIoctl::GemClose:
+        case DrmIoctl::gemUserptr:
+        case DrmIoctl::gemClose:
             ret = 0;
             break;
-        case DrmIoctl::GemVmDestroy: {
+        case DrmIoctl::gemVmDestroy: {
             struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
             if (v->vm_id == testValueVmId)
                 ret = 0;
         } break;
-        case DrmIoctl::GemMmapOffset: {
+        case DrmIoctl::gemMmapOffset: {
             struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
             if (v->handle == testValueMapOff) {
                 v->offset = v->handle;
                 ret = 0;
             }
         } break;
-        case DrmIoctl::PrimeFdToHandle: {
+        case DrmIoctl::primeFdToHandle: {
             PrimeHandle *v = static_cast<PrimeHandle *>(arg);
             if (v->fileDescriptor == testValuePrime) {
                 v->handle = testValuePrime;
                 ret = 0;
             }
         } break;
-        case DrmIoctl::PrimeHandleToFd: {
+        case DrmIoctl::primeHandleToFd: {
             PrimeHandle *v = static_cast<PrimeHandle *>(arg);
             if (v->handle == testValuePrime) {
                 v->fileDescriptor = testValuePrime;
                 ret = 0;
             }
         } break;
-        case DrmIoctl::GemCreate: {
+        case DrmIoctl::gemCreate: {
             ioctlCnt.gemCreate++;
             auto createParams = static_cast<drm_xe_gem_create *>(arg);
             this->createParamsSize = createParams->size;
@@ -156,11 +156,11 @@ class DrmMockXe : public DrmMockCustom {
             }
             ret = 0;
         } break;
-        case DrmIoctl::Getparam:
-        case DrmIoctl::GetResetStats:
+        case DrmIoctl::getparam:
+        case DrmIoctl::getResetStats:
             ret = -2;
             break;
-        case DrmIoctl::Query: {
+        case DrmIoctl::query: {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
             switch (deviceQuery->query) {
             case DRM_XE_DEVICE_QUERY_ENGINES:
@@ -196,7 +196,7 @@ class DrmMockXe : public DrmMockCustom {
             };
             ret = 0;
         } break;
-        case DrmIoctl::GemVmBind: {
+        case DrmIoctl::gemVmBind: {
             ret = gemVmBindReturn;
             auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
             vmBindInputs.push_back(*vmBindInput);
@@ -207,14 +207,14 @@ class DrmMockXe : public DrmMockCustom {
             syncInputs.push_back(syncInput);
         } break;
 
-        case DrmIoctl::GemWaitUserFence: {
+        case DrmIoctl::gemWaitUserFence: {
             ret = waitUserFenceReturn;
             auto waitUserFenceInput = static_cast<drm_xe_wait_user_fence *>(arg);
             waitUserFenceInputs.push_back(*waitUserFenceInput);
         } break;
 
-        case DrmIoctl::GemContextSetparam:
-        case DrmIoctl::GemContextGetparam:
+        case DrmIoctl::gemContextSetparam:
+        case DrmIoctl::gemContextGetparam:
 
         default:
             break;

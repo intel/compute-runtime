@@ -124,7 +124,7 @@ bool BufferObject::close() {
     PRINT_DEBUG_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle.getBoHandle());
 
     auto ioctlHelper = this->drm->getIoctlHelper();
-    int ret = ioctlHelper->ioctl(DrmIoctl::GemClose, &close);
+    int ret = ioctlHelper->ioctl(DrmIoctl::gemClose, &close);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));

@@ -60,7 +60,7 @@ class DrmMockProdDg1 : public DrmTipMock {
     }
 
     int handleKernelSpecificRequests(DrmIoctl request, void *arg) override {
-        if (request == DrmIoctl::DG1GemCreateExt) {
+        if (request == DrmIoctl::dg1GemCreateExt) {
             auto createExtParams = static_cast<drm_i915_gem_create_ext *>(arg);
             if (createExtParams->size == 0) {
                 return EINVAL;
