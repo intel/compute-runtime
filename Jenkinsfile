@@ -8,4 +8,4 @@
  */
 
 dependenciesRevision='293622c94d7f1400923d61585298b8f430d83cd4-2197'
-kernelVersion='dev-5236'
+kernelVersion='dev-5283'
