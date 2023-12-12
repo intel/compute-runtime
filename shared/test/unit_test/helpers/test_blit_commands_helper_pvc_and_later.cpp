@@ -24,7 +24,7 @@ HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithBlitThenCommandIsProg
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
@@ -41,7 +41,7 @@ HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForVillBu
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
@@ -65,7 +65,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForVill
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0u);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
@@ -90,7 +90,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForVillB
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0u);
     const auto &rootDeviceEnvironment = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()];
     EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(rootDeviceEnvironment.get())};
@@ -121,7 +121,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
@@ -145,7 +145,7 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMe
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
@@ -177,7 +177,7 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMem
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+                                          MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
@@ -199,7 +199,7 @@ HWTEST2_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWh
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitSetWidth) - 1,
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
@@ -220,7 +220,7 @@ HWTEST2_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBl
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitSetWidth),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint8_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;

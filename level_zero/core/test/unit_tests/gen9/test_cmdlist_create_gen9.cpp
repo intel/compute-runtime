@@ -66,7 +66,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
                                                       reinterpret_cast<uint64_t>(buffer),
                                                       0,
                                                       isaSize,
-                                                      MemoryPool::System4KBPages,
+                                                      MemoryPool::system4KBPages,
                                                       MemoryManager::maxOsContextCount);
         if (isaBuffer != nullptr) {
             memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), isaBuffer, isaSize);

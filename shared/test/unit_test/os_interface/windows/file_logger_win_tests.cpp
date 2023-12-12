@@ -30,7 +30,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     MockWddmAllocation allocation(getGmmHelper());
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
-    allocation.memoryPool = MemoryPool::System64KBPages;
+    allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
     allocation.setGpuAddress(0x12345);
 
@@ -76,7 +76,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
-    allocation.memoryPool = MemoryPool::System64KBPages;
+    allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
     fileLogger.logAllocation(&allocation);

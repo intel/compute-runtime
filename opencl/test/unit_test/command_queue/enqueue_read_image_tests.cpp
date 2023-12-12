@@ -895,7 +895,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageWithMapAlloc
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
     size_t rowPitch = srcImage->getHostPtrRowPitch();
     size_t slicePitch = srcImage->getHostPtrSlicePitch();
-    GraphicsAllocation mapAllocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation mapAllocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu};
 
     EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), srcImage.get(), CL_TRUE, origin, region, rowPitch, slicePitch, dstPtr, &mapAllocation);
 

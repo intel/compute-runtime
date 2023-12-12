@@ -39,7 +39,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
                                                                 ptr,
                                                                 0x1000,
                                                                 0u,
-                                                                MemoryPool::System4KBPages,
+                                                                MemoryPool::system4KBPages,
                                                                 MemoryManager::maxOsContextCount,
                                                                 castToUint64(ptr)));
     kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
@@ -233,7 +233,7 @@ ModuleWithZebinFixture::MockImmutableData::MockImmutableData(L0::Device *device)
                                                                 ptr,
                                                                 0x1000,
                                                                 0u,
-                                                                MemoryPool::System4KBPages,
+                                                                MemoryPool::system4KBPages,
                                                                 MemoryManager::maxOsContextCount,
                                                                 castToUint64(ptr)));
 }
@@ -254,7 +254,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
                                                                        ptr,
                                                                        0x1000,
                                                                        0u,
-                                                                       MemoryPool::System4KBPages,
+                                                                       MemoryPool::system4KBPages,
                                                                        MemoryManager::maxOsContextCount,
                                                                        canonizedGpuAddress);
     translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
@@ -262,7 +262,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
                                                                          ptr,
                                                                          0x1000,
                                                                          0u,
-                                                                         MemoryPool::System4KBPages,
+                                                                         MemoryPool::system4KBPages,
                                                                          MemoryManager::maxOsContextCount,
                                                                          canonizedGpuAddress);
 

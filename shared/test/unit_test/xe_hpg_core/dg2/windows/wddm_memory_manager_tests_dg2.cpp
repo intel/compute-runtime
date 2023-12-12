@@ -48,7 +48,7 @@ DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValu
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
 
-    EXPECT_NE(MemoryPool::LocalMemory, graphicsAllocation->getMemoryPool());
+    EXPECT_NE(MemoryPool::localMemory, graphicsAllocation->getMemoryPool());
     EXPECT_FALSE(graphicsAllocation->isLocked());
     auto &partition = wddm->getGfxPartition();
 
@@ -82,7 +82,7 @@ DG2TEST_F(Dg2WddmTest, givenG10B0WhenGettingLocalMemoryAccessModeThenCorrectValu
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
 
-    EXPECT_EQ(MemoryPool::LocalMemory, graphicsAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, graphicsAllocation->getMemoryPool());
     EXPECT_TRUE(graphicsAllocation->isLocked());
     auto &partition = wddm->getGfxPartition();
 
@@ -121,7 +121,7 @@ DG2TEST_F(Dg2WddmTest, givenG11WhenGettingLocalMemoryAccessModeThenCorrectValueI
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
 
-    EXPECT_EQ(MemoryPool::LocalMemory, graphicsAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, graphicsAllocation->getMemoryPool());
     EXPECT_TRUE(graphicsAllocation->isLocked());
     auto &partition = wddm->getGfxPartition();
 
@@ -160,7 +160,7 @@ DG2TEST_F(Dg2WddmTest, givenG12WhenGettingLocalMemoryAccessModeThenCorrectValueI
     auto gpuAddressEnd = gpuAddress + 4096u;
     auto gmmHelper = memoryManager.getGmmHelper(graphicsAllocation->getRootDeviceIndex());
 
-    EXPECT_EQ(MemoryPool::LocalMemory, graphicsAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, graphicsAllocation->getMemoryPool());
     EXPECT_TRUE(graphicsAllocation->isLocked());
     auto &partition = wddm->getGfxPartition();
 

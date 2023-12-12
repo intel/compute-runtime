@@ -410,7 +410,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrI
     ctx.memoryManager = &memoryManager;
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
 
     retVal = mockCmdQ->enqueueWriteBuffer(buffer.get(),
@@ -442,7 +442,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenForcedCpuCopyWhenEnqueueWriteCompresse
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
     auto allocation = static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
 
-    allocation->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    allocation->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     MockBuffer::setAllocationType(allocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
@@ -488,7 +488,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrI
     ctx.memoryManager = &memoryManager;
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::System4KBPages);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::system4KBPages);
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
 
     retVal = mockCmdQ->enqueueWriteBuffer(buffer.get(),

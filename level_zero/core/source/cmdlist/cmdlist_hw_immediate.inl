@@ -1108,7 +1108,7 @@ void *CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainLockedPtrFromDevice(N
     }
 
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex());
-    if (alloc->getMemoryPool() != NEO::MemoryPool::LocalMemory) {
+    if (alloc->getMemoryPool() != NEO::MemoryPool::localMemory) {
         return nullptr;
     }
 

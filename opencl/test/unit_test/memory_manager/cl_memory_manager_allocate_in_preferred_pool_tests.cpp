@@ -44,7 +44,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
 
     auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());

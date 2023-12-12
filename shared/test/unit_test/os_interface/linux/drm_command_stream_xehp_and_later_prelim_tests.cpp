@@ -32,7 +32,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBuff
     auto bo2 = this->createBO(size);
     auto bo3 = this->createBO(size);
     BufferObjects bos{bo0, bo1, bo2, bo3};
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
 
     csr->CommandStreamReceiver::makeResident(*allocation);
@@ -258,7 +258,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithMultipleBuff
     auto bo2 = this->createBO(size);
     auto bo3 = this->createBO(size);
     BufferObjects bos{bo0, bo1, bo2, bo3};
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
     allocation->storageInfo.tileInstanced = true;
 
@@ -466,14 +466,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesW
     auto multiStorageBo0 = new BufferObject(0u, drm, 3, 30, 0, 1);
     auto multiStorageBo1 = new BufferObject(0u, drm, 3, 31, 0, 1);
     BufferObjects multiStorageBos{multiStorageBo0, multiStorageBo1};
-    auto multiStorageAllocation = new DrmAllocation(0, AllocationType::unknown, multiStorageBos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto multiStorageAllocation = new DrmAllocation(0, AllocationType::unknown, multiStorageBos, nullptr, 0u, size, MemoryPool::localMemory);
     multiStorageAllocation->storageInfo.memoryBanks = 0b11;
     csr->CommandStreamReceiver::makeResident(*multiStorageAllocation);
 
     auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
     auto tileInstancedBo1 = new BufferObject(0u, drm, 3, 41, 0, 1);
     BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1};
-    auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::unknown, tileInstancedBos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::unknown, tileInstancedBos, nullptr, 0u, size, MemoryPool::localMemory);
     tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
     tileInstancedAllocation->storageInfo.tileInstanced = true;
     csr->CommandStreamReceiver::makeResident(*tileInstancedAllocation);
@@ -540,7 +540,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     auto tileInstancedBo2 = new BufferObject(0u, drm, 3, 42, 0, 1);
     auto tileInstancedBo3 = new BufferObject(0u, drm, 3, 43, 0, 1);
     BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1, tileInstancedBo2, tileInstancedBo3};
-    auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::unknown, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::LocalMemory);
+    auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::unknown, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::localMemory);
     tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
     tileInstancedAllocation->storageInfo.tileInstanced = true;
     csr->CommandStreamReceiver::makeResident(*tileInstancedAllocation);
@@ -583,7 +583,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     auto tileInstancedBo2 = new BufferObject(0u, drm, 3, 42, 0, 1);
     auto tileInstancedBo3 = new BufferObject(0u, drm, 3, 43, 0, 1);
     BufferObjects tileInstancedBos{tileInstancedBo0, tileInstancedBo1, tileInstancedBo2, tileInstancedBo3};
-    auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::unknown, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::LocalMemory);
+    auto tileInstancedAllocation = new DrmAllocation(0, AllocationType::unknown, tileInstancedBos, nullptr, 0u, 1024u, MemoryPool::localMemory);
     tileInstancedAllocation->storageInfo.memoryBanks = 0b11;
     tileInstancedAllocation->storageInfo.tileInstanced = true;
     csr->CommandStreamReceiver::makeResident(*tileInstancedAllocation);
@@ -629,7 +629,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
     const auto size = 1024u;
     BufferObject *bufferObject = new BufferObject(0u, drm, 3, 30, 0, 1);
     BufferObjects bufferObjects{bufferObject};
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, bufferObjects, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, bufferObjects, nullptr, 0u, size, MemoryPool::localMemory);
     csr->CommandStreamReceiver::makeResident(*allocation);
 
     auto &cs = csr->getCS();
@@ -663,7 +663,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
     const auto size = 1024u;
     BufferObject *bufferObject = new BufferObject(0u, drm, 3, 30, 0, 1);
     BufferObjects bufferObjects{bufferObject};
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, bufferObjects, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, bufferObjects, nullptr, 0u, size, MemoryPool::localMemory);
     csr->CommandStreamReceiver::makeResident(*allocation);
 
     auto &cs = csr->getCS();

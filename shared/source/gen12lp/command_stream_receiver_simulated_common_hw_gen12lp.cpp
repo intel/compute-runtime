@@ -25,7 +25,7 @@ void CommandStreamReceiverSimulatedCommonHw<Family>::initGlobalMMIO() {
 template <>
 uint64_t CommandStreamReceiverSimulatedCommonHw<Family>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
     return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) |
-           ((gfxAllocation && gfxAllocation->getMemoryPool() == MemoryPool::LocalMemory) ? BIT(PageTableEntry::localMemoryBit) : 0);
+           ((gfxAllocation && gfxAllocation->getMemoryPool() == MemoryPool::localMemory) ? BIT(PageTableEntry::localMemoryBit) : 0);
 }
 
 template <>

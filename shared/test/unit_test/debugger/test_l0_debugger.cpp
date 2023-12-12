@@ -97,7 +97,7 @@ TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUs
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), 4096, NEO::AllocationType::kernelIsa, neoDevice->getDeviceBitfield()});
 
-    if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+    if (allocation->getMemoryPool() == MemoryPool::localMemory) {
         EXPECT_EQ(1u, allocation->storageInfo.getMemoryBanks());
     } else {
         EXPECT_EQ(0u, allocation->storageInfo.getMemoryBanks());
@@ -125,7 +125,7 @@ TEST(Debugger, givenTileAttachAndDebuggingEnabledInExecEnvWhenAllocatingIsaThenM
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), 4096, NEO::AllocationType::kernelIsa, DeviceBitfield{3}});
 
-    if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+    if (allocation->getMemoryPool() == MemoryPool::localMemory) {
         EXPECT_EQ(3u, allocation->storageInfo.getMemoryBanks());
     } else {
         EXPECT_EQ(0u, allocation->storageInfo.getMemoryBanks());
@@ -172,7 +172,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWithoutMemoryOperationsHandlerWhenNotifyin
     StackVec<NEO::GraphicsAllocation *, 32> allocs;
     NEO::GraphicsAllocation alloc(0, NEO::AllocationType::internalHostMemory,
                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     allocs.push_back(&alloc);
 
     debugger->notifyModuleLoadAllocations(pDevice, allocs);

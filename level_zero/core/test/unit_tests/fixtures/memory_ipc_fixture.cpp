@@ -322,7 +322,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithPro
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -342,7 +342,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromS
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -361,7 +361,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -377,7 +377,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromN
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -437,7 +437,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -454,7 +454,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -474,7 +474,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -495,7 +495,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);
@@ -514,7 +514,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
                                                               ptr,
                                                               0x1000,
                                                               0u,
-                                                              MemoryPool::System4KBPages,
+                                                              MemoryPool::system4KBPages,
                                                               MemoryManager::maxOsContextCount,
                                                               canonizedGpuAddress);
     alloc->setGpuBaseAddress(0xabcd);

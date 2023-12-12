@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourP
     EXPECT_EQ(CL_SUCCESS, retVal);
     buffer->forceDisallowCPUCopy = true;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     auto gpuAddress = allocation->getGpuAddress();
     allocation->storageInfo.cloningOfPageTables = false;
     allocation->storageInfo.memoryBanks = 0;
@@ -78,7 +78,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourP
     EXPECT_EQ(CL_SUCCESS, retVal);
     buffer->forceDisallowCPUCopy = true;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     auto gpuAddress = allocation->getGpuAddress();
     allocation->storageInfo.cloningOfPageTables = false;
     allocation->storageInfo.memoryBanks = 0;
@@ -111,7 +111,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenColouredBufferW
     EXPECT_EQ(CL_SUCCESS, retVal);
     buffer->forceDisallowCPUCopy = true;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(allTilesValue, allocation->storageInfo.memoryBanks.to_ullong());
     EXPECT_EQ(allTilesValue, allocation->storageInfo.pageTablesVisibility.to_ullong());
     EXPECT_TRUE(allocation->storageInfo.cloningOfPageTables);

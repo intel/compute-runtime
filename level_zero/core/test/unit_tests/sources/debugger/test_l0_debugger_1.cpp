@@ -563,10 +563,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
 
     NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
     auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -586,10 +586,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
 
     NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
     auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

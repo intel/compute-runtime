@@ -226,7 +226,7 @@ HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueue
     device->getMemoryManager()->freeGraphicsMemory(printfHandler->printfSurface);
 
     auto allocation = new MockGraphicsAllocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    allocation->memoryPool = MemoryPool::LocalMemory;
+    allocation->memoryPool = MemoryPool::localMemory;
 
     printfHandler->printfSurface = allocation;
 

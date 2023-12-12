@@ -90,7 +90,7 @@ class DrmGemCloseWorkerFixture {
     class DrmAllocationWrapper : public DrmAllocation {
       public:
         DrmAllocationWrapper(BufferObject *bo)
-            : DrmAllocation(0, AllocationType::unknown, bo, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull) {
+            : DrmAllocation(0, AllocationType::unknown, bo, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::memoryNull) {
         }
     };
     MockExecutionEnvironment executionEnvironment;

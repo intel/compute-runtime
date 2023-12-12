@@ -24,7 +24,7 @@ MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandListImp
                                                  reinterpret_cast<uint64_t>(&batchBuffer),
                                                  0,
                                                  sizeof(batchBufferSize),
-                                                 NEO::MemoryPool::System4KBPages,
+                                                 NEO::MemoryPool::system4KBPages,
                                                  NEO::MemoryManager::maxOsContextCount);
 }
 

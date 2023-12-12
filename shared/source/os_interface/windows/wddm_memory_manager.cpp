@@ -122,7 +122,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
-                                                       MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
+                                                       MemoryPool::systemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     if (!createPhysicalAllocation(allocation.get())) {
         return nullptr;
@@ -149,7 +149,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
-                                                       MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
+                                                       MemoryPool::systemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     void *requiredGpuVa = nullptr;
     adjustGpuPtrToHostAddressSpace(*allocation.get(), requiredGpuVa);
@@ -166,7 +166,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.imgInfo->size,
-                                                       nullptr, MemoryPool::SystemCpuInaccessible,
+                                                       nullptr, MemoryPool::systemCpuInaccessible,
                                                        0u, // shareable
                                                        maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
@@ -206,7 +206,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
                                                            allocationData.type, nullptr, 0,
-                                                           sizeAligned, nullptr, allowLargePages ? MemoryPool::System64KBPages : MemoryPool::System4KBPages,
+                                                           sizeAligned, nullptr, allowLargePages ? MemoryPool::system64KBPages : MemoryPool::system4KBPages,
                                                            0u, // shareable
                                                            maxOsContextCount);
 
@@ -271,13 +271,13 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
     void *hostPtr = nullptr, *alignedPtr = nullptr;
     size_t alignedSize = 0;
     bool uncacheable = allocationData.flags.uncacheable;
-    auto memoryPool = MemoryPool::System64KBPages;
+    auto memoryPool = MemoryPool::system64KBPages;
 
     if (allocationData.hostPtr) {
         hostPtr = const_cast<void *>(allocationData.hostPtr);
         alignedSize = alignSizeWholePage(hostPtr, allocationData.size);
         alignedPtr = alignDown(hostPtr, MemoryConstants::pageSize);
-        memoryPool = MemoryPool::System4KBPages;
+        memoryPool = MemoryPool::system4KBPages;
     } else {
         alignedSize = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         uncacheable = false;
@@ -384,7 +384,7 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
                                                            allocationData.type, pSysMem, canonizedAddress, sizeAligned,
-                                                           nullptr, MemoryPool::System4KBPages,
+                                                           nullptr, MemoryPool::system4KBPages,
                                                            0u, // shareable
                                                            maxOsContextCount);
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
@@ -434,7 +434,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
                                                            allocationData.type, const_cast<void *>(allocationData.hostPtr), canonizedAddress,
-                                                           allocationData.size, nullptr, MemoryPool::System4KBPages,
+                                                           allocationData.size, nullptr, MemoryPool::system4KBPages,
                                                            0u, // shareable
                                                            maxOsContextCount);
 
@@ -484,7 +484,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const A
                                              const_cast<void *>(inputPtr),
                                              canonizedAddress,
                                              allocationData.size,
-                                             reserve, MemoryPool::System4KBPages,
+                                             reserve, MemoryPool::system4KBPages,
                                              0u, // shareable
                                              maxOsContextCount);
         allocation->setAllocationOffset(offset);
@@ -535,7 +535,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
                                                            1u, // numGmms
                                                            allocationData.type, const_cast<void *>(ptrAligned), canonizedAddress,
                                                            sizeAligned, nullptr,
-                                                           MemoryPool::System4KBPagesWith32BitGpuAddressing,
+                                                           MemoryPool::system4KBPagesWith32BitGpuAddressing,
                                                            0u, // shareable
                                                            maxOsContextCount);
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
@@ -587,7 +587,7 @@ bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
 }
 
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer) {
-    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, maxOsContextCount, 0llu);
+    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
 
     bool status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
                            : getWddm(rootDeviceIndex).openSharedHandle(handle, allocation.get());
@@ -915,7 +915,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage 
                                          allocationData.type,
                                          const_cast<void *>(allocationData.hostPtr),
                                          canonizedAddress,
-                                         allocationData.size, nullptr, MemoryPool::System4KBPages,
+                                         allocationData.size, nullptr, MemoryPool::system4KBPages,
                                          0u, // shareable
                                          maxOsContextCount);
     allocation->fragmentsStorage = handleStorage;
@@ -1322,7 +1322,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     const size_t numGmms = (static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
-                                                           allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::LocalMemory, allocationData.flags.shareable, maxOsContextCount);
+                                                           allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::localMemory, allocationData.flags.shareable, maxOsContextCount);
     if (singleBankAllocation) {
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo));
@@ -1408,7 +1408,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     const size_t numGmms = (static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
-                                                           allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::LocalMemory, allocationData.flags.shareable, maxOsContextCount);
+                                                           allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::localMemory, allocationData.flags.shareable, maxOsContextCount);
     if (singleBankAllocation) {
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo));
@@ -1520,7 +1520,7 @@ void WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAlloc
         if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm()) {
             if (isStatelessAccessRequired(wddmAllocation.getAllocationType())) {
                 size_t reserveSizeAligned = wddmAllocation.getUnderlyingBufferSize();
-                auto isLocalMemory = wddmAllocation.getMemoryPool() == MemoryPool::LocalMemory;
+                auto isLocalMemory = wddmAllocation.getMemoryPool() == MemoryPool::localMemory;
                 if (isLocalMemory) {
                     // add 2MB padding to make sure there are no overlaps between system and local memory
                     reserveSizeAligned += 2 * MemoryConstants::megaByte;

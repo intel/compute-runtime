@@ -76,7 +76,7 @@ TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorF
 }
 
 TEST_F(FrontWindowAllocatorTests, givenLinearStreamAllocWhenSelectingHeapWithFrontWindowThenCorrectIndexReturned) {
-    GraphicsAllocation allocation{0, AllocationType::linearStream, nullptr, 0, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
+    GraphicsAllocation allocation{0, AllocationType::linearStream, nullptr, 0, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     EXPECT_EQ(HeapIndex::heapExternalFrontWindow, memManager->selectHeap(&allocation, true, true, true));
 }
 

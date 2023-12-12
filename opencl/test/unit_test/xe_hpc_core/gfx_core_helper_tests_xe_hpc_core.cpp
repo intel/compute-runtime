@@ -89,7 +89,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
     auto commandBufferAllocation = heap.getGraphicsAllocation();
     EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::localMemory);
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen16IsReturned) {
@@ -643,7 +643,7 @@ using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDefaultProductHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
     auto &productHelper = getHelper<ProductHelper>();
     MockGraphicsAllocation allocation;
-    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    allocation.overrideMemoryPool(MemoryPool::localMemory);
     allocation.setAllocationType(AllocationType::bufferHostMemory);
     EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(pDevice->getRootDeviceEnvironment(), allocation));
 }

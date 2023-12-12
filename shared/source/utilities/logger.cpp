@@ -254,19 +254,19 @@ const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation) {
     auto pool = graphicsAllocation->getMemoryPool();
 
     switch (pool) {
-    case MemoryPool::MemoryNull:
+    case MemoryPool::memoryNull:
         return "MemoryNull";
-    case MemoryPool::System4KBPages:
+    case MemoryPool::system4KBPages:
         return "System4KBPages";
-    case MemoryPool::System64KBPages:
+    case MemoryPool::system64KBPages:
         return "System64KBPages";
-    case MemoryPool::System4KBPagesWith32BitGpuAddressing:
+    case MemoryPool::system4KBPagesWith32BitGpuAddressing:
         return "System4KBPagesWith32BitGpuAddressing";
-    case MemoryPool::System64KBPagesWith32BitGpuAddressing:
+    case MemoryPool::system64KBPagesWith32BitGpuAddressing:
         return "System64KBPagesWith32BitGpuAddressing";
-    case MemoryPool::SystemCpuInaccessible:
+    case MemoryPool::systemCpuInaccessible:
         return "SystemCpuInaccessible";
-    case MemoryPool::LocalMemory:
+    case MemoryPool::localMemory:
         return "LocalMemory";
     }
 

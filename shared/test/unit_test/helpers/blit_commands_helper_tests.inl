@@ -47,7 +47,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
                                               ptr,
                                               size,
                                               0u,
-                                              MemoryPool::System4KBPages,
+                                              MemoryPool::system4KBPages,
                                               MemoryManager::maxOsContextCount,
                                               canonizedGpuAddress);
         uint32_t patternToCommand[4];

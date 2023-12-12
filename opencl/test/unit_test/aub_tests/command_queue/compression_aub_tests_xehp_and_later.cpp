@@ -92,9 +92,9 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
     EXPECT_NE(nullptr, compressedAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
     EXPECT_TRUE(compressedAllocation->getDefaultGmm()->isCompressionEnabled);
     if (testLocalMemory) {
-        EXPECT_EQ(MemoryPool::LocalMemory, compressedAllocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::localMemory, compressedAllocation->getMemoryPool());
     } else {
-        EXPECT_EQ(MemoryPool::System4KBPages, compressedAllocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::system4KBPages, compressedAllocation->getMemoryPool());
     }
 
     auto notCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));

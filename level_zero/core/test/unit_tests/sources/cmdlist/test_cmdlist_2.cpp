@@ -321,7 +321,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -329,7 +329,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -349,7 +349,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -357,7 +357,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -376,7 +376,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -384,7 +384,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -404,7 +404,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledAndErrorOnMi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -412,7 +412,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledAndErrorOnMi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -432,7 +432,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -440,7 +440,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -459,7 +459,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -467,7 +467,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -486,7 +486,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -494,7 +494,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -514,7 +514,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -522,7 +522,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
@@ -1106,7 +1106,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -1114,7 +1114,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
@@ -1155,7 +1155,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -1163,7 +1163,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
@@ -1203,7 +1203,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBli
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
@@ -1211,7 +1211,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBli
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     AlignedAllocationData srcAllocationData = {mockAllocationSrc.gpuAddress, 0, &mockAllocationSrc, false};
@@ -1257,7 +1257,7 @@ class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily
                                                      reinterpret_cast<void *>(0x1234),
                                                      1,
                                                      0u,
-                                                     MemoryPool::System4KBPages,
+                                                     MemoryPool::system4KBPages,
                                                      MemoryManager::maxOsContextCount,
                                                      0x1234};
 };
@@ -1336,7 +1336,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     void *srcPtr = reinterpret_cast<void *>(mockAllocationSrc.getGpuAddress());
@@ -1345,7 +1345,7 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
                                                   ptr,
                                                   size,
                                                   0u,
-                                                  MemoryPool::System4KBPages,
+                                                  MemoryPool::system4KBPages,
                                                   MemoryManager::maxOsContextCount,
                                                   canonizedGpuAddress);
     void *dstPtr = reinterpret_cast<void *>(mockAllocationDst.getGpuAddress());

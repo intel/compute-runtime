@@ -17,7 +17,7 @@ struct ImageWindowsTestsMockMemoryManager : MockMemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
 
         auto graphicsAllocation = createMemoryAllocation(allocType, nullptr, reinterpret_cast<void *>(1), 1,
-                                                         4096u, reinterpret_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible,
+                                                         4096u, reinterpret_cast<uint64_t>(handle), MemoryPool::systemCpuInaccessible,
                                                          rootDeviceIndex, false, false, false);
 
         graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()));

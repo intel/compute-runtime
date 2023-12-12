@@ -50,7 +50,7 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpeci
     auto commandBufferAllocation = heap.getGraphicsAllocation();
     EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::localMemory);
 }
 
 void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo) {
@@ -79,6 +79,6 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecif
     auto commandBufferAllocation = heap.getGraphicsAllocation();
     EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::localMemory);
 }
 } // namespace NEO

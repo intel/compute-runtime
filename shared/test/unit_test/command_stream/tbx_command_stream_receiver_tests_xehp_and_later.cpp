@@ -70,7 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTbxCommandStreamReceiverTests, givenGra
     setUpImpl<FamilyType>();
     auto tbxCsr = std::make_unique<MockTbxCommandStreamReceiverHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockGraphicsAllocation allocation(nullptr, 0);
-    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    allocation.overrideMemoryPool(MemoryPool::localMemory);
     auto bits = tbxCsr->getPPGTTAdditionalBits(&allocation);
 
     EXPECT_EQ(3u | (1 << 11), bits);

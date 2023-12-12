@@ -478,7 +478,7 @@ HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequired
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
-    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
 
     auto expectedDefaultValue = (productHelper->getLocalMemoryAccessMode(pInHwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
@@ -495,7 +495,7 @@ HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequired
     pInHwInfo.capabilityTable.blitterOperationsSupported = false;
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 
-    graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::system64KBPages);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
     pInHwInfo.capabilityTable.blitterOperationsSupported = true;
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
@@ -510,7 +510,7 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.setAllocationType(AllocationType::svmGpu);
     EXPECT_FALSE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
-    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.initGmm();
@@ -537,7 +537,7 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 
-    graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::system64KBPages);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
@@ -547,7 +547,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGettingIsBlitCopyRequiredForL
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
 
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
     graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));

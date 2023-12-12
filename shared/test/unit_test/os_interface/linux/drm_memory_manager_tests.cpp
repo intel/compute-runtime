@@ -247,7 +247,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     size_t size = 0x1000;
 
     const uint32_t rootDeviceIndex = 0u;
-    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, cpuPtr, size, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
+    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, cpuPtr, size, static_cast<osHandle>(1u), MemoryPool::memoryNull);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment({gfxAllocation.getUnderlyingBuffer(), rootDeviceIndex});
     EXPECT_NE(fragment, nullptr);
@@ -484,7 +484,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSmallSizeAndGpuAddress
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     EXPECT_EQ(0x2000u, allocation->getGpuAddress());
 
     mock->testIoctls();
@@ -529,7 +529,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSizeExceedingThreshold
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     EXPECT_EQ(0x2000u, allocation->getGpuAddress());
 
     mock->testIoctls();
@@ -546,7 +546,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSizeExceedingThreshold
 
     allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     EXPECT_EQ(0x5000u, allocation->getGpuAddress());
 
     mock->testIoctls();
@@ -568,7 +568,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndSiz
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     EXPECT_EQ(0x2000u, allocation->getGpuAddress());
 
     mock->testIoctls();
@@ -2044,7 +2044,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
 
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, graphicsAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::systemCpuInaccessible, graphicsAllocation->getMemoryPool());
     EXPECT_EQ(this->mock->inputFd, static_cast<int32_t>(handle));
 
     const bool prefer57bitAddressing = memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapExtended) > 0;
@@ -2411,7 +2411,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnNullAl
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutBufferObjectThenReturnNullPtr) {
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2426,7 +2426,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
     mock->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2456,7 +2456,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
 
     DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[1]);
     auto bo = new BufferObject(rootDeviceIndex, &drmMock, 3, 1, 0, 1);
-    auto drmAllocation = new DrmAllocation(rootDeviceIndex, AllocationType::unknown, bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::LocalMemory);
+    auto drmAllocation = new DrmAllocation(rootDeviceIndex, AllocationType::unknown, bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::localMemory);
 
     drmMemoryManager.unlockResourceImpl(*drmAllocation);
     EXPECT_TRUE(drmMemoryManager.unlockResourceInLocalMemoryImplParam.called);
@@ -2466,7 +2466,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -2480,7 +2480,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
 
     DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     BufferObject bo(0u, &drmMock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -2493,7 +2493,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllo
 
     DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     BufferObject bo(rootDeviceIndex, &drmMock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, true);
@@ -2887,7 +2887,7 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, MemoryConstants::pageSize, false));
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -2904,7 +2904,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
     auto size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), false, size}, ptr);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -2922,7 +2922,7 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, AllocationType::buffer);
 
     ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -2936,7 +2936,7 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenCreateAllocationFromHandleIs
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::systemCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -3625,19 +3625,19 @@ struct DrmAllocationTests : public ::testing::Test {
 };
 
 TEST_F(DrmAllocationTests, givenAllocationTypeWhenPassedToDrmAllocationConstructorThenAllocationTypeIsStored) {
-    DrmAllocation allocation{0, AllocationType::commandBuffer, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull};
+    DrmAllocation allocation{0, AllocationType::commandBuffer, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::memoryNull};
     EXPECT_EQ(AllocationType::commandBuffer, allocation.getAllocationType());
 
-    DrmAllocation allocation2{0, AllocationType::unknown, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::MemoryNull};
+    DrmAllocation allocation2{0, AllocationType::unknown, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::memoryNull};
     EXPECT_EQ(AllocationType::unknown, allocation2.getAllocationType());
 }
 
 TEST_F(DrmAllocationTests, givenMemoryPoolWhenPassedToDrmAllocationConstructorThenMemoryPoolIsStored) {
-    DrmAllocation allocation{0, AllocationType::commandBuffer, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::System64KBPages};
-    EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
+    DrmAllocation allocation{0, AllocationType::commandBuffer, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::system64KBPages};
+    EXPECT_EQ(MemoryPool::system64KBPages, allocation.getMemoryPool());
 
-    DrmAllocation allocation2{0, AllocationType::unknown, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::SystemCpuInaccessible};
-    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation2.getMemoryPool());
+    DrmAllocation allocation2{0, AllocationType::unknown, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::systemCpuInaccessible};
+    EXPECT_EQ(MemoryPool::systemCpuInaccessible, allocation2.getMemoryPool());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, whenReservingAddressRangeThenExpectProperAddressAndReleaseWhenFreeing) {
@@ -3915,7 +3915,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -3925,7 +3925,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::system4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -3935,7 +3935,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -3945,7 +3945,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugModuleArea, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugModuleArea, MemoryPool::system4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -3956,7 +3956,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::bufferHostMemory, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::bufferHostMemory, MemoryPool::system4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(0u, bo.bindExtHandles.size());
@@ -3976,7 +3976,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsaInternal, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsaInternal, MemoryPool::system4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(0u, bo.bindExtHandles.size());
@@ -3990,7 +3990,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationNotEnabledWhenRegisteringBin
     EXPECT_EQ(0u, drm.classHandles.size());
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(0u, bo.bindExtHandles.size());
@@ -4011,7 +4011,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhe
 
     mockDrm->registeredDataSize = 0;
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
 
     memoryManager->registerAllocationInOs(&allocation);
 
@@ -4033,13 +4033,13 @@ TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhen
     mockDrm->classHandles.push_back(1);
 
     MockBufferObject bo(rootDeviceIndex, mockDrm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::scratchSurface, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::scratchSurface, MemoryPool::system4KBPages);
     allocation.bufferObjects[0] = &bo;
     memoryManager->registerAllocationInOs(&allocation);
 
     EXPECT_TRUE(allocation.markedForCapture);
 
-    MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::buffer, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(rootDeviceIndex, AllocationType::buffer, MemoryPool::system4KBPages);
     allocation2.bufferObjects[0] = &bo;
     memoryManager->registerAllocationInOs(&allocation2);
 
@@ -4147,7 +4147,7 @@ TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
 
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
-    MockDrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::MemoryNull);
+    MockDrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::memoryNull);
 
     gfxAllocation.registerBOBindExtHandle(mockDrm.get());
     EXPECT_EQ(1u, gfxAllocation.registeredBoBindHandles.size());
@@ -4161,7 +4161,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationIsRegis
     drm.classHandles.push_back(1);
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
 
@@ -4180,7 +4180,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndTileInstancedIsaWh
     drm.registeredClass = DrmResourceClass::MaxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
     allocation.storageInfo.tileInstanced = true;
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
@@ -4204,7 +4204,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSingleInstanceIsaW
     drm.registeredClass = DrmResourceClass::MaxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(1u, bo.bindExtHandles.size());
@@ -4226,7 +4226,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredTh
     drm.registeredClass = DrmResourceClass::MaxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
     allocation.storageInfo.subDeviceBitfield = 1 << 3;
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
@@ -4250,7 +4250,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldS
     drm.registeredClass = DrmResourceClass::MaxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
     allocation.storageInfo.tileInstanced = false;
     allocation.storageInfo.subDeviceBitfield = 0b0010;
     allocation.bufferObjects[0] = &bo;
@@ -4288,7 +4288,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldN
     drm.registeredClass = DrmResourceClass::MaxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
     allocation.storageInfo.tileInstanced = false;
     allocation.bufferObjects[0] = &bo;
 
@@ -4327,7 +4327,7 @@ TEST_F(DrmAllocationTests, givenTwoBufferObjectsAndTileInstancedSbaAndSubDeviceB
     MockBufferObject bo0(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockBufferObject bo1(rootDeviceIndex, &drm, 3, 0, 0, 1);
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
     allocation.storageInfo.subDeviceBitfield = 0b0011;
     allocation.storageInfo.tileInstanced = true;
     allocation.bufferObjects[0] = &bo0;
@@ -4368,7 +4368,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenSbaTrackingBuffer
     drm.registeredClass = DrmResourceClass::MaxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     allocation.registerBOBindExtHandle(&drm);
@@ -4384,7 +4384,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaul
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
     EXPECT_TRUE(allocation.setCacheRegion(&drm, CacheRegion::defaultRegion));
 }
@@ -4393,7 +4393,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCach
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
     EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::region1));
 }
@@ -4403,7 +4403,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThen
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     drm.setupCacheInfo(*defaultHwInfo.get());
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
     EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::region1));
 }
@@ -4413,7 +4413,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFa
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
     EXPECT_FALSE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::none, false));
 }
@@ -4424,7 +4424,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     drm.queryAndSetVmBindPatIndexProgrammingSupport();
     drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
@@ -4443,7 +4443,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -4468,7 +4468,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenBufferObjectIsCreatedThenApplyD
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     for (auto bo : allocation.bufferObjects) {
@@ -4483,7 +4483,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCachePolicyIsCalledThenUpdat
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     allocation.setCachePolicy(CachePolicy::uncached);
@@ -4500,7 +4500,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCa
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     EXPECT_EQ(CachePolicy::writeBack, bo.peekCachePolicy());
@@ -4524,7 +4524,7 @@ TEST_F(DrmAllocationTests, givenBoWhenMarkingForCaptureThenBosAreMarked) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::scratchSurface, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::scratchSurface, MemoryPool::system4KBPages);
     allocation.markForCapture();
 
     allocation.bufferObjects[0] = &bo;
@@ -4554,7 +4554,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
     memoryManager->populateOsHandles(storage, rootDeviceIndex);
 
     auto allocation = std::make_unique<DrmAllocation>(rootDeviceIndex, AllocationType::bufferHostMemory,
-                                                      nullptr, ptr, castToUint64(ptr), size, MemoryPool::System4KBPages);
+                                                      nullptr, ptr, castToUint64(ptr), size, MemoryPool::system4KBPages);
     allocation->fragmentsStorage = storage;
 
     allocation->setCacheAdvice(drm, 1024, CacheRegion::region1, false);
@@ -4684,7 +4684,7 @@ TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeI
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     size_t sizeIn = 1024llu;
     uint64_t gpuAddress = 0x1337llu;
-    DrmAllocation stackDrmAllocation(0u, AllocationType::buffer, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::System64KBPages);
+    DrmAllocation stackDrmAllocation(0u, AllocationType::buffer, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::system64KBPages);
     memoryManager.freeGraphicsMemoryImpl(&stackDrmAllocation);
 }
 
@@ -4754,7 +4754,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenLockResourceIsCal
     DrmMemoryManagerToTestLockInLocalMemory memoryManager(*executionEnvironment);
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, AllocationType::writeCombined, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::writeCombined, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager.lockResourceImpl(drmAllocation);
@@ -4886,7 +4886,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenLockResourceIsCalledOn
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager.lockBufferObject(drmAllocation.getBO());
     EXPECT_EQ(nullptr, ptr);
@@ -4902,7 +4902,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenFreeGraphicsMemoryIsCa
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 
-    auto drmAllocation = new DrmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    auto drmAllocation = new DrmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation);
 
     memoryManager.freeGraphicsMemoryImpl(drmAllocation);
@@ -4919,7 +4919,7 @@ TEST(DrmMemoryManagerSimpleTest, WhenDrmIsCreatedThenQueryPageFaultSupportIsCall
 using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
 
 TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
     EXPECT_EQ(nullptr, ptr);
@@ -4985,7 +4985,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     for (auto isCached : {false, true}) {
@@ -5001,7 +5001,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetAtomicAccessIsCalledThe
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     size_t size = 16;
@@ -5025,7 +5025,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
     BufferObject bo1(rootDeviceIndex, mock, 3, 2, 1024, 0);
     BufferObjects bos{&bo0, &bo1};
 
-    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory, bos);
+    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::localMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
     drmAllocation.setNumHandles(2);
 
@@ -5062,7 +5062,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
     BufferObject bo1(rootDeviceIndex, mock, 3, 2, 1024, 0);
     BufferObjects bos{&bo0, &bo1};
 
-    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory, bos);
+    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::localMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
     drmAllocation.setNumHandles(2);
 
@@ -5096,7 +5096,7 @@ TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMig
     BufferObject bo1(rootDeviceIndex, mock, 3, 2, 1024, 0);
     BufferObjects bos{&bo0, &bo1};
 
-    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory, bos);
+    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::localMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
     drmAllocation.setNumHandles(2);
 
@@ -5130,7 +5130,7 @@ TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMig
     BufferObject bo1(rootDeviceIndex, mock, 3, 2, 1024, 0);
     BufferObjects bos{&bo0, &bo1};
 
-    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory, bos);
+    MockDrmAllocation drmAllocation(AllocationType::unifiedSharedMemory, MemoryPool::localMemory, bos);
     drmAllocation.storageInfo.memoryBanks = 0x3;
     drmAllocation.setNumHandles(2);
 
@@ -5166,7 +5166,7 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithSingleBOWhenSet
     SubDeviceIdsVec subDeviceIds{0};
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
-    MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory);
+    MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     drmAllocation.bufferObjects[0] = &bo;
     drmAllocation.setNumHandles(1);
 
@@ -5192,7 +5192,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchFailsToBindB
     SubDeviceIdsVec subDeviceIds{0};
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
-    MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory);
+    MockDrmAllocation drmAllocation(rootDeviceIndex, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     drmAllocation.bufferObjects[0] = &bo;
 
     memoryManager.allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
@@ -5221,7 +5221,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBuffe
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     std::vector<BufferObject *> bufferObjects;
@@ -5247,7 +5247,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForB
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     for (auto useKmdMigrationForBuffers : {-1, 0, 1}) {
@@ -5279,7 +5279,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocat
     uint32_t vmHandleId = 0;
 
     struct MockDrmAllocationToTestPageFault : MockDrmAllocation {
-        MockDrmAllocationToTestPageFault() : MockDrmAllocation(0u, AllocationType::buffer, MemoryPool::LocalMemory){};
+        MockDrmAllocationToTestPageFault() : MockDrmAllocation(0u, AllocationType::buffer, MemoryPool::localMemory){};
         bool shouldAllocationPageFault(const Drm *drm) override {
             return shouldPageFault;
         }
@@ -5900,7 +5900,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllowed3
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -5921,7 +5921,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
         ASSERT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-        EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
         EXPECT_NE(0u, allocation->getGpuAddress());
         EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
 
@@ -5956,7 +5956,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getGpuAddress());
     EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
     memoryManager->mapPhysicalToVirtualMemory(allocation, gpuAddress, allocData.size);
@@ -6035,7 +6035,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getGpuAddress());
     EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
     memoryManager->mapPhysicalToVirtualMemory(allocation, gpuAddress, allocData.size);
@@ -6079,7 +6079,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
     EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
 
@@ -6112,7 +6112,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMultiple
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
     EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
 
@@ -6403,7 +6403,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
@@ -6543,7 +6543,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
 
     EXPECT_TRUE(allocData.imgInfo->useLocalMemory);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
@@ -6592,7 +6592,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
         EXPECT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-        EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
         auto gpuAddress = allocation->getGpuAddress();
         auto gmmHelper = device->getGmmHelper();
@@ -6765,7 +6765,7 @@ TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenC
     DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManger(executionEnvironment, destinationAllocationSize);
     std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
 
-    MockDrmAllocation mockAllocation(0u, AllocationType::workPartitionSurface, MemoryPool::LocalMemory);
+    MockDrmAllocation mockAllocation(0u, AllocationType::workPartitionSurface, MemoryPool::localMemory);
 
     mockAllocation.storageInfo.memoryBanks = 0b1111;
     DeviceBitfield memoryBanksToCopy = 0b1010;
@@ -6997,7 +6997,7 @@ TEST_F(DrmMemoryManagerTest, givenMultiSubDevicesBitfieldWhenAllocatingSbaTracki
 
         EXPECT_NE(nullptr, sbaBuffer);
 
-        EXPECT_EQ(MemoryPool::System4KBPages, sbaBuffer->getMemoryPool());
+        EXPECT_EQ(MemoryPool::system4KBPages, sbaBuffer->getMemoryPool());
         EXPECT_EQ(2u, sbaBuffer->getNumGmms());
 
         EXPECT_NE(nullptr, sbaBuffer->getUnderlyingBuffer());
@@ -7044,7 +7044,7 @@ TEST_F(DrmMemoryManagerTest, givenSingleSubDevicesBitfieldWhenAllocatingSbaTrack
 
         EXPECT_NE(nullptr, sbaBuffer);
 
-        EXPECT_EQ(MemoryPool::System4KBPages, sbaBuffer->getMemoryPool());
+        EXPECT_EQ(MemoryPool::system4KBPages, sbaBuffer->getMemoryPool());
         EXPECT_EQ(1u, sbaBuffer->getNumGmms());
 
         EXPECT_NE(nullptr, sbaBuffer->getUnderlyingBuffer());
@@ -7074,7 +7074,7 @@ TEST_F(DrmMemoryManagerTest, givenMakeBosResidentErrorWhenRegisteringMemoryAlloc
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.vmIdToCreate = 1;
     drm.createVirtualMemoryAddressSpace(1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::system4KBPages);
     allocation.makeBOsResidentResult = ENOSPC;
 
     EXPECT_EQ(MemoryManager::AllocationStatus::Error, memoryManager->registerSysMemAlloc(&allocation));
@@ -7088,7 +7088,7 @@ TEST_F(DrmMemoryManagerTest, givenMakeBosResidentSuccessWhenRegisteringMemoryAll
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(0));
     drm.vmIdToCreate = 1;
     drm.createVirtualMemoryAddressSpace(1);
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::system4KBPages);
     allocation.makeBOsResidentResult = 0;
 
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerSysMemAlloc(&allocation));

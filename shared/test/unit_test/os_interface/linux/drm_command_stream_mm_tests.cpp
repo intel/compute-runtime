@@ -105,7 +105,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(rootDeviceIndex, mock, 128);
-    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::system4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -139,7 +139,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndNotComp
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(rootDeviceIndex, mock, 128);
-    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::system4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -174,7 +174,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceA
     mock->isVmBindAvailableCall.returnValue = false;
 
     TestedBufferObject bo(rootDeviceIndex, mock, 128);
-    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::system4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 

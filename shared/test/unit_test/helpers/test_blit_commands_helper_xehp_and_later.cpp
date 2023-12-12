@@ -49,7 +49,7 @@ HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForFillBu
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
     EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_DISABLE);
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), XY_COLOR_BLT::DESTINATION_AUXILIARY_SURFACE_MODE::DESTINATION_AUXILIARY_SURFACE_MODE_AUX_NONE);
@@ -62,7 +62,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForFill
     gmm->isCompressionEnabled = false;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
     EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_DISABLE);
@@ -76,7 +76,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
     EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_ENABLE);
@@ -91,7 +91,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     auto gmm = std::make_unique<MockGmm>(gmmContext);
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
-                                          0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
 
     uint32_t compressionFormat = gmmContext->getClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
@@ -111,7 +111,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
-                                          0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
 
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
@@ -128,7 +128,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBuffer
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
     EXPECT_EQ(blitCmd.getDestinationMOCS(), mockValue);
 }
@@ -141,7 +141,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFi
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
@@ -155,7 +155,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFil
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
@@ -169,7 +169,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFil
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                          MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
@@ -264,7 +264,7 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     resInfo.MediaCompressed = true;
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmClientContext());
     mockAllocationSrc.setGmm(gmm.get(), 0);
     BlitProperties properties = {};
@@ -348,7 +348,7 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
         resourceInfoSrc->getResourceFlags()->Info.RenderCompressed = renderCompressedSrc;
         MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                                 MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                                 MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
         mockAllocationSrc.setGmm(gmmSrc.get(), 0);
         properties.srcAllocation = &mockAllocationSrc;
 
@@ -359,7 +359,7 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
             resourceInfoDst->getResourceFlags()->Info.RenderCompressed = renderCompressedDst;
             MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
                                                      reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                                     MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                                     MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
             mockAllocationDst.setGmm(gmmDst.get(), 0);
             properties.dstAllocation = &mockAllocationDst;
             auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;

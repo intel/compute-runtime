@@ -1113,8 +1113,8 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     commandList->close();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
 
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
@@ -1212,8 +1212,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     commandList->close();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
 
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
@@ -1239,8 +1239,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     commandList->close();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
 
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
@@ -1314,8 +1314,8 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     commandList->close();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation1);
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation2);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = 0;
@@ -1345,8 +1345,8 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     commandList->close();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation1);
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation2);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = 2;

@@ -172,7 +172,7 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     allocation.bindBO(&bo, &osContext, vmHandleId, nullptr, true);
@@ -195,7 +195,7 @@ TEST(DrmVmBindTest, givenDrmWithPageFaultSupportWhenCallingBindBoOnUnifiedShared
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::unifiedSharedMemory, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::unifiedSharedMemory, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     allocation.bindBO(&bo, &osContext, vmHandleId, nullptr, true);

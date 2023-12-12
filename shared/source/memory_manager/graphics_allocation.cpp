@@ -70,9 +70,9 @@ std::string GraphicsAllocation::getAllocationInfoString() const {
 
 uint32_t GraphicsAllocation::getUsedPageSize() const {
     switch (this->memoryPool) {
-    case MemoryPool::System64KBPages:
-    case MemoryPool::System64KBPagesWith32BitGpuAddressing:
-    case MemoryPool::LocalMemory:
+    case MemoryPool::system64KBPages:
+    case MemoryPool::system64KBPagesWith32BitGpuAddressing:
+    case MemoryPool::localMemory:
         return MemoryConstants::pageSize64k;
     default:
         return MemoryConstants::pageSize;

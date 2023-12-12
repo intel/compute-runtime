@@ -328,7 +328,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerW
 }
 
 TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
-    GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
     EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
 }
 

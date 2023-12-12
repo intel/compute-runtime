@@ -15,15 +15,15 @@
 using namespace NEO;
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
-    MockGraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
         EXPECT_EQ(0u, graphicsAllocation.getInspectionId(i));
     }
 }
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsAreInitializedProperly) {
-    GraphicsAllocation graphicsAllocation1(0, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
-    GraphicsAllocation graphicsAllocation2(0, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation1(0, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation2(0, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(i));
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation2.getTaskCount(i));
@@ -260,10 +260,10 @@ TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenGettingNumHandles
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThenCorrectSizeForMemoryPoolUsedIsReturned) {
 
-    MemoryPool page4kPools[] = {MemoryPool::MemoryNull,
-                                MemoryPool::System4KBPages,
-                                MemoryPool::System4KBPagesWith32BitGpuAddressing,
-                                MemoryPool::SystemCpuInaccessible};
+    MemoryPool page4kPools[] = {MemoryPool::memoryNull,
+                                MemoryPool::system4KBPages,
+                                MemoryPool::system4KBPagesWith32BitGpuAddressing,
+                                MemoryPool::systemCpuInaccessible};
 
     for (auto pool : page4kPools) {
         MockGraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0u, 0u, static_cast<osHandle>(1), pool, MemoryManager::maxOsContextCount);
@@ -271,9 +271,9 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
         EXPECT_EQ(MemoryConstants::pageSize, graphicsAllocation.getUsedPageSize());
     }
 
-    MemoryPool page64kPools[] = {MemoryPool::System64KBPages,
-                                 MemoryPool::System64KBPagesWith32BitGpuAddressing,
-                                 MemoryPool::LocalMemory};
+    MemoryPool page64kPools[] = {MemoryPool::system64KBPages,
+                                 MemoryPool::system64KBPagesWith32BitGpuAddressing,
+                                 MemoryPool::localMemory};
 
     for (auto pool : page64kPools) {
         MockGraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0u, 0u, 0, pool, MemoryManager::maxOsContextCount);
@@ -300,14 +300,14 @@ struct GraphicsAllocationTests : public ::testing::Test {
     void gfxAllocationSetToDefault() {
         graphicsAllocation.storageInfo.readOnlyMultiStorage = false;
         graphicsAllocation.storageInfo.memoryBanks = 0;
-        graphicsAllocation.overrideMemoryPool(MemoryPool::MemoryNull);
+        graphicsAllocation.overrideMemoryPool(MemoryPool::memoryNull);
     }
 
     void gfxAllocationEnableReadOnlyMultiStorage(uint32_t banks) {
         graphicsAllocation.storageInfo.cloningOfPageTables = false;
         graphicsAllocation.storageInfo.readOnlyMultiStorage = true;
         graphicsAllocation.storageInfo.memoryBanks = banks;
-        graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+        graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
     }
 
     MockExecutionEnvironment executionEnvironment;
@@ -332,7 +332,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationThatHasPageTablesClonin
 
     gfxAllocationSetToDefault();
     graphicsAllocation.storageInfo.memoryBanks = 0x2;
-    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
 
     EXPECT_TRUE(aubCsr.isAubWritable(graphicsAllocation));

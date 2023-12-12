@@ -31,7 +31,7 @@
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
     BufferObject bo(0, mock, 3, 1, 1024, 1);
 
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockBufferObject(&bo);
@@ -691,7 +691,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
     EXPECT_NE(allocation, nullptr);
 
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapPtr(), nullptr);
     EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapSize(), 0u);
@@ -1711,7 +1711,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
     EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::chunkSizeBased);
     EXPECT_EQ(allocation->storageInfo.colouringGranularity, 256 * MemoryConstants::kiloByte);
@@ -1751,7 +1751,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWh
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_NE(0u, allocation->getGpuAddress());
     EXPECT_EQ(allocation->storageInfo.colouringPolicy, ColouringPolicy::mappingBased);
     EXPECT_EQ(allocation->storageInfo.colouringGranularity, 64 * MemoryConstants::kiloByte);
@@ -1797,7 +1797,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCpuAccessRequiredWhenAllocati
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->isLocked());
     EXPECT_NE(nullptr, allocation->getLockedPtr());
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
@@ -1849,7 +1849,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenWriteCombinedAllocationWhenAl
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->isLocked());
     EXPECT_NE(nullptr, allocation->getLockedPtr());
 
@@ -2099,7 +2099,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugModuleAreaTypeWhenAlloca
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapInternalDeviceFrontWindow)), gpuAddress);
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow)), moduleDebugArea->getGpuBaseAddress());
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceMemory)), moduleDebugArea->getGpuBaseAddress());
-    EXPECT_EQ(MemoryPool::LocalMemory, moduleDebugArea->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, moduleDebugArea->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(moduleDebugArea);
 }
@@ -2117,7 +2117,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSipKernelTypeWhenAllocatingTh
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapInternalDeviceFrontWindow)), gpuAddress);
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow)), sipAllocation->getGpuBaseAddress());
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceMemory)), sipAllocation->getGpuBaseAddress());
-    EXPECT_EQ(MemoryPool::LocalMemory, sipAllocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, sipAllocation->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(sipAllocation);
 }
@@ -2131,7 +2131,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugVariableSetWhenAllocatin
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::megaByte * 2));
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -2595,7 +2595,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     mock->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(0, mock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2610,7 +2610,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     mock->failOnMmapOffset = true;
 
     BufferObject bo(0, mock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2834,7 +2834,7 @@ TEST_F(DrmMemoryManagerTestPrelim, MmapFailWhenUSMHostAllocationFromSharedHandle
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
-    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
     EXPECT_EQ(nullptr, ptr);
@@ -2925,7 +2925,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenGraphicsAllocationInDevicePoo
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
 
     EXPECT_TRUE(allocData.imgInfo->useLocalMemory);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);
@@ -2991,7 +2991,7 @@ TEST(AllocationInfoLogging, givenDrmGraphicsAllocationWithMultipleBOsWhenGetting
     BufferObject bo0(0, &drm, 3, 0, 0, 1), bo1(0, &drm, 3, 1, 0, 1),
         bo2(0, &drm, 3, 2, 0, 1), bo3(0, &drm, 3, 3, 0, 1);
     BufferObjects bos{&bo0, &bo1, &bo2, &bo3};
-    DrmAllocation drmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     EXPECT_STREQ(drmAllocation.getAllocationInfoString().c_str(), " Handle: 0 Handle: 1 Handle: 2 Handle: 3");
 }

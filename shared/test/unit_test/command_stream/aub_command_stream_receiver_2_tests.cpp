@@ -281,7 +281,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
     allocation.setAllocationType(AllocationType::buffer);
-    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    allocation.overrideMemoryPool(MemoryPool::localMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     GmmRequirements gmmRequirements{};
@@ -319,7 +319,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
     allocation.setAllocationType(AllocationType::bufferHostMemory);
-    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    allocation.overrideMemoryPool(MemoryPool::localMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     GmmRequirements gmmRequirements{};

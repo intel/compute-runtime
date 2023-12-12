@@ -39,7 +39,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
                                          ? getDeviceIndexFromStorageInfo(allocation->storageInfo)
                                          : getDeviceIndex();
 
-        if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+        if (allocation->getMemoryPool() == MemoryPool::localMemory) {
             return MemoryBanks::getBankForLocalMemory(deviceIndexChosen);
         }
         return MemoryBanks::getBank(deviceIndexChosen);
@@ -55,7 +55,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     }
 
     DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation) const {
-        if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+        if (allocation->getMemoryPool() == MemoryPool::localMemory) {
             if (allocation->storageInfo.memoryBanks.any()) {
                 if (allocation->storageInfo.cloningOfPageTables || this->isMultiOsContextCapable()) {
                     return allocation->storageInfo.memoryBanks;

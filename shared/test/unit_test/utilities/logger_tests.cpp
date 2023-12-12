@@ -475,7 +475,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::swTagBuffer, "SW_TAG_BUFFER"}}};
 
     for (const auto &[type, str] : allocationTypeValues) {
-        GraphicsAllocation graphicsAllocation(0, type, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+        GraphicsAllocation graphicsAllocation(0, type, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
         auto result = getAllocationTypeString(&graphicsAllocation);
 
         EXPECT_STREQ(result, str);
@@ -487,7 +487,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 
@@ -499,7 +499,7 @@ TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenS
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         graphicsAllocation.setAllocationType(static_cast<AllocationType>(i));
@@ -517,7 +517,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     testing::internal::CaptureStdout();
     fileLogger.logAllocation(&graphicsAllocation);
@@ -535,7 +535,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
@@ -563,13 +563,13 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     std::array<std::pair<MemoryPool, const char *>, 7> memoryPoolValues = {
-        {{MemoryPool::MemoryNull, "MemoryNull"},
-         {MemoryPool::LocalMemory, "LocalMemory"},
-         {MemoryPool::System4KBPages, "System4KBPages"},
-         {MemoryPool::System4KBPagesWith32BitGpuAddressing, "System4KBPagesWith32BitGpuAddressing"},
-         {MemoryPool::System64KBPages, "System64KBPages"},
-         {MemoryPool::System64KBPagesWith32BitGpuAddressing, "System64KBPagesWith32BitGpuAddressing"},
-         {MemoryPool::SystemCpuInaccessible, "SystemCpuInaccessible"}}};
+        {{MemoryPool::memoryNull, "MemoryNull"},
+         {MemoryPool::localMemory, "LocalMemory"},
+         {MemoryPool::system4KBPages, "System4KBPages"},
+         {MemoryPool::system4KBPagesWith32BitGpuAddressing, "System4KBPagesWith32BitGpuAddressing"},
+         {MemoryPool::system64KBPages, "System64KBPages"},
+         {MemoryPool::system64KBPagesWith32BitGpuAddressing, "System64KBPagesWith32BitGpuAddressing"},
+         {MemoryPool::systemCpuInaccessible, "SystemCpuInaccessible"}}};
 
     for (const auto &[pool, str] : memoryPoolValues) {
         GraphicsAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, 0, 0, pool, MemoryManager::maxOsContextCount, 0llu);

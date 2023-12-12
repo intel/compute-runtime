@@ -597,32 +597,32 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesWhe
     constexpr auto linkBcsIndex = 5;
     auto queue = createQueueWithLinkBcsSelectedWithQueueFamilies(linkBcsIndex);
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
@@ -647,32 +647,32 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithForceBcsEngineIn
     debugManager.flags.ForceBcsEngineIndex.set(linkBcsIndex);
     auto queue = createQueue(nullptr);
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
@@ -696,32 +696,32 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesAnd
     debugManager.flags.ForceBcsEngineIndex.set(2); // this should be ignored, because of queue families
     auto queue = createQueueWithLinkBcsSelectedWithQueueFamilies(linkBcsIndex);
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
@@ -744,32 +744,32 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenOneBcsEngineInQueueWhenSelectin
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
     auto queue = createQueueWithEngines({linkBcsType});
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
         EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
     }
     {
-        srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-        dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+        srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+        dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
         EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
@@ -787,8 +787,8 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     MockBuffer dstMemObj{dstGraphicsAllocation};
     builtinOpParams.srcMemObj = &srcMemObj;
     builtinOpParams.dstMemObj = &dstMemObj;
-    srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-    dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+    srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
     {
@@ -829,8 +829,8 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     MockBuffer dstMemObj{dstGraphicsAllocation};
     builtinOpParams.srcMemObj = &srcMemObj;
     builtinOpParams.dstMemObj = &dstMemObj;
-    srcGraphicsAllocation.memoryPool = MemoryPool::System4KBPages;
-    dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+    srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
 
     {

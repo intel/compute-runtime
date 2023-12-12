@@ -274,7 +274,7 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
 
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     // read write on CPU is allowed, but not preferred. We can access this memory via Lock.
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
@@ -336,7 +336,7 @@ TEST(ReadWriteBufferOnCpu, whenLocalMemoryPoolAllocationIsAskedForPreferenceThen
     cl_int retVal = 0;
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::LocalMemory);
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::localMemory);
 
     EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));

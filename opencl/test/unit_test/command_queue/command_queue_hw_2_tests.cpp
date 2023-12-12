@@ -410,7 +410,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenEnqueueB
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -463,7 +463,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskWhenEnqueueReadTh
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -516,7 +516,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyAndD2HMaskGreaterThanAvaila
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -568,7 +568,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteThenEnqueue
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -619,7 +619,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueWriteH2HThenEnqu
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::System64KBPages;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::system64KBPages;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -673,7 +673,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -726,7 +726,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBarrierNonSplitC
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -788,7 +788,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadThenDoNotEnq
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -842,7 +842,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -896,7 +896,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithNoReques
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -948,7 +948,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueBlockingReadThen
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);
@@ -999,7 +999,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithEventThe
 
     BcsSplitBufferTraits::context = context;
     auto buffer = clUniquePtr(BufferHelper<BcsSplitBufferTraits>::create());
-    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::LocalMemory;
+    static_cast<MockGraphicsAllocation *>(buffer->getGraphicsAllocation(0u))->memoryPool = MemoryPool::localMemory;
     char ptr[1] = {};
 
     EXPECT_EQ(csr1->peekTaskCount(), 0u);

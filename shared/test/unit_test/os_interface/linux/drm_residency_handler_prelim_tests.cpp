@@ -549,7 +549,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResi
     BufferObject mockBo(device->getRootDeviceIndex(), mock, 3, 1, 0, 1);
     bos.push_back(&mockBo);
 
-    auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     auto graphicsAllocation = static_cast<GraphicsAllocation *>(allocation);
 
     EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::OUT_OF_MEMORY);
@@ -574,7 +574,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest,
     mockBo.setSize(1024);
     bos.push_back(&mockBo);
 
-    auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->setNumHandles(1);
     allocation->storageInfo.isChunked = 1;
     allocation->storageInfo.numOfChunks = 4;
@@ -1098,7 +1098,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     uint64_t gpuAddress = 0x123000;
     size_t size = 1;
     BufferObject bo(0, mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
-    DrmAllocation allocation(0, 1, AllocationType::buffer, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
+    DrmAllocation allocation(0, 1, AllocationType::buffer, &bo, nullptr, gpuAddress, size, MemoryPool::system4KBPages);
 
     auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
 
@@ -1161,7 +1161,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     uint64_t gpuAddress = 0x123000;
     size_t size = 1;
     BufferObject bo(0, mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
-    DrmAllocation allocation(0, 1, AllocationType::buffer, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
+    DrmAllocation allocation(0, 1, AllocationType::buffer, &bo, nullptr, gpuAddress, size, MemoryPool::system4KBPages);
 
     EXPECT_ANY_THROW(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
 }
@@ -1242,7 +1242,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
     EXPECT_EQ(2u, patIndex);
 
     MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
-    DrmAllocation allocation(0, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::LocalMemory);
+    DrmAllocation allocation(0, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::localMemory);
 
     GraphicsAllocation *allocPtr = &allocation;
 
@@ -1273,7 +1273,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
     EXPECT_EQ(3u, patIndex);
 
     MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
-    DrmAllocation allocation(0, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::System4KBPages);
+    DrmAllocation allocation(0, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::system4KBPages);
 
     GraphicsAllocation *allocPtr = &allocation;
 

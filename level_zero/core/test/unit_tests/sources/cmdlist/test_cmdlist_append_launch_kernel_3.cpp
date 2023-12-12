@@ -1776,7 +1776,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
 
     NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                               MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                               MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
     AlignedAllocationData allocationData = {mockAllocation.gpuAddress, 0, &mockAllocation, false};
 
@@ -1868,7 +1868,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEven
 
     NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                               MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                               MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
     AlignedAllocationData allocationData = {mockAllocation.gpuAddress, 0, &mockAllocation, false};
 

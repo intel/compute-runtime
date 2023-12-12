@@ -3714,7 +3714,7 @@ TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
 template <bool localMemEnabled>
 struct ModuleIsaAllocationsFixture : public DeviceFixture {
     static constexpr size_t isaAllocationPageSize = (localMemEnabled ? MemoryConstants::pageSize64k : MemoryConstants::pageSize);
-    static constexpr NEO::MemoryPool isaAllocationMemoryPool = (localMemEnabled ? NEO::MemoryPool::LocalMemory : NEO::MemoryPool::System4KBPagesWith32BitGpuAddressing);
+    static constexpr NEO::MemoryPool isaAllocationMemoryPool = (localMemEnabled ? NEO::MemoryPool::localMemory : NEO::MemoryPool::system4KBPagesWith32BitGpuAddressing);
 
     void setUp() {
         this->dbgRestorer = std::make_unique<DebugManagerStateRestore>();

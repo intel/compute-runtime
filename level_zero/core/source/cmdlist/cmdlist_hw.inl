@@ -3126,9 +3126,9 @@ inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const
     if (allocFound) {
         return allocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool();
     } else if (NEO::debugManager.flags.SplitBcsCopyHostptr.get() != 0) {
-        return NEO::MemoryPool::System4KBPages;
+        return NEO::MemoryPool::system4KBPages;
     }
-    return NEO::MemoryPool::MemoryNull;
+    return NEO::MemoryPool::memoryNull;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3145,7 +3145,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
     auto srcMemoryPool = getMemoryPoolFromAllocDataForSplit(srcAllocFound, srcAllocData);
     auto dstMemoryPool = getMemoryPoolFromAllocDataForSplit(dstAllocFound, dstAllocData);
     for (const auto memoryPool : {srcMemoryPool, dstMemoryPool}) {
-        if (memoryPool == NEO::MemoryPool::MemoryNull) {
+        if (memoryPool == NEO::MemoryPool::memoryNull) {
             return false;
         }
     }

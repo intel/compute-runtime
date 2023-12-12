@@ -842,7 +842,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     uint64_t bufferAddress = (uint64_t)gfxAlloc.getUnderlyingBuffer();
 
     // create kernel
@@ -870,7 +870,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
     char buffer[16];
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(buffer));
-    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::memoryNull, 0u, canonizedGpuAddress);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel
@@ -963,7 +963,7 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, static_cast<osHandle>(1u), MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     uint64_t bufferAddress = (uint64_t)gfxAlloc.getUnderlyingBuffer();
 
     // create kernel
@@ -990,7 +990,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
     char buffer[16];
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(buffer));
-    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, 0u, canonizedGpuAddress);
+    GraphicsAllocation gfxAlloc(0, AllocationType::unknown, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::memoryNull, 0u, canonizedGpuAddress);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel
@@ -3273,7 +3273,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(buffer));
     GraphicsAllocation gfxAlloc(0, AllocationType::constantSurface, buffer, MemoryConstants::pageSize64k,
-                                static_cast<osHandle>(8), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, canonizedGpuAddress);
+                                static_cast<osHandle>(8), MemoryPool::memoryNull, MemoryManager::maxOsContextCount, canonizedGpuAddress);
 
     MockContext context(pClDevice);
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));

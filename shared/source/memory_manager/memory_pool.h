@@ -10,23 +10,23 @@
 namespace NEO {
 
 enum class MemoryPool {
-    MemoryNull,
-    System4KBPages,
-    System64KBPages,
-    System4KBPagesWith32BitGpuAddressing,
-    System64KBPagesWith32BitGpuAddressing,
-    SystemCpuInaccessible,
-    LocalMemory,
+    memoryNull,
+    system4KBPages,
+    system64KBPages,
+    system4KBPagesWith32BitGpuAddressing,
+    system64KBPagesWith32BitGpuAddressing,
+    systemCpuInaccessible,
+    localMemory,
 };
 
 namespace MemoryPoolHelper {
 
 template <typename... Args>
 inline bool isSystemMemoryPool(Args... pool) {
-    return ((pool == MemoryPool::System4KBPages ||
-             pool == MemoryPool::System64KBPages ||
-             pool == MemoryPool::System4KBPagesWith32BitGpuAddressing ||
-             pool == MemoryPool::System64KBPagesWith32BitGpuAddressing) &&
+    return ((pool == MemoryPool::system4KBPages ||
+             pool == MemoryPool::system64KBPages ||
+             pool == MemoryPool::system4KBPagesWith32BitGpuAddressing ||
+             pool == MemoryPool::system64KBPagesWith32BitGpuAddressing) &&
             ...);
 }
 

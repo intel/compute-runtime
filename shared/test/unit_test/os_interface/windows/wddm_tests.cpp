@@ -851,7 +851,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
 }
 
 TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
-    WddmAllocation allocation(0, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
+    WddmAllocation allocation(0, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_NE(nullptr, sharedHandleToModify);
     *sharedHandleToModify = 1234u;
@@ -862,7 +862,7 @@ TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsShar
 }
 
 TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModifyAndCantPeekInternalHandle) {
-    WddmAllocation allocation(0, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false, 1u);
+    WddmAllocation allocation(0, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, false, 1u);
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_EQ(nullptr, sharedHandleToModify);
     uint64_t handle = 0;

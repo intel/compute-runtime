@@ -112,7 +112,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenGra
 
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     MockGraphicsAllocation allocation(nullptr, 0);
-    allocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    allocation.overrideMemoryPool(MemoryPool::localMemory);
     auto bits = aubCsr->getPPGTTAdditionalBits(&allocation);
 
     EXPECT_EQ(3u | (1 << 11), bits);

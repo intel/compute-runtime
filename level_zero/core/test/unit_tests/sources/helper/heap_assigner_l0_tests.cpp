@@ -43,7 +43,7 @@ TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUse
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     std::unique_ptr<MemoryManagerMock> mockMemoryManager(new MemoryManagerMock(*device->getNEODevice()->getExecutionEnvironment()));
-    GraphicsAllocation allocation{0, AllocationType::linearStream, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation allocation{0, AllocationType::linearStream, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu};
 
     allocation.set32BitAllocation(false);
     EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), mockMemoryManager->selectHeap(&allocation, false, false, false));

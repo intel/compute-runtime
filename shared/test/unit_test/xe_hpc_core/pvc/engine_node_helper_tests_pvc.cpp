@@ -592,7 +592,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequ
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
-    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
     hwInfo.platform.usRevId = 0u;
 
     bool expectedRetVal = true;

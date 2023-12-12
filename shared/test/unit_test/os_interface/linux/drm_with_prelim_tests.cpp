@@ -279,7 +279,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     drm->ioctlRetVal = -1;
 
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -300,7 +300,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseForChunkingFa
     drm->ioctlRetVal = -1;
 
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -316,7 +316,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseForChunkingFa
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
     drm->ioctlCallsCount = 0;
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -333,7 +333,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -352,7 +352,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithSystemPreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -382,7 +382,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingP
 
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -414,7 +414,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingB
 
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -448,7 +448,7 @@ TEST_F(IoctlHelperPrelimFixture,
 
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x5;
     allocation.setNumHandles(1);
@@ -467,7 +467,7 @@ TEST_F(IoctlHelperPrelimFixture,
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithModeCalledThenIoctlCalled) {
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -493,7 +493,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithModeCa
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithNullBufferObjectThenIoctlNotCalled) {
     drm->ioctlCallsCount = 0;
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = nullptr;
     allocation.storageInfo.memoryBanks = 0x1;
     allocation.setNumHandles(1);
@@ -507,7 +507,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetAtomicAccessWithNullBu
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThenReturnTrue) {
     SubDeviceIdsVec subDeviceIds{0};
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = 0;
@@ -517,7 +517,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThe
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenReturnFalse) {
     SubDeviceIdsVec subDeviceIds{0};
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.setNumHandles(1);
 
@@ -544,7 +544,7 @@ TEST_F(IoctlHelperPrelimFixture,
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
     bo.isChunked = 1;
     bo.setSize(1024);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x5;
     allocation.setNumHandles(1);
@@ -573,7 +573,7 @@ TEST_F(IoctlHelperPrelimFixture,
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
     bo.isChunked = 1;
     bo.setSize(1024);
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
     allocation.storageInfo.memoryBanks = 0x5;
     allocation.setNumHandles(1);

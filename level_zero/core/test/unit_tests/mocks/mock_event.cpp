@@ -17,7 +17,7 @@ Mock<Event>::Mock() : WhiteBox<::L0::Event>(nullptr, 0, nullptr),
                                      reinterpret_cast<uint64_t>(&memory),
                                      0,
                                      sizeof(memory),
-                                     NEO::MemoryPool::System4KBPages,
+                                     NEO::MemoryPool::system4KBPages,
                                      NEO::MemoryManager::maxOsContextCount) {}
 
 Mock<Event>::~Mock() {}

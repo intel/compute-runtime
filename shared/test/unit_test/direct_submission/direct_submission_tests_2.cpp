@@ -383,7 +383,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
 
-    static_cast<MemoryAllocation *>(batchBuffer.commandBufferAllocation)->overrideMemoryPool(MemoryPool::LocalMemory);
+    static_cast<MemoryAllocation *>(batchBuffer.commandBufferAllocation)->overrideMemoryPool(MemoryPool::localMemory);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));

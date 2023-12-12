@@ -89,7 +89,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalTh
     mock->errnoRetVal = EWOULDBLOCK;
     auto rootDeviceIndex = csr->getRootDeviceIndex();
     TestedBufferObject bo(rootDeviceIndex, mock, 128);
-    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::system4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128]{};
 
@@ -272,7 +272,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveG
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBufferObjectToModifyIsCalledForAGivenHandleIdThenTheCorrespondingBufferObjectGetsModified) {
     auto size = 1024u;
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, nullptr, nullptr, size, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, nullptr, nullptr, size, static_cast<osHandle>(0u), MemoryPool::memoryNull);
 
     auto &bos = allocation->getBOs();
     for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
@@ -292,7 +292,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBuffer
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenSucceeds) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
@@ -310,8 +310,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenSucceeds)
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMakingResidentThenEachSucceeds) {
     BufferObject *buffer1 = this->createBO(4096);
     BufferObject *buffer2 = this->createBO(4096);
-    auto allocation1 = new DrmAllocation(0, AllocationType::unknown, buffer1, nullptr, buffer1->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
-    auto allocation2 = new DrmAllocation(0, AllocationType::unknown, buffer2, nullptr, buffer2->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    auto allocation1 = new DrmAllocation(0, AllocationType::unknown, buffer1, nullptr, buffer1->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    auto allocation2 = new DrmAllocation(0, AllocationType::unknown, buffer2, nullptr, buffer2->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_EQ(nullptr, allocation1->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation2->getUnderlyingBuffer());
 
@@ -334,7 +334,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMak
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentTwiceThenRefCountIsOne) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
 
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations(), 0u);
@@ -852,7 +852,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOsFailsThenMakeBOsRes
     auto bo = this->createBO(size);
     BufferObjects bos{bo};
 
-    auto allocation = new MockDrmAllocationBindBOs(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBindBOs(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOsResult = -1;
 
     auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true);
@@ -868,7 +868,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentStorageAndBindBOFa
     auto bo = this->createBO(size);
     BufferObjects bos{bo};
 
-    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOResult = -1;
 
     OsHandleStorage prevStorage;
@@ -899,7 +899,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsThenBindBOsRetu
     auto bo = this->createBO(size);
     BufferObjects bos{bo};
 
-    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOResult = -1;
 
     auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false);
@@ -915,7 +915,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsWithMultipleMem
     auto bo2 = this->createBO(size);
     BufferObjects bos{bo, bo2};
 
-    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOResult = -1;
     allocation->storageInfo.memoryBanks = 0b11;
     EXPECT_EQ(allocation->storageInfo.getNumBanks(), 2u);
@@ -933,7 +933,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsWithMultipleMem
     auto bo2 = this->createBO(size);
     BufferObjects bos{bo, bo2};
 
-    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOResult = -1;
     allocation->storageInfo.tileInstanced = true;
     allocation->storageInfo.memoryBanks = 0b11;
@@ -950,7 +950,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
     auto size = 1024u;
     auto bo = this->createBO(size);
     BufferObjects bos{bo};
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
+    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     EXPECT_EQ(bo, allocation->getBO());
 
     makeResidentBufferObjects<FamilyType>(&csr->getOsContext(), allocation);

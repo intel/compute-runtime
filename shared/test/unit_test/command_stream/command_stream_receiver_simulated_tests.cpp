@@ -38,7 +38,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::LocalMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x2u;
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
@@ -57,7 +57,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
 
     executionEnvironment.initializeMemoryManager();
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x2u;
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
@@ -73,7 +73,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::LocalMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x0u;
 
     DeviceBitfield deviceBitfield(0b100);
@@ -92,7 +92,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::System64KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
 
     DeviceBitfield deviceBitfield(1);
@@ -111,7 +111,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::LocalMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -135,7 +135,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryCloneableAllocationWithMan
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::LocalMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = true;
 
@@ -159,7 +159,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::LocalMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -184,7 +184,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::LocalMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x0u;
 
     DeviceBitfield deviceBitfield(0b100);
@@ -311,7 +311,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSimulatedCommandStreamReceiverWhenClo
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
@@ -337,7 +337,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
 
     graphicsAllocation.setDefaultGmm(&gmm);
@@ -370,7 +370,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
 
     graphicsAllocation.setDefaultGmm(&gmm);
@@ -398,7 +398,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWhenWriteMemor
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::localMemory, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 0b11u;
@@ -433,7 +433,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::localMemory, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 0b11u;
@@ -475,7 +475,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::localMemory, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 0b11u;
@@ -508,7 +508,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWithMissingMem
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::localMemory, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = false;
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 2u;
@@ -524,7 +524,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCommandBufferAllocationWhenWriteMemor
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::commandBuffer,
-                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::MemoryNull, MemoryManager::maxOsContextCount};
+                                          &dummy, 0, 0, sizeof(dummy), MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
@@ -545,9 +545,9 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
     int dummy = 1;
 
     MemoryPool poolsWith4kPages[] = {
-        MemoryPool::System4KBPages,
-        MemoryPool::System4KBPagesWith32BitGpuAddressing,
-        MemoryPool::SystemCpuInaccessible};
+        MemoryPool::system4KBPages,
+        MemoryPool::system4KBPagesWith32BitGpuAddressing,
+        MemoryPool::systemCpuInaccessible};
 
     for (size_t i = 0; i < arrayCount(poolsWith4kPages); i++) {
 
@@ -578,9 +578,9 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
     }
 
     MemoryPool poolsWith64kPages[] = {
-        MemoryPool::System64KBPages,
-        MemoryPool::System64KBPagesWith32BitGpuAddressing,
-        MemoryPool::LocalMemory};
+        MemoryPool::system64KBPages,
+        MemoryPool::system64KBPagesWith32BitGpuAddressing,
+        MemoryPool::localMemory};
 
     for (size_t i = 0; i < arrayCount(poolsWith64kPages); i++) {
 

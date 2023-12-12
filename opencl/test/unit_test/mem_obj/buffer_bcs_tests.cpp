@@ -1460,8 +1460,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetToOneWhenEnqueueingCopyLocal
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-    dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+    srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
 
     auto &clGfxCoreHelper = this->device->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     const bool preferBlitterHw = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
@@ -1503,8 +1503,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsQueueWhenEnqueueingCopyBufferToBuffer
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    srcGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
-    dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
+    srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
 
     debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(-1);
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);

@@ -83,10 +83,10 @@ HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddre
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
@@ -121,10 +121,10 @@ HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImag
 
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
     properties.srcAllocation = &mockAllocationSrc;
@@ -185,10 +185,10 @@ HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThe
     gmm->gmmResourceInfo.reset(myResourecInfo.release());
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
@@ -216,10 +216,10 @@ HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsTh
     gmm->gmmResourceInfo.reset(myResourecInfo.release());
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;

@@ -514,7 +514,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenCpuAccessRequiredWhenAllocatingI
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->isLocked());
     EXPECT_NE(nullptr, allocation->getLockedPtr());
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
@@ -534,7 +534,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenWriteCombinedAllocationWhenAlloc
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->isLocked());
     EXPECT_NE(nullptr, allocation->getLockedPtr());
 
@@ -644,7 +644,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhen
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
     BufferObject bo(0, mock, 3, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockBufferObject(&bo);
@@ -822,7 +822,7 @@ HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledO
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     auto ptr = memoryManager->lockResource(allocation);
     EXPECT_NE(nullptr, ptr);
@@ -847,7 +847,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(0, mockExp, 3, 1, 0, 0);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -863,7 +863,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->failOnMmapOffset = true;
 
     BufferObject bo(0, mockExp, 3, 1, 0, 0);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -874,7 +874,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
-    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
     EXPECT_EQ(nullptr, ptr);
@@ -938,7 +938,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIs
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
 
     EXPECT_TRUE(allocData.imgInfo->useLocalMemory);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     auto gmm = allocation->getDefaultGmm();
     EXPECT_NE(nullptr, gmm);

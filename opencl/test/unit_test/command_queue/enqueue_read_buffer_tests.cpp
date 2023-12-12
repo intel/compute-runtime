@@ -555,7 +555,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferIsCall
 HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferWithMapAllocationIsCalledThenItDoesntCallNotifyFunction) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
-    GraphicsAllocation mapAllocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu};
+    GraphicsAllocation mapAllocation{0, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu};
     auto retVal = mockCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                               CL_TRUE,
                                               0,
@@ -581,7 +581,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInT
     ctx.memoryManager = &memoryManager;
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
 
     retVal = mockCmdQ->enqueueReadBuffer(buffer.get(),
@@ -612,7 +612,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    static_cast<MemoryAllocation *>(graphicsAllocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(graphicsAllocation)->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
 
     MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
@@ -659,7 +659,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInT
     ctx.memoryManager = &memoryManager;
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::System4KBPages);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::system4KBPages);
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
 
     retVal = mockCmdQ->enqueueReadBuffer(buffer.get(),

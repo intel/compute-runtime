@@ -125,7 +125,7 @@ void AubMemoryOperationsHandler::setAubWritable(bool writable, GraphicsAllocatio
 }
 
 DeviceBitfield AubMemoryOperationsHandler::getMemoryBanksBitfield(GraphicsAllocation *allocation, Device *device) const {
-    if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+    if (allocation->getMemoryPool() == MemoryPool::localMemory) {
         if (allocation->storageInfo.memoryBanks.any()) {
             if (allocation->storageInfo.cloningOfPageTables ||
                 device->getDefaultEngine().commandStreamReceiver->isMultiOsContextCapable()) {

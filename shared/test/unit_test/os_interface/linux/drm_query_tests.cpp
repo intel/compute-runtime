@@ -72,6 +72,6 @@ TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledThenReturn
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::memoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }

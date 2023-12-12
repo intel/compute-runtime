@@ -266,10 +266,10 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     ASSERT_NE(nullptr, allocation);
     if constexpr (is64bit) {
         EXPECT_TRUE(allocation->is32BitAllocation());
-        EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::system4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
     } else {
         EXPECT_FALSE(allocation->is32BitAllocation());
-        EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     }
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -361,7 +361,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryA
     EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer()) & MemoryConstants::page64kMask);
     EXPECT_EQ(0u, allocation->getGpuAddress() & MemoryConstants::page64kMask);
     EXPECT_EQ(0u, allocation->getUnderlyingBufferSize() & MemoryConstants::page64kMask);
-    EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system64KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -395,7 +395,7 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemory
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager.allocation64kbPageCreated);
     EXPECT_TRUE(memoryManager.allocationCreated);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -433,7 +433,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ((executionEnvironment.rootDeviceEnvironments[0u]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled || is32bit), allocation->fragmentsStorage.fragmentCount);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -447,7 +447,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGraphicsMemoryAllocationInDevicePo
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield});
     ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager.allocationCreated);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }

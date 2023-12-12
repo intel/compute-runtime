@@ -110,7 +110,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           ptr,
                                                                           size,
                                                                           0u,
-                                                                          MemoryPool::System4KBPages,
+                                                                          MemoryPool::system4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
         alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
@@ -138,7 +138,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           ptr,
                                                                           size,
                                                                           0u,
-                                                                          MemoryPool::System4KBPages,
+                                                                          MemoryPool::system4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
         alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
@@ -526,7 +526,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                            ptr,
                                                            size,
                                                            0u,
-                                                           MemoryPool::System4KBPages,
+                                                           MemoryPool::system4KBPages,
                                                            canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
         alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();
@@ -553,7 +553,7 @@ class MemoryManagerIpcObtainFdMock : public NEO::DrmMemoryManager {
                                                            ptr,
                                                            size,
                                                            0u,
-                                                           MemoryPool::System4KBPages,
+                                                           MemoryPool::system4KBPages,
                                                            canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
         alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{properties.rootDeviceIndex, &drm}).get();

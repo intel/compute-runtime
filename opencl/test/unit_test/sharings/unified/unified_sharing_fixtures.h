@@ -66,7 +66,7 @@ struct UnifiedSharingMockMemoryManager : MockMemoryManager {
         }
 
         auto graphicsAllocation = createMemoryAllocation(AllocationType::internalHostMemory, nullptr, reinterpret_cast<void *>(1), 1,
-                                                         4096u, reinterpret_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible,
+                                                         4096u, reinterpret_cast<uint64_t>(handle), MemoryPool::systemCpuInaccessible,
                                                          rootDeviceIndex, false, false, false);
         graphicsAllocation->setSharedHandle(static_cast<osHandle>(reinterpret_cast<uint64_t>(handle)));
         graphicsAllocation->set32BitAllocation(false);

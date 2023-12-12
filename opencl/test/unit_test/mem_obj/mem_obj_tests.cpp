@@ -397,7 +397,7 @@ TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
                   1, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), false, false, false);
 
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
-    reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 

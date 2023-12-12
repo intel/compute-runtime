@@ -230,7 +230,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledThenItRe
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
     device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
@@ -250,7 +250,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledInAlloca
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
 
     EXPECT_EQ(static_cast<size_t>(10u), drmMock->registeredDataSize);
@@ -260,7 +260,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenFailureToRegisterElfWhenRegisterElfAndLinkWit
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
@@ -278,11 +278,11 @@ HWTEST_F(L0DebuggerLinuxTest, givenFailureToRegisterElfWhenRegisterElfAndLinkWit
 }
 
 TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandles) {
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
-    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     MockBufferObject bo2(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation2.bufferObjects[0] = &bo2;
 
@@ -318,11 +318,11 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
 }
 
 TEST_F(L0DebuggerLinuxTest, givenModuleAllocationsWhenAttachingZebinModuleThenBosRequireImmediateBind) {
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
     MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
-    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::constantSurface, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation2(rootDeviceIndex, AllocationType::constantSurface, MemoryPool::system4KBPages);
     MockBufferObject bo2(rootDeviceIndex, drmMock, 3, 0, 0, 1);
     isaAllocation2.bufferObjects[0] = &bo2;
 

@@ -188,14 +188,14 @@ TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenAlloca
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
-    EXPECT_EQ(MemoryPool::System64KBPages,
+    EXPECT_EQ(MemoryPool::system64KBPages,
               svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbDisallowedWhenAllocatingSvmMemoryThenAllocationIsIn4kbPagePool) {
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
-    EXPECT_EQ(MemoryPool::System4KBPages,
+    EXPECT_EQ(MemoryPool::system4KBPages,
               svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
@@ -220,7 +220,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
-    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::localMemory);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(AllocationType::writeCombined, gpuAllocation->getAllocationType());
@@ -267,7 +267,7 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(AllocationType::bufferHostMemory, gpuAllocation->getAllocationType());
-    EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::localMemory);
     EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
 }
@@ -302,7 +302,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(AllocationType::bufferHostMemory, gpuAllocation->getAllocationType());
-    EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::localMemory);
     EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
 }
@@ -334,8 +334,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(AllocationType::svmGpu, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::svmCpu, allocation->cpuAllocation->getAllocationType());
 
-    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
-    EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::localMemory);
+    EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::localMemory);
 
     EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
@@ -364,8 +364,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(AllocationType::svmGpu, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::svmCpu, allocation->cpuAllocation->getAllocationType());
 
-    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
-    EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::localMemory);
+    EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::localMemory);
 
     EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);

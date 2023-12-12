@@ -32,7 +32,7 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
                                                   0,
                                                   0,
                                                   4096,
-                                                  NEO::MemoryPool::System4KBPages,
+                                                  NEO::MemoryPool::system4KBPages,
                                                   NEO::MemoryManager::maxOsContextCount);
 
     immutableData.isaGraphicsAllocation.reset(allocation);

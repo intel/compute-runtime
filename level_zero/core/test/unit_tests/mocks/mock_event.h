@@ -117,7 +117,7 @@ class MockEvent : public ::L0::Event {
                                                              0x1000,
                                                              0,
                                                              sizeof(uint32_t),
-                                                             NEO::MemoryPool::System4KBPages,
+                                                             NEO::MemoryPool::system4KBPages,
                                                              NEO::MemoryManager::maxOsContextCount));
         this->timestampSizeInDw = 1;
         this->contextStartOffset = 0;

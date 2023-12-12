@@ -78,10 +78,10 @@ TEST(Buffer, whenBufferAllocatedInLocalMemoryThenCpuCopyIsDisallowed) {
     UltDeviceFactory factory{1, 0};
     auto &device = *factory.rootDevices[0];
 
-    allocation.memoryPool = MemoryPool::LocalMemory;
+    allocation.memoryPool = MemoryPool::localMemory;
     EXPECT_FALSE(buffer.isReadWriteOnCpuAllowed(device));
 
-    allocation.memoryPool = MemoryPool::System4KBPages;
+    allocation.memoryPool = MemoryPool::system4KBPages;
     EXPECT_TRUE(buffer.isReadWriteOnCpuAllowed(device));
 }
 
@@ -91,7 +91,7 @@ TEST(Buffer, givenNoCpuAccessWhenIsReadWriteOnCpuAllowedIsCalledThenReturnFalse)
     UltDeviceFactory factory{1, 0};
     auto &device = *factory.rootDevices[0];
 
-    allocation.memoryPool = MemoryPool::System4KBPages;
+    allocation.memoryPool = MemoryPool::system4KBPages;
     EXPECT_TRUE(buffer.isReadWriteOnCpuAllowed(device));
 
     buffer.allowCpuAccessReturnValue = false;

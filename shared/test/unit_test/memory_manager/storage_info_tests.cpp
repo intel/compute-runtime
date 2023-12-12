@@ -254,7 +254,7 @@ HWTEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenAllocatingCsrSpecific
     auto commandBufferAllocation = heap.getGraphicsAllocation();
     EXPECT_EQ(AllocationType::commandBuffer, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_NE(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(commandBufferAllocation->getMemoryPool(), MemoryPool::localMemory);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenAllMemoryBanksAreOnAndPageTableClonningIsRequired) {

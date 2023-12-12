@@ -50,7 +50,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurf
 
     EXPECT_NE(nullptr, debugSurface);
 
-    EXPECT_EQ(MemoryPool::System4KBPages, debugSurface->getMemoryPool());
+    EXPECT_EQ(MemoryPool::system4KBPages, debugSurface->getMemoryPool());
     EXPECT_EQ(3u, debugSurface->getNumGmms());
     EXPECT_EQ(3, mock->ioctlCnt.gemUserptr);
 

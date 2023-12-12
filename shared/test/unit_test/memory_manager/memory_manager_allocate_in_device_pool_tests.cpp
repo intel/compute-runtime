@@ -151,7 +151,7 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
     auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -227,7 +227,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryAndAllowed32BitWhen32BitIsNotForc
     auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -315,7 +315,7 @@ TEST(BaseMemoryManagerTest, givenMemoryManagerWithForced32BitsWhenSystemMemoryIs
     auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -594,8 +594,8 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     MemoryAllocation allocation(mockRootDeviceIndex, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
-                                0x1000, 0, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation.getMemoryPool());
+                                0x1000, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+    EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());
 }
 
 TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocationIsOverridenThenItHasLocalMemoryPool) {
@@ -603,9 +603,9 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     MemoryAllocation allocation(mockRootDeviceIndex, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
-                                0x1000, 0, MemoryPool::System4KBPages, false, false, MemoryManager::maxOsContextCount);
-    allocation.overrideMemoryPool(MemoryPool::System64KBPages);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation.getMemoryPool());
+                                0x1000, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+    allocation.overrideMemoryPool(MemoryPool::system64KBPages);
+    EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());
 }
 
 TEST(MemoryManagerTest, givenDisabledLocalMemoryWhenAllocateInternalAllocationInDevicePoolThen32BitAllocationIsCreatedInNonDevicePool) {
@@ -615,7 +615,7 @@ TEST(MemoryManagerTest, givenDisabledLocalMemoryWhenAllocateInternalAllocationIn
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::internalHeap, mockDeviceBitfield}, nullptr);
     EXPECT_NE(nullptr, allocation);
     EXPECT_TRUE(allocation->is32BitAllocation());
-    EXPECT_NE(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_NE(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_FALSE(memoryManager.allocationInDevicePoolCreated);
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -642,13 +642,13 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingKernelIsaThenL
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::kernelIsa, mockDeviceBitfield}, nullptr);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);
 
     allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::kernelIsaInternal, mockDeviceBitfield}, nullptr);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -659,7 +659,7 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocateKernelIsaInDevic
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::internalHeap, mockDeviceBitfield}, nullptr);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -670,7 +670,7 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenLinearStreamIsAllocatedI
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::linearStream, mockDeviceBitfield}, nullptr);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -708,7 +708,7 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
     AllocationProperties allocProperties(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield);
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(allocation->getUnderlyingBufferSize(), memoryManager.getLocalMemoryUsageBankSelector(allocation->getAllocationType(), allocation->getRootDeviceIndex())->getOccupiedMemorySizeForBank(0));
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -738,7 +738,7 @@ TEST(MemoryManagerTest, givenInternalAllocationTypeWhenIsAllocatedInDevicePoolTh
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0u, memoryManager.externalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()]->getOccupiedMemorySizeForBank(0));
 
-    if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+    if (allocation->getMemoryPool() == MemoryPool::localMemory) {
         EXPECT_EQ(allocation->getUnderlyingBufferSize(), memoryManager.internalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()]->getOccupiedMemorySizeForBank(0));
         EXPECT_EQ(memoryManager.getLocalMemoryUsageBankSelector(allocation->getAllocationType(), allocation->getRootDeviceIndex()), memoryManager.internalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()].get());
     }
@@ -759,7 +759,7 @@ TEST(MemoryManagerTest, givenExternalAllocationTypeWhenIsAllocatedInDevicePoolTh
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0u, memoryManager.internalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()]->getOccupiedMemorySizeForBank(0));
 
-    if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
+    if (allocation->getMemoryPool() == MemoryPool::localMemory) {
         EXPECT_EQ(allocation->getUnderlyingBufferSize(), memoryManager.externalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()]->getOccupiedMemorySizeForBank(0));
         EXPECT_EQ(memoryManager.getLocalMemoryUsageBankSelector(allocation->getAllocationType(), allocation->getRootDeviceIndex()), memoryManager.externalLocalMemoryUsageBankSelector[allocation->getRootDeviceIndex()].get());
     }
@@ -803,7 +803,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenCommandBufferTy
 
     EXPECT_NE(nullptr, allocation);
 
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -815,7 +815,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenRingBufferTypeW
 
     EXPECT_NE(nullptr, allocation);
 
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -827,7 +827,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenSemaphoreBuffer
 
     EXPECT_NE(nullptr, allocation);
 
-    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -842,7 +842,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
 
             EXPECT_NE(nullptr, allocation);
 
-            EXPECT_NE(MemoryPool::LocalMemory, allocation->getMemoryPool());
+            EXPECT_NE(MemoryPool::localMemory, allocation->getMemoryPool());
             EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
 
             memoryManager->freeGraphicsMemory(allocation);
@@ -861,7 +861,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
             EXPECT_NE(nullptr, allocation);
 
             if (multiTile) {
-                EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+                EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
                 EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
             } else {
                 if (allocationType != AllocationType::commandBuffer) {

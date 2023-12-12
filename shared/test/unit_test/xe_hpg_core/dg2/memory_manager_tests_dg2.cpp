@@ -35,7 +35,7 @@ DG2TEST_F(MemoryManagerTestsDg2, givenEnabledLocalMemoryWhenLinearStreamIsAlloca
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::linearStream, mockDeviceBitfield}, nullptr);
-    EXPECT_NE(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_NE(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_FALSE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -64,7 +64,7 @@ DG2TEST_F(MemoryManagerTestsDg2, givenEnabledLocalMemoryWhenAllocateInternalHeap
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::kernelIsa, mockDeviceBitfield}, nullptr);
-    EXPECT_NE(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_NE(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_FALSE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);

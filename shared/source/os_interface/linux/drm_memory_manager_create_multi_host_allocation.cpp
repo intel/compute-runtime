@@ -44,7 +44,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, numTiles, allocationData.type,
-                                        nullptr /*bo*/, cpuBasePointer, canonizedGpuAddress, sizePerTile, MemoryPool::System4KBPages);
+                                        nullptr /*bo*/, cpuBasePointer, canonizedGpuAddress, sizePerTile, MemoryPool::system4KBPages);
 
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setFlushL3Required(true);

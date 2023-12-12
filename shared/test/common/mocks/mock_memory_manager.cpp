@@ -90,7 +90,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
     validateAllocateProperties(properties);
     lastAllocationProperties.reset(new AllocationProperties(properties));
     if (returnFakeAllocation) {
-        return new GraphicsAllocation(properties.rootDeviceIndex, properties.allocationType, const_cast<void *>(ptr), dummyAddress, properties.size, 0, MemoryPool::System4KBPages, maxOsContextCount);
+        return new GraphicsAllocation(properties.rootDeviceIndex, properties.allocationType, const_cast<void *>(ptr), dummyAddress, properties.size, 0, MemoryPool::system4KBPages, maxOsContextCount);
     }
     if (isMockHostMemoryManager) {
         allocateGraphicsMemoryWithPropertiesCount++;
@@ -159,7 +159,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         if (allocation) {
             allocationInDevicePoolCreated = true;
             if (localMemorySupported[allocation->getRootDeviceIndex()]) {
-                static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::LocalMemory);
+                static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::localMemory);
             }
         }
         successAllocatedGraphicsMemoryIndex++;
@@ -231,7 +231,7 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(
 GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
     if (toOsHandle(handle) != invalidSharedHandle) {
         auto graphicsAllocation = createMemoryAllocation(NEO::AllocationType::sharedBuffer, nullptr, reinterpret_cast<void *>(1), 1,
-                                                         4096u, toOsHandle(handle), MemoryPool::SystemCpuInaccessible, rootDeviceIndex,
+                                                         4096u, toOsHandle(handle), MemoryPool::systemCpuInaccessible, rootDeviceIndex,
                                                          false, false, false);
         graphicsAllocation->setSharedHandle(toOsHandle(handle));
         this->capturedSharedHandle = toOsHandle(handle);
@@ -268,7 +268,7 @@ GraphicsAllocation *MockMemoryManagerFailFirstAllocation::allocateNonSystemGraph
     if (!allocation) {
         allocation = allocateGraphicsMemory(allocationData);
     }
-    static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     return allocation;
 }
 

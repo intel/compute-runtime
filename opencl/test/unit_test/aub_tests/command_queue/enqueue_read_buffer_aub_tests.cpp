@@ -121,7 +121,7 @@ HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpe
                                                                    0xFFFF800400001000,
                                                                    0xFFFF800400001000,
                                                                    sizeof(srcMemory),
-                                                                   MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+                                                                   MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),

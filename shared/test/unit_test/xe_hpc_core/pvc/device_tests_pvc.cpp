@@ -100,7 +100,7 @@ PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmis
 
                 EXPECT_NE(nullptr, allocation);
 
-                EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+                EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
                 EXPECT_EQ(expectedPlacement, allocation->storageInfo.getMemoryBanks());
 
                 memoryManager->freeGraphicsMemory(allocation);
@@ -137,7 +137,7 @@ PVCTEST_F(MemoryManagerDirectSubmissionImplicitScalingPvcTest, givenDirectSubmis
 
                 EXPECT_NE(nullptr, allocation);
 
-                EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+                EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
                 EXPECT_EQ(expectedPlacement, allocation->storageInfo.getMemoryBanks());
 
                 memoryManager->freeGraphicsMemory(allocation);

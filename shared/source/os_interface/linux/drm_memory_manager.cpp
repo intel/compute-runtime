@@ -316,7 +316,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &
     auto hostPtr = const_cast<void *>(allocationData.hostPtr);
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, nullptr, hostPtr, canonizedGpuAddress, allocationData.size, MemoryPool::System4KBPages);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, nullptr, hostPtr, canonizedGpuAddress, allocationData.size, MemoryPool::system4KBPages);
     allocation->fragmentsStorage = handleStorage;
     if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
         return nullptr;
@@ -395,7 +395,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, canonizedGpuAddress, size, MemoryPool::System4KBPages);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, canonizedGpuAddress, size, MemoryPool::system4KBPages);
     allocation->setDriverAllocatedCpuPtr(res);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
     if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
@@ -450,7 +450,7 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
                                         bufferPtr,
                                         bo->peekAddress(),
                                         cSize,
-                                        MemoryPool::System4KBPages);
+                                        MemoryPool::system4KBPages);
 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), cSize);
     bo.release();
@@ -498,7 +498,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
         pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, osContextLinux, 0, osContextLinux->getDrmContextIds()[0]);
     }
 
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->peekAddress(), alignedSize, MemoryPool::System4KBPages);
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->peekAddress(), alignedSize, MemoryPool::system4KBPages);
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setDriverAllocatedCpuPtr(res);
     allocation->setOsContext(osContextLinux);
@@ -546,7 +546,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     }
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), const_cast<void *>(allocationData.hostPtr),
-                                        gpuVirtualAddress, allocationData.size, MemoryPool::System4KBPages);
+                                        gpuVirtualAddress, allocationData.size, MemoryPool::system4KBPages);
     allocation->setAllocationOffset(offsetInPage);
 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize);
@@ -590,7 +590,7 @@ bool DrmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAl
 }
 
 GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
+    const auto memoryPool = MemoryPool::systemCpuInaccessible;
     StorageInfo systemMemoryStorageInfo = {};
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     GmmRequirements gmmRequirements{};
@@ -619,7 +619,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
-    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
+    const auto memoryPool = MemoryPool::systemCpuInaccessible;
 
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
@@ -663,7 +663,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
         return alloc;
     }
 
-    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
+    const auto memoryPool = MemoryPool::systemCpuInaccessible;
 
     uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
 
@@ -717,7 +717,7 @@ GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allo
         auto canonizedGpuAddress = gmmHelper->canonize(ptrOffset(gpuVirtualAddress, inputPointerOffset));
         auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), const_cast<void *>(allocationData.hostPtr),
                                             canonizedGpuAddress,
-                                            allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+                                            allocationSize, MemoryPool::system4KBPagesWith32BitGpuAddressing);
         allocation->set32BitAllocation(true);
         allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(allocatorToUse)));
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVirtualAddress), realAllocationSize);
@@ -756,7 +756,7 @@ GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allo
     auto canonizedGpuAddress = gmmHelper->canonize(gpuVA);
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), ptrAlloc,
                                         canonizedGpuAddress, alignedAllocationSize,
-                                        MemoryPool::System4KBPagesWith32BitGpuAddressing);
+                                        MemoryPool::system4KBPagesWith32BitGpuAddressing);
 
     allocation->set32BitAllocation(true);
     allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(allocatorToUse)));
@@ -803,7 +803,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     bool areBosSharedObjects = true;
     auto ioctlHelper = drm.getIoctlHelper();
 
-    const auto memoryPool = MemoryPool::LocalMemory;
+    const auto memoryPool = MemoryPool::localMemory;
 
     for (auto handle : handles) {
         PrimeHandle openFd = {0, 0, 0};
@@ -978,7 +978,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
     }
 
-    const auto memoryPool = MemoryPool::SystemCpuInaccessible;
+    const auto memoryPool = MemoryPool::systemCpuInaccessible;
 
     if (bo == nullptr) {
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);
@@ -1717,7 +1717,7 @@ inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const 
 
     auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.storageInfo.getNumBanks(),
                                                       allocationData.type, nullptr, nullptr, gmmHelper->canonize(gpuAddress),
-                                                      sizeAligned, MemoryPool::LocalMemory);
+                                                      sizeAligned, MemoryPool::localMemory);
 
     if (createSingleHandle) {
         allocation->setDefaultGmm(gmm.release());
@@ -2133,7 +2133,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 
     if (useBooMmap) {
-        const auto memoryPool = MemoryPool::System4KBPages;
+        const auto memoryPool = MemoryPool::system4KBPages;
 
         auto totalSizeToAlloc = alignedSize + alignment;
         uint64_t preferredAddress = 0;
@@ -2330,7 +2330,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         numOfChunks = static_cast<uint32_t>(size / getSizeOfChunk(size));
     }
 
-    const auto memoryPool = MemoryPool::LocalMemory;
+    const auto memoryPool = MemoryPool::localMemory;
 
     for (auto handleId = 0u; handleId < numHandles; handleId++) {
         uint32_t handle = 0;
@@ -2433,7 +2433,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     PrimeHandle openFd{};
     openFd.fileDescriptor = handle;
 
-    auto memoryPool = MemoryPool::SystemCpuInaccessible;
+    auto memoryPool = MemoryPool::systemCpuInaccessible;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
@@ -2479,7 +2479,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
-        memoryPool = MemoryPool::System4KBPages;
+        memoryPool = MemoryPool::system4KBPages;
         patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
         bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, boHandle, size, maxOsContextCount);
 

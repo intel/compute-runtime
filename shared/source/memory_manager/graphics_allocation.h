@@ -281,7 +281,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     uint32_t getUsedPageSize() const;
 
-    bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::LocalMemory); }
+    bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::localMemory); }
     bool isAllocationLockable() const;
 
     const AubInfo &getAubInfo() const { return aubInfo; }
@@ -373,7 +373,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void *cpuPtr = nullptr;
     void *lockedPtr = nullptr;
 
-    MemoryPool memoryPool = MemoryPool::MemoryNull;
+    MemoryPool memoryPool = MemoryPool::memoryNull;
     AllocationType allocationType = AllocationType::unknown;
 
     StackVec<UsageInfo, 32> usageInfos;

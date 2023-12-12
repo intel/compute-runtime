@@ -56,7 +56,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
         allocations.push_back(sbaAllocation);
 
         EXPECT_EQ(NEO::AllocationType::debugSbaTrackingBuffer, sbaAllocation->getAllocationType());
-        EXPECT_EQ(MemoryPool::System4KBPages, sbaAllocation->getMemoryPool());
+        EXPECT_EQ(MemoryPool::system4KBPages, sbaAllocation->getMemoryPool());
     }
 
     for (uint32_t i = 0; i < allocations.size() - 1; i++) {
