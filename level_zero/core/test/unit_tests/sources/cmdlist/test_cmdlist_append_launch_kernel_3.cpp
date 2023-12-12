@@ -695,6 +695,10 @@ struct InOrderCmdListTests : public CommandListAppendLaunchKernel {
         void makeCounterBasedInitiallyDisabled() {
             counterBasedMode = CounterBasedMode::InitiallyDisabled;
         }
+
+        void makeCounterBasedImplicitlyDisabled() {
+            counterBasedMode = CounterBasedMode::ImplicitlyDisabled;
+        }
     };
 
     void SetUp() override {
@@ -1185,8 +1189,8 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignme
 
     auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBuffer());
 
-    auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->makeCounterBasedInitiallyDisabled();
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->makeCounterBasedImplicitlyDisabled();
 
     auto nonWalkerSignallingSupported = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
 
@@ -1220,7 +1224,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrde
     immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->makeCounterBasedInitiallyDisabled();
+    events[0]->makeCounterBasedImplicitlyDisabled();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_FALSE(events[0]->isCounterBased());
@@ -1257,7 +1261,7 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnR
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->makeCounterBasedInitiallyDisabled();
+    events[0]->makeCounterBasedImplicitlyDisabled();
 
     auto nonWalkerSignallingSupported = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
 
@@ -1584,6 +1588,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmediateCmdListThenConvertEventToCounterBased, IsAtLeastSkl) {
+    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(0);
+
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto outOfOrderImmCmdList = createImmCmdList<gfxCoreFamily>();
     auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
@@ -1603,7 +1609,7 @@ HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmed
     EXPECT_EQ(Event::CounterBasedMode::InitiallyDisabled, events[1]->counterBasedMode);
     EXPECT_FALSE(events[1]->isCounterBased());
 
-    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
+    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(-1);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::ImplicitlyEnabled, events[0]->counterBasedMode);
@@ -1682,7 +1688,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgram
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->makeCounterBasedInitiallyDisabled();
+    events[0]->makeCounterBasedImplicitlyDisabled();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1757,8 +1763,6 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgram
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEventThenSwitchToCounterBased, IsAtLeastXeHpCore) {
-    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
-
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto copyOnlyCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
@@ -1844,8 +1848,6 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
 }
 
 HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEventThenReturnError, IsAtLeastXeHpCore) {
-    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
-
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->inOrderExecInfo.reset();
     EXPECT_FALSE(immCmdList->isInOrderExecutionEnabled());
@@ -1912,7 +1914,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKer
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->makeCounterBasedInitiallyDisabled();
+    events[0]->makeCounterBasedImplicitlyDisabled();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -2556,7 +2558,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenCl
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->signalScope = 0;
-    events[0]->makeCounterBasedInitiallyDisabled();
+    events[0]->makeCounterBasedImplicitlyDisabled();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
@@ -5025,6 +5027,18 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
+
+    auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+
+    for (auto &event : bcsSplit.events.barrier) {
+        EXPECT_FALSE(event->isCounterBased());
+    }
+    for (auto &event : bcsSplit.events.subcopy) {
+        EXPECT_FALSE(event->isCounterBased());
+    }
+    for (auto &event : bcsSplit.events.marker) {
+        EXPECT_FALSE(event->isCounterBased());
+    }
 }
 
 HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCopyAfterBarrierWithoutImplicitDependenciesThenHandleCorrectInOrderSignaling, IsAtLeastXeHpcCore) {
@@ -5131,8 +5145,6 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 }
 
 HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEventThenSwitchToCounterBased, IsAtLeastXeHpcCore) {
-    debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
-
     auto immCmdList = createBcsSplitImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, true);

@@ -165,6 +165,7 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
 
         ze_event_handle_t hEvent{};
         pool->createEvent(&desc, &hEvent);
+        Event::fromHandle(hEvent)->disableImplicitCounterBasedMode();
 
         // Last event, created with host scope flag, is marker event.
         if (i == neededEvents - 1) {

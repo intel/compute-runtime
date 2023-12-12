@@ -3670,7 +3670,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             return false;
         }
 
-        if ((NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() == 1)) {
+        if ((NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != 0)) {
             if (signalEvent->isCounterBasedExplicitlyEnabled()) {
                 return true;
             }
