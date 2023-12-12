@@ -17,9 +17,9 @@ class Device;
 
 struct KernelHelper {
     enum class ErrorCode {
-        SUCCESS = 0,
-        OUT_OF_DEVICE_MEMORY = 1,
-        INVALID_KERNEL = 2
+        success = 0,
+        outOfDeviceMemory = 1,
+        invalidKernel = 2
     };
     static uint32_t getMaxWorkGroupCount(uint32_t simd, uint32_t availableThreadCount, uint32_t dssCount, uint32_t availableSlmSize,
                                          uint32_t usedSlmSize, uint32_t maxBarrierCount, uint32_t numberOfBarriers, uint32_t workDim,

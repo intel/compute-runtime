@@ -161,7 +161,7 @@ const SipKernel &SipKernel::getSipKernel(Device &device, OsContext *context) {
     if (MockSipData::useMockSip) {
         return *MockSipData::mockSipKernel.get();
     } else {
-        if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::Offline) {
+        if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::offline) {
             return SipKernel::getBindlessDebugSipKernel(device, context);
         }
         auto sipType = SipKernel::getSipKernelType(device);

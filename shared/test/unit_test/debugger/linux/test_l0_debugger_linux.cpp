@@ -31,7 +31,7 @@ struct L0DebuggerSharedLinuxFixture {
     void setUp(HardwareInfo *hwInfo) {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
@@ -100,7 +100,7 @@ HWTEST_F(SingleAddressSpaceLinuxFixture, givenDebuggingModeOfflineWhenDebuggerIs
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     EXPECT_FALSE(debugger->singleAddressSpaceSbaTracking);
 
-    pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::Offline);
+    pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::offline);
 
     debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     EXPECT_TRUE(debugger->singleAddressSpaceSbaTracking);

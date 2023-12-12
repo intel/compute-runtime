@@ -137,7 +137,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
-    device->executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    device->executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     device->setPreemptionMode(MidThread);
 
     const uint32_t contextId = 0u;

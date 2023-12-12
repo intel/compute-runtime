@@ -4428,7 +4428,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
-    pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::Offline);
+    pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::offline);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;

@@ -24,7 +24,7 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
     sliceCountChangeSupported = true;
 
     if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
             setPerContextVMRequired(false);
         } else {
             setPerContextVMRequired(true);

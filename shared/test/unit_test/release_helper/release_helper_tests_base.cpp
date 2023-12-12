@@ -81,7 +81,7 @@ void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmd
                 EXPECT_FALSE(preferredAllocationMethod.has_value());
             } else {
                 EXPECT_TRUE(preferredAllocationMethod.has_value());
-                EXPECT_EQ(GfxMemoryAllocationMethod::AllocateByKmd, preferredAllocationMethod.value());
+                EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
             }
         }
     }

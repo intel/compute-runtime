@@ -48,7 +48,7 @@ GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForRayTracingSu
 
 GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
+    EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
 }
 
 GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForCmdlistPrimaryBufferSupportThenReturnTrue) {

@@ -62,8 +62,8 @@ enum class AllocationType {
 };
 
 enum class GfxMemoryAllocationMethod : uint32_t {
-    UseUmdSystemPtr,
-    AllocateByKmd,
-    NotDefined = std::numeric_limits<uint32_t>::max()
+    useUmdSystemPtr,
+    allocateByKmd,
+    notDefined = std::numeric_limits<uint32_t>::max()
 };
 } // namespace NEO

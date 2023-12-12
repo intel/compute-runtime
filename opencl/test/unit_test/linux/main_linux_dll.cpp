@@ -710,7 +710,7 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     debugManager.flags.CreateMultipleSubDevices.set(2);
     debugManager.flags.UseVmBind.set(1);
 
-    mockExecutionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    mockExecutionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
 
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     ASSERT_NE(drm, nullptr);
@@ -735,7 +735,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     debugManager.flags.UseVmBind.set(0);
     debugManager.flags.PrintDebugMessages.set(true);
 
-    mockRootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    mockRootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
 
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);

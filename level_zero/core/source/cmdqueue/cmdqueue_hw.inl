@@ -546,7 +546,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             ctx.perThreadScratchSpaceSize = std::max(ctx.perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
             ctx.perThreadPrivateScratchSize = std::max(ctx.perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
 
-            if (commandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::PrivateHeaps) {
+            if (commandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::privateHeaps) {
                 if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
                     if (commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
                         heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
@@ -1384,7 +1384,7 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 
     auto &commandContainer = lastCommandList->getCmdContainer();
 
-    if (lastCommandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::GlobalStateless) {
+    if (lastCommandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::globalStateless) {
         auto globalStateless = csr->getGlobalStatelessHeap();
         csrHw->getSshState().updateAndCheck(globalStateless);
         streamProperties.stateBaseAddress.setPropertiesSurfaceState(globalStateless->getHeapGpuBase(), globalStateless->getHeapSizeInPages());
@@ -1421,7 +1421,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultiple
 
     size_t estimatedSize = 0;
 
-    if (commandListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+    if (commandListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         estimatedSize = estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(baseAddressStateDirty, csrState, cmdListRequired, cmdListFinal, requiredState, propertyDirty);
     } else {
         estimatedSize = estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(baseAddressStateDirty, csrState, cmdListRequired, cmdListFinal, requiredState, propertyDirty);

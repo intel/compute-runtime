@@ -5781,7 +5781,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest,
     allocData.rootDeviceIndex = rootDeviceIndex;
     allocData.storageInfo.memoryBanks = 0b11;
 
-    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);

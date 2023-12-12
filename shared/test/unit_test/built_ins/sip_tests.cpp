@@ -499,7 +499,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorr
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -629,7 +629,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIs
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext->debuggableContext = true;
@@ -666,7 +666,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext->debuggableContext = true;
@@ -703,7 +703,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
-    executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext->debuggableContext = true;

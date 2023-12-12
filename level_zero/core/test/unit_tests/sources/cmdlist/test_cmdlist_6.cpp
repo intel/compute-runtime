@@ -1305,11 +1305,11 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     EXPECT_GE(expectedSshAlignedSize, sshUsed);
 }
 
-using CommandListStateBaseAddressGlobalStatelessTest = Test<CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless)>>;
+using CommandListStateBaseAddressGlobalStatelessTest = Test<CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)>>;
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
-    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandList->cmdListHeapAddressModel);
-    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandListImmediate->cmdListHeapAddressModel);
-    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandQueue->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandList->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandQueue->cmdListHeapAddressModel);
 
     ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
     auto globalStatelessAlloc = commandListImmediate->csr->getGlobalStatelessHeapAllocation();

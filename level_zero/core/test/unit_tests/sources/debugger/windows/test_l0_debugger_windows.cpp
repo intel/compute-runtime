@@ -33,10 +33,10 @@ namespace ult {
 
 struct L0DebuggerWindowsFixture {
     void setUp() {
-        debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+        debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
@@ -57,7 +57,7 @@ struct L0DebuggerWindowsFixture {
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+        driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
@@ -198,7 +198,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledAndModuleD
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailableWhenInitializingDriverThenSuccessIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
 
@@ -218,7 +218,7 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailabl
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
 
-    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
     wddm->debugAttachAvailable = true;
 
     ze_result_t result = driverHandle->initialize(std::move(devices));
@@ -228,7 +228,7 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailabl
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
 
@@ -248,7 +248,7 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvail
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
 
-    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
     wddm->debugAttachAvailable = false;
 
     ze_result_t result = driverHandle->initialize(std::move(devices));

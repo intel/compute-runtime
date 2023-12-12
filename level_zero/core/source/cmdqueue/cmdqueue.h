@@ -74,7 +74,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
     std::atomic<TaskCountType> taskCount = 0;
-    NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::PrivateHeaps;
+    NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
 
     bool preemptionCmdSyncProgramming = true;
     bool commandQueueDebugCmdsProgrammed = false;

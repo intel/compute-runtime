@@ -945,10 +945,10 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     const auto &productHelper = neoDevice->getProductHelper();
     auto &kernelDescriptor = kernelImmData->getDescriptor();
     auto ret = NEO::KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, neoDevice);
-    if (ret == NEO::KernelHelper::ErrorCode::INVALID_KERNEL) {
+    if (ret == NEO::KernelHelper::ErrorCode::invalidKernel) {
         return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
     }
-    if (ret == NEO::KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY) {
+    if (ret == NEO::KernelHelper::ErrorCode::outOfDeviceMemory) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);

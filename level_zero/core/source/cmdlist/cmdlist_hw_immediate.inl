@@ -129,7 +129,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
             this->requiredStreamState.stateBaseAddress.setPropertiesIndirectState(ioh->getHeapGpuBase(), ioh->getHeapSizeInPages());
         }
 
-        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
             ssh = this->csr->getGlobalStatelessHeap();
             this->csr->makeResident(*ssh->getGraphicsAllocation());
             if (this->requiredStreamState.stateBaseAddress.surfaceStateBaseAddress.value == NEO::StreamProperty64::initValue) {
@@ -261,7 +261,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
         this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
 
-        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
             ssh = this->csr->getGlobalStatelessHeap();
         } else if (this->immediateCmdListHeapSharing) {
             auto &sshReserveConfig = this->commandContainer.getSurfaceStateHeapReserve();

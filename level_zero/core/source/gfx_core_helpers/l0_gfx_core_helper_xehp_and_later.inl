@@ -69,7 +69,7 @@ bool L0GfxCoreHelperHw<Family>::isZebinAllowed(const NEO::Debugger *debugger) co
 
 template <typename Family>
 NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel() const {
-    return NEO::HeapAddressModel::PrivateHeaps;
+    return NEO::HeapAddressModel::privateHeaps;
 }
 
 template <typename Family>

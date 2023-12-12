@@ -194,7 +194,7 @@ void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &ne
 }
 
 void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice) {
-    if (enableProgramDebugging != NEO::DebuggingMode::Disabled) {
+    if (enableProgramDebugging != NEO::DebuggingMode::disabled) {
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
         auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
         rootDeviceEnvironment->initDebuggerL0(neoDevice.get());
@@ -230,7 +230,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         this->devices.push_back(device);
 
         auto osInterface = device->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
-        if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::Disabled) {
+        if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::disabled) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Debug mode is not enabled in the system.\n");
             return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;

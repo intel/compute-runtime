@@ -507,7 +507,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
 
     mock->chunkingMode = 0x01;
 
-    executionEnvironment->setDebuggingMode(DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
 
     AllocationProperties gpuProperties{0u,
                                        mock->minimalChunkingSize * 2,

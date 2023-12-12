@@ -99,7 +99,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         if (NEO::AddressingModeHelper::containsStatefulAccess(kernelDescriptor, false)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -126,12 +126,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 
-    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) && (commandListPerThreadScratchSize != 0 || commandListPerThreadPrivateScratchSize != 0)) {
+    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && (commandListPerThreadScratchSize != 0 || commandListPerThreadPrivateScratchSize != 0)) {
         commandContainer.prepareBindfulSsh();
     }
 
     if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
-        (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps)) {
+        (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps)) {
 
         auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
         NEO::HeapReserveArguments sshReserveArgs = {sshReserveConfig.indirectHeapReservation,

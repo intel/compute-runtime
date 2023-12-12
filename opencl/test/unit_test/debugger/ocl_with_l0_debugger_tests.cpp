@@ -30,7 +30,7 @@ struct DebuggerClFixture
     void setUp() {
         hardwareInfo = *NEO::defaultHwInfo.get();
         auto executionEnvironment = MockClDevice::prepareExecutionEnvironment(&hardwareInfo, rootDeviceIndex);
-        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         device = MockDevice::createWithExecutionEnvironment<MockDevice>(&hardwareInfo, executionEnvironment, rootDeviceIndex);
         ASSERT_NE(nullptr, device);
         clExecutionEnvironment = static_cast<MockClExecutionEnvironment *>(device->getExecutionEnvironment());

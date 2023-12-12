@@ -833,19 +833,19 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
 
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
-    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+    EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 
     debugManager.flags.SelectCmdListHeapAddressModel.set(1);
 
-    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 
     debugManager.flags.SelectCmdListHeapAddressModel.set(2);
 
-    EXPECT_EQ(NEO::HeapAddressModel::GlobalBindless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+    EXPECT_EQ(NEO::HeapAddressModel::globalBindless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 
     debugManager.flags.SelectCmdListHeapAddressModel.set(3);
 
-    EXPECT_EQ(NEO::HeapAddressModel::GlobalBindful, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+    EXPECT_EQ(NEO::HeapAddressModel::globalBindful, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryThenUseDbgKeyValue) {

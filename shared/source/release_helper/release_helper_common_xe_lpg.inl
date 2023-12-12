@@ -22,7 +22,7 @@ std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<release>::getPreferredA
     case AllocationType::timestampPacketTagBuffer:
         return {};
     default:
-        return GfxMemoryAllocationMethod::AllocateByKmd;
+        return GfxMemoryAllocationMethod::allocateByKmd;
     }
 }
 

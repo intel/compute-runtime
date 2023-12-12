@@ -779,7 +779,7 @@ TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextIsCalledThenIoctlIsCalledOn
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWhenCreatingContextThenCooperativeFlagIsPassedToCreateDrmContextOnlyIfCCSEnginesArePresent) {
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     drm->contextDebugSupported = true;
     drm->callBaseCreateDrmContext = false;
 
@@ -802,7 +802,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupportedAndRegularEngineUsageWhenCreatingContextThenCooperativeFlagIsNotPassedInOfflineDebuggingMode) {
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     drm->contextDebugSupported = true;
     drm->callBaseCreateDrmContext = false;
 
@@ -817,7 +817,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
         EXPECT_FALSE(drm->capturedCooperativeContextRequest);
     }
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Offline);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::offline);
 
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
     osContext2.ensureContextInitialized();
@@ -834,7 +834,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupport
 
 TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenInitializingContextThenVmIsCreatedWithAllNecessaryFlags) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);

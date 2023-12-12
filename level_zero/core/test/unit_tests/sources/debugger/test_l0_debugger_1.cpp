@@ -68,12 +68,12 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSip
 }
 
 TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenFusedEusAreDisabled) {
-    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Online);
+    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::online);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.fusedEuEnabled);
 }
 
 TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenCompressionIsDisabled) {
-    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::Online);
+    EXPECT_TRUE(driverHandle->enableProgramDebugging == NEO::DebuggingMode::online);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
@@ -699,7 +699,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     NEO::debugManager.flags.UseImmediateFlushTask.set(1);
-    NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -758,7 +758,7 @@ struct DebuggerWithGlobalBindlessFixture : public L0DebuggerFixture {
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+        driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];

@@ -117,7 +117,7 @@ TEST_F(WddmMemoryManagerTests, GivenAllocDataWithSVMCPUSetWhenAllocateGraphicsMe
     allocData.allocationMethod = memoryManager->getPreferredAllocationMethod(allocationProperties);
     memoryManager->allocateGraphicsMemoryWithAlignment(allocData);
 
-    if (allocData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (allocData.allocationMethod == GfxMemoryAllocationMethod::allocateByKmd) {
         EXPECT_TRUE(memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVACalled);
     } else {
         EXPECT_TRUE(memoryManager->allocateSystemMemoryAndCreateGraphicsAllocationFromItCalled);
@@ -312,7 +312,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
         allocData.allocationMethod = memoryManager->getPreferredAllocationMethod(allocationProperties);
         auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
-        if (allocData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && is64bit) {
+        if (allocData.allocationMethod == GfxMemoryAllocationMethod::allocateByKmd && is64bit) {
             EXPECT_FALSE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
         } else {
             EXPECT_TRUE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
@@ -592,7 +592,7 @@ TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGet
         }
 
         DebugManagerStateRestore restorer;
-        for (const auto &allocationMethod : {GfxMemoryAllocationMethod::UseUmdSystemPtr, GfxMemoryAllocationMethod::AllocateByKmd}) {
+        for (const auto &allocationMethod : {GfxMemoryAllocationMethod::useUmdSystemPtr, GfxMemoryAllocationMethod::allocateByKmd}) {
             debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(allocationMethod));
             EXPECT_EQ(allocationMethod, memoryManager->getPreferredAllocationMethod(allocationProperties));
         }
@@ -715,7 +715,7 @@ class WddmMemoryManagerSimpleTest : public ::testing::Test {
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreatedAndZerod) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, AllocationType::debugContextSaveArea, false, false, 0b1011};
     auto debugSurface = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
     EXPECT_NE(nullptr, debugSurface);
@@ -729,7 +729,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryWithPropertiesCal
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -829,7 +829,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithStorageInfoWhenAlloca
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithFlagsWhenAllocateGraphicsMemory64kbThenAllocationFlagFlushL3RequiredIsSetCorrectly) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     class MockGraphicsAllocation : public GraphicsAllocation {
       public:
         using GraphicsAllocation::allocationInfo;
@@ -876,7 +876,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMThen4KBGraphicsAllocationIsReturned) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
@@ -1260,7 +1260,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestr
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     memoryManager->lockResource(allocation);
     EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
@@ -1269,7 +1269,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeed
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     EXPECT_FALSE(allocation->isLocked());
     EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
@@ -1278,7 +1278,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntN
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatNeedsMakeResidentBeforeLockThenRemoveTemporaryResource) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     allocation->needsMakeResidentBeforeLock = true;
     memoryManager->lockResource(allocation);
@@ -1287,7 +1287,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatNeedsMakeR
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     allocation->needsMakeResidentBeforeLock = true;
     EXPECT_FALSE(allocation->isLocked());
@@ -1296,7 +1296,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMa
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingAllocationWithReservedGpuVirtualAddressThenReleaseTheAddress) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     uint64_t gpuAddress = 0x123;
     uint64_t sizeForFree = 0x1234;
@@ -1719,7 +1719,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAlignmentRequirementExceedsPageSizeThenA
     allocData.size = 1024;
     allocData.alignment = MemoryConstants::pageSize;
     memoryManager.allocateGraphicsMemoryWithAlignment(allocData);
-    if (allocData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (allocData.allocationMethod == GfxMemoryAllocationMethod::allocateByKmd) {
         EXPECT_EQ(0, memoryManager.callCount.allocateSystemMemoryAndCreateGraphicsAllocationFromIt);
         EXPECT_EQ(1, memoryManager.callCount.allocateGraphicsMemoryUsingKmdAndMapItToCpuVA);
     } else {
@@ -2304,7 +2304,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryAllocationAndRequestedSizeIs
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCopyDebugSurfaceToMultiTileAllocationThenCallCopyMemoryToAllocation) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     size_t sourceAllocationSize = MemoryConstants::pageSize;
 
     std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
@@ -3138,7 +3138,7 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, nullptr, AllocationType::internalHeap));
     ASSERT_NE(nullptr, wddmAllocation);
     auto gmmHelper = memoryManager->getGmmHelper(wddmAllocation->getRootDeviceIndex());
@@ -3162,7 +3162,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto ptr = reinterpret_cast<void *>(0x1000000);
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, ptr, AllocationType::internalHeap));
     ASSERT_NE(nullptr, wddmAllocation);
@@ -3480,8 +3480,8 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {
     MockWddmMemoryManager memoryManager(executionEnvironment);
-    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
-    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {
@@ -3982,7 +3982,7 @@ TEST(WddmMemoryManagerTest3, givenDefaultWddmMemoryManagerWhenItIsQueriedForInte
 
 TEST(WddmMemoryManagerTest3, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     MockExecutionEnvironment executionEnvironment{};
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0, 1));
     auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());

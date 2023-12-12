@@ -181,10 +181,10 @@ cl_int Kernel::initialize() {
         pImplicitArgs->simdWidth = maxSimdSize;
     }
     auto ret = KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, &pClDevice->getDevice());
-    if (ret == NEO::KernelHelper::ErrorCode::INVALID_KERNEL) {
+    if (ret == NEO::KernelHelper::ErrorCode::invalidKernel) {
         return CL_INVALID_KERNEL;
     }
-    if (ret == NEO::KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY) {
+    if (ret == NEO::KernelHelper::ErrorCode::outOfDeviceMemory) {
         return CL_OUT_OF_RESOURCES;
     }
 

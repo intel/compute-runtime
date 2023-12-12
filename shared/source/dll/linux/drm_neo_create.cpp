@@ -98,7 +98,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     drm->queryPageFaultSupport();
 
     if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+        if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
             drm->setPerContextVMRequired(false);
         } else {
             if (drm->isVmBindAvailable()) {

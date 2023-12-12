@@ -41,7 +41,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         debuggingEnabledMode = debuggingMode;
     }
     DebuggingMode getDebuggingMode() const { return debuggingEnabledMode; }
-    bool isDebuggingEnabled() const { return debuggingEnabledMode != DebuggingMode::Disabled; }
+    bool isDebuggingEnabled() const { return debuggingEnabledMode != DebuggingMode::disabled; }
     void setMetricsEnabled(bool value) {
         this->metricsEnabled = value;
     }
@@ -82,7 +82,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool subDevicesAsDevices = false;
     bool combinedDeviceHierarchy = false;
 
-    DebuggingMode debuggingEnabledMode = DebuggingMode::Disabled;
+    DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
     std::mutex initializeDirectSubmissionControllerMutex;
 };

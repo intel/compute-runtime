@@ -161,7 +161,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIsInitialized) {
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
 
     EXPECT_EQ(pDevice, cmdContainer.getDevice());
     EXPECT_NE(cmdContainer.getHeapHelper(), nullptr);
@@ -192,7 +192,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
 TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsNotInitialized) {
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
 
     EXPECT_EQ(pDevice, cmdContainer.getDevice());
     EXPECT_EQ(cmdContainer.getHeapHelper(), nullptr);
@@ -229,7 +229,7 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
 
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(device.get(), nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
 
     EXPECT_EQ(instructionHeapBaseAddress, cmdContainer.getInstructionHeapBaseAddress());
 }
@@ -248,7 +248,7 @@ TEST_F(CommandContainerTest, givenForceDefaultHeapSizeWhenCmdContainerIsInitiali
 
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(device.get(), nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
 
     auto indirectHeap = cmdContainer.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT);
     EXPECT_EQ(indirectHeap->getAvailableSpace(), 32 * MemoryConstants::kiloByte);
@@ -258,14 +258,14 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemor
     CommandContainer cmdContainer;
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::outOfDeviceMemory, status);
 }
 
 TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenAllocateSecondaryCmdStreamFailsDuringInitializeThenErrorIsReturned) {
     CommandContainer cmdContainer;
     static_cast<MockMemoryManager *>(pDevice->getMemoryManager())->maxSuccessAllocatedGraphicsMemoryIndex = 7;
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, true);
-    EXPECT_EQ(CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::outOfDeviceMemory, status);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
@@ -331,7 +331,7 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemo
     auto tempMemoryManager = pDevice->executionEnvironment->memoryManager.release();
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(1, *pDevice->executionEnvironment));
     auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+    EXPECT_EQ(CommandContainer::ErrorCode::outOfDeviceMemory, status);
     delete tempMemoryManager;
 }
 
@@ -1022,7 +1022,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
 
     cmdContainer.setNumIddPerBlock(1);
     auto code = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, code);
 
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
@@ -1198,7 +1198,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingH
     HeapReserveArguments dshReserveArgs = {dshHeapPtr, 0, dshAlign};
 
     auto code = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, code);
 
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
 
@@ -1246,7 +1246,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsingPrivateHeapsWhenGettingRese
     HeapReserveArguments dshReserveArgs = {dshHeapPtr, 0, dshAlign};
 
     auto code = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, code);
 
     constexpr size_t nonZeroSshSize = 4 * MemoryConstants::kiloByte;
     constexpr size_t nonZeroDshSize = 4 * MemoryConstants::kiloByte + 64;
@@ -1289,7 +1289,7 @@ HWTEST_F(CommandContainerTest,
     cmdContainer.setNumIddPerBlock(1);
 
     auto code = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, code);
 
     constexpr size_t misalignedSize = 11;
     sshReserveArgs.size = misalignedSize;
@@ -1638,19 +1638,19 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAnd
 }
 
 TEST_F(CommandContainerHeapStateTests, givenCmdContainerWhenSettingHeapAddressModelThenGeterReturnsTheSameValue) {
-    myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalStateless);
-    EXPECT_EQ(HeapAddressModel::GlobalStateless, myCommandContainer.getHeapAddressModel());
+    myCommandContainer.setHeapAddressModel(HeapAddressModel::globalStateless);
+    EXPECT_EQ(HeapAddressModel::globalStateless, myCommandContainer.getHeapAddressModel());
 
-    myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalBindless);
-    EXPECT_EQ(HeapAddressModel::GlobalBindless, myCommandContainer.getHeapAddressModel());
+    myCommandContainer.setHeapAddressModel(HeapAddressModel::globalBindless);
+    EXPECT_EQ(HeapAddressModel::globalBindless, myCommandContainer.getHeapAddressModel());
 
-    myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalBindful);
-    EXPECT_EQ(HeapAddressModel::GlobalBindful, myCommandContainer.getHeapAddressModel());
+    myCommandContainer.setHeapAddressModel(HeapAddressModel::globalBindful);
+    EXPECT_EQ(HeapAddressModel::globalBindful, myCommandContainer.getHeapAddressModel());
 }
 
 TEST_F(CommandContainerTest, givenGlobalHeapModelSelectedWhenCmdContainerIsInitializedThenNoSurfaceAndDynamicHeapCreated) {
     MyMockCommandContainer cmdContainer;
-    cmdContainer.setHeapAddressModel(HeapAddressModel::GlobalStateless);
+    cmdContainer.setHeapAddressModel(HeapAddressModel::globalStateless);
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE));

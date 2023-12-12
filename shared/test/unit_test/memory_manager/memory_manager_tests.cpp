@@ -71,7 +71,7 @@ TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsRetu
     MockMemoryManager memoryManager;
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
         AllocationProperties allocationProperties{0u, 0u, static_cast<AllocationType>(i), {}};
-        EXPECT_EQ(GfxMemoryAllocationMethod::NotDefined, memoryManager.getPreferredAllocationMethod(allocationProperties));
+        EXPECT_EQ(GfxMemoryAllocationMethod::notDefined, memoryManager.getPreferredAllocationMethod(allocationProperties));
     }
 }
 

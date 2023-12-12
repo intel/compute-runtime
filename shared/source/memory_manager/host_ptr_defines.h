@@ -24,19 +24,19 @@ struct ResidencyData;
 constexpr int maxFragmentsCount = 3;
 
 enum class FragmentPosition {
-    NONE = 0,
-    LEADING,
-    MIDDLE,
-    TRAILING
+    none = 0,
+    leading,
+    middle,
+    trailing
 };
 
 enum class RequirementsStatus {
-    SUCCESS = 0,
-    FATAL
+    success = 0,
+    fatal
 };
 
 struct PartialAllocation {
-    FragmentPosition fragmentPosition = FragmentPosition::NONE;
+    FragmentPosition fragmentPosition = FragmentPosition::none;
     const void *allocationPtr = nullptr;
     size_t allocationSize = 0u;
 };

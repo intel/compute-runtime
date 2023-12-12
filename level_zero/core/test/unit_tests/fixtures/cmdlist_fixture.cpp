@@ -188,7 +188,7 @@ void CommandListStateBaseAddressFixture::setUp() {
 void CommandListPrivateHeapsFixture::setUp() {
     constexpr uint32_t storeAllocations = 4;
 
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
     debugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
 
     CommandListStateBaseAddressFixture::setUp();
@@ -214,7 +214,7 @@ void CommandListPrivateHeapsFixture::setUp() {
 }
 
 void CommandListGlobalHeapsFixtureInit::setUp() {
-    CommandListGlobalHeapsFixtureInit::setUpParams(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
+    CommandListGlobalHeapsFixtureInit::setUpParams(static_cast<int32_t>(NEO::HeapAddressModel::globalStateless));
 }
 
 void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
@@ -222,7 +222,7 @@ void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
     debugManager.flags.UseImmediateFlushTask.set(0);
     CommandListStateBaseAddressFixture::setUp();
 
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
 
     ze_result_t returnValue;
     commandListPrivateHeap.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
@@ -240,7 +240,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
     debugManager.flags.EnableFlushTaskSubmission.set(1);
     debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
     debugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
 
     ModuleMutableCommandListFixture::setUp();
@@ -475,7 +475,7 @@ void PrimaryBatchBufferCmdListFixture::setUp() {
 }
 
 void PrimaryBatchBufferPreamblelessCmdListFixture::setUp() {
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::globalStateless));
     debugManager.flags.ForceL1Caching.set(0);
     debugManager.flags.EnableStateBaseAddressTracking.set(1);
 
@@ -501,14 +501,14 @@ void ImmediateFlushTaskCmdListFixture::setUp() {
 }
 
 void ImmediateFlushTaskGlobalStatelessCmdListFixture::setUp() {
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::globalStateless));
 
     ImmediateFlushTaskCmdListFixture::setUp();
 }
 
 void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
     debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
     debugManager.flags.ForceDefaultHeapSize.set(64);
 
     ImmediateFlushTaskCmdListFixture::setUp();
@@ -528,7 +528,7 @@ void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
 
 void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {
     debugManager.flags.EnableImmediateCmdListHeapSharing.set(0);
-    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
 
     ImmediateFlushTaskCmdListFixture::setUp();
 }

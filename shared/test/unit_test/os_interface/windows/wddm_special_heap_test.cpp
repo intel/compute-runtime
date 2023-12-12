@@ -65,7 +65,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenW
     auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
     EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
 
-    if (allocData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd) {
+    if (allocData.allocationMethod == GfxMemoryAllocationMethod::allocateByKmd) {
         EXPECT_TRUE(allocation->isAllocationLockable());
     } else {
         EXPECT_FALSE(allocation->isAllocationLockable());

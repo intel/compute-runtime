@@ -134,7 +134,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
-    if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd)) {
+    if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd)) {
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
@@ -191,13 +191,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     }
 
     size_t sizeAligned = alignUp(allocationData.size, allowLargePages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize);
-    if (sizeAligned > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd)) {
+    if (sizeAligned > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd)) {
         const bool isBufferHostMemory = allocationData.type == NEO::AllocationType::bufferHostMemory;
         return allocateHugeGraphicsMemory(allocationData, isBufferHostMemory);
     }
 
     // algin gpu address of device part of usm shared allocation to 64kb for WSL2
-    auto alignGpuAddressTo64KB = allocationData.allocationMethod == GfxMemoryAllocationMethod::AllocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr;
+    auto alignGpuAddressTo64KB = allocationData.allocationMethod == GfxMemoryAllocationMethod::allocateByKmd && allocationData.makeGPUVaDifferentThanCPUPtr;
 
     if (alignGpuAddressTo64KB) {
         sizeAligned = sizeAligned + allocationData.alignment;
@@ -287,7 +287,7 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
         }
     }
 
-    auto chunkSize = getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr);
+    auto chunkSize = getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr);
     auto numGmms = (alignedSize + chunkSize - 1) / chunkSize;
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(hostPtr)));
@@ -357,7 +357,7 @@ GraphicsAllocation *WddmMemoryManager::allocateUSMHostGraphicsMemory(const Alloc
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     auto pageSize = NEO::OSInterface::osEnabled64kbPages ? MemoryConstants::pageSize64k : MemoryConstants::pageSize;
     bool requiresNonStandardAlignment = allocationData.alignment > pageSize;
-    if ((allocationData.allocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) || (requiresNonStandardAlignment && allocationData.forceKMDAllocation == false)) {
+    if ((allocationData.allocationMethod == GfxMemoryAllocationMethod::useUmdSystemPtr) || (requiresNonStandardAlignment && allocationData.forceKMDAllocation == false)) {
         return allocateSystemMemoryAndCreateGraphicsAllocationFromIt(allocationData);
     } else {
         return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData, NEO::OSInterface::osEnabled64kbPages);
@@ -367,7 +367,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
 GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllocationFromIt(const AllocationData &allocationData) {
     size_t newAlignment = allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize;
     size_t sizeAligned = allocationData.size ? alignUp(allocationData.size, MemoryConstants::pageSize) : MemoryConstants::pageSize;
-    if (sizeAligned > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr)) {
+    if (sizeAligned > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr)) {
         return allocateHugeGraphicsMemory(allocationData, true);
     }
     void *pSysMem = allocateSystemMemory(sizeAligned, newAlignment);
@@ -425,7 +425,7 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
     auto alignedSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
-    if (alignedSize > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr)) {
+    if (alignedSize > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr)) {
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
@@ -461,7 +461,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
-    if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr)) {
+    if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::useUmdSystemPtr)) {
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
@@ -518,7 +518,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         ptrAligned = alignDown(allocationData.hostPtr, MemoryConstants::allocationAlignment);
         sizeAligned = alignSizeWholePage(allocationData.hostPtr, sizeAligned);
         offset = ptrDiff(allocationData.hostPtr, ptrAligned);
-    } else if (allocationData.allocationMethod == GfxMemoryAllocationMethod::UseUmdSystemPtr) {
+    } else if (allocationData.allocationMethod == GfxMemoryAllocationMethod::useUmdSystemPtr) {
         sizeAligned = alignUp(sizeAligned, MemoryConstants::allocationAlignment);
         pSysMem = allocateSystemMemory(sizeAligned, MemoryConstants::allocationAlignment);
         if (pSysMem == nullptr) {
@@ -547,7 +547,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     StorageInfo storageInfo{};
-    storageInfo.isLockable = allocationData.allocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr;
+    storageInfo.isLockable = allocationData.allocationMethod != GfxMemoryAllocationMethod::useUmdSystemPtr;
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -1318,7 +1318,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
                                     gmmRequirements);
     }
 
-    const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), alignment);
+    const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd), alignment);
     const size_t numGmms = (static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
@@ -1404,7 +1404,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         }
     }
 
-    const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd), alignment);
+    const auto chunkSize = alignDown(getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::allocateByKmd), alignment);
     const size_t numGmms = (static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,

@@ -536,7 +536,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 }
 
 GfxMemoryAllocationMethod MemoryManager::getPreferredAllocationMethod(const AllocationProperties &allocationProperties) const {
-    return GfxMemoryAllocationMethod::NotDefined;
+    return GfxMemoryAllocationMethod::notDefined;
 }
 
 GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const AllocationProperties &properties) {

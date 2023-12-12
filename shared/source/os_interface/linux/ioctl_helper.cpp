@@ -99,7 +99,7 @@ int IoctlHelper::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t 
 
     const auto numberOfCCS = drm.getRootDeviceEnvironment().getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
     const bool debuggableContext = drm.isContextDebugSupported() && drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled() && !osContext.isInternalEngine();
-    const bool debuggableContextCooperative = drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Offline ? false : (debuggableContext && numberOfCCS > 0);
+    const bool debuggableContextCooperative = drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline ? false : (debuggableContext && numberOfCCS > 0);
     auto drmContextId = drm.createDrmContext(drmVmId, drm.isVmBindAvailable(), osContext.isCooperativeEngine() || debuggableContextCooperative);
     if (drmContextId < 0) {
         return drmContextId;

@@ -117,7 +117,7 @@ struct AllocationData {
     static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
     AllocationType type = AllocationType::unknown;
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
-    GfxMemoryAllocationMethod allocationMethod = GfxMemoryAllocationMethod::NotDefined;
+    GfxMemoryAllocationMethod allocationMethod = GfxMemoryAllocationMethod::notDefined;
     const void *hostPtr = nullptr;
     uint64_t gpuAddress = 0;
     size_t size = 0;

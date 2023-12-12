@@ -397,7 +397,7 @@ struct CommandList : _ze_command_list_handle_t {
     ze_command_list_flags_t flags = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType = NEO::EngineGroupType::maxEngineGroups;
-    NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::PrivateHeaps;
+    NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
 
     uint32_t cmdListType = CommandListType::TYPE_REGULAR;
     uint32_t commandListPerThreadScratchSize = 0u;

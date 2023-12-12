@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ AllocationRequirements HostPtrManager::getAllocationRequirements(uint32_t rootDe
     if (alignedStartAddress != inputPtr) {
         leadingNeeded = true;
         requiredAllocations.allocationFragments[allocationCount].allocationPtr = alignedStartAddress;
-        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::LEADING;
+        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::leading;
         requiredAllocations.allocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
         allocationCount++;
     }
@@ -69,14 +69,14 @@ AllocationRequirements HostPtrManager::getAllocationRequirements(uint32_t rootDe
     auto middleSize = wholeAllocationSize - (trailingNeeded + leadingNeeded) * MemoryConstants::pageSize;
     if (middleSize) {
         requiredAllocations.allocationFragments[allocationCount].allocationPtr = alignUp(inputPtr, MemoryConstants::pageSize);
-        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::MIDDLE;
+        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::middle;
         requiredAllocations.allocationFragments[allocationCount].allocationSize = middleSize;
         allocationCount++;
     }
 
     if (trailingNeeded) {
         requiredAllocations.allocationFragments[allocationCount].allocationPtr = alignedEndAddress;
-        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::TRAILING;
+        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::trailing;
         requiredAllocations.allocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
         allocationCount++;
     }
@@ -249,7 +249,7 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDev
 OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     auto requirements = HostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
-    UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::FATAL);
+    UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::fatal);
     auto osStorage = populateAlreadyAllocatedFragments(requirements);
     if (osStorage.fragmentCount > 0) {
         if (memoryManager.populateOsHandles(osStorage, rootDeviceIndex) != MemoryManager::AllocationStatus::Success) {
@@ -263,7 +263,7 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
 RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements) {
     UNRECOVERABLE_IF(requirements == nullptr);
 
-    RequirementsStatus status = RequirementsStatus::SUCCESS;
+    RequirementsStatus status = RequirementsStatus::success;
 
     for (unsigned int i = 0; i < requirements->requiredFragmentsCount; i++) {
         OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
@@ -286,7 +286,7 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
                 getFragmentAndCheckForOverlaps(requirements->rootDeviceIndex, requirements->allocationFragments[i].allocationPtr,
                                                requirements->allocationFragments[i].allocationSize, overlapStatus);
                 if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
-                    status = RequirementsStatus::FATAL;
+                    status = RequirementsStatus::fatal;
                     break;
                 }
             }

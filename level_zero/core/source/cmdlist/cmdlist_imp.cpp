@@ -55,7 +55,7 @@ ze_result_t CommandListImp::destroy() {
     if (this->cmdListType == CommandListType::TYPE_REGULAR &&
         !isCopyOnly() &&
         this->stateBaseAddressTracking &&
-        this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) {
+        this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
 
         auto surfaceStateHeap = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         if (surfaceStateHeap) {

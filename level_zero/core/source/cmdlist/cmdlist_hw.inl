@@ -61,7 +61,7 @@ namespace L0 {
 
 inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) {
     switch (returnValue) {
-    case NEO::CommandContainer::ErrorCode::OUT_OF_DEVICE_MEMORY:
+    case NEO::CommandContainer::ErrorCode::outOfDeviceMemory:
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     default:
         return ZE_RESULT_SUCCESS;
@@ -2962,7 +2962,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     bool checkDsh = false;
     bool checkIoh = false;
 
-    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) {
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
         if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE)) {
             auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
             if (ssh) {

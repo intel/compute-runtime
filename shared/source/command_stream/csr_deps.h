@@ -16,9 +16,9 @@ class CommandStreamReceiver;
 class CsrDependencies {
   public:
     enum class DependenciesType {
-        OnCsr,
-        OutOfCsr,
-        All
+        onCsr,
+        outOfCsr,
+        all
     };
 
     StackVec<TimestampPacketContainer *, 32> multiRootTimeStampSyncContainer;

@@ -61,8 +61,8 @@ struct HeapReserveArguments {
 class CommandContainer : public NonCopyableOrMovableClass {
   public:
     enum class ErrorCode {
-        SUCCESS = 0,
-        OUT_OF_DEVICE_MEMORY = 1
+        success = 0,
+        outOfDeviceMemory = 1
     };
 
     static constexpr size_t defaultListCmdBufferSize = 1u * MemoryConstants ::megaByte;
@@ -251,7 +251,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
-    HeapAddressModel heapAddressModel = HeapAddressModel::PrivateHeaps;
+    HeapAddressModel heapAddressModel = HeapAddressModel::privateHeaps;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
     uint32_t nextIddInBlock = 0;
 

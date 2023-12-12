@@ -312,7 +312,7 @@ TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesF
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
@@ -327,7 +327,7 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenC
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);

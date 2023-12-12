@@ -201,9 +201,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                                    productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled(), this->taskCount, computeCommandStreamReceiver);
         if (false == clearDependenciesForSubCapture) {
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
-                eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OnCsr);
+                eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::onCsr);
             }
-            eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+            eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::outOfCsr);
         }
         auto allocator = computeCommandStreamReceiver.getTimestampPacketAllocator();
 
@@ -575,7 +575,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
                                                                 multiDispatchInfo.peekBuiltinOpParams());
     if (!queueBlocked) {
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(blitProperties.csrDependencies, blitCommandStreamReceiver,
-                                                                     CsrDependencies::DependenciesType::All);
+                                                                     CsrDependencies::DependenciesType::all);
 
         blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.cacheFlushNodes);
         blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
@@ -643,7 +643,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
 
     if (!queueBlocked) {
         CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
+        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::all);
         BlitProperties::setupDependenciesForAuxTranslation(blitPropertiesContainer, timestampPacketDependencies,
                                                            *this->timestampPacketContainer, csrDeps,
                                                            getGpgpuCommandStreamReceiver(), bcsCsr);
@@ -1402,7 +1402,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     BlitPropertiesContainer blitPropertiesContainer;
     CsrDependencies csrDeps;
 
-    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::all);
     if (this->context->getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, bcsCsr);
     }

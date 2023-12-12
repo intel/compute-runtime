@@ -139,7 +139,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
                                                        bool &gsbaState, bool &frontEndState,
                                                        uint32_t perThreadScratchSpaceSize, uint32_t perThreadPrivateScratchSize) {
     if (perThreadScratchSpaceSize > 0 || perThreadPrivateScratchSize > 0) {
-        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
             auto globalStatelessHeapAllocation = csr->getGlobalStatelessHeapAllocation();
             scratchController->setRequiredScratchSpace(globalStatelessHeapAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                                        csr->getOsContext(), gsbaState, frontEndState);

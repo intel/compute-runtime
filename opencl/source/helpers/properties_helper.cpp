@@ -51,9 +51,9 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
             dependentCsr = &event->getCommandQueue()->getGpgpuCommandStreamReceiver();
         }
         const auto sameCsr = (dependentCsr == &currentCsr);
-        const auto pushDependency = (CsrDependencies::DependenciesType::OnCsr == depsType && sameCsr) ||
-                                    (CsrDependencies::DependenciesType::OutOfCsr == depsType && !sameCsr) ||
-                                    (CsrDependencies::DependenciesType::All == depsType);
+        const auto pushDependency = (CsrDependencies::DependenciesType::onCsr == depsType && sameCsr) ||
+                                    (CsrDependencies::DependenciesType::outOfCsr == depsType && !sameCsr) ||
+                                    (CsrDependencies::DependenciesType::all == depsType);
 
         if (pushDependency) {
             csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);

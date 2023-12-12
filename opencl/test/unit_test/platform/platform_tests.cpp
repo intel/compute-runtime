@@ -432,7 +432,7 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
 TEST(PlatformInitTest, GivenDebuggingEnabledWhenPlatformIsInitializedThenL0DebuggerIsCreated) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 0));
     auto status = platform()->initialize(std::move(devices));
     EXPECT_TRUE(status);

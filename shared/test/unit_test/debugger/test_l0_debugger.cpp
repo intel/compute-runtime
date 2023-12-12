@@ -29,7 +29,7 @@ using namespace NEO;
 TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
@@ -84,7 +84,7 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
 TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUsed) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
@@ -112,7 +112,7 @@ TEST(Debugger, givenTileAttachAndDebuggingEnabledInExecEnvWhenAllocatingIsaThenM
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
@@ -144,7 +144,7 @@ TEST(Debugger, WhenInitializingDebuggerL0ThenCapabilitiesAreAdjustedAndDebuggerI
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     auto neoDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
@@ -266,16 +266,16 @@ HWTEST_F(L0DebuggerTest, givenUseBindlessDebugSipZeroWhenModuleHeapDebugAreaIsCr
 
 HWTEST_F(L0DebuggerTest, givenProgramDebuggingWhenGettingDebuggingModeThenCorrectModeIsReturned) {
     DebuggingMode mode = NEO::getDebuggingMode(0);
-    EXPECT_TRUE(DebuggingMode::Disabled == mode);
+    EXPECT_TRUE(DebuggingMode::disabled == mode);
 
     mode = NEO::getDebuggingMode(1);
-    EXPECT_TRUE(DebuggingMode::Online == mode);
+    EXPECT_TRUE(DebuggingMode::online == mode);
 
     mode = NEO::getDebuggingMode(2);
-    EXPECT_TRUE(DebuggingMode::Offline == mode);
+    EXPECT_TRUE(DebuggingMode::offline == mode);
 
     mode = NEO::getDebuggingMode(3);
-    EXPECT_TRUE(DebuggingMode::Disabled == mode);
+    EXPECT_TRUE(DebuggingMode::disabled == mode);
 }
 
 using PerContextAddressSpaceL0DebuggerTest = L0DebuggerTest;

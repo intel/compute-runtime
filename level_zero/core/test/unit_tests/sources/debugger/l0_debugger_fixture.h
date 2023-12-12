@@ -34,7 +34,7 @@ struct L0DebuggerFixture {
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         memoryOperationsHandler = new NEO::MockMemoryOperations();
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
-        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
 
         hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
@@ -55,7 +55,7 @@ struct L0DebuggerFixture {
             NEO::DeviceVector devices;
             devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
             driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-            driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
+            driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
 
             driverHandle->initialize(std::move(devices));
             device = driverHandle->devices[0];

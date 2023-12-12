@@ -22,7 +22,7 @@ using Dg2WddmTest = ::testing::Test;
 
 DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::UseUmdSystemPtr));
+    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();

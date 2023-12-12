@@ -16,7 +16,7 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
 }
 
 const SipKernel &SipKernel::getSipKernel(Device &device, OsContext *context) {
-    if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::Offline) {
+    if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::offline) {
         return SipKernel::getBindlessDebugSipKernel(device, context);
     } else {
         return SipKernel::getSipKernelImpl(device);

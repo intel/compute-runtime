@@ -53,7 +53,7 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
     if ((attributes.perThreadScratchSize[0] > maxScratchSize) || (attributes.perThreadScratchSize[1] > maxScratchSize)) {
-        return KernelHelper::ErrorCode::INVALID_KERNEL;
+        return KernelHelper::ErrorCode::invalidKernel;
     }
     auto globalMemorySize = device->getDeviceInfo().globalMemSize;
     auto computeUnitsForScratch = device->getDeviceInfo().computeUnitsUsedForScratch;
@@ -80,9 +80,9 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
         totalScratchSize > globalMemorySize ||
         totalPrivateScratchSize > globalMemorySize) {
 
-        return KernelHelper::ErrorCode::OUT_OF_DEVICE_MEMORY;
+        return KernelHelper::ErrorCode::outOfDeviceMemory;
     }
-    return KernelHelper::ErrorCode::SUCCESS;
+    return KernelHelper::ErrorCode::success;
 }
 
 bool KernelHelper::isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor) {

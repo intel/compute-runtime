@@ -61,7 +61,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         }
         sipBuiltIn.first.reset(new SipKernel(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary)));
 
-        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
             sipBuiltIn.first->parseBinaryForContextId();
         }
     };

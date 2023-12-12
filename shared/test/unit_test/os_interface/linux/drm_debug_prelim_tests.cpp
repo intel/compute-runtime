@@ -195,7 +195,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringElfResourceWithoutDataThenRegi
 
 TEST(DrmPrelimTest, givenContextDebugAvailableWhenCheckedForSupportThenTrueIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -219,7 +219,7 @@ TEST(DrmPrelimTest, givenContextDebugAvailableWhenCheckedForSupportThenTrueIsRet
 
 TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -315,7 +315,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
 
 TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenDebugFlagSipParamIsSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -337,7 +337,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
 
 TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenContextRunaloneIsSetOnlyIfCCSEnginesArePresent) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

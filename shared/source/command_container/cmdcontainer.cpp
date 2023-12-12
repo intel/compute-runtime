@@ -81,7 +81,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
 
     if (!cmdBufferAllocation) {
-        return ErrorCode::OUT_OF_DEVICE_MEMORY;
+        return ErrorCode::outOfDeviceMemory;
     }
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
@@ -108,7 +108,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
         auto cmdBufferAllocationHost = this->obtainNextCommandBufferAllocation(true);
         if (!cmdBufferAllocationHost) {
-            return ErrorCode::OUT_OF_DEVICE_MEMORY;
+            return ErrorCode::outOfDeviceMemory;
         }
         secondaryCommandStreamForImmediateCmdList = std::make_unique<LinearStream>(cmdBufferAllocationHost->getUnderlyingBuffer(),
                                                                                    usableSize, this, this->selectedBbCmdSize);
@@ -135,7 +135,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
                                                                        device->getRootDeviceIndex());
 
             if (!allocationIndirectHeaps[i]) {
-                return ErrorCode::OUT_OF_DEVICE_MEMORY;
+                return ErrorCode::outOfDeviceMemory;
             }
             residencyContainer.push_back(allocationIndirectHeaps[i]);
 
@@ -157,7 +157,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         iddBlock = nullptr;
         nextIddInBlock = this->getNumIddPerBlock();
     }
-    return ErrorCode::SUCCESS;
+    return ErrorCode::success;
 }
 
 void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
@@ -579,7 +579,7 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
     bool skipCreation = (globalBindlessHeapsEnabled && IndirectHeap::Type::SURFACE_STATE == heapType) ||
                         this->immediateCmdListSharedHeap(heapType) ||
                         (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
-                        (this->heapAddressModel != HeapAddressModel::PrivateHeaps);
+                        (this->heapAddressModel != HeapAddressModel::privateHeaps);
     return skipCreation;
 }
 

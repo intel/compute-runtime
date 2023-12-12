@@ -673,7 +673,7 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
 TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsUsed) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
-    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
 
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
@@ -688,7 +688,7 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenExplicitVmIsCreated) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
-    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
 
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
@@ -730,7 +730,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenVmIdCreationFailsThenContextInitializ
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenVmIdPerContextIsCreateddAndStoredAtSubDeviceIndex) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
-    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
 
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
@@ -754,7 +754,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenVmId
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenVmIdsPerContextAreCreatedAndStoredAtSubDeviceIndices) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
-    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
+    rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
 
     DrmMock drmMock(rootEnv);
     EXPECT_TRUE(drmMock.requirePerContextVM);
@@ -795,7 +795,7 @@ TEST(DrmTest, givenNoPerContextVmsDrmWhenCreatingOsContextsThenVmIdIsNotQueriedA
 
 TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextThenSetContextDebugFlagIsCalled) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -815,7 +815,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextTh
 
 TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextForInternalEngineThenSetContextDebugFlagIsNotCalled) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -851,7 +851,7 @@ TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingConte
 
     EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     drmMock.contextDebugSupported = false;
     drmMock.callBaseCreateDrmContext = false;
     drmMock.capturedCooperativeContextRequest = true;
@@ -929,7 +929,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCapt
 
 TEST(DrmTest, givenProgramDebuggingWhenCreatingContextThenUnrecoverableContextIsSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

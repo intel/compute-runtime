@@ -40,22 +40,22 @@ class Debugger {
 };
 
 enum class DebuggingMode : uint32_t {
-    Disabled,
-    Online,
-    Offline
+    disabled,
+    online,
+    offline
 };
 
 inline DebuggingMode getDebuggingMode(uint32_t programDebugging) {
     switch (programDebugging) {
     case 1: {
-        return DebuggingMode::Online;
+        return DebuggingMode::online;
     }
     case 2: {
-        return DebuggingMode::Offline;
+        return DebuggingMode::offline;
     }
     case 0:
     default: {
-        return DebuggingMode::Disabled;
+        return DebuggingMode::disabled;
     }
     }
 }

@@ -32,9 +32,9 @@ TEST_F(HostPtrManagerTest, GivenAlignedPointerAndAlignedSizeWhenGettingAllocatio
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
 
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::NONE);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::middle);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::none);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
 
     EXPECT_EQ(reqs.totalRequiredSize, size);
 
@@ -54,9 +54,9 @@ TEST_F(HostPtrManagerTest, GivenAlignedPointerAndNotAlignedSizeWhenGettingAlloca
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(2u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::TRAILING);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::middle);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::trailing);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
     EXPECT_EQ(reqs.totalRequiredSize, alignUp(size, MemoryConstants::pageSize));
 
     EXPECT_EQ(ptr, reqs.allocationFragments[0].allocationPtr);
@@ -77,9 +77,9 @@ TEST_F(HostPtrManagerTest, GivenNotAlignedPointerAndNotAlignedSizeWhenGettingAll
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(3u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::MIDDLE);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::TRAILING);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::leading);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::middle);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::trailing);
 
     auto leadingPtr = (void *)0x1000;
     auto middlePtr = (void *)0x2000;
@@ -104,9 +104,9 @@ TEST_F(HostPtrManagerTest, GivenNotAlignedPointerAndNotAlignedSizeWithinOnePageW
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::NONE);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::leading);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::none);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
 
     auto leadingPtr = (void *)0x1000;
 
@@ -129,9 +129,9 @@ TEST_F(HostPtrManagerTest, GivenNotAlignedPointerAndNotAlignedSizeWithinTwoPages
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(2u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::TRAILING);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::leading);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::trailing);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
 
     auto leadingPtr = (void *)0x1000;
     auto trailingPtr = (void *)0x2000;
@@ -155,9 +155,9 @@ TEST_F(HostPtrManagerTest, GivenAlignedPointerAndAlignedSizeOfOnePageWhenGetting
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::NONE);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::middle);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::none);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
 
     auto middlePtr = (void *)0x1000;
 
@@ -180,9 +180,9 @@ TEST_F(HostPtrManagerTest, GivenNotAlignedPointerAndSizeThatFitsToPageWhenGettin
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(2u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::MIDDLE);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::leading);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::middle);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
 
     auto leadingPtr = (void *)0x1000;
     auto middlePtr = (void *)0x2000;
@@ -206,9 +206,9 @@ TEST_F(HostPtrManagerTest, GivenAlignedPointerAndPageSizeWhenGettingAllocationRe
     AllocationRequirements reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
-    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::NONE);
-    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.allocationFragments[0].fragmentPosition, FragmentPosition::middle);
+    EXPECT_EQ(reqs.allocationFragments[1].fragmentPosition, FragmentPosition::none);
+    EXPECT_EQ(reqs.allocationFragments[2].fragmentPosition, FragmentPosition::none);
 
     auto middlePtr = (void *)0x1000;
 
@@ -893,11 +893,11 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
 
     requirements.allocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.allocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::NONE;
+    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::none;
 
     RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
-    EXPECT_EQ(RequirementsStatus::SUCCESS, status);
+    EXPECT_EQ(RequirementsStatus::success, status);
 }
 
 HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWaitAndCleanOnAllEngines) {
@@ -941,7 +941,7 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
 
     requirements.allocationFragments[0].allocationPtr = alignDown(cpuPtr, MemoryConstants::pageSize);
     requirements.allocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::NONE;
+    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::none;
     requirements.rootDeviceIndex = csr0->getRootDeviceIndex();
 
     hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
@@ -984,12 +984,12 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
 
     requirements.allocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.allocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::NONE;
+    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::none;
     requirements.rootDeviceIndex = csr->getRootDeviceIndex();
 
     RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
-    EXPECT_EQ(RequirementsStatus::FATAL, status);
+    EXPECT_EQ(RequirementsStatus::fatal, status);
 }
 
 TEST_F(HostPtrAllocationTest, GivenAllocationsWithoutBiggerOverlapWhenChckingForOverlappingThenSuccessIsReturned) {
@@ -1023,15 +1023,15 @@ TEST_F(HostPtrAllocationTest, GivenAllocationsWithoutBiggerOverlapWhenChckingFor
 
     requirements.allocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.allocationFragments[0].allocationSize = MemoryConstants::pageSize;
-    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::LEADING;
+    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::leading;
 
     requirements.allocationFragments[1].allocationPtr = alignUp(cpuPtr1, MemoryConstants::pageSize);
     requirements.allocationFragments[1].allocationSize = MemoryConstants::pageSize;
-    requirements.allocationFragments[1].fragmentPosition = FragmentPosition::TRAILING;
+    requirements.allocationFragments[1].fragmentPosition = FragmentPosition::trailing;
 
     RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
-    EXPECT_EQ(RequirementsStatus::SUCCESS, status);
+    EXPECT_EQ(RequirementsStatus::success, status);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation1);
     memoryManager->freeGraphicsMemory(graphicsAllocation2);
@@ -1067,11 +1067,11 @@ TEST_F(HostPtrAllocationTest, GivenAllocationsWithBiggerOverlapWhenChckingForOve
 
     requirements.allocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.allocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::NONE;
+    requirements.allocationFragments[0].fragmentPosition = FragmentPosition::none;
 
     RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
-    EXPECT_EQ(RequirementsStatus::SUCCESS, status);
+    EXPECT_EQ(RequirementsStatus::success, status);
 }
 
 TEST(HostPtrEntryKeyTest, givenTwoHostPtrEntryKeysWhenComparingThemThenKeyWithLowerRootDeviceIndexIsLower) {

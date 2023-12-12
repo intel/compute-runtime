@@ -171,7 +171,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         CsrDependencies csrDeps;
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, *bcsCsrForAuxTranslation, CsrDependencies::DependenciesType::All);
+        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, *bcsCsrForAuxTranslation, CsrDependencies::DependenciesType::all);
 
         BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
                                                            *currentTimestampPacketNodes, csrDeps,
@@ -308,7 +308,7 @@ TaskCountType CommandWithoutKernel::dispatchBlitOperation() {
 
     UNRECOVERABLE_IF(kernelOperation->blitPropertiesContainer.size() != 1);
     auto &blitProperties = *kernelOperation->blitPropertiesContainer.begin();
-    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(blitProperties.csrDependencies, *bcsCsr, CsrDependencies::DependenciesType::All);
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(blitProperties.csrDependencies, *bcsCsr, CsrDependencies::DependenciesType::all);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->cacheFlushNodes);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->previousEnqueueNodes);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->barrierNodes);

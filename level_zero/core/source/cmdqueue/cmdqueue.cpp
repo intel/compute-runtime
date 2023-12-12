@@ -250,7 +250,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
 
     csr->initializeResources();
     csr->initDirectSubmission();
-    if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+    if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         csr->createGlobalStatelessHeap();
     }
 

@@ -24,8 +24,8 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 
         const bool vmBindAvailable = drm->isVmBindAvailable();
         const bool perContextVms = drm->isPerContextVMRequired();
-        const bool allowDebug = (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) ||
-                                (perContextVms && drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Online);
+        const bool allowDebug = (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) ||
+                                (perContextVms && drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::online);
 
         if (vmBindAvailable && allowDebug) {
             drm->registerResourceClasses();
@@ -39,7 +39,7 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 }
 
 void DebuggerL0::initSbaTrackingMode() {
-    if (device->getExecutionEnvironment()->getDebuggingMode() == DebuggingMode::Offline) {
+    if (device->getExecutionEnvironment()->getDebuggingMode() == DebuggingMode::offline) {
         singleAddressSpaceSbaTracking = true;
     } else {
         singleAddressSpaceSbaTracking = false;

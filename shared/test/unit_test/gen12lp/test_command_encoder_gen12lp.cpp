@@ -35,7 +35,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
     CommandContainer cmdContainer;
 
     auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    ASSERT_EQ(CommandContainer::ErrorCode::SUCCESS, ret);
+    ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto usedSpaceBefore = cmdContainer.getCommandStream()->getUsed();
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -87,7 +87,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenA
     CommandContainer cmdContainer;
 
     auto ret = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    ASSERT_EQ(CommandContainer::ErrorCode::SUCCESS, ret);
+    ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto gmmHelper = cmdContainer.getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);

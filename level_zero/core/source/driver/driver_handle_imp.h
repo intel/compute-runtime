@@ -160,7 +160,7 @@ struct DriverHandleImp : public DriverHandle {
     void enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice);
 
     // Environment Variables
-    NEO::DebuggingMode enableProgramDebugging = NEO::DebuggingMode::Disabled;
+    NEO::DebuggingMode enableProgramDebugging = NEO::DebuggingMode::disabled;
     bool enableSysman = false;
     bool enablePciIdDeviceOrder = false;
     uint8_t powerHint = 0;
