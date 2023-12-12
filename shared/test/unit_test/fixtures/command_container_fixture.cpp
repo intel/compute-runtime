@@ -64,7 +64,9 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         false,                                      // isKernelUsingSystemAllocation
         false,                                      // isKernelDispatchedFromImmediateCmdList
         false,                                      // isRcs
-        false                                       // dcFlushEnable
+        false,                                      // dcFlushEnable
+        false,                                      // isHeaplessModeEnabled
+        false,                                      // interruptEvent
     };
 
     return args;

@@ -73,6 +73,7 @@ struct EncodeDispatchKernelArgs {
     bool isRcs = false;
     bool dcFlushEnable = false;
     bool isHeaplessModeEnabled = false;
+    bool interruptEvent = false;
 };
 
 enum class MiPredicateType : uint32_t {

@@ -178,6 +178,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool isTimestampEvent = false;
     bool l3FlushEnable = false;
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
+    bool interruptEvent = false;
     Event *compactEvent = nullptr;
     Event *eventForInOrderExec = event;
     if (event) {
@@ -198,6 +199,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             l3FlushEnable = getDcFlushRequired(flushRequired);
             isTimestampEvent = event->isUsingContextEndOffset();
             eventAddress = event->getPacketAddress(this->device);
+            interruptEvent = event->isInterruptModeEnabled();
         }
     }
 
@@ -320,6 +322,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport,                                   // dcFlushEnable
         this->heaplessModeEnabled,                              // isHeaplessModeEnabled
+        interruptEvent,                                         // interruptEvent
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);

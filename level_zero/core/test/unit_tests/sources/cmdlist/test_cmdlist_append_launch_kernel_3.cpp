@@ -662,7 +662,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                      // isKernelUsingSystemAllocation
         false,                                      // isKernelDispatchedFromImmediateCmdList
         false,                                      // isRcs
-        commandList->getDcFlushRequired(true)       // dcFlushEnable
+        commandList->getDcFlushRequired(true),      // dcFlushEnable
+        false,                                      // isHeaplessModeEnabled
+        false,                                      // interruptEvent
     };
     EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs), std::exception);
 }

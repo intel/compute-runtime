@@ -218,7 +218,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport,                                   // dcFlushEnable
-        this->heaplessModeEnabled                               // isHeaplessModeEnabled
+        this->heaplessModeEnabled,                              // isHeaplessModeEnabled
+        false,                                                  // interruptEvent
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
