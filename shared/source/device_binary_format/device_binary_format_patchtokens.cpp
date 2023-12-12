@@ -55,7 +55,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(Progr
     std::string validatorWarnings;
     std::string validatorErrMessage;
     auto validatorErr = PatchTokenBinary::validate(decodedProgram, outErrReason, outWarning);
-    if (DecodeError::Success != validatorErr) {
+    if (DecodeError::success != validatorErr) {
         return validatorErr;
     }
 
@@ -68,7 +68,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(Progr
         kd.kernelAttributes.barrierCount = gfxCoreHelper.getBarriersCountFromHasBarriers(kd.kernelAttributes.barrierCount);
     }
 
-    return DecodeError::Success;
+    return DecodeError::success;
 }
 
 } // namespace NEO

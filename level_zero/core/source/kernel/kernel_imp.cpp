@@ -829,7 +829,7 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
 
     NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerSnapWa, (samplerDesc.addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER && samplerDesc.filterMode == ZE_SAMPLER_FILTER_MODE_NEAREST) ? std::numeric_limits<uint32_t>::max() : 0u);
     NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerAddressingMode, static_cast<uint32_t>(getAddrMode(samplerDesc.addressMode)));
-    NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerNormalizedCoords, samplerDesc.isNormalized ? static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsTrue) : static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsFalse));
+    NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerNormalizedCoords, samplerDesc.isNormalized ? static_cast<uint32_t>(SamplerPatchValues::normalizedCoordsTrue) : static_cast<uint32_t>(SamplerPatchValues::normalizedCoordsFalse));
 
     return ZE_RESULT_SUCCESS;
 }

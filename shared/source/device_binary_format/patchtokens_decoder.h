@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ struct KernelArgFromPatchtokens {
 using StackVecKernelArgs = StackVec<KernelArgFromPatchtokens, 12>;
 
 struct KernelFromPatchtokens {
-    DecodeError decodeStatus = DecodeError::Undefined;
+    DecodeError decodeStatus = DecodeError::undefined;
 
     const SKernelBinaryHeaderCommon *header = nullptr;
     ArrayRef<const char> name;
@@ -159,7 +159,7 @@ struct KernelFromPatchtokens {
 };
 
 struct ProgramFromPatchtokens {
-    DecodeError decodeStatus = DecodeError::Undefined;
+    DecodeError decodeStatus = DecodeError::undefined;
 
     const SProgramBinaryHeader *header = nullptr;
     struct {

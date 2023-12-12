@@ -85,7 +85,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
     Elf::ZebinTargetFlags targetMetadata = {};
     std::vector<Elf::IntelGTNote> intelGTNotes = {};
     auto decodeError = getIntelGTNotes(elf, intelGTNotes, outErrReason, outWarning);
-    if (DecodeError::Success != decodeError) {
+    if (DecodeError::success != decodeError) {
         return false;
     }
     for (const auto &intelGTNote : intelGTNotes) {
@@ -114,11 +114,11 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             ConstStringRef versionString(zebinVersionData);
             ZeInfo::Types::Version receivedZeInfoVersion{0, 0};
             decodeError = ZeInfo::populateZeInfoVersion(receivedZeInfoVersion, versionString, outErrReason);
-            if (DecodeError::Success != decodeError) {
+            if (DecodeError::success != decodeError) {
                 return false;
             }
             decodeError = ZeInfo::validateZeInfoVersion(receivedZeInfoVersion, outErrReason, outWarning);
-            if (DecodeError::Success != decodeError) {
+            if (DecodeError::success != decodeError) {
                 return false;
             }
             break;
@@ -157,7 +157,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
             intelGTNotes.clear();
             outErrReason.append("DeviceBinaryFormat::Zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
                                 ", current section data offset: " + std::to_string(currentPos) + ", next offset : " + std::to_string(currOffset) + "\n");
-            return DecodeError::InvalidBinary;
+            return DecodeError::invalidBinary;
         }
         currentPos += currOffset;
 
@@ -186,7 +186,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
         }
         intelGTNotes.push_back(Elf::IntelGTNote{static_cast<Elf::IntelGTSectionType>(intelGTNote->type), notesData});
     }
-    return DecodeError::Success;
+    return DecodeError::success;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -197,14 +197,14 @@ DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::Intel
             return decodeIntelGTNoteSection<numBits>(section.data, intelGTNotes, outErrReason, outWarning);
         }
     }
-    return DecodeError::Success;
+    return DecodeError::success;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &out, std::string &outErrReason, std::string &outWarning) {
     if ((elf.elfFileHeader->shStrNdx >= elf.sectionHeaders.size()) || (NEO::Elf::SHN_UNDEF == elf.elfFileHeader->shStrNdx)) {
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n");
-        return DecodeError::InvalidBinary;
+        return DecodeError::invalidBinary;
     }
 
     auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
@@ -215,7 +215,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         switch (elfSectionHeader.header->type) {
         default:
             outErrReason.append("DeviceBinaryFormat::Zebin : Unhandled ELF section header type : " + std::to_string(elfSectionHeader.header->type) + "\n");
-            return DecodeError::InvalidBinary;
+            return DecodeError::invalidBinary;
         case Elf::SHT_PROGBITS:
             if (sectionName.startsWith(Elf::SectionNames::textPrefix.data())) {
                 out.textKernelSections.push_back(&elfSectionHeader);
@@ -232,7 +232,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
                 // ignoring intentionally
             } else {
                 outErrReason.append("DeviceBinaryFormat::Zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
-                return DecodeError::InvalidBinary;
+                return DecodeError::invalidBinary;
             }
             break;
         case Elf::SHT_ZEBIN_ZEINFO:
@@ -290,7 +290,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         }
     }
 
-    return DecodeError::Success;
+    return DecodeError::success;
 }
 
 template <typename ContainerT>
@@ -316,7 +316,7 @@ DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, s
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, Elf::SectionNames::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, Elf::SectionNames::spv, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, Elf::SectionNames::noteIntelGT, 1U, outErrReason, outWarning);
-    return valid ? DecodeError::Success : DecodeError::InvalidBinary;
+    return valid ? DecodeError::success : DecodeError::invalidBinary;
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -343,12 +343,12 @@ template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning) {
     ZebinSections<numBits> zebinSections;
     auto extractError = extractZebinSections(elf, zebinSections, outErrReason, outWarning);
-    if (DecodeError::Success != extractError) {
+    if (DecodeError::success != extractError) {
         return extractError;
     }
 
     extractError = validateZebinSectionsCount(zebinSections, outErrReason, outWarning);
-    if (DecodeError::Success != extractError) {
+    if (DecodeError::success != extractError) {
         return extractError;
     }
 
@@ -377,7 +377,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
 
     if (zebinSections.zeInfoSections.empty()) {
         outWarning.append("DeviceBinaryFormat::Zebin : Expected at least one " + Elf::SectionNames::zeInfo.str() + " section, got 0\n");
-        return DecodeError::Success;
+        return DecodeError::success;
     }
 
     auto metadataSectionData = zebinSections.zeInfoSections[0]->data;
@@ -393,7 +393,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
     }
 
     auto decodeZeInfoError = ZeInfo::decodeZeInfo(dst, zeinfo, outErrReason, outWarning);
-    if (DecodeError::Success != decodeZeInfoError) {
+    if (DecodeError::success != decodeZeInfoError) {
         return decodeZeInfoError;
     }
 
@@ -402,7 +402,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         auto kernelInstructions = getKernelHeap(kernelName, elf, zebinSections);
         if (kernelInstructions.empty()) {
             outErrReason.append("DeviceBinaryFormat::Zebin : Could not find text section for kernel " + kernelName.str() + "\n");
-            return DecodeError::InvalidBinary;
+            return DecodeError::invalidBinary;
         }
 
         auto gtpinInfoForKernel = getKernelGtpinInfo(kernelName, elf, zebinSections);
@@ -423,7 +423,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         kernelInfo->heapInfo.dynamicStateHeapSize = static_cast<uint32_t>(kernelDSH.size());
     }
 
-    return DecodeError::Success;
+    return DecodeError::success;
 }
 
 template ArrayRef<const uint8_t> getKernelHeap<Elf::EI_CLASS_32>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_32> &elf, const ZebinSections<Elf::EI_CLASS_32> &zebinSections);

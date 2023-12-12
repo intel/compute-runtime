@@ -5338,7 +5338,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
 
-    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::Interrupt, bitmaskOut, bitmaskSizeOut);
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::interrupt, bitmaskOut, bitmaskSizeOut);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
@@ -5352,7 +5352,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
 
     handler->euControlOutputSeqno = handler->euControlOutputSeqno + 3;
     handler->ioctlCalled = 0;
-    result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::InterruptAll, bitmaskOut, bitmaskSizeOut);
+    result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::interruptAll, bitmaskOut, bitmaskSizeOut);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
@@ -5381,7 +5381,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingThreadControlForInterrup
 
     handler->ioctlRetVal = -1;
 
-    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::InterruptAll, bitmaskOut, bitmaskSizeOut);
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::interruptAll, bitmaskOut, bitmaskSizeOut);
     EXPECT_NE(0, result);
 
     EXPECT_EQ(1, handler->ioctlCalled);
@@ -5403,7 +5403,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForResumeThenProperIoctlsIsCal
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
 
-    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::Resume, bitmaskOut, bitmaskSizeOut);
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::resume, bitmaskOut, bitmaskSizeOut);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
@@ -5815,7 +5815,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForThreadStoppedThenProperIoct
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
 
-    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::Stopped, bitmaskOut, bitmaskSizeOut);
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxi915::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);

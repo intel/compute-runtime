@@ -69,8 +69,8 @@ FabricVertex *FabricVertex::createFromDevice(Device *device) {
         fabricVertex->properties.address.function = pciProperties.address.function;
     }
 
-    fabricVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf] = FabricDeviceInterface::createFabricDeviceInterfaceIaf(fabricVertex);
-    fabricVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Mdfi] = FabricDeviceInterface::createFabricDeviceInterfaceMdfi(fabricVertex);
+    fabricVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf] = FabricDeviceInterface::createFabricDeviceInterfaceIaf(fabricVertex);
+    fabricVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::mdfi] = FabricDeviceInterface::createFabricDeviceInterfaceMdfi(fabricVertex);
 
     for (auto const &fabricDeviceInterface : fabricVertex->pFabricDeviceInterfaces) {
         fabricDeviceInterface.second->enumerate();

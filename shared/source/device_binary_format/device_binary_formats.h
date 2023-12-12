@@ -31,10 +31,10 @@ enum class DeviceBinaryFormat : uint8_t {
 };
 
 enum class DecodeError : uint8_t {
-    Success,
-    Undefined,
-    InvalidBinary,
-    UnhandledBinary
+    success,
+    undefined,
+    invalidBinary,
+    unhandledBinary
 };
 
 enum class GeneratorType : uint8_t {
@@ -47,13 +47,13 @@ inline const char *asString(DecodeError err) {
     default:
         return "with invalid binary";
         break;
-    case DecodeError::UnhandledBinary:
+    case DecodeError::unhandledBinary:
         return "with unhandled binary";
         break;
-    case DecodeError::Success:
+    case DecodeError::success:
         return "decoded successfully";
         break;
-    case DecodeError::Undefined:
+    case DecodeError::undefined:
         return "in undefined status";
         break;
     }
@@ -180,7 +180,7 @@ DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(ProgramInfo &, c
 
 inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     std::pair<DecodeError, DeviceBinaryFormat> ret;
-    ret.first = DecodeError::InvalidBinary;
+    ret.first = DecodeError::invalidBinary;
     ret.second = DeviceBinaryFormat::Unknown;
     if (isDeviceBinaryFormat<DeviceBinaryFormat::OclElf>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::OclElf;

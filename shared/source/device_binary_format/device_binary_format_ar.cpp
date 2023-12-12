@@ -91,7 +91,7 @@ template <>
 DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     // packed binary format
     outErrReason = "Device binary format is packed";
-    return DecodeError::InvalidBinary;
+    return DecodeError::invalidBinary;
 }
 
 } // namespace NEO

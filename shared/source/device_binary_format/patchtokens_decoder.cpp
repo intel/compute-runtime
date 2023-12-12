@@ -64,7 +64,7 @@ inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, siz
     if (arg.objectType == ArgObjectType::None) {
         arg.objectType = type;
     } else if ((arg.objectType != type) && (type != ArgObjectType::None)) {
-        kernel.decodeStatus = DecodeError::InvalidBinary;
+        kernel.decodeStatus = DecodeError::invalidBinary;
         DBG_LOG(LogPatchTokens, "\n Mismatched metadata for kernel arg :", argNum);
         DEBUG_BREAK_IF(true);
     }
@@ -417,7 +417,7 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         break;
     }
 
-    return out.decodeStatus != DecodeError::InvalidBinary;
+    return out.decodeStatus != DecodeError::invalidBinary;
 }
 
 inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &out) {
@@ -494,9 +494,9 @@ inline bool decodePatchList(PatchTokensStreamReader patchListStream, OutT &out) 
 bool decodeKernelFromPatchtokensBlob(ArrayRef<const uint8_t> kernelBlob, KernelFromPatchtokens &out) {
     PatchTokensStreamReader stream{kernelBlob};
     auto decodePos = stream.data.begin();
-    out.decodeStatus = DecodeError::Undefined;
+    out.decodeStatus = DecodeError::undefined;
     if (stream.notEnoughDataLeft<SKernelBinaryHeaderCommon>(decodePos)) {
-        out.decodeStatus = DecodeError::InvalidBinary;
+        out.decodeStatus = DecodeError::invalidBinary;
         return false;
     }
 
@@ -505,7 +505,7 @@ bool decodeKernelFromPatchtokensBlob(ArrayRef<const uint8_t> kernelBlob, KernelF
     auto kernelInfoBlobSize = sizeof(SKernelBinaryHeaderCommon) + out.header->KernelNameSize + out.header->KernelHeapSize + out.header->GeneralStateHeapSize + out.header->DynamicStateHeapSize + out.header->SurfaceStateHeapSize + out.header->PatchListSize;
 
     if (stream.notEnoughDataLeft(decodePos, kernelInfoBlobSize)) {
-        out.decodeStatus = DecodeError::InvalidBinary;
+        out.decodeStatus = DecodeError::invalidBinary;
         return false;
     }
 
@@ -531,11 +531,11 @@ bool decodeKernelFromPatchtokensBlob(ArrayRef<const uint8_t> kernelBlob, KernelF
     out.blobs.patchList = ArrayRef<const uint8_t>(decodePos, out.header->PatchListSize);
 
     if (false == decodePatchList(out.blobs.patchList, out)) {
-        out.decodeStatus = DecodeError::InvalidBinary;
+        out.decodeStatus = DecodeError::invalidBinary;
         return false;
     }
 
-    out.decodeStatus = DecodeError::Success;
+    out.decodeStatus = DecodeError::success;
     return true;
 }
 
@@ -583,7 +583,7 @@ bool decodeProgramFromPatchtokensBlob(ArrayRef<const uint8_t> programBlob, Progr
     bool decodeSuccess = decodeProgramHeader(out);
     decodeSuccess = decodeSuccess && decodeKernels(out);
     decodeSuccess = decodeSuccess && decodePatchList(out.blobs.patchList, out);
-    out.decodeStatus = decodeSuccess ? DecodeError::Success : DecodeError::InvalidBinary;
+    out.decodeStatus = decodeSuccess ? DecodeError::success : DecodeError::invalidBinary;
 
     return decodeSuccess;
 }

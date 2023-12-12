@@ -28,9 +28,9 @@ class OclocIgcFacade;
 class OfflineLinker {
   protected:
     enum class OperationMode {
-        SKIP_EXECUTION = 0,
-        SHOW_HELP = 1,
-        LINK_FILES = 2,
+        skipExecution = 0,
+        showHelp = 1,
+        linkFiles = 2,
     };
 
     struct InputFileContent {

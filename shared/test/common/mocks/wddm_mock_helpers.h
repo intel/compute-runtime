@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/memory_manager/eviction_status.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
 

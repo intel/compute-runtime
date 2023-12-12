@@ -111,13 +111,13 @@ template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
     auto elf = Elf::decodeElf<numBits>(src.deviceBinary, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
-        return DecodeError::InvalidBinary;
+        return DecodeError::invalidBinary;
     }
 
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
     auto decodeError = NEO::Zebin::decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
-    if (DecodeError::Success != decodeError) {
+    if (DecodeError::success != decodeError) {
         return decodeError;
     }
 

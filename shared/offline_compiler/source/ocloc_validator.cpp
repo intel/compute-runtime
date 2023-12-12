@@ -76,8 +76,8 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
         argHelper->printf("Validator detected errors :\n%s\n", errors.c_str());
     }
 
-    argHelper->printf("Binary is %s (%s).\n", ((NEO::DecodeError::Success == decodeResult) ? "VALID" : "INVALID"), NEO::asString(decodeResult));
-    if (NEO::DecodeError::Success == decodeResult) {
+    argHelper->printf("Binary is %s (%s).\n", ((NEO::DecodeError::success == decodeResult) ? "VALID" : "INVALID"), NEO::asString(decodeResult));
+    if (NEO::DecodeError::success == decodeResult) {
         argHelper->printf("Statistics : \n");
         if (0 != programInfo.globalVariables.size) {
             argHelper->printf("Binary contains global variables section of size :  %zd.\n", programInfo.globalVariables.size);

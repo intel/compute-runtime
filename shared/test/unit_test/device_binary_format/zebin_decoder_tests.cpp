@@ -45,7 +45,7 @@ class DecodeZeInfoKernelEntryFixture {
 
         bool parseSuccess = yamlParser->parse(zeinfo, errors, warnings);
         if (false == parseSuccess) {
-            return DecodeError::InvalidBinary;
+            return DecodeError::invalidBinary;
         }
 
         auto &kernelNode = *yamlParser->createChildrenRange(*yamlParser->findNodeWithKeyDfs("kernels")).begin();
@@ -90,7 +90,7 @@ TEST(ExtractZebinSections, WhenElfDoesNotContainValidStringSectionThenFail) {
     elfHeader.shStrNdx = NEO::Elf::SHN_UNDEF;
     elf.sectionHeaders.resize(1);
     auto decodeError = extractZebinSections(elf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodeError);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n", errors.c_str());
     elf.sectionHeaders.clear();
@@ -99,7 +99,7 @@ TEST(ExtractZebinSections, WhenElfDoesNotContainValidStringSectionThenFail) {
     warnings.clear();
     elfHeader.shStrNdx = elfHeader.shNum + 1;
     decodeError = extractZebinSections(elf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodeError);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n", errors.c_str());
 }
@@ -116,7 +116,7 @@ TEST(ExtractZebinSections, GivenUnknownElfSectionThenFail) {
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodeError);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
     auto expectedError = "DeviceBinaryFormat::Zebin : Unhandled ELF section header type : " + std::to_string(NEO::Elf::SHT_OPENCL_RESERVED_START) + "\n";
     EXPECT_STREQ(expectedError.c_str(), errors.c_str());
@@ -134,7 +134,7 @@ TEST(ExtractZebinSections, GivenUnknownElfProgbitsSectionThenFail) {
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, decodeError);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
     auto expectedError = "DeviceBinaryFormat::Zebin : Unhandled SHT_PROGBITS section : someSection currently supports only : .text.KERNEL_NAME, .data.const, .data.global and .debug_* .\n";
     EXPECT_STREQ(expectedError, errors.c_str());
@@ -171,7 +171,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
@@ -216,7 +216,7 @@ TEST(ExtractZebinSections, GivenMispelledConstDataSectionThenAllowItButEmitWarni
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
     EXPECT_STREQ("Misspelled section name : .data.global_const, should be : .data.const\n", warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
 
@@ -239,7 +239,7 @@ TEST(ExtractZebinSections, GivenUnknownZebinGtpinInfoSectionThenEmitWarning) {
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
     std::string expectedWarning{"DeviceBinaryFormat::Zebin : Unhandled SHT_ZEBIN_GTPIN_INFO section : .unknown, currently supports only : " + NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "KERNEL_NAME\n"};
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
@@ -262,7 +262,7 @@ TEST(ExtractZebinSections, GivenUnknownMiscSectionThenEmitWarning) {
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
     EXPECT_TRUE(errors.empty()) << errors;
     const auto expectedWarning = "DeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : " + unknownMiscSectionName.str() + " currently supports only : " + NEO::Zebin::Elf::SectionNames::buildOptions.str() + ".\n";
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
@@ -281,7 +281,7 @@ TEST(ExtractZebinSections, GivenUnknownElfNobitsSectionThenEmitWarning) {
     std::string errors;
     std::string warnings;
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
     EXPECT_TRUE(errors.empty()) << errors;
     auto expectedWarning = "DeviceBinaryFormat::Zebin : unhandled SHT_NOBITS section : " + unknownNobitsSectionName.str() + " currently supports only : .bss.const and .bss.global.\n";
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
@@ -292,7 +292,7 @@ TEST(ValidateZebinSectionsCount, GivenEmptyZebinThenReturnSuccess) {
     std::string errors;
     std::string warnings;
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -308,7 +308,7 @@ TEST(ValidateZebinSectionsCount, GivenCorrectNumberOfSectionsThenReturnSuccess) 
     sections.textKernelSections.resize(10U);
     sections.zeInfoSections.resize(1U);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -319,7 +319,7 @@ TEST(ValidateZebinSectionsCount, GivenTwoConstDataSectionsThenFail) {
     std::string warnings;
     sections.constDataSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .data.const section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -330,7 +330,7 @@ TEST(ValidateZebinSectionsCount, GivenTwoGlobalDataSectionsThenFail) {
     std::string warnings;
     sections.globalDataSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .data.global section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -341,7 +341,7 @@ TEST(ValidateZebinSectionsCount, GivenTwoZeInfoSectionsThenFail) {
     std::string warnings;
     sections.zeInfoSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .ze_info section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -352,7 +352,7 @@ TEST(ValidateZebinSectionsCount, GivenTwoSymtabSectionsThenFail) {
     std::string warnings;
     sections.symtabSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .symtab section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -363,7 +363,7 @@ TEST(ValidateZebinSectionsCount, GivenTwoSpirvSectionsThenFail) {
     std::string warnings;
     sections.spirvSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .spv section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -374,7 +374,7 @@ TEST(ValidateZebinSectionsCount, GivenTwoIntelGTNoteSectionsThenFail) {
     std::string warnings;
     sections.noteIntelGTSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .note.intelgt.compat section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -385,7 +385,7 @@ TEST(ValidateZebinSectionsCount, GivenMoreThanOneConstZeroInitDataSectionThenFai
     std::string warnings;
     sections.constZeroInitDataSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .bss.const section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -396,7 +396,7 @@ TEST(ValidateZebinSectionsCount, GivenMoreThanOneGlobalZeroInitDataSectionThenFa
     std::string warnings;
     sections.globalZeroInitDataSections.resize(2);
     auto err = validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .bss.global section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -413,7 +413,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoSectionIsEmptyThenEmitsWarning) {
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at least one .ze_info section, got 0\n", warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
 }
@@ -439,7 +439,7 @@ version: '1.0'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_EQ(1U, version.major);
@@ -466,7 +466,7 @@ version: '1.0'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_EQ(12U, version.major);
@@ -495,7 +495,7 @@ version: '100'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected \'MAJOR.MINOR\' string, got : 100\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -520,7 +520,7 @@ version: '100'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : 12.\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -545,7 +545,7 @@ version: '100'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .12\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -570,7 +570,7 @@ version: '100'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : .\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -595,7 +595,7 @@ version: '100'
         std::string warnings;
         NEO::Zebin::ZeInfo::Types::Version version;
         auto err = NEO::Zebin::ZeInfo::readZeInfoVersionFromZeInfo(version, parser, versionNode, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string\n", errors.c_str()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -726,7 +726,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeinfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::Success, res);
+    EXPECT_EQ(DecodeError::success, res);
     EXPECT_TRUE(outErrors.empty());
     EXPECT_TRUE(outWarnings.empty());
 
@@ -828,7 +828,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognized, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::Success, res);
+    EXPECT_EQ(DecodeError::success, res);
     EXPECT_TRUE(outErrors.empty()) << outErrors;
 
     auto expectedWarning = "DeviceBinaryFormat::Zebin : Unrecognized entry: pickle in kernels_misc_info zeInfo's section.\n";
@@ -858,7 +858,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::Success, res);
+    EXPECT_EQ(DecodeError::success, res);
     EXPECT_TRUE(outErrors.empty());
 
     auto expectedWarning = "DeviceBinaryFormat::Zebin : KernelMiscInfo : Unrecognized argsInfo member pickle\n";
@@ -895,7 +895,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
 
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read name from : [-] in context of : kernels_misc_info\n"));
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read name from : [-] in context of : kernels_misc_info\n"));
@@ -931,7 +931,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoUnrecognizedArgInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
 
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read address_qualifier from : [-] in context of : kernels_misc_info\n"));
     EXPECT_NE(std::string::npos, outErrors.find("DeviceBinaryFormat::Zebin::.ze_info : could not read access_qualifier from : [-] in context of : kernels_misc_info\n"));
@@ -956,7 +956,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoEmptyArgsInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::Success, res);
+    EXPECT_EQ(DecodeError::success, res);
     EXPECT_TRUE(outErrors.empty());
     std::array<std::string, 5> missingMembers = {
         "name",
@@ -992,7 +992,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfoEmptyArgsInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
 
     auto expectedError{"DeviceBinaryFormat::Zebin : Error : KernelMiscInfo : ArgInfo index missing (has default value -1)"};
     EXPECT_STREQ(outErrors.c_str(), expectedError);
@@ -1010,7 +1010,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
 }
 
 TEST(DecodeKernelMiscInfo, givenKernelMiscInfoEntryWithMissingKernelNameWhenDecodingKernelsMiscInfoSectionThenErrorIsReturned) {
@@ -1030,7 +1030,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
 
     auto expectedError{"DeviceBinaryFormat::Zebin : Error : Missing kernel name in kernels_misc_info section.\n"};
     EXPECT_STREQ(outErrors.c_str(), expectedError);
@@ -1057,7 +1057,7 @@ kernels_misc_info:
 
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, kernelMiscInfo, outErrors, outWarnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
 
     auto expectedError{"DeviceBinaryFormat::Zebin : Error : Cannot find kernel info for kernel some_kernel.\n"};
     EXPECT_STREQ(outErrors.c_str(), expectedError);
@@ -1082,7 +1082,7 @@ kernels:
     std::string outWarnings, outErrors;
     auto res = NEO::Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(programInfo.kernelMiscInfoPos, programInfo.kernelInfos, zeinfo, outErrors, outWarnings);
 
-    EXPECT_EQ(DecodeError::InvalidBinary, res);
+    EXPECT_EQ(DecodeError::invalidBinary, res);
     auto expectedError{"DeviceBinaryFormat::Zebin : Position of kernels_misc_info not set - may be missing in zeInfo.\n"};
     EXPECT_STREQ(outErrors.c_str(), expectedError);
 }
@@ -1181,7 +1181,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenCorrectNumberOfSectionsThenReturnSu
     kernelSections.executionEnvNd.resize(1);
 
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -1194,7 +1194,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenCorrectNumberOfSectionsThenReturnSu
     errors.clear();
     warnings.clear();
     err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1205,7 +1205,7 @@ TEST(ValidateZeInfoKernelSectionsCount, WhenNameSectionIsMissingThenFail) {
     std::string warnings;
     kernelSections.executionEnvNd.resize(1);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of name, got : 0\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1216,7 +1216,7 @@ TEST(ValidateZeInfoKernelSectionsCount, WhenExecutionEnvSectionIsMissingThenFail
     std::string warnings;
     kernelSections.nameNd.resize(1);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of execution_env, got : 0\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1228,7 +1228,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoNameSectionsThenFail) {
     kernelSections.nameNd.resize(2);
     kernelSections.executionEnvNd.resize(1);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of name, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1240,7 +1240,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoExecutionEnvSectionsThenFail) {
     kernelSections.nameNd.resize(1);
     kernelSections.executionEnvNd.resize(2);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of execution_env, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1253,7 +1253,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoDebugEnvSectionsThenFail) {
     kernelSections.executionEnvNd.resize(1);
     kernelSections.debugEnvNd.resize(2);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected at most 1 of debug_env, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1266,7 +1266,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoBindingTableIndicesSectionsThenF
     kernelSections.executionEnvNd.resize(1);
     kernelSections.bindingTableIndicesNd.resize(2);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected at most 1 of binding_table_indices, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1279,7 +1279,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoPayloadArgumentsSectionsThenFail
     kernelSections.executionEnvNd.resize(1);
     kernelSections.payloadArgumentsNd.resize(2);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected at most 1 of payload_arguments, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1292,7 +1292,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoPerThreadPayloadArgumentsSection
     kernelSections.executionEnvNd.resize(1);
     kernelSections.perThreadPayloadArgumentsNd.resize(2);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected at most 1 of per_thread_payload_arguments, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1305,7 +1305,7 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoPerThreadMemoryBuffersSectionsTh
     kernelSections.executionEnvNd.resize(1);
     kernelSections.perThreadMemoryBuffersNd.resize(2);
     auto err = NEO::Zebin::ZeInfo::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected at most 1 of per_thread_memory_buffers, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -1336,7 +1336,7 @@ kernels:
                                                                     "some_kernel",
                                                                     errors,
                                                                     warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(experimentalProperties.hasNonKernelArgLoad, 1);
@@ -1370,7 +1370,7 @@ kernels:
                                                                     "some_kernel",
                                                                     errors,
                                                                     warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(experimentalProperties.hasNonKernelArgLoad, 0);
@@ -1404,7 +1404,7 @@ kernels:
                                                                     "some_kernel",
                                                                     errors,
                                                                     warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(experimentalProperties.hasNonKernelArgLoad, 0);
@@ -1438,7 +1438,7 @@ kernels:
                                                                     "some_kernel",
                                                                     errors,
                                                                     warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
 }
 
 TEST(ReadZeExperimentalProperties, GivenYamlWithInvalidExperimentalPropertyEntryThenErrorIsReturned) {
@@ -1467,7 +1467,7 @@ kernels:
                                                                     "some_kernel",
                                                                     errors,
                                                                     warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenValidExperimentalPropertiesThenPopulateKernelDescriptorSucceeds) {
@@ -1487,7 +1487,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenErrorWhileReadingExperimentalPropertiesThenPopulateKernelDescriptorFails) {
@@ -1507,7 +1507,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessBufferAddressingWhenDecodingZeInfoThenBufferAddressingModeIsBindlessAndStateless) {
@@ -1527,7 +1527,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
 }
@@ -1556,7 +1556,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
 
@@ -1583,7 +1583,7 @@ kernels:
 ...
 )===";
     err = decodeZeInfoKernelEntry(zeinfo2);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
 
@@ -1611,7 +1611,7 @@ kernels:
 ...
 )===";
     err = decodeZeInfoKernelEntry(zeinfo3);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(3u, kernelDescriptor->kernelAttributes.numArgsStateful);
 }
@@ -1642,7 +1642,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
 }
@@ -1665,7 +1665,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(KernelDescriptor::Bindless, kernelDescriptor->kernelAttributes.imageAddressingMode);
 }
@@ -1694,7 +1694,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n", errors.c_str());
     EXPECT_EQ(KernelDescriptor::BindfulAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
 }
@@ -1725,7 +1725,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n", errors.c_str());
     EXPECT_EQ(KernelDescriptor::Bindful, kernelDescriptor->kernelAttributes.imageAddressingMode);
 }
@@ -1780,7 +1780,7 @@ kernels:
     EXPECT_FALSE(execEnv.hasSample);
 
     auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(7, execEnv.barrierCount);
@@ -1834,7 +1834,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv;
     auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" in context of some_kernel\n", warnings.c_str());
     EXPECT_EQ(8, execEnv.simdSize);
@@ -1859,7 +1859,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv;
     auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [true] in context of : some_kernel\n", errors.c_str());
 }
@@ -1885,7 +1885,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv;
     auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : wrong size of collection required_work_group_size in context of : some_kernel. Got : 2 expected : 3\n", errors.c_str());
 }
@@ -1915,7 +1915,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::Attributes::AttributesBaseT attributes;
     auto err = NEO::Zebin::ZeInfo::readZeInfoAttributes(parser, attributeNd, attributes, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(16, attributes.intelReqdSubgroupSize.value());
@@ -1954,7 +1954,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::DebugEnv::DebugEnvBaseT debugEnv;
     auto err = NEO::Zebin::ZeInfo::readZeInfoDebugEnvironment(parser, argsNode, debugEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -1981,7 +1981,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::DebugEnv::DebugEnvBaseT debugEnv;
     auto err = NEO::Zebin::ZeInfo::readZeInfoDebugEnvironment(parser, argsNode, debugEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"different\" in context of some_kernel\n", warnings.c_str());
 }
@@ -2005,7 +2005,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::Types::Kernel::DebugEnv::DebugEnvBaseT debugEnv;
     auto err = NEO::Zebin::ZeInfo::readZeInfoDebugEnvironment(parser, argsNode, debugEnv, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read sip_surface_bti from : [any] in context of : some_kernel\n", errors.c_str());
 }
@@ -2020,7 +2020,7 @@ kernels:
         sip_surface_bti: 123
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -2040,7 +2040,7 @@ kernels:
         sip_surface_bti: 0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -2062,7 +2062,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgumentByValueWithMoreThanOneElementWithSourceOffsetsSpecifiedThenSetThemAccordingly) {
@@ -2087,7 +2087,7 @@ kernels:
     namespace Defaults = NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::Defaults;
     NEO::Zebin::ZeInfo::KernelPayloadArguments args;
     auto res = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, res);
+    EXPECT_EQ(NEO::DecodeError::success, res);
     auto elements = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
     EXPECT_EQ(0, elements[0].sourceOffset);
     EXPECT_EQ(1, elements[1].sourceOffset);
@@ -2109,7 +2109,7 @@ kernels:
     namespace Defaults = NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::Defaults;
     NEO::Zebin::ZeInfo::KernelPayloadArguments args;
     auto res = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, res);
+    EXPECT_EQ(NEO::DecodeError::success, res);
     auto elements = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescValue>().elements;
     EXPECT_EQ(0, elements[0].sourceOffset);
 }
@@ -2134,7 +2134,7 @@ kernels:
     namespace Defaults = NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::Defaults;
     NEO::Zebin::ZeInfo::KernelPayloadArguments args;
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("Missing source offset value for element in argByValue\n", errors.c_str());
 }
 
@@ -2154,7 +2154,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
@@ -2183,7 +2183,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown attribute entry \"unknown_attribute\" in context of some_kernel\n", errors.c_str());
 }
@@ -2235,7 +2235,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadPayloadArguments args;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadPayloadArguments(parser, argsNode, args, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(2U, args.size());
@@ -2270,7 +2270,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadPayloadArguments args;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadPayloadArguments(parser, argsNode, args, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for per-thread payload argument in context of some_kernel\n", warnings.c_str());
 
@@ -2301,7 +2301,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadPayloadArguments args;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadPayloadArguments(parser, argsNode, args, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [true] in context of : some_kernel\n", errors.c_str());
 }
@@ -2327,7 +2327,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadPayloadArguments args;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadPayloadArguments(parser, argsNode, args, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Skippinig 0-size per-thread argument of type : packed_local_ids in context of some_kernel\n", warnings.c_str());
     EXPECT_TRUE(args.empty());
@@ -2369,7 +2369,7 @@ kernels:
     int32_t maxArgIndex = -1;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
     EXPECT_EQ(2, maxArgIndex);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(3U, args.size());
@@ -2418,7 +2418,7 @@ kernels:
     NEO::Zebin::ZeInfo::KernelPayloadArguments args;
     int32_t maxArgIndex = -1;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for payload argument in context of some_kernel\n", warnings.c_str());
 
@@ -2458,7 +2458,7 @@ kernels:
     NEO::Zebin::ZeInfo::KernelPayloadArguments args;
     int32_t maxArgIndex = -1;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -2492,7 +2492,7 @@ kernels:
     NEO::Zebin::ZeInfo::KernelPayloadArguments args;
     int32_t maxArgIndex = -1;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [true] in context of : some_kernel\n", errors.c_str());
 }
@@ -2519,7 +2519,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelBindingTableEntries btis;
     auto err = NEO::Zebin::ZeInfo::readZeInfoBindingTableIndices(parser, btisNode, btis, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(2U, btis.size());
@@ -2552,7 +2552,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelBindingTableEntries btis;
     auto err = NEO::Zebin::ZeInfo::readZeInfoBindingTableIndices(parser, argsNode, btis, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for binding table index in context of some_kernel\n", warnings.c_str());
 
@@ -2581,7 +2581,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelBindingTableEntries btis;
     auto err = NEO::Zebin::ZeInfo::readZeInfoBindingTableIndices(parser, argsNode, btis, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read arg_index from : [any] in context of : some_kernel\n", errors.c_str());
 }
@@ -2614,7 +2614,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadMemoryBuffers buffers;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, buffers, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(3U, buffers.size());
@@ -2661,7 +2661,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadMemoryBuffers buffers;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, buffers, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, buffers.size());
@@ -2694,7 +2694,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadMemoryBuffers buffers;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, buffers, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for per-thread memory buffer in context of some_kernel\n", warnings.c_str());
 
@@ -2725,7 +2725,7 @@ kernels:
     std::string warnings;
     NEO::Zebin::ZeInfo::KernelPerThreadMemoryBuffers args;
     auto err = NEO::Zebin::ZeInfo::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, args, "some_kernel", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", errors.c_str());
 }
@@ -2740,7 +2740,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenValid32BitZebinThenReturnSuccess) {
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 }
@@ -2753,7 +2753,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenInvalidElfThenReturnError) {
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(warnings.empty());
     EXPECT_FALSE(errors.empty());
     EXPECT_STREQ("Invalid or missing ELF header", errors.c_str());
@@ -2771,7 +2771,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenFailedToExtractZebinSectionsThenDecoding
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_FALSE(errors.empty());
 
@@ -2783,7 +2783,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenFailedToExtractZebinSectionsThenDecoding
     std::string extractErrors;
     std::string extractWarnings;
     auto extractErr = extractZebinSections(elf, sections, extractErrors, extractWarnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, extractErr);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, extractErr);
     EXPECT_STREQ(extractErrors.c_str(), errors.c_str());
     EXPECT_STREQ(extractWarnings.c_str(), warnings.c_str());
 }
@@ -2801,7 +2801,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenValidationOfZebinSectionsCountFailsThenD
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_FALSE(errors.empty());
 
@@ -2813,14 +2813,14 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenValidationOfZebinSectionsCountFailsThenD
     std::string extractErrors;
     std::string extractWarnings;
     auto extractErr = extractZebinSections(elf, sections, extractErrors, extractWarnings);
-    EXPECT_EQ(NEO::DecodeError::Success, extractErr);
+    EXPECT_EQ(NEO::DecodeError::success, extractErr);
     EXPECT_TRUE(extractErrors.empty()) << extractErrors;
     EXPECT_TRUE(extractWarnings.empty()) << extractWarnings;
 
     std::string validateErrors;
     std::string validateWarnings;
     auto validateErr = validateZebinSectionsCount(sections, validateErrors, validateWarnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, validateErr);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, validateErr);
     EXPECT_STREQ(validateErrors.c_str(), errors.c_str());
     EXPECT_STREQ(validateWarnings.c_str(), warnings.c_str());
 }
@@ -2838,7 +2838,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalDataSectionThenSetsUpInitDataAndS
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(sizeof(data), programInfo.globalVariables.size);
@@ -2860,7 +2860,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataSectionThenSetsUpInitDataAndSi
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(sizeof(data), programInfo.globalConstants.size);
@@ -2883,7 +2883,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstZeroInitDataSectionThenSetUpZeroIn
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(16u, programInfo.globalConstants.zeroInitSize);
@@ -2905,7 +2905,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalZeroInitDataSectionThenSetUpZeroI
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
@@ -2927,7 +2927,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDa
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(sizeof(data), programInfo.globalStrings.size);
@@ -2952,7 +2952,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenIntelGTNoteSectionThenAddsItToZebinSect
 
     ZebinSections zebinSections;
     auto extractErr = extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+    ASSERT_EQ(NEO::DecodeError::success, extractErr) << errors << " " << warnings;
     EXPECT_EQ(1u, zebinSections.noteIntelGTSections.size());
 }
 
@@ -2977,7 +2977,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenNoteSectionDifferentThanIntelGTThenEmit
 
     ZebinSections zebinSections;
     auto extractErr = extractZebinSections(elf, zebinSections, errors, warnings);
-    ASSERT_EQ(NEO::DecodeError::Success, extractErr);
+    ASSERT_EQ(NEO::DecodeError::success, extractErr);
     EXPECT_EQ(0u, zebinSections.noteIntelGTSections.size());
     EXPECT_TRUE(errors.empty());
     EXPECT_FALSE(warnings.empty());
@@ -2998,7 +2998,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenSymtabWithInvalidSymEntriesThenFails) {
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_STREQ("Invalid symbol table entries size - expected : 24, got : 23\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -3017,7 +3017,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenYamlParserForZeInfoFailsThenDecodingFail
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
 
     NEO::Yaml::YamlParser parser;
@@ -3043,7 +3043,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenEmptyInZeInfoThenEmitsWarning) {
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_STREQ("NEO::Yaml : Text has no data\nDeviceBinaryFormat::Zebin : Empty kernels metadata section (.ze_info)\n", warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
 }
@@ -3062,7 +3062,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmit
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"some_entry\" in global scope of .ze_info\n", warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
 }
@@ -3081,7 +3081,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\n", warnings.c_str());
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo : Expected exactly 1 of kernels, got : 0\n", errors.c_str());
 }
@@ -3100,7 +3100,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThen
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo : Expected exactly 1 of kernels, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -3119,7 +3119,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleVersionSectionsThe
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo : Expected at most 1 of version, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -3142,7 +3142,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainVersionSectionsThenE
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
 }
@@ -3161,7 +3161,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoVersionIsInvalidThenFails) {
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : 1a\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -3183,7 +3183,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarnin
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
     EXPECT_TRUE(errors.empty()) << errors;
 }
@@ -3205,7 +3205,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
         std::string errors;
         std::string warnings;
         auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-        EXPECT_EQ(NEO::DecodeError::UnhandledBinary, error);
+        EXPECT_EQ(NEO::DecodeError::unhandledBinary, error);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -3224,7 +3224,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails)
         std::string errors;
         std::string warnings;
         auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-        EXPECT_EQ(NEO::DecodeError::UnhandledBinary, error);
+        EXPECT_EQ(NEO::DecodeError::unhandledBinary, error);
         EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 0, decoder is at : 1\n", errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -3248,7 +3248,7 @@ kernels:
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of name, got : 0\nDeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of execution_env, got : 0\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -3279,7 +3279,7 @@ kernels:
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -3322,7 +3322,7 @@ functions:
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -3361,7 +3361,7 @@ functions:
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     const std::string expectedError = "DeviceBinaryFormat::Zebin::.ze_info : could not read grf_count from : [abc] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [defgas] in context of : external functions\n";
     EXPECT_STREQ(expectedError.c_str(), errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -3398,7 +3398,7 @@ functions:
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     const std::string expectedError = "DeviceBinaryFormat::Zebin::ZeInfo : Expected at most 1 of functions, got : 2\n";
     EXPECT_STREQ(expectedError.c_str(), errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -3438,7 +3438,7 @@ kernels_misc_info:
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_NE(std::string::npos, programInfo.kernelMiscInfoPos);
@@ -3453,7 +3453,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
             grf_count: 128
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -3491,7 +3491,7 @@ kernels:
     - name : some_kernel
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of name, got : 0\nDeviceBinaryFormat::Zebin::ZeInfo::Kernel : Expected exactly 1 of execution_env, got : 0\n", errors.c_str());
 }
@@ -3504,7 +3504,7 @@ kernels:
         simd_size : true
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [true] in context of : some_kernel\n", errors.c_str());
 }
@@ -3522,7 +3522,7 @@ kernels:
           size:            8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", errors.c_str());
 }
@@ -3540,7 +3540,7 @@ kernels:
           size:            12
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", errors.c_str());
 }
@@ -3558,7 +3558,7 @@ kernels:
           size:        eight
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", errors.c_str());
 }
@@ -3571,7 +3571,7 @@ kernels:
         simd_size: 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid simd size : 7 in context of : some_kernel. Expected 1, 8, 16 or 32. Got : 7\n", errors.c_str());
 }
@@ -3586,7 +3586,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSimdSizeThenSetsItCorrectly) {
             simd_size: )===" +
                              std::to_string(simdSize) + "\n";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_EQ(simdSize, kernelDescriptor->kernelAttributes.simdSize);
@@ -3605,7 +3605,7 @@ kernels:
           size:            8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : some_kernel.\n", errors.c_str());
 }
@@ -3628,7 +3628,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidThreadSchedulingModesThenPopulateC
                              R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_TRUE(errors.empty()) << errors;
 
@@ -3649,7 +3649,7 @@ kernels:
 )===";
     grfSize = 64U;
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(3U, kernelDescriptor->kernelAttributes.numLocalIdChannels);
@@ -3668,7 +3668,7 @@ kernels:
           size:            192
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(3U, kernelDescriptor->kernelAttributes.numLocalIdChannels);
@@ -3686,7 +3686,7 @@ kernels:
           size:            12
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in cross thread data section in context of : some_kernel.\n", errors.c_str());
 }
@@ -3707,7 +3707,7 @@ kernels:
 )===";
 
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(64, kernelDescriptor->kernelAttributes.crossThreadDataSize);
@@ -3735,7 +3735,7 @@ kernels:
           bti_value:true
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read bti_value from : [true] in context of : some_kernel\n", errors.c_str());
 }
@@ -3765,7 +3765,7 @@ kernels:
           bti_value:7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -3795,7 +3795,7 @@ kernels:
           bti_value:0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : 0.\n", errors.c_str());
 }
@@ -3815,7 +3815,7 @@ kernels:
           sampler_index:   0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -3848,7 +3848,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAn
     ...
     )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", errors.c_str());
     }
@@ -3866,7 +3866,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsGlobalAn
     ...
     )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_TRUE(warnings.empty()) << warnings;
         EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", errors.c_str());
     }
@@ -3885,7 +3885,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferWhenTypeIsSlmThenF
     ...
     )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : some_kernel.\n", errors.c_str());
 }
@@ -3902,7 +3902,7 @@ kernels:
             size:            256
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(256U, kernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize);
@@ -3921,7 +3921,7 @@ kernels:
             is_simt_thread:  true
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(256U * 8, kernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize);
@@ -3940,7 +3940,7 @@ kernels:
             is_simt_thread:  true
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
@@ -3961,7 +3961,7 @@ kernels:
             slot : 1
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
@@ -3980,7 +3980,7 @@ kernels:
             size:            512
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(1024U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
@@ -3999,7 +3999,7 @@ kernels:
             size:            1540
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
@@ -4019,7 +4019,7 @@ kernels:
             slot : 1
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
@@ -4039,7 +4039,7 @@ kernels:
             slot : 2
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid scratch buffer slot 2 in context of : some_kernel. Expected 0 or 1.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4056,7 +4056,7 @@ kernels:
             size:            0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : some_kernel.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4076,7 +4076,7 @@ kernels:
             size:            128
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry 0 in context of : some_kernel.\n", errors.c_str());
 }
@@ -4097,7 +4097,7 @@ kernels:
     ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
 
     auto err = decodeZebin(programInfo, elf, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Could not find text section for kernel some_kernel\n", errors.c_str());
 }
 
@@ -4127,7 +4127,7 @@ TEST(DecodeZebinTest, givenGtpinInfoSectionsWhenDecodingZebinThenProperlySetIgcI
     programInfo.kernelInfos.push_back(kernelInfo2);
 
     auto err = decodeZebin(programInfo, elf, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo1->igcInfoForGtpin), mockGtpinData1.data(), mockGtpinData1.size()));
     EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo2->igcInfoForGtpin), mockGtpinData2.data(), mockGtpinData2.size()));
 }
@@ -4164,7 +4164,7 @@ kernels:
         indirect_stateless_count : 2
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -4211,7 +4211,7 @@ kernels:
           is_pipe:         true
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -4233,7 +4233,7 @@ kernels:
           size:            192
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid offset for argument of type local_id in context of : some_kernel. Expected 0.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4250,7 +4250,7 @@ kernels:
           size:            7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type local_id in context of : some_kernel. For simd=8 expected : 32 or 64 or 96. Got : 7 \n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4274,7 +4274,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalIdWhenSizeIsValidThenCalcul
                                  std::to_string(((simdSize == 32) ? 32 : 16) * numChannels * sizeof(short)) + R"===(
         )===";
             auto err = decodeZeInfoKernelEntry(zeinfo);
-            EXPECT_EQ(NEO::DecodeError::Success, err) << "simd : " << simdSize << ", num channels : " << numChannels;
+            EXPECT_EQ(NEO::DecodeError::success, err) << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(errors.empty()) << errors << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(warnings.empty()) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_EQ(numChannels, kernelDescriptor->kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
@@ -4300,7 +4300,7 @@ kernels:
           size:            6
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Unhandled offset for argument of type packed_local_ids in context of : some_kernel. Expected 0.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4317,7 +4317,7 @@ kernels:
           size:            1
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type packed_local_ids in context of : some_kernel. Expected : 2 or 4 or 6. Got : 1 \n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4341,7 +4341,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePackedLocalIdWhenSizeIsValidThen
                                  std::to_string(numChannels * sizeof(short)) + R"===(
         )===";
             auto err = decodeZeInfoKernelEntry(zeinfo);
-            EXPECT_EQ(NEO::DecodeError::Success, err) << "simd : " << simdSize << ", num channels : " << numChannels;
+            EXPECT_EQ(NEO::DecodeError::success, err) << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(errors.empty()) << errors << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_TRUE(warnings.empty()) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_EQ(numChannels, kernelDescriptor->kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
@@ -4382,7 +4382,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenBufferPointerArgWhenAddressSpaceIsKnown
                   access_type : readwrite
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4408,7 +4408,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAddressSpaceIsImageThenPo
                 addrmode: stateful
     )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4441,7 +4441,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAccessQualifierIsKnownThe
                              R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4471,7 +4471,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenNonPointerArgWhenAddressSpaceIsStateles
                              R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
         EXPECT_STREQ("Invalid or missing memory addressing stateless for arg idx : 0 in context of : some_kernel.\n", errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
     }
@@ -4490,7 +4490,7 @@ kernels:
             arg_index	: 0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("Invalid or missing memory addressing mode for arg idx : 0 in context of : some_kernel.\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4539,7 +4539,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
             expectedArgsCount += 2;
         }
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(expectedArgsCount, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4592,7 +4592,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalSizeWhenArgSizeIsInvalidThe
                   size : 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type local_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4613,7 +4613,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeLocalSizeWhenArgSizeValidThenPop
                              std::to_string(vectorSize) + R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4636,7 +4636,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobaIdOffsetWhenArgSizeIsInvali
                   size : 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type global_id_offset in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4654,7 +4654,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrivateBaseStatelessWhenArgSizeV
     )===";
 
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4678,7 +4678,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobaIdOffsetWhenArgSizeValidThe
                              std::to_string(vectorSize) + R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4701,7 +4701,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGroupCountWhenArgSizeIsInvalidTh
                   size : 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type group_count in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4722,7 +4722,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGroupCountWhenArgSizeValidThenPo
                              std::to_string(vectorSize) + R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4745,7 +4745,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeIsIn
                   size : 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type enqueued_local_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4765,7 +4765,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeByPointerWithSlmAlignmentSetThen
                  slm_alignment: 8
 )===";
     auto res = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, res);
+    EXPECT_EQ(NEO::DecodeError::success, res);
     ASSERT_EQ(1u, kernelDescriptor->payloadMappings.explicitArgs.size());
     const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
     EXPECT_EQ(8, arg.requiredSlmAlignment);
@@ -4787,7 +4787,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeVali
                              std::to_string(vectorSize) + R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4810,7 +4810,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeIsInvalidTh
                   size : 7
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type global_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
@@ -4831,7 +4831,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeValidThenPo
                              std::to_string(vectorSize) + R"===(
         )===";
         auto err = decodeZeInfoKernelEntry(zeinfo);
-        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_EQ(NEO::DecodeError::success, err);
         EXPECT_TRUE(errors.empty()) << errors;
         EXPECT_TRUE(warnings.empty()) << warnings;
         ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4855,7 +4855,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeBufferOffsetWhenOffsetAndSizeVal
                   arg_index: 0
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4886,7 +4886,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenPureStatefulArgWithBufferAddressWhenThe
                   arg_index: 0         
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4907,7 +4907,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenNoArgsThenPopulatesKernelDescriptor) {
               
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(0U, kernelDescriptor->payloadMappings.explicitArgs.size());
@@ -4927,7 +4927,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeBufferOffsetWhenSizeIs
         bufferOffsetArg.size = size;
         std::string errors, warnings;
         auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, bufferOffsetArg, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, retVal);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, retVal);
         auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type buffer_offset in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
@@ -4946,7 +4946,7 @@ TEST(PopulateArgDescriptor, GivenValueArgWithPointerMemberThenItIsProperlyPopula
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, valueArg, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_EQ(NEO::DecodeError::success, retVal);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescValue>().elements[0].isPtr);
@@ -4964,7 +4964,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeWorkDimensionsWhenSizeIsValidThe
                   size: 4
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(32U, kernelDescriptor->payloadMappings.dispatchTraits.workDim);
@@ -4982,7 +4982,7 @@ kernels:
           size:            8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(4u, kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer);
@@ -5002,7 +5002,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSize
         workDimensionsArg.size = size;
         std::string errors, warnings;
         auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, workDimensionsArg, errors, warnings);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, retVal);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, retVal);
         auto expectedError = "DeviceBinaryFormat::Zebin : Invalid size for argument of type work_dimensions in context of : some_kernel. Expected 4. Got : " + std::to_string(size) + "\n";
         EXPECT_STREQ(expectedError.c_str(), errors.c_str());
         EXPECT_TRUE(warnings.empty()) << warnings;
@@ -5018,7 +5018,7 @@ TEST(PopulateArgDescriptor, GivenValidArgOfTypeRTGlobalBufferThenRtGlobalBufferI
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, rtGlobalBufferArg, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_EQ(NEO::DecodeError::success, retVal);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
     EXPECT_EQ(40U, kernelDescriptor.kernelAttributes.crossThreadDataSize);
@@ -5037,7 +5037,7 @@ TEST(PopulateArgDescriptor, GivenValidConstDataBufferArgThenItIsPopulatedCorrect
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, dataConstBuffer, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_EQ(NEO::DecodeError::success, retVal);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
     EXPECT_EQ(40U, kernelDescriptor.kernelAttributes.crossThreadDataSize);
@@ -5055,7 +5055,7 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, dataGlobalBuffer, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_EQ(NEO::DecodeError::success, retVal);
     EXPECT_TRUE(errors.empty());
     EXPECT_TRUE(warnings.empty());
     EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.crossThreadDataSize);
@@ -5075,7 +5075,7 @@ TEST(PopulateArgDescriptor, GivenGlobalDataBufferArgWithoutBTIThenItIsPopulatedC
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, dataGlobalBuffer, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_EQ(NEO::DecodeError::success, retVal);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
@@ -5094,7 +5094,7 @@ TEST(PopulateArgDescriptor, GivenConstDataBufferArgWithoutBTIThenItIsPopulatedCo
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, dataGlobalBuffer, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, retVal);
+    EXPECT_EQ(NEO::DecodeError::success, retVal);
     EXPECT_TRUE(warnings.empty());
     EXPECT_TRUE(errors.empty());
     EXPECT_EQ(8U, kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.pointerSize);
@@ -5115,7 +5115,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenIndirectDataPointerZeInfoWhenDecodeZeIn
                   size: 8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     const auto indirectDataPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress;
@@ -5135,7 +5135,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenScratchPointerZeInfoWhenDecodeZeInfoThe
                   size: 8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     const auto scratchPointerAddress = kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
@@ -5155,7 +5155,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsV
                   size: 8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     const auto printfSurfaceAddress = kernelDescriptor->payloadMappings.implicitArgs.printfSurfaceAddress;
@@ -5175,7 +5175,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeAssertBufferWhenOffsetAndSizeIsV
                   size: 8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     const auto assertBufferAddress = kernelDescriptor->payloadMappings.implicitArgs.assertBufferAddress;
@@ -5195,7 +5195,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeSyncBufferWhenOffsetAndSizeIsVal
                   size: 8
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesSyncBuffer);
@@ -5283,7 +5283,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThen
                   arg_index:       1
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     auto &args = kernelDescriptor->payloadMappings.explicitArgs;
@@ -5383,7 +5383,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
                   arg_index:       3
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
@@ -5504,7 +5504,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSection
 
     std::vector<Zebin::Elf::IntelGTNote> intelGTNotesRead = {};
     auto decodeError = NEO::Zebin::getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
-    EXPECT_EQ(DecodeError::Success, decodeError);
+    EXPECT_EQ(DecodeError::success, decodeError);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_TRUE(outErrReason.empty());
     EXPECT_EQ(numNotes, intelGTNotesRead.size());
@@ -5531,7 +5531,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidIntelGTNotesSecti
 
     std::vector<Zebin::Elf::IntelGTNote> intelGTNotesRead = {};
     auto decodeError = NEO::Zebin::getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
-    EXPECT_EQ(DecodeError::Success, decodeError);
+    EXPECT_EQ(DecodeError::success, decodeError);
     EXPECT_TRUE(outWarning.empty());
     EXPECT_TRUE(outErrReason.empty());
     EXPECT_EQ(0U, intelGTNotesRead.size());
@@ -5556,7 +5556,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidOwnerNameInIntelG
 
         std::vector<Zebin::Elf::IntelGTNote> intelGTNotesRead = {};
         auto decodeError = NEO::Zebin::getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
-        EXPECT_EQ(DecodeError::Success, decodeError);
+        EXPECT_EQ(DecodeError::success, decodeError);
         auto expectedWarning = "DeviceBinaryFormat::Zebin : Invalid owner name : badName for IntelGTNote - note will not be used.\n";
         EXPECT_STREQ(expectedWarning, outWarning.c_str());
         EXPECT_TRUE(outErrReason.empty());
@@ -5580,7 +5580,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenInvalidOwnerNameInIntelG
 
         std::vector<Zebin::Elf::IntelGTNote> intelGTNotesRead = {};
         auto decodeError = NEO::Zebin::getIntelGTNotes(elf, intelGTNotesRead, outErrReason, outWarning);
-        EXPECT_EQ(DecodeError::Success, decodeError);
+        EXPECT_EQ(DecodeError::success, decodeError);
         auto expectedWarning = "DeviceBinaryFormat::Zebin : Empty owner name.\n";
         EXPECT_STREQ(expectedWarning, outWarning.c_str());
         EXPECT_TRUE(outErrReason.empty());
@@ -6004,7 +6004,7 @@ TEST_F(IntelGTNotesFixture, GivenNotNullTerminatedVersioningStringWhenGettingInt
 
     std::vector<Zebin::Elf::IntelGTNote> intelGTNotes = {};
     auto decodeError = NEO::Zebin::getIntelGTNotes(elf, intelGTNotes, outErrReason, outWarning);
-    EXPECT_EQ(DecodeError::Success, decodeError);
+    EXPECT_EQ(DecodeError::success, decodeError);
     EXPECT_EQ(0u, intelGTNotes.size());
     EXPECT_TRUE(outErrReason.empty());
     EXPECT_STREQ("DeviceBinaryFormat::Zebin :  Versioning string is not null-terminated: 1.15 - note will not be used.\n", outWarning.c_str());
@@ -6170,7 +6170,7 @@ TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTab
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(errors.empty()) << errors;
 
     EXPECT_EQ(2u, programInfo.globalsDeviceToHostNameMap.size());
@@ -6212,7 +6212,7 @@ TEST(PopulateGlobalDeviceHostNameMapping, givenZebinWithGlobalHostAccessTableSec
         std::string errors;
         std::string warnings;
         auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-        EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+        EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     }
 }
 
@@ -6238,7 +6238,7 @@ TEST(PopulateGlobalDeviceHostNameMapping, givenZebinWithGlobalHostAccessTableSec
     std::string warnings;
     NEO::Zebin::ZeInfo::ZeInfoGlobalHostAccessTables tables;
     auto err = NEO::Zebin::ZeInfo::readZeInfoGlobalHostAceessTable(parser, tableNode, tables, "global_host_access_table", errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
 
     std::string expectedWarning("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"banana_type\" for payload argument in context of global_host_access_table\n");
@@ -6275,7 +6275,7 @@ functions:
         ProgramInfo programInfo;
         for (const auto &functionNd : parser.createChildrenRange(functionsNode)) {
             auto err = NEO::Zebin::ZeInfo::populateExternalFunctionsMetadata(programInfo, parser, functionNd, errors, warnings);
-            EXPECT_EQ(DecodeError::Success, err);
+            EXPECT_EQ(DecodeError::success, err);
             EXPECT_TRUE(errors.empty()) << errors;
             EXPECT_TRUE(warnings.empty()) << warnings;
         }
@@ -6321,7 +6321,7 @@ functions:
     std::string warnings;
     ProgramInfo programInfo;
     auto err = NEO::Zebin::ZeInfo::populateExternalFunctionsMetadata(programInfo, parser, functionNode, errors, warnings);
-    EXPECT_EQ(DecodeError::Success, err);
+    EXPECT_EQ(DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     const auto expectedWarning = "DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"unknown\" in context of : external functions\n";
     EXPECT_STREQ(expectedWarning, warnings.c_str());
@@ -6359,7 +6359,7 @@ functions:
     std::string warnings;
     ProgramInfo programInfo;
     auto err = NEO::Zebin::ZeInfo::populateExternalFunctionsMetadata(programInfo, parser, functionNode, errors, warnings);
-    EXPECT_EQ(DecodeError::InvalidBinary, err);
+    EXPECT_EQ(DecodeError::invalidBinary, err);
     EXPECT_EQ(0U, programInfo.externalFunctions.size());
     const auto expectedError = "DeviceBinaryFormat::Zebin::.ze_info : could not read grf_count from : [abc] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [def] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read barrier_count from : [ghi] in context of : external functions\n";
     EXPECT_STREQ(expectedError, errors.c_str());
@@ -6402,7 +6402,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty());
 
     ASSERT_EQ(1U, kernelDescriptor->inlineSamplers.size());
@@ -6427,7 +6427,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_FALSE(errors.empty());
 }
 
@@ -6442,7 +6442,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, givenGlobalBufferAndConstBufferWhenPopulatingKernelDescriptorThenPopulateThemProperly) {
@@ -6463,7 +6463,7 @@ kernels:
 ...
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(0U, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
     EXPECT_EQ(8U, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.pointerSize);
@@ -6488,7 +6488,7 @@ TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersF
     inlineSamplerSrc.addrMode = NEO::Zebin::ZeInfo::Types::Kernel::InlineSamplers::AddrMode::None;
     inlineSamplerSrc.filterMode = NEO::Zebin::ZeInfo::Types::Kernel::InlineSamplers::FilterMode::Nearest;
     auto err = NEO::Zebin::ZeInfo::populateKernelInlineSampler(kd, inlineSamplerSrc, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_FALSE(errors.empty());
 }
 
@@ -6500,7 +6500,7 @@ TEST(PopulateInlineSamplers, GivenInvalidAddrModeThenPopulateInlineSamplersFails
     inlineSamplerSrc.addrMode = NEO::Zebin::ZeInfo::Types::Kernel::InlineSamplers::AddrMode::Unknown;
     inlineSamplerSrc.filterMode = NEO::Zebin::ZeInfo::Types::Kernel::InlineSamplers::FilterMode::Nearest;
     auto err = NEO::Zebin::ZeInfo::populateKernelInlineSampler(kd, inlineSamplerSrc, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_FALSE(errors.empty());
 }
 
@@ -6512,7 +6512,7 @@ TEST(PopulateInlineSamplers, GivenInvalidFilterModeThenPopulateInlineSamplersFai
     inlineSamplerSrc.addrMode = NEO::Zebin::ZeInfo::Types::Kernel::InlineSamplers::AddrMode::None;
     inlineSamplerSrc.filterMode = NEO::Zebin::ZeInfo::Types::Kernel::InlineSamplers::FilterMode::Unknown;
     auto err = NEO::Zebin::ZeInfo::populateKernelInlineSampler(kd, inlineSamplerSrc, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_FALSE(errors.empty());
 }
 
@@ -6541,7 +6541,7 @@ kernels:
                                                             "some_kernel",
                                                             errors,
                                                             warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_FALSE(warnings.empty());
     EXPECT_TRUE(errors.empty()) << errors;
 }

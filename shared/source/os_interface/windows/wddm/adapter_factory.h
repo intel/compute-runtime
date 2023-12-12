@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,12 +30,12 @@ class AdapterFactory {
 
     struct AdapterDesc {
         enum class Type {
-            Unknown,
-            Hardware,
-            NotHardware
+            unknown,
+            hardware,
+            notHardware
         };
 
-        Type type = Type::Unknown;
+        Type type = Type::unknown;
         std::string driverDescription;
         uint32_t deviceId = {};
         LUID luid = {};

@@ -116,25 +116,25 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
     }
 
     enum class Index {
-        MockSubsystemVendor,
-        MockDevice,
-        MockVendor,
-        MockCount
+        mockSubsystemVendor,
+        mockDevice,
+        mockVendor,
+        mockCount
     };
 
     ze_result_t readResult = ZE_RESULT_SUCCESS;
-    std::string mockReadVal[static_cast<int>(Index::MockCount)] = {"0x8086", "0x3ea5", "0x8086"};
+    std::string mockReadVal[static_cast<int>(Index::mockCount)] = {"0x8086", "0x3ea5", "0x8086"};
     ze_result_t read(const std::string file, std::string &val) override {
         if (mockReadError != ZE_RESULT_SUCCESS) {
             return mockReadError;
         }
 
         if (file.compare(subsystemVendorFile) == 0) {
-            val = mockReadVal[static_cast<int>(Index::MockSubsystemVendor)];
+            val = mockReadVal[static_cast<int>(Index::mockSubsystemVendor)];
         } else if (file.compare(deviceFile) == 0) {
-            val = mockReadVal[static_cast<int>(Index::MockDevice)];
+            val = mockReadVal[static_cast<int>(Index::mockDevice)];
         } else if (file.compare(vendorFile) == 0) {
-            val = mockReadVal[static_cast<int>(Index::MockVendor)];
+            val = mockReadVal[static_cast<int>(Index::mockVendor)];
         } else if (file.compare("clients/8/pid") == 0) {
             val = bPid4;
         } else {

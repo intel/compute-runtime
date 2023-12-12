@@ -21,10 +21,10 @@
 #include "shared/test/common/test_macros/test.h"
 
 TEST(DecodeError, WhenStringRepresentationIsNeededThenAsStringEncodesProperly) {
-    EXPECT_STREQ("decoded successfully", NEO::asString(NEO::DecodeError::Success));
-    EXPECT_STREQ("in undefined status", NEO::asString(NEO::DecodeError::Undefined));
-    EXPECT_STREQ("with invalid binary", NEO::asString(NEO::DecodeError::InvalidBinary));
-    EXPECT_STREQ("with unhandled binary", NEO::asString(NEO::DecodeError::UnhandledBinary));
+    EXPECT_STREQ("decoded successfully", NEO::asString(NEO::DecodeError::success));
+    EXPECT_STREQ("in undefined status", NEO::asString(NEO::DecodeError::undefined));
+    EXPECT_STREQ("with invalid binary", NEO::asString(NEO::DecodeError::invalidBinary));
+    EXPECT_STREQ("with unhandled binary", NEO::asString(NEO::DecodeError::unhandledBinary));
 }
 
 TEST(IsAnyDeviceBinaryFormat, GivenNoneOfKnownFormatsThenReturnsFalse) {
@@ -283,7 +283,7 @@ TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, status);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Unknown format", decodeErrors.c_str());
@@ -302,7 +302,7 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DecodeError::success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_TRUE(decodeErrors.empty());
@@ -320,7 +320,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DecodeError::success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
@@ -338,7 +338,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSuccee
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DecodeError::success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
     EXPECT_NE(nullptr, programInfo.linkerInput.get());
@@ -363,7 +363,7 @@ TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, status);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::OclElf, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Device binary format is packed", decodeErrors.c_str());
@@ -382,7 +382,7 @@ TEST(DecodeSingleDeviceBinary, GivenArFormatThenDecodingFails) {
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, status);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Archive, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Device binary format is packed", decodeErrors.c_str());
@@ -423,7 +423,7 @@ kernels:
     NEO::DecodeError status;
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, status);
+    EXPECT_EQ(NEO::DecodeError::success, status);
     EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
     EXPECT_TRUE(decodeWarnings.empty());
 

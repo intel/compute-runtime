@@ -77,7 +77,7 @@ TEST(DxCoreAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     NEO::AdapterFactory::AdapterDesc adapterDesc;
     bool retreivedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
     EXPECT_TRUE(retreivedAdapterDesc);
-    EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::Hardware, adapterDesc.type);
+    EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::hardware, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
     EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
     EXPECT_EQ(0U, adapterDesc.luid.LowPart);
@@ -119,7 +119,7 @@ TEST(DxgiAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     NEO::AdapterFactory::AdapterDesc adapterDesc;
     bool retreivedAdapterDesc = adapterFactory.getAdapterDesc(0, adapterDesc);
     EXPECT_TRUE(retreivedAdapterDesc);
-    EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::Unknown, adapterDesc.type);
+    EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::unknown, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
     EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
     EXPECT_EQ(0U, adapterDesc.luid.LowPart);

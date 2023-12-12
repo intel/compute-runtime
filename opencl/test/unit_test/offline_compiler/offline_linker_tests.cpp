@@ -67,7 +67,7 @@ MockOfflineLinker::InputFileContent OfflineLinkerTest::createFileContent(const s
 TEST_F(OfflineLinkerTest, GivenDefaultConstructedLinkerThenRequiredFieldsHaveDefaultValues) {
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-    EXPECT_EQ(OperationMode::SKIP_EXECUTION, mockOfflineLinker.operationMode);
+    EXPECT_EQ(OperationMode::skipExecution, mockOfflineLinker.operationMode);
     EXPECT_EQ("linker_output", mockOfflineLinker.outputFilename);
     EXPECT_EQ(IGC::CodeType::llvmBc, mockOfflineLinker.outputFormat);
 }
@@ -189,7 +189,7 @@ TEST_F(OfflineLinkerTest, GivenHelpArgumentWhenParsingThenShowHelpOperationIsSet
     const auto result = mockOfflineLinker.parseCommand(argv.size(), argv);
 
     ASSERT_EQ(OCLOC_SUCCESS, result);
-    EXPECT_EQ(OperationMode::SHOW_HELP, mockOfflineLinker.operationMode);
+    EXPECT_EQ(OperationMode::showHelp, mockOfflineLinker.operationMode);
 }
 
 TEST_F(OfflineLinkerTest, GivenUnknownArgumentWhenParsingThenErrorIsReported) {
@@ -437,7 +437,7 @@ TEST_F(OfflineLinkerTest, GivenValidFilesWhenInitializationIsSuccessfulThenLinkM
     EXPECT_EQ(OCLOC_SUCCESS, initializationResult);
     EXPECT_TRUE(output.empty());
 
-    EXPECT_EQ(OperationMode::LINK_FILES, mockOfflineLinker.operationMode);
+    EXPECT_EQ(OperationMode::linkFiles, mockOfflineLinker.operationMode);
 }
 
 TEST_F(OfflineLinkerTest, GivenSPIRVandLLVMBCFilesWhenElfOutputIsRequestedThenElfWithSPIRVAndLLVMSectionsIsCreated) {
@@ -450,7 +450,7 @@ TEST_F(OfflineLinkerTest, GivenSPIRVandLLVMBCFilesWhenElfOutputIsRequestedThenEl
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
     mockOfflineLinker.outputFormat = IGC::CodeType::elf;
-    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+    mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
     const auto linkingResult{mockOfflineLinker.execute()};
     ASSERT_EQ(OCLOC_SUCCESS, linkingResult);
@@ -501,7 +501,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsWhenLlvmBcOutputIsRequested
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
-    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+    mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
     const auto linkingResult{mockOfflineLinker.execute()};
     ASSERT_EQ(OCLOC_SUCCESS, linkingResult);
@@ -534,7 +534,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndFailingIGCWhenLlvmBcOutp
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
-    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+    mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
     ::testing::internal::CaptureStdout();
     const auto linkingResult{mockOfflineLinker.execute()};
@@ -565,7 +565,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndIGCSignalingSuccessButRe
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
-    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+    mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
     ::testing::internal::CaptureStdout();
     const auto linkingResult{mockOfflineLinker.execute()};
@@ -596,7 +596,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndInvalidTranslationOutput
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
     mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
-    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+    mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
     ::testing::internal::CaptureStdout();
     const auto linkingResult{mockOfflineLinker.execute()};
@@ -622,7 +622,7 @@ TEST_F(OfflineLinkerTest, GivenUninitializedLinkerWhenExecuteIsInvokedThenErrorI
 
 TEST_F(OfflineLinkerTest, GivenHelpRequestWhenExecuteIsInvokedThenHelpIsPrinted) {
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
-    mockOfflineLinker.operationMode = OperationMode::SHOW_HELP;
+    mockOfflineLinker.operationMode = OperationMode::showHelp;
 
     ::testing::internal::CaptureStdout();
     const auto executionResult{mockOfflineLinker.execute()};

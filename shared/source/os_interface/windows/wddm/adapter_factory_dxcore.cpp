@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,7 @@ bool DxCoreAdapterFactory::getAdapterDesc(uint32_t ordinal, AdapterDesc &outAdap
     bool isHardware = false;
     hr = adapter->GetProperty(DXCoreAdapterProperty::IsHardware, &isHardware);
     DEBUG_BREAK_IF(S_OK != hr);
-    outAdapter.type = isHardware ? AdapterDesc::Type::Hardware : AdapterDesc::Type::NotHardware;
+    outAdapter.type = isHardware ? AdapterDesc::Type::hardware : AdapterDesc::Type::notHardware;
 
     static constexpr uint32_t maxDriverDescriptionStaticSize = 512;
     StackVec<char, maxDriverDescriptionStaticSize> driverDescription;

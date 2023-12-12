@@ -365,7 +365,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
     auto &fabricVertex0 = driverHandle->fabricVertices[0];
     {
-        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex0->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex0->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         auto &fabricSubDeviceIaf0 = fabricDeviceIaf->subDeviceIafs[0];
         fabricSubDeviceIaf0->connections.clear();
         fabricSubDeviceIaf0->connections = connection00To10;
@@ -378,13 +378,13 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
         // SubVertices
         auto &fabricVertex00 = fabricVertex0->subVertices[0];
-        auto fabricSubDeviceIaf00 = static_cast<FabricSubDeviceIaf *>(fabricVertex00->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricSubDeviceIaf00 = static_cast<FabricSubDeviceIaf *>(fabricVertex00->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         fabricSubDeviceIaf00->connections.clear();
         fabricSubDeviceIaf00->connections = connection00To10;
         fabricSubDeviceIaf00->guid = 0xA;
 
         auto &fabricVertex01 = fabricVertex0->subVertices[1];
-        auto fabricSubDeviceIaf01 = static_cast<FabricSubDeviceIaf *>(fabricVertex01->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricSubDeviceIaf01 = static_cast<FabricSubDeviceIaf *>(fabricVertex01->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         fabricSubDeviceIaf01->connections.clear();
         fabricSubDeviceIaf01->connections = connection01To11;
         fabricSubDeviceIaf01->guid = 0xAB;
@@ -392,7 +392,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
     auto fabricVertex1 = static_cast<FabricVertex *>(driverHandle->fabricVertices[1]);
     {
-        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         auto &fabricSubDeviceIaf0 = fabricDeviceIaf->subDeviceIafs[0];
         fabricSubDeviceIaf0->connections.clear();
         fabricSubDeviceIaf0->connections = connection10To00;
@@ -405,13 +405,13 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenCreatingEdgesT
 
         // SubVertices
         auto &fabricVertex00 = fabricVertex1->subVertices[0];
-        auto fabricSubDeviceIaf00 = static_cast<FabricSubDeviceIaf *>(fabricVertex00->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricSubDeviceIaf00 = static_cast<FabricSubDeviceIaf *>(fabricVertex00->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         fabricSubDeviceIaf00->connections.clear();
         fabricSubDeviceIaf00->connections = connection10To00;
         fabricSubDeviceIaf00->guid = 0xABC;
 
         auto &fabricVertex01 = fabricVertex1->subVertices[1];
-        auto fabricSubDeviceIaf01 = static_cast<FabricSubDeviceIaf *>(fabricVertex01->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricSubDeviceIaf01 = static_cast<FabricSubDeviceIaf *>(fabricVertex01->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         fabricSubDeviceIaf01->connections.clear();
         fabricSubDeviceIaf01->connections = connection11To01;
         fabricSubDeviceIaf01->guid = 0xABCD;
@@ -597,7 +597,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequest
 
     auto &fabricVertex0 = driverHandle->fabricVertices[0];
     {
-        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex0->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex0->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         auto &fabricSubDeviceIaf0 = fabricDeviceIaf->subDeviceIafs[0];
         fabricSubDeviceIaf0->connections.clear();
         fabricSubDeviceIaf0->connections = connection00To10;
@@ -606,7 +606,7 @@ TEST_F(FabricIafEdgeFixture, GivenMultipleDevicesAndSubDevicesWhenLatencyRequest
 
     auto fabricVertex1 = static_cast<FabricVertex *>(driverHandle->fabricVertices[1]);
     {
-        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        auto fabricDeviceIaf = static_cast<FabricDeviceIaf *>(fabricVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         auto &fabricSubDeviceIaf0 = fabricDeviceIaf->subDeviceIafs[0];
         fabricSubDeviceIaf0->connections.clear();
         fabricSubDeviceIaf0->connections = connection10To00;

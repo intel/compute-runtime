@@ -441,7 +441,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
                 continue;
             }
 
-            if (adapterDesc.type == AdapterFactory::AdapterDesc::Type::NotHardware) {
+            if (adapterDesc.type == AdapterFactory::AdapterDesc::Type::notHardware) {
                 continue;
             }
 

@@ -238,7 +238,7 @@ TEST(DecodeSingleDeviceBinaryOclElf, WhenUsedAsSingleDeviceBinaryThenDecodingFai
     std::string unpackWarnings;
     NEO::ProgramInfo programInfo;
     NEO::DecodeError error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(programInfo, deviceBinary, unpackErrors, unpackWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(unpackWarnings.empty());
     EXPECT_FALSE(unpackErrors.empty());
     EXPECT_STREQ("Device binary format is packed", unpackErrors.c_str());

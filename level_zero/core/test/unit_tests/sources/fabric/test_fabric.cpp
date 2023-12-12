@@ -444,7 +444,7 @@ TEST_F(FabricEdgeFixture, GivenMdfiLinksAreAvailableWhenEdgesAreCreatedThenVerif
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto &fabricSubVertex1 = driverHandle->fabricVertices[0]->subVertices[1];
-    auto fabricDeviceMdfi = static_cast<FabricDeviceMdfi *>(fabricSubVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Mdfi].get());
+    auto fabricDeviceMdfi = static_cast<FabricDeviceMdfi *>(fabricSubVertex1->pFabricDeviceInterfaces[FabricDeviceInterface::Type::mdfi].get());
 
     ze_fabric_edge_exp_properties_t unusedProperty = {};
     EXPECT_FALSE(fabricDeviceMdfi->getEdgeProperty(driverHandle->fabricVertices[0]->subVertices[0], unusedProperty));

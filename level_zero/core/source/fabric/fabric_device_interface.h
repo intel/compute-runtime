@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,8 @@ class FabricDeviceInterface {
 
   public:
     enum class Type {
-        Undefined,
-        Iaf,
-        Mdfi
+        iaf,
+        mdfi
     };
     virtual ~FabricDeviceInterface(){};
     virtual ze_result_t enumerate() = 0;

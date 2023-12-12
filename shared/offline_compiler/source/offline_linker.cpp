@@ -37,7 +37,7 @@ std::unique_ptr<OfflineLinker> OfflineLinker::create(size_t argsCount, const std
 }
 
 OfflineLinker::OfflineLinker(OclocArgHelper *argHelper, std::unique_ptr<OclocIgcFacade> igcFacade)
-    : argHelper{argHelper}, operationMode{OperationMode::SKIP_EXECUTION}, outputFilename{"linker_output"}, outputFormat{IGC::CodeType::llvmBc}, igcFacade{std::move(igcFacade)} {}
+    : argHelper{argHelper}, operationMode{OperationMode::skipExecution}, outputFilename{"linker_output"}, outputFormat{IGC::CodeType::llvmBc}, igcFacade{std::move(igcFacade)} {}
 
 OfflineLinker::~OfflineLinker() = default;
 
@@ -48,7 +48,7 @@ int OfflineLinker::initialize(size_t argsCount, const std::vector<std::string> &
     }
 
     // If a user requested help, then stop here.
-    if (operationMode == OperationMode::SHOW_HELP) {
+    if (operationMode == OperationMode::showHelp) {
         return OCLOC_SUCCESS;
     }
 
@@ -72,13 +72,13 @@ int OfflineLinker::initialize(size_t argsCount, const std::vector<std::string> &
         return igcPreparationResult;
     }
 
-    operationMode = OperationMode::LINK_FILES;
+    operationMode = OperationMode::linkFiles;
     return OCLOC_SUCCESS;
 }
 
 int OfflineLinker::parseCommand(size_t argsCount, const std::vector<std::string> &args) {
     if (argsCount < 2u) {
-        operationMode = OperationMode::SHOW_HELP;
+        operationMode = OperationMode::showHelp;
         return OCLOC_INVALID_COMMAND_LINE;
     }
 
@@ -104,7 +104,7 @@ int OfflineLinker::parseCommand(size_t argsCount, const std::vector<std::string>
             internalOptions = args[argIndex + 1];
             ++argIndex;
         } else if (currentArg == "--help") {
-            operationMode = OperationMode::SHOW_HELP;
+            operationMode = OperationMode::showHelp;
             return OCLOC_SUCCESS;
         } else {
             argHelper->printf("Invalid option (arg %zd): %s\n", argIndex, currentArg.c_str());
@@ -225,11 +225,11 @@ ArrayRef<const HardwareInfo *> OfflineLinker::getHardwareInfoTable() const {
 
 int OfflineLinker::execute() {
     switch (operationMode) {
-    case OperationMode::SHOW_HELP:
+    case OperationMode::showHelp:
         return showHelp();
-    case OperationMode::LINK_FILES:
+    case OperationMode::linkFiles:
         return link();
-    case OperationMode::SKIP_EXECUTION:
+    case OperationMode::skipExecution:
         [[fallthrough]];
     default:
         argHelper->printf("Error: Linker cannot be executed due to unsuccessful initialization!\n");

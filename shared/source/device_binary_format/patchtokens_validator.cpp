@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,19 +23,19 @@ bool allowUnhandledTokens = true;
 
 DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
                      std::string &outErrReason, std::string &outWarnings) {
-    if (decodedProgram.decodeStatus != DecodeError::Success) {
+    if (decodedProgram.decodeStatus != DecodeError::success) {
         outErrReason = "ProgramFromPatchtokens wasn't successfully decoded";
-        return DecodeError::InvalidBinary;
+        return DecodeError::invalidBinary;
     }
 
     if (decodedProgram.programScopeTokens.allocateConstantMemorySurface.size() > 1) {
         outErrReason = "Unhandled number of global constants surfaces > 1";
-        return DecodeError::UnhandledBinary;
+        return DecodeError::unhandledBinary;
     }
 
     if (decodedProgram.programScopeTokens.allocateGlobalMemorySurface.size() > 1) {
         outErrReason = "Unhandled number of global variables surfaces > 1";
-        return DecodeError::UnhandledBinary;
+        return DecodeError::unhandledBinary;
     }
 
     for (const auto &globalConstantPointerToken : decodedProgram.programScopeTokens.constantPointer) {
@@ -47,7 +47,7 @@ DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
 
         if (isUnhandled) {
             outErrReason = "Unhandled SPatchConstantPointerProgramBinaryInfo";
-            return DecodeError::UnhandledBinary;
+            return DecodeError::unhandledBinary;
         }
     }
 
@@ -60,7 +60,7 @@ DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
 
         if (isUnhandled) {
             outErrReason = "Unhandled SPatchGlobalPointerProgramBinaryInfo";
-            return DecodeError::UnhandledBinary;
+            return DecodeError::unhandledBinary;
         }
     }
 
@@ -69,36 +69,36 @@ DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
             outWarnings = "Unknown program-scope Patch Token : " + std::to_string(unhandledToken->Token);
         } else {
             outErrReason = "Unhandled required program-scope Patch Token : " + std::to_string(unhandledToken->Token);
-            return DecodeError::UnhandledBinary;
+            return DecodeError::unhandledBinary;
         }
     }
 
     UNRECOVERABLE_IF(nullptr == decodedProgram.header);
     if (decodedProgram.header->Version != CURRENT_ICBE_VERSION) {
         outErrReason = "Unhandled Version of Patchtokens: expected: " + std::to_string(CURRENT_ICBE_VERSION) + ", got: " + std::to_string(decodedProgram.header->Version);
-        return DecodeError::UnhandledBinary;
+        return DecodeError::unhandledBinary;
     }
 
     if ((decodedProgram.header->GPUPointerSizeInBytes != 4U) && (decodedProgram.header->GPUPointerSizeInBytes != 8U)) {
         outErrReason = "Invalid pointer size";
-        return DecodeError::UnhandledBinary;
+        return DecodeError::unhandledBinary;
     }
 
     for (const auto &decodedKernel : decodedProgram.kernels) {
-        if (decodedKernel.decodeStatus != DecodeError::Success) {
+        if (decodedKernel.decodeStatus != DecodeError::success) {
             outErrReason = "KernelFromPatchtokens wasn't successfully decoded";
-            return DecodeError::UnhandledBinary;
+            return DecodeError::unhandledBinary;
         }
 
         UNRECOVERABLE_IF(nullptr == decodedKernel.header);
         if (hasInvalidChecksum(decodedKernel)) {
             outErrReason = "KernelFromPatchtokens has invalid checksum";
-            return DecodeError::UnhandledBinary;
+            return DecodeError::unhandledBinary;
         }
 
         if (nullptr == decodedKernel.tokens.executionEnvironment) {
             outErrReason = "Missing execution environment";
-            return DecodeError::UnhandledBinary;
+            return DecodeError::unhandledBinary;
         } else {
             switch (decodedKernel.tokens.executionEnvironment->LargestCompiledSIMDSize) {
             case 1:
@@ -111,7 +111,7 @@ DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
                 break;
             default:
                 outErrReason = "Invalid LargestCompiledSIMDSize";
-                return DecodeError::UnhandledBinary;
+                return DecodeError::unhandledBinary;
             }
         }
 
@@ -123,12 +123,12 @@ DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
             auto accessQualifier = KernelArgMetadata::parseAccessQualifier(parseLimitedString(argInfoInlineData.accessQualifier.begin(), argInfoInlineData.accessQualifier.size()));
             if (KernelArgMetadata::AccessUnknown == accessQualifier) {
                 outErrReason = "Unhandled access qualifier";
-                return DecodeError::UnhandledBinary;
+                return DecodeError::unhandledBinary;
             }
             auto addressQualifier = KernelArgMetadata::parseAddressSpace(parseLimitedString(argInfoInlineData.addressQualifier.begin(), argInfoInlineData.addressQualifier.size()));
             if (KernelArgMetadata::AddrUnknown == addressQualifier) {
                 outErrReason = "Unhandled address qualifier";
-                return DecodeError::UnhandledBinary;
+                return DecodeError::unhandledBinary;
             }
         }
 
@@ -137,12 +137,12 @@ DecodeError validate(const ProgramFromPatchtokens &decodedProgram,
                 outWarnings = "Unknown kernel-scope Patch Token : " + std::to_string(unhandledToken->Token);
             } else {
                 outErrReason = "Unhandled required kernel-scope Patch Token : " + std::to_string(unhandledToken->Token);
-                return DecodeError::UnhandledBinary;
+                return DecodeError::unhandledBinary;
             }
         }
     }
 
-    return DecodeError::Success;
+    return DecodeError::success;
 }
 
 } // namespace PatchTokenBinary

@@ -642,10 +642,10 @@ HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDat
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), *reinterpret_cast<const uint32_t *>(pSamplerSnapWa));
 
     auto pSamplerAddressingMode = ptrOffset(crossThreadData, samplerArg.metadataPayload.samplerAddressingMode);
-    EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::AddressClampToBorder), *pSamplerAddressingMode);
+    EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::addressClampToBorder), *pSamplerAddressingMode);
 
     auto pSamplerNormalizedCoords = ptrOffset(crossThreadData, samplerArg.metadataPayload.samplerNormalizedCoords);
-    EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsTrue), *pSamplerNormalizedCoords);
+    EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::normalizedCoordsTrue), *pSamplerNormalizedCoords);
 }
 
 TEST_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThenSuccessIsReturned) {

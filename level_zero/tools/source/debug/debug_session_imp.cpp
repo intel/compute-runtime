@@ -372,7 +372,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     bool allThreadsRunning = true;
     auto physicalThread = convertToPhysicalWithinDevice(apiThread, deviceIndex);
     auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
-    Error retVal = Error::Unknown;
+    Error retVal = Error::unknown;
     uint64_t memoryHandle = EuThread::invalidHandle;
 
     std::vector<ze_device_thread_t> resumeThreads;
@@ -390,7 +390,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     }
 
     if (allThreadsRunning) {
-        return Error::ThreadsRunning;
+        return Error::threadsRunning;
     }
 
     std::unique_lock<std::mutex> lock(threadStateMutex);
@@ -440,7 +440,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     checkStoppedThreadsAndGenerateEvents(resumeThreadIds, memoryHandle, deviceIndex);
 
     if (sipCommandResult && result == ZE_RESULT_SUCCESS) {
-        retVal = Error::Success;
+        retVal = Error::success;
     }
 
     return retVal;
@@ -577,9 +577,9 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
 
         auto result = resumeThreadsWithinDevice(deviceIndex, thread);
 
-        if (result == Error::ThreadsRunning) {
+        if (result == Error::threadsRunning) {
             retVal = ZE_RESULT_ERROR_NOT_AVAILABLE;
-        } else if (result != Error::Success) {
+        } else if (result != Error::success) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     } else {
@@ -588,9 +588,9 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
         for (uint32_t deviceId = 0; deviceId < deviceCount; deviceId++) {
             auto result = resumeThreadsWithinDevice(deviceId, thread);
 
-            if (result == Error::ThreadsRunning) {
+            if (result == Error::threadsRunning) {
                 continue;
-            } else if (result != Error::Success) {
+            } else if (result != Error::success) {
                 retVal = ZE_RESULT_ERROR_UNKNOWN;
             }
             allThreadsRunning = false;

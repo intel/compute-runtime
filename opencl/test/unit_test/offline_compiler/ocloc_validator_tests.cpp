@@ -101,6 +101,6 @@ TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
-    EXPECT_EQ(static_cast<int>(NEO::DecodeError::InvalidBinary), res) << oclocStdout;
+    EXPECT_EQ(static_cast<int>(NEO::DecodeError::invalidBinary), res) << oclocStdout;
     EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected errors :\nNEO::Yaml : Could not parse line : [1] : [kernels ] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -")) << oclocStdout;
 }

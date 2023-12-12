@@ -226,7 +226,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
 
-    if (DecodeError::Success != decodeError) {
+    if (DecodeError::success != decodeError) {
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return CL_INVALID_BINARY;
     }
@@ -369,7 +369,7 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
         std::string errors{}, warnings{};
         auto zeInfo = Zebin::getZeInfoFromZebin(refBin, errors, warnings);
         auto decodeError = Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, zeInfo, errors, warnings);
-        if (NEO::DecodeError::Success != decodeError) {
+        if (NEO::DecodeError::success != decodeError) {
             PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
         }
     };

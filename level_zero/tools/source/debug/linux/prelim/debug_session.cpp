@@ -1279,7 +1279,7 @@ void DebugSessionLinuxi915::handleAttentionEvent(prelim_drm_i915_debug_event_eu_
     if (interruptSent) {
         std::unique_ptr<uint8_t[]> bitmask;
         size_t bitmaskSize;
-        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
+        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
         if (attReadResult == 0) {
             threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
         }
@@ -1503,16 +1503,16 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
 
     decltype(prelim_drm_i915_debug_eu_control::cmd) command = 0;
     switch (threadCmd) {
-    case ThreadControlCmd::InterruptAll:
+    case ThreadControlCmd::interruptAll:
         command = PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL;
         break;
-    case ThreadControlCmd::Interrupt:
+    case ThreadControlCmd::interrupt:
         command = PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT;
         break;
-    case ThreadControlCmd::Resume:
+    case ThreadControlCmd::resume:
         command = PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME;
         break;
-    case ThreadControlCmd::Stopped:
+    case ThreadControlCmd::stopped:
         command = PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED;
         break;
     }
@@ -1551,7 +1551,7 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
         }
     }
 
-    if (threadCmd == ThreadControlCmd::Stopped) {
+    if (threadCmd == ThreadControlCmd::stopped) {
         bitmaskOut = std::move(bitmask);
         bitmaskSizeOut = euControl.bitmask_size;
     }
@@ -1586,7 +1586,7 @@ void DebugSessionLinuxi915::checkStoppedThreadsAndGenerateEvents(const std::vect
 
         std::unique_ptr<uint8_t[]> bitmask;
         size_t bitmaskSize;
-        [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
+        [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
 
         // error querying STOPPED threads - no threads available ( for example: threads have completed )
         if (attReadResult != 0) {
@@ -1640,7 +1640,7 @@ ze_result_t DebugSessionLinuxi915::resumeImp(const std::vector<EuThread::ThreadI
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;
 
-    auto result = threadControl(threads, deviceIndex, ThreadControlCmd::Resume, bitmask, bitmaskSize);
+    auto result = threadControl(threads, deviceIndex, ThreadControlCmd::resume, bitmask, bitmaskSize);
 
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
 }
@@ -1649,7 +1649,7 @@ ze_result_t DebugSessionLinuxi915::interruptImp(uint32_t deviceIndex) {
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;
 
-    auto result = threadControl({}, deviceIndex, ThreadControlCmd::InterruptAll, bitmask, bitmaskSize);
+    auto result = threadControl({}, deviceIndex, ThreadControlCmd::interruptAll, bitmask, bitmaskSize);
 
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
 }

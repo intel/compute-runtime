@@ -33,9 +33,9 @@ namespace L0 {
 struct DebugSessionImp : DebugSession {
 
     enum class Error {
-        Success,
-        ThreadsRunning,
-        Unknown
+        success,
+        threadsRunning,
+        unknown
     };
 
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {

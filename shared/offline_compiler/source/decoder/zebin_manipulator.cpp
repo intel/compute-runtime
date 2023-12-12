@@ -476,7 +476,7 @@ std::vector<NEO::Zebin::Elf::IntelGTNote> ZebinEncoder<numBits>::getIntelGTNotes
     auto refIntelGTNotesSection = ArrayRef<const uint8_t>::fromAny(intelGtNotesSection.data(), intelGtNotesSection.size());
     auto decodeError = NEO::Zebin::decodeIntelGTNoteSection<numBits>(refIntelGTNotesSection, intelGTNotes, errors, warnings);
     argHelper->printf(warnings.c_str());
-    if (decodeError != NEO::DecodeError::Success) {
+    if (decodeError != NEO::DecodeError::success) {
         argHelper->printf(errors.c_str());
     }
     return intelGTNotes;

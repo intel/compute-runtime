@@ -257,7 +257,7 @@ bool FabricSubDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex,
 
         std::vector<ze_fabric_edge_exp_properties_t> subEdgeProperties = {};
 
-        FabricDeviceIaf *deviceIaf = static_cast<FabricDeviceIaf *>(neighborVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+        FabricDeviceIaf *deviceIaf = static_cast<FabricDeviceIaf *>(neighborVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         // Get the edges to the neighbors subVertices
         for (auto &subDeviceIaf : deviceIaf->subDeviceIafs) {
             ze_fabric_edge_exp_properties_t edgeProperty = {};
@@ -294,7 +294,7 @@ bool FabricSubDeviceIaf::getEdgeProperty(FabricVertex *neighborVertex,
         }
     } else {
         FabricSubDeviceIaf *pNeighbourInterface =
-            static_cast<FabricSubDeviceIaf *>(neighborVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::Iaf].get());
+            static_cast<FabricSubDeviceIaf *>(neighborVertex->pFabricDeviceInterfaces[FabricDeviceInterface::Type::iaf].get());
         isConnected = getEdgeProperty(pNeighbourInterface, edgeProperty);
     }
 

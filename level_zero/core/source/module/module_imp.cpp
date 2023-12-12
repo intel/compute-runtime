@@ -378,7 +378,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
 
-    if (NEO::DecodeError::Success != decodeError) {
+    if (NEO::DecodeError::success != decodeError) {
         driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;

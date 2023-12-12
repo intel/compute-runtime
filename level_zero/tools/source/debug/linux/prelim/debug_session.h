@@ -177,10 +177,10 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
   protected:
     enum class ThreadControlCmd {
-        Interrupt,
-        Resume,
-        Stopped,
-        InterruptAll
+        interrupt,
+        resume,
+        stopped,
+        interruptAll
     };
 
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);

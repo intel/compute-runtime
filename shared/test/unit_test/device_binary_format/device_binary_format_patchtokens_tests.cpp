@@ -139,7 +139,7 @@ TEST(DecodeSingleDeviceBinaryPatchtokens, GivenInvalidBinaryThenReturnError) {
     std::string decodeErrors;
     std::string decodeWarnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
     EXPECT_STREQ("ProgramFromPatchtokens wasn't successfully decoded", decodeErrors.c_str());
@@ -156,7 +156,7 @@ TEST(DecodeSingleDeviceBinaryPatchtokens, GivenValidBinaryThenOutputIsProperlyPo
     std::string decodeErrors;
     std::string decodeWarnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_TRUE(decodeErrors.empty());
     ASSERT_EQ(1U, programInfo.kernelInfos.size());
