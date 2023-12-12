@@ -27,15 +27,15 @@ HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUse32BitHeapCalledThenTrueR
 
 HWTEST_F(AlocationHelperTests, givenKernelIsaTypeWhenUseIternalAllocatorThenUseHeapInternal) {
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::kernelIsa, true, *defaultHwInfo, false);
-    EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
+    EXPECT_EQ(heapIndex, NEO::HeapIndex::heapInternalDeviceMemory);
 
     heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::kernelIsaInternal, true, *defaultHwInfo, false);
-    EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
+    EXPECT_EQ(heapIndex, NEO::HeapIndex::heapInternalDeviceMemory);
 }
 
 HWTEST_F(AlocationHelperTests, givenNotInternalTypeWhenUseIternalAllocatorThenUseHeapExternal) {
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::linearStream, true, *defaultHwInfo, false);
-    EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
+    EXPECT_EQ(heapIndex, NEO::HeapIndex::heapExternalDeviceMemory);
 }
 
 HWTEST_F(AlocationHelperTests, givenKernelIsaTypesWhenUseInternalAllocatorCalledThenTrueReturned) {

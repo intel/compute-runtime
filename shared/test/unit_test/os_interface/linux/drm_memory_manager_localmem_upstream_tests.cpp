@@ -606,20 +606,20 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDev
             auto gmmHelper = device->getGmmHelper();
             if (allocation->getAllocationType() == AllocationType::svmGpu) {
                 if (!memoryManager->isLimitedRange(0)) {
-                    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_SVM)), gpuAddress);
-                    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM)), gpuAddress);
+                    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapSvm)), gpuAddress);
+                    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapSvm)), gpuAddress);
                 }
             } else if (memoryManager->heapAssigners[rootDeviceIndex]->useInternal32BitHeap(allocation->getAllocationType())) {
-                EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), gpuAddress);
-                EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), gpuAddress);
+                EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapInternalDeviceMemory)), gpuAddress);
+                EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapInternalDeviceMemory)), gpuAddress);
             } else {
                 const bool prefer2MBAlignment = allocation->getUnderlyingBufferSize() >= 2 * MemoryConstants::megaByte;
 
-                auto heap = HeapIndex::HEAP_STANDARD64KB;
+                auto heap = HeapIndex::heapStandard64KB;
                 if (prefer2MBAlignment) {
-                    heap = HeapIndex::HEAP_STANDARD2MB;
-                } else if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !allocData.flags.resource48Bit) {
-                    heap = HeapIndex::HEAP_EXTENDED;
+                    heap = HeapIndex::heapStandard2MB;
+                } else if (memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExtended) > 0 && !allocData.flags.resource48Bit) {
+                    heap = HeapIndex::heapExtended;
                 }
 
                 EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(heap)), gpuAddress);

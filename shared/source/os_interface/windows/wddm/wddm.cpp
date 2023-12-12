@@ -1164,16 +1164,16 @@ bool Wddm::isGpuHangDetected(OsContext &osContext) {
 
 void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) const {
     if (gfxPartition.SVM.Limit != 0) {
-        outGfxPartition.heapInit(HeapIndex::HEAP_SVM, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1);
+        outGfxPartition.heapInit(HeapIndex::heapSvm, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1);
     } else if (is32bit) {
-        outGfxPartition.heapInit(HeapIndex::HEAP_SVM, 0x0ull, 4 * MemoryConstants::gigaByte);
+        outGfxPartition.heapInit(HeapIndex::heapSvm, 0x0ull, 4 * MemoryConstants::gigaByte);
     }
 
-    outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD, gfxPartition.Standard.Base, gfxPartition.Standard.Limit - gfxPartition.Standard.Base + 1);
+    outGfxPartition.heapInit(HeapIndex::heapStandard, gfxPartition.Standard.Base, gfxPartition.Standard.Limit - gfxPartition.Standard.Base + 1);
 
     // Split HEAP_STANDARD64K among root devices
     auto gfxStandard64KBSize = alignDown((gfxPartition.Standard64KB.Limit - gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
-    outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD64KB, gfxPartition.Standard64KB.Base + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize);
+    outGfxPartition.heapInit(HeapIndex::heapStandard64KB, gfxPartition.Standard64KB.Base + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize);
 
     for (auto heap : GfxPartition::heap32Names) {
         if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {

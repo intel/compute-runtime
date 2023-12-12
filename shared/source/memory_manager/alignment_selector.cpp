@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ bool operator==(const AlignmentSelector::CandidateAlignment &lhs, const Alignmen
 }
 
 void AlignmentSelector::addCandidateAlignment(size_t alignment, bool applyForSmallerSize, float maxMemoryWastage) {
-    this->addCandidateAlignment(alignment, applyForSmallerSize, maxMemoryWastage, HeapIndex::TOTAL_HEAPS);
+    this->addCandidateAlignment(alignment, applyForSmallerSize, maxMemoryWastage, HeapIndex::totalHeaps);
 }
 
 void AlignmentSelector::addCandidateAlignment(size_t alignment, bool applyForSmallerSize, float maxMemoryWastage, HeapIndex heap) {

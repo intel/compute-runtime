@@ -74,11 +74,11 @@ class MockGfxPartition : public GfxPartition {
     uint32_t freeGpuAddressRangeCalled = 0u;
     bool callBasefreeGpuAddressRange = false;
 
-    static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> allHeapNames;
+    static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::totalHeaps)> allHeapNames;
 
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     bool callHeapAllocate = true;
-    HeapIndex heapAllocateIndex = HeapIndex::TOTAL_HEAPS;
+    HeapIndex heapAllocateIndex = HeapIndex::totalHeaps;
     const uint64_t mockGpuVa = std::numeric_limits<uint64_t>::max();
     uint64_t heapFreePtr = 0;
 };

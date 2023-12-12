@@ -1189,9 +1189,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapCalledThenCorrectHeapReturned) {
-    HeapIndex heap = HeapIndex::HEAP_STANDARD;
+    HeapIndex heap = HeapIndex::heapStandard;
     auto alignment = memoryManager->selectAlignmentAndHeap(MemoryConstants::pageSize64k, &heap);
-    EXPECT_EQ(heap, HeapIndex::HEAP_STANDARD64KB);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
     EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
 }
 
@@ -1199,9 +1199,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReserv
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 1;
-    HeapIndex heap = HeapIndex::HEAP_STANDARD;
+    HeapIndex heap = HeapIndex::heapStandard;
     auto alignment = memoryManager->selectAlignmentAndHeap(MemoryConstants::pageSize64k, &heap);
-    EXPECT_EQ(heap, HeapIndex::HEAP_STANDARD64KB);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
     EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
     auto addressRange = memoryManager->reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize64k, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
     auto gmmHelper = memoryManager->getGmmHelper(0);
@@ -1346,8 +1346,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
     auto gmmSize = allocation.getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
     auto lastRequiredAddress = (numGmms - 1) * gmmSize + gpuPreferredVa;
     EXPECT_EQ(lastRequiredAddress, wddm->mapGpuVirtualAddressResult.uint64ParamPassed);
-    EXPECT_GT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_SVM));
-    EXPECT_LT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM));
+    EXPECT_GT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapSvm));
+    EXPECT_LT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapSvm));
 
     wddm->destroyAllocation(&allocation, nullptr);
 }
@@ -1400,7 +1400,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentPro
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getDriverAllocatedCpuPtr());
-    // limited platforms will not use heap HeapIndex::HEAP_SVM
+    // limited platforms will not use heap HeapIndex::heapSvm
     if (executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
         EXPECT_EQ(alignUp(allocation->getReservedAddressPtr(), size), reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
@@ -1461,8 +1461,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
     EXPECT_EQ(0ULL, gpuAddress & 0xffFFffF000000000);
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAddress);
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAddress);
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExternal)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExternal)), gpuAddress);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -1618,8 +1618,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingMemoryI
     EXPECT_TRUE(buffer->isAllocatedInLocalMemoryPool());
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
-    auto heapBase = gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB));
-    auto heapLimit = gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB));
+    auto heapBase = gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard64KB));
+    auto heapLimit = gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB));
 
     EXPECT_NE(0u, buffer->getGpuAddress());
 
@@ -1635,8 +1635,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingMemoryI
 
 TEST_F(WddmMemoryManagerSimpleTest, whenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
     std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-        {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
-        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+        {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::totalHeaps},
+        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::totalHeaps},
     };
 
     MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
@@ -1648,7 +1648,7 @@ TEST_F(WddmMemoryManagerSimpleTest, given2MbPagesDisabledWhenWddmMemoryManagerIs
     debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
 
     std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+        {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::totalHeaps},
     };
 
     MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
@@ -1661,9 +1661,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     {
         debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(MemoryConstants::megaByte);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-            {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
-            {MemoryConstants::megaByte, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
-            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+            {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::totalHeaps},
+            {MemoryConstants::megaByte, false, AlignmentSelector::anyWastage, HeapIndex::totalHeaps},
+            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::totalHeaps},
         };
         MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
         EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
@@ -1672,9 +1672,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentWhenWddmMemoryManagerIsC
     {
         debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.set(2 * MemoryConstants::pageSize2M);
         std::vector<AlignmentSelector::CandidateAlignment> expectedAlignments = {
-            {2 * MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
-            {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::TOTAL_HEAPS},
-            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::TOTAL_HEAPS},
+            {2 * MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::totalHeaps},
+            {MemoryConstants::pageSize2M, false, 0.1f, HeapIndex::totalHeaps},
+            {MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::totalHeaps},
         };
         MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
         EXPECT_EQ(expectedAlignments, memoryManager.alignmentSelector.peekCandidateAlignments());
@@ -2256,7 +2256,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmGpuAllocationWhenHostPtrProvidedThen
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
-    // limited platforms will not use heap HeapIndex::HEAP_SVM
+    // limited platforms will not use heap HeapIndex::heapSvm
     if (executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
         EXPECT_EQ(svmPtr, reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
@@ -2793,8 +2793,8 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, true, size, AllocationType::buffer, mockDeviceBitfield}, ptr);
 
     auto gfxPartition = memoryManager->getGfxPartition(mockRootDeviceIndex);
-    D3DGPU_VIRTUAL_ADDRESS svmRangeMinimumAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_SVM);
-    D3DGPU_VIRTUAL_ADDRESS svmRangeMaximumAddress = gfxPartition->getHeapLimit(HeapIndex::HEAP_SVM);
+    D3DGPU_VIRTUAL_ADDRESS svmRangeMinimumAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::heapSvm);
+    D3DGPU_VIRTUAL_ADDRESS svmRangeMaximumAddress = gfxPartition->getHeapLimit(HeapIndex::heapSvm);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager->allocationGraphicsMemory64kbCreated);
@@ -2945,8 +2945,8 @@ TEST_F(WddmMemoryManagerTest, GivenNullptrWhenAllocating32BitMemoryThenAddressIs
     ASSERT_NE(nullptr, gpuAllocation);
 
     auto gmmHelper = memoryManager->getGmmHelper(gpuAllocation->getRootDeviceIndex());
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress());
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -2959,8 +2959,8 @@ TEST_F(WddmMemoryManagerTest, given32BitAllocationWhenItIsCreatedThenItHasNonZer
     EXPECT_NE(0llu, gpuAllocation->getGpuAddressToPatch());
 
     auto gmmHelper = memoryManager->getGmmHelper(gpuAllocation->getRootDeviceIndex());
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress());
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
@@ -2975,8 +2975,8 @@ TEST_F(WddmMemoryManagerTest, GivenMisalignedHostPtrWhenAllocating32BitMemoryThe
     EXPECT_EQ(alignSizeWholePage(misalignedPtr, misalignedSize), gpuAllocation->getUnderlyingBufferSize());
 
     auto gmmHelper = memoryManager->getGmmHelper(gpuAllocation->getRootDeviceIndex());
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress());
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
 
@@ -3188,7 +3188,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerAnd32bitBuildThenSvmPartitionIsAlwaysInitialized) {
     if (is32bit) {
-        EXPECT_EQ(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM), MemoryConstants::max32BitAddress);
+        EXPECT_EQ(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapSvm), MemoryConstants::max32BitAddress);
     }
 }
 
@@ -3975,7 +3975,7 @@ TEST(WddmMemoryManagerTest3, givenDefaultWddmMemoryManagerWhenItIsQueriedForInte
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     wddm->init();
     MockWddmMemoryManager memoryManager(executionEnvironment);
-    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
+    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory)].Base;
     heapBase = std::max(heapBase, static_cast<uint64_t>(wddm->getWddmMinAddress()));
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress(0, true));
 }

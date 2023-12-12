@@ -1924,21 +1924,21 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSupportedTypeWhenAllocatingIn
             auto gmmHelper = device->getGmmHelper();
             if (allocation->getAllocationType() == AllocationType::svmGpu) {
                 if (!memoryManager->isLimitedRange(0)) {
-                    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_SVM)), gpuAddress);
-                    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM)), gpuAddress);
+                    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapSvm)), gpuAddress);
+                    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapSvm)), gpuAddress);
                 }
             } else if (memoryManager->heapAssigners[rootDeviceIndex]->useInternal32BitHeap(allocation->getAllocationType())) {
-                EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), gpuAddress);
-                EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), gpuAddress);
+                EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapInternalDeviceMemory)), gpuAddress);
+                EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapInternalDeviceMemory)), gpuAddress);
             } else {
                 const bool prefer2MBAlignment = allocation->getUnderlyingBufferSize() >= 2 * MemoryConstants::megaByte;
-                const bool prefer57bitAddressing = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !allocData.flags.resource48Bit;
+                const bool prefer57bitAddressing = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExtended) > 0 && !allocData.flags.resource48Bit;
 
-                auto heap = HeapIndex::HEAP_STANDARD64KB;
+                auto heap = HeapIndex::heapStandard64KB;
                 if (prefer2MBAlignment) {
-                    heap = HeapIndex::HEAP_STANDARD2MB;
+                    heap = HeapIndex::heapStandard2MB;
                 } else if (prefer57bitAddressing) {
-                    heap = HeapIndex::HEAP_EXTENDED;
+                    heap = HeapIndex::heapExtended;
                 }
 
                 EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(heap)), gpuAddress);
@@ -2095,10 +2095,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDebugModuleAreaTypeWhenAlloca
 
     auto gpuAddress = moduleDebugArea->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_LE(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)), gpuAddress);
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)), gpuAddress);
-    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)), moduleDebugArea->getGpuBaseAddress());
-    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), moduleDebugArea->getGpuBaseAddress());
+    EXPECT_LE(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapInternalDeviceFrontWindow)), gpuAddress);
+    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow)), moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceMemory)), moduleDebugArea->getGpuBaseAddress());
     EXPECT_EQ(MemoryPool::LocalMemory, moduleDebugArea->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(moduleDebugArea);
@@ -2113,10 +2113,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSipKernelTypeWhenAllocatingTh
 
     auto gpuAddress = sipAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_LE(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)), gpuAddress);
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)), gpuAddress);
-    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)), sipAllocation->getGpuBaseAddress());
-    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)), sipAllocation->getGpuBaseAddress());
+    EXPECT_LE(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapInternalDeviceFrontWindow)), gpuAddress);
+    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow)), sipAllocation->getGpuBaseAddress());
+    EXPECT_EQ(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapInternalDeviceMemory)), sipAllocation->getGpuBaseAddress());
     EXPECT_EQ(MemoryPool::LocalMemory, sipAllocation->getMemoryPool());
 
     memoryManager->freeGraphicsMemory(sipAllocation);
@@ -2535,8 +2535,8 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    const bool prefer57bitAddressing = memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0;
-    const auto expectedHeap = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
+    const bool prefer57bitAddressing = memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapExtended) > 0;
+    const auto expectedHeap = prefer57bitAddressing ? HeapIndex::heapExtended : HeapIndex::heapStandard2MB;
 
     auto gpuAddress = graphicsAllocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
@@ -3004,7 +3004,7 @@ class DrmMemoryManagerAllocation57BitTest : public DrmMemoryManagerLocalMemoryPr
 };
 
 TEST_P(DrmMemoryManagerAllocation57BitTest, givenAllocationTypeHaveToBeAllocatedAs57BitThenHeapExtendedIsUsed) {
-    if (0 == memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED)) {
+    if (0 == memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExtended)) {
         GTEST_SKIP();
     }
 
@@ -3013,8 +3013,8 @@ TEST_P(DrmMemoryManagerAllocation57BitTest, givenAllocationTypeHaveToBeAllocated
 
     auto gpuAddress = allocation->getGpuAddress();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTENDED)), gpuAddress);
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED)), gpuAddress);
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExtended)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExtended)), gpuAddress);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

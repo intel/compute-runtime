@@ -37,17 +37,17 @@ bool HeapAssigner::useExternal32BitHeap(AllocationType allocType) {
 }
 
 bool HeapAssigner::heapTypeExternalWithFrontWindowPool(HeapIndex heap) {
-    return heap == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY || heap == HeapIndex::HEAP_EXTERNAL;
+    return heap == HeapIndex::heapExternalDeviceMemory || heap == HeapIndex::heapExternal;
 }
 
 HeapIndex HeapAssigner::mapExternalWindowIndex(HeapIndex index) {
-    auto retIndex = HeapIndex::TOTAL_HEAPS;
+    auto retIndex = HeapIndex::totalHeaps;
     switch (index) {
-    case HeapIndex::HEAP_EXTERNAL:
-        retIndex = HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW;
+    case HeapIndex::heapExternal:
+        retIndex = HeapIndex::heapExternalFrontWindow;
         break;
-    case HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY:
-        retIndex = HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW;
+    case HeapIndex::heapExternalDeviceMemory:
+        retIndex = HeapIndex::heapExternalDeviceFrontWindow;
         break;
     default:
         UNRECOVERABLE_IF(true);
@@ -57,13 +57,13 @@ HeapIndex HeapAssigner::mapExternalWindowIndex(HeapIndex index) {
 }
 
 HeapIndex HeapAssigner::mapInternalWindowIndex(HeapIndex index) {
-    auto retIndex = HeapIndex::TOTAL_HEAPS;
+    auto retIndex = HeapIndex::totalHeaps;
     switch (index) {
-    case HeapIndex::HEAP_INTERNAL:
-        retIndex = HeapIndex::HEAP_INTERNAL_FRONT_WINDOW;
+    case HeapIndex::heapInternal:
+        retIndex = HeapIndex::heapInternalFrontWindow;
         break;
-    case HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY:
-        retIndex = HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW;
+    case HeapIndex::heapInternalDeviceMemory:
+        retIndex = HeapIndex::heapInternalDeviceFrontWindow;
         break;
     default:
         UNRECOVERABLE_IF(true);
@@ -73,7 +73,7 @@ HeapIndex HeapAssigner::mapInternalWindowIndex(HeapIndex index) {
 }
 
 bool HeapAssigner::isInternalHeap(HeapIndex heap) {
-    return heap == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY || heap == HeapIndex::HEAP_INTERNAL;
+    return heap == HeapIndex::heapInternalDeviceMemory || heap == HeapIndex::heapInternal;
 }
 
 } // namespace NEO

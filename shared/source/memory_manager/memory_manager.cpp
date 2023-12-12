@@ -120,10 +120,10 @@ GmmHelper *MemoryManager::getGmmHelper(uint32_t rootDeviceIndex) {
 }
 
 HeapIndex MemoryManager::selectInternalHeap(bool useLocalMemory) {
-    return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL;
+    return useLocalMemory ? HeapIndex::heapInternalDeviceMemory : HeapIndex::heapInternal;
 }
 HeapIndex MemoryManager::selectExternalHeap(bool useLocalMemory) {
-    return useLocalMemory ? HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL;
+    return useLocalMemory ? HeapIndex::heapExternalDeviceMemory : HeapIndex::heapExternal;
 }
 
 void MemoryManager::zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
@@ -771,15 +771,15 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool h
     }
     if (isFullRangeSVM) {
         if (hasPointer) {
-            return HeapIndex::HEAP_SVM;
+            return HeapIndex::heapSvm;
         }
         if (allocation && allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
-            return HeapIndex::HEAP_STANDARD64KB;
+            return HeapIndex::heapStandard64KB;
         }
-        return HeapIndex::HEAP_STANDARD;
+        return HeapIndex::heapStandard;
     }
     // Limited range allocation goes to STANDARD heap
-    return HeapIndex::HEAP_STANDARD;
+    return HeapIndex::heapStandard;
 }
 
 bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {

@@ -60,13 +60,13 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
 
-    alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD64KB);
+    alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::heapStandard64KB);
     if (debugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
-        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::HEAP_STANDARD2MB);
+        alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize2M, false, AlignmentSelector::anyWastage, HeapIndex::heapStandard2MB);
     }
     const size_t customAlignment = static_cast<size_t>(debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
     if (customAlignment > 0) {
-        const auto heapIndex = customAlignment >= MemoryConstants::pageSize2M ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD64KB;
+        const auto heapIndex = customAlignment >= MemoryConstants::pageSize2M ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
         alignmentSelector.addCandidateAlignment(customAlignment, true, AlignmentSelector::anyWastage, heapIndex);
     }
 
@@ -121,7 +121,7 @@ BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDevice
         if (bo) {
             if (isLimitedRange(rootDeviceIndex)) {
                 auto boSize = bo->peekSize();
-                bo->setAddress(acquireGpuRange(boSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD));
+                bo->setAddress(acquireGpuRange(boSize, rootDeviceIndex, HeapIndex::heapStandard));
                 UNRECOVERABLE_IF(boSize < bo->peekSize());
             }
         } else {
@@ -353,7 +353,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
-        gpuReservationAddress = acquireGpuRange(alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        gpuReservationAddress = acquireGpuRange(alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
         if (!gpuReservationAddress) {
             return nullptr;
         }
@@ -435,7 +435,7 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
     uint64_t gpuAddress = 0;
     auto svmCpuAllocation = allocationData.type == AllocationType::svmCpu;
     if (isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) {
-        gpuAddress = acquireGpuRange(cSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        gpuAddress = acquireGpuRange(cSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
         if (!gpuAddress) {
             return nullptr;
         }
@@ -519,7 +519,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
 
     alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);
-    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize2M);
+    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize2M);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
@@ -629,7 +629,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
                                      allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper), systemMemoryStorageInfo, gmmRequirements);
     size_t bufferSize = allocationData.size;
-    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB, allocationData.alignment);
+    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard64KB, allocationData.alignment);
 
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
@@ -665,7 +665,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     const auto memoryPool = MemoryPool::SystemCpuInaccessible;
 
-    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
 
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
@@ -845,8 +845,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         gpuRange = reinterpret_cast<uint64_t>(mapPointer);
     } else {
         auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
-        auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
-        auto heapIndex = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
+        auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0);
+        auto heapIndex = prefer57bitAddressing ? HeapIndex::heapExtended : HeapIndex::heapStandard2MB;
         gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
     }
 
@@ -998,20 +998,20 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
         auto getHeapIndex = [&] {
             if (requireSpecificBitness && this->force32bitAllocations) {
-                return HeapIndex::HEAP_EXTERNAL;
+                return HeapIndex::heapExternal;
             }
 
             auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
-            auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
+            auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0);
             if (prefer57bitAddressing) {
-                return HeapIndex::HEAP_EXTENDED;
+                return HeapIndex::heapExtended;
             }
 
             if (isLocalMemorySupported(properties.rootDeviceIndex)) {
-                return HeapIndex::HEAP_STANDARD2MB;
+                return HeapIndex::heapStandard2MB;
             }
 
-            return HeapIndex::HEAP_STANDARD;
+            return HeapIndex::heapStandard;
         };
 
         if (mapPointer) {
@@ -1374,7 +1374,7 @@ size_t DrmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
     // If all devices can support HEAP EXTENDED, then that heap is used, otherwise the HEAP based on the size is used.
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceCount; rootDeviceIndex++) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0) {
+        if (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0) {
             auto alignSize = size >= 8 * MemoryConstants::gigaByte && Math::isPow2(size);
             if (debugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
                 alignSize = !!debugManager.flags.UseHighAlignmentForHeapExtended.get();
@@ -1384,7 +1384,7 @@ size_t DrmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
                 pageSizeAlignment = Math::prevPowerOfTwo(size);
             }
 
-            *heap = HeapIndex::HEAP_EXTENDED;
+            *heap = HeapIndex::heapExtended;
         } else {
             pageSizeAlignment = alignmentBase.alignment;
             *heap = alignmentBase.heap;
@@ -1395,14 +1395,14 @@ size_t DrmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
 }
 
 AddressRange DrmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
-    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize64k);
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize64k);
 }
 
 AddressRange DrmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
     for (auto rootDeviceIndex : rootDeviceIndices) {
-        if (heap == HeapIndex::HEAP_EXTENDED) {
+        if (heap == HeapIndex::heapExtended) {
             gpuVa = acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heap, alignment);
         } else {
             gpuVa = acquireGpuRange(size, rootDeviceIndex, heap);
@@ -1649,13 +1649,13 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
         break;
     default:
         if (heapAssigner.useExternal32BitHeap(allocType)) {
-            auto heapIndex = allocationData.flags.use32BitFrontWindow ? HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY) : HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY;
+            auto heapIndex = allocationData.flags.use32BitFrontWindow ? HeapAssigner::mapExternalWindowIndex(HeapIndex::heapExternalDeviceMemory) : HeapIndex::heapExternalDeviceMemory;
             gpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, sizeAllocated, std::max(allocationData.alignment, MemoryConstants::pageSize64k)));
             break;
         }
 
         AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(sizeAllocated);
-        if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !allocationData.flags.resource48Bit) {
+        if (gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0 && !allocationData.flags.resource48Bit) {
             auto alignSize = sizeAllocated >= 8 * MemoryConstants::gigaByte && Math::isPow2(sizeAllocated);
             if (debugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
                 alignSize = !!debugManager.flags.UseHighAlignmentForHeapExtended.get();
@@ -1665,7 +1665,7 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
                 alignment.alignment = Math::prevPowerOfTwo(sizeAllocated);
             }
 
-            alignment.heap = HeapIndex::HEAP_EXTENDED;
+            alignment.heap = HeapIndex::heapExtended;
         }
         if (alignment.alignment < allocationData.alignment) {
             alignment.alignment = allocationData.alignment;
@@ -2139,9 +2139,9 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         uint64_t preferredAddress = 0;
         auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
         auto canAllocateInHeapExtended = debugManager.flags.AllocateHostAllocationsInHeapExtendedHost.get();
-        if (canAllocateInHeapExtended && allocationData.flags.isUSMHostAllocation && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST) > 0u) {
+        if (canAllocateInHeapExtended && allocationData.flags.isUSMHostAllocation && gfxPartition->getHeapLimit(HeapIndex::heapExtendedHost) > 0u) {
 
-            preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED_HOST);
+            preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::heapExtendedHost);
         }
 
         auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -2293,8 +2293,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     uint64_t preferredAddress = 0;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
     auto canAllocateInHeapExtended = debugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.get();
-    if (canAllocateInHeapExtended && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED_HOST) > 0u && !allocationData.flags.resource48Bit) {
-        preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED_HOST);
+    if (canAllocateInHeapExtended && gfxPartition->getHeapLimit(HeapIndex::heapExtendedHost) > 0u && !allocationData.flags.resource48Bit) {
+        preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::heapExtendedHost);
     }
 
     auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);

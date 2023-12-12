@@ -245,14 +245,14 @@ HWTEST_F(MemoryManagerTests, givenDefaultHwInfoWhenAllocatingDebugAreaThenHeapIn
     auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto systemMemoryPlacement = gfxCoreHelper.useSystemMemoryPlacementForISA(*defaultHwInfo);
 
-    HeapIndex expectedHeap = HeapIndex::TOTAL_HEAPS;
-    HeapIndex baseHeap = HeapIndex::TOTAL_HEAPS;
+    HeapIndex expectedHeap = HeapIndex::totalHeaps;
+    HeapIndex baseHeap = HeapIndex::totalHeaps;
     if (systemMemoryPlacement) {
-        expectedHeap = HeapIndex::HEAP_INTERNAL_FRONT_WINDOW;
-        baseHeap = HeapIndex::HEAP_INTERNAL;
+        expectedHeap = HeapIndex::heapInternalFrontWindow;
+        baseHeap = HeapIndex::heapInternal;
     } else {
-        expectedHeap = HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW;
-        baseHeap = HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+        expectedHeap = HeapIndex::heapInternalDeviceFrontWindow;
+        baseHeap = HeapIndex::heapInternalDeviceMemory;
     }
     auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
     auto gpuAddress = moduleDebugArea->getGpuAddress();
@@ -283,11 +283,11 @@ HWTEST2_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThen
     auto systemMemoryPlacement = gfxCoreHelper.useSystemMemoryPlacementForISA(hwInfo);
     EXPECT_FALSE(systemMemoryPlacement);
 
-    HeapIndex expectedHeap = HeapIndex::TOTAL_HEAPS;
-    HeapIndex baseHeap = HeapIndex::TOTAL_HEAPS;
+    HeapIndex expectedHeap = HeapIndex::totalHeaps;
+    HeapIndex baseHeap = HeapIndex::totalHeaps;
 
-    expectedHeap = HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW;
-    baseHeap = HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+    expectedHeap = HeapIndex::heapInternalDeviceFrontWindow;
+    baseHeap = HeapIndex::heapInternalDeviceMemory;
 
     auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
     auto gpuAddress = moduleDebugArea->getGpuAddress();

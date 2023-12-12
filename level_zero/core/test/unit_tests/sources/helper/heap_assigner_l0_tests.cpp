@@ -36,7 +36,7 @@ HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseExternalAllocatorFor
 HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThenUseHeapExternal, Platforms) {
     HeapAssigner heapAssigner{true};
     auto heapIndex = heapAssigner.get32BitHeapIndex(AllocationType::linearStream, true, *defaultHwInfo.get(), false);
-    EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
+    EXPECT_EQ(heapIndex, NEO::HeapIndex::heapExternalDeviceMemory);
 }
 
 TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUseExternalAllocatorForSshAndDshEnabledThenExternalHeapIsUsed) {
@@ -51,15 +51,15 @@ TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUse
 }
 
 TEST_F(AlocationHelperTests, givenExternalHeapIndexWhenMapingToExternalFrontWindowThenEternalFrontWindowReturned) {
-    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW, HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_EXTERNAL));
+    EXPECT_EQ(HeapIndex::heapExternalFrontWindow, HeapAssigner::mapExternalWindowIndex(HeapIndex::heapExternal));
 }
 
 TEST_F(AlocationHelperTests, givenExternalDeviceHeapIndexWhenMapingToExternalFrontWindowThenEternalDeviceFrontWindowReturned) {
-    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW, HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY));
+    EXPECT_EQ(HeapIndex::heapExternalDeviceFrontWindow, HeapAssigner::mapExternalWindowIndex(HeapIndex::heapExternalDeviceMemory));
 }
 
 TEST_F(AlocationHelperTests, givenOtherThanExternalHeapIndexWhenMapingToExternalFrontWindowThenAbortHasBeenThrown) {
-    EXPECT_THROW(HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_STANDARD), std::exception);
+    EXPECT_THROW(HeapAssigner::mapExternalWindowIndex(HeapIndex::heapStandard), std::exception);
 }
 
 } // namespace ult

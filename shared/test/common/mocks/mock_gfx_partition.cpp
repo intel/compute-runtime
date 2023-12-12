@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@
 
 using namespace NEO;
 
-std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)>
-    MockGfxPartition::allHeapNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
-                                    HeapIndex::HEAP_INTERNAL,
-                                    HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
-                                    HeapIndex::HEAP_EXTERNAL,
-                                    HeapIndex::HEAP_STANDARD,
-                                    HeapIndex::HEAP_STANDARD64KB,
-                                    HeapIndex::HEAP_STANDARD2MB,
-                                    HeapIndex::HEAP_SVM}};
+std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::totalHeaps)>
+    MockGfxPartition::allHeapNames{{HeapIndex::heapInternalDeviceMemory,
+                                    HeapIndex::heapInternal,
+                                    HeapIndex::heapExternalDeviceMemory,
+                                    HeapIndex::heapExternal,
+                                    HeapIndex::heapStandard,
+                                    HeapIndex::heapStandard64KB,
+                                    HeapIndex::heapStandard2MB,
+                                    HeapIndex::heapSvm}};

@@ -93,7 +93,7 @@ void WddmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physica
     wddm->freeGpuVirtualAddress(gpuRange, bufferSize);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     uint64_t reservedAddress = 0u;
-    auto status = wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), bufferSize, &reservedAddress);
+    auto status = wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::heapStandard64KB), gfxPartition->getHeapLimit(HeapIndex::heapStandard64KB), bufferSize, &reservedAddress);
     UNRECOVERABLE_IF(status != STATUS_SUCCESS);
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
@@ -957,12 +957,12 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
 
 size_t WddmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
     AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(size);
-    *heap = HeapIndex::HEAP_STANDARD64KB;
+    *heap = HeapIndex::heapStandard64KB;
     return alignment.alignment;
 }
 
 AddressRange WddmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
-    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::HEAP_STANDARD64KB, MemoryConstants::pageSize64k);
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard64KB, MemoryConstants::pageSize64k);
 }
 
 AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
@@ -1039,7 +1039,7 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
 
     auto alignedSize = allocation->getAlignedSize();
     uint64_t addressToMap = 0;
-    HeapIndex heapIndex = preferredGpuVirtualAddress ? HeapIndex::HEAP_SVM : HeapIndex::HEAP_STANDARD64KB;
+    HeapIndex heapIndex = preferredGpuVirtualAddress ? HeapIndex::heapSvm : HeapIndex::heapStandard64KB;
 
     if (preferredGpuVirtualAddress) {
         addressToMap = castToUint64(preferredGpuVirtualAddress);

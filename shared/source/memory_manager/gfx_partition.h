@@ -15,23 +15,23 @@ namespace NEO {
 class HeapAllocator;
 
 enum class HeapIndex : uint32_t {
-    HEAP_INTERNAL_DEVICE_MEMORY = 0u,
-    HEAP_INTERNAL = 1u,
-    HEAP_EXTERNAL_DEVICE_MEMORY = 2u,
-    HEAP_EXTERNAL = 3u,
-    HEAP_STANDARD,
-    HEAP_STANDARD64KB,
-    HEAP_STANDARD2MB,
-    HEAP_SVM,
-    HEAP_EXTENDED,
-    HEAP_EXTERNAL_FRONT_WINDOW,
-    HEAP_EXTERNAL_DEVICE_FRONT_WINDOW,
-    HEAP_INTERNAL_FRONT_WINDOW,
-    HEAP_INTERNAL_DEVICE_FRONT_WINDOW,
-    HEAP_EXTENDED_HOST,
+    heapInternalDeviceMemory = 0u,
+    heapInternal = 1u,
+    heapExternalDeviceMemory = 2u,
+    heapExternal = 3u,
+    heapStandard,
+    heapStandard64KB,
+    heapStandard2MB,
+    heapSvm,
+    heapExtended,
+    heapExternalFrontWindow,
+    heapExternalDeviceFrontWindow,
+    heapInternalFrontWindow,
+    heapInternalDeviceFrontWindow,
+    heapExtendedHost,
 
     // Please put new heap indexes above this line
-    TOTAL_HEAPS
+    totalHeaps
 };
 
 class GfxPartition {
@@ -85,11 +85,11 @@ class GfxPartition {
 
     uint64_t getHeapMinimalAddress(HeapIndex heapIndex);
 
-    bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
+    bool isLimitedRange() { return getHeap(HeapIndex::heapSvm).getSize() == 0ull; }
 
     static bool isAnyHeap32(HeapIndex heapIndex) {
-        if ((heapIndex >= HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY && heapIndex <= HeapIndex::HEAP_EXTERNAL) ||
-            (heapIndex >= HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW && heapIndex <= HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW)) {
+        if ((heapIndex >= HeapIndex::heapInternalDeviceMemory && heapIndex <= HeapIndex::heapExternal) ||
+            (heapIndex >= HeapIndex::heapExternalFrontWindow && heapIndex <= HeapIndex::heapInternalDeviceFrontWindow)) {
             return true;
         }
         return false;
@@ -129,7 +129,7 @@ class GfxPartition {
         return heaps[static_cast<uint32_t>(heapIndex)];
     }
 
-    std::array<Heap, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> heaps;
+    std::array<Heap, static_cast<uint32_t>(HeapIndex::totalHeaps)> heaps;
 
     OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRangeForHeapExtended{};

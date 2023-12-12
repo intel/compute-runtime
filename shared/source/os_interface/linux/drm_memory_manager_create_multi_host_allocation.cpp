@@ -35,7 +35,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
     auto gpuAddress = allocationData.gpuAddress;
     bool addressReserved = false;
     if (gpuAddress == 0) {
-        gpuAddress = acquireGpuRange(sizePerTile, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        gpuAddress = acquireGpuRange(sizePerTile, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
         addressReserved = true;
     } else {
         gpuAddress = allocationData.gpuAddress;

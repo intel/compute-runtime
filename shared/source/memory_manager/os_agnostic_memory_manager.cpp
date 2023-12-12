@@ -541,7 +541,7 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 
     size_t alignedSize = alignSizeWholePage(pMem, memSize);
 
-    auto heap = (force32bitAllocations || requireSpecificBitness) ? HeapIndex::HEAP_EXTERNAL : HeapIndex::HEAP_STANDARD;
+    auto heap = (force32bitAllocations || requireSpecificBitness) ? HeapIndex::heapExternal : HeapIndex::heapStandard;
 
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     uint64_t limitedGpuAddress = gfxPartition->heapAllocate(heap, alignedSize);
@@ -549,7 +549,7 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
     auto memoryAllocation = new MemoryAllocation(rootDeviceIndex, allocationType, driverAllocatedCpuPointer, pMem, canonizedGpuAddress, memSize,
                                                  count, pool, uncacheable, flushL3Required, maxOsContextCount);
 
-    if (heap == HeapIndex::HEAP_EXTERNAL) {
+    if (heap == HeapIndex::heapExternal) {
         memoryAllocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heap)));
     }
     memoryAllocation->sizeToFree = alignedSize;
@@ -558,12 +558,12 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 }
 
 size_t OsAgnosticMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
-    *heap = HeapIndex::HEAP_STANDARD;
+    *heap = HeapIndex::heapStandard;
     return MemoryConstants::pageSize64k;
 }
 
 AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
-    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize64k);
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize64k);
 }
 
 AddressRange OsAgnosticMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
@@ -638,13 +638,13 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         }
 
         auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-        auto heapIndex = HeapIndex::HEAP_STANDARD64KB;
+        auto heapIndex = HeapIndex::heapStandard64KB;
 
         if (use32Allocator) {
             auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
             heapIndex = heapAssigners[allocationData.rootDeviceIndex]->get32BitHeapIndex(allocationData.type, true, *hwInfo, allocationData.flags.use32BitFrontWindow);
-        } else if ((gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0) && !allocationData.flags.resource48Bit) {
-            heapIndex = HeapIndex::HEAP_EXTENDED;
+        } else if ((gfxPartition->getHeapLimit(HeapIndex::heapExtended) > 0) && !allocationData.flags.resource48Bit) {
+            heapIndex = HeapIndex::heapExtended;
         }
 
         auto systemMemory = allocateSystemMemory(sizeAligned64k, MemoryConstants::pageSize64k);

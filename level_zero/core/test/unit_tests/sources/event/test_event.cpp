@@ -82,7 +82,7 @@ class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
         return {};
     }
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
-        *heap = HeapIndex::HEAP_STANDARD;
+        *heap = HeapIndex::heapStandard;
         return MemoryConstants::pageSize64k;
     }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};

@@ -55,8 +55,8 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingBufferThenGpuAddressIsFromHeapEx
 
     auto gmmHelper = context.getDevice(0)->getGmmHelper();
     auto gpuAddress = gmmHelper->decanonize(graphicsAllocation->getGpuAddress());
-    auto extendedHeapBase = context.memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_EXTENDED);
-    auto extendedHeapLimit = context.memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_EXTENDED);
+    auto extendedHeapBase = context.memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExtended);
+    auto extendedHeapLimit = context.memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExtended);
 
     EXPECT_EQ(extendedHeapBase, maxNBitValue(57 - 1) + 1);
     EXPECT_EQ(extendedHeapLimit, extendedHeapBase + maxNBitValue(48));
@@ -96,8 +96,8 @@ HWTEST2_F(PvcAndLaterBufferTests, WhenAllocatingRtBufferThenGpuAddressFromHeapSt
 
     auto gmmHelper = context.getDevice(0)->getGmmHelper();
     auto gpuAddress = gmmHelper->decanonize(graphicsAllocation->getGpuAddress());
-    auto standard64KbHeapBase = context.memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD64KB);
-    auto standard64KbHeapLimit = context.memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB);
+    auto standard64KbHeapBase = context.memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard64KB);
+    auto standard64KbHeapLimit = context.memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
 
     EXPECT_GT(gpuAddress, standard64KbHeapBase);
     EXPECT_LT(gpuAddress, standard64KbHeapLimit);

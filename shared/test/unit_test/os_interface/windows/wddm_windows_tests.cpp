@@ -139,8 +139,8 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
     size_t alignedSize = 0x2000;
     std::unique_ptr<Gmm> gmm(GmmHelperFunctionsWindows::getGmm(alignedPtr, alignedSize, getGmmHelper()));
     uint64_t gpuAddress = 0u;
-    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
-    auto heapLimit = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Limit;
+    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory)].Base;
+    auto heapLimit = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory)].Limit;
 
     bool ret = wddm->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, heapBase, heapLimit, 0u, gpuAddress);
     EXPECT_TRUE(ret);
@@ -172,8 +172,8 @@ TEST(WddmGfxPartitionTests, WhenInitializingGfxPartitionThen64KBHeapsAreUsed) {
     wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
 
     auto heapStandard64KBSize = alignDown((wddm->gfxPartition.Standard64KB.Limit - wddm->gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
-    EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
-    EXPECT_EQ(wddm->gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::heapStandard64KB));
+    EXPECT_EQ(wddm->gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::heapStandard64KB));
 }
 
 namespace NEO {
@@ -319,7 +319,7 @@ TEST_F(WddmGfxPartitionTest, WhenInitializingGfxPartitionThenAllHeapsAreInitiali
 
     for (auto heap : MockGfxPartition::allHeapNames) {
         if (!gfxPartition.heapInitialized(heap)) {
-            EXPECT_TRUE(heap == HeapIndex::HEAP_SVM || heap == HeapIndex::HEAP_STANDARD2MB || heap == HeapIndex::HEAP_EXTENDED);
+            EXPECT_TRUE(heap == HeapIndex::heapSvm || heap == HeapIndex::heapStandard2MB || heap == HeapIndex::heapExtended);
         } else {
             EXPECT_TRUE(gfxPartition.heapInitialized(heap));
         }

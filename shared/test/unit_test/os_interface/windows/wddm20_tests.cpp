@@ -1255,23 +1255,23 @@ TEST(WddmGfxPartitionTests, givenGfxPartitionWhenInitializedThenInternalFrontWin
     wddm->init();
     wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
 
-    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL));
-    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY));
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapInternalFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternal));
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory));
 
     auto frontWindowSize = GfxPartition::internalFrontWindowPoolSize;
-    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), frontWindowSize);
-    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), frontWindowSize);
+    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow), frontWindowSize);
+    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapInternalDeviceFrontWindow), frontWindowSize);
 
-    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW));
-    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW));
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::heapInternalFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternalFrontWindow));
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::heapInternalDeviceFrontWindow), gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceFrontWindow));
 
-    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL) + frontWindowSize);
-    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) + frontWindowSize);
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::heapInternal), gfxPartition.getHeapBase(HeapIndex::heapInternal) + frontWindowSize);
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::heapInternalDeviceMemory), gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory) + frontWindowSize);
 
-    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::HEAP_INTERNAL),
-              gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL) + gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL) - 1);
-    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY),
-              gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) + gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) - 1);
+    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::heapInternal),
+              gfxPartition.getHeapBase(HeapIndex::heapInternal) + gfxPartition.getHeapSize(HeapIndex::heapInternal) - 1);
+    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::heapInternalDeviceMemory),
+              gfxPartition.getHeapBase(HeapIndex::heapInternalDeviceMemory) + gfxPartition.getHeapSize(HeapIndex::heapInternalDeviceMemory) - 1);
 }
 
 TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBigChunkThenAddressFromFrontIsReturned) {
@@ -1286,10 +1286,10 @@ TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBig
     wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
 
     const size_t sizeSmall = MemoryConstants::pageSize64k;
-    const size_t sizeBig = static_cast<size_t>(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW)) - MemoryConstants::pageSize64k;
+    const size_t sizeBig = static_cast<size_t>(gfxPartition.getHeapSize(HeapIndex::heapInternalFrontWindow)) - MemoryConstants::pageSize64k;
 
-    HeapIndex heaps[] = {HeapIndex::HEAP_INTERNAL_FRONT_WINDOW,
-                         HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW};
+    HeapIndex heaps[] = {HeapIndex::heapInternalFrontWindow,
+                         HeapIndex::heapInternalDeviceFrontWindow};
 
     for (int i = 0; i < 2; i++) {
         size_t sizeToAlloc = sizeSmall;
