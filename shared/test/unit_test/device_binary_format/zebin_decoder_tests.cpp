@@ -5291,12 +5291,12 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThen
     EXPECT_EQ(64U, args[0].as<ArgDescImage>().bindful);
     EXPECT_TRUE(args[0].getExtendedTypeInfo().isMediaImage);
     EXPECT_TRUE(args[0].getExtendedTypeInfo().isTransformable);
-    EXPECT_EQ(NEOImageType::ImageType2DMedia, args[0].as<ArgDescImage>().imageType);
+    EXPECT_EQ(NEOImageType::imageType2DMedia, args[0].as<ArgDescImage>().imageType);
 
     EXPECT_EQ(128U, args[1].as<ArgDescImage>().bindful);
     EXPECT_TRUE(args[1].getExtendedTypeInfo().isMediaBlockImage);
     EXPECT_FALSE(args[1].getExtendedTypeInfo().isTransformable);
-    EXPECT_EQ(NEOImageType::ImageType2DMediaBlock, args[1].as<ArgDescImage>().imageType);
+    EXPECT_EQ(NEOImageType::imageType2DMediaBlock, args[1].as<ArgDescImage>().imageType);
     const auto &imgMetadata = args[1].as<ArgDescImage>().metadataPayload;
     EXPECT_EQ(0U, imgMetadata.imgHeight);
     EXPECT_EQ(4U, imgMetadata.imgWidth);

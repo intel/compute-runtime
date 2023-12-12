@@ -3789,7 +3789,7 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, givenNativeBinaryWhenCallingGenera
 
     kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).type = ArgDescriptor::ArgTImage;
     auto &img = kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).as<ArgDescImage>();
-    img.imageType = NEOImageType::ImageType2D;
+    img.imageType = NEOImageType::imageType2D;
 
     kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTSampler;
@@ -3893,18 +3893,18 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForAr
 }
 
 std::array<std::pair<NEOImageType, std::string>, 12> imgTypes{
-    std::make_pair<>(NEOImageType::ImageTypeBuffer, "image1d_buffer_t"),
-    std::make_pair<>(NEOImageType::ImageType1D, "image1d_t"),
-    std::make_pair<>(NEOImageType::ImageType1DArray, "image1d_array_t"),
-    std::make_pair<>(NEOImageType::ImageType2DArray, "image2d_array_t"),
-    std::make_pair<>(NEOImageType::ImageType3D, "image3d_t"),
-    std::make_pair<>(NEOImageType::ImageType2DDepth, "image2d_depth_t"),
-    std::make_pair<>(NEOImageType::ImageType2DArrayDepth, "image2d_array_depth_t"),
-    std::make_pair<>(NEOImageType::ImageType2DMSAA, "image2d_msaa_t"),
-    std::make_pair<>(NEOImageType::ImageType2DMSAADepth, "image2d_msaa_depth_t"),
-    std::make_pair<>(NEOImageType::ImageType2DArrayMSAA, "image2d_array_msaa_t"),
-    std::make_pair<>(NEOImageType::ImageType2DArrayMSAADepth, "image2d_array_msaa_depth_t"),
-    std::make_pair<>(NEOImageType::ImageType2D, "image2d_t")};
+    std::make_pair<>(NEOImageType::imageTypeBuffer, "image1d_buffer_t"),
+    std::make_pair<>(NEOImageType::imageType1D, "image1d_t"),
+    std::make_pair<>(NEOImageType::imageType1DArray, "image1d_array_t"),
+    std::make_pair<>(NEOImageType::imageType2DArray, "image2d_array_t"),
+    std::make_pair<>(NEOImageType::imageType3D, "image3d_t"),
+    std::make_pair<>(NEOImageType::imageType2DDepth, "image2d_depth_t"),
+    std::make_pair<>(NEOImageType::imageType2DArrayDepth, "image2d_array_depth_t"),
+    std::make_pair<>(NEOImageType::imageType2DMSAA, "image2d_msaa_t"),
+    std::make_pair<>(NEOImageType::imageType2DMSAADepth, "image2d_msaa_depth_t"),
+    std::make_pair<>(NEOImageType::imageType2DArrayMSAA, "image2d_array_msaa_t"),
+    std::make_pair<>(NEOImageType::imageType2DArrayMSAADepth, "image2d_array_msaa_depth_t"),
+    std::make_pair<>(NEOImageType::imageType2D, "image2d_t")};
 
 using ProgramGenerateDefaultArgsMetadataImagesTest = ::testing::TestWithParam<std::pair<NEOImageType, std::string>>;
 

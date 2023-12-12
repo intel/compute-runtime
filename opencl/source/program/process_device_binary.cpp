@@ -421,37 +421,37 @@ void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceInd
                 } else if (kernelArg.is<ArgDescriptor::ArgTImage>()) {
                     const auto &argAsImage = kernelArg.as<ArgDescImage>(false);
                     switch (argAsImage.imageType) {
-                    case NEOImageType::ImageTypeBuffer:
+                    case NEOImageType::imageTypeBuffer:
                         argMetadataExtended.type = std::string("image1d_buffer_t");
                         break;
-                    case NEOImageType::ImageType1D:
+                    case NEOImageType::imageType1D:
                         argMetadataExtended.type = std::string("image1d_t");
                         break;
-                    case NEOImageType::ImageType1DArray:
+                    case NEOImageType::imageType1DArray:
                         argMetadataExtended.type = std::string("image1d_array_t");
                         break;
-                    case NEOImageType::ImageType2DArray:
+                    case NEOImageType::imageType2DArray:
                         argMetadataExtended.type = std::string("image2d_array_t");
                         break;
-                    case NEOImageType::ImageType3D:
+                    case NEOImageType::imageType3D:
                         argMetadataExtended.type = std::string("image3d_t");
                         break;
-                    case NEOImageType::ImageType2DDepth:
+                    case NEOImageType::imageType2DDepth:
                         argMetadataExtended.type = std::string("image2d_depth_t");
                         break;
-                    case NEOImageType::ImageType2DArrayDepth:
+                    case NEOImageType::imageType2DArrayDepth:
                         argMetadataExtended.type = std::string("image2d_array_depth_t");
                         break;
-                    case NEOImageType::ImageType2DMSAA:
+                    case NEOImageType::imageType2DMSAA:
                         argMetadataExtended.type = std::string("image2d_msaa_t");
                         break;
-                    case NEOImageType::ImageType2DMSAADepth:
+                    case NEOImageType::imageType2DMSAADepth:
                         argMetadataExtended.type = std::string("image2d_msaa_depth_t");
                         break;
-                    case NEOImageType::ImageType2DArrayMSAA:
+                    case NEOImageType::imageType2DArrayMSAA:
                         argMetadataExtended.type = std::string("image2d_array_msaa_t");
                         break;
-                    case NEOImageType::ImageType2DArrayMSAADepth:
+                    case NEOImageType::imageType2DArrayMSAADepth:
                         argMetadataExtended.type = std::string("image2d_array_msaa_depth_t");
                         break;
                     default:
