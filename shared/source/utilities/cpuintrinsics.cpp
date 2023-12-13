@@ -8,8 +8,11 @@
 #include "shared/source/utilities/cpuintrinsics.h"
 
 #if defined(_WIN32)
+#include <immintrin.h>
 #include <intrin.h>
+#pragma intrinsic(__rdtsc)
 #else
+#include <immintrin.h>
 #include <x86intrin.h>
 #endif
 
@@ -40,6 +43,24 @@ void sfence() {
 
 void pause() {
     _mm_pause();
+}
+
+unsigned char umwait(unsigned int ctrl, uint64_t counter) {
+#ifdef SUPPORTS_WAITPKG
+    return _umwait(ctrl, counter);
+#else
+    return 0;
+#endif
+}
+
+void umonitor(void *a) {
+#ifdef SUPPORTS_WAITPKG
+    _umonitor(a);
+#endif
+}
+
+uint64_t rdtsc() {
+    return __rdtsc();
 }
 
 } // namespace CpuIntrinsics

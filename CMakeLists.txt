@@ -726,15 +726,23 @@ if(NOT MSVC)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=1024")
 endif()
 
-# _mm_clflushopt support
+# intrinsics (_mm_clflushopt and waitpkg) support
 if(NOT MSVC)
   check_cxx_compiler_flag(-mclflushopt SUPPORTS_CLFLUSHOPT)
+  check_cxx_compiler_flag(-mwaitpkg SUPPORTS_WAITPKG)
   if(SUPPORTS_CLFLUSHOPT)
     add_compile_definitions(SUPPORTS_CLFLUSHOPT)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mclflushopt")
   endif()
+  if(SUPPORTS_WAITPKG)
+    add_compile_definitions(SUPPORTS_WAITPKG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwaitpkg")
+  else()
+    message(WARNING "-mwaitpkg flag is not supported by the compiler")
+  endif()
 else()
   add_compile_definitions(SUPPORTS_CLFLUSHOPT)
+  add_compile_definitions(SUPPORTS_WAITPKG)
 endif()
 
 # Compiler warning flags

@@ -21,11 +21,23 @@ std::atomic<uint32_t> clFlushCounter(0u);
 std::atomic<uint32_t> pauseCounter(0u);
 std::atomic<uint32_t> sfenceCounter(0u);
 
+std::atomic<uint64_t> lastUmwaitCounter(0u);
+std::atomic<unsigned int> lastUmwaitControl(0u);
+std::atomic<uint32_t> umwaitCounter(0u);
+
+std::atomic<uintptr_t> lastUmonitorPtr(0u);
+std::atomic<uint32_t> umonitorCounter(0u);
+
+std::atomic<uint32_t> rdtscCounter(0u);
+
 volatile TagAddressType *pauseAddress = nullptr;
 TaskCountType pauseValue = 0u;
 uint32_t pauseOffset = 0u;
+uint64_t rdtscRetValue = 0;
+unsigned char umwaitRetValue = 0;
 
 std::function<void()> setupPauseAddress;
+std::function<unsigned char()> controlUmwait;
 } // namespace CpuIntrinsicsTests
 
 namespace NEO {
@@ -54,6 +66,27 @@ void pause() {
             CpuIntrinsicsTests::pauseAddress = ptrOffset(CpuIntrinsicsTests::pauseAddress, CpuIntrinsicsTests::pauseOffset);
         }
     }
+}
+
+unsigned char umwait(unsigned int ctrl, uint64_t counter) {
+    CpuIntrinsicsTests::lastUmwaitControl = ctrl;
+    CpuIntrinsicsTests::lastUmwaitCounter = counter;
+    CpuIntrinsicsTests::umwaitCounter++;
+    if (CpuIntrinsicsTests::controlUmwait) {
+        return CpuIntrinsicsTests::controlUmwait();
+    } else {
+        return CpuIntrinsicsTests::umwaitRetValue;
+    }
+}
+
+void umonitor(void *a) {
+    CpuIntrinsicsTests::lastUmonitorPtr = reinterpret_cast<uintptr_t>(a);
+    CpuIntrinsicsTests::umonitorCounter++;
+}
+
+uint64_t rdtsc() {
+    CpuIntrinsicsTests::rdtscCounter++;
+    return CpuIntrinsicsTests::rdtscRetValue;
 }
 
 } // namespace CpuIntrinsics
