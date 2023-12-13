@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,10 @@ inline const std::vector<unsigned short> dg2G11DeviceIds{
     0x56A6,
     0x56B0,
     0x56B1,
+    0x56BA,
+    0x56BB,
+    0x56BC,
+    0x56BD,
     0x56C1};
 
 inline const std::vector<unsigned short> dg2G12DeviceIds{

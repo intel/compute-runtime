@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,10 @@ NAMEDDEVICE(0x56B0, Dg2HwConfig, "Intel(R) Arc(TM) Pro A30M Graphics")
 NAMEDDEVICE(0x56B1, Dg2HwConfig, "Intel(R) Arc(TM) Pro A40/A50 Graphics")
 DEVICE(0x56B2, Dg2HwConfig)
 DEVICE(0x56B3, Dg2HwConfig)
+DEVICE(0x56BA, Dg2HwConfig)
+DEVICE(0x56BB, Dg2HwConfig)
+DEVICE(0x56BC, Dg2HwConfig)
+DEVICE(0x56BD, Dg2HwConfig)
 NAMEDDEVICE(0x56A0, Dg2HwConfig, "Intel(R) Arc(TM) A770 Graphics")
 NAMEDDEVICE(0x56A1, Dg2HwConfig, "Intel(R) Arc(TM) A750 Graphics")
 NAMEDDEVICE(0x56A2, Dg2HwConfig, "Intel(R) Arc(TM) A580 Graphics")
