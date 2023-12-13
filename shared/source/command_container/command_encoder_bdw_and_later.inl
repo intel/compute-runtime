@@ -615,6 +615,14 @@ void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCmd, cons
 
 template <typename Family>
 template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+
+template <typename Family>
+template <typename WalkerType>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>

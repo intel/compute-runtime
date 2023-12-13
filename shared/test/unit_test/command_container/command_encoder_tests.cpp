@@ -63,6 +63,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_EQ(nullptr, inOrderExecInfo.getHostCounterAllocation());
         EXPECT_FALSE(inOrderExecInfo.isHostStorageDuplicated());
         EXPECT_FALSE(inOrderExecInfo.isRegularCmdList());
+        EXPECT_FALSE(inOrderExecInfo.isAtomicDeviceSignalling());
         EXPECT_EQ(2u, inOrderExecInfo.getNumDevicePartitionsToWait());
         EXPECT_EQ(2u, inOrderExecInfo.getNumHostPartitionsToWait());
         EXPECT_EQ(0u, InOrderPatchCommandHelpers::getAppendCounterValue(inOrderExecInfo));
@@ -73,6 +74,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
 
         InOrderExecInfo inOrderExecInfo(*deviceSyncAllocation, nullptr, memoryManager, 2, true, true);
         EXPECT_TRUE(inOrderExecInfo.isRegularCmdList());
+        EXPECT_TRUE(inOrderExecInfo.isAtomicDeviceSignalling());
         EXPECT_EQ(1u, inOrderExecInfo.getNumDevicePartitionsToWait());
         EXPECT_EQ(2u, inOrderExecInfo.getNumHostPartitionsToWait());
     }

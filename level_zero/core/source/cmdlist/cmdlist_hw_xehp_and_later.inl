@@ -78,7 +78,7 @@ void programEventL3Flush(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
-    return (event && (event->isUsingContextEndOffset() || !event->isCounterBased() || compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))));
+    return (!duplicatedInOrderCounterStorageEnabled() && event && (event->isUsingContextEndOffset() || !event->isCounterBased() || compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -289,6 +289,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         } else {
             inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
             inOrderExecInfo = this->inOrderExecInfo.get();
+            if (eventForInOrderExec && eventForInOrderExec->isCounterBased() && !isTimestampEvent) {
+                eventAddress = 0;
+            }
         }
     }
 

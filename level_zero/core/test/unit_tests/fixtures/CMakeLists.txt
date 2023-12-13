@@ -18,6 +18,7 @@ set(L0_FIXTURES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/event_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/in_order_cmd_list_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_max_cooperative_groups_count_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_max_cooperative_groups_count_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module_fixture.cpp

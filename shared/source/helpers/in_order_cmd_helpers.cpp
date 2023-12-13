@@ -21,7 +21,7 @@ InOrderExecInfo::~InOrderExecInfo() {
 }
 
 InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling)
-    : deviceCounterAllocation(deviceCounterAllocation), memoryManager(memoryManager), hostCounterAllocation(hostCounterAllocation), regularCmdList(regularCmdList) {
+    : deviceCounterAllocation(deviceCounterAllocation), memoryManager(memoryManager), hostCounterAllocation(hostCounterAllocation), regularCmdList(regularCmdList), atomicDeviceSignalling(atomicDeviceSignalling) {
 
     numDevicePartitionsToWait = atomicDeviceSignalling ? 1 : partitionCount;
     numHostPartitionsToWait = partitionCount;

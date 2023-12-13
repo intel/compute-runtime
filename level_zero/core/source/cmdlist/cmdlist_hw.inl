@@ -3688,11 +3688,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::inOrderAtomicSignallingEnabled() const {
-    if (NEO::debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1) {
-        return (this->getPartitionCount() > 1);
-    }
-
-    return false;
+    return (NEO::debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

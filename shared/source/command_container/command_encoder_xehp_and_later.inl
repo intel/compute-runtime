@@ -345,38 +345,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    requiredWorkgroupOrder,
                                                    rootDeviceEnvironment);
 
-    auto &postSync = walkerCmd.getPostSync();
-    if (args.eventAddress != 0 || args.inOrderExecInfo) {
-        postSync.setDataportPipelineFlush(true);
-        postSync.setDataportSubsliceCacheFlush(true);
-
-        auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
-        uint64_t gpuVa = args.eventAddress;
-        uint64_t immData = args.postSyncImmValue;
-
-        if (args.inOrderExecInfo) {
-            gpuVa = args.inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + args.inOrderExecInfo->getAllocationOffset();
-            immData = args.inOrderCounterValue;
-        } else if (args.isTimestampEvent) {
-            operationType = POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP;
-            immData = 0;
-
-            UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(gpuVa)));
-        }
-
-        if (operationType == POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA) {
-            UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
-        }
-
-        postSync.setOperation(operationType);
-        postSync.setImmediateData(immData);
-        postSync.setDestinationAddress(gpuVa);
-
-        EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, args.dcFlushEnable);
-        EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
+    if (args.inOrderExecInfo) {
+        EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec<WalkerType>(walkerCmd, args);
+    } else if (args.eventAddress) {
+        EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent<WalkerType>(walkerCmd, args);
     }
 
     if (debugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {
+        auto &postSync = walkerCmd.getPostSync();
         postSync.setDataportPipelineFlush(true);
         postSync.setDataportSubsliceCacheFlush(true);
     }
@@ -418,7 +394,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (args.partitionCount > 1 && !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
         if (args.eventAddress != 0 && !NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-            postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
+            walkerCmd.getPostSync().setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
         }
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
                                                           walkerCmd,
@@ -447,6 +423,59 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
         EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
+}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
+    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
+
+    auto &postSync = walkerCmd.getPostSync();
+
+    postSync.setDataportPipelineFlush(true);
+    postSync.setDataportSubsliceCacheFlush(true);
+
+    auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
+    uint64_t gpuVa = args.eventAddress;
+    uint64_t immData = args.postSyncImmValue;
+
+    if (args.isTimestampEvent) {
+        operationType = POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP;
+        immData = 0;
+
+        UNRECOVERABLE_IF(!(isAligned<timestampDestinationAddressAlignment>(gpuVa)));
+    } else {
+        UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
+    }
+
+    postSync.setOperation(operationType);
+    postSync.setImmediateData(immData);
+    postSync.setDestinationAddress(gpuVa);
+
+    EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
+    EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
+}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
+    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
+
+    auto &postSync = walkerCmd.getPostSync();
+
+    postSync.setDataportPipelineFlush(true);
+    postSync.setDataportSubsliceCacheFlush(true);
+
+    uint64_t gpuVa = args.inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + args.inOrderExecInfo->getAllocationOffset();
+
+    UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
+
+    postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
+    postSync.setImmediateData(args.inOrderCounterValue);
+    postSync.setDestinationAddress(gpuVa);
+
+    EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
+    EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
 }
 
 template <typename Family>
