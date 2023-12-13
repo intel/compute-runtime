@@ -35,8 +35,8 @@ struct Kernel;
 struct CommandQueue;
 
 struct CmdListKernelLaunchParams {
-    NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::None;
-    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::None;
+    NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
+    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t numKernelsInSplitLaunch = 0;
     uint32_t numKernelsExecutedInSplitLaunch = 0;

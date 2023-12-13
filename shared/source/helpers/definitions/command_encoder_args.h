@@ -29,17 +29,17 @@ struct MiFlushArgs {
 };
 
 enum class RequiredPartitionDim : uint32_t {
-    None = 0,
-    X,
-    Y,
-    Z
+    none = 0,
+    x,
+    y,
+    z
 };
 
 enum class RequiredDispatchWalkOrder : uint32_t {
-    None = 0,
-    X,
-    Y,
-    Additional
+    none = 0,
+    x,
+    y,
+    additional
 };
 
 static constexpr uint32_t additionalKernelLaunchSizeParamNotSet = 0;

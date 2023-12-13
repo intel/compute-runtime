@@ -78,7 +78,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
          {dg2G12DeviceIds[0], revIdA0}};
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::None, 0};
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0};
 
     for (const auto &[deviceID, revisionID] : dg2Configs) {
         hwInfo.platform.usRevId = revisionID;

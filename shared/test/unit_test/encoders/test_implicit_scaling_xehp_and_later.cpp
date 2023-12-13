@@ -36,7 +36,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCm
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, 0u, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -79,7 +79,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndNoPartiti
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, false, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, false, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, 0u, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -123,7 +123,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndPartition
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, 0u, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -170,7 +170,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -222,7 +222,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPa
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(32, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -276,7 +276,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -327,7 +327,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -364,7 +364,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, true, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -401,7 +401,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPrefe
     expectedSize = ImplicitScalingDispatch<FamilyType>::template getSize<DefaultWalkerType>(false, false, twoTile, Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1));
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -449,7 +449,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, true, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, true, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -517,7 +517,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, true, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, true, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -577,7 +577,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, true, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, true, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -637,7 +637,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, true, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, true, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -704,7 +704,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, true, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, true, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -767,7 +767,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -832,7 +832,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -900,7 +900,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, true, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, true, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
@@ -967,7 +967,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     EXPECT_EQ(expectedSize, estimatedSize);
 
     uint32_t partitionCount = 0;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::None, partitionCount, true, false, dcFlushFlag,
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, nullptr, twoTile, NEO::RequiredPartitionDim::none, partitionCount, true, false, dcFlushFlag,
                                                           forceExecutionOnSingleTileFlag, workPartitionAllocationAddress, *defaultHwInfo);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);

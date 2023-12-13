@@ -197,17 +197,17 @@ uint32_t computePartitionCountAndSetPartitionType(WalkerType *walker,
     std::optional<PARTITION_TYPE> requestedPartitionType{};
 
     switch (requiredPartitionDim) {
-    case NEO::RequiredPartitionDim::X:
+    case NEO::RequiredPartitionDim::x:
         requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_X;
         break;
-    case NEO::RequiredPartitionDim::Y:
+    case NEO::RequiredPartitionDim::y:
         requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Y;
         break;
-    case NEO::RequiredPartitionDim::Z:
+    case NEO::RequiredPartitionDim::z:
         requestedPartitionType = PARTITION_TYPE::PARTITION_TYPE_Z;
         break;
     default:
-        UNRECOVERABLE_IF(requiredPartitionDim != NEO::RequiredPartitionDim::None);
+        UNRECOVERABLE_IF(requiredPartitionDim != NEO::RequiredPartitionDim::none);
         break;
     }
 

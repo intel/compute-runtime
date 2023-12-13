@@ -49,8 +49,8 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                                    // outWalkerPtr
         nullptr,                                    // additionalCommands
         PreemptionMode::Disabled,                   // preemptionMode
-        NEO::RequiredPartitionDim::None,            // requiredPartitionDim
-        NEO::RequiredDispatchWalkOrder::None,       // requiredDispatchWalkOrder
+        NEO::RequiredPartitionDim::none,            // requiredPartitionDim
+        NEO::RequiredDispatchWalkOrder::none,       // requiredDispatchWalkOrder
         NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
         1,                                          // partitionCount
         false,                                      // isIndirect

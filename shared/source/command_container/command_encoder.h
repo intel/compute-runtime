@@ -56,8 +56,8 @@ struct EncodeDispatchKernelArgs {
     void *outWalkerPtr = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
-    NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::None;
-    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::None;
+    NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
+    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t partitionCount = 0u;
     bool isIndirect = false;
@@ -95,7 +95,7 @@ struct EncodeWalkerArgs {
     KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     bool requiredSystemFence = false;
     const KernelDescriptor &kernelDescriptor;
-    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::None;
+    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t maxFrontEndThreads = 0;
 };
