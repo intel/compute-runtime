@@ -92,7 +92,7 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingM
     const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
 
     auto cmdList = new MockCommandListImmediateHw<gfxCoreFamily>;
-    cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_SUCCESS;
 
@@ -114,7 +114,7 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryB
     const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
 
     auto cmdList = new MockCommandListImmediateHw<gfxCoreFamily>;
-    cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
 

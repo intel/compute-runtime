@@ -193,7 +193,7 @@ bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled) const {
-    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::Zebin;
+    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
     const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
     return !isPrecompiled && isZebin && !isCMKernelHeuristic;
 }

@@ -56,7 +56,7 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_FALSE(unpackWarnings.empty());
     EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
@@ -68,5 +68,5 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     ASSERT_EQ(5U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[3].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[3].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }

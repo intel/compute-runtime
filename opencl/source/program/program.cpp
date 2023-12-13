@@ -192,14 +192,14 @@ cl_int Program::createProgramFromBinary(
             this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
-            if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::Zebin) {
+            if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::zebin) {
                 this->options += " " + NEO::CompilerOptions::enableZebin.str();
             }
 
             this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
             this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
 
-            this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::Igc;
+            this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::igc;
 
             auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
             bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
@@ -231,10 +231,10 @@ cl_int Program::createProgramFromBinary(
             switch (singleDeviceBinary.format) {
             default:
                 break;
-            case DeviceBinaryFormat::OclLibrary:
+            case DeviceBinaryFormat::oclLibrary:
                 deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
                 break;
-            case DeviceBinaryFormat::OclCompiledObject:
+            case DeviceBinaryFormat::oclCompiledObject:
                 deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
                 break;
             }
@@ -607,7 +607,7 @@ void Program::notifyModuleCreate() {
             auto &buildInfo = this->buildInfos[rootDeviceIndex];
             auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
 
-            if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+            if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
 
                 createDebugZebin(rootDeviceIndex);
                 NEO::DebugData debugData;

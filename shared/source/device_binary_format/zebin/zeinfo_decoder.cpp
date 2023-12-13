@@ -41,11 +41,11 @@ bool validateCountExactly(const ContainerT &sectionsContainer, size_t num, std::
 
 DecodeError validateZeInfoVersion(const Types::Version &receivedZeInfoVersion, std::string &outErrReason, std::string &outWarning) {
     if (receivedZeInfoVersion.major != zeInfoDecoderVersion.major) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : " + std::to_string(receivedZeInfoVersion.major) + ", decoder is at : " + std::to_string(zeInfoDecoderVersion.major) + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Unhandled major version : " + std::to_string(receivedZeInfoVersion.major) + ", decoder is at : " + std::to_string(zeInfoDecoderVersion.major) + "\n");
         return DecodeError::unhandledBinary;
     }
     if (receivedZeInfoVersion.minor > zeInfoDecoderVersion.minor) {
-        outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Minor version : " + std::to_string(receivedZeInfoVersion.minor) + " is newer than available in decoder : " + std::to_string(zeInfoDecoderVersion.minor) + " - some features may be skipped\n");
+        outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Minor version : " + std::to_string(receivedZeInfoVersion.minor) + " is newer than available in decoder : " + std::to_string(zeInfoDecoderVersion.minor) + " - some features may be skipped\n");
     }
     return DecodeError::success;
 }
@@ -62,7 +62,7 @@ void extractZeInfoSections(const Yaml::YamlParser &parser, ZeInfoSections &outZe
         } else if (Tags::functions == key) {
             outZeInfoSections.functions.push_back(&globalScopeNd);
         } else {
-            outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + parser.readKey(globalScopeNd).str() + "\" in global scope of .ze_info\n");
+            outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + parser.readKey(globalScopeNd).str() + "\" in global scope of .ze_info\n");
         }
     }
 }
@@ -91,13 +91,13 @@ void extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, const NEO:
         } else if (Tags::Kernel::inlineSamplers == key) {
             outZeInfoKernelSections.inlineSamplersNd.push_back(&kernelMetadataNd);
         } else {
-            outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + parser.readKey(kernelMetadataNd).str() + "\" in context of : " + context.str() + "\n");
+            outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + parser.readKey(kernelMetadataNd).str() + "\" in context of : " + context.str() + "\n");
         }
     }
 }
 
 bool validateZeInfoSectionsCount(const ZeInfoSections &zeInfoSections, std::string &outErrReason) {
-    ConstStringRef context = "DeviceBinaryFormat::Zebin::ZeInfo";
+    ConstStringRef context = "DeviceBinaryFormat::zebin::ZeInfo";
     bool valid = validateCountExactly(zeInfoSections.kernels, 1U, outErrReason, "kernels", context);
     valid &= validateCountAtMost(zeInfoSections.version, 1U, outErrReason, "version", context);
     valid &= validateCountAtMost(zeInfoSections.globalHostAccessTable, 1U, outErrReason, "global host access table", context);
@@ -106,7 +106,7 @@ bool validateZeInfoSectionsCount(const ZeInfoSections &zeInfoSections, std::stri
 }
 
 DecodeError validateZeInfoKernelSectionsCount(const ZeInfoKernelSections &outZeInfoKernelSections, std::string &outErrReason, std::string &outWarning) {
-    ConstStringRef context = "DeviceBinaryFormat::Zebin::ZeInfo::Kernel";
+    ConstStringRef context = "DeviceBinaryFormat::zebin::ZeInfo::Kernel";
     bool valid = validateCountExactly(outZeInfoKernelSections.nameNd, 1U, outErrReason, Tags::Kernel::name, context);
     valid &= validateCountExactly(outZeInfoKernelSections.executionEnvNd, 1U, outErrReason, Tags::Kernel::executionEnv, context);
     valid &= validateCountAtMost(outZeInfoKernelSections.attributesNd, 1U, outErrReason, Tags::Kernel::attributes, context);
@@ -125,7 +125,7 @@ bool readZeInfoValueChecked(const NEO::Yaml::YamlParser &parser, const NEO::Yaml
     if (parser.readValueChecked(node, outValue)) {
         return true;
     }
-    outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : could not read " + parser.readKey(node).str() + " from : [" + parser.readValue(node).str() + "] in context of : " + context.str() + "\n");
+    outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : could not read " + parser.readKey(node).str() + " from : [" + parser.readValue(node).str() + "] in context of : " + context.str() + "\n");
     return false;
 }
 
@@ -140,7 +140,7 @@ bool readZeInfoValueCollectionCheckedArr(std::array<DestinationT, len> &vec, con
     }
 
     if (index != len) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : wrong size of collection " + parser.readKey(node).str() + " in context of : " + context.str() + ". Got : " + std::to_string(index) + " expected : " + std::to_string(len) + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : wrong size of collection " + parser.readKey(node).str() + " in context of : " + context.str() + ". Got : " + std::to_string(index) + " expected : " + std::to_string(len) + "\n");
         isValid = false;
     }
     return isValid;
@@ -159,7 +159,7 @@ bool readEnumChecked(ConstStringRef enumString, T &outValue, ConstStringRef kern
     outValue = enumVal.value_or(static_cast<T>(0));
 
     if (false == enumVal.has_value()) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"" + enumString.str() + "\" " + EnumLooker::name.str() + " in context of " + kernelName.str() + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Unhandled \"" + enumString.str() + "\" " + EnumLooker::name.str() + " in context of " + kernelName.str() + "\n");
     }
 
     return enumVal.has_value();
@@ -191,7 +191,7 @@ DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser,
             } else if (Tags::GlobalHostAccessTable::hostName == key) {
                 validTable &= readZeInfoValueChecked(parser, globalHostAccessNameMemberNd, globalHostAccessMetadata.hostName, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
         }
     }
@@ -229,7 +229,7 @@ void setSSHOffsetBasedOnBti(SurfaceStateHeapOffset &sshOffset, int32_t bti, uint
 DecodeError readZeInfoVersionFromZeInfo(Types::Version &dst,
                                         NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &versionNd, std::string &outErrReason, std::string &outWarning) {
     if (nullptr == yamlParser.getValueToken(versionNd)) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected \'MAJOR.MINOR\' string\n");
+        outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Invalid version format - expected \'MAJOR.MINOR\' string\n");
         return DecodeError::invalidBinary;
     }
     auto versionStr = yamlParser.readValueNoQuotes(versionNd);
@@ -241,7 +241,7 @@ DecodeError populateZeInfoVersion(Types::Version &dst, ConstStringRef &versionSt
     nullTerminated.push_back('\0');
     auto separator = std::find(nullTerminated.begin(), nullTerminated.end(), '.');
     if ((nullTerminated.end() == separator) || (nullTerminated.begin() == separator) || (&*nullTerminated.rbegin() == separator + 1)) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : " + std::string{versionStr} + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : " + std::string{versionStr} + "\n");
         return DecodeError::invalidBinary;
     }
     *separator = 0;
@@ -265,7 +265,7 @@ DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::
                 isValid = false;
             }
         } else {
-            outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + yamlParser.readKey(functionMetadataNd).str() + "\" in context of : external functions\n");
+            outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + yamlParser.readKey(functionMetadataNd).str() + "\" in context of : external functions\n");
         }
     }
 
@@ -304,11 +304,11 @@ DecodeError readKernelMiscArgumentInfos(const NEO::Yaml::YamlParser &parser, con
             } else if (key == Tags::KernelMiscInfo::ArgsInfo::typeQualifiers) {
                 validArgInfo &= readZeInfoValueChecked(parser, singleArgInfoMember, metadataExtended.typeQualifiers, Tags::kernelMiscInfo, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : KernelMiscInfo : Unrecognized argsInfo member " + key.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin : KernelMiscInfo : Unrecognized argsInfo member " + key.str() + "\n");
             }
         }
         if (-1 == metadataExtended.index) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Error : KernelMiscInfo : ArgInfo index missing (has default value -1)");
+            outErrReason.append("DeviceBinaryFormat::zebin : Error : KernelMiscInfo : ArgInfo index missing (has default value -1)");
             return DecodeError::invalidBinary;
         }
     }
@@ -320,7 +320,7 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
         if (false == src.empty()) {
             dst = std::move(src);
         } else {
-            warnings.append("DeviceBinaryFormat::Zebin : KernelMiscInfo : ArgInfo member \"" + context.str() + "\" missing. Ignoring.\n");
+            warnings.append("DeviceBinaryFormat::zebin : KernelMiscInfo : ArgInfo member \"" + context.str() + "\" missing. Ignoring.\n");
         }
     };
 
@@ -346,7 +346,7 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
 
 DecodeError decodeAndPopulateKernelMiscInfo(size_t kernelMiscInfoOffset, std::vector<NEO::KernelInfo *> &kernelInfos, ConstStringRef metadataString, std::string &outErrReason, std::string &outWarning) {
     if (std::string::npos == kernelMiscInfoOffset) {
-        outErrReason.append("DeviceBinaryFormat::Zebin : Position of " + Tags::kernelMiscInfo.str() + " not set - may be missing in zeInfo.\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Position of " + Tags::kernelMiscInfo.str() + " not set - may be missing in zeInfo.\n");
         return DecodeError::invalidBinary;
     }
     ConstStringRef kernelMiscInfoString(reinterpret_cast<const char *>(metadataString.begin() + kernelMiscInfoOffset), metadataString.size() - kernelMiscInfoOffset);
@@ -373,11 +373,11 @@ DecodeError decodeAndPopulateKernelMiscInfo(size_t kernelMiscInfoOffset, std::ve
             } else if (key == Tags::KernelMiscInfo::argsInfo) {
                 validMetadata &= (DecodeError::success == readKernelMiscArgumentInfos(parser, kernelMiscInfoNodeMetadata, miscArgInfosVec, outErrReason, outWarning));
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : Unrecognized entry: " + key.str() + " in " + Tags::kernelMiscInfo.str() + " zeInfo's section.\n");
+                outWarning.append("DeviceBinaryFormat::zebin : Unrecognized entry: " + key.str() + " in " + Tags::kernelMiscInfo.str() + " zeInfo's section.\n");
             }
         }
         if (kernelName.empty()) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Error : Missing kernel name in " + Tags::kernelMiscInfo.str() + " section.\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Error : Missing kernel name in " + Tags::kernelMiscInfo.str() + " section.\n");
             validMetadata = false;
         }
         kernelArgsMiscInfoVec.emplace_back(std::make_pair(std::move(kernelName), miscArgInfosVec));
@@ -393,7 +393,7 @@ DecodeError decodeAndPopulateKernelMiscInfo(size_t kernelMiscInfoOffset, std::ve
             }
         }
         if (nullptr == kernelInfo) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Error : Cannot find kernel info for kernel " + kName + ".\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Error : Cannot find kernel info for kernel " + kName + ".\n");
             return DecodeError::invalidBinary;
         }
         populateKernelMiscInfo(kernelInfo->kernelDescriptor, miscInfos, outErrReason, outWarning);
@@ -409,7 +409,7 @@ DecodeError decodeZeInfo(ProgramInfo &dst, ConstStringRef zeInfo, std::string &o
     }
 
     if (yamlParser.empty()) {
-        outWarning.append("DeviceBinaryFormat::Zebin : Empty kernels metadata section (.ze_info)\n");
+        outWarning.append("DeviceBinaryFormat::zebin : Empty kernels metadata section (.ze_info)\n");
         return DecodeError::success;
     }
 
@@ -454,7 +454,7 @@ DecodeError decodeZeInfoVersion(Yaml::YamlParser &parser, const ZeInfoSections &
             return err;
         }
     } else {
-        outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : No version info provided (i.e. no " + Tags::version.str() + " entry in global scope of DeviceBinaryFormat::Zebin::.ze_info) - will use decoder's default : \'" + std::to_string(zeInfoDecoderVersion.major) + "." + std::to_string(zeInfoDecoderVersion.minor) + "\'\n");
+        outWarning.append("DeviceBinaryFormat::zebin::.ze_info : No version info provided (i.e. no " + Tags::version.str() + " entry in global scope of DeviceBinaryFormat::zebin::.ze_info) - will use decoder's default : \'" + std::to_string(zeInfoDecoderVersion.major) + "." + std::to_string(zeInfoDecoderVersion.minor) + "\'\n");
     }
     return DecodeError::success;
 }
@@ -508,7 +508,7 @@ DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlP
         return extractError;
     }
 
-    dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
+    dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
     dst.kernelMetadata.kernelName = yamlParser.readValueNoQuotes(*zeInfokernelSections.nameNd[0]).str();
 
     auto decodeError = decodeZeInfoKernelExecutionEnvironment(dst, yamlParser, zeInfokernelSections, outErrReason, outWarning);
@@ -644,7 +644,7 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
         } else if (Tags::Kernel::ExecutionEnv::hasSample == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasSample, context, outErrReason);
         } else {
-            outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
+            outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
         }
     }
 
@@ -653,7 +653,7 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
     }
 
     if ((outExecEnv.simdSize != 1) && (outExecEnv.simdSize != 8) && (outExecEnv.simdSize != 16) && (outExecEnv.simdSize != 32)) {
-        outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Invalid simd size : " + std::to_string(outExecEnv.simdSize) + " in context of : " + context.str() + ". Expected 1, 8, 16 or 32. Got : " + std::to_string(outExecEnv.simdSize) + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Invalid simd size : " + std::to_string(outExecEnv.simdSize) + " in context of : " + context.str() + ". Expected 1, 8, 16 or 32. Got : " + std::to_string(outExecEnv.simdSize) + "\n");
         return DecodeError::invalidBinary;
     }
 
@@ -742,7 +742,7 @@ DecodeError readZeInfoAttributes(const Yaml::YamlParser &parser, const Yaml::Nod
         } else if (key.contains(Tags::Kernel::Attributes::hintSuffix.data())) {
             outAttributes.otherHints.push_back({key, parser.readValue(attributesMetadataNd)});
         } else {
-            outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown attribute entry \"" + key.str() + "\" in context of " + context.str() + "\n");
+            outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Unknown attribute entry \"" + key.str() + "\" in context of " + context.str() + "\n");
             validAttributes = false;
         }
     }
@@ -810,7 +810,7 @@ DecodeError readZeInfoDebugEnvironment(const Yaml::YamlParser &parser, const Yam
         if (Tags::Kernel::DebugEnv::debugSurfaceBTI == key) {
             validDebugEnv &= readZeInfoValueChecked(parser, debugEnvNd, outDebugEnv.debugSurfaceBTI, context, outErrReason);
         } else {
-            outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
+            outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
         }
     }
     return validDebugEnv ? DecodeError::success : DecodeError::invalidBinary;
@@ -856,11 +856,11 @@ DecodeError readZeInfoPerThreadPayloadArguments(const Yaml::YamlParser &parser, 
             } else if (Tags::Kernel::PerThreadPayloadArgument::offset == key) {
                 validPerThreadPayload &= readZeInfoValueChecked(parser, perThreadPayloadArgumentMemberNd, perThreadPayloadArgMetadata.offset, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" for per-thread payload argument in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" for per-thread payload argument in context of " + context.str() + "\n");
             }
         }
         if (0 == perThreadPayloadArgMetadata.size) {
-            outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Skippinig 0-size per-thread argument of type : " + argTypeStr.str() + " in context of " + context.str() + "\n");
+            outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Skippinig 0-size per-thread argument of type : " + argTypeStr.str() + " in context of " + context.str() + "\n");
             outPerThreadPayloadArguments.pop_back();
         }
     }
@@ -871,11 +871,11 @@ DecodeError readZeInfoPerThreadPayloadArguments(const Yaml::YamlParser &parser, 
 DecodeError populateKernelPerThreadPayloadArgument(KernelDescriptor &dst, const KernelPerThreadPayloadArgBaseT &src, const uint32_t grfSize, std::string &outErrReason, std::string &outWarning) {
     switch (src.argType) {
     default:
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid arg type in per-thread data section in context of : " + dst.kernelMetadata.kernelName + ".\n");
         return DecodeError::invalidBinary;
-    case Types::Kernel::ArgTypeLocalId: {
+    case Types::Kernel::argTypeLocalId: {
         if (src.offset != 0) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid offset for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::localId.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0.\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid offset for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::localId.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0.\n");
             return DecodeError::invalidBinary;
         }
         using LocalIdT = uint16_t;
@@ -887,7 +887,7 @@ DecodeError populateKernelPerThreadPayloadArgument(KernelDescriptor &dst, const 
         auto tupleSize = (src.size / singleChannelBytes);
         switch (tupleSize) {
         default:
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::localId.str() + " in context of : " + dst.kernelMetadata.kernelName + ". For simd=" + std::to_string(dst.kernelAttributes.simdSize) + " expected : " + std::to_string(singleChannelBytes) + " or " + std::to_string(singleChannelBytes * 2) + " or " + std::to_string(singleChannelBytes * 3) + ". Got : " + std::to_string(src.size) + " \n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid size for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::localId.str() + " in context of : " + dst.kernelMetadata.kernelName + ". For simd=" + std::to_string(dst.kernelAttributes.simdSize) + " expected : " + std::to_string(singleChannelBytes) + " or " + std::to_string(singleChannelBytes * 2) + " or " + std::to_string(singleChannelBytes * 3) + ". Got : " + std::to_string(src.size) + " \n");
             return DecodeError::invalidBinary;
         case 1:
         case 2:
@@ -904,16 +904,16 @@ DecodeError populateKernelPerThreadPayloadArgument(KernelDescriptor &dst, const 
         dst.kernelAttributes.perThreadDataSize *= dst.kernelAttributes.numLocalIdChannels;
         break;
     }
-    case Types::Kernel::ArgTypePackedLocalIds: {
+    case Types::Kernel::argTypePackedLocalIds: {
         if (src.offset != 0) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Unhandled offset for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::packedLocalIds.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0.\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Unhandled offset for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::packedLocalIds.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0.\n");
             return DecodeError::invalidBinary;
         }
         using LocalIdT = uint16_t;
         auto tupleSize = src.size / sizeof(LocalIdT);
         switch (tupleSize) {
         default:
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::packedLocalIds.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected : " + std::to_string(sizeof(LocalIdT)) + " or " + std::to_string(sizeof(LocalIdT) * 2) + " or " + std::to_string(sizeof(LocalIdT) * 3) + ". Got : " + std::to_string(src.size) + " \n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid size for argument of type " + Tags::Kernel::PerThreadPayloadArgument::ArgType::packedLocalIds.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected : " + std::to_string(sizeof(LocalIdT)) + " or " + std::to_string(sizeof(LocalIdT) * 2) + " or " + std::to_string(sizeof(LocalIdT) * 3) + ". Got : " + std::to_string(src.size) + " \n");
             return DecodeError::invalidBinary;
 
         case 1:
@@ -959,16 +959,16 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
                 return decodeErr;
             }
 
-            if (arg.addrmode == Types::Kernel::PayloadArgument::MemoryAddressingModeBindless) {
-                if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+            if (arg.addrmode == Types::Kernel::PayloadArgument::memoryAddressingModeBindless) {
+                if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
                     bindlessBufferAccess = true;
-                } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTImage>()) {
+                } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                     bindlessImageAccess = true;
                 }
-            } else if (arg.addrmode == Types::Kernel::PayloadArgument::MemoryAddressingModeStateful) {
-                if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+            } else if (arg.addrmode == Types::Kernel::PayloadArgument::memoryAddressingModeStateful) {
+                if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
                     bindfulBufferAccess = true;
-                } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::ArgTImage>()) {
+                } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                     bindfulImageAccess = true;
                 }
             }
@@ -976,7 +976,7 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
 
         if ((bindlessBufferAccess && bindfulBufferAccess) ||
             (bindlessImageAccess && bindfulImageAccess)) {
-            outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n");
+            outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n");
             return DecodeError::invalidBinary;
         }
 
@@ -1032,7 +1032,7 @@ DecodeError readZeInfoPayloadArguments(const Yaml::YamlParser &parser, const Yam
             } else if (Tags::Kernel::PayloadArgument::btiValue == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.btiValue, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
         }
     }
@@ -1071,7 +1071,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     };
     auto populateWithOffsetChecked = [&src, &kernelName, &outErrReason](auto &dst, size_t size, ConstStringRef typeName) {
         if (size != static_cast<size_t>(src.size)) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + typeName.str() + " in context of : " + kernelName + ". Expected 4. Got : " + std::to_string(src.size) + "\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid size for argument of type " + typeName.str() + " in context of : " + kernelName + ". Expected 4. Got : " + std::to_string(src.size) + "\n");
             return DecodeError::invalidBinary;
         }
         dst = src.offset;
@@ -1079,7 +1079,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     };
     auto populateArgVec = [&src, &outErrReason, &kernelName](auto &dst, ConstStringRef typeName) {
         if (false == setVecArgIndicesBasedOnSize<uint32_t>(dst, src.size, src.offset)) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + typeName.str() + " in context of : " + kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid size for argument of type " + typeName.str() + " in context of : " + kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
             return DecodeError::invalidBinary;
         }
         return DecodeError::success;
@@ -1087,50 +1087,50 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     switch (src.argType) {
     default:
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid arg type in cross thread data section in context of : " + kernelName + ".\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid arg type in cross thread data section in context of : " + kernelName + ".\n");
         return DecodeError::invalidBinary; // unsupported
 
-    case Types::Kernel::ArgTypeArgBypointer: {
+    case Types::Kernel::argTypeArgBypointer: {
         auto &arg = dst.payloadMappings.explicitArgs[src.argIndex];
         auto &argTraits = arg.getTraits();
         switch (src.addrspace) {
         default:
-            UNRECOVERABLE_IF(Types::Kernel::PayloadArgument::AddressSpaceUnknown != src.addrspace);
+            UNRECOVERABLE_IF(Types::Kernel::PayloadArgument::addressSpaceUnknown != src.addrspace);
             argTraits.addressQualifier = KernelArgMetadata::AddrUnknown;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
-        case Types::Kernel::PayloadArgument::AddressSpaceGlobal:
+        case Types::Kernel::PayloadArgument::addressSpaceGlobal:
             argTraits.addressQualifier = KernelArgMetadata::AddrGlobal;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
-        case Types::Kernel::PayloadArgument::AddressSpaceLocal:
+        case Types::Kernel::PayloadArgument::addressSpaceLocal:
             argTraits.addressQualifier = KernelArgMetadata::AddrLocal;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
-        case Types::Kernel::PayloadArgument::AddressSpaceConstant:
+        case Types::Kernel::PayloadArgument::addressSpaceConstant:
             argTraits.addressQualifier = KernelArgMetadata::AddrConstant;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
             break;
-        case Types::Kernel::PayloadArgument::AddressSpaceImage: {
+        case Types::Kernel::PayloadArgument::addressSpaceImage: {
             auto &argAsImage = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(true);
-            if (src.imageType != Types::Kernel::PayloadArgument::ImageTypeMax) {
+            if (src.imageType != Types::Kernel::PayloadArgument::imageTypeMax) {
                 argAsImage.imageType = static_cast<NEOImageType>(src.imageType);
             }
 
             auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
-            extendedInfo.isMediaImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::ImageType2DMedia);
-            extendedInfo.isMediaBlockImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::ImageType2DMediaBlock);
+            extendedInfo.isMediaImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::imageType2DMedia);
+            extendedInfo.isMediaBlockImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::imageType2DMediaBlock);
             extendedInfo.isTransformable = src.imageTransformable;
             dst.kernelAttributes.flags.usesImages = true;
         } break;
-        case Types::Kernel::PayloadArgument::AddressSpaceSampler: {
+        case Types::Kernel::PayloadArgument::addressSpaceSampler: {
             using SamplerType = Types::Kernel::PayloadArgument::SamplerType;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
             auto &extendedInfo = arg.getExtendedTypeInfo();
-            extendedInfo.isAccelerator = (src.samplerType == SamplerType::SamplerTypeVME) ||
-                                         (src.samplerType == SamplerType::SamplerTypeVE) ||
-                                         (src.samplerType == SamplerType::SamplerTypeVD);
-            const bool usesVme = src.samplerType == SamplerType::SamplerTypeVME;
+            extendedInfo.isAccelerator = (src.samplerType == SamplerType::samplerTypeVME) ||
+                                         (src.samplerType == SamplerType::samplerTypeVE) ||
+                                         (src.samplerType == SamplerType::samplerTypeVD);
+            const bool usesVme = src.samplerType == SamplerType::samplerTypeVME;
             extendedInfo.hasVmeExtendedDescriptor = usesVme;
             dst.kernelAttributes.flags.usesVme = usesVme;
             dst.kernelAttributes.flags.usesSamplers = true;
@@ -1139,22 +1139,22 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
         switch (src.accessType) {
         default:
-            UNRECOVERABLE_IF(argTraits.accessQualifier != Types::Kernel::PayloadArgument::AccessTypeUnknown);
+            UNRECOVERABLE_IF(argTraits.accessQualifier != Types::Kernel::PayloadArgument::accessTypeUnknown);
             argTraits.accessQualifier = KernelArgMetadata::AccessUnknown;
             break;
-        case Types::Kernel::PayloadArgument::AccessTypeReadonly:
+        case Types::Kernel::PayloadArgument::accessTypeReadonly:
             argTraits.accessQualifier = KernelArgMetadata::AccessReadOnly;
             break;
-        case Types::Kernel::PayloadArgument::AccessTypeReadwrite:
+        case Types::Kernel::PayloadArgument::accessTypeReadwrite:
             argTraits.accessQualifier = KernelArgMetadata::AccessReadWrite;
             break;
-        case Types::Kernel::PayloadArgument::AccessTypeWriteonly:
+        case Types::Kernel::PayloadArgument::accessTypeWriteonly:
             argTraits.accessQualifier = KernelArgMetadata::AccessWriteOnly;
             break;
         }
 
         argTraits.argByValSize = sizeof(void *);
-        if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+        if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>().accessedUsingStatelessAddressingMode = false;
             if (src.isPipe) {
                 argTraits.typeQualifiers.pipeQual = true;
@@ -1164,8 +1164,8 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         default:
             outErrReason.append("Invalid or missing memory addressing mode for arg idx : " + std::to_string(src.argIndex) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
             return DecodeError::invalidBinary;
-        case Types::Kernel::PayloadArgument::MemoryAddressingModeStateful:
-            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTSampler>()) {
+        case Types::Kernel::PayloadArgument::memoryAddressingModeStateful:
+            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTSampler>()) {
                 static constexpr auto maxSamplerStateSize = 16U;
                 static constexpr auto maxIndirectSamplerStateSize = 64U;
                 auto &sampler = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>();
@@ -1175,8 +1175,8 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 dst.kernelAttributes.numArgsStateful++;
             }
             break;
-        case Types::Kernel::PayloadArgument::MemoryAddressingModeStateless:
-            if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+        case Types::Kernel::PayloadArgument::memoryAddressingModeStateless:
+            if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
                 outErrReason.append("Invalid or missing memory addressing " + Tags::Kernel::PayloadArgument::MemoryAddressingMode::stateless.str() + " for arg idx : " + std::to_string(src.argIndex) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
                 return DecodeError::invalidBinary;
             }
@@ -1184,17 +1184,17 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).pointerSize = src.size;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).accessedUsingStatelessAddressingMode = true;
             break;
-        case Types::Kernel::PayloadArgument::MemoryAddressingModeBindless:
-            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+        case Types::Kernel::PayloadArgument::memoryAddressingModeBindless:
+            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).bindless = src.offset;
-            } else if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTImage>()) {
+            } else if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).bindless = src.offset;
             } else {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).bindless = src.offset;
             }
             dst.kernelAttributes.numArgsStateful++;
             break;
-        case Types::Kernel::PayloadArgument::MemoryAddressingModeSharedLocalMemory:
+        case Types::Kernel::PayloadArgument::memoryAddressingModeSharedLocalMemory:
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).slmOffset = src.offset;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).requiredSlmAlignment = src.slmArgAlignment;
             break;
@@ -1203,7 +1203,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         return DecodeError::success;
     }
 
-    case Types::Kernel::ArgTypeArgByvalue: {
+    case Types::Kernel::argTypeArgByvalue: {
         auto &argAsValue = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescValue>(true);
         ArgDescValue::Element valueElement;
         valueElement.sourceOffset = 0;
@@ -1220,128 +1220,128 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         return DecodeError::success;
     }
 
-    case Types::Kernel::ArgTypeBufferAddress:
+    case Types::Kernel::argTypeBufferAddress:
         return populateArgPointerStateless(dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true));
 
-    case Types::Kernel::ArgTypeBufferOffset:
+    case Types::Kernel::argTypeBufferOffset:
         return populateWithOffsetChecked(dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true).bufferOffset, 4U, Tags::Kernel::PayloadArgument::ArgType::bufferOffset);
 
-    case Types::Kernel::ArgTypeLocalSize:
+    case Types::Kernel::argTypeLocalSize:
         return populateArgVec(dst.payloadMappings.dispatchTraits.localWorkSize, Tags::Kernel::PayloadArgument::ArgType::localSize);
 
-    case Types::Kernel::ArgTypeGlobalIdOffset:
+    case Types::Kernel::argTypeGlobalIdOffset:
         return populateArgVec(dst.payloadMappings.dispatchTraits.globalWorkOffset, Tags::Kernel::PayloadArgument::ArgType::globalIdOffset);
 
-    case Types::Kernel::ArgTypeGroupCount:
+    case Types::Kernel::argTypeGroupCount:
         return populateArgVec(dst.payloadMappings.dispatchTraits.numWorkGroups, Tags::Kernel::PayloadArgument::ArgType::groupCount);
 
-    case Types::Kernel::ArgTypeGlobalSize:
+    case Types::Kernel::argTypeGlobalSize:
         return populateArgVec(dst.payloadMappings.dispatchTraits.globalWorkSize, Tags::Kernel::PayloadArgument::ArgType::globalSize);
 
-    case Types::Kernel::ArgTypeEnqueuedLocalSize:
+    case Types::Kernel::argTypeEnqueuedLocalSize:
         return populateArgVec(dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, Tags::Kernel::PayloadArgument::ArgType::enqueuedLocalSize);
 
-    case Types::Kernel::ArgTypeWorkDimensions:
+    case Types::Kernel::argTypeWorkDimensions:
         return populateWithOffsetChecked(dst.payloadMappings.dispatchTraits.workDim, 4U, Tags::Kernel::PayloadArgument::ArgType::workDimensions);
 
-    case Types::Kernel::ArgTypePrivateBaseStateless:
+    case Types::Kernel::argTypePrivateBaseStateless:
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.privateMemoryAddress);
 
-    case Types::Kernel::ArgTypeScratchPointer:
+    case Types::Kernel::argTypeScratchPointer:
         return populateArgToInlineData(dst.payloadMappings.implicitArgs.scratchPointerAddress);
 
-    case Types::Kernel::ArgTypeIndirectDataPointer:
+    case Types::Kernel::argTypeIndirectDataPointer:
         return populateArgToInlineData(dst.payloadMappings.implicitArgs.indirectDataPointerAddress);
 
-    case Types::Kernel::ArgTypePrintfBuffer:
+    case Types::Kernel::argTypePrintfBuffer:
         dst.kernelAttributes.flags.usesPrintf = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.printfSurfaceAddress);
 
-    case Types::Kernel::ArgTypeAssertBuffer:
+    case Types::Kernel::argTypeAssertBuffer:
         dst.kernelAttributes.flags.usesAssert = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.assertBufferAddress);
 
-    case Types::Kernel::ArgTypeSyncBuffer:
+    case Types::Kernel::argTypeSyncBuffer:
         dst.kernelAttributes.flags.usesSyncBuffer = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.syncBufferAddress);
 
-    case Types::Kernel::ArgTypeImplicitArgBuffer:
+    case Types::Kernel::argTypeImplicitArgBuffer:
         dst.kernelAttributes.flags.requiresImplicitArgs = true;
         return populateWithOffset(dst.payloadMappings.implicitArgs.implicitArgsBuffer);
 
-    case Types::Kernel::ArgTypeRtGlobalBuffer:
+    case Types::Kernel::argTypeRtGlobalBuffer:
         dst.kernelAttributes.flags.hasRTCalls = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.rtDispatchGlobals);
 
-    case Types::Kernel::ArgTypeDataConstBuffer:
+    case Types::Kernel::argTypeDataConstBuffer:
         if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
             populateArgPointerStateless(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress);
         }
         setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         return DecodeError::success;
 
-    case Types::Kernel::ArgTypeDataGlobalBuffer:
+    case Types::Kernel::argTypeDataGlobalBuffer:
         if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
             populateArgPointerStateless(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress);
         }
         setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         return DecodeError::success;
 
-    case Types::Kernel::ArgTypeImageHeight:
+    case Types::Kernel::argTypeImageHeight:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.imgHeight);
 
-    case Types::Kernel::ArgTypeImageWidth:
+    case Types::Kernel::argTypeImageWidth:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.imgWidth);
 
-    case Types::Kernel::ArgTypeImageDepth:
+    case Types::Kernel::argTypeImageDepth:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.imgDepth);
 
-    case Types::Kernel::ArgTypeImageChannelDataType:
+    case Types::Kernel::argTypeImageChannelDataType:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.channelDataType);
 
-    case Types::Kernel::ArgTypeImageChannelOrder:
+    case Types::Kernel::argTypeImageChannelOrder:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.channelOrder);
 
-    case Types::Kernel::ArgTypeImageArraySize:
+    case Types::Kernel::argTypeImageArraySize:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.arraySize);
 
-    case Types::Kernel::ArgTypeImageNumSamples:
+    case Types::Kernel::argTypeImageNumSamples:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.numSamples);
 
-    case Types::Kernel::ArgTypeImageMipLevels:
+    case Types::Kernel::argTypeImageMipLevels:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.numMipLevels);
 
-    case Types::Kernel::ArgTypeImageFlatBaseOffset:
+    case Types::Kernel::argTypeImageFlatBaseOffset:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatBaseOffset);
 
-    case Types::Kernel::ArgTypeImageFlatWidth:
+    case Types::Kernel::argTypeImageFlatWidth:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatWidth);
 
-    case Types::Kernel::ArgTypeImageFlatHeight:
+    case Types::Kernel::argTypeImageFlatHeight:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatHeight);
 
-    case Types::Kernel::ArgTypeImageFlatPitch:
+    case Types::Kernel::argTypeImageFlatPitch:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescImage>(true).metadataPayload.flatPitch);
 
-    case Types::Kernel::ArgTypeSamplerAddrMode:
+    case Types::Kernel::argTypeSamplerAddrMode:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerAddressingMode);
 
-    case Types::Kernel::ArgTypeSamplerNormCoords:
+    case Types::Kernel::argTypeSamplerNormCoords:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerNormalizedCoords);
 
-    case Types::Kernel::ArgTypeSamplerSnapWa:
+    case Types::Kernel::argTypeSamplerSnapWa:
         return populateWithOffset(explicitArgs[src.argIndex].as<ArgDescSampler>(true).metadataPayload.samplerSnapWa);
 
-    case Types::Kernel::ArgTypeVmeMbBlockType:
+    case Types::Kernel::argTypeVmeMbBlockType:
         return populateWithOffset(getVmeDescriptor()->mbBlockType);
 
-    case Types::Kernel::ArgTypeVmeSubpixelMode:
+    case Types::Kernel::argTypeVmeSubpixelMode:
         return populateWithOffset(getVmeDescriptor()->subpixelMode);
 
-    case Types::Kernel::ArgTypeVmeSadAdjustMode:
+    case Types::Kernel::argTypeVmeSadAdjustMode:
         return populateWithOffset(getVmeDescriptor()->sadAdjustMode);
 
-    case Types::Kernel::ArgTypeVmeSearchPathType:
+    case Types::Kernel::argTypeVmeSearchPathType:
         return populateWithOffset(getVmeDescriptor()->searchPathType);
     }
 
@@ -1385,7 +1385,7 @@ DecodeError readZeInfoInlineSamplers(const Yaml::YamlParser &parser, const Yaml:
             } else if (Tags::normalized == key) {
                 validInlineSamplers &= readZeInfoValueChecked(parser, inlineSamplerMemberNd, inlineSampler.normalized, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" for inline sampler in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" for inline sampler in context of " + context.str() + "\n");
             }
         }
     }
@@ -1397,32 +1397,32 @@ DecodeError populateKernelInlineSampler(KernelDescriptor &dst, const KernelInlin
     NEO::KernelDescriptor::InlineSampler inlineSampler = {};
 
     if (src.samplerIndex == -1) {
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid inline sampler index (must be >= 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid inline sampler index (must be >= 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
         return DecodeError::invalidBinary;
     }
     inlineSampler.samplerIndex = src.samplerIndex;
 
     using AddrModeZeInfo = Types::Kernel::InlineSamplers::AddrModeT;
     using AddrModeDescriptor = NEO::KernelDescriptor::InlineSampler::AddrMode;
-    constexpr LookupArray<AddrModeZeInfo, AddrModeDescriptor, 5> addrModes({{{AddrModeZeInfo::None, AddrModeDescriptor::None},
-                                                                             {AddrModeZeInfo::Repeat, AddrModeDescriptor::Repeat},
-                                                                             {AddrModeZeInfo::ClampEdge, AddrModeDescriptor::ClampEdge},
-                                                                             {AddrModeZeInfo::ClampBorder, AddrModeDescriptor::ClampBorder},
-                                                                             {AddrModeZeInfo::Mirror, AddrModeDescriptor::Mirror}}});
+    constexpr LookupArray<AddrModeZeInfo, AddrModeDescriptor, 5> addrModes({{{AddrModeZeInfo::none, AddrModeDescriptor::none},
+                                                                             {AddrModeZeInfo::repeat, AddrModeDescriptor::repeat},
+                                                                             {AddrModeZeInfo::clampEdge, AddrModeDescriptor::clampEdge},
+                                                                             {AddrModeZeInfo::clampBorder, AddrModeDescriptor::clampBorder},
+                                                                             {AddrModeZeInfo::mirror, AddrModeDescriptor::mirror}}});
     auto addrMode = addrModes.find(src.addrMode);
     if (addrMode.has_value() == false) {
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid inline sampler addressing mode in context of : " + dst.kernelMetadata.kernelName + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid inline sampler addressing mode in context of : " + dst.kernelMetadata.kernelName + "\n");
         return DecodeError::invalidBinary;
     }
     inlineSampler.addrMode = *addrMode;
 
     using FilterModeZeInfo = Types::Kernel::InlineSamplers::FilterModeT;
     using FilterModeDescriptor = NEO::KernelDescriptor::InlineSampler::FilterMode;
-    constexpr LookupArray<FilterModeZeInfo, FilterModeDescriptor, 2> filterModes({{{FilterModeZeInfo::Nearest, FilterModeDescriptor::Nearest},
-                                                                                   {FilterModeZeInfo::Linear, FilterModeDescriptor::Linear}}});
+    constexpr LookupArray<FilterModeZeInfo, FilterModeDescriptor, 2> filterModes({{{FilterModeZeInfo::nearest, FilterModeDescriptor::nearest},
+                                                                                   {FilterModeZeInfo::linear, FilterModeDescriptor::linear}}});
     auto filterMode = filterModes.find(src.filterMode);
     if (filterMode.has_value() == false) {
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid inline sampler filterMode mode in context of : " + dst.kernelMetadata.kernelName + "\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid inline sampler filterMode mode in context of : " + dst.kernelMetadata.kernelName + "\n");
         return DecodeError::invalidBinary;
     }
     inlineSampler.filterMode = *filterMode;
@@ -1471,7 +1471,7 @@ DecodeError readZeInfoPerThreadMemoryBuffers(const Yaml::YamlParser &parser, con
             } else if (Tags::Kernel::PerThreadMemoryBuffer::slot == key) {
                 validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.slot, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" for per-thread memory buffer in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" for per-thread memory buffer in context of " + context.str() + "\n");
             }
         }
     }
@@ -1483,7 +1483,7 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
     using namespace Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
     using namespace Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
     if (src.size <= 0) {
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation size (size must be greater than 0) in context of : " + dst.kernelMetadata.kernelName + ".\n");
         return DecodeError::invalidBinary;
     }
 
@@ -1493,11 +1493,11 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
     }
     switch (src.allocationType) {
     default:
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer allocation type in context of : " + dst.kernelMetadata.kernelName + ".\n");
         return DecodeError::invalidBinary;
     case AllocationTypeGlobal:
         if (MemoryUsagePrivateSpace != src.memoryUsage) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for " + global.str() + " allocation type in context of : " + dst.kernelMetadata.kernelName + ". Expected : " + privateSpace.str() + ".\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid per-thread memory buffer memory usage type for " + global.str() + " allocation type in context of : " + dst.kernelMetadata.kernelName + ". Expected : " + privateSpace.str() + ".\n");
             return DecodeError::invalidBinary;
         }
 
@@ -1505,11 +1505,11 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
         break;
     case AllocationTypeScratch:
         if (src.slot > 1) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid scratch buffer slot " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0 or 1.\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid scratch buffer slot " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0 or 1.\n");
             return DecodeError::invalidBinary;
         }
         if (0 != dst.kernelAttributes.perThreadScratchSize[src.slot]) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid duplicated scratch buffer entry " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
             return DecodeError::invalidBinary;
         }
         uint32_t scratchSpaceSize = std::max(static_cast<uint32_t>(src.size), minScratchSpaceSize);
@@ -1549,7 +1549,7 @@ DecodeError readZeInfoExperimentalProperties(const Yaml::YamlParser &parser, con
                 validExperimentalProperty &= readZeInfoValueChecked(parser, experimentalPropertyMemberNd,
                                                                     outExperimentalProperties.hasNonKernelArgAtomic, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
                 validExperimentalProperty = false;
             }
         }
@@ -1593,7 +1593,7 @@ DecodeError readZeInfoBindingTableIndices(const Yaml::YamlParser &parser, const 
             } else if (Tags::Kernel::BindingTableIndex::btiValue == key) {
                 validBindingTableEntries &= readZeInfoValueChecked(parser, bindingTableIndexMemberNd, bindingTableIndexMetadata.btiValue, context, outErrReason);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"" + key.str() + "\" for binding table index in context of " + context.str() + "\n");
+                outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" for binding table index in context of " + context.str() + "\n");
             }
         }
     }
@@ -1606,13 +1606,13 @@ DecodeError populateKernelBindingTableIndicies(KernelDescriptor &dst, const Kern
         auto &explicitArg = dst.payloadMappings.explicitArgs[btEntry.argIndex];
         switch (explicitArg.type) {
         default:
-            outErrReason.append("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : " + std::to_string(btEntry.argIndex) + ".\n");
+            outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : " + std::to_string(btEntry.argIndex) + ".\n");
             return DecodeError::invalidBinary;
-        case ArgDescriptor::ArgTImage: {
+        case ArgDescriptor::argTImage: {
             setSSHOffsetBasedOnBti(explicitArg.as<ArgDescImage>().bindful, btEntry.btiValue, dst.payloadMappings.bindingTable.numEntries);
             break;
         }
-        case ArgDescriptor::ArgTPointer: {
+        case ArgDescriptor::argTPointer: {
             setSSHOffsetBasedOnBti(explicitArg.as<ArgDescPointer>().bindful, btEntry.btiValue, dst.payloadMappings.bindingTable.numEntries);
             break;
         }

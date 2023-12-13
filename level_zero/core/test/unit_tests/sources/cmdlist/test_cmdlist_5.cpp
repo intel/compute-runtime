@@ -493,7 +493,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetA
 
     struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
         MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
-            tmpModule = std::make_unique<MockModule>(device, nullptr, ModuleType::Builtin);
+            tmpModule = std::make_unique<MockModule>(device, nullptr, ModuleType::builtin);
             tmpMockKernel = std::make_unique<MockQueryKernelTimestampsKernel>(tmpModule.get());
         }
         MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
@@ -1114,14 +1114,14 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(0u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddress = sshHeap->getHeapGpuBase();
     auto ssSize = sshHeap->getHeapSizeInPages();
 
     uint64_t dsBaseAddress = -1;
     size_t dsSize = static_cast<size_t>(-1);
 
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (NEO::UnitTestHelper<FamilyType>::expectNullDsh(device->getDeviceInfo())) {
         EXPECT_EQ(nullptr, dshHeap);
     } else {
@@ -1132,8 +1132,8 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
         dsSize = dshHeap->getHeapSizeInPages();
     }
 
-    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapSizeInPages();
 
     auto statlessMocs = getMocs(true);
 
@@ -1281,7 +1281,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(0u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     uint64_t ssBaseAddress = sshHeap->getHeapGpuBase();
     uint64_t ssSize = sshHeap->getHeapSizeInPages();
 
@@ -1291,7 +1291,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
     size_t dsSize = static_cast<size_t>(-1);
 
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeap) {
         dsBaseAddress = dshHeap->getHeapGpuBase();
         dsSize = dsFirstBaseSize = dshHeap->getHeapSizeInPages();
@@ -1316,11 +1316,11 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(finalState.dynamicStateSize.value, requiredState.dynamicStateSize.value);
 
     sshHeap->getSpace(sshHeap->getAvailableSpace());
-    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::SURFACE_STATE, sshHeap->getMaxAvailableSpace(), 0);
+    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, sshHeap->getMaxAvailableSpace(), 0);
 
     if (dshHeap) {
         dshHeap->getSpace(dshHeap->getAvailableSpace());
-        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::DYNAMIC_STATE, dshHeap->getMaxAvailableSpace(), 0);
+        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::dynamicState, dshHeap->getMaxAvailableSpace(), 0);
     }
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -1489,13 +1489,13 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     uint64_t ssBaseAddress = sshHeap->getHeapGpuBase();
     uint64_t dsBaseAddress = -1;
     uint32_t dsBaseSize = 0;
     uint32_t dsFirstBaseSize = 0;
 
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeap) {
         dsBaseAddress = dshHeap->getHeapGpuBase();
         dsFirstBaseSize = dshHeap->getHeapSizeInPages();
@@ -1505,11 +1505,11 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     uint64_t dsFirstBaseAddress = dsBaseAddress;
 
     sshHeap->getSpace(sshHeap->getAvailableSpace());
-    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::SURFACE_STATE, sshHeap->getMaxAvailableSpace(), 0);
+    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, sshHeap->getMaxAvailableSpace(), 0);
 
     if (dshHeap) {
         dshHeap->getSpace(dshHeap->getAvailableSpace());
-        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::DYNAMIC_STATE, dshHeap->getMaxAvailableSpace(), 0);
+        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::dynamicState, dshHeap->getMaxAvailableSpace(), 0);
     }
 
     size_t cmdListBefore = cmdListStream.getUsed();
@@ -1688,7 +1688,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
 
-    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
@@ -1710,7 +1710,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(0u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     EXPECT_EQ(nullptr, sshHeap);
 
     result = commandList->close();
@@ -1761,7 +1761,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
 
-    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
@@ -1790,7 +1790,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(1u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     EXPECT_NE(nullptr, sshHeap);
 
     result = commandList->close();
@@ -1845,7 +1845,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(0u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     uint64_t ssBaseAddress = sshHeap->getHeapGpuBase();
     uint64_t ssSize = sshHeap->getHeapSizeInPages();
 
@@ -1855,7 +1855,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
     size_t dsSize = static_cast<size_t>(-1);
 
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeap) {
         dsBaseAddress = dshHeap->getHeapGpuBase();
         dsSize = dsFirstBaseSize = dshHeap->getHeapSizeInPages();
@@ -1877,11 +1877,11 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(finalState.dynamicStateSize.value, requiredState.dynamicStateSize.value);
 
     sshHeap->getSpace(sshHeap->getAvailableSpace());
-    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::SURFACE_STATE, sshHeap->getMaxAvailableSpace(), 0);
+    container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, sshHeap->getMaxAvailableSpace(), 0);
 
     if (dshHeap) {
         dshHeap->getSpace(dshHeap->getAvailableSpace());
-        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::DYNAMIC_STATE, dshHeap->getMaxAvailableSpace(), 0);
+        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::dynamicState, dshHeap->getMaxAvailableSpace(), 0);
     }
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -1978,14 +1978,14 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(0u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddress = sshHeap->getHeapGpuBase();
     auto ssSize = sshHeap->getHeapSizeInPages();
 
     uint64_t dsBaseAddress = -1;
     size_t dsSize = static_cast<size_t>(-1);
 
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (!this->dshRequired) {
         EXPECT_EQ(nullptr, dshHeap);
     } else {
@@ -2021,8 +2021,8 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
 
-    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapSizeInPages();
 
     auto statlessMocs = getMocs(true);
 
@@ -2045,17 +2045,17 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
     sshHeap->getSpace(sshHeap->getAvailableSpace());
     if (commandListImmediate->immediateCmdListHeapSharing) {
-        csrImmediate.getIndirectHeap(NEO::HeapType::SURFACE_STATE, sshHeap->getMaxAvailableSpace());
+        csrImmediate.getIndirectHeap(NEO::HeapType::surfaceState, sshHeap->getMaxAvailableSpace());
     } else {
-        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::SURFACE_STATE, sshHeap->getMaxAvailableSpace(), 0);
+        container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, sshHeap->getMaxAvailableSpace(), 0);
     }
 
     if (dshHeap) {
         dshHeap->getSpace(dshHeap->getAvailableSpace());
         if (commandListImmediate->immediateCmdListHeapSharing) {
-            csrImmediate.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE, dshHeap->getMaxAvailableSpace());
+            csrImmediate.getIndirectHeap(NEO::HeapType::dynamicState, dshHeap->getMaxAvailableSpace());
         } else {
-            container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::DYNAMIC_STATE, dshHeap->getMaxAvailableSpace(), 0);
+            container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::dynamicState, dshHeap->getMaxAvailableSpace(), 0);
         }
     }
 
@@ -2128,21 +2128,21 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(0u, sbaCmds.size());
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddress = sshHeap->getHeapGpuBase();
     auto ssSize = sshHeap->getHeapSizeInPages();
 
     uint64_t dsBaseAddress = -1;
     size_t dsSize = static_cast<size_t>(-1);
     uint32_t dsBaseSize = 0;
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeap) {
         dsBaseAddress = dshHeap->getHeapGpuBase();
         dsSize = dsBaseSize = dshHeap->getHeapSizeInPages();
     }
 
-    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapSizeInPages();
 
     auto statlessMocs = getMocs(true);
 
@@ -2237,7 +2237,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto csrIohStateCopy = csrImmediate.getIohState();
-    bool iohDirty = csrIohStateCopy.updateAndCheck(container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT));
+    bool iohDirty = csrIohStateCopy.updateAndCheck(container.getIndirectHeap(NEO::HeapType::indirectObject));
     EXPECT_FALSE(iohDirty);
 
     auto &containerImmediate = commandListImmediate->getCmdContainer();
@@ -2249,21 +2249,21 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t csrUsedAfter = csrStream.getUsed();
 
-    auto sshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddressImmediate = sshHeapImmediate->getHeapGpuBase();
     auto ssSizeImmediate = sshHeapImmediate->getHeapSizeInPages();
 
     uint64_t dsBaseAddressImmediate = -1;
     size_t dsSizeImmediate = static_cast<size_t>(-1);
 
-    auto dshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeapImmediate) {
         dsBaseAddressImmediate = dshHeapImmediate->getHeapGpuBase();
         dsSizeImmediate = dshHeapImmediate->getHeapSizeInPages();
     }
 
-    auto ioBaseAddressImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto ioSizeImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+    auto ioBaseAddressImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto ioSizeImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapSizeInPages();
 
     auto statlessMocsImmediate = getMocs(true);
 
@@ -2337,21 +2337,21 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t csrUsedAfter = csrStream.getUsed();
 
-    auto sshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddressImmediate = sshHeapImmediate->getHeapGpuBase();
     auto ssSizeImmediate = sshHeapImmediate->getHeapSizeInPages();
 
     uint64_t dsBaseAddressImmediate = -1;
     size_t dsSizeImmediate = static_cast<size_t>(-1);
 
-    auto dshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeapImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeapImmediate) {
         dsBaseAddressImmediate = dshHeapImmediate->getHeapGpuBase();
         dsSizeImmediate = dshHeapImmediate->getHeapSizeInPages();
     }
 
-    auto ioBaseAddressImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto ioSizeImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+    auto ioBaseAddressImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto ioSizeImmediate = containerImmediate.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapSizeInPages();
 
     auto statlessMocsImmediate = getMocs(true);
 
@@ -2402,21 +2402,21 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto sshHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddress = sshHeap->getHeapGpuBase();
     auto ssSize = sshHeap->getHeapSizeInPages();
 
     uint64_t dsBaseAddress = -1;
     size_t dsSize = static_cast<size_t>(-1);
     uint32_t dsBaseSize = 0;
-    auto dshHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
     if (dshHeap) {
         dsBaseAddress = dshHeap->getHeapGpuBase();
         dsSize = dsBaseSize = dshHeap->getHeapSizeInPages();
     }
 
-    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapSizeInPages();
 
     auto statlessMocs = getMocs(true);
 
@@ -2876,11 +2876,11 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &container = commandList->getCmdContainer();
-    auto indirectBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
-    auto surfaceBaseAddress = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+    auto indirectBaseAddress = container.getIndirectHeap(NEO::HeapType::indirectObject)->getHeapGpuBase();
+    auto surfaceBaseAddress = container.getIndirectHeap(NEO::HeapType::surfaceState)->getHeapGpuBase();
     auto dynamicBaseAddress = static_cast<uint64_t>(NEO::StreamProperty64::initValue);
     if (dshRequired) {
-        dynamicBaseAddress = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE)->getHeapGpuBase();
+        dynamicBaseAddress = container.getIndirectHeap(NEO::HeapType::dynamicState)->getHeapGpuBase();
     }
 
     EXPECT_EQ(static_cast<int64_t>(indirectBaseAddress), commandList->currentIndirectObjectBaseAddress);
@@ -2910,18 +2910,18 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &container = commandList->getCmdContainer();
-    size_t surfaceHeapUsed = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getUsed();
+    size_t surfaceHeapUsed = container.getIndirectHeap(NEO::HeapType::surfaceState)->getUsed();
     size_t dynamicHeapUsed = 0;
     if (dshRequired) {
-        dynamicHeapUsed = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE)->getUsed();
+        dynamicHeapUsed = container.getIndirectHeap(NEO::HeapType::dynamicState)->getUsed();
     }
 
     result = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(surfaceHeapUsed, container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getUsed());
+    EXPECT_EQ(surfaceHeapUsed, container.getIndirectHeap(NEO::HeapType::surfaceState)->getUsed());
     if (dshRequired) {
-        EXPECT_EQ(dynamicHeapUsed, container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE)->getUsed());
+        EXPECT_EQ(dynamicHeapUsed, container.getIndirectHeap(NEO::HeapType::dynamicState)->getUsed());
     }
 }
 
@@ -2939,7 +2939,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &container = commandList->getCmdContainer();
-    auto ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
 
     auto firstHeapSurfaceBaseAddress = ssh->getHeapGpuBase();
 
@@ -3009,7 +3009,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &container = commandList->getCmdContainer();
-    auto ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
 
     auto firstHeapSurfaceBaseAddress = ssh->getHeapGpuBase();
 

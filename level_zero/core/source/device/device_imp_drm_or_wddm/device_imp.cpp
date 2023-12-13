@@ -21,7 +21,7 @@ ze_result_t DeviceImp::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLu
     NEO::Device *activeDevice = getActiveDevice();
     if (activeDevice->getRootDeviceEnvironment().osInterface) {
         NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
-        if (driverType == NEO::DriverModelType::WDDM) {
+        if (driverType == NEO::DriverModelType::wddm) {
             NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
             NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
             std::vector<uint8_t> luidData;
@@ -39,7 +39,7 @@ uint32_t DeviceImp::queryDeviceNodeMask() {
     NEO::Device *activeDevice = getActiveDevice();
     if (activeDevice->getRootDeviceEnvironment().osInterface) {
         NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
-        if (driverType == NEO::DriverModelType::WDDM) {
+        if (driverType == NEO::DriverModelType::wddm) {
             NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
             NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
             return context->getDeviceNodeMask();
@@ -52,7 +52,7 @@ ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_pro
     NEO::Device *activeDevice = getActiveDevice();
     if (activeDevice->getRootDeviceEnvironment().osInterface) {
         NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
-        if (driverType == NEO::DriverModelType::WDDM) {
+        if (driverType == NEO::DriverModelType::wddm) {
             pExternalMemoryProperties->imageExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
             pExternalMemoryProperties->imageImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
             pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;

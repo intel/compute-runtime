@@ -87,7 +87,7 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
 
 bool KernelHelper::isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor) {
     for (auto &argDescriptor : kernelDescriptor.payloadMappings.explicitArgs) {
-        if (argDescriptor.type == NEO::ArgDescriptor::ArgTValue) {
+        if (argDescriptor.type == NEO::ArgDescriptor::argTValue) {
             for (auto &element : argDescriptor.as<NEO::ArgDescValue>().elements) {
                 if (element.isPtr) {
                     return true;

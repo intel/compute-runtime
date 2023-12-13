@@ -1314,7 +1314,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
                                                               stateSaveAreaHeader.size());
         if (neoDevice->getBindlessHeapsHelper()) {
             auto &gfxCoreHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[debugSurface->getRootDeviceIndex()]->getHelper<NEO::GfxCoreHelper>();
-            auto ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getCpuBase();
+            auto ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getCpuBase();
             NEO::EncodeSurfaceStateArgs args;
             args.outMemory = ssh;
             args.graphicsAddress = device->getDebugSurface()->getGpuAddress();

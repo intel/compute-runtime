@@ -969,16 +969,16 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         default:
             this->kernelArgHandlers.push_back(&KernelImp::setArgUnknown);
             break;
-        case NEO::ArgDescriptor::ArgTPointer:
+        case NEO::ArgDescriptor::argTPointer:
             this->kernelArgHandlers.push_back(&KernelImp::setArgBuffer);
             break;
-        case NEO::ArgDescriptor::ArgTImage:
+        case NEO::ArgDescriptor::argTImage:
             this->kernelArgHandlers.push_back(&KernelImp::setArgImage);
             break;
-        case NEO::ArgDescriptor::ArgTSampler:
+        case NEO::ArgDescriptor::argTSampler:
             this->kernelArgHandlers.push_back(&KernelImp::setArgSampler);
             break;
-        case NEO::ArgDescriptor::ArgTValue:
+        case NEO::ArgDescriptor::argTValue:
             this->kernelArgHandlers.push_back(&KernelImp::setArgImmediate);
             break;
         }
@@ -1259,9 +1259,9 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
         const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex];
 
         auto crossThreadOffset = NEO::undefined<NEO::CrossThreadDataOffset>;
-        if (arg.type == NEO::ArgDescriptor::ArgTPointer) {
+        if (arg.type == NEO::ArgDescriptor::argTPointer) {
             crossThreadOffset = arg.as<NEO::ArgDescPointer>().bindless;
-        } else if (arg.type == NEO::ArgDescriptor::ArgTImage) {
+        } else if (arg.type == NEO::ArgDescriptor::argTImage) {
             crossThreadOffset = arg.as<NEO::ArgDescImage>().bindless;
         } else {
             continue;

@@ -148,7 +148,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
-    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
+    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
@@ -188,7 +188,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     bindlessHeapsHelperPtr->globalBindlessDsh = true;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
-    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
+    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
@@ -233,7 +233,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
-    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::GLOBAL_SSH].reset(new IndirectHeap(&baseAllocation, true));
+    bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());

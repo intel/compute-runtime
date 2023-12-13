@@ -780,27 +780,27 @@ std::string asString(ArgObjectType type, ArgObjectTypeSpecialized typeSpecialize
     std::string typeAsStr;
     switch (type) {
     default:
-        UNRECOVERABLE_IF(ArgObjectType::None != type);
+        UNRECOVERABLE_IF(ArgObjectType::none != type);
         return "unspecified";
-    case ArgObjectType::Buffer:
+    case ArgObjectType::buffer:
         typeAsStr = "BUFFER";
         break;
-    case ArgObjectType::Image:
+    case ArgObjectType::image:
         typeAsStr = "IMAGE";
         break;
-    case ArgObjectType::Sampler:
+    case ArgObjectType::sampler:
         typeAsStr = "SAMPLER";
         break;
-    case ArgObjectType::Slm:
+    case ArgObjectType::slm:
         typeAsStr = "SLM";
         break;
     }
 
     switch (typeSpecialized) {
     default:
-        UNRECOVERABLE_IF(ArgObjectTypeSpecialized::None != typeSpecialized);
+        UNRECOVERABLE_IF(ArgObjectTypeSpecialized::none != typeSpecialized);
         break;
-    case ArgObjectTypeSpecialized::Vme:
+    case ArgObjectTypeSpecialized::vme:
         typeAsStr += " [ VME ]";
     }
 
@@ -817,12 +817,12 @@ std::string asString(const KernelArgFromPatchtokens &arg, const std::string &ind
     switch (arg.objectType) {
     default:
         break;
-    case ArgObjectType::Buffer:
+    case ArgObjectType::buffer:
         stream << indentLevel1 << "Buffer Metadata:\n";
         dumpOrNull(arg.metadata.buffer.bufferOffset, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.buffer.pureStateful, "", stream, indentLevel2);
         break;
-    case ArgObjectType::Image:
+    case ArgObjectType::image:
         stream << indentLevel1 << "Image Metadata:\n";
         dumpOrNull(arg.metadata.image.width, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.image.height, "", stream, indentLevel2);
@@ -837,13 +837,13 @@ std::string asString(const KernelArgFromPatchtokens &arg, const std::string &ind
         dumpOrNull(arg.metadata.image.flatHeight, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.image.flatPitch, "", stream, indentLevel2);
         break;
-    case ArgObjectType::Sampler:
+    case ArgObjectType::sampler:
         stream << indentLevel1 << "Sampler Metadata:\n";
         dumpOrNull(arg.metadata.sampler.addressMode, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.sampler.coordinateSnapWaRequired, "", stream, indentLevel2);
         dumpOrNull(arg.metadata.sampler.normalizedCoords, "", stream, indentLevel2);
         break;
-    case ArgObjectType::Slm:
+    case ArgObjectType::slm:
         stream << indentLevel1 << "Slm Metadata:\n";
         dumpOrNull(arg.metadata.slm.token, "", stream, indentLevel2);
         break;
@@ -851,7 +851,7 @@ std::string asString(const KernelArgFromPatchtokens &arg, const std::string &ind
     switch (arg.objectTypeSpecialized) {
     default:
         break;
-    case ArgObjectTypeSpecialized::Vme:
+    case ArgObjectTypeSpecialized::vme:
         stream << indentLevel1 << "Vme Metadata:\n";
         dumpOrNull(arg.metadataSpecialized.vme.mbBlockType, "", stream, indentLevel2);
         dumpOrNull(arg.metadataSpecialized.vme.sadAdjustMode, "", stream, indentLevel2);

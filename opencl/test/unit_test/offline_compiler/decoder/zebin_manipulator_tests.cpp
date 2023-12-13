@@ -265,7 +265,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithProductFamilyWhenParsingIntelGT
     PRODUCT_FAMILY productFamily = PRODUCT_FAMILY::IGFX_DG2;
     std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
     intelGTnotes.resize(1);
-    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::productFamily;
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1);
 
     auto iga = std::make_unique<MockIgaWrapper>();
@@ -278,7 +278,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithGfxCoreFamilyWhenParsingIntelGT
     GFXCORE_FAMILY gfxCore = GFXCORE_FAMILY::IGFX_XE_HPG_CORE;
     std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
     intelGTnotes.resize(1);
-    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::GfxCore;
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::gfxCore;
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&gfxCore, 1);
 
     auto iga = std::make_unique<MockIgaWrapper>();
@@ -296,7 +296,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithValidProductConfigWhenParsingIn
     auto productConfig = aotInfo.aotConfig;
     std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
     intelGTnotes.resize(1);
-    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductConfig;
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::productConfig;
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productConfig, 1u);
 
     auto iga = std::make_unique<MockIgaWrapper>();
@@ -313,7 +313,7 @@ TEST(ZebinManipulatorTests, GivenIntelGTNotesWithInvalidProductConfigWhenParsing
     AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::UNKNOWN_ISA;
     std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
     intelGTnotes.resize(1);
-    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductConfig;
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::productConfig;
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productConfig, 1u);
 
     auto iga = std::make_unique<MockIgaWrapper>();
@@ -386,7 +386,7 @@ TEST_F(ZebinDecoderTests, GivenInvalidIntelGTNotesWhenDecodeThenErrorIsReturned)
     decoder.returnValueGetIntelGTNotes = {};
     decoder.returnValueGetIntelGTNotes.resize(1);
     const std::string zebinVersion = "1.0";
-    decoder.returnValueGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ZebinVersion;
+    decoder.returnValueGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::zebinVersion;
     decoder.returnValueGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(zebinVersion.data(), zebinVersion.length());
 
     const auto retVal = decoder.decode();
@@ -446,7 +446,7 @@ TEST_F(ZebinDecoderTests, GivenNoFailsWhenDecodeThenSuccessIsReturned) {
     decoder.returnValueGetIntelGTNotes = {};
     decoder.returnValueGetIntelGTNotes.resize(1);
     const PRODUCT_FAMILY productFamily = PRODUCT_FAMILY::IGFX_DG2;
-    decoder.returnValueGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
+    decoder.returnValueGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::productFamily;
     decoder.returnValueGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1U);
 
     const auto retVal = decoder.decode();

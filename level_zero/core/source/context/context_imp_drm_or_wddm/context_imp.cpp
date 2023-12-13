@@ -25,7 +25,7 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
     }
     if (neoDevice->getRootDeviceEnvironment().osInterface) {
         NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
-        if (!exportDesc && driverType == NEO::DriverModelType::WDDM) {
+        if (!exportDesc && driverType == NEO::DriverModelType::wddm) {
             return true;
         }
     }
@@ -39,7 +39,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
                                   ze_ipc_memory_flags_t flags) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
-    NEO::DriverModelType driverType = NEO::DriverModelType::UNKNOWN;
+    NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
     if (neoDevice->getRootDeviceEnvironment().osInterface) {
         driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
     }
@@ -48,7 +48,7 @@ void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice,
         return this->driverHandle->importNTHandle(hDevice,
                                                   reinterpret_cast<void *>(handle),
                                                   allocationType);
-    } else if (driverType == NEO::DriverModelType::DRM) {
+    } else if (driverType == NEO::DriverModelType::drm) {
         auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
         NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
         return this->driverHandle->importFdHandle(neoDevice,

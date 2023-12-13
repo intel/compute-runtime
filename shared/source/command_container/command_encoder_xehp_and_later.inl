@@ -143,7 +143,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 auto ssh = args.surfaceStateHeap;
                 if (ssh == nullptr) {
                     container.prepareBindfulSsh();
-                    ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                    ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
                 }
 
                 uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
@@ -177,7 +177,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 if (bindingTableStateCount > 0u) {
                     auto ssh = args.surfaceStateHeap;
                     if (ssh == nullptr) {
-                        ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                        ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
                     }
                     auto bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                         *ssh,
@@ -203,7 +203,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
                 auto dsHeap = args.dynamicStateHeap;
                 if (dsHeap == nullptr) {
-                    dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+                    dsHeap = container.getIndirectHeap(HeapType::dynamicState);
                 }
                 UNRECOVERABLE_IF(!dsHeap);
 
@@ -242,14 +242,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, gfxCoreHelper);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     {
-        auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
+        auto heap = container.getIndirectHeap(HeapType::indirectObject);
         UNRECOVERABLE_IF(!heap);
         heap->align(DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         void *ptr = nullptr;
         if (args.isKernelDispatchedFromImmediateCmdList) {
-            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
+            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
         } else {
-            ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
+            ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
         }
         UNRECOVERABLE_IF(!ptr);
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
@@ -322,7 +322,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if constexpr (heaplessModeEnabled) {
         auto inlineDataPointer = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
         auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
-        auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
+        auto heap = container.getIndirectHeap(HeapType::indirectObject);
         auto address = heap->getHeapGpuBase() + offsetThreadData;
         std::memcpy(inlineDataPointer + indirectDataPointerAddress.offset, &address, indirectDataPointerAddress.pointerSize);
 
@@ -657,9 +657,9 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto &device = *args.container->getDevice();
     auto gmmHelper = device.getRootDeviceEnvironment().getGmmHelper();
 
-    auto dsh = args.container->isHeapDirty(HeapType::DYNAMIC_STATE) ? args.container->getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
-    auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
-    auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
+    auto dsh = args.container->isHeapDirty(HeapType::dynamicState) ? args.container->getIndirectHeap(HeapType::dynamicState) : nullptr;
+    auto ioh = args.container->isHeapDirty(HeapType::indirectObject) ? args.container->getIndirectHeap(HeapType::indirectObject) : nullptr;
+    auto ssh = args.container->isHeapDirty(HeapType::surfaceState) ? args.container->getIndirectHeap(HeapType::surfaceState) : nullptr;
     auto isDebuggerActive = device.getDebugger() != nullptr;
     bool setGeneralStateBaseAddress = args.sbaProperties ? false : true;
     uint64_t globalHeapsBase = 0;
@@ -709,8 +709,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
                                                                            static_cast<uint32_t>(args.sbaProperties->bindingTablePoolSize.value),
                                                                            gmmHelper);
         }
-    } else if (args.container->isHeapDirty(HeapType::SURFACE_STATE) && ssh != nullptr) {
-        auto heap = args.container->getIndirectHeap(HeapType::SURFACE_STATE);
+    } else if (args.container->isHeapDirty(HeapType::surfaceState) && ssh != nullptr) {
+        auto heap = args.container->getIndirectHeap(HeapType::surfaceState);
         StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*args.container->getCommandStream(),
                                                                        *heap,
                                                                        gmmHelper);
@@ -727,7 +727,7 @@ size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device
         size += sizeof(typename Family::STATE_BASE_ADDRESS);
     }
 
-    if (container.isHeapDirty(HeapType::SURFACE_STATE)) {
+    if (container.isHeapDirty(HeapType::surfaceState)) {
         size += sizeof(typename Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
     }
 

@@ -14,7 +14,7 @@
 namespace NEO {
 
 template <>
-bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t> binary) {
+bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::oclElf>(const ArrayRef<const uint8_t> binary) {
     auto header = Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary);
     if (nullptr == header) {
         return false;
@@ -31,7 +31,7 @@ bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const 
 }
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                                              std::string &outErrReason, std::string &outWarning) {
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(archive, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
@@ -45,15 +45,15 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(con
         return {};
 
     case Elf::ET_OPENCL_EXECUTABLE:
-        ret.format = NEO::DeviceBinaryFormat::Patchtokens;
+        ret.format = NEO::DeviceBinaryFormat::patchtokens;
         break;
 
     case Elf::ET_OPENCL_LIBRARY:
-        ret.format = NEO::DeviceBinaryFormat::OclLibrary;
+        ret.format = NEO::DeviceBinaryFormat::oclLibrary;
         break;
 
     case Elf::ET_OPENCL_OBJECTS:
-        ret.format = NEO::DeviceBinaryFormat::OclCompiledObject;
+        ret.format = NEO::DeviceBinaryFormat::oclCompiledObject;
         break;
     }
 
@@ -91,13 +91,13 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(con
         }
     }
 
-    if (NEO::DeviceBinaryFormat::Patchtokens != ret.format) {
+    if (NEO::DeviceBinaryFormat::patchtokens != ret.format) {
         ret.deviceBinary.clear();
         return ret;
     }
 
     if (false == ret.deviceBinary.empty()) {
-        auto unpackedOclDevBin = unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(ret.deviceBinary, requestedProductAbbreviation, requestedTargetDevice,
+        auto unpackedOclDevBin = unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(ret.deviceBinary, requestedProductAbbreviation, requestedTargetDevice,
                                                                                                 outErrReason, outWarning);
         if (unpackedOclDevBin.deviceBinary.empty()) {
             ret.deviceBinary.clear();
@@ -111,14 +111,14 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(con
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     // packed binary format
     outErrReason = "Device binary format is packed";
     return DecodeError::invalidBinary;
 }
 
 template <>
-std::vector<uint8_t> packDeviceBinary<NEO::DeviceBinaryFormat::OclElf>(const SingleDeviceBinary binary, std::string &outErrReason, std::string &outWarning) {
+std::vector<uint8_t> packDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(const SingleDeviceBinary binary, std::string &outErrReason, std::string &outWarning) {
     using namespace NEO::Elf;
     NEO::Elf::ElfEncoder<EI_CLASS_64> elfEncoder;
     elfEncoder.getElfFileHeader().type = ET_OPENCL_EXECUTABLE;

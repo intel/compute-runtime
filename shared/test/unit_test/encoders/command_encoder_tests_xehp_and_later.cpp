@@ -52,7 +52,7 @@ HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAdd
 
 HWTEST2_F(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
     auto container = CommandContainer();
-    container.setHeapDirty(HeapType::SURFACE_STATE);
+    container.setHeapDirty(HeapType::surfaceState);
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 104ul);
 }

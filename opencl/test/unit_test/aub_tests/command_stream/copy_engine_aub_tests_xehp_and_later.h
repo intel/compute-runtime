@@ -411,7 +411,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhe
 
     {
         // resolve
-        auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
+        auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::auxToNonAux,
                                                                                    buffer->getGraphicsAllocation(rootDeviceIndex),
                                                                                    bcsCsr->getClearColorAllocation());
 
@@ -423,7 +423,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhe
 
     {
         // compress again
-        auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
+        auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::nonAuxToAux,
                                                                                    buffer->getGraphicsAllocation(rootDeviceIndex),
                                                                                    bcsCsr->getClearColorAllocation());
 

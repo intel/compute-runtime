@@ -26,7 +26,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinDisabledWhenBinExtensionPass
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindful_copy_buffer_to_buffer.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -41,7 +41,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "bindless_copy_buffer_to_buffer.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -67,10 +67,10 @@ HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatfor
                                                 EBuiltInOps::fillImage3d};
 
     for (auto &builtinType : builtinTypes) {
-        auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Binary, *pDevice);
+        auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::binary, *pDevice);
         EXPECT_EQ(0U, binaryBuiltinResource.size());
 
-        auto intermediateBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::Intermediate, *pDevice);
+        auto intermediateBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::intermediate, *pDevice);
         EXPECT_NE(0U, intermediateBuiltinResource.size());
     }
 }
@@ -79,7 +79,7 @@ HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAdd
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::binary, *pDevice);
 
     std::string expectedResourceNameGeneric = "stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -92,14 +92,14 @@ HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGet
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
     {
-        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
         std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
     }
 
     {
-        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::Binary, *pDevice);
+        auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBufferStateless, BuiltinCode::ECodeType::binary, *pDevice);
         std::string expectedResourceName = deviceIpString + "_stateless_copy_buffer_to_buffer_stateless.builtin_kernel.bin";
         EXPECT_EQ(1u, resourceNames.size());
         EXPECT_EQ(resourceNames[0], expectedResourceName);
@@ -112,7 +112,7 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
+    auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
 
     std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.bc";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -130,7 +130,7 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltin
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
-    auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Binary, builtinCode.type);
+    auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());
 }

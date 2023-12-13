@@ -712,7 +712,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
-        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = {bltSize, 1, 1};
         blitPropertiesContainer.push_back(blitProperties);
 
@@ -755,7 +755,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
-        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = {bltSize, 1, 1};
         blitPropertiesContainer.push_back(blitProperties);
 
@@ -797,7 +797,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
-        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = bltSize;
         blitPropertiesContainer.push_back(blitProperties);
 
@@ -839,7 +839,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
-        blitProperties.auxTranslationDirection = AuxTranslationDirection::None;
+        blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = bltSize;
         blitPropertiesContainer.push_back(blitProperties);
 

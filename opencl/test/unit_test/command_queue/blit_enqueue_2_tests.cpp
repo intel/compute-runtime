@@ -36,7 +36,7 @@ using BlitEnqueueWithDisabledGpgpuSubmissionTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushRequiredWhenDoingBcsCopyThenSubmitToGpgpuOnlyIfPreviousEnqueueWasGpgpu) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -48,29 +48,29 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
     int hostPtr = 0;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::gpuKernel, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenProfilingEnabledWhenSubmittingWithoutFlushToGpgpuThenSetSubmitTime) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -85,7 +85,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenProfilingEn
     cl_event clEvent;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     auto event = castToObject<Event>(clEvent);
@@ -100,7 +100,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenProfilingEn
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhenEnqueuingBcsSubmissionThenSetupBcsCsrInEvent) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     auto buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
@@ -111,7 +111,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhe
 
         cl_event clEvent;
         commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
-        EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+        EXPECT_EQ(EnqueueProperties::Operation::gpuKernel, mockCommandQueue->latestSentEnqueueType);
         EXPECT_EQ(0u, bcsCsr->peekTaskCount());
         EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
@@ -125,7 +125,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhe
 
         cl_event clEvent;
         commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &clEvent);
-        EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+        EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
         EXPECT_EQ(1u, bcsCsr->peekTaskCount());
         EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 
@@ -138,7 +138,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenOutEventWhe
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyThenDontSubmitToGpgpu) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -150,29 +150,29 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     int hostPtr = 0;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::gpuKernel, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredAndEnqueueNotFlushedWhenDoingBcsCopyThenSubmitOnlyOnceAfterEnqueue) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
     debugManager.flags.PerformImplicitFlushForNewResource.set(0);
@@ -188,29 +188,29 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     int hostPtr = 0;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::gpuKernel, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenImmediateDispatchCacheFlushNotRequiredAndEnqueueNotFlushedWhenDoingBcsCopyThenSubmitOnlyOnceAfterEnqueue) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
     debugManager.flags.PerformImplicitFlushForNewResource.set(0);
@@ -226,29 +226,29 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenImmediateDi
     int hostPtr = 0;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::gpuKernel, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyAfterBarrierThenDontSubmitToGpgpu) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -267,7 +267,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 }
 
@@ -275,7 +275,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     debugManager.flags.OptimizeIoqBarriersHandling.set(0);
 
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -294,13 +294,13 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
     EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyOnBlockedQueueThenSubmitToGpgpu) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -315,10 +315,10 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
     cl_event waitlist = &userEvent;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, &waitlist, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     userEvent.setStatus(CL_COMPLETE);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
 
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 
@@ -327,7 +327,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushRequiredWhenDoingBcsCopyOnBlockedQueueThenSubmitToGpgpu) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
 
@@ -342,10 +342,10 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushR
     cl_event waitlist = &userEvent;
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, &waitlist, nullptr);
-    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::none, mockCommandQueue->latestSentEnqueueType);
 
     userEvent.setStatus(CL_COMPLETE);
-    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(EnqueueProperties::Operation::blit, mockCommandQueue->latestSentEnqueueType);
 
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 

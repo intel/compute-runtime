@@ -155,15 +155,15 @@ using TokenId = uint32_t;
 constexpr TokenId invalidTokenId = std::numeric_limits<TokenId>::max();
 
 struct Token {
-    enum Type : uint8_t { Identifier,
-                          LiteralString,
-                          LiteralNumber,
-                          SingleCharacter,
-                          Comment,
-                          FileSectionBeg,
-                          FileSectionEnd,
-                          CollectionBeg,
-                          CollectionEnd };
+    enum Type : uint8_t { identifier,
+                          literalString,
+                          literalNumber,
+                          singleCharacter,
+                          comment,
+                          fileSectionBeg,
+                          fileSectionEnd,
+                          collectionBeg,
+                          collectionEnd };
 
     constexpr Token(ConstStringRef tokData, Type tokType) {
         pos = tokData.begin();
@@ -175,7 +175,7 @@ struct Token {
     const char *pos = nullptr;
     uint32_t len = 0U;
     struct {
-        Type type = Token::Type::Identifier;
+        Type type = Token::Type::identifier;
         char character0 = 0U;
     } traits;
 
@@ -237,16 +237,16 @@ constexpr bool isVectorDataType(const Token &token) {
 }
 
 struct Line {
-    enum class LineType : uint8_t { Empty,
-                                    Comment,
-                                    FileSection,
-                                    DictionaryEntry,
-                                    ListEntry };
+    enum class LineType : uint8_t { empty,
+                                    comment,
+                                    fileSection,
+                                    dictionaryEntry,
+                                    listEntry };
     TokenId first = 0U;
     TokenId last = 0U; // note : NOT past last (aka end)
 
     uint16_t indent = 0U;
-    LineType lineType = LineType::Empty;
+    LineType lineType = LineType::empty;
     struct LineTraits {
         union {
             struct {
@@ -317,11 +317,11 @@ constexpr bool isUnused(Line::LineType lineType) {
     switch (lineType) {
     default:
         return false;
-    case Line::LineType::Empty:
+    case Line::LineType::empty:
         return true;
-    case Line::LineType::Comment:
+    case Line::LineType::comment:
         return true;
-    case Line::LineType::FileSection:
+    case Line::LineType::fileSection:
         return true;
     }
 }
@@ -497,7 +497,7 @@ struct YamlParser {
             return "";
         }
         auto &tok = tokens[node.value];
-        if (Token::Type::LiteralString != tok.traits.type) {
+        if (Token::Type::literalString != tok.traits.type) {
             return tok.cstrref();
         }
         if ((tok.traits.character0 != '\'') && (tok.traits.character0 != '\"')) {
@@ -541,7 +541,7 @@ inline bool YamlParser::readValueChecked<int64_t>(const Node &node, int64_t &out
         return false;
     }
     const auto &token = tokens[node.value];
-    if (Token::Type::LiteralNumber != token.traits.type) {
+    if (Token::Type::literalNumber != token.traits.type) {
         return false;
     }
     StackVec<char, 96> nullTerminated{token.pos, token.pos + token.len};
@@ -622,7 +622,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         return false;
     }
     const auto &token = tokens[node.value];
-    if (Token::Type::LiteralString != token.traits.type) {
+    if (Token::Type::literalString != token.traits.type) {
         return false;
     }
 
@@ -698,7 +698,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
 template <>
 inline bool YamlParser::readValueChecked<std::string>(const Node &node, std::string &outValue) const {
     const auto &token = tokens[node.value];
-    if (Token::Type::LiteralString != token.traits.type) {
+    if (Token::Type::literalString != token.traits.type) {
         return false;
     }
     outValue.assign(token.pos, token.len);

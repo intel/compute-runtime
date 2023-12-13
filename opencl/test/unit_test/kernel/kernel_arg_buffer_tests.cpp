@@ -578,9 +578,9 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
         if (type.compressed) {
             EXPECT_EQ(1u, kernelObjsForAuxTranslation->size());
-            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
+            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::gfxAlloc, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
             kernelObjsForAuxTranslation->erase(kernelObj);
         } else {
             EXPECT_EQ(0u, kernelObjsForAuxTranslation->size());
@@ -626,9 +626,9 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
 
         if (type.compressed) {
             EXPECT_EQ(1u, kernelObjsForAuxTranslation->size());
-            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
+            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::gfxAlloc, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
             kernelObjsForAuxTranslation->erase(kernelObj);
         } else {
             EXPECT_EQ(0u, kernelObjsForAuxTranslation->size());

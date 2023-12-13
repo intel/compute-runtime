@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,9 +40,11 @@ struct PhysicalDevicePciSpeedInfo {
     int64_t maxBandwidth = unknown;
 };
 
-enum class DriverInfoType { UNKNOWN,
-                            WINDOWS,
-                            LINUX };
+enum class DriverInfoType {
+    unknown,
+    windowsType,
+    linuxType,
+};
 class DriverInfo {
   public:
     DriverInfo(DriverInfoType driverInfoType)

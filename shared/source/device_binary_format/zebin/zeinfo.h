@@ -450,49 +450,49 @@ struct DebugEnvBaseT {
 } // namespace DebugEnv
 
 enum ArgType : uint8_t {
-    ArgTypeUnknown = 0,
-    ArgTypePackedLocalIds = 1,
-    ArgTypeLocalId,
-    ArgTypeLocalSize,
-    ArgTypeGroupCount,
-    ArgTypeGlobalSize,
-    ArgTypeEnqueuedLocalSize,
-    ArgTypeGlobalIdOffset,
-    ArgTypePrivateBaseStateless,
-    ArgTypeArgByvalue,
-    ArgTypeArgBypointer,
-    ArgTypeBufferAddress,
-    ArgTypeBufferOffset,
-    ArgTypePrintfBuffer,
-    ArgTypeWorkDimensions,
-    ArgTypeImplicitArgBuffer,
-    ArgTypeImageWidth,
-    ArgTypeImageHeight,
-    ArgTypeImageDepth,
-    ArgTypeImageChannelDataType,
-    ArgTypeImageChannelOrder,
-    ArgTypeImageArraySize,
-    ArgTypeImageNumSamples,
-    ArgTypeImageMipLevels,
-    ArgTypeImageFlatBaseOffset,
-    ArgTypeImageFlatWidth,
-    ArgTypeImageFlatHeight,
-    ArgTypeImageFlatPitch,
-    ArgTypeSamplerSnapWa,
-    ArgTypeSamplerNormCoords,
-    ArgTypeSamplerAddrMode,
-    ArgTypeVmeMbBlockType,
-    ArgTypeVmeSubpixelMode,
-    ArgTypeVmeSadAdjustMode,
-    ArgTypeVmeSearchPathType,
-    ArgTypeSyncBuffer,
-    ArgTypeRtGlobalBuffer,
-    ArgTypeDataConstBuffer,
-    ArgTypeDataGlobalBuffer,
-    ArgTypeAssertBuffer,
-    ArgTypeIndirectDataPointer,
-    ArgTypeScratchPointer,
-    ArgTypeMax
+    argTypeUnknown = 0,
+    argTypePackedLocalIds = 1,
+    argTypeLocalId,
+    argTypeLocalSize,
+    argTypeGroupCount,
+    argTypeGlobalSize,
+    argTypeEnqueuedLocalSize,
+    argTypeGlobalIdOffset,
+    argTypePrivateBaseStateless,
+    argTypeArgByvalue,
+    argTypeArgBypointer,
+    argTypeBufferAddress,
+    argTypeBufferOffset,
+    argTypePrintfBuffer,
+    argTypeWorkDimensions,
+    argTypeImplicitArgBuffer,
+    argTypeImageWidth,
+    argTypeImageHeight,
+    argTypeImageDepth,
+    argTypeImageChannelDataType,
+    argTypeImageChannelOrder,
+    argTypeImageArraySize,
+    argTypeImageNumSamples,
+    argTypeImageMipLevels,
+    argTypeImageFlatBaseOffset,
+    argTypeImageFlatWidth,
+    argTypeImageFlatHeight,
+    argTypeImageFlatPitch,
+    argTypeSamplerSnapWa,
+    argTypeSamplerNormCoords,
+    argTypeSamplerAddrMode,
+    argTypeVmeMbBlockType,
+    argTypeVmeSubpixelMode,
+    argTypeVmeSadAdjustMode,
+    argTypeVmeSearchPathType,
+    argTypeSyncBuffer,
+    argTypeRtGlobalBuffer,
+    argTypeDataConstBuffer,
+    argTypeDataGlobalBuffer,
+    argTypeAssertBuffer,
+    argTypeIndirectDataPointer,
+    argTypeScratchPointer,
+    argTypeMax
 };
 
 namespace PerThreadPayloadArgument {
@@ -505,7 +505,7 @@ namespace Defaults {
 }
 
 struct PerThreadPayloadArgumentBaseT {
-    ArgTypeT argType = ArgTypeUnknown;
+    ArgTypeT argType = argTypeUnknown;
     OffsetT offset = -1;
     SizeT size = -1;
 };
@@ -515,68 +515,68 @@ struct PerThreadPayloadArgumentBaseT {
 namespace PayloadArgument {
 
 enum MemoryAddressingMode : uint8_t {
-    MemoryAddressingModeUnknown = 0,
-    MemoryAddressingModeStateful = 1,
-    MemoryAddressingModeStateless,
-    MemoryAddressingModeBindless,
-    MemoryAddressingModeSharedLocalMemory,
-    MemoryAddressIngModeMax
+    memoryAddressingModeUnknown = 0,
+    memoryAddressingModeStateful = 1,
+    memoryAddressingModeStateless,
+    memoryAddressingModeBindless,
+    memoryAddressingModeSharedLocalMemory,
+    memoryAddressIngModeMax
 };
 
 enum AddressSpace : uint8_t {
-    AddressSpaceUnknown = 0,
-    AddressSpaceGlobal = 1,
-    AddressSpaceLocal,
-    AddressSpaceConstant,
-    AddressSpaceImage,
-    AddressSpaceSampler,
-    AddressSpaceMax
+    addressSpaceUnknown = 0,
+    addressSpaceGlobal = 1,
+    addressSpaceLocal,
+    addressSpaceConstant,
+    addressSpaceImage,
+    addressSpaceSampler,
+    addressSpaceMax
 };
 
 enum AccessType : uint8_t {
-    AccessTypeUnknown = 0,
-    AccessTypeReadonly = 1,
-    AccessTypeWriteonly,
-    AccessTypeReadwrite,
-    AccessTypeMax
+    accessTypeUnknown = 0,
+    accessTypeReadonly = 1,
+    accessTypeWriteonly,
+    accessTypeReadwrite,
+    accessTypeMax
 };
 
 enum ImageType : uint8_t {
-    ImageTypeUnknown,
-    ImageTypeBuffer,
-    ImageType1D,
-    ImageType1DArray,
-    ImageType2D,
-    ImageType2DArray,
-    ImageType3D,
-    ImageTypeCube,
-    ImageTypeCubeArray,
-    ImageType2DDepth,
-    ImageType2DArrayDepth,
-    ImageType2DMSAA,
-    ImageType2DMSAADepth,
-    ImageType2DArrayMSAA,
-    ImageType2DArrayMSAADepth,
-    ImageType2DMedia,
-    ImageType2DMediaBlock,
-    ImageTypeMax
+    imageTypeUnknown,
+    imageTypeBuffer,
+    imageType1D,
+    imageType1DArray,
+    imageType2D,
+    imageType2DArray,
+    imageType3D,
+    imageTypeCube,
+    imageTypeCubeArray,
+    imageType2DDepth,
+    imageType2DArrayDepth,
+    imageType2DMSAA,
+    imageType2DMSAADepth,
+    imageType2DArrayMSAA,
+    imageType2DArrayMSAADepth,
+    imageType2DMedia,
+    imageType2DMediaBlock,
+    imageTypeMax
 };
 
 enum SamplerType : uint8_t {
-    SamplerTypeUnknown,
-    SamplerTypeTexture,
-    SamplerType8x8,
-    SamplerType2DConvolve8x8,
-    SamplerTypeErode8x8,
-    SamplerTypeDilate8x8,
-    SamplerTypeMinMaxFilter8x8,
-    SamplerTypeCentroid8x8,
-    SamplerTypeBoolCentroid8x8,
-    SamplerTypeBoolSum8x8,
-    SamplerTypeVME,
-    SamplerTypeVE,
-    SamplerTypeVD,
-    SamplerTypeMax
+    samplerTypeUnknown,
+    samplerTypeTexture,
+    samplerType8x8,
+    samplerType2DConvolve8x8,
+    samplerTypeErode8x8,
+    samplerTypeDilate8x8,
+    samplerTypeMinMaxFilter8x8,
+    samplerTypeCentroid8x8,
+    samplerTypeBoolCentroid8x8,
+    samplerTypeBoolSum8x8,
+    samplerTypeVME,
+    samplerTypeVE,
+    samplerTypeVD,
+    samplerTypeMax
 };
 
 using ArgTypeT = ArgType;
@@ -601,19 +601,19 @@ inline constexpr BtiValueT btiValue = -1;
 } // namespace Defaults
 
 struct PayloadArgumentBaseT {
-    ArgTypeT argType = ArgTypeUnknown;
+    ArgTypeT argType = argTypeUnknown;
     OffsetT offset = Defaults::offset;
     SourceOffseT sourceOffset = Defaults::sourceOffset;
     SizeT size = 0;
     ArgIndexT argIndex = Defaults::argIndex;
     BtiValueT btiValue = Defaults::btiValue;
-    AddrmodeT addrmode = MemoryAddressingModeUnknown;
-    AddrspaceT addrspace = AddressSpaceUnknown;
-    AccessTypeT accessType = AccessTypeUnknown;
+    AddrmodeT addrmode = memoryAddressingModeUnknown;
+    AddrspaceT addrspace = addressSpaceUnknown;
+    AccessTypeT accessType = accessTypeUnknown;
     SamplerIndexT samplerIndex = Defaults::samplerIndex;
     SlmAlignmentT slmArgAlignment = Defaults::slmArgAlignment;
-    ImageType imageType = ImageTypeUnknown;
-    SamplerType samplerType = SamplerTypeUnknown;
+    ImageType imageType = imageTypeUnknown;
+    SamplerType samplerType = samplerTypeUnknown;
     bool imageTransformable = false;
     bool isPipe = false;
     bool isPtr = false;
@@ -669,20 +669,20 @@ struct PerThreadMemoryBufferBaseT {
 
 namespace InlineSamplers {
 enum class AddrMode : uint8_t {
-    Unknown,
-    None,
-    Repeat,
-    ClampEdge,
-    ClampBorder,
-    Mirror,
-    Max
+    unknown,
+    none,
+    repeat,
+    clampEdge,
+    clampBorder,
+    mirror,
+    max
 };
 
 enum FilterMode {
-    Unknown,
-    Nearest,
-    Linear,
-    Max
+    unknown,
+    nearest,
+    linear,
+    max
 };
 
 using SamplerIndexT = int32_t;
@@ -692,8 +692,8 @@ using NormalizedT = bool;
 
 namespace Defaults {
 inline constexpr SamplerIndexT samplerIndex = -1;
-inline constexpr AddrModeT addrMode = AddrMode::Unknown;
-inline constexpr FilterModeT filterMode = FilterMode::Unknown;
+inline constexpr AddrModeT addrMode = AddrMode::unknown;
+inline constexpr FilterModeT filterMode = FilterMode::unknown;
 inline constexpr NormalizedT normalized = false;
 }; // namespace Defaults
 

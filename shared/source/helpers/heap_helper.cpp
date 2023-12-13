@@ -17,7 +17,7 @@ namespace NEO {
 
 GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heapSize, size_t alignment, uint32_t rootDeviceIndex) {
     auto allocationType = AllocationType::linearStream;
-    if (IndirectHeap::Type::INDIRECT_OBJECT == heapType) {
+    if (IndirectHeap::Type::indirectObject == heapType) {
         allocationType = AllocationType::internalHeap;
     }
 

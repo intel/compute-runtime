@@ -637,7 +637,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     mockKernel.kernelInfo.setBufferAddressingMode(KernelDescriptor::Stateless);
     mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 8);
     cl_uint workDim = 1;
@@ -683,7 +683,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = false;
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
     *mockKernel.mockKernel->pImplicitArgs = {};
 
@@ -906,7 +906,7 @@ class MyCmdQ : public MockCommandQueueHw<FamilyType> {
 
 struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     void SetUp() override {
-        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
         EnqueueKernelTest::SetUp();
     }
 
@@ -987,8 +987,8 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     ASSERT_EQ(4u + additionalPcCount, pipeControls.size());
 
     ASSERT_EQ(2u, cmdQ.auxTranslationDirections.size());
-    EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, cmdQ.auxTranslationDirections[0]);
-    EXPECT_EQ(AuxTranslationDirection::NonAuxToAux, cmdQ.auxTranslationDirections[1]);
+    EXPECT_EQ(AuxTranslationDirection::auxToNonAux, cmdQ.auxTranslationDirections[0]);
+    EXPECT_EQ(AuxTranslationDirection::nonAuxToAux, cmdQ.auxTranslationDirections[1]);
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
@@ -1024,7 +1024,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
 using BlitAuxKernelTests = ::testing::Test;
 HWTEST_F(BlitAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhenDispatchingKernelWithRequiredAuxTranslationThenDontDispatch) {
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

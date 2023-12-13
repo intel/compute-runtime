@@ -177,13 +177,13 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
                                               patchInfoData.targetType,
                                               0u,
                                               stiCommandOffset + EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() - 2 * sizeof(uint64_t),
-                                              PatchInfoAllocationType::Default);
+                                              PatchInfoAllocationType::defaultType);
             PatchInfoData patchInfoForValue(patchInfoData.sourceAllocation,
                                             patchInfoData.sourceAllocationOffset,
                                             patchInfoData.sourceType,
                                             0u,
                                             stiCommandOffset + EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() - sizeof(uint64_t),
-                                            PatchInfoAllocationType::Default);
+                                            PatchInfoAllocationType::defaultType);
             indirectPatchInfo.push_back(patchInfoForAddress);
             indirectPatchInfo.push_back(patchInfoForValue);
             stiCommandOffset += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
@@ -208,7 +208,7 @@ template <typename GfxFamily>
 void FlatBatchBufferHelperHw<GfxFamily>::collectScratchSpacePatchInfo(uint64_t scratchAddress, uint64_t commandOffset, const LinearStream &csr) {
     if (scratchAddress) {
         auto scratchOffset = reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(csr.getCpuBase()) + commandOffset)[0] & 0x3FF;
-        PatchInfoData patchInfoData(scratchAddress, scratchOffset, PatchInfoAllocationType::ScratchSpace, csr.getGraphicsAllocation()->getGpuAddress(), commandOffset, PatchInfoAllocationType::Default);
+        PatchInfoData patchInfoData(scratchAddress, scratchOffset, PatchInfoAllocationType::scratchSpace, csr.getGraphicsAllocation()->getGpuAddress(), commandOffset, PatchInfoAllocationType::defaultType);
         patchInfoCollection.push_back(patchInfoData);
     }
 }

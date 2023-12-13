@@ -101,7 +101,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
         cmdList->cmdQImmediate = mockCmdQs[createdCmdLists].get();
         cmdList->isFlushTaskSubmissionEnabled = true;
-        cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+        cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
         cmdList->csr = csr;
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);

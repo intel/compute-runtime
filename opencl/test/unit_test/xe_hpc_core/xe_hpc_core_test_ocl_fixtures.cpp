@@ -37,7 +37,7 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpeci
     setupDeviceIdAndRevision(hwInfo, *clDevice);
 
     auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
+    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::indirectObject, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
         EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
@@ -66,7 +66,7 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecif
     setupDeviceIdAndRevision(hwInfo, *clDevice);
 
     auto commandStreamReceiver = clDevice->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
+    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::indirectObject, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
         EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());

@@ -97,17 +97,17 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
     uint32_t imageCount = 1;
 
     switch (imgInfo.imgDesc.imageType) {
-    case ImageType::Image1D:
-    case ImageType::Image1DArray:
-    case ImageType::Image1DBuffer:
+    case ImageType::image1D:
+    case ImageType::image1DArray:
+    case ImageType::image1DBuffer:
         resourceParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
         break;
-    case ImageType::Image2D:
-    case ImageType::Image2DArray:
+    case ImageType::image2D:
+    case ImageType::image2DArray:
         resourceParams.Type = GMM_RESOURCE_TYPE::RESOURCE_2D;
         imageHeight = static_cast<uint32_t>(imgInfo.imgDesc.imageHeight);
         break;
-    case ImageType::Image3D:
+    case ImageType::image3D:
         resourceParams.Type = GMM_RESOURCE_TYPE::RESOURCE_3D;
         imageHeight = static_cast<uint32_t>(imgInfo.imgDesc.imageHeight);
         imageDepth = static_cast<uint32_t>(imgInfo.imgDesc.imageDepth);
@@ -116,8 +116,8 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
         return;
     }
 
-    if (imgInfo.imgDesc.imageType == ImageType::Image1DArray ||
-        imgInfo.imgDesc.imageType == ImageType::Image2DArray) {
+    if (imgInfo.imgDesc.imageType == ImageType::image1DArray ||
+        imgInfo.imgDesc.imageType == ImageType::image2DArray) {
         imageCount = static_cast<uint32_t>(imgInfo.imgDesc.imageArraySize);
     }
 

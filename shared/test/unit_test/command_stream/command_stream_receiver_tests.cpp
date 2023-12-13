@@ -683,16 +683,16 @@ HWTEST_F(CommandStreamReceiverTest, givenL0CommandStreamReceiverThenDefaultDispa
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetIndirectHeapIsCalledThenHeapIsReturned) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto &heap = csr.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10u);
+    auto &heap = csr.getIndirectHeap(IndirectHeap::Type::dynamicState, 10u);
     EXPECT_NE(nullptr, heap.getGraphicsAllocation());
-    EXPECT_NE(nullptr, csr.indirectHeap[IndirectHeap::Type::DYNAMIC_STATE]);
-    EXPECT_EQ(&heap, csr.indirectHeap[IndirectHeap::Type::DYNAMIC_STATE]);
+    EXPECT_NE(nullptr, csr.indirectHeap[IndirectHeap::Type::dynamicState]);
+    EXPECT_EQ(&heap, csr.indirectHeap[IndirectHeap::Type::dynamicState]);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenReleaseIndirectHeapIsCalledThenHeapAllocationIsNull) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto &heap = csr.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10u);
-    csr.releaseIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE);
+    auto &heap = csr.getIndirectHeap(IndirectHeap::Type::dynamicState, 10u);
+    csr.releaseIndirectHeap(IndirectHeap::Type::dynamicState);
     EXPECT_EQ(nullptr, heap.getGraphicsAllocation());
     EXPECT_EQ(0u, heap.getMaxAvailableSpace());
 }
@@ -700,7 +700,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenReleaseIndirectHeapIsCalledThenH
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHeapMemoryIsAllocated) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     IndirectHeap *dsh = nullptr;
-    csr.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    csr.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
     EXPECT_NE(nullptr, dsh);
     ASSERT_NE(nullptr, dsh->getGraphicsAllocation());
     csr.getMemoryManager()->freeGraphicsMemory(dsh->getGraphicsAllocation());
@@ -710,7 +710,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
 HWTEST_F(CommandStreamReceiverTest, givenSurfaceStateHeapTypeWhenAllocateHeapMemoryIsCalledThenSSHHasInitialSpaceReserevedForBindlessOffsets) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     IndirectHeap *ssh = nullptr;
-    csr.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    csr.allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
     EXPECT_NE(nullptr, ssh);
     ASSERT_NE(nullptr, ssh->getGraphicsAllocation());
 

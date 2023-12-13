@@ -82,7 +82,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreate
               executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getGlobalHeapsBase());
 
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getGlobalHeapsBase(),
-              executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::SPECIAL_SSH)->getGraphicsAllocation()->getGpuAddress());
+              executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::specialSsh)->getGraphicsAllocation()->getGpuAddress());
 
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset();
 }

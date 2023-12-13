@@ -72,7 +72,7 @@ bool ExecutionEnvironment::initializeMemoryManager() {
     case CommandStreamReceiverType::CSR_HW:
     case CommandStreamReceiverType::CSR_HW_WITH_AUB:
     default: {
-        auto driverModelType = DriverModelType::UNKNOWN;
+        auto driverModelType = DriverModelType::unknown;
         if (this->rootDeviceEnvironments[0]->osInterface && this->rootDeviceEnvironments[0]->osInterface->getDriverModel()) {
             driverModelType = this->rootDeviceEnvironments[0]->osInterface->getDriverModel()->getDriverModelType();
         }

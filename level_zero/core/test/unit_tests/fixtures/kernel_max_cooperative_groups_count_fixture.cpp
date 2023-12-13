@@ -38,7 +38,7 @@ uint32_t KernelImpSuggestMaxCooperativeGroupCountFixture::getMaxWorkGroupCount()
 
     Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
-    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
     kernel.module = module.get();
 
     kernel.groupSize[0] = lws[0];

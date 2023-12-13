@@ -21,12 +21,12 @@ void searchForBinary(Ar::Ar &archiveData, const ConstStringRef filter, Ar::ArFil
 }
 
 template <>
-bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Archive>(const ArrayRef<const uint8_t> binary) {
+bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::archive>(const ArrayRef<const uint8_t> binary) {
     return NEO::Ar::isAr(binary);
 }
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                                               std::string &outErrReason, std::string &outWarning) {
     auto archiveData = NEO::Ar::decodeAr(archive, outErrReason, outWarning);
     if (nullptr == archiveData.magic) {
@@ -88,7 +88,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     // packed binary format
     outErrReason = "Device binary format is packed";
     return DecodeError::invalidBinary;

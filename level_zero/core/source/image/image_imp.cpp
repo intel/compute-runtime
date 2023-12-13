@@ -103,7 +103,7 @@ ze_result_t ImageImp::allocateBindlessSlot() {
         const auto surfStateCount = 2;
         auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
 
-        auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+        auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
         if (surfaceStateInfo.heapAllocation == nullptr) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }

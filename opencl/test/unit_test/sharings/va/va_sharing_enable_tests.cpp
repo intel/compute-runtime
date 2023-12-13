@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ extern "C" int vaDisplayIsValid(VADisplay vaDisplay) {
 
 class MockDriverInfo : public DriverInfo {
   public:
-    MockDriverInfo(bool imageSupport) : DriverInfo(DriverInfoType::UNKNOWN), imageSupport(imageSupport) {}
+    MockDriverInfo(bool imageSupport) : DriverInfo(DriverInfoType::unknown), imageSupport(imageSupport) {}
     bool getMediaSharingSupport() override { return imageSupport; };
     bool imageSupport = true;
 };

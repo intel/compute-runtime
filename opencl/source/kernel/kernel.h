@@ -81,9 +81,9 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     };
 
     enum class TunningType {
-        DISABLED,
-        SIMPLE,
-        FULL
+        disabled,
+        simple,
+        full
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
@@ -512,7 +512,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
     char *crossThreadData = nullptr;
 
-    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
+    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::none;
     KernelExecutionType executionType = KernelExecutionType::defaultType;
 
     uint32_t patchedArgumentsNum = 0;

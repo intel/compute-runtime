@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,12 +25,12 @@ TEST_P(ImageStaticFunctionConvertTypeTest, givenZeImageFormatTypeWhenConvertType
 }
 
 std::pair<ze_image_type_t, NEO::ImageType> validTypes[] = {
-    {ZE_IMAGE_TYPE_2D, NEO::ImageType::Image2D},
-    {ZE_IMAGE_TYPE_3D, NEO::ImageType::Image3D},
-    {ZE_IMAGE_TYPE_2DARRAY, NEO::ImageType::Image2DArray},
-    {ZE_IMAGE_TYPE_1D, NEO::ImageType::Image1D},
-    {ZE_IMAGE_TYPE_1DARRAY, NEO::ImageType::Image1DArray},
-    {ZE_IMAGE_TYPE_BUFFER, NEO::ImageType::Image1DBuffer}};
+    {ZE_IMAGE_TYPE_2D, NEO::ImageType::image2D},
+    {ZE_IMAGE_TYPE_3D, NEO::ImageType::image3D},
+    {ZE_IMAGE_TYPE_2DARRAY, NEO::ImageType::image2DArray},
+    {ZE_IMAGE_TYPE_1D, NEO::ImageType::image1D},
+    {ZE_IMAGE_TYPE_1DARRAY, NEO::ImageType::image1DArray},
+    {ZE_IMAGE_TYPE_BUFFER, NEO::ImageType::image1DBuffer}};
 
 INSTANTIATE_TEST_CASE_P(
     imageTypeFlags,
@@ -38,7 +38,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(validTypes));
 
 TEST(ImageStaticFunctionConvertInvalidType, givenInvalidZeImageFormatTypeWhenConvertTypeThenInvalidFormatIsRetrurned) {
-    EXPECT_EQ(convertType(ZE_IMAGE_TYPE_FORCE_UINT32), NEO::ImageType::Invalid);
+    EXPECT_EQ(convertType(ZE_IMAGE_TYPE_FORCE_UINT32), NEO::ImageType::invalid);
 }
 
 TEST(ConvertDescriptorTest, givenZeImageDescWhenConvertDescriptorThenCorrectImageDescriptorReturned) {
@@ -58,7 +58,7 @@ TEST(ConvertDescriptorTest, givenZeImageDescWhenConvertDescriptorThenCorrectImag
     EXPECT_EQ(desc.imageHeight, zeDesc.height);
     EXPECT_EQ(desc.imageRowPitch, 0u);
     EXPECT_EQ(desc.imageSlicePitch, 0u);
-    EXPECT_EQ(desc.imageType, NEO::ImageType::Image2DArray);
+    EXPECT_EQ(desc.imageType, NEO::ImageType::image2DArray);
     EXPECT_EQ(desc.imageWidth, zeDesc.width);
     EXPECT_EQ(desc.numMipLevels, zeDesc.miplevels);
     EXPECT_EQ(desc.numSamples, 0u);

@@ -11,8 +11,8 @@
 namespace NEO {
 
 bool Image::validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem) {
-    if (memoryProperties.handleType == static_cast<uint64_t>(UnifiedSharingHandleType::Win32Nt)) {
-        extMem.type = UnifiedSharingHandleType::Win32Nt;
+    if (memoryProperties.handleType == static_cast<uint64_t>(UnifiedSharingHandleType::win32Nt)) {
+        extMem.type = UnifiedSharingHandleType::win32Nt;
         return true;
     }
     return false;

@@ -48,7 +48,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <>
 bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
-    if (driverModel->getDriverModelType() != DriverModelType::DRM) {
+    if (driverModel->getDriverModelType() != DriverModelType::drm) {
         return false;
     }
 

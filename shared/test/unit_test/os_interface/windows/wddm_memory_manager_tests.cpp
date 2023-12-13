@@ -3290,7 +3290,7 @@ TEST_F(WddmMemoryManagerSimpleTestWithLocalMemory, givenLocalMemoryAndImageOrSha
     ImageDescriptor imgDesc = {};
     imgDesc.imageWidth = 1;
     imgDesc.imageHeight = 1;
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationType types[] = {AllocationType::image,

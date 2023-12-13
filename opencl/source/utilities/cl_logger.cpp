@@ -55,7 +55,7 @@ void ClFileLogger<debugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDisp
             const auto &arg = explicitArgs[i];
             if (arg.getTraits().getAddressQualifier() == KernelArgMetadata::AddrLocal) {
                 type = "local";
-            } else if (arg.is<ArgDescriptor::ArgTImage>()) {
+            } else if (arg.is<ArgDescriptor::argTImage>()) {
                 type = "image";
                 auto clMem = reinterpret_cast<const _cl_mem *>(kernel->getKernelArg(i));
                 auto memObj = castToObject<MemObj>(clMem);
@@ -64,9 +64,9 @@ void ClFileLogger<debugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDisp
                     size = memObj->getSize();
                     flags = memObj->getFlags();
                 }
-            } else if (arg.is<ArgDescriptor::ArgTSampler>()) {
+            } else if (arg.is<ArgDescriptor::argTSampler>()) {
                 type = "sampler";
-            } else if (arg.is<ArgDescriptor::ArgTPointer>()) {
+            } else if (arg.is<ArgDescriptor::argTPointer>()) {
                 type = "buffer";
                 auto clMem = reinterpret_cast<const _cl_mem *>(kernel->getKernelArg(i));
                 auto memObj = castToObject<MemObj>(clMem);

@@ -393,16 +393,16 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
 
     switch (src.objectType) {
     default:
-        UNRECOVERABLE_IF(PatchTokenBinary::ArgObjectType::None != src.objectType);
+        UNRECOVERABLE_IF(PatchTokenBinary::ArgObjectType::none != src.objectType);
         break;
-    case PatchTokenBinary::ArgObjectType::Buffer: {
+    case PatchTokenBinary::ArgObjectType::buffer: {
         auto &asBufferArg = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
         asBufferArg.bufferOffset = getOffset(src.metadata.buffer.bufferOffset);
         if (src.metadata.buffer.pureStateful != nullptr) {
             asBufferArg.accessedUsingStatelessAddressingMode = false;
         }
     } break;
-    case PatchTokenBinary::ArgObjectType::Image: {
+    case PatchTokenBinary::ArgObjectType::image: {
         auto &asImageArg = dst.payloadMappings.explicitArgs[argNum].as<ArgDescImage>(true);
         asImageArg.metadataPayload.imgWidth = getOffset(src.metadata.image.width);
         asImageArg.metadataPayload.imgHeight = getOffset(src.metadata.image.height);
@@ -418,14 +418,14 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
         asImageArg.metadataPayload.flatPitch = getOffset(src.metadata.image.flatPitch);
         dst.kernelAttributes.flags.usesImages = true;
     } break;
-    case PatchTokenBinary::ArgObjectType::Sampler: {
+    case PatchTokenBinary::ArgObjectType::sampler: {
         auto &asSamplerArg = dst.payloadMappings.explicitArgs[argNum].as<ArgDescSampler>(true);
         asSamplerArg.metadataPayload.samplerSnapWa = getOffset(src.metadata.sampler.coordinateSnapWaRequired);
         asSamplerArg.metadataPayload.samplerAddressingMode = getOffset(src.metadata.sampler.addressMode);
         asSamplerArg.metadataPayload.samplerNormalizedCoords = getOffset(src.metadata.sampler.normalizedCoords);
         dst.kernelAttributes.flags.usesSamplers = true;
     } break;
-    case PatchTokenBinary::ArgObjectType::Slm: {
+    case PatchTokenBinary::ArgObjectType::slm: {
         markArgAsPatchable(dst, argNum);
         auto &asBufferArg = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
         asBufferArg.requiredSlmAlignment = src.metadata.slm.token->SourceOffset;
@@ -435,9 +435,9 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
 
     switch (src.objectTypeSpecialized) {
     default:
-        UNRECOVERABLE_IF(PatchTokenBinary::ArgObjectTypeSpecialized::None != src.objectTypeSpecialized);
+        UNRECOVERABLE_IF(PatchTokenBinary::ArgObjectTypeSpecialized::none != src.objectTypeSpecialized);
         break;
-    case PatchTokenBinary::ArgObjectTypeSpecialized::Vme: {
+    case PatchTokenBinary::ArgObjectTypeSpecialized::vme: {
         dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().hasVmeExtendedDescriptor = true;
         dst.payloadMappings.explicitArgsExtendedDescriptors.resize(dst.payloadMappings.explicitArgs.size());
 
@@ -451,7 +451,7 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
     }
 
     for (auto &byValArg : src.byValMap) {
-        if (PatchTokenBinary::ArgObjectType::Slm != src.objectType) {
+        if (PatchTokenBinary::ArgObjectType::slm != src.objectType) {
             populateKernelArgDescriptor(dst, argNum, *byValArg);
         }
     }
@@ -518,7 +518,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
         dst.external.igcInfoForGtpin = (src.tokens.gtpinInfo + 1);
     }
 
-    dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
     dst.kernelAttributes.flags.requiresImplicitArgs = src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset != nullptr;
 

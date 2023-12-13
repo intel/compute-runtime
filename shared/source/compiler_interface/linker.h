@@ -27,13 +27,13 @@ struct KernelDescriptor;
 struct ProgramInfo;
 
 enum class SegmentType : uint32_t {
-    Unknown,
-    GlobalConstants,
-    GlobalConstantsZeroInit,
-    GlobalStrings,
-    GlobalVariables,
-    GlobalVariablesZeroInit,
-    Instructions,
+    unknown,
+    globalConstants,
+    globalConstantsZeroInit,
+    globalStrings,
+    globalVariables,
+    globalVariablesZeroInit,
+    instructions,
 };
 
 enum class LinkingStatus : uint32_t {
@@ -46,11 +46,11 @@ inline const char *asString(SegmentType segment) {
     switch (segment) {
     default:
         return "UNKOWN";
-    case SegmentType::GlobalConstants:
+    case SegmentType::globalConstants:
         return "GLOBAL_CONSTANTS";
-    case SegmentType::GlobalVariables:
+    case SegmentType::globalVariables:
         return "GLOBAL_VARIABLES";
-    case SegmentType::Instructions:
+    case SegmentType::instructions:
         return "INSTRUCTIONS";
     }
 }
@@ -58,7 +58,7 @@ inline const char *asString(SegmentType segment) {
 struct SymbolInfo {
     uint64_t offset = std::numeric_limits<uint64_t>::max();
     uint64_t size = std::numeric_limits<uint64_t>::max();
-    SegmentType segment = SegmentType::Unknown;
+    SegmentType segment = SegmentType::unknown;
     uint32_t instructionSegmentId = std::numeric_limits<uint32_t>::max(); // set if segment type is instructions
     bool global = false;                                                  // Binding
 };
@@ -87,18 +87,18 @@ struct LinkerInput {
 
     struct RelocationInfo {
         enum class Type : uint32_t {
-            Unknown,
-            Address,
-            AddressLow,
-            AddressHigh,
-            PerThreadPayloadOffset,
-            RelocTypeMax
+            unknown,
+            address,
+            addressLow,
+            addressHigh,
+            perThreadPayloadOffset,
+            relocTypeMax
         };
 
         std::string symbolName;
         uint64_t offset = std::numeric_limits<uint64_t>::max();
-        Type type = Type::Unknown;
-        SegmentType relocationSegment = SegmentType::Unknown;
+        Type type = Type::unknown;
+        SegmentType relocationSegment = SegmentType::unknown;
         int64_t addend = 0U;
     };
 
@@ -269,10 +269,10 @@ std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unres
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);
 
 inline bool isVarDataSegment(const SegmentType &segment) {
-    return segment == NEO::SegmentType::GlobalVariables || segment == NEO::SegmentType::GlobalVariablesZeroInit;
+    return segment == NEO::SegmentType::globalVariables || segment == NEO::SegmentType::globalVariablesZeroInit;
 }
 inline bool isConstDataSegment(const SegmentType &segment) {
-    return segment == NEO::SegmentType::GlobalConstants || segment == NEO::SegmentType::GlobalConstantsZeroInit;
+    return segment == NEO::SegmentType::globalConstants || segment == NEO::SegmentType::globalConstantsZeroInit;
 }
 inline bool isDataSegment(const SegmentType &segment) {
     return isConstDataSegment(segment) || isVarDataSegment(segment);

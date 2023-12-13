@@ -49,7 +49,7 @@ TEST(Buffer, GivenInvalidHandleTypeWhenValidateHandleTypeThenReturnFalse) {
 
 TEST(Buffer, GivenLinuxFdHandleTypeWhenValidateHandleTypeThenReturnTrue) {
     MemoryProperties memoryProperties;
-    memoryProperties.handleType = static_cast<uint64_t>(UnifiedSharingHandleType::LinuxFd);
+    memoryProperties.handleType = static_cast<uint64_t>(UnifiedSharingHandleType::linuxFd);
     UnifiedSharingMemoryDescription extMem;
     bool isValid = Buffer::validateHandleType(memoryProperties, extMem);
     EXPECT_TRUE(isValid);

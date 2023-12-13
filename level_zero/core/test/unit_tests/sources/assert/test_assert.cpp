@@ -38,7 +38,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
-    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+    Mock<Module> module(&l0Device, nullptr, ModuleType::user);
 
     {
         Mock<KernelImp> kernel;
@@ -54,7 +54,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestruct
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
-    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+    Mock<Module> module(&l0Device, nullptr, ModuleType::user);
 
     {
         Mock<KernelImp> kernel;
@@ -71,7 +71,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
-    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+    Mock<Module> module(&l0Device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
     kernel.module = &module;
 
@@ -96,7 +96,7 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
-    MockModule module(&l0Device, nullptr, ModuleType::User);
+    MockModule module(&l0Device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
     kernel.module = &module;
 
@@ -128,7 +128,7 @@ TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenA
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
-    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+    Mock<Module> module(&l0Device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
     kernel.module = &module;
 
@@ -248,7 +248,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
-    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = false;
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -276,7 +276,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
-    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -315,7 +315,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynch
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
-    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

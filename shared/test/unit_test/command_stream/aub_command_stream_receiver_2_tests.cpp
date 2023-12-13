@@ -154,7 +154,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenRemoveP
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
-    PatchInfoData patchInfoData(0xA000, 0x0, PatchInfoAllocationType::KernelArg, 0xB000, 0x0, PatchInfoAllocationType::Default);
+    PatchInfoData patchInfoData(0xA000, 0x0, PatchInfoAllocationType::kernelArg, 0xB000, 0x0, PatchInfoAllocationType::defaultType);
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData);
     EXPECT_EQ(1u, aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
 
@@ -178,7 +178,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucS
     auto &patchInfoCollection = aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection();
     ASSERT_EQ(1u, patchInfoCollection.size());
     EXPECT_EQ(patchInfoCollection[0].sourceAllocation, reinterpret_cast<uint64_t>(batchBuffer.get()));
-    EXPECT_EQ(patchInfoCollection[0].targetType, PatchInfoAllocationType::GUCStartMessage);
+    EXPECT_EQ(patchInfoCollection[0].targetType, PatchInfoAllocationType::gucStartMessage);
 }
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInBatchedDispatchModeThenNewCombinedBatchBufferIsCreated) {
@@ -220,9 +220,9 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedB
 
     ASSERT_EQ(3u, aubCsr->getFlatBatchBufferHelper().getCommandChunkList().size());
 
-    PatchInfoData patchInfoData1(0xAAAu, 0xAu, PatchInfoAllocationType::IndirectObjectHeap, chunk1.baseAddressGpu, 0x10, PatchInfoAllocationType::Default);
-    PatchInfoData patchInfoData2(0xBBBu, 0xAu, PatchInfoAllocationType::IndirectObjectHeap, chunk1.baseAddressGpu, 0x60, PatchInfoAllocationType::Default);
-    PatchInfoData patchInfoData3(0xCCCu, 0xAu, PatchInfoAllocationType::IndirectObjectHeap, 0x0, 0x10, PatchInfoAllocationType::Default);
+    PatchInfoData patchInfoData1(0xAAAu, 0xAu, PatchInfoAllocationType::indirectObjectHeap, chunk1.baseAddressGpu, 0x10, PatchInfoAllocationType::defaultType);
+    PatchInfoData patchInfoData2(0xBBBu, 0xAu, PatchInfoAllocationType::indirectObjectHeap, chunk1.baseAddressGpu, 0x60, PatchInfoAllocationType::defaultType);
+    PatchInfoData patchInfoData3(0xCCCu, 0xAu, PatchInfoAllocationType::indirectObjectHeap, 0x0, 0x10, PatchInfoAllocationType::defaultType);
 
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData1);
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData2);
@@ -473,10 +473,10 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndi
     typedef typename FamilyType::MI_STORE_DATA_IMM MI_STORE_DATA_IMM;
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    PatchInfoData patchInfo1(0xA000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x100, PatchInfoAllocationType::IndirectObjectHeap);
-    PatchInfoData patchInfo2(0xB000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x200, PatchInfoAllocationType::IndirectObjectHeap);
-    PatchInfoData patchInfo3(0xC000, 0u, PatchInfoAllocationType::IndirectObjectHeap, 0x1000, 0x100, PatchInfoAllocationType::Default);
-    PatchInfoData patchInfo4(0xC000, 0u, PatchInfoAllocationType::Default, 0x2000, 0x100, PatchInfoAllocationType::GUCStartMessage);
+    PatchInfoData patchInfo1(0xA000, 0u, PatchInfoAllocationType::kernelArg, 0x6000, 0x100, PatchInfoAllocationType::indirectObjectHeap);
+    PatchInfoData patchInfo2(0xB000, 0u, PatchInfoAllocationType::kernelArg, 0x6000, 0x200, PatchInfoAllocationType::indirectObjectHeap);
+    PatchInfoData patchInfo3(0xC000, 0u, PatchInfoAllocationType::indirectObjectHeap, 0x1000, 0x100, PatchInfoAllocationType::defaultType);
+    PatchInfoData patchInfo4(0xC000, 0u, PatchInfoAllocationType::defaultType, 0x2000, 0x100, PatchInfoAllocationType::gucStartMessage);
 
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfo1);
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfo2);
@@ -495,7 +495,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, GivenAubCommandStreamReceiverWhenGetIndi
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    PatchInfoData patchInfo(0xA000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x100, PatchInfoAllocationType::IndirectObjectHeap, sizeof(uint64_t));
+    PatchInfoData patchInfo(0xA000, 0u, PatchInfoAllocationType::kernelArg, 0x6000, 0x100, PatchInfoAllocationType::indirectObjectHeap, sizeof(uint64_t));
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfo);
 
     size_t indirectPatchCommandsSize = 0u;
@@ -514,7 +514,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, GivenAubCommandStreamReceiverWhenGetIndi
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    PatchInfoData patchInfo(0xA000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x100, PatchInfoAllocationType::IndirectObjectHeap, sizeof(uint32_t));
+    PatchInfoData patchInfo(0xA000, 0u, PatchInfoAllocationType::kernelArg, 0x6000, 0x100, PatchInfoAllocationType::indirectObjectHeap, sizeof(uint32_t));
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfo);
 
     size_t indirectPatchCommandsSize = 0u;
@@ -610,7 +610,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     ImageDescriptor imgDesc = {};
     imgDesc.imageWidth = 512;
     imgDesc.imageHeight = 1;
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 

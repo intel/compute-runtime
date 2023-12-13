@@ -1867,7 +1867,7 @@ TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) 
         MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
-        auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+        auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
         argDescriptor.as<ArgDescPointer>().bindful = surfaceStateHeapOffset;
         argDescriptor.as<ArgDescPointer>().bindless = crossThreadDataOffset;
 
@@ -1889,7 +1889,7 @@ TEST_F(ProgramTests, givenSkipLastExplicitArgWhenContainsStatefulAccessIsCalledT
         MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
-        auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+        auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
         argDescriptor.as<ArgDescPointer>().bindful = surfaceStateHeapOffset;
         argDescriptor.as<ArgDescPointer>().bindless = crossThreadDataOffset;
 
@@ -1919,7 +1919,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         void setAddressingMode(bool isStateful) {
             auto kernelInfo = std::make_unique<KernelInfo>();
             kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
-            auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+            auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
             if (isStateful) {
                 argDescriptor.as<ArgDescPointer>().bindful = 0x40;
                 argDescriptor.as<ArgDescPointer>().bindless = 0x40;
@@ -3783,16 +3783,16 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, givenNativeBinaryWhenCallingGenera
     buildInfo.kernelInfoArray.push_back(&kernelInfo2);
 
     kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.resize(2);
-    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTPointer;
+    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::argTPointer;
     auto &ptr = kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(0).as<ArgDescPointer>();
     ptr.pointerSize = 8u;
 
-    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).type = ArgDescriptor::ArgTImage;
+    kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).type = ArgDescriptor::argTImage;
     auto &img = kernelInfo1.kernelDescriptor.payloadMappings.explicitArgs.at(1).as<ArgDescImage>();
     img.imageType = NEOImageType::imageType2D;
 
     kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-    kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTSampler;
+    kernelInfo2.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::argTSampler;
 
     program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
     EXPECT_EQ(2u, kernelInfo1.kernelDescriptor.explicitArgsExtendedMetadata.size());
@@ -3827,7 +3827,7 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForAr
     buildInfo.kernelInfoArray.push_back(&kernelInfo);
 
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTValue;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::argTValue;
     auto &argAsVal = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).as<ArgDescValue>();
     argAsVal.elements.resize(3u);
 
@@ -3869,7 +3869,7 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForAr
     buildInfo.kernelInfoArray.push_back(&kernelInfo);
 
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTValue;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::argTValue;
     auto &argAsVal = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).as<ArgDescValue>();
     argAsVal.elements.resize(1u);
     argAsVal.elements[0].size = 16u;
@@ -3923,7 +3923,7 @@ TEST_P(ProgramGenerateDefaultArgsMetadataImagesTest, whenGeneratingDefaultMetada
 
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0];
-    arg.type = ArgDescriptor::ArgTImage;
+    arg.type = ArgDescriptor::argTImage;
     arg.as<ArgDescImage>().imageType = imgTypeTypenamePair.first;
 
     program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
@@ -3952,7 +3952,7 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForSa
     buildInfo.kernelInfoArray.push_back(&kernelInfo);
 
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTSampler;
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::argTSampler;
 
     program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
     EXPECT_EQ(1u, kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.size());

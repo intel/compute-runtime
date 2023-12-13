@@ -302,7 +302,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
 
     uint64_t sshGpuVa = cmdSba->getSurfaceStateBaseAddress();
-    auto expectedGpuVa = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+    auto expectedGpuVa = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState)->getHeapGpuBase();
     EXPECT_EQ(expectedGpuVa, sshGpuVa);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
 

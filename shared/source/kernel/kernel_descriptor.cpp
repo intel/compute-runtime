@@ -74,13 +74,13 @@ void KernelDescriptor::updateCrossThreadDataSize() {
     for (size_t i = 0; i < payloadMappings.explicitArgs.size(); i++) {
 
         switch (payloadMappings.explicitArgs[i].type) {
-        case ArgDescriptor::ArgType::ArgTImage: {
+        case ArgDescriptor::ArgType::argTImage: {
             auto &argImage = payloadMappings.explicitArgs[i].as<ArgDescImage>(false);
             if (isValidOffset(argImage.bindless)) {
                 crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, argImage.bindless + sizeof(uint32_t));
             }
         } break;
-        case ArgDescriptor::ArgType::ArgTPointer: {
+        case ArgDescriptor::ArgType::argTPointer: {
             auto &argPtr = payloadMappings.explicitArgs[i].as<ArgDescPointer>(false);
             if (isValidOffset(argPtr.bindless)) {
                 crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, argPtr.bindless + sizeof(uint32_t));
@@ -89,11 +89,11 @@ void KernelDescriptor::updateCrossThreadDataSize() {
                 crossThreadDataSize = std::max<uint32_t>(crossThreadDataSize, argPtr.stateless + argPtr.pointerSize);
             }
         } break;
-        case ArgDescriptor::ArgType::ArgTSampler: {
+        case ArgDescriptor::ArgType::argTSampler: {
             auto &argSampler = payloadMappings.explicitArgs[i].as<ArgDescSampler>(false);
             UNRECOVERABLE_IF(isValidOffset(argSampler.bindless));
         } break;
-        case ArgDescriptor::ArgType::ArgTValue: {
+        case ArgDescriptor::ArgType::argTValue: {
             auto &argVal = payloadMappings.explicitArgs[i].as<ArgDescValue>(false);
             for (size_t i = 0; i < argVal.elements.size(); i++) {
                 UNRECOVERABLE_IF(!isValidOffset(argVal.elements[i].offset));
@@ -128,13 +128,13 @@ void KernelDescriptor::initBindlessOffsetToSurfaceState() {
         for (size_t i = 0; i < this->payloadMappings.explicitArgs.size(); i++) {
 
             switch (this->payloadMappings.explicitArgs[i].type) {
-            case ArgDescriptor::ArgType::ArgTImage: {
+            case ArgDescriptor::ArgType::argTImage: {
                 auto &argImage = this->payloadMappings.explicitArgs[i].as<ArgDescImage>();
                 if (isValidOffset(argImage.bindless)) {
                     this->bindlessArgsMap.emplace(std::pair{argImage.bindless, index++});
                 }
             } break;
-            case ArgDescriptor::ArgType::ArgTPointer: {
+            case ArgDescriptor::ArgType::argTPointer: {
                 auto &argPtr = payloadMappings.explicitArgs[i].as<ArgDescPointer>();
                 if (isValidOffset(argPtr.bindless)) {
                     this->bindlessArgsMap.emplace(std::pair{argPtr.bindless, index++});

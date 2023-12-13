@@ -27,7 +27,7 @@ struct MockDeviceForBuiltinTests : public MockDeviceImp {
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override;
     ze_module_format_t formatForModule{};
     bool createModuleCalled = false;
-    ModuleType typeCreated = ModuleType::User;
+    ModuleType typeCreated = ModuleType::user;
 };
 } // namespace ult
 } // namespace L0

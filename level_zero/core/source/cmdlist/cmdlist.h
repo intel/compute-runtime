@@ -259,13 +259,13 @@ struct CommandList : _ze_command_list_handle_t {
         return performMemoryPrefetch;
     }
     bool storeExternalPtrAsTemporary() const {
-        return this->cmdListType == CommandListType::TYPE_IMMEDIATE && (this->isFlushTaskSubmissionEnabled || isCopyOnly());
+        return this->cmdListType == CommandListType::typeImmediate && (this->isFlushTaskSubmissionEnabled || isCopyOnly());
     }
     bool isWaitForEventsFromHostEnabled();
 
     enum CommandListType : uint32_t {
-        TYPE_REGULAR = 0u,
-        TYPE_IMMEDIATE = 1u
+        typeRegular = 0u,
+        typeImmediate = 1u
     };
 
     virtual ze_result_t executeCommandListImmediate(bool performMigration) = 0;
@@ -401,7 +401,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::EngineGroupType engineGroupType = NEO::EngineGroupType::maxEngineGroups;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
 
-    uint32_t cmdListType = CommandListType::TYPE_REGULAR;
+    uint32_t cmdListType = CommandListType::typeRegular;
     uint32_t commandListPerThreadScratchSize = 0u;
     uint32_t commandListPerThreadPrivateScratchSize = 0u;
     uint32_t partitionCount = 1;

@@ -30,21 +30,21 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
 
 struct MockKernelObjForAuxTranslation : public KernelObjForAuxTranslation {
     MockKernelObjForAuxTranslation(Type type) : KernelObjForAuxTranslation(type, nullptr) {
-        if (type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+        if (type == KernelObjForAuxTranslation::Type::memObj) {
             mockBuffer.reset(new MockBuffer);
             this->object = mockBuffer.get();
         } else {
-            DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+            DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::gfxAlloc);
             mockGraphicsAllocation.reset(new MockGraphicsAllocation(nullptr, 0x100));
             this->object = mockGraphicsAllocation.get();
         }
     };
 
     MockKernelObjForAuxTranslation(Type type, size_t size) : MockKernelObjForAuxTranslation(type) {
-        if (type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+        if (type == KernelObjForAuxTranslation::Type::memObj) {
             mockBuffer->getGraphicsAllocation(0)->setSize(size);
         } else {
-            DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+            DEBUG_BREAK_IF(type != KernelObjForAuxTranslation::Type::gfxAlloc);
             mockGraphicsAllocation->setSize(size);
         }
     }

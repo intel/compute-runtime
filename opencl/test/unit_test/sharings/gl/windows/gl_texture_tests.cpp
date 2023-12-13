@@ -56,7 +56,7 @@ class GlSharingTextureTests : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
         imgDesc = {};
-        imgDesc.imageType = ImageType::Image1D;
+        imgDesc.imageType = ImageType::image1D;
         imgDesc.imageWidth = 10;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 

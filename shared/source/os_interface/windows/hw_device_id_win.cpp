@@ -22,7 +22,7 @@ HwDeviceIdWddm::~HwDeviceIdWddm() {
 }
 HwDeviceIdWddm::HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, uint32_t adapterNodeMaskIn,
                                OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator)
-    : HwDeviceId(DriverModelType::WDDM),
+    : HwDeviceId(DriverModelType::wddm),
       adapterLuid(adapterLuidIn), adapterNodeMask(adapterNodeMaskIn), umKmDataTranslator(std::move(umKmDataTranslator)),
       osEnvironment(osEnvironmentIn), adapter(adapterIn) {
 }

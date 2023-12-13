@@ -78,7 +78,7 @@ struct BlitEnqueueTests : public ::testing::Test {
 
         debugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
         debugManager.flags.RenderCompressedBuffersEnabled.set(1);
         debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::immediateDispatch));

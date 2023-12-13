@@ -201,7 +201,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    IndirectHeap &ih = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 2048);
+    IndirectHeap &ih = pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 2048);
 
     auto retVal = pCmdQ->enqueueKernel(
         kernels[3].get(),

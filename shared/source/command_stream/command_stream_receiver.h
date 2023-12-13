@@ -507,7 +507,7 @@ class CommandStreamReceiver {
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 
-    IndirectHeap *indirectHeap[IndirectHeapType::NUM_TYPES];
+    IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
     OsContext *osContext = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
 

@@ -18,7 +18,7 @@ TEST_F(clGetDeviceGlobalVariablePointer, GivenNullMandatoryArgumentsThenReturnIn
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
     symbols["A"].gpuAddress = 7U;
     symbols["A"].symbol.size = 64U;
-    symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
+    symbols["A"].symbol.segment = NEO::SegmentType::globalVariables;
 
     void *globalRet = 0;
     auto ret = clGetDeviceGlobalVariablePointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", nullptr, &globalRet);
@@ -39,7 +39,7 @@ TEST_F(clGetDeviceGlobalVariablePointer, GivenValidSymbolNameThenReturnProperAdd
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
     symbols["A"].gpuAddress = 7U;
     symbols["A"].symbol.size = 64U;
-    symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
+    symbols["A"].symbol.segment = NEO::SegmentType::globalVariables;
 
     void *globalRet = 0;
     size_t sizeRet = 0;
@@ -53,7 +53,7 @@ TEST_F(clGetDeviceGlobalVariablePointer, GivenFunctionSymbolNameThenReturnInvali
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
     symbols["A"].gpuAddress = 7U;
     symbols["A"].symbol.size = 64U;
-    symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
+    symbols["A"].symbol.segment = NEO::SegmentType::instructions;
 
     void *globalRet = 0;
     auto ret = clGetDeviceGlobalVariablePointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", nullptr, &globalRet);
@@ -70,7 +70,7 @@ TEST_F(clGetDeviceFunctionPointer, GivenNullMandatoryArgumentsThenReturnInvalidA
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
     symbols["A"].gpuAddress = 7U;
     symbols["A"].symbol.size = 64U;
-    symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
+    symbols["A"].symbol.segment = NEO::SegmentType::instructions;
 
     cl_ulong fptrRet = 0;
     auto ret = clGetDeviceFunctionPointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", &fptrRet);
@@ -91,7 +91,7 @@ TEST_F(clGetDeviceFunctionPointer, GivenValidSymbolNameThenReturnProperAddress) 
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
     symbols["A"].gpuAddress = 7U;
     symbols["A"].symbol.size = 64U;
-    symbols["A"].symbol.segment = NEO::SegmentType::Instructions;
+    symbols["A"].symbol.segment = NEO::SegmentType::instructions;
 
     cl_ulong fptrRet = 0;
     auto ret = clGetDeviceFunctionPointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", &fptrRet);
@@ -103,10 +103,10 @@ TEST_F(clGetDeviceFunctionPointer, GivenGlobalSymbolNameThenReturnInvalidArgErro
     auto &symbols = pProgram->buildInfos[testedRootDeviceIndex].symbols;
     symbols["A"].gpuAddress = 7U;
     symbols["A"].symbol.size = 64U;
-    symbols["A"].symbol.segment = NEO::SegmentType::GlobalVariables;
+    symbols["A"].symbol.segment = NEO::SegmentType::globalVariables;
     symbols["B"].gpuAddress = 7U;
     symbols["B"].symbol.size = 64U;
-    symbols["B"].symbol.segment = NEO::SegmentType::GlobalConstants;
+    symbols["B"].symbol.segment = NEO::SegmentType::globalConstants;
 
     cl_ulong fptrRet = 0;
     auto ret = clGetDeviceFunctionPointerINTEL(this->pContext->getDevice(0), this->pProgram, "A", &fptrRet);

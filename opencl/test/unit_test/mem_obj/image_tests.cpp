@@ -1468,13 +1468,13 @@ struct ImageConvertTypeTest
     void TearDown() override {
     }
 
-    std::array<std::pair<uint32_t, ImageType>, 7> types = {{std::make_pair<>(CL_MEM_OBJECT_IMAGE1D, ImageType::Image1D),
-                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE2D, ImageType::Image2D),
-                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE3D, ImageType::Image3D),
-                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_ARRAY, ImageType::Image1DArray),
-                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE2D_ARRAY, ImageType::Image2DArray),
-                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_BUFFER, ImageType::Image1DBuffer),
-                                                            std::make_pair<>(0, ImageType::Invalid)}};
+    std::array<std::pair<uint32_t, ImageType>, 7> types = {{std::make_pair<>(CL_MEM_OBJECT_IMAGE1D, ImageType::image1D),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE2D, ImageType::image2D),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE3D, ImageType::image3D),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_ARRAY, ImageType::image1DArray),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE2D_ARRAY, ImageType::image2DArray),
+                                                            std::make_pair<>(CL_MEM_OBJECT_IMAGE1D_BUFFER, ImageType::image1DBuffer),
+                                                            std::make_pair<>(0, ImageType::invalid)}};
 };
 
 TEST_F(ImageConvertTypeTest, givenClMemObjectTypeWhenConvertedThenCorrectImageTypeIsReturned) {
@@ -1495,7 +1495,7 @@ TEST(ImageConvertDescriptorTest, givenClImageDescWhenConvertedThenCorrectImageDe
     cl_image_desc clDesc = {CL_MEM_OBJECT_IMAGE1D, 16, 24, 1, 1, 1024, 2048, 1, 3, {nullptr}};
     auto desc = Image::convertDescriptor(clDesc);
 
-    EXPECT_EQ(ImageType::Image1D, desc.imageType);
+    EXPECT_EQ(ImageType::image1D, desc.imageType);
     EXPECT_EQ(clDesc.image_array_size, desc.imageArraySize);
     EXPECT_EQ(clDesc.image_depth, desc.imageDepth);
     EXPECT_EQ(clDesc.image_height, desc.imageHeight);
@@ -1514,7 +1514,7 @@ TEST(ImageConvertDescriptorTest, givenClImageDescWhenConvertedThenCorrectImageDe
 }
 
 TEST(ImageConvertDescriptorTest, givenImageDescriptorWhenConvertedThenCorrectClImageDescIsReturned) {
-    ImageDescriptor desc = {ImageType::Image2D, 16, 24, 1, 1, 1024, 2048, 1, 3, false};
+    ImageDescriptor desc = {ImageType::image2D, 16, 24, 1, 1, 1024, 2048, 1, 3, false};
     auto clDesc = Image::convertDescriptor(desc);
 
     EXPECT_EQ(clDesc.image_type, static_cast<cl_mem_object_type>(CL_MEM_OBJECT_IMAGE2D));
@@ -1798,7 +1798,7 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
     MemoryProperties memoryProperties{};
 
     ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                    ClMemoryPropertiesHelper::ObjType::IMAGE, context);
+                                                    ClMemoryPropertiesHelper::ObjType::image, context);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
         flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);

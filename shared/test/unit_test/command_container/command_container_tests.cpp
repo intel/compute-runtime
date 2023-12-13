@@ -59,7 +59,7 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForAllThen
     EXPECT_EQ(0u, myCommandContainer.dirtyHeaps);
     EXPECT_FALSE(myCommandContainer.isAnyHeapDirty());
 
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         HeapType heapType = static_cast<HeapType>(i);
         EXPECT_FALSE(myCommandContainer.isHeapDirty(heapType));
     }
@@ -67,7 +67,7 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForAllThen
     myCommandContainer.setDirtyStateForAllHeaps(true);
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), myCommandContainer.dirtyHeaps);
 
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         HeapType heapType = static_cast<HeapType>(i);
         EXPECT_TRUE(myCommandContainer.isHeapDirty(heapType));
     }
@@ -78,7 +78,7 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleH
     EXPECT_FALSE(myCommandContainer.isAnyHeapDirty());
 
     uint32_t controlVariable = 0;
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         HeapType heapType = static_cast<HeapType>(i);
 
         EXPECT_FALSE(myCommandContainer.isHeapDirty(heapType));
@@ -90,7 +90,7 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleH
         EXPECT_EQ(controlVariable, myCommandContainer.dirtyHeaps);
     }
 
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         HeapType heapType = static_cast<HeapType>(i);
         EXPECT_TRUE(myCommandContainer.isHeapDirty(heapType));
     }
@@ -141,13 +141,13 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         HeapType heapType = static_cast<HeapType>(i);
         auto heap = cmdContainer.getIndirectHeap(heapType);
-        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
             EXPECT_EQ(heap, nullptr);
         } else {
-            if (HeapType::INDIRECT_OBJECT == heapType) {
+            if (HeapType::indirectObject == heapType) {
                 EXPECT_EQ(AllocationType::internalHeap, heap->getGraphicsAllocation()->getAllocationType());
                 EXPECT_NE(0u, heap->getHeapGpuStartOffset());
             } else {
@@ -169,10 +169,10 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
     EXPECT_NE(cmdContainer.getCommandStream(), nullptr);
     EXPECT_EQ(0u, cmdContainer.currentLinearStreamStartOffsetRef());
 
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         auto heapType = static_cast<HeapType>(i);
         auto indirectHeap = cmdContainer.getIndirectHeap(heapType);
-        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
             EXPECT_EQ(indirectHeap, nullptr);
         } else {
             auto heapAllocation = cmdContainer.getIndirectHeapAllocation(heapType);
@@ -199,7 +199,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsN
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     EXPECT_NE(cmdContainer.getCommandStream(), nullptr);
 
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes; i++) {
         auto indirectHeap = cmdContainer.getIndirectHeap(static_cast<HeapType>(i));
         EXPECT_EQ(indirectHeap, nullptr);
     }
@@ -250,7 +250,7 @@ TEST_F(CommandContainerTest, givenForceDefaultHeapSizeWhenCmdContainerIsInitiali
     auto status = cmdContainer.initialize(device.get(), nullptr, HeapSize::defaultHeapSize, true, false);
     EXPECT_EQ(CommandContainer::ErrorCode::success, status);
 
-    auto indirectHeap = cmdContainer.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT);
+    auto indirectHeap = cmdContainer.getIndirectHeap(IndirectHeap::Type::indirectObject);
     EXPECT_EQ(indirectHeap->getAvailableSpace(), 32 * MemoryConstants::kiloByte);
 }
 
@@ -338,7 +338,7 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemo
 TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocationThenAllocationIsSet) {
     CommandContainer cmdContainer;
     MockGraphicsAllocation mockAllocation;
-    auto heapType = HeapType::DYNAMIC_STATE;
+    auto heapType = HeapType::dynamicState;
     cmdContainer.setIndirectHeapAllocation(heapType, &mockAllocation);
     EXPECT_EQ(cmdContainer.getIndirectHeapAllocation(heapType), &mockAllocation);
 }
@@ -346,13 +346,13 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocat
 TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThenHeapAllocationsAreReused) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, true, HeapSize::defaultHeapSize, false);
-    auto heapAllocationsAddress = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE)->getUnderlyingBuffer();
+    auto heapAllocationsAddress = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState)->getUnderlyingBuffer();
     cmdContainer.reset(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, true, HeapSize::defaultHeapSize, false);
     bool status = true;
-    for (uint32_t i = 0; i < HeapType::NUM_TYPES && !status; i++) {
+    for (uint32_t i = 0; i < HeapType::numTypes && !status; i++) {
         auto heapType = static_cast<HeapType>(i);
-        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
             status = status && cmdContainer->getIndirectHeapAllocation(heapType) == nullptr;
         } else {
             status = status && cmdContainer->getIndirectHeapAllocation(heapType)->getUnderlyingBuffer() == heapAllocationsAddress;
@@ -421,7 +421,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenInitializeCalledThenSSHHeapH
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
 
-    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::surfaceState);
 
     ASSERT_NE(nullptr, heap);
     EXPECT_EQ(4 * MemoryConstants::pageSize, heap->getUsed());
@@ -434,11 +434,11 @@ HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequir
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
 
-    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     ASSERT_NE(nullptr, heap);
     heap->getSpace(heap->getAvailableSpace());
 
-    cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeof(RENDER_SURFACE_STATE), 0);
+    cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sizeof(RENDER_SURFACE_STATE), 0);
 
     EXPECT_EQ(4 * MemoryConstants::pageSize, heap->getUsed());
     EXPECT_EQ(cmdContainer->getSshAllocations().size(), 1u);
@@ -448,14 +448,14 @@ TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAl
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    HeapType heapTypes[] = {HeapType::SURFACE_STATE,
-                            HeapType::DYNAMIC_STATE};
+    HeapType heapTypes[] = {HeapType::surfaceState,
+                            HeapType::dynamicState};
 
     for (auto heapType : heapTypes) {
         auto heapAllocation = cmdContainer->getIndirectHeapAllocation(heapType);
         auto heap = cmdContainer->getIndirectHeap(heapType);
 
-        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
             EXPECT_EQ(heap, nullptr);
         } else {
             const size_t sizeRequested = 32;
@@ -483,8 +483,8 @@ TEST_F(CommandContainerTest, givenUnalignedAvailableSpaceWhenGetHeapWithRequired
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
-    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::surfaceState);
 
     const size_t sizeRequested = 32;
     const size_t alignment = 32;
@@ -493,22 +493,22 @@ TEST_F(CommandContainerTest, givenUnalignedAvailableSpaceWhenGetHeapWithRequired
 
     EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
 
-    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeRequested, alignment);
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sizeRequested, alignment);
     auto newAllocation = heapRequested->getGraphicsAllocation();
 
     EXPECT_EQ(heap, heapRequested);
     EXPECT_EQ(heapAllocation, newAllocation);
 
     EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
-    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::SURFACE_STATE));
+    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::surfaceState));
 }
 
 TEST_F(CommandContainerTest, givenNoAlignmentAndAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenHeapReturnedIsNotAligned) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
-    auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::surfaceState);
 
     const size_t sizeRequested = 32;
     const size_t alignment = 0;
@@ -517,28 +517,28 @@ TEST_F(CommandContainerTest, givenNoAlignmentAndAvailableSpaceWhenGetHeapWithReq
 
     EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
 
-    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeRequested, alignment);
+    auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sizeRequested, alignment);
     auto newAllocation = heapRequested->getGraphicsAllocation();
 
     EXPECT_EQ(heap, heapRequested);
     EXPECT_EQ(heapAllocation, newAllocation);
 
     EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (sizeRequested / 2)) == sizeRequested / 2);
-    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::SURFACE_STATE));
+    EXPECT_FALSE(cmdContainer->isHeapDirty(HeapType::surfaceState));
 }
 
 TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenNewAllocationIsReturned) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    HeapType heapTypes[] = {HeapType::SURFACE_STATE,
-                            HeapType::DYNAMIC_STATE};
+    HeapType heapTypes[] = {HeapType::surfaceState,
+                            HeapType::dynamicState};
 
     for (auto heapType : heapTypes) {
         auto heapAllocation = cmdContainer->getIndirectHeapAllocation(heapType);
         auto heap = cmdContainer->getIndirectHeap(heapType);
 
-        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
             EXPECT_EQ(heap, nullptr);
         } else {
             const size_t sizeRequested = 32;
@@ -569,7 +569,7 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAlocationHaveDifferen
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    HeapType type = HeapType::INDIRECT_OBJECT;
+    HeapType type = HeapType::indirectObject;
 
     auto heapAllocation = cmdContainer->getIndirectHeapAllocation(type);
     auto heap = cmdContainer->getIndirectHeap(type);
@@ -664,9 +664,9 @@ INSTANTIATE_TEST_CASE_P(
     Device,
     CommandContainerHeaps,
     testing::Values(
-        IndirectHeap::Type::DYNAMIC_STATE,
-        IndirectHeap::Type::INDIRECT_OBJECT,
-        IndirectHeap::Type::SURFACE_STATE));
+        IndirectHeap::Type::dynamicState,
+        IndirectHeap::Type::indirectObject,
+        IndirectHeap::Type::surfaceState));
 
 TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThenHeapIsReturned) {
     HeapType heapType = GetParam();
@@ -674,7 +674,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThe
     CommandContainer cmdContainer;
 
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
         EXPECT_EQ(cmdContainer.getIndirectHeap(heapType), nullptr);
     } else {
         auto usedSpaceBefore = cmdContainer.getIndirectHeap(heapType)->getUsed();
@@ -694,7 +694,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer.setDirtyStateForAllHeaps(false);
     auto heap = cmdContainer.getIndirectHeap(heapType);
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
         EXPECT_EQ(heap, nullptr);
     } else {
         auto usedSpaceBefore = heap->getUsed();
@@ -706,7 +706,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
         auto usedSpaceAfter = heap->getUsed();
         auto availableSizeAfter = heap->getAvailableSpace();
         EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
-        EXPECT_EQ(!cmdContainer.isHeapDirty(heapType), heapType == IndirectHeap::Type::INDIRECT_OBJECT);
+        EXPECT_EQ(!cmdContainer.isHeapDirty(heapType), heapType == IndirectHeap::Type::indirectObject);
     }
 }
 
@@ -730,7 +730,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHe
 
     CommandContainer cmdContainer1;
     cmdContainer1.initialize(device1.get(), nullptr, HeapSize::defaultHeapSize, true, false);
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::dynamicState == heapType) {
         EXPECT_EQ(cmdContainer0.getIndirectHeap(heapType), nullptr);
         EXPECT_EQ(cmdContainer1.getIndirectHeap(heapType), nullptr);
     } else {
@@ -985,7 +985,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
 TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {
     MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-    auto size = cmdContainer.allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getUnderlyingBufferSize();
+    auto size = cmdContainer.allocationIndirectHeaps[IndirectHeap::Type::surfaceState]->getUnderlyingBufferSize();
     constexpr size_t expectedHeapSize = MemoryConstants::pageSize64k;
     EXPECT_EQ(expectedHeapSize, size);
 }
@@ -1013,9 +1013,9 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     dshReserveArgs.alignment = dshAlign;
 
     cmdContainer.enableHeapSharing();
-    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::SURFACE_STATE));
-    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::DYNAMIC_STATE));
-    EXPECT_FALSE(cmdContainer.immediateCmdListSharedHeap(HeapType::INDIRECT_OBJECT));
+    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::surfaceState));
+    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::dynamicState));
+    EXPECT_FALSE(cmdContainer.immediateCmdListSharedHeap(HeapType::indirectObject));
 
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
@@ -1024,14 +1024,14 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     auto code = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EXPECT_EQ(CommandContainer::ErrorCode::success, code);
 
-    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
-    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::dynamicState));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::surfaceState));
 
-    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 0), std::exception);
-    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 0, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::dynamicState, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, 0, 0), std::exception);
 
-    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0), std::exception);
-    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::surfaceState, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 0, 0), std::exception);
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.recursiveLockCounter = 0;
@@ -1041,26 +1041,26 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, false);
     EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
-    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::dynamicState));
     EXPECT_EQ(nullptr, reservedDsh.getCpuBase());
 
-    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::surfaceState));
     EXPECT_NE(nullptr, reservedSsh.getCpuBase());
-    EXPECT_EQ(cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE)->getCpuBase(), reservedSsh.getCpuBase());
+    EXPECT_EQ(cmdContainer.getIndirectHeap(HeapType::surfaceState)->getCpuBase(), reservedSsh.getCpuBase());
 
-    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 0), std::exception);
-    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 0, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::dynamicState, 0), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, 0, 0), std::exception);
 
-    EXPECT_NO_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0));
-    EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0));
+    EXPECT_NO_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::surfaceState, 0));
+    EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 0, 0));
 
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
-    ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
-    ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+    ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::dynamicState));
+    ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::surfaceState));
 
-    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::surfaceState);
     EXPECT_NE(nullptr, sshHeap);
 
     size_t sizeUsedDsh = 0;
@@ -1073,7 +1073,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(3u, ultCsr.recursiveLockCounter);
 
-    auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto dshHeap = cmdContainer.getIndirectHeap(HeapType::dynamicState);
     EXPECT_NE(nullptr, dshHeap);
 
     EXPECT_EQ(sshHeapPtr->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
@@ -1129,9 +1129,9 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(5u, ultCsr.recursiveLockCounter);
 
-    dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    dshHeap = cmdContainer.getIndirectHeap(HeapType::dynamicState);
     EXPECT_NE(nullptr, dshHeap);
-    sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    sshHeap = cmdContainer.getIndirectHeap(HeapType::surfaceState);
     EXPECT_NE(nullptr, sshHeap);
 
     EXPECT_EQ(sshHeap->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
@@ -1162,8 +1162,8 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     EXPECT_EQ(ptrOffset(reservedDsh.getCpuBase(), sizeReserveUsedDsh), dshReservePtr);
     EXPECT_EQ(ptrOffset(reservedSsh.getCpuBase(), sizeReserveUsedSsh), sshReservePtr);
 
-    auto alignedHeapDsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 128, 128);
-    auto alignedHeapSsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 128, 128);
+    auto alignedHeapDsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, 128, 128);
+    auto alignedHeapSsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 128, 128);
 
     EXPECT_EQ(dshHeap, alignedHeapDsh);
     EXPECT_EQ(sshHeap, alignedHeapSsh);
@@ -1171,11 +1171,11 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     dshHeap->getSpace(dshHeap->getAvailableSpace() - 32);
     sshHeap->getSpace(sshHeap->getAvailableSpace() - 32);
 
-    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 64), std::exception);
-    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 64, 64), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::dynamicState, 64), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, 64, 64), std::exception);
 
-    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64), std::exception);
-    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 64, 64), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::surfaceState, 64), std::exception);
+    EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 64, 64), std::exception);
 }
 
 HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingHeapWithEnsuringSpaceThenExpectCorrectHeap) {
@@ -1205,8 +1205,8 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingH
     EXPECT_EQ(nullptr, sshReserveArgs.indirectHeapReservation);
     EXPECT_EQ(nullptr, dshReserveArgs.indirectHeapReservation);
 
-    auto dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
-    auto ssh = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    auto dsh = cmdContainer.getIndirectHeap(HeapType::dynamicState);
+    auto ssh = cmdContainer.getIndirectHeap(HeapType::surfaceState);
 
     EXPECT_EQ(0u, reservedDsh.getAvailableSpace());
     EXPECT_EQ(0u, reservedSsh.getAvailableSpace());
@@ -1223,7 +1223,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingH
     dshReserveArgs.indirectHeapReservation = dshHeapPtr;
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
 
-    dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    dsh = cmdContainer.getIndirectHeap(HeapType::dynamicState);
     EXPECT_EQ(dsh->getMaxAvailableSpace(), dsh->getAvailableSpace());
 
     EXPECT_EQ(nullptr, sshReserveArgs.indirectHeapReservation);
@@ -1256,12 +1256,12 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsingPrivateHeapsWhenGettingRese
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
 
     if (dshSupport) {
-        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::dynamicState);
         ASSERT_NE(nullptr, dshHeap);
         EXPECT_EQ(nullptr, dshReserveArgs.indirectHeapReservation);
     }
 
-    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::surfaceState);
     ASSERT_NE(nullptr, sshHeap);
     EXPECT_EQ(nullptr, sshReserveArgs.indirectHeapReservation);
 }
@@ -1298,7 +1298,7 @@ HWTEST_F(CommandContainerTest,
 
     size_t oldUsedDsh = 0;
     if (dshSupport) {
-        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::dynamicState);
         ASSERT_NE(nullptr, dshHeap);
 
         size_t sizeUsedDsh = dshHeap->getUsed();
@@ -1314,7 +1314,7 @@ HWTEST_F(CommandContainerTest,
     }
 
     size_t oldUsedSsh = 0;
-    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::surfaceState);
     ASSERT_NE(nullptr, sshHeap);
 
     size_t sizeUsedSsh = sshHeap->getUsed();
@@ -1333,7 +1333,7 @@ HWTEST_F(CommandContainerTest,
     dshReserveArgs.size = zeroSize;
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
     if (dshSupport) {
-        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::dynamicState);
         ASSERT_NE(nullptr, dshHeap);
 
         size_t sizeUsedDsh = dshHeap->getUsed();
@@ -1343,7 +1343,7 @@ HWTEST_F(CommandContainerTest,
         EXPECT_EQ(sizeReserveUsedDsh, reservedDsh.getMaxAvailableSpace());
     }
 
-    sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    sshHeap = cmdContainer.getIndirectHeap(HeapType::surfaceState);
     ASSERT_NE(nullptr, sshHeap);
 
     sizeUsedSsh = sshHeap->getUsed();
@@ -1356,7 +1356,7 @@ HWTEST_F(CommandContainerTest,
     dshReserveArgs.size = misalignedSize;
     cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
     if (dshSupport) {
-        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::dynamicState);
         ASSERT_NE(nullptr, dshHeap);
 
         size_t alignedDshSize = alignUp(misalignedSize, dshExampleAlignment);
@@ -1371,7 +1371,7 @@ HWTEST_F(CommandContainerTest,
         EXPECT_EQ(ptrOffset(reservedDsh.getCpuBase(), sizeReserveUsedDsh), dshReservePtr);
     }
 
-    sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    sshHeap = cmdContainer.getIndirectHeap(HeapType::surfaceState);
     ASSERT_NE(nullptr, sshHeap);
 
     size_t alignedSshSize = alignUp(misalignedSize, sshExampleAlignment);
@@ -1608,11 +1608,11 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
 
     cmdContainer->fillReusableAllocationLists();
     auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
-    auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::INDIRECT_OBJECT);
+    auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::indirectObject);
     auto reusableAlloc = reusableHeapsList.peekHead();
 
-    cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT)->getSpace(cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT)->getMaxAvailableSpace());
-    auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, 1024, 1024);
+    cmdContainer->getIndirectHeap(HeapType::indirectObject)->getSpace(cmdContainer->getIndirectHeap(HeapType::indirectObject)->getMaxAvailableSpace());
+    auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, 1024, 1024);
 
     EXPECT_EQ(heap->getGraphicsAllocation(), reusableAlloc);
     EXPECT_TRUE(reusableHeapsList.peekContains(*baseAlloc));
@@ -1653,15 +1653,15 @@ TEST_F(CommandContainerTest, givenGlobalHeapModelSelectedWhenCmdContainerIsIniti
     cmdContainer.setHeapAddressModel(HeapAddressModel::globalStateless);
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
-    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE));
-    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::surfaceState));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::dynamicState));
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerAllocatesIndirectHeapWhenGettingMemoryPlacementThenFlagMatchesGraphicsAllocationPlacement) {
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
-    EXPECT_EQ(cmdContainer->isIndirectHeapInLocalMemory(), cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
+    EXPECT_EQ(cmdContainer->isIndirectHeapInLocalMemory(), cmdContainer->getIndirectHeap(NEO::HeapType::indirectObject)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerSetToSbaTrackingWhenStateHeapsConsumedAndContainerResetThenHeapsCurrentPositionRetained) {
@@ -1671,14 +1671,14 @@ TEST_F(CommandContainerTest, givenCmdContainerSetToSbaTrackingWhenStateHeapsCons
     cmdContainer->setStateBaseAddressTracking(true);
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
-    NEO::IndirectHeap *ioh = cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    NEO::IndirectHeap *ioh = cmdContainer->getIndirectHeap(NEO::HeapType::indirectObject);
     ioh->getSpace(64);
 
-    NEO::IndirectHeap *ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    NEO::IndirectHeap *ssh = cmdContainer->getIndirectHeap(NEO::HeapType::surfaceState);
     ssh->getSpace(64);
     size_t sshUsed = ssh->getUsed();
 
-    NEO::IndirectHeap *dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    NEO::IndirectHeap *dsh = cmdContainer->getIndirectHeap(NEO::HeapType::dynamicState);
     size_t dshUsed = 0;
     if (useDsh) {
         dsh->getSpace(64);

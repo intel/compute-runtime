@@ -1437,7 +1437,7 @@ TEST(KernelArgDumper, givenSamplerObjectKernelArgThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchSamplerKernelArgument>(iOpenCL::PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT);
     kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Sampler;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::sampler;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type SAMPLER
@@ -1464,7 +1464,7 @@ TEST(KernelArgDumper, givenImageObjectKernelArgThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchImageMemoryObjectKernelArgument>(iOpenCL::PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT);
     kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Image;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::image;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type IMAGE
@@ -1492,7 +1492,7 @@ TEST(KernelArgDumper, givenGlobalMemoryObjectKernelArgThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchGlobalMemoryObjectKernelArgument>(iOpenCL::PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT);
     kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Buffer;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type BUFFER
@@ -1515,7 +1515,7 @@ TEST(KernelArgDumper, givenStatelessGlobalMemoryObjectKernelArgThenProperlyCreat
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument>(iOpenCL::PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT);
     kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Buffer;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type BUFFER
@@ -1540,7 +1540,7 @@ TEST(KernelArgDumper, givenStatelessConstantMemoryObjectKernelArgThenProperlyCre
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchStatelessConstantMemoryObjectKernelArgument>(iOpenCL::PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT);
     kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Buffer;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type BUFFER
@@ -1565,7 +1565,7 @@ TEST(KernelArgDumper, givenStatelessDeviceQueueObjectKernelArgThenProperlyCreate
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
     auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchStatelessDeviceQueueKernelArgument>(iOpenCL::PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT);
     kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Buffer;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
     std::stringstream expected;
     expected << R"===(  | Kernel argument of type BUFFER
@@ -1588,7 +1588,7 @@ TEST(KernelArgDumper, givenStatelessDeviceQueueObjectKernelArgThenProperlyCreate
 
 TEST(KernelArgDumper, givenBufferKernelArgWithMetadataTokensThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Buffer;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
     auto dataBufferOffset = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET);
     auto pureStateful = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL);
     kernelArg.metadata.buffer.bufferOffset = &dataBufferOffset;
@@ -1629,7 +1629,7 @@ TEST(KernelArgDumper, givenBufferKernelArgWithMetadataTokensThenProperlyCreatesD
 
 TEST(KernelArgDumper, givenImageKernelArgWithMetadataTokensThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Image;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::image;
     auto width = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_IMAGE_WIDTH);
     auto height = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_IMAGE_HEIGHT);
     auto depth = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_IMAGE_DEPTH);
@@ -1821,7 +1821,7 @@ TEST(KernelArgDumper, givenImageKernelArgWithMetadataTokensThenProperlyCreatesDu
 
 TEST(KernelArgDumper, givenSamplerKernelArgWithMetadataTokensThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Sampler;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::sampler;
     auto coordinateSnapWaRequired = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED);
     auto addressMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_SAMPLER_ADDRESS_MODE);
     auto normalizedCoords = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS);
@@ -1877,7 +1877,7 @@ TEST(KernelArgDumper, givenSamplerKernelArgWithMetadataTokensThenProperlyCreates
 
 TEST(KernelArgDumper, givenSlmKernelArgWithMetadataTokensThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Slm;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::slm;
     auto slm = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES);
     kernelArg.metadata.slm.token = &slm;
     auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
@@ -1903,8 +1903,8 @@ TEST(KernelArgDumper, givenSlmKernelArgWithMetadataTokensThenProperlyCreatesDump
 
 TEST(KernelArgDumper, givenVmeKernelArgWithMetadataTokensThenProperlyCreatesDump) {
     NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::Image;
-    kernelArg.objectTypeSpecialized = NEO::PatchTokenBinary::ArgObjectTypeSpecialized::Vme;
+    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::image;
+    kernelArg.objectTypeSpecialized = NEO::PatchTokenBinary::ArgObjectTypeSpecialized::vme;
     auto mbBlockType = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE);
     auto subpixelMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE);
     auto sadAdjustMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SAD_ADJUST_MODE);

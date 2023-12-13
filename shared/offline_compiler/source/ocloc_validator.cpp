@@ -55,7 +55,7 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     argHelper->printf("Validating : %s (%zd bytes).\n", fileName.c_str(), fileData.size());
 
     auto deviceBinary = ArrayRef<const uint8_t>::fromAny(fileData.data(), fileData.size());
-    if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(deviceBinary)) {
+    if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(deviceBinary)) {
         argHelper->printf("Input is not a Zebin file (not elf or wrong elf object file type)\n");
         return -2;
     }

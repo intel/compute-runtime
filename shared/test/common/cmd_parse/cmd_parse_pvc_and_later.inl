@@ -215,7 +215,7 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     auto argOffset = std::numeric_limits<uint32_t>::max();
     // Determine where the argument is
     const auto &arg = kernelInfo.getArgDescriptorAt(indexArg);
-    if (arg.is<ArgDescriptor::ArgTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
+    if (arg.is<ArgDescriptor::argTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
         argOffset = arg.as<ArgDescPointer>().stateless;
     } else {
         return nullptr;

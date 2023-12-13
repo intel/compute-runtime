@@ -336,7 +336,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThen
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -359,7 +359,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyWith
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -379,7 +379,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -414,7 +414,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
     commandList->device = device;
     commandList->isSyncModeQueue = false;
     commandList->cmdQImmediate = cmdQueue.get();
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = ultCsr;
 
     // Program CSR state on first submit
@@ -509,7 +509,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
     commandList->device = device;
     commandList->isSyncModeQueue = true;
     commandList->cmdQImmediate = cmdQueue.get();
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = ultCsr;
 
     // Program CSR state on first submit
@@ -592,7 +592,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncModeImmediateCommandListWhenAppendingMemory
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->isSyncModeQueue = true;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -617,7 +617,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThen
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);

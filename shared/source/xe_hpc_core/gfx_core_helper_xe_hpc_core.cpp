@@ -24,7 +24,7 @@ using Family = NEO::XeHpcCoreFamily;
 namespace NEO {
 
 template <>
-const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::blit;
 
 template <>
 uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {

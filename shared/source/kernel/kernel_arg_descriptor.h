@@ -116,11 +116,11 @@ struct ArgDescValue final {
 
 struct ArgDescriptor final {
     enum ArgType : uint8_t {
-        ArgTUnknown,
-        ArgTPointer,
-        ArgTImage,
-        ArgTSampler,
-        ArgTValue
+        argTUnknown,
+        argTPointer,
+        argTImage,
+        argTSampler,
+        argTValue
     };
 
     struct ExtendedTypeInfo {
@@ -144,7 +144,7 @@ struct ArgDescriptor final {
     ArgDescriptor(ArgType type);
 
     ArgDescriptor()
-        : ArgDescriptor(ArgTUnknown) {
+        : ArgDescriptor(argTUnknown) {
     }
 
     ArgDescriptor &operator=(const ArgDescriptor &rhs);
@@ -183,9 +183,9 @@ struct ArgDescriptor final {
         switch (type) {
         default:
             return true;
-        case ArgTImage:
+        case argTImage:
             return (KernelArgMetadata::AccessReadOnly == traits.accessQualifier);
-        case ArgTPointer:
+        case argTPointer:
             return (KernelArgMetadata::AddrConstant == traits.addressQualifier) ||
                    (KernelArgMetadata::AccessReadOnly == traits.accessQualifier) ||
                    traits.typeQualifiers.constQual;
@@ -214,65 +214,65 @@ static_assert(argSize <= 72, "Keep it small");
 
 template <>
 inline const ArgDescPointer &ArgDescriptor::as<ArgDescPointer>() const {
-    UNRECOVERABLE_IF(type != ArgTPointer);
+    UNRECOVERABLE_IF(type != argTPointer);
     return this->asPointer;
 }
 
 template <>
 inline const ArgDescImage &ArgDescriptor::as<ArgDescImage>() const {
-    UNRECOVERABLE_IF(type != ArgTImage);
+    UNRECOVERABLE_IF(type != argTImage);
     return this->asImage;
 }
 
 template <>
 inline const ArgDescSampler &ArgDescriptor::as<ArgDescSampler>() const {
-    UNRECOVERABLE_IF(type != ArgTSampler);
+    UNRECOVERABLE_IF(type != argTSampler);
     return this->asSampler;
 }
 
 template <>
 inline const ArgDescValue &ArgDescriptor::as<ArgDescValue>() const {
-    UNRECOVERABLE_IF(type != ArgTValue);
+    UNRECOVERABLE_IF(type != argTValue);
     return this->asByValue;
 }
 
 template <>
 inline ArgDescPointer &ArgDescriptor::as<ArgDescPointer>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) && initIfUnknown) {
-        this->type = ArgTPointer;
+    if ((argTUnknown == type) && initIfUnknown) {
+        this->type = argTPointer;
         this->asPointer = {};
     }
-    UNRECOVERABLE_IF(type != ArgTPointer);
+    UNRECOVERABLE_IF(type != argTPointer);
     return this->asPointer;
 }
 
 template <>
 inline ArgDescImage &ArgDescriptor::as<ArgDescImage>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) && initIfUnknown) {
-        this->type = ArgTImage;
+    if ((argTUnknown == type) && initIfUnknown) {
+        this->type = argTImage;
         this->asImage = {};
     }
-    UNRECOVERABLE_IF(type != ArgTImage);
+    UNRECOVERABLE_IF(type != argTImage);
     return this->asImage;
 }
 
 template <>
 inline ArgDescSampler &ArgDescriptor::as<ArgDescSampler>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) && initIfUnknown) {
-        this->type = ArgTSampler;
+    if ((argTUnknown == type) && initIfUnknown) {
+        this->type = argTSampler;
         this->asSampler = {};
     }
-    UNRECOVERABLE_IF(type != ArgTSampler);
+    UNRECOVERABLE_IF(type != argTSampler);
     return this->asSampler;
 }
 
 template <>
 inline ArgDescValue &ArgDescriptor::as<ArgDescValue>(bool initIfUnknown) {
-    if ((ArgTUnknown == type) && initIfUnknown) {
-        this->type = ArgTValue;
+    if ((argTUnknown == type) && initIfUnknown) {
+        this->type = argTValue;
         this->asByValue.elements.clear();
     }
-    UNRECOVERABLE_IF(type != ArgTValue);
+    UNRECOVERABLE_IF(type != argTValue);
     return this->asByValue;
 }
 
@@ -314,20 +314,20 @@ inline ArgDescriptor &ArgDescriptor::operator=(const ArgDescriptor &rhs) {
     if (this == &rhs) {
         return *this;
     }
-    this->type = ArgTUnknown;
+    this->type = argTUnknown;
     switch (rhs.type) {
     default:
         break;
-    case ArgTPointer:
+    case argTPointer:
         this->as<ArgDescPointer>(true) = rhs.as<ArgDescPointer>();
         break;
-    case ArgTImage:
+    case argTImage:
         this->as<ArgDescImage>(true) = rhs.as<ArgDescImage>();
         break;
-    case ArgTSampler:
+    case argTSampler:
         this->as<ArgDescSampler>(true) = rhs.as<ArgDescSampler>();
         break;
-    case ArgTValue:
+    case argTValue:
         this->as<ArgDescValue>(true) = rhs.as<ArgDescValue>();
         break;
     }
@@ -341,16 +341,16 @@ inline ArgDescriptor::ArgDescriptor(ArgType type) : type(type) {
     switch (type) {
     default:
         break;
-    case ArgTPointer:
+    case argTPointer:
         this->as<ArgDescPointer>(true);
         break;
-    case ArgTImage:
+    case argTImage:
         this->as<ArgDescImage>(true);
         break;
-    case ArgTSampler:
+    case argTSampler:
         this->as<ArgDescSampler>(true);
         break;
-    case ArgTValue:
+    case argTValue:
         this->as<ArgDescValue>(true);
         break;
     }

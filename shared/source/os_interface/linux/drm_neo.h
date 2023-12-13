@@ -69,7 +69,7 @@ class Drm : public DriverModel {
     friend DeviceFactory;
 
   public:
-    static constexpr DriverModelType driverModelType = DriverModelType::DRM;
+    static constexpr DriverModelType driverModelType = DriverModelType::drm;
 
     static SubmissionStatus getSubmissionStatusFromReturnCode(int32_t retCode);
 

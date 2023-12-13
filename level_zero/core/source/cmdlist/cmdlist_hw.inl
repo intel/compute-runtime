@@ -228,7 +228,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->l1CachePolicyData.init(productHelper);
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
     this->dummyBlitWa.rootDeviceEnvironment = &(neoDevice->getRootDeviceEnvironmentRef());
-    this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, this->cmdListType == CommandListType::TYPE_REGULAR);
+    this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, this->cmdListType == CommandListType::typeRegular);
     this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
     this->maxFillPaternSizeForCopyEngine = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
@@ -259,7 +259,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     commandContainer.setReservedSshSize(getReserveSshSize());
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
-    auto createSecondaryCmdBufferInHostMem = this->cmdListType == TYPE_IMMEDIATE &&
+    auto createSecondaryCmdBufferInHostMem = this->cmdListType == typeImmediate &&
                                              this->isFlushTaskSubmissionEnabled &&
                                              !device->isImplicitScalingCapable() &&
                                              this->csr &&
@@ -547,7 +547,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
 
     event->resetPackets(false);
-    event->disableHostCaching(this->cmdListType == CommandList::CommandListType::TYPE_REGULAR);
+    event->disableHostCaching(this->cmdListType == CommandList::CommandListType::typeRegular);
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
 
     // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
@@ -661,7 +661,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     auto rowPitch = pDstRegion->width * bytesPerPixel;
     auto slicePitch =
-        image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pDstRegion->height * rowPitch;
+        image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height * rowPitch;
 
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
@@ -813,7 +813,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     auto rowPitch = pSrcRegion->width * bytesPerPixel;
     auto slicePitch =
-        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pSrcRegion->height) * rowPitch;
+        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * rowPitch;
 
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
@@ -1011,11 +1011,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
         auto srcRowPitch = srcRegion.width * bytesPerPixel;
         auto srcSlicePitch =
-            (srcImage->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : srcRegion.height) * srcRowPitch;
+            (srcImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : srcRegion.height) * srcRowPitch;
 
         auto dstRowPitch = dstRegion.width * bytesPerPixel;
         auto dstSlicePitch =
-            (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : dstRegion.height) * dstRowPitch;
+            (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 
         auto status = appendCopyImageBlit(srcImage->getAllocation(), dstImage->getAllocation(),
                                           {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
@@ -2214,13 +2214,13 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "invalid imageType: %d\n", imageType);
         UNRECOVERABLE_IF(true);
         break;
-    case NEO::ImageType::Image1D:
-    case NEO::ImageType::Image1DArray:
+    case NEO::ImageType::image1D:
+    case NEO::ImageType::image1DArray:
         return bytesPerPixel * region->width;
-    case NEO::ImageType::Image2D:
-    case NEO::ImageType::Image2DArray:
+    case NEO::ImageType::image2D:
+    case NEO::ImageType::image2DArray:
         return bytesPerPixel * region->width * region->height;
-    case NEO::ImageType::Image3D:
+    case NEO::ImageType::image3D:
         return bytesPerPixel * region->width * region->height * region->depth;
     }
 }
@@ -2437,7 +2437,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 auto lri2 = NEO::LriHelper<GfxFamily>::program(commandContainer.getCommandStream(), RegisterOffsets::csGprR0 + 4, getHighPart(waitValue), true);
 
                 if (inOrderExecInfo->isRegularCmdList()) {
-                    addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::Lri64b);
+                    addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::lri64b);
                 }
             }
 
@@ -2447,7 +2447,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                                                                     false, true, isQwordInOrderCounter(), indirectMode);
 
             if (inOrderExecInfo->isRegularCmdList() && !isQwordInOrderCounter()) {
-                addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, nullptr, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
+                addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, nullptr, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore);
             }
         }
 
@@ -2458,7 +2458,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(const Event &event) const {
     if (isInOrderExecutionEnabled()) {
-        return ((this->cmdListType == TYPE_IMMEDIATE && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                     // 1. Immediate CmdList can skip "regular Events" from the same CmdList
+        return ((this->cmdListType == typeImmediate && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                      // 1. Immediate CmdList can skip "regular Events" from the same CmdList
                 (event.isCounterBased() && event.getInOrderExecDataAllocation() == &inOrderExecInfo->getDeviceCounterAllocation())); // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
     }
 
@@ -2504,7 +2504,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
-        if ((this->cmdListType == TYPE_IMMEDIATE && event->isAlreadyCompleted()) ||
+        if ((this->cmdListType == typeImmediate && event->isAlreadyCompleted()) ||
             canSkipInOrderEventWait(*event)) {
             continue;
         }
@@ -2516,7 +2516,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
             // 1. Regular CmdList adds submission counter to base value on each Execute
             // 2. Immediate CmdList takes current value (with submission counter)
-            auto waitValue = (this->cmdListType == TYPE_REGULAR) ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
+            auto waitValue = (this->cmdListType == typeRegular) ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
 
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecInfo(), waitValue, event->getInOrderAllocationOffset(), relaxedOrderingAllowed, false);
 
@@ -2528,7 +2528,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         appendWaitOnSingleEvent(event, relaxedOrderingAllowed);
     }
 
-    if (this->cmdListType == TYPE_IMMEDIATE && isCopyOnly() && trackDependencies) {
+    if (this->cmdListType == typeImmediate && isCopyOnly() && trackDependencies) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), this->csr->getBarrierCountGpuAddress(), this->csr->getNextBarrierCount() + 1, args);
@@ -2566,7 +2566,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(miStoreCmd, gpuVa, getLowPart(signalValue), getHighPart(signalValue),
                                                            isQwordInOrderCounter(), (this->partitionCount > 1));
 
-    addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+    addCmdForPatching(nullptr, miStoreCmd, nullptr, signalValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::sdi);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2965,8 +2965,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     bool checkIoh = false;
 
     if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
-        if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE)) {
-            auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+        if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::surfaceState)) {
+            auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
             if (ssh) {
                 currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
                 currentSurfaceStateSize = ssh->getHeapSizeInPages();
@@ -2976,11 +2976,11 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
                 checkSsh = true;
             }
-            DEBUG_BREAK_IF(ssh == nullptr && commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE));
+            DEBUG_BREAK_IF(ssh == nullptr && commandContainer.isHeapDirty(NEO::IndirectHeap::Type::surfaceState));
         }
 
-        if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::DYNAMIC_STATE))) {
-            auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+        if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::dynamicState))) {
+            auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
             currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
             currentDynamicStateSize = dsh->getHeapSizeInPages();
 
@@ -2989,7 +2989,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     }
 
     if (currentIndirectObjectBaseAddress == NEO::StreamProperty64::initValue) {
-        auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
+        auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject);
         currentIndirectObjectBaseAddress = ioh->getHeapGpuBase();
         currentIndirectObjectSize = ioh->getHeapSizeInPages();
 
@@ -3231,7 +3231,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
             NEO::MiFlushArgs args{this->dummyBlitWa};
             uint64_t gpuAddress = 0u;
             TaskCountType value = 0u;
-            if (this->cmdListType == TYPE_IMMEDIATE) {
+            if (this->cmdListType == typeImmediate) {
                 args.commandWithPostSync = true;
                 gpuAddress = this->csr->getBarrierCountGpuAddress();
                 value = this->csr->getNextBarrierCount() + 1;
@@ -3567,7 +3567,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 
         const auto &productHelper = this->device->getNEODevice()->getRootDeviceEnvironment().template getHelper<NEO::ProductHelper>();
         if (productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(this->device->getHwInfo())) {
-            if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
+            if (this->cmdListType == CommandListType::typeImmediate) {
                 pipeControlArgs.constantCacheInvalidationEnable = this->csr->isDirectSubmissionEnabled();
             } else {
                 pipeControlArgs.constantCacheInvalidationEnable = this->device->getNEODevice()->isAnyDirectSubmissionEnabled();
@@ -3643,7 +3643,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
-    if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && (this->cmdListType == TYPE_REGULAR)) {
+    if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && (this->cmdListType == typeRegular)) {
         this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType);
     }
 }
@@ -3677,7 +3677,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
                 return true;
             }
 
-            if (isInOrderExecutionEnabled() && (this->cmdListType == TYPE_IMMEDIATE)) {
+            if (isInOrderExecutionEnabled() && (this->cmdListType == typeImmediate)) {
                 signalEvent->enableCounterBasedMode(false);
             } else {
                 signalEvent->disableImplicitCounterBasedMode();

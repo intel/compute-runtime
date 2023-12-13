@@ -653,17 +653,17 @@ const ClSurfaceFormatInfo &Image::getSurfaceFormatInfo() const {
 
 cl_mem_object_type Image::convertType(const ImageType type) {
     switch (type) {
-    case ImageType::Image2D:
+    case ImageType::image2D:
         return CL_MEM_OBJECT_IMAGE2D;
-    case ImageType::Image3D:
+    case ImageType::image3D:
         return CL_MEM_OBJECT_IMAGE3D;
-    case ImageType::Image2DArray:
+    case ImageType::image2DArray:
         return CL_MEM_OBJECT_IMAGE2D_ARRAY;
-    case ImageType::Image1D:
+    case ImageType::image1D:
         return CL_MEM_OBJECT_IMAGE1D;
-    case ImageType::Image1DArray:
+    case ImageType::image1DArray:
         return CL_MEM_OBJECT_IMAGE1D_ARRAY;
-    case ImageType::Image1DBuffer:
+    case ImageType::image1DBuffer:
         return CL_MEM_OBJECT_IMAGE1D_BUFFER;
     default:
         break;
@@ -674,21 +674,21 @@ cl_mem_object_type Image::convertType(const ImageType type) {
 ImageType Image::convertType(const cl_mem_object_type type) {
     switch (type) {
     case CL_MEM_OBJECT_IMAGE2D:
-        return ImageType::Image2D;
+        return ImageType::image2D;
     case CL_MEM_OBJECT_IMAGE3D:
-        return ImageType::Image3D;
+        return ImageType::image3D;
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        return ImageType::Image2DArray;
+        return ImageType::image2DArray;
     case CL_MEM_OBJECT_IMAGE1D:
-        return ImageType::Image1D;
+        return ImageType::image1D;
     case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        return ImageType::Image1DArray;
+        return ImageType::image1DArray;
     case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-        return ImageType::Image1DBuffer;
+        return ImageType::image1DBuffer;
     default:
         break;
     }
-    return ImageType::Invalid;
+    return ImageType::invalid;
 }
 
 ImageDescriptor Image::convertDescriptor(const cl_image_desc &imageDesc) {
@@ -1271,7 +1271,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                  ClMemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::image, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, emptyFlagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_VALUE;
@@ -1279,7 +1279,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     }
 
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                  ClMemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::image, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_PROPERTY;

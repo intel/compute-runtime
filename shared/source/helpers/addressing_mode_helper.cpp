@@ -28,7 +28,7 @@ bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceE
 }
 
 inline bool argPointerIsStateful(const ArgDescriptor &arg) {
-    return arg.is<NEO::ArgDescriptor::ArgTPointer>() &&
+    return arg.is<NEO::ArgDescriptor::argTPointer>() &&
            (NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindless) ||
             NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindful));
 }

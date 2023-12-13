@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,17 +11,17 @@
 namespace NEO {
 
 enum PatchInfoAllocationType {
-    Default = 0,
-    KernelArg,
-    GeneralStateHeap,
-    DynamicStateHeap,
-    IndirectObjectHeap,
-    SurfaceStateHeap,
-    InstructionHeap,
-    TagAddress,
-    TagValue,
-    GUCStartMessage,
-    ScratchSpace
+    defaultType = 0,
+    kernelArg,
+    generalStateHeap,
+    dynamicStateHeap,
+    indirectObjectHeap,
+    surfaceStateHeap,
+    instructionHeap,
+    tagAddress,
+    tagValue,
+    gucStartMessage,
+    scratchSpace
 };
 
 struct PatchInfoData {
@@ -65,7 +65,7 @@ struct PatchInfoData {
     }
 
     bool requiresIndirectPatching() {
-        return (targetType != PatchInfoAllocationType::Default && targetType != PatchInfoAllocationType::GUCStartMessage);
+        return (targetType != PatchInfoAllocationType::defaultType && targetType != PatchInfoAllocationType::gucStartMessage);
     }
 };
 

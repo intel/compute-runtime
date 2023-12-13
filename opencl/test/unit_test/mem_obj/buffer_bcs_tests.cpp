@@ -298,7 +298,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetWhenDispatchingBlitCommandsT
     snprintf(expectedStr, 512, "\nBlit dispatch with AuxTranslationDirection %u \
 \nBlit command. width: %u, height: %u, srcAddr: %#" SCNx64 ", dstAddr: %#" SCNx64 " \
 \nBlit command. width: %u, height: %u, srcAddr: %#" SCNx64 ", dstAddr: %#" SCNx64 " ",
-             static_cast<uint32_t>(AuxTranslationDirection::None),
+             static_cast<uint32_t>(AuxTranslationDirection::none),
              maxBlitWidth, 1, hostPtrAddr, bufferGpuAddr,
              (copySize - maxBlitWidth), 1, ptrOffset(hostPtrAddr, maxBlitWidth), ptrOffset(bufferGpuAddr, maxBlitWidth));
 

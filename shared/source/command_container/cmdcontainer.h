@@ -142,7 +142,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     }
     void enableHeapSharing() { heapSharingEnabled = true; }
     bool immediateCmdListSharedHeap(HeapType heapType) {
-        return (heapSharingEnabled && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
+        return (heapSharingEnabled && (heapType == HeapType::dynamicState || heapType == HeapType::surfaceState));
     }
 
     void reserveSpaceForDispatch(HeapReserveArguments &sshReserveArg, HeapReserveArguments &dshReserveArg, bool getDsh);
@@ -215,7 +215,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     size_t getHeapSize(HeapType heapType);
     void alignPrimaryEnding(void *endPtr, size_t exactUsedSize);
 
-    GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
+    GraphicsAllocation *allocationIndirectHeaps[HeapType::numTypes] = {};
 
     CmdBufferContainer cmdBufferAllocations;
     ResidencyContainer residencyContainer;
@@ -225,7 +225,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     HeapReserveData dynamicStateHeapReserveData;
     HeapReserveData surfaceStateHeapReserveData;
 
-    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
+    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::numTypes];
     std::unique_ptr<HeapHelper> heapHelper;
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;

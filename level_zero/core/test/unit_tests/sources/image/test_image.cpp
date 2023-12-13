@@ -64,7 +64,7 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
     EXPECT_EQ(imageInfo.imgDesc.imageArraySize, zeDesc.arraylevels);
     EXPECT_EQ(imageInfo.imgDesc.imageDepth, zeDesc.depth);
     EXPECT_EQ(imageInfo.imgDesc.imageHeight, zeDesc.height);
-    EXPECT_EQ(imageInfo.imgDesc.imageType, NEO::ImageType::Image2DArray);
+    EXPECT_EQ(imageInfo.imgDesc.imageType, NEO::ImageType::image2DArray);
     EXPECT_EQ(imageInfo.imgDesc.imageWidth, zeDesc.width);
     EXPECT_EQ(imageInfo.imgDesc.numMipLevels, zeDesc.miplevels);
     EXPECT_EQ(imageInfo.imgDesc.numSamples, 0u);

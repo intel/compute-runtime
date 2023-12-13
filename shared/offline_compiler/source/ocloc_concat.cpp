@@ -88,7 +88,7 @@ AOT::PRODUCT_CONFIG OclocConcat::getAOTProductConfigFromBinary(ArrayRef<const ui
     AOT::PRODUCT_CONFIG productConfig{};
     bool productConfigFound = false;
     for (auto &note : intelGTNotes) {
-        if (note.type == Zebin::Elf::IntelGTSectionType::ProductConfig) {
+        if (note.type == Zebin::Elf::IntelGTSectionType::productConfig) {
             productConfig = *reinterpret_cast<const AOT::PRODUCT_CONFIG *>(note.data.begin());
             productConfigFound = true;
             break;

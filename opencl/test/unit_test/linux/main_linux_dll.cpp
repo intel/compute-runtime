@@ -657,7 +657,7 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    auto drmMemoryManager = MemoryManager::createMemoryManager(mockExecutionEnvironment, DriverModelType::UNKNOWN);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(mockExecutionEnvironment, DriverModelType::unknown);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     mockExecutionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
@@ -678,7 +678,7 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     mockExecutionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    auto drmMemoryManager = MemoryManager::createMemoryManager(mockExecutionEnvironment, DriverModelType::UNKNOWN);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(mockExecutionEnvironment, DriverModelType::unknown);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     EXPECT_FALSE(static_cast<DrmMemoryManager *>(drmMemoryManager.get())->isValidateHostMemoryEnabled());
     mockExecutionEnvironment.memoryManager = std::move(drmMemoryManager);

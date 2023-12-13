@@ -243,9 +243,9 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
 
         csr->makeResident(*helperSurface);
         csr->flushTask(*taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
                        0u, dispatchFlags, device->getDevice());
 
         csr->flushBatchedSubmissions();
@@ -630,9 +630,9 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
 
         csr->makeResident(*helperSurface);
         csr->flushTask(*taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
                        0u, dispatchFlags, device->getDevice());
 
         csr->flushBatchedSubmissions();

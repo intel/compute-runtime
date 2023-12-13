@@ -118,7 +118,7 @@ TEST(ClOsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGrap
     ImageDescriptor imgDesc = {};
     imgDesc.imageWidth = 4;
     imgDesc.imageHeight = 1;
-    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageType = ImageType::image1D;
 
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
@@ -158,7 +158,7 @@ TEST(ClOsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphic
     ImageDescriptor imgDesc = {};
     imgDesc.imageHeight = 4;
     imgDesc.imageWidth = 4;
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
 
     cl_image_format imageFormat = {};
     imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;

@@ -167,9 +167,9 @@ class SVMAllocsManager {
     };
 
     enum class FreePolicyType : uint32_t {
-        POLICY_NONE = 0,
-        POLICY_BLOCKING = 1,
-        POLICY_DEFER = 2
+        none = 0,
+        blocking = 1,
+        defer = 2
     };
 
     SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport);

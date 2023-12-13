@@ -934,7 +934,7 @@ ze_result_t ContextImp::createModule(ze_device_handle_t hDevice,
                                      const ze_module_desc_t *desc,
                                      ze_module_handle_t *phModule,
                                      ze_module_build_log_handle_t *phBuildLog) {
-    return L0::Device::fromHandle(hDevice)->createModule(desc, phModule, phBuildLog, ModuleType::User);
+    return L0::Device::fromHandle(hDevice)->createModule(desc, phModule, phBuildLog, ModuleType::user);
 }
 
 ze_result_t ContextImp::createSampler(ze_device_handle_t hDevice,

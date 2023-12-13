@@ -220,7 +220,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     commandList->close();
 
-    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
@@ -250,7 +250,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     commandList->close();
 
-    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
 
     const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
@@ -613,7 +613,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     commandList->close();
 
-    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
     ASSERT_NE(ssh, nullptr);
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
@@ -673,7 +673,7 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::SURFACE_STATE, 0);
+    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::surfaceState, 0);
     ASSERT_NE(nullptr, csrHeap);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
@@ -722,7 +722,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::SURFACE_STATE, 0);
+    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::surfaceState, 0);
     ASSERT_NE(nullptr, csrHeap);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
@@ -778,10 +778,10 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCrea
 
     auto globalBindlessBase = bindlessHelper->getGlobalHeapsBase();
 
-    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getCpuBase());
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getCpuBase());
     auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
 
-    EXPECT_EQ(globalBindlessBase, bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getHeapGpuBase());
+    EXPECT_EQ(globalBindlessBase, bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getHeapGpuBase());
 
     SurfaceStateBufferLength length;
     length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
@@ -807,7 +807,7 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingKer
 
     commandList->close();
 
-    auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
 
     EXPECT_EQ(nullptr, ssh);
 }
@@ -838,7 +838,7 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenExecutingCmd
 
     auto allocIter = std::find(memoryOperationsHandler->gfxAllocationsForMakeResident.begin(),
                                memoryOperationsHandler->gfxAllocationsForMakeResident.end(),
-                               bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+                               bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
     EXPECT_EQ(memoryOperationsHandler->gfxAllocationsForMakeResident.end(), allocIter);
     commandList->destroy();
     commandQueue->destroy();
@@ -862,7 +862,7 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingToI
 
     auto allocIter = std::find(memoryOperationsHandler->gfxAllocationsForMakeResident.begin(),
                                memoryOperationsHandler->gfxAllocationsForMakeResident.end(),
-                               bindlessHelper->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+                               bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
     EXPECT_EQ(memoryOperationsHandler->gfxAllocationsForMakeResident.end(), allocIter);
     commandList->destroy();
 }

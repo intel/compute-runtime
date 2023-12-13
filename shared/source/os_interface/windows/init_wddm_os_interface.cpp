@@ -15,7 +15,7 @@
 namespace NEO {
 
 bool initWddmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, RootDeviceEnvironment *rootDeviceEnv) {
-    UNRECOVERABLE_IF(hwDeviceId->getDriverModelType() != DriverModelType::WDDM);
+    UNRECOVERABLE_IF(hwDeviceId->getDriverModelType() != DriverModelType::wddm);
     auto hwDeviceIdWddm = std::unique_ptr<HwDeviceIdWddm>(reinterpret_cast<HwDeviceIdWddm *>(hwDeviceId.release()));
     NEO::Wddm *wddm = Wddm::createWddm(std::move(hwDeviceIdWddm), *rootDeviceEnv);
     if (!wddm->init()) {

@@ -34,7 +34,7 @@ std::string getCurrentLibraryPath() {
 
 namespace NEO {
 DriverInfoWindows::DriverInfoWindows(const std::string &fullPath, const PhysicalDevicePciBusInfo &pciBusInfo)
-    : DriverInfo(DriverInfoType::WINDOWS), path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
+    : DriverInfo(DriverInfoType::windowsType), path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
     this->pciBusInfo = pciBusInfo;
 }
 

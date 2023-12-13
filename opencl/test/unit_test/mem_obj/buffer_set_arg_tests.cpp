@@ -323,8 +323,8 @@ TEST_F(BufferSetArgTest, givenKernelArgBufferWhenAddPathInfoDataIsSetThenPatchIn
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(1u, pKernel->getPatchInfoDataList().size());
 
-    EXPECT_EQ(PatchInfoAllocationType::KernelArg, pKernel->getPatchInfoDataList()[0].sourceType);
-    EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, pKernel->getPatchInfoDataList()[0].targetType);
+    EXPECT_EQ(PatchInfoAllocationType::kernelArg, pKernel->getPatchInfoDataList()[0].sourceType);
+    EXPECT_EQ(PatchInfoAllocationType::indirectObjectHeap, pKernel->getPatchInfoDataList()[0].targetType);
     EXPECT_EQ(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddressToPatch(), pKernel->getPatchInfoDataList()[0].sourceAllocation);
     EXPECT_EQ(reinterpret_cast<uint64_t>(pKernel->getCrossThreadData()), pKernel->getPatchInfoDataList()[0].targetAllocation);
     EXPECT_EQ(0u, pKernel->getPatchInfoDataList()[0].sourceAllocationOffset);

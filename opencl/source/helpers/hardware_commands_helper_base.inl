@@ -311,7 +311,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         inlineInterfaceDescriptor);
 
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);
+        PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::instructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::dynamicStateHeap);
         kernel.getPatchInfoDataList().push_back(patchInfoData);
     }
 

@@ -25,16 +25,16 @@ namespace PatchTokenBinary {
 using namespace iOpenCL;
 
 enum class ArgObjectType : uint32_t {
-    None = 0,
-    Buffer,
-    Image,
-    Sampler,
-    Slm
+    none = 0,
+    buffer,
+    image,
+    sampler,
+    slm
 };
 
 enum class ArgObjectTypeSpecialized : uint32_t {
-    None = 0,
-    Vme
+    none = 0,
+    vme
 };
 
 using StackVecUnhandledTokens = StackVec<const SPatchItemHeader *, 4>;
@@ -44,8 +44,8 @@ using StackVecStrings = StackVec<const SPatchString *, 4>;
 struct KernelArgFromPatchtokens {
     const SPatchKernelArgumentInfo *argInfo = nullptr;
     const SPatchItemHeader *objectArg = nullptr;
-    ArgObjectType objectType = ArgObjectType::None;
-    ArgObjectTypeSpecialized objectTypeSpecialized = ArgObjectTypeSpecialized::None;
+    ArgObjectType objectType = ArgObjectType::none;
+    ArgObjectTypeSpecialized objectTypeSpecialized = ArgObjectTypeSpecialized::none;
     StackVecByValMap byValMap;
     union {
         struct {

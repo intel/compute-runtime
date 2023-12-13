@@ -49,7 +49,7 @@ struct BlitProperties {
     TagNodeBase *multiRootDeviceEventSync = nullptr;
     BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
     CsrDependencies csrDependencies;
-    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
+    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::none;
 
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;

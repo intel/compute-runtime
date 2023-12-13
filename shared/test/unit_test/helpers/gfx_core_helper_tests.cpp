@@ -874,25 +874,25 @@ HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationMode
 
     EXPECT_EQ(UnitTestHelper<FamilyType>::requiredAuxTranslationMode, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
-    if (GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo) == AuxTranslationMode::Blit) {
+    if (GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo) == AuxTranslationMode::blit) {
         hwInfo.capabilityTable.blitterOperationsSupported = false;
 
-        EXPECT_EQ(AuxTranslationMode::Builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
+        EXPECT_EQ(AuxTranslationMode::builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
     }
 
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::None));
-    EXPECT_EQ(AuxTranslationMode::None, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::none));
+    EXPECT_EQ(AuxTranslationMode::none, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = false;
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
-    EXPECT_EQ(AuxTranslationMode::Builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
+    EXPECT_EQ(AuxTranslationMode::builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
-    EXPECT_EQ(AuxTranslationMode::Blit, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
+    EXPECT_EQ(AuxTranslationMode::blit, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-    EXPECT_EQ(AuxTranslationMode::Builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
+    EXPECT_EQ(AuxTranslationMode::builtin, GfxCoreHelperHw<FamilyType>::getAuxTranslationMode(hwInfo));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenDebugFlagWhenCheckingIfBufferIsSuitableForCompressionThenReturnCorrectValue) {

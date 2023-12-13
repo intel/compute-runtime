@@ -208,7 +208,7 @@ HWTEST_F(BuiltInTestsL0, givenBuiltinsWhenInitializingFunctionsThenModulesWithPr
         testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
 
-    EXPECT_EQ(ModuleType::Builtin, testDevice.typeCreated);
+    EXPECT_EQ(ModuleType::builtin, testDevice.typeCreated);
 }
 
 HWTEST_F(BuiltInTestsL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuiltinKernelThenOnlyIntermediateFormatIsAvailable) {

@@ -70,7 +70,7 @@ class CreateFromGlTexture : public ::testing::Test {
             mcsImgDesc.imageHeight = 128;
             mcsImgDesc.imageRowPitch = 256;
             mcsImgDesc.imageWidth = 128;
-            mcsImgDesc.imageType = ImageType::Image2D;
+            mcsImgDesc.imageType = ImageType::image2D;
             auto mcsImgInfo = MockGmm::initImgInfo(mcsImgDesc, 0, nullptr);
             mcsGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), mcsImgInfo, false);
             tempMM.forceMcsGmm = mcsGmm.get();

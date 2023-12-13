@@ -81,7 +81,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         imgDesc.imageHeight = 10;
         imgDesc.imageWidth = 10;
         imgDesc.imageDepth = 1;
-        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageType = ImageType::image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         gmm = MockGmm::queryImgParams(pPlatform->getClDevice(0)->getGmmHelper(), imgInfo, false).release();
         mockGmmResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
@@ -1312,7 +1312,7 @@ TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNullWhenCreatingSharedSurfaceAnd
     imgDesc.imageHeight = 10;
     imgDesc.imageWidth = 10;
     imgDesc.imageDepth = 1;
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto gmm = MockGmm::queryImgParams(device1->getGmmHelper(), imgInfo, false).release();
 
@@ -1346,7 +1346,7 @@ TEST_F(D3D9MultiRootDeviceTest, givenD3DHandleIsNotNullWhenCreatingSharedSurface
     imgDesc.imageHeight = 10;
     imgDesc.imageWidth = 10;
     imgDesc.imageDepth = 1;
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto gmm = MockGmm::queryImgParams(device1->getGmmHelper(), imgInfo, false).release();
 

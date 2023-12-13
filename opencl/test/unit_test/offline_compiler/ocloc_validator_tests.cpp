@@ -87,7 +87,7 @@ TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
-    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected potential problems :\nDeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : .misc.other currently supports only : .misc.buildOptions.")) << oclocStdout;
+    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected potential problems :\nDeviceBinaryFormat::zebin : unhandled SHT_ZEBIN_MISC section : .misc.other currently supports only : .misc.buildOptions.")) << oclocStdout;
 }
 
 TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {

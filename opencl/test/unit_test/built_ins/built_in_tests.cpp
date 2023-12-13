@@ -72,7 +72,7 @@ class BuiltInTests
     }
 
     void SetUp() override {
-        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
         ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
@@ -150,7 +150,7 @@ HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinTh
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
     EXPECT_EQ(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::auxBuiltinsSupported,
-              mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size() != 0);
+              mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::binary, *pDevice).size() != 0);
 }
 
 class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::auxTranslation> {
@@ -168,7 +168,7 @@ class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::auxTranslation> {
 
 INSTANTIATE_TEST_CASE_P(,
                         AuxBuiltInTests,
-                        testing::ValuesIn({KernelObjForAuxTranslation::Type::MEM_OBJ, KernelObjForAuxTranslation::Type::GFX_ALLOC}));
+                        testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
 
 HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
 
@@ -181,22 +181,22 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
     BuiltinOpParams builtinOpParamsToAux;
-    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     BuiltinOpParams builtinOpParamsToNonAux;
-    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     std::unique_ptr<Buffer> buffer = nullptr;
     std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
+    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
         cl_int retVal = CL_SUCCESS;
         buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
     } else {
         gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
     }
 
     MultiDispatchInfo multiDispatchInfo;
@@ -383,7 +383,7 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
@@ -401,11 +401,11 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
         auto kernel = dispatchInfo.getKernel();
         builtinKernels.push_back(kernel);
 
-        if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+        if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
             auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::memObj, buffer});
             EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::MEM_OBJ, kernelObj.type);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::memObj, kernelObj.type);
             kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             cl_mem clMem = buffer;
@@ -418,9 +418,9 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
             EXPECT_EQ(gws, dispatchInfo.getGWS());
         } else {
             auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
             kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
@@ -451,7 +451,7 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x30000));
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
@@ -468,11 +468,11 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
         auto kernel = dispatchInfo.getKernel();
         builtinKernels.push_back(kernel);
 
-        if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+        if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
             auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::memObj, buffer});
             EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::MEM_OBJ, kernelObj.type);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::memObj, kernelObj.type);
             kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             cl_mem clMem = buffer;
@@ -485,9 +485,9 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
             EXPECT_EQ(gws, dispatchInfo.getGWS());
         } else {
             auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
-            EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
+            EXPECT_EQ(KernelObjForAuxTranslation::Type::gfxAlloc, kernelObj.type);
             kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
@@ -526,10 +526,10 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThe
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
     EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
 
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
     EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
 
     EXPECT_EQ(6u, multiDispatchInfo.size());
@@ -559,7 +559,7 @@ HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
 
     kernelObjsForAuxTranslationPtr->insert(mockKernelObjForAuxTranslation);
 
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::None;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::none;
     EXPECT_THROW(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams), std::exception);
 }
 
@@ -580,7 +580,7 @@ HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
     }
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
@@ -631,7 +631,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
     std::unique_ptr<Gmm> gmm;
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
-    if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+    if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
         MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
         cl_mem clMem = mockKernelObjForAuxTranslation.mockBuffer.get();
@@ -669,23 +669,23 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
     BuiltinOpParams builtinOpParamsToAux;
-    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     BuiltinOpParams builtinOpParamsToNonAux;
-    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     std::unique_ptr<Buffer> buffer = nullptr;
     std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
 
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
+    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
         cl_int retVal = CL_SUCCESS;
         buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
     } else {
         gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
     }
 
     MultiDispatchInfo multiDispatchInfo;
@@ -737,7 +737,7 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
     BuiltinOpParams builtinOpParams;
-    builtinOpParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     std::unique_ptr<Buffer> buffer = nullptr;
     std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
@@ -749,17 +749,17 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
 
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
+    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
         cl_int retVal = CL_SUCCESS;
         buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
         buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
 
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
     } else {
         gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
         gfxAllocation->setDefaultGmm(gmm.get());
 
-        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
     }
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
@@ -796,7 +796,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
 
     BuiltinOpParams builtinOpParams;
-    builtinOpParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+    builtinOpParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
     GmmRequirements gmmRequirements{};
@@ -804,7 +804,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     gmm->isCompressionEnabled = true;
-    if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
+    if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
         mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
     } else {
         mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
@@ -1470,12 +1470,12 @@ TEST_F(VmeBuiltInTests, WhenGettingBuiltinAsStringThenCorrectStringIsReturned) {
 }
 
 TEST_F(BuiltInTests, GivenEncodeTypeWhenGettingExtensionThenCorrectStringIsReturned) {
-    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::Any)));
-    EXPECT_EQ(0, strcmp(".bin", BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary)));
-    EXPECT_EQ(0, strcmp(".bc", BuiltinCode::getExtension(BuiltinCode::ECodeType::Intermediate)));
-    EXPECT_EQ(0, strcmp(".cl", BuiltinCode::getExtension(BuiltinCode::ECodeType::Source)));
-    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::COUNT)));
-    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::INVALID)));
+    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::any)));
+    EXPECT_EQ(0, strcmp(".bin", BuiltinCode::getExtension(BuiltinCode::ECodeType::binary)));
+    EXPECT_EQ(0, strcmp(".bc", BuiltinCode::getExtension(BuiltinCode::ECodeType::intermediate)));
+    EXPECT_EQ(0, strcmp(".cl", BuiltinCode::getExtension(BuiltinCode::ECodeType::source)));
+    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::count)));
+    EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::invalid)));
 }
 
 TEST_F(BuiltInTests, GivenBuiltinResourceWhenCreatingBuiltinResourceThenSizesAreEqual) {
@@ -1576,105 +1576,105 @@ TEST_F(BuiltInTests, WhenBuiltinsLibIsCreatedThenAllStoragesSizeIsTwo) {
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Intermediate, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::intermediate, code.type);
     EXPECT_EQ(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeSourceWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Source, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::INVALID, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::INVALID, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::invalid, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::invalid, code.type);
     EXPECT_EQ(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::Source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Binary, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::Binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::binary, *pDevice).size());
 }
 
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceForNotRegisteredRevisionThenResourceSizeIsNonZero) {
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::Source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRect, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBuffer, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::source, *pDevice).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
 }
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
@@ -1682,7 +1682,7 @@ TEST_F(BuiltInTests, GivenTypeAnyWhenCreatingProgramFromCodeThenValidPointerIsRe
 
 TEST_F(BuiltInTests, GivenTypeSourceWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
@@ -1691,7 +1691,7 @@ TEST_F(BuiltInTests, GivenTypeSourceWhenCreatingProgramFromCodeThenValidPointerI
 TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr32BitThenInternalOptionsHasGreaterThan4gbBuffersRequired) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
 
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
@@ -1707,7 +1707,7 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr3
 
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
@@ -1715,7 +1715,7 @@ TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPoi
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
@@ -1723,7 +1723,7 @@ TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerI
 
 TEST_F(BuiltInTests, GivenTypeInvalidWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::INVALID, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::invalid, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
@@ -1731,7 +1731,7 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenCreatingProgramFromCodeThenNullPointerI
 
 TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::count, BuiltinCode::ECodeType::Any, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::count, BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_EQ(nullptr, program.get());
@@ -1742,7 +1742,7 @@ TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreate
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
 
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
     ASSERT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     ASSERT_NE(nullptr, program.get());
@@ -2351,8 +2351,8 @@ TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAl
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }
@@ -2360,8 +2360,8 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuilti
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCodeSource) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
-    EXPECT_EQ(BuiltinCode::ECodeType::Source, code.type);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
 }

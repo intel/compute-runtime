@@ -70,9 +70,9 @@ struct EncodeConditionalBatchBufferStartTest : public ::testing::Test {
 
         auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
         if (compareOperation == CompareOperation::Equal) {
-            EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::NoopOnResult2Clear), predicateCmd->getPredicateEnable());
+            EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::noopOnResult2Clear), predicateCmd->getPredicateEnable());
         } else {
-            EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::NoopOnResult2Set), predicateCmd->getPredicateEnable());
+            EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::noopOnResult2Set), predicateCmd->getPredicateEnable());
         }
 
         auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++predicateCmd);
@@ -83,7 +83,7 @@ struct EncodeConditionalBatchBufferStartTest : public ::testing::Test {
         }
 
         predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++bbStartCmd);
-        EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::Disable), predicateCmd->getPredicateEnable());
+        EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::disable), predicateCmd->getPredicateEnable());
     }
 };
 

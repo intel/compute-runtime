@@ -12,55 +12,55 @@ namespace NEO {
 
 struct EnqueueProperties {
     enum class Operation {
-        None,
-        Blit,
-        ExplicitCacheFlush,
-        EnqueueWithoutSubmission,
-        DependencyResolveOnGpu,
-        GpuKernel,
-        ProfilingOnly
+        none,
+        blit,
+        explicitCacheFlush,
+        enqueueWithoutSubmission,
+        dependencyResolveOnGpu,
+        gpuKernel,
+        profilingOnly
     };
 
     EnqueueProperties() = delete;
     EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly, bool isMarkerWithEvent, bool hasStallingCmds,
                       const BlitPropertiesContainer *blitPropertiesContainer) : hasStallingCmds(hasStallingCmds) {
         if (blitEnqueue) {
-            operation = Operation::Blit;
+            operation = Operation::blit;
             this->blitPropertiesContainer = blitPropertiesContainer;
             return;
         }
 
         if (hasKernels) {
-            operation = Operation::GpuKernel;
+            operation = Operation::gpuKernel;
             this->blitPropertiesContainer = blitPropertiesContainer;
             return;
         }
 
         if (isCacheFlushCmd) {
-            operation = Operation::ExplicitCacheFlush;
+            operation = Operation::explicitCacheFlush;
             return;
         }
 
         if (flushDependenciesOnly) {
-            operation = Operation::DependencyResolveOnGpu;
+            operation = Operation::dependencyResolveOnGpu;
             return;
         }
 
         if (isMarkerWithEvent) {
-            operation = Operation::ProfilingOnly;
+            operation = Operation::profilingOnly;
             return;
         }
 
-        operation = Operation::EnqueueWithoutSubmission;
+        operation = Operation::enqueueWithoutSubmission;
     }
 
     bool isFlushWithoutKernelRequired() const {
-        return (operation == Operation::Blit) || (operation == Operation::ExplicitCacheFlush) ||
-               (operation == Operation::DependencyResolveOnGpu) || (operation == EnqueueProperties::Operation::ProfilingOnly);
+        return (operation == Operation::blit) || (operation == Operation::explicitCacheFlush) ||
+               (operation == Operation::dependencyResolveOnGpu) || (operation == EnqueueProperties::Operation::profilingOnly);
     }
 
     const BlitPropertiesContainer *blitPropertiesContainer = nullptr;
-    Operation operation = Operation::EnqueueWithoutSubmission;
+    Operation operation = Operation::enqueueWithoutSubmission;
     const bool hasStallingCmds;
 };
 } // namespace NEO

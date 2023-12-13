@@ -203,7 +203,7 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenCompressedBufferWhenResolveBlitIsCall
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 2048, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
+    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::auxToNonAux,
                                                                                buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()), &clearColorAlloc);
 
     flushBcsTask(csr, blitProperties, false, clDevice->getDevice());

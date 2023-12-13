@@ -49,7 +49,7 @@ HWTEST2_F(DG2CommandEncoderTest, givenDG2WhenGettingRequiredSizeForStateBaseAddr
 
 HWTEST2_F(DG2CommandEncoderTest, givenDG2AndCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG2) {
     auto container = CommandContainer();
-    container.setHeapDirty(HeapType::SURFACE_STATE);
+    container.setHeapDirty(HeapType::surfaceState);
 
     auto &hwInfo = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 

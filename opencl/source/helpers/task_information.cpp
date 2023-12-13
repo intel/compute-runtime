@@ -92,14 +92,14 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
 
     completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
                                                       offset,
-                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
 
-    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::DependencyResolveOnGpu);
+    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::dependencyResolveOnGpu);
 
     if (!memObj.isMemObjZeroCopy()) {
         const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
@@ -108,10 +108,10 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
             return completionStamp;
         }
 
-        if (operationType == MAP) {
+        if (operationType == MapOperationType::map) {
             memObj.transferDataToHostPtr(copySize, copyOffset);
         } else if (!readOnly) {
-            DEBUG_BREAK_IF(operationType != UNMAP);
+            DEBUG_BREAK_IF(operationType != MapOperationType::unmap);
             memObj.transferDataFromHostPtr(copySize, copyOffset);
         }
     }
@@ -277,7 +277,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
             completionStamp.taskCount = newTaskCount;
         }
     }
-    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
+    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::gpuKernel);
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyFlushTask(completionStamp.taskCount);
@@ -348,10 +348,10 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
     auto barrierNodes = timestampPacketDependencies ? &timestampPacketDependencies->barrierNodes : nullptr;
     auto lockCSR = commandStreamReceiver.obtainUniqueOwnership();
 
-    auto enqueueOperationType = EnqueueProperties::Operation::DependencyResolveOnGpu;
+    auto enqueueOperationType = EnqueueProperties::Operation::dependencyResolveOnGpu;
 
     if (kernelOperation->blitEnqueue) {
-        enqueueOperationType = EnqueueProperties::Operation::Blit;
+        enqueueOperationType = EnqueueProperties::Operation::blit;
 
         UNRECOVERABLE_IF(!barrierNodes);
         if (commandQueue.isStallingCommandsOnNextFlushRequired()) {
@@ -415,9 +415,9 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
 
     completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
                                                       0,
-                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                                                      &commandQueue.getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());

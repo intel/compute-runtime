@@ -95,7 +95,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     const auto builtinName = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
     auto getAddressingMode = [type, &productHelper, releaseHelper, builtin]() {
-        if (type == BuiltinCode::ECodeType::Binary) {
+        if (type == BuiltinCode::ECodeType::binary) {
             const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
             const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
             if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
@@ -121,7 +121,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     StackVec<std::string, 3> resourcesToLookup = {};
     resourcesToLookup.push_back(createBuiltinResourceName(deviceIp, addressingMode, builtinName, extension));
 
-    if (BuiltinCode::ECodeType::Binary != type) {
+    if (BuiltinCode::ECodeType::binary != type) {
         resourcesToLookup.push_back(createBuiltinResourceName("", addressingMode, builtinName, extension));
     }
     return resourcesToLookup;
@@ -176,14 +176,14 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
     std::lock_guard<std::mutex> lockRaii{mutex};
 
     BuiltinResourceT bc;
-    BuiltinCode::ECodeType usedCodetType = BuiltinCode::ECodeType::INVALID;
+    BuiltinCode::ECodeType usedCodetType = BuiltinCode::ECodeType::invalid;
 
-    if (requestedCodeType == BuiltinCode::ECodeType::Any) {
-        uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Binary);
+    if (requestedCodeType == BuiltinCode::ECodeType::any) {
+        uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::binary);
         if (debugManager.flags.RebuildPrecompiledKernels.get()) {
-            codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Source);
+            codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::source);
         }
-        for (uint32_t e = static_cast<uint32_t>(BuiltinCode::ECodeType::COUNT);
+        for (uint32_t e = static_cast<uint32_t>(BuiltinCode::ECodeType::count);
              codeType != e; ++codeType) {
             bc = getBuiltinResource(builtin, static_cast<BuiltinCode::ECodeType>(codeType), device);
             if (bc.size() > 0) {

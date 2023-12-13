@@ -531,7 +531,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     uint32_t numCommandLists,
     ze_fence_handle_t hFence) {
 
-    ctx.containsAnyRegularCmdList = ctx.firstCommandList->getCmdListType() == CommandList::CommandListType::TYPE_REGULAR;
+    ctx.containsAnyRegularCmdList = ctx.firstCommandList->getCmdListType() == CommandList::CommandListType::typeRegular;
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
@@ -548,8 +548,8 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
             if (commandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::privateHeaps) {
                 if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
-                    if (commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
-                        heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
+                    if (commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) != nullptr) {
+                        heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::surfaceState)->getGraphicsAllocation());
                     }
                     for (auto &element : commandContainer.getSshAllocations()) {
                         heapContainer.push_back(element);
@@ -836,7 +836,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddressWithGsbaIfDirty(
     if (!ctx.gsbaStateDirty) {
         return;
     }
-    auto indirectHeap = CommandList::fromHandle(hCommandList)->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto indirectHeap = CommandList::fromHandle(hCommandList)->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     programStateBaseAddress(ctx.scratchGsba,
                             indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
                             cmdStream,
@@ -914,7 +914,7 @@ void CommandQueueHw<gfxCoreFamily>::makeDebugSurfaceResidentIfNEODebuggerActive(
     UNRECOVERABLE_IF(this->device->getDebugSurface() == nullptr);
     this->csr->makeResident(*this->device->getDebugSurface());
     if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-        this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+        this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
     }
 }
 
@@ -1389,13 +1389,13 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
         csrHw->getSshState().updateAndCheck(globalStateless);
         streamProperties.stateBaseAddress.setPropertiesSurfaceState(globalStateless->getHeapGpuBase(), globalStateless->getHeapSizeInPages());
     } else {
-        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         if (dsh != nullptr) {
             csrHw->getDshState().updateAndCheck(dsh);
             streamProperties.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
         }
 
-        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
             csrHw->getSshState().updateAndCheck(ssh);
             streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
@@ -1403,7 +1403,7 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
         }
     }
 
-    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::indirectObject);
     csrHw->getIohState().updateAndCheck(ioh);
 }
 

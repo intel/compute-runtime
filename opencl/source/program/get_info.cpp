@@ -144,7 +144,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
             auto rootDeviceIndex = clDevices[i]->getRootDeviceIndex();
             if (nullptr == buildInfos[rootDeviceIndex].debugData) {
                 auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
-                if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(refBin)) {
+                if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(refBin)) {
                     createDebugZebin(rootDeviceIndex);
                 } else
                     continue;
@@ -171,7 +171,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
             auto rootDeviceIndex = clDevices[i]->getRootDeviceIndex();
             if (nullptr == buildInfos[rootDeviceIndex].debugData) {
                 auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
-                if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(refBin)) {
+                if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(refBin)) {
                     createDebugZebin(rootDeviceIndex);
                 } else
                     continue;

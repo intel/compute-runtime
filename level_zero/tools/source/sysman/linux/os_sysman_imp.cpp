@@ -113,7 +113,7 @@ ze_result_t LinuxSysmanImp::initLocalDeviceAndDrmHandles() {
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     DEBUG_BREAK_IF(nullptr == pDevice);
     NEO::OSInterface &osInterface = pDevice->getOsInterface();
-    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     pDrm = osInterface.getDriverModel()->as<NEO::Drm>();

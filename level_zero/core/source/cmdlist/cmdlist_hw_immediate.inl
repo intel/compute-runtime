@@ -123,7 +123,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         NEO::IndirectHeap *dsh = nullptr;
         NEO::IndirectHeap *ssh = nullptr;
 
-        NEO::IndirectHeap *ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
+        NEO::IndirectHeap *ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject);
         this->csr->makeResident(*ioh->getGraphicsAllocation());
         if (this->requiredStreamState.stateBaseAddress.indirectObjectBaseAddress.value == NEO::StreamProperty64::initValue) {
             this->requiredStreamState.stateBaseAddress.setPropertiesIndirectState(ioh->getHeapGpuBase(), ioh->getHeapSizeInPages());
@@ -152,11 +152,11 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
             }
         } else {
             if (this->dynamicHeapRequired) {
-                dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+                dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
                 this->csr->makeResident(*dsh->getGraphicsAllocation());
                 this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
             }
-            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
             this->csr->makeResident(*ssh->getGraphicsAllocation());
             this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
                                                                                              ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
@@ -168,7 +168,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
             this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
             this->csr->makeResident(*this->device->getDebugSurface());
             if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
             }
         }
 
@@ -253,7 +253,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         false                                                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
-    auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT));
+    auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));
     NEO::IndirectHeap *dsh = nullptr;
     NEO::IndirectHeap *ssh = nullptr;
 
@@ -273,8 +273,8 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
                 dsh = dshReserveConfig.indirectHeapReservation;
             }
         } else {
-            dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
-            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+            dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
+            ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
         }
 
         if (this->device->getL0Debugger()) {
@@ -282,7 +282,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
             this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
             this->csr->makeResident(*this->device->getDebugSurface());
             if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::SPECIAL_SSH)->getGraphicsAllocation());
+                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
             }
         }
 

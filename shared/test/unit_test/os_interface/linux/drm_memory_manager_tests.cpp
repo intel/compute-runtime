@@ -1968,7 +1968,7 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     mock->ioctlExpected.gemClose = 1;
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D; // tiled
+    imgDesc.imageType = ImageType::image2D; // tiled
     imgDesc.imageWidth = 512;
     imgDesc.imageHeight = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
@@ -2368,7 +2368,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     mock->ioctlExpected.gemClose = 1;
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 512;
     imgDesc.imageHeight = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
@@ -4127,7 +4127,7 @@ TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItI
     CommandContainer cmdContainer;
     cmdContainer.initialize(device.get(), nullptr, HeapSize::defaultHeapSize, true, false);
 
-    auto *ssh = cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto *ssh = cmdContainer.getIndirectHeap(NEO::HeapType::surfaceState);
     auto bo = static_cast<DrmAllocation *>(ssh->getGraphicsAllocation())->getBO();
 
     ASSERT_NE(nullptr, bo);
@@ -6524,7 +6524,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForImageThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 512;
     imgDesc.imageHeight = 512;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);

@@ -25,7 +25,7 @@ struct DeviceWddmExtensionTest : public ::testing::Test {
         executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->incRefInternal();
-        executionEnvironment->rootDeviceEnvironments[0]->initOsInterface(std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::WDDM), rootDeviceIndex);
+        executionEnvironment->rootDeviceEnvironments[0]->initOsInterface(std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::wddm), rootDeviceIndex);
         neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment.get(), rootDeviceIndex);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));

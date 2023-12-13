@@ -19,12 +19,12 @@
 namespace NEO {
 
 template <>
-bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t> binary) {
+bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::patchtokens>(const ArrayRef<const uint8_t> binary) {
     return NEO::PatchTokenBinary::isValidPatchTokenBinary(binary);
 }
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                                                   std::string &outErrReason, std::string &outWarning) {
     auto programHeader = NEO::PatchTokenBinary::decodeProgramHeader(archive);
     if (nullptr == programHeader) {
@@ -41,13 +41,13 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens
     }
     SingleDeviceBinary ret = {};
     ret.targetDevice = requestedTargetDevice;
-    ret.format = NEO::DeviceBinaryFormat::Patchtokens;
+    ret.format = NEO::DeviceBinaryFormat::patchtokens;
     ret.deviceBinary = archive;
     return ret;
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram = {};
     NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(src.deviceBinary, decodedProgram);
     DBG_LOG(LogPatchTokens, NEO::PatchTokenBinary::asString(decodedProgram).c_str());

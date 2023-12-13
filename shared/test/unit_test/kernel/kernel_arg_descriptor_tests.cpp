@@ -113,7 +113,7 @@ TEST(ArgDescValue, WhenDefaultInitializedThenOffsetsAreUndefined) {
 
 TEST(ArgDescriptor, WhenDefaultInitializedThenTypeIsUnknown) {
     NEO::ArgDescriptor arg;
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTUnknown, arg.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, arg.type);
 }
 
 TEST(ArgDescriptorExtendedTypeInfo, WhenDefaultInitializedThenFlagsAreCleared) {
@@ -201,15 +201,15 @@ TEST(ArgDescriptorIsReadOnly, GivenValueArgThenReturnsTrue) {
 }
 
 TEST(ArgDescriptorIs, WhenQueriedThenComparesAgainstStoredArgType) {
-    NEO::ArgDescriptor args[] = {{NEO::ArgDescriptor::ArgTPointer},
-                                 {NEO::ArgDescriptor::ArgTImage},
-                                 {NEO::ArgDescriptor::ArgTSampler},
-                                 {NEO::ArgDescriptor::ArgTValue}};
+    NEO::ArgDescriptor args[] = {{NEO::ArgDescriptor::argTPointer},
+                                 {NEO::ArgDescriptor::argTImage},
+                                 {NEO::ArgDescriptor::argTSampler},
+                                 {NEO::ArgDescriptor::argTValue}};
     for (const auto &arg : args) {
-        EXPECT_EQ(arg.type == NEO::ArgDescriptor::ArgTPointer, arg.is<NEO::ArgDescriptor::ArgTPointer>());
-        EXPECT_EQ(arg.type == NEO::ArgDescriptor::ArgTImage, arg.is<NEO::ArgDescriptor::ArgTImage>());
-        EXPECT_EQ(arg.type == NEO::ArgDescriptor::ArgTSampler, arg.is<NEO::ArgDescriptor::ArgTSampler>());
-        EXPECT_EQ(arg.type == NEO::ArgDescriptor::ArgTValue, arg.is<NEO::ArgDescriptor::ArgTValue>());
+        EXPECT_EQ(arg.type == NEO::ArgDescriptor::argTPointer, arg.is<NEO::ArgDescriptor::argTPointer>());
+        EXPECT_EQ(arg.type == NEO::ArgDescriptor::argTImage, arg.is<NEO::ArgDescriptor::argTImage>());
+        EXPECT_EQ(arg.type == NEO::ArgDescriptor::argTSampler, arg.is<NEO::ArgDescriptor::argTSampler>());
+        EXPECT_EQ(arg.type == NEO::ArgDescriptor::argTValue, arg.is<NEO::ArgDescriptor::argTValue>());
     }
 }
 
@@ -223,10 +223,10 @@ TEST(ArgDescriptorAs, GivenUninitializedArgWhenInitializationRequestedThenInitia
     argImage.as<NEO::ArgDescImage>(true);
     argSampler.as<NEO::ArgDescSampler>(true);
     argValue.as<NEO::ArgDescValue>(true);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTPointer, argPointer.type);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTImage, argImage.type);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTSampler, argSampler.type);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTValue, argValue.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTPointer, argPointer.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTImage, argImage.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTSampler, argSampler.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTValue, argValue.type);
 }
 
 TEST(ArgDescriptorAs, GivenUninitializedArgWhenInitializationNotRequestedThenAborts) {
@@ -239,10 +239,10 @@ TEST(ArgDescriptorAs, GivenUninitializedArgWhenInitializationNotRequestedThenAbo
     EXPECT_THROW(argImage.as<NEO::ArgDescImage>(false), std::exception);
     EXPECT_THROW(argSampler.as<NEO::ArgDescSampler>(false), std::exception);
     EXPECT_THROW(argValue.as<NEO::ArgDescValue>(false), std::exception);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTUnknown, argPointer.type);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTUnknown, argImage.type);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTUnknown, argSampler.type);
-    EXPECT_EQ(NEO::ArgDescriptor::ArgTUnknown, argValue.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, argPointer.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, argImage.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, argSampler.type);
+    EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, argValue.type);
 }
 
 TEST(ArgDescriptorAs, GivenMismatchedArgTypeThenAborts) {

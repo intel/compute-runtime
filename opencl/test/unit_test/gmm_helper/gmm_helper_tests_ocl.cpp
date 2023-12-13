@@ -62,7 +62,7 @@ TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
     MockGraphicsAllocation bufferAllocation(nullptr, 4096);
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 5;
     imgDesc.imageHeight = 5;
     imgDesc.imageRowPitch = 0;
@@ -78,7 +78,7 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
     MockGraphicsAllocation bufferAllocation(nullptr, 4096);
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 5;
     imgDesc.imageHeight = 5;
     imgDesc.imageRowPitch = 123;
@@ -100,7 +100,7 @@ TEST_F(GmmTests, givenNumSamplesWhenAskedForMultisamplesCountThenReturnValue) {
 
 TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItHasDesiredPitchAndSize) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 329;
     imgDesc.imageHeight = 349;
     imgDesc.imageDepth = 1;
@@ -163,7 +163,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
 
     ImageInfo updateImgInfo = {};
     NEO::ImagePlane yuvPlane = NEO::ImagePlane::NO_PLANE;
-    if (Image::convertType(GetParam()) == ImageType::Image2D) {
+    if (Image::convertType(GetParam()) == ImageType::image2D) {
         updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
         yuvPlane = NEO::ImagePlane::PLANE_UV;
     }
@@ -182,17 +182,17 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     imgDesc.imageArraySize = 1;
     cl_uint arrayIndex = 0;
 
-    if (imgDesc.imageType == ImageType::Image2D || imgDesc.imageType == ImageType::Image2DArray || imgDesc.imageType == ImageType::Image3D) {
+    if (imgDesc.imageType == ImageType::image2D || imgDesc.imageType == ImageType::image2DArray || imgDesc.imageType == ImageType::image3D) {
         imgDesc.imageHeight = 40;
     }
-    if (imgDesc.imageType == ImageType::Image3D) {
+    if (imgDesc.imageType == ImageType::image3D) {
         imgDesc.imageDepth = 5;
         expectCalls = 2u;
         expectedReqInfo[0].Slice = 1;
     }
 
-    if (imgDesc.imageType == ImageType::Image2DArray ||
-        imgDesc.imageType == ImageType::Image1DArray) {
+    if (imgDesc.imageType == ImageType::image2DArray ||
+        imgDesc.imageType == ImageType::image1DArray) {
         imgDesc.imageArraySize = 5;
         expectCalls = 2u;
         arrayIndex = 2;
@@ -272,7 +272,7 @@ TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsThenGmmIsCalledToGetOffsets) {
     };
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2DArray;
+    imgDesc.imageType = ImageType::image2DArray;
     imgDesc.imageWidth = 60;
     imgDesc.imageHeight = 1;
     imgDesc.imageDepth = 1;
@@ -309,7 +309,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
     }
 
     void setupImgInfo() {
-        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageType = ImageType::image2D;
         imgDesc.imageWidth = 2;
         imgDesc.imageHeight = 2;
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);

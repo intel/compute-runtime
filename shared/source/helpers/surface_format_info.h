@@ -202,13 +202,13 @@ struct SurfaceFormatInfo {
 };
 
 enum class ImageType {
-    Invalid,
-    Image1D,
-    Image2D,
-    Image3D,
-    Image1DArray,
-    Image2DArray,
-    Image1DBuffer
+    invalid,
+    image1D,
+    image2D,
+    image3D,
+    image1DArray,
+    image2DArray,
+    image1DBuffer
 };
 
 struct ImageDescriptor {

@@ -26,7 +26,7 @@ inline bool ClGfxCoreHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &
 template <typename GfxFamily>
 inline bool ClGfxCoreHelperHw<GfxFamily>::hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const {
     for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
-        if (arg.is<ArgDescriptor::ArgTPointer>() && !arg.as<ArgDescPointer>().isPureStateful()) {
+        if (arg.is<ArgDescriptor::argTPointer>() && !arg.as<ArgDescPointer>().isPureStateful()) {
             return true;
         }
     }

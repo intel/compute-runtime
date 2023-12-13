@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ namespace NEO {
 
 struct KernelObjForAuxTranslation {
     enum class Type {
-        MEM_OBJ,
-        GFX_ALLOC
+        memObj,
+        gfxAlloc
     };
 
     KernelObjForAuxTranslation(Type type, void *object) : type(type), object(object) {}

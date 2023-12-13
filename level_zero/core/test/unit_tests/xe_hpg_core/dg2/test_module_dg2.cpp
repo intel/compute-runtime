@@ -49,7 +49,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
 
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
                                                                       moduleBuildLog,
-                                                                      ModuleType::User);
+                                                                      ModuleType::user);
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -108,7 +108,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
 
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
                                                                       moduleBuildLog,
-                                                                      ModuleType::User);
+                                                                      ModuleType::user);
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;

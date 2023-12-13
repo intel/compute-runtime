@@ -559,7 +559,7 @@ HWTEST2_F(CommandListAppend, givenImmediateCommandListWithFlushTaskEnabledWhenAp
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     MockCommandListHw<gfxCoreFamily> cmdList;
-    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);

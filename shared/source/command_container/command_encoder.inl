@@ -78,7 +78,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
             borderColorOffsetInDsh = bindlessHeapHelper->getAlphaBorderColorOffset();
         }
         dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
-        auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+        auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::globalDsh);
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(samplerStateInDsh.ssPtr);
         samplerStateOffsetInDsh = static_cast<uint32_t>(samplerStateInDsh.surfaceStateOffset);
     }
@@ -554,8 +554,8 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
             childDsh->align(EncodeStates<Family>::alignInterfaceDescriptorData);
             heapPointer = childDsh->getSpace(heapSize);
         } else {
-            container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
-            heapPointer = container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, heapSize);
+            container.getIndirectHeap(HeapType::dynamicState)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            heapPointer = container.getHeapSpaceAllowGrow(HeapType::dynamicState, heapSize);
         }
         container.setIddBlock(heapPointer);
         container.nextIddInBlockRef() = 0;
@@ -938,16 +938,16 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase
 
     EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csPredicateResult2, RegisterOffsets::csGprR7);
 
-    MiPredicateType predicateType = MiPredicateType::NoopOnResult2Clear; // Equal or Less
+    MiPredicateType predicateType = MiPredicateType::noopOnResult2Clear; // Equal or Less
     if ((compareOperation == CompareOperation::NotEqual) || (compareOperation == CompareOperation::GreaterOrEqual)) {
-        predicateType = MiPredicateType::NoopOnResult2Set;
+        predicateType = MiPredicateType::noopOnResult2Set;
     }
 
     EncodeMiPredicate<Family>::encode(commandStream, predicateType);
 
     programBatchBufferStart(&commandStream, startAddress, false, indirect, true);
 
-    EncodeMiPredicate<Family>::encode(commandStream, MiPredicateType::Disable);
+    EncodeMiPredicate<Family>::encode(commandStream, MiPredicateType::disable);
 }
 
 template <typename Family>

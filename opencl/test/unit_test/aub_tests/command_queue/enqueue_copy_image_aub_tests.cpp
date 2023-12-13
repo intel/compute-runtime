@@ -184,7 +184,7 @@ using AUBCopyImageBCS = AUBCopyImage<true>;
 
 HWTEST2_P(AUBCopyImageBCS, WhenCopyingWithBlitterEnabledThenExpectationsMet, ImagesSupportedMatcher) {
     runAubTest<FamilyType>();
-    ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::Blit);
+    ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
 INSTANTIATE_TEST_CASE_P(AUBCopyImage_simple,

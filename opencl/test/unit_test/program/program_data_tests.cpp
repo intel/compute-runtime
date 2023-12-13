@@ -469,15 +469,15 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
     programInfo.prepareLinkerInputStorage();
 
     NEO::LinkerInput::RelocationInfo relocInfo;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocInfo.offset = 0U;
-    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     relocInfo.symbolName = "GlobalConstantPointer";
 
     NEO::SymbolInfo symbol = {};
     symbol.offset = 0U;
     symbol.size = 8U;
-    symbol.segment = NEO::SegmentType::GlobalConstants;
+    symbol.segment = NEO::SegmentType::globalConstants;
 
     programInfo.linkerInput->addSymbol("GlobalConstantPointer", symbol);
     programInfo.linkerInput->addDataRelocationInfo(relocInfo);
@@ -517,14 +517,14 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     programInfo.prepareLinkerInputStorage();
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 0U;
-    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
     relocInfo.symbolName = "GlobalVariablePointer";
 
     NEO::SymbolInfo symbol = {};
     symbol.offset = 0U;
     symbol.size = 8U;
-    symbol.segment = NEO::SegmentType::GlobalVariables;
+    symbol.segment = NEO::SegmentType::globalVariables;
 
     programInfo.linkerInput->addSymbol("GlobalVariablePointer", symbol);
     programInfo.linkerInput->addDataRelocationInfo(relocInfo);
@@ -596,11 +596,11 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
 
 TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::GlobalVariables, std::numeric_limits<uint32_t>::max(), true};
-    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::GlobalConstants, std::numeric_limits<uint32_t>::max(), true};
-    linkerInput->symbols["C"] = NEO::SymbolInfo{16U, 4U, NEO::SegmentType::Instructions, std::numeric_limits<uint32_t>::max(), true};
+    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::globalVariables, std::numeric_limits<uint32_t>::max(), true};
+    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::globalConstants, std::numeric_limits<uint32_t>::max(), true};
+    linkerInput->symbols["C"] = NEO::SymbolInfo{16U, 4U, NEO::SegmentType::instructions, std::numeric_limits<uint32_t>::max(), true};
 
-    auto relocationType = NEO::LinkerInput::RelocationInfo::Type::Address;
+    auto relocationType = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput->textRelocations.push_back({NEO::LinkerInput::RelocationInfo{"A", 8U, relocationType},
                                             NEO::LinkerInput::RelocationInfo{"B", 16U, relocationType},
                                             NEO::LinkerInput::RelocationInfo{"C", 24U, relocationType}});
@@ -651,8 +651,8 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
 
 TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::GlobalVariables};
-    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::GlobalConstants};
+    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::globalVariables};
+    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::globalConstants};
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
@@ -707,8 +707,8 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->textRelocations.push_back({{".str", 0x8, LinkerInput::RelocationInfo::Type::Address, SegmentType::Instructions}});
-    linkerInput->symbols.insert({".str", {0x0, 0x8, SegmentType::GlobalStrings}});
+    linkerInput->textRelocations.push_back({{".str", 0x8, LinkerInput::RelocationInfo::Type::address, SegmentType::instructions}});
+    linkerInput->symbols.insert({".str", {0x0, 0x8, SegmentType::globalStrings}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
 
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
@@ -743,7 +743,7 @@ TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRe
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, program.externalFunctions);
@@ -769,7 +769,7 @@ TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisable
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, 0, nullptr, 0, {}, program.externalFunctions);

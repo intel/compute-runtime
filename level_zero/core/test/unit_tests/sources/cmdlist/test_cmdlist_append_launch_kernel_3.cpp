@@ -79,7 +79,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
         auto cmd = genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(*itorMIDL);
         ASSERT_NE(cmd, nullptr);
 
-        auto dsh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::dynamicState);
         auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
 
         if (NEO::EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -2578,11 +2578,11 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
 using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonPostSyncWalkerMatcher) {
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::None);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::none);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::Walker);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> walkerCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::walker);
 
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }
@@ -2995,9 +2995,9 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
     ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size());
 
     if (NonPostSyncWalkerMatcher::isMatched<productFamily>()) {
-        EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::Sdi, regularCmdList->inOrderPatchCmds[0].patchCmdType);
+        EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::sdi, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     } else {
-        EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::Walker, regularCmdList->inOrderPatchCmds[0].patchCmdType);
+        EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::walker, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     }
 
     GenCmdList cmdList;
@@ -5749,7 +5749,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
                                                      *static_cast<ze_group_count_t *>(alloc),
                                                      nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    auto heap = commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT);
+    auto heap = commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject);
     uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + getIndirectHeapOffsetForImplicitArgsBuffer<FamilyType>(kernel);
 
     auto workDimStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
@@ -5914,7 +5914,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     ze_group_count_t groupCount{128, 1, 1};
 
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCmdList->isFlushTaskSubmissionEnabled = true;
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -5976,7 +5976,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
     ze_group_count_t groupCount{128, 1, 1};
 
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCmdList->isFlushTaskSubmissionEnabled = false;
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

@@ -89,9 +89,9 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::commandBuffer, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
@@ -139,9 +139,9 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;

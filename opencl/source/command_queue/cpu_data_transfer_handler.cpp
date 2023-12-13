@@ -88,7 +88,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         // Pass size and offset only. Unblocked command will call transferData(size, offset) method
         enqueueBlockedMapUnmapOperation(eventsRequest.eventWaitList,
                                         static_cast<size_t>(eventsRequest.numEventsInWaitList),
-                                        mapOperation ? MAP : UNMAP,
+                                        mapOperation ? MapOperationType::map : MapOperationType::unmap,
                                         transferProperties.memObj,
                                         mapOperation ? transferProperties.size : unmapInfo.size,
                                         mapOperation ? transferProperties.offset : unmapInfo.offset,

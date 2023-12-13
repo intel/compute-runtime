@@ -63,7 +63,7 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenKernelWhenWalkerIsProgramme
     auto commandQueue = createCommandQueue<FamilyType>();
     auto &commandStream = commandQueue->getCS(1024);
 
-    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 1);
+    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::dynamicState, 1);
     size_t workSize[] = {1, 1, 1};
     Vec3<size_t> wgInfo = {1, 1, 1};
 
@@ -109,7 +109,7 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenProperThreadGroupSizesWhenWa
     auto commandQueue = createCommandQueue<FamilyType>();
     auto &commandStream = commandQueue->getCS(1024);
 
-    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 1);
+    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::dynamicState, 1);
     size_t workSize[] = {1, 1, 1};
     Vec3<size_t> wgInfo = {1024, 1, 1};
 
@@ -141,7 +141,7 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
     auto commandQueue = createCommandQueue<FamilyType>();
     auto &commandStream = commandQueue->getCS(1024);
 
-    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 1);
+    auto &heap = commandQueue->getIndirectHeap(IndirectHeap::Type::dynamicState, 1);
     size_t workSize[] = {1, 1, 1};
     Vec3<size_t> wgInfo = {1, 1, 1};
 

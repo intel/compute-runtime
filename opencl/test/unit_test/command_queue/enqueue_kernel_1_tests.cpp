@@ -511,9 +511,9 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenTaskLevelIsIncremented) {
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenLatestSentEnqueueTypeIsUpdated) {
-    EXPECT_NE(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::GpuKernel);
+    EXPECT_NE(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::gpuKernel);
     callOneWorkItemNDRKernel();
-    EXPECT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::GpuKernel);
+    EXPECT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::gpuKernel);
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCsrTaskLevelIsIncremented) {

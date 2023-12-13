@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 
 class DriverInfoLinux : public DriverInfo {
   public:
-    static constexpr DriverInfoType driverInfoType = DriverInfoType::LINUX;
+    static constexpr DriverInfoType driverInfoType = DriverInfoType::linuxType;
 
     DriverInfoLinux(bool imageSupport, const PhysicalDevicePciBusInfo &pciBusInfo);
     bool getMediaSharingSupport() override;

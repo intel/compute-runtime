@@ -72,9 +72,9 @@ struct MiAtomicAubFixture : public AUBFixture {
         csr->makeResident(*deviceSurface);
         csr->makeResident(*systemSurface);
         csr->flushTask(taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeapType::DYNAMIC_STATE, 0u),
-                       &csr->getIndirectHeap(IndirectHeapType::INDIRECT_OBJECT, 0u),
-                       &csr->getIndirectHeap(IndirectHeapType::SURFACE_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::dynamicState, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::indirectObject, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::surfaceState, 0u),
                        0u, dispatchFlags, device->getDevice());
 
         csr->flushBatchedSubmissions();

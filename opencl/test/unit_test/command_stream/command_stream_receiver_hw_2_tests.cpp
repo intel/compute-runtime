@@ -1486,7 +1486,7 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
     auto allocationGpuAddress = graphicsAllocation->getGpuAddress();
     auto allocationSize = graphicsAllocation->getUnderlyingBufferSize();
 
-    AuxTranslationDirection translationDirection[] = {AuxTranslationDirection::AuxToNonAux, AuxTranslationDirection::NonAuxToAux};
+    AuxTranslationDirection translationDirection[] = {AuxTranslationDirection::auxToNonAux, AuxTranslationDirection::nonAuxToAux};
 
     for (int i = 0; i < 2; i++) {
         auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(translationDirection[i],

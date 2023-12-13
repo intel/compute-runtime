@@ -200,7 +200,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsProgrammedCorr
 
     auto index = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo().getArgDescriptorAt(1).template as<ArgDescImage>().bindful / sizeof(RENDER_SURFACE_STATE);
 
-    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0), static_cast<uint32_t>(index));
+    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), static_cast<uint32_t>(index));
 
     // EnqueueWriteImage uses  multi-byte copies depending on per-pixel-size-in-bytes
     const auto &imageDesc = dstImage->getImageDesc();

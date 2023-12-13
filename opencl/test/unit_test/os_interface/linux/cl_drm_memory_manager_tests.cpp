@@ -704,7 +704,7 @@ TEST_F(ClDrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraph
     mock->ioctlExpected.gemClose = 1;
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageType = ImageType::image1D;
     imgDesc.imageWidth = MemoryConstants::pageSize;
     imgDesc.imageHeight = 1;
 

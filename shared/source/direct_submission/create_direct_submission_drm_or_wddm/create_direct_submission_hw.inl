@@ -13,7 +13,7 @@
 namespace NEO {
 template <typename GfxFamily, typename Dispatcher>
 inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(const DirectSubmissionInputParams &inputParams) {
-    if (inputParams.rootDeviceEnvironment.osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
+    if (inputParams.rootDeviceEnvironment.osInterface->getDriverModel()->getDriverModelType() == DriverModelType::drm) {
         return std::make_unique<DrmDirectSubmission<GfxFamily, Dispatcher>>(inputParams);
     } else {
         return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(inputParams);

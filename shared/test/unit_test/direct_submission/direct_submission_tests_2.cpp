@@ -1083,7 +1083,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     // 1. Init section
     auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(schedulerCmds);
 
-    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
         return false;
     }
 
@@ -1133,7 +1133,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     // 2. Dispatch task section (loop start)
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++lriCmd);
 
-    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
         return false;
     }
 
@@ -1213,7 +1213,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
 
     // 3. Remove task section
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
-    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
         return false;
     }
 
@@ -1330,7 +1330,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     // 4. List loop check section
 
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++miAluCmd);
-    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
         return false;
     }
 
@@ -1472,7 +1472,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
 
             // 2. Semaphore section
             auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
-            if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+            if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
                 continue;
             }
 
@@ -1486,7 +1486,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
             // 3. End section
 
             miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++semaphore);
-            if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+            if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
                 continue;
             }
 
@@ -1761,7 +1761,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     auto taskStoreSection = ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset);
 
     if constexpr (FamilyType::isUsingMiSetPredicate) {
-        EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(taskStoreSection, MiPredicateType::Disable));
+        EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(taskStoreSection, MiPredicateType::disable));
 
         taskStoreSection = ptrOffset(taskStoreSection, sizeof(typename FamilyType::MI_SET_PREDICATE));
     }

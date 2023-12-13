@@ -74,7 +74,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     imgInfo.imgDesc.imageWidth = imgDesc.image_width;
-    imgInfo.imgDesc.imageType = ImageType::Image2D;
+    imgInfo.imgDesc.imageType = ImageType::image2D;
     imgInfo.imgDesc.imageHeight = imgDesc.image_height;
 
     if (target == GL_RENDERBUFFER_EXT) {

@@ -590,7 +590,7 @@ int OfflineCompiler::buildSourceCode() {
         }
 
         if (irBinary && genBinary) {
-            bool isZebin = isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize));
+            bool isZebin = isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize));
 
             auto asBitcode = ArrayRef<const uint8_t>::fromAny(irBinary, irBinarySize);
             isSpirV = NEO::isSpirVBitcode(asBitcode);
@@ -1375,7 +1375,7 @@ bool OfflineCompiler::generateElfBinary() {
     }
 
     // return "as is" if zebin format
-    if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize))) {
+    if (isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize))) {
         this->elfBinary = std::vector<uint8_t>(genBinary, genBinary + genBinarySize);
         return true;
     }

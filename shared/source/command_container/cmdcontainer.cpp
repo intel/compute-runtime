@@ -121,7 +121,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     if (requireHeaps) {
         heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
-        for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
+        for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
             auto heapType = static_cast<HeapType>(i);
             if (skipHeapAllocationCreation(heapType)) {
                 continue;
@@ -140,12 +140,12 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             residencyContainer.push_back(allocationIndirectHeaps[i]);
 
             bool requireInternalHeap = false;
-            if (IndirectHeap::Type::INDIRECT_OBJECT == heapType) {
+            if (IndirectHeap::Type::indirectObject == heapType) {
                 requireInternalHeap = true;
                 indirectHeapInLocalMemory = allocationIndirectHeaps[i]->isAllocatedInLocalMemoryPool();
             }
             indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
-            if (IndirectHeap::Type::SURFACE_STATE == heapType) {
+            if (IndirectHeap::Type::surfaceState == heapType) {
                 indirectHeaps[i]->getSpace(reservedSshSize);
             }
         }
@@ -193,12 +193,12 @@ void CommandContainer::reset() {
 
     setCmdBuffer(cmdBufferAllocations[0]);
 
-    for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
         if (indirectHeaps[i] != nullptr) {
-            if (i == IndirectHeap::Type::INDIRECT_OBJECT || !this->stateBaseAddressTracking) {
+            if (i == IndirectHeap::Type::indirectObject || !this->stateBaseAddressTracking) {
                 indirectHeaps[i]->replaceBuffer(indirectHeaps[i]->getCpuBase(),
                                                 indirectHeaps[i]->getMaxAvailableSpace());
-                if (i == IndirectHeap::Type::SURFACE_STATE) {
+                if (i == IndirectHeap::Type::surfaceState) {
                     indirectHeaps[i]->getSpace(reservedSshSize);
                 }
             }
@@ -253,7 +253,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSize(HeapType heapType, size_
             newSize = alignUp(newSize, MemoryConstants::pageSize);
             auto oldAlloc = getIndirectHeapAllocation(heapType);
             this->createAndAssignNewHeap(heapType, newSize);
-            if (heapType == HeapType::SURFACE_STATE) {
+            if (heapType == HeapType::surfaceState) {
                 indirectHeap->getSpace(reservedSshSize);
                 sshAllocations.push_back(oldAlloc);
             }
@@ -371,25 +371,25 @@ void CommandContainer::endAlignedPrimaryBuffer() {
 void CommandContainer::prepareBindfulSsh() {
     bool globalBindlessSsh = this->device->getBindlessHeapsHelper() != nullptr;
     if (globalBindlessSsh) {
-        if (allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] == nullptr) {
+        if (allocationIndirectHeaps[IndirectHeap::Type::surfaceState] == nullptr) {
             constexpr size_t heapSize = MemoryConstants::pageSize64k;
-            allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] = heapHelper->getHeapAllocation(IndirectHeap::Type::SURFACE_STATE,
-                                                                                                       heapSize,
-                                                                                                       defaultHeapAllocationAlignment,
-                                                                                                       device->getRootDeviceIndex());
-            UNRECOVERABLE_IF(!allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]);
-            residencyContainer.push_back(allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]);
+            allocationIndirectHeaps[IndirectHeap::Type::surfaceState] = heapHelper->getHeapAllocation(IndirectHeap::Type::surfaceState,
+                                                                                                      heapSize,
+                                                                                                      defaultHeapAllocationAlignment,
+                                                                                                      device->getRootDeviceIndex());
+            UNRECOVERABLE_IF(!allocationIndirectHeaps[IndirectHeap::Type::surfaceState]);
+            residencyContainer.push_back(allocationIndirectHeaps[IndirectHeap::Type::surfaceState]);
 
-            indirectHeaps[IndirectHeap::Type::SURFACE_STATE] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE], false);
-            indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(reservedSshSize);
-            setHeapDirty(IndirectHeap::Type::SURFACE_STATE);
+            indirectHeaps[IndirectHeap::Type::surfaceState] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[IndirectHeap::Type::surfaceState], false);
+            indirectHeaps[IndirectHeap::Type::surfaceState]->getSpace(reservedSshSize);
+            setHeapDirty(IndirectHeap::Type::surfaceState);
         }
     }
 }
 
 IndirectHeap *CommandContainer::getIndirectHeap(HeapType heapType) {
     if (immediateCmdListSharedHeap(heapType)) {
-        return heapType == HeapType::SURFACE_STATE ? sharedSshCsrHeap : sharedDshCsrHeap;
+        return heapType == HeapType::surfaceState ? sharedSshCsrHeap : sharedDshCsrHeap;
     } else {
         return indirectHeaps[heapType].get();
     }
@@ -426,19 +426,19 @@ void CommandContainer::reserveSpaceForDispatch(HeapReserveArguments &sshReserveA
     }
     if (immediateCmdListCsr) {
         auto lock = immediateCmdListCsr->obtainUniqueOwnership();
-        sharedSshCsrHeap = this->initIndirectHeapReservation(sshReserveArg.indirectHeapReservation, sshReserveArg.size, sshAlignment, HeapType::SURFACE_STATE);
+        sharedSshCsrHeap = this->initIndirectHeapReservation(sshReserveArg.indirectHeapReservation, sshReserveArg.size, sshAlignment, HeapType::surfaceState);
 
         if (getDsh) {
-            sharedDshCsrHeap = this->initIndirectHeapReservation(dshReserveArg.indirectHeapReservation, dshReserveArg.size, dshAlignment, HeapType::DYNAMIC_STATE);
+            sharedDshCsrHeap = this->initIndirectHeapReservation(dshReserveArg.indirectHeapReservation, dshReserveArg.size, dshAlignment, HeapType::dynamicState);
         }
     } else {
         if (sshReserveArg.size > 0) {
             prepareBindfulSsh();
-            this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshReserveArg.size, sshAlignment);
+            this->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshReserveArg.size, sshAlignment);
         }
 
         if (getDsh) {
-            this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshReserveArg.size, dshAlignment);
+            this->getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, dshReserveArg.size, dshAlignment);
         }
         // private heaps can be accessed directly
         sshReserveArg.indirectHeapReservation = nullptr;
@@ -531,7 +531,7 @@ void CommandContainer::fillReusableAllocationLists() {
     }
 
     for (auto i = 0u; i < amountToFill; i++) {
-        for (auto heapType = 0u; heapType < IndirectHeap::Type::NUM_TYPES; heapType++) {
+        for (auto heapType = 0u; heapType < IndirectHeap::Type::numTypes; heapType++) {
             if (skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
                 continue;
             }
@@ -571,21 +571,21 @@ HeapReserveData::~HeapReserveData() {
 }
 
 bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
-    if (heapType == IndirectHeap::Type::INDIRECT_OBJECT) {
+    if (heapType == IndirectHeap::Type::indirectObject) {
         return false;
     }
     const auto &hardwareInfo = this->device->getHardwareInfo();
 
-    bool skipCreation = (globalBindlessHeapsEnabled && IndirectHeap::Type::SURFACE_STATE == heapType) ||
+    bool skipCreation = (globalBindlessHeapsEnabled && IndirectHeap::Type::surfaceState == heapType) ||
                         this->immediateCmdListSharedHeap(heapType) ||
-                        (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
+                        (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::dynamicState == heapType) ||
                         (this->heapAddressModel != HeapAddressModel::privateHeaps);
     return skipCreation;
 }
 
 size_t CommandContainer::getHeapSize(HeapType heapType) {
     size_t defaultHeapSize = HeapSize::defaultHeapSize;
-    if (HeapType::SURFACE_STATE == heapType) {
+    if (HeapType::surfaceState == heapType) {
         defaultHeapSize = this->defaultSshSize;
     }
     return HeapSize::getDefaultHeapSize(defaultHeapSize);

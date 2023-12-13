@@ -13,7 +13,7 @@
 namespace NEO {
 
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
-    if (hwDeviceId->getDriverModelType() == DriverModelType::DRM) {
+    if (hwDeviceId->getDriverModelType() == DriverModelType::drm) {
         return initDrmOsInterface(std::move(hwDeviceId), rootDeviceIndex, this);
     } else {
         this->isWddmOnLinuxEnable = true;

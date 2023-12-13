@@ -15,19 +15,19 @@
 
 TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryThenReturnTrue) {
     PatchTokensTestData::ValidProgramWithKernel programTokens;
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::patchtokens>(programTokens.storage));
 }
 
 TEST(IsDeviceBinaryFormatPatchtokens, GivenInvalidBinaryThenReturnFalse) {
     const uint8_t binary[] = "not_patchtokens";
-    EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(binary));
+    EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::patchtokens>(binary));
 }
 
 TEST(UnpackSingleDeviceBinaryPatchtokens, WhenFailedToDecodeHeaderThenUnpackingFails) {
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>({}, "", {}, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>({}, "", {}, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_TRUE(unpackResult.deviceBinary.empty());
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
@@ -45,8 +45,8 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryAndMatchedWithRequested
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -69,8 +69,8 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryForDifferentCoreFamilyD
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -93,8 +93,8 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryWithUnsupportedPatchTok
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -117,8 +117,8 @@ TEST(UnpackSingleDeviceBinaryPatchtokens, WhenValidBinaryWithUnsupportedPointerS
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(programTokens.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -138,7 +138,7 @@ TEST(DecodeSingleDeviceBinaryPatchtokens, GivenInvalidBinaryThenReturnError) {
     NEO::SingleDeviceBinary singleBinary;
     std::string decodeErrors;
     std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
@@ -155,7 +155,7 @@ TEST(DecodeSingleDeviceBinaryPatchtokens, GivenValidBinaryThenOutputIsProperlyPo
     singleBinary.targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     std::string decodeErrors;
     std::string decodeWarnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::patchtokens>(programInfo, singleBinary, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, error);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_TRUE(decodeErrors.empty());

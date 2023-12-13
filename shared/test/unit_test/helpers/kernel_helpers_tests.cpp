@@ -166,9 +166,9 @@ TEST_F(KernelHelperTest, GivenScratchEqualsZeroAndPrivetGreaterThanZeroWhenCheck
 
 TEST_F(KernelHelperTest, GivenNoPtrByValueWhenCheckingIsAnyArgumentPtrByValueThenFalseIsReturned) {
     KernelDescriptor kernelDescriptor;
-    auto pointerArg = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    auto pointerArg = ArgDescriptor(ArgDescriptor::argTPointer);
 
-    auto valueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
+    auto valueArg = ArgDescriptor(ArgDescriptor::argTValue);
     ArgDescValue::Element element;
     element.isPtr = false;
     valueArg.as<ArgDescValue>().elements.push_back(element);
@@ -180,9 +180,9 @@ TEST_F(KernelHelperTest, GivenNoPtrByValueWhenCheckingIsAnyArgumentPtrByValueThe
 
 TEST_F(KernelHelperTest, GivenPtrByValueWhenCheckingIsAnyArgumentPtrByValueThenTrueIsReturned) {
     KernelDescriptor kernelDescriptor;
-    auto pointerArg = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    auto pointerArg = ArgDescriptor(ArgDescriptor::argTPointer);
 
-    auto valueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
+    auto valueArg = ArgDescriptor(ArgDescriptor::argTValue);
     ArgDescValue::Element element;
     element.isPtr = true;
     valueArg.as<ArgDescValue>().elements.push_back(element);

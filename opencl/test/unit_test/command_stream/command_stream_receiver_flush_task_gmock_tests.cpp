@@ -190,13 +190,13 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
     for (auto &patchInfoData : mockHelper->patchInfoDataVector) {
         uint64_t expectedAddress = 0u;
         switch (patchInfoData.sourceType) {
-        case PatchInfoAllocationType::DynamicStateHeap:
+        case PatchInfoAllocationType::dynamicStateHeap:
             expectedAddress = dsh.getGraphicsAllocation()->getGpuAddress();
             break;
-        case PatchInfoAllocationType::SurfaceStateHeap:
+        case PatchInfoAllocationType::surfaceStateHeap:
             expectedAddress = ssh.getGraphicsAllocation()->getGpuAddress();
             break;
-        case PatchInfoAllocationType::IndirectObjectHeap:
+        case PatchInfoAllocationType::indirectObjectHeap:
             expectedAddress = ioh.getGraphicsAllocation()->getGpuAddress();
             break;
         default:
@@ -204,7 +204,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
         }
         EXPECT_EQ(expectedAddress, patchInfoData.sourceAllocation);
         EXPECT_EQ(0u, patchInfoData.sourceAllocationOffset);
-        EXPECT_EQ(PatchInfoAllocationType::Default, patchInfoData.targetType);
+        EXPECT_EQ(PatchInfoAllocationType::defaultType, patchInfoData.targetType);
     }
 
     EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);

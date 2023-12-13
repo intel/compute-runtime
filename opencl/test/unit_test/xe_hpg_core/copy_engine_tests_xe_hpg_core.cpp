@@ -354,7 +354,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenResolveBlitIsCall
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
+    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::auxToNonAux,
                                                                                buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                                &clearColorAlloc);
 
@@ -379,7 +379,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenNonAuxToAuxBlitIs
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
-    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
+    auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::nonAuxToAux,
                                                                                buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                                &clearColorAlloc);
 

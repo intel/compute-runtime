@@ -258,24 +258,24 @@ TEST(YamlConsumeStringLiteral, GivenQuotedStringThenConsumeUntilEndingMarkIsMet)
 TEST(YamlToken, WhenConstructedThenSetsUpProperDefaults) {
     ConstStringRef str = "\"some string\"";
     ConstStringRef identifier = "someIdentifier";
-    NEO::Yaml::Token tokenString{str, NEO::Yaml::Token::LiteralString};
-    NEO::Yaml::Token tokenNameIdentifier{identifier, NEO::Yaml::Token::Identifier};
+    NEO::Yaml::Token tokenString{str, NEO::Yaml::Token::literalString};
+    NEO::Yaml::Token tokenNameIdentifier{identifier, NEO::Yaml::Token::identifier};
 
     EXPECT_EQ(str.begin(), tokenString.pos);
     EXPECT_EQ(str.length(), tokenString.len);
     EXPECT_EQ(str[0], tokenString.traits.character0);
-    EXPECT_EQ(NEO::Yaml::Token::LiteralString, tokenString.traits.type);
+    EXPECT_EQ(NEO::Yaml::Token::literalString, tokenString.traits.type);
     EXPECT_EQ(str, tokenString.cstrref());
 
     EXPECT_EQ(identifier.begin(), tokenNameIdentifier.pos);
     EXPECT_EQ(identifier.length(), tokenNameIdentifier.len);
     EXPECT_EQ(identifier[0], tokenNameIdentifier.traits.character0);
-    EXPECT_EQ(NEO::Yaml::Token::Identifier, tokenNameIdentifier.traits.type);
+    EXPECT_EQ(NEO::Yaml::Token::identifier, tokenNameIdentifier.traits.type);
     EXPECT_EQ(identifier, tokenNameIdentifier.cstrref());
 }
 
 TEST(YamlTokenMatchers, WhenTokenIsComparedAgainstTextThenReturnTrueOnlyIfMatched) {
-    NEO::Yaml::Token tokenString{"abc", NEO::Yaml::Token::Identifier};
+    NEO::Yaml::Token tokenString{"abc", NEO::Yaml::Token::identifier};
     EXPECT_TRUE(ConstStringRef("abc") == tokenString);
     EXPECT_TRUE(tokenString == ConstStringRef("abc"));
     EXPECT_FALSE(ConstStringRef("abd") == tokenString);
@@ -285,7 +285,7 @@ TEST(YamlTokenMatchers, WhenTokenIsComparedAgainstTextThenReturnTrueOnlyIfMatche
 }
 
 TEST(YamlTokenMatchers, WhenTokenIsComparedAgainstCharacterThenReturnTrueOnlyIfMatched) {
-    NEO::Yaml::Token tokenString{"+", NEO::Yaml::Token::Identifier};
+    NEO::Yaml::Token tokenString{"+", NEO::Yaml::Token::identifier};
     EXPECT_TRUE('+' == tokenString);
     EXPECT_TRUE(tokenString == '+');
     EXPECT_FALSE('-' == tokenString);
@@ -309,23 +309,23 @@ TEST(YamlLineTraits, WhenResetThenFlagsGetCleared) {
 TEST(YamlLine, WhenConstructedThenSetsUpProperDefaults) {
     NEO::Yaml::Line::LineTraits emptyTraits;
     emptyTraits.reset();
-    NEO::Yaml::Line commentLine{NEO::Yaml::Line::LineType::Comment, 4, 6, 8, emptyTraits};
+    NEO::Yaml::Line commentLine{NEO::Yaml::Line::LineType::comment, 4, 6, 8, emptyTraits};
 
     NEO::Yaml::Line::LineTraits dictionaryEntryTraits;
     dictionaryEntryTraits.reset();
     dictionaryEntryTraits.hasDictionaryEntry = true;
-    NEO::Yaml::Line dictEntryLine{NEO::Yaml::Line::LineType::DictionaryEntry, 2, 128, 146, dictionaryEntryTraits};
+    NEO::Yaml::Line dictEntryLine{NEO::Yaml::Line::LineType::dictionaryEntry, 2, 128, 146, dictionaryEntryTraits};
 
     EXPECT_EQ(4U, commentLine.indent);
     EXPECT_EQ(6U, commentLine.first);
     EXPECT_EQ(8U, commentLine.last);
-    EXPECT_EQ(NEO::Yaml::Line::LineType::Comment, commentLine.lineType);
+    EXPECT_EQ(NEO::Yaml::Line::LineType::comment, commentLine.lineType);
     EXPECT_EQ(emptyTraits.packed, commentLine.traits.packed);
 
     EXPECT_EQ(2U, dictEntryLine.indent);
     EXPECT_EQ(128U, dictEntryLine.first);
     EXPECT_EQ(146U, dictEntryLine.last);
-    EXPECT_EQ(NEO::Yaml::Line::LineType::DictionaryEntry, dictEntryLine.lineType);
+    EXPECT_EQ(NEO::Yaml::Line::LineType::dictionaryEntry, dictEntryLine.lineType);
     EXPECT_EQ(dictionaryEntryTraits.packed, dictEntryLine.traits.packed);
 }
 
@@ -528,32 +528,32 @@ TEST(YamlTokenize, GivenMultilineDictionaryThenTokenizeAllEntries) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 0
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 0
 
         // line 1
-        Token{"apple", NEO::Yaml::Token::Identifier},   // token 1
-        Token{":", NEO::Yaml::Token::SingleCharacter},  // token 2
-        Token{"red", NEO::Yaml::Token::LiteralString},  // token 3
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 4
+        Token{"apple", NEO::Yaml::Token::identifier},   // token 1
+        Token{":", NEO::Yaml::Token::singleCharacter},  // token 2
+        Token{"red", NEO::Yaml::Token::literalString},  // token 3
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 4
 
         // line 2
-        Token{"banana", NEO::Yaml::Token::Identifier},    // token 5
-        Token{":", NEO::Yaml::Token::SingleCharacter},    // token 6
-        Token{"yellow", NEO::Yaml::Token::LiteralString}, // token 7
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},   // token 8
+        Token{"banana", NEO::Yaml::Token::identifier},    // token 5
+        Token{":", NEO::Yaml::Token::singleCharacter},    // token 6
+        Token{"yellow", NEO::Yaml::Token::literalString}, // token 7
+        Token{"\n", NEO::Yaml::Token::singleCharacter},   // token 8
 
         // line 3
-        Token{"orange", NEO::Yaml::Token::Identifier},    // token 9
-        Token{":", NEO::Yaml::Token::SingleCharacter},    // token 10
-        Token{"orange", NEO::Yaml::Token::LiteralString}, // token 11
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},   // token 12
+        Token{"orange", NEO::Yaml::Token::identifier},    // token 9
+        Token{":", NEO::Yaml::Token::singleCharacter},    // token 10
+        Token{"orange", NEO::Yaml::Token::literalString}, // token 11
+        Token{"\n", NEO::Yaml::Token::singleCharacter},   // token 12
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::Empty, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::DictionaryEntry, 4, 1, 4, {}},
-        Line{NEO::Yaml::Line::LineType::DictionaryEntry, 4, 5, 8, {}},
-        Line{NEO::Yaml::Line::LineType::DictionaryEntry, 4, 9, 12, {}},
+        Line{NEO::Yaml::Line::LineType::empty, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::dictionaryEntry, 4, 1, 4, {}},
+        Line{NEO::Yaml::Line::LineType::dictionaryEntry, 4, 5, 8, {}},
+        Line{NEO::Yaml::Line::LineType::dictionaryEntry, 4, 9, 12, {}},
     };
     expectedLines[1].traits.hasDictionaryEntry = true;
     expectedLines[2].traits.hasDictionaryEntry = true;
@@ -589,29 +589,29 @@ TEST(YamlTokenize, GivenMultilineListThenTokenizeAllEntries) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 0
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 0
 
         // line 1
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 1
-        Token{"apple", NEO::Yaml::Token::Identifier},   // token 2
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 3
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 1
+        Token{"apple", NEO::Yaml::Token::identifier},   // token 2
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 3
 
         // line 2
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 4
-        Token{"banana", NEO::Yaml::Token::Identifier},  // token 5
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 6
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 4
+        Token{"banana", NEO::Yaml::Token::identifier},  // token 5
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 6
 
         // line 3
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 7
-        Token{"orange", NEO::Yaml::Token::Identifier},  // token 8
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 9
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 7
+        Token{"orange", NEO::Yaml::Token::identifier},  // token 8
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 9
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::Empty, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 3, 1, 3, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 3, 4, 6, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 3, 7, 9, {}},
+        Line{NEO::Yaml::Line::LineType::empty, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 3, 1, 3, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 3, 4, 6, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 3, 7, 9, {}},
     };
 
     NEO::Yaml::LinesCache lines;
@@ -639,16 +639,16 @@ TEST(YamlTokenize, GivenCommentThenTokenizeTillEndOfLineAsOneToken) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"orange", NEO::Yaml::Token::Identifier},       // token 0
-        Token{":", NEO::Yaml::Token::SingleCharacter},       // token 1
-        Token{"green", NEO::Yaml::Token::LiteralString},     // token 2
-        Token{"#", NEO::Yaml::Token::SingleCharacter},       // token 3
-        Token{" needs more sun", NEO::Yaml::Token::Comment}, // token 4
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},      // token 5
+        Token{"orange", NEO::Yaml::Token::identifier},       // token 0
+        Token{":", NEO::Yaml::Token::singleCharacter},       // token 1
+        Token{"green", NEO::Yaml::Token::literalString},     // token 2
+        Token{"#", NEO::Yaml::Token::singleCharacter},       // token 3
+        Token{" needs more sun", NEO::Yaml::Token::comment}, // token 4
+        Token{"\n", NEO::Yaml::Token::singleCharacter},      // token 5
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::DictionaryEntry, 0, 0, 5, {}},
+        Line{NEO::Yaml::Line::LineType::dictionaryEntry, 0, 0, 5, {}},
     };
 
     expectedLines[0].traits.hasDictionaryEntry = true;
@@ -697,15 +697,15 @@ TEST(YamlTokenize, GivenEmptyCommentMarkerThenDontCreateEmptyComment) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"orange", NEO::Yaml::Token::Identifier},   // token 0
-        Token{":", NEO::Yaml::Token::SingleCharacter},   // token 1
-        Token{"green", NEO::Yaml::Token::LiteralString}, // token 2
-        Token{"#", NEO::Yaml::Token::SingleCharacter},   // token 3
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},  // token 4
+        Token{"orange", NEO::Yaml::Token::identifier},   // token 0
+        Token{":", NEO::Yaml::Token::singleCharacter},   // token 1
+        Token{"green", NEO::Yaml::Token::literalString}, // token 2
+        Token{"#", NEO::Yaml::Token::singleCharacter},   // token 3
+        Token{"\n", NEO::Yaml::Token::singleCharacter},  // token 4
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::DictionaryEntry, 0, 0, 4, {}},
+        Line{NEO::Yaml::Line::LineType::dictionaryEntry, 0, 0, 4, {}},
     };
 
     expectedLines[0].traits.hasDictionaryEntry = true;
@@ -735,13 +735,13 @@ TEST(YamlTokenize, GivenCommentAtTheBeginningOfTheLineThenMarkWholeLineAsComment
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"#", NEO::Yaml::Token::SingleCharacter},      // token 0
-        Token{"orange : green", NEO::Yaml::Token::Comment}, // token 1
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},     // token 2
+        Token{"#", NEO::Yaml::Token::singleCharacter},      // token 0
+        Token{"orange : green", NEO::Yaml::Token::comment}, // token 1
+        Token{"\n", NEO::Yaml::Token::singleCharacter},     // token 2
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::Comment, 0, 0, 2, {}},
+        Line{NEO::Yaml::Line::LineType::comment, 0, 0, 2, {}},
     };
 
     NEO::Yaml::LinesCache lines;
@@ -774,27 +774,27 @@ TEST(YamlTokenize, GivenFileSectionMarkersThenTokenizesThemProperly) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 0
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 0
 
         // line 1
-        Token{"---", NEO::Yaml::Token::FileSectionBeg}, // token 1
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 2
+        Token{"---", NEO::Yaml::Token::fileSectionBeg}, // token 1
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 2
 
         // line 2
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 3
-        Token{"banana", NEO::Yaml::Token::Identifier},  // token 4
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 5
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 3
+        Token{"banana", NEO::Yaml::Token::identifier},  // token 4
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 5
 
         // line 3
-        Token{"...", NEO::Yaml::Token::FileSectionEnd}, // token 6
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 7
+        Token{"...", NEO::Yaml::Token::fileSectionEnd}, // token 6
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 7
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::Empty, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::FileSection, 0, 1, 2, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 1, 3, 5, {}},
-        Line{NEO::Yaml::Line::LineType::FileSection, 0, 6, 7, {}},
+        Line{NEO::Yaml::Line::LineType::empty, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::fileSection, 0, 1, 2, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 1, 3, 5, {}},
+        Line{NEO::Yaml::Line::LineType::fileSection, 0, 6, 7, {}},
     };
 
     NEO::Yaml::LinesCache lines;
@@ -822,13 +822,13 @@ TEST(YamlTokenize, GivenInvalidFileSectionMarkersThenTreatThemAsText) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 1
-        Token{".", NEO::Yaml::Token::SingleCharacter},  // token 2
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 3
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 1
+        Token{".", NEO::Yaml::Token::singleCharacter},  // token 2
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 3
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 0, 2, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 0, 2, {}},
     };
 
     NEO::Yaml::LinesCache lines;
@@ -872,35 +872,35 @@ TEST(YamlTokenize, GivenStringLiteralsThenTokenizesThemProperly) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 0
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 0
 
         // line 1
-        Token{"-", NEO::Yaml::Token::SingleCharacter},              // token 1
-        Token{"\"abc defg ijk\"", NEO::Yaml::Token::LiteralString}, // token 2
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},             // token 3
+        Token{"-", NEO::Yaml::Token::singleCharacter},              // token 1
+        Token{"\"abc defg ijk\"", NEO::Yaml::Token::literalString}, // token 2
+        Token{"\n", NEO::Yaml::Token::singleCharacter},             // token 3
 
         // line 2
-        Token{"-", NEO::Yaml::Token::SingleCharacter},       // token 4
-        Token{"\'23 57\'", NEO::Yaml::Token::LiteralString}, // token 5
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},      // token 6
+        Token{"-", NEO::Yaml::Token::singleCharacter},       // token 4
+        Token{"\'23 57\'", NEO::Yaml::Token::literalString}, // token 5
+        Token{"\n", NEO::Yaml::Token::singleCharacter},      // token 6
 
         // line 3
-        Token{"-", NEO::Yaml::Token::SingleCharacter},                    // token 7
-        Token{"\'needs to \"match\"\'", NEO::Yaml::Token::LiteralString}, // token 8
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},                   // token 9
+        Token{"-", NEO::Yaml::Token::singleCharacter},                    // token 7
+        Token{"\'needs to \"match\"\'", NEO::Yaml::Token::literalString}, // token 8
+        Token{"\n", NEO::Yaml::Token::singleCharacter},                   // token 9
 
         // line 4
-        Token{"-", NEO::Yaml::Token::SingleCharacter},                    // token 10
-        Token{"\"match \'needs to\'\"", NEO::Yaml::Token::LiteralString}, // token 11
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},                   // token 12
+        Token{"-", NEO::Yaml::Token::singleCharacter},                    // token 10
+        Token{"\"match \'needs to\'\"", NEO::Yaml::Token::literalString}, // token 11
+        Token{"\n", NEO::Yaml::Token::singleCharacter},                   // token 12
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::Empty, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 1, 3, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 4, 6, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 7, 9, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 10, 12, {}},
+        Line{NEO::Yaml::Line::LineType::empty, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 1, 3, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 4, 6, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 7, 9, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 10, 12, {}},
     };
 
     NEO::Yaml::LinesCache lines;
@@ -949,53 +949,53 @@ TEST(YamlTokenize, GivenNumericLiteralsThenTokenizesThemProperly) {
 
     NEO::Yaml::Token expectedTokens[] = {
         // line 0
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 0
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 0
 
         // line 1
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 1
-        Token{"-5", NEO::Yaml::Token::LiteralNumber},   // token 2
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 3
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 1
+        Token{"-5", NEO::Yaml::Token::literalNumber},   // token 2
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 3
 
         // line 2
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 4
-        Token{"+7", NEO::Yaml::Token::LiteralNumber},   // token 5
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 6
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 4
+        Token{"+7", NEO::Yaml::Token::literalNumber},   // token 5
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 6
 
         // line 3
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 7
-        Token{"136", NEO::Yaml::Token::LiteralNumber},  // token 8
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 9
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 7
+        Token{"136", NEO::Yaml::Token::literalNumber},  // token 8
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 9
 
         // line 4
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 10
-        Token{"95.8", NEO::Yaml::Token::LiteralNumber}, // token 11
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 12
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 10
+        Token{"95.8", NEO::Yaml::Token::literalNumber}, // token 11
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 12
 
         // line 5
-        Token{"-", NEO::Yaml::Token::SingleCharacter},   // token 13
-        Token{"+14.7", NEO::Yaml::Token::LiteralNumber}, // token 14
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},  // token 15
+        Token{"-", NEO::Yaml::Token::singleCharacter},   // token 13
+        Token{"+14.7", NEO::Yaml::Token::literalNumber}, // token 14
+        Token{"\n", NEO::Yaml::Token::singleCharacter},  // token 15
 
         // line 6
-        Token{"-", NEO::Yaml::Token::SingleCharacter},   // token 16
-        Token{"-63.1", NEO::Yaml::Token::LiteralNumber}, // token 17
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},  // token 18
+        Token{"-", NEO::Yaml::Token::singleCharacter},   // token 16
+        Token{"-63.1", NEO::Yaml::Token::literalNumber}, // token 17
+        Token{"\n", NEO::Yaml::Token::singleCharacter},  // token 18
 
         // line 7
-        Token{"-", NEO::Yaml::Token::SingleCharacter},  // token 19
-        Token{"0", NEO::Yaml::Token::LiteralNumber},    // token 20
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}, // token 21
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 19
+        Token{"0", NEO::Yaml::Token::literalNumber},    // token 20
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 21
     };
 
     NEO::Yaml::Line expectedLines[] = {
-        Line{NEO::Yaml::Line::LineType::Empty, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 1, 3, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 4, 6, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 7, 9, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 10, 12, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 13, 15, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 16, 18, {}},
-        Line{NEO::Yaml::Line::LineType::ListEntry, 0, 19, 21, {}},
+        Line{NEO::Yaml::Line::LineType::empty, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 1, 3, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 4, 6, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 7, 9, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 10, 12, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 13, 15, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 16, 18, {}},
+        Line{NEO::Yaml::Line::LineType::listEntry, 0, 19, 21, {}},
     };
 
     NEO::Yaml::LinesCache lines;
@@ -1035,15 +1035,15 @@ TEST(YamlTokenize, GivenSpaceSeparatedStringAsValueThenReadItCorrectly) {
     ConstStringRef yaml = "\nbanana: space separated string\napple: space separated with spaces at the end   \n";
 
     NEO::Yaml::Token expectedTokens[] = {
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},
-        Token{"banana", NEO::Yaml::Token::Identifier},
-        Token{":", NEO::Yaml::Token::SingleCharacter},
-        Token{"space separated string", NEO::Yaml::Token::LiteralString},
-        Token{"\n", NEO::Yaml::Token::SingleCharacter},
-        Token{"apple", NEO::Yaml::Token::Identifier},
-        Token{":", NEO::Yaml::Token::SingleCharacter},
-        Token{"space separated with spaces at the end", NEO::Yaml::Token::LiteralString},
-        Token{"\n", NEO::Yaml::Token::SingleCharacter}};
+        Token{"\n", NEO::Yaml::Token::singleCharacter},
+        Token{"banana", NEO::Yaml::Token::identifier},
+        Token{":", NEO::Yaml::Token::singleCharacter},
+        Token{"space separated string", NEO::Yaml::Token::literalString},
+        Token{"\n", NEO::Yaml::Token::singleCharacter},
+        Token{"apple", NEO::Yaml::Token::identifier},
+        Token{":", NEO::Yaml::Token::singleCharacter},
+        Token{"space separated with spaces at the end", NEO::Yaml::Token::literalString},
+        Token{"\n", NEO::Yaml::Token::singleCharacter}};
     NEO::Yaml::LinesCache lines;
     NEO::Yaml::TokensCache tokens;
     std::string warnings;
@@ -1088,14 +1088,14 @@ TEST(YamlNode, WhenConstructedThenSetsUpProperDefaults) {
 }
 
 TEST(YamlLineTypeIsUnused, WhenLineContaintsNoDataThenReturnTrue) {
-    EXPECT_TRUE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::Empty));
-    EXPECT_TRUE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::Comment));
-    EXPECT_TRUE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::FileSection));
+    EXPECT_TRUE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::empty));
+    EXPECT_TRUE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::comment));
+    EXPECT_TRUE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::fileSection));
 }
 
 TEST(YamlLineTypeIsUnused, WhenLineContaintsDataThenReturnFalse) {
-    EXPECT_FALSE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::DictionaryEntry));
-    EXPECT_FALSE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::ListEntry));
+    EXPECT_FALSE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::dictionaryEntry));
+    EXPECT_FALSE(NEO::Yaml::isUnused(NEO::Yaml::Line::LineType::listEntry));
 }
 
 TEST(YamlBuildTree, GivenEmptyInputThenEmitsWarning) {
@@ -1113,9 +1113,9 @@ TEST(YamlBuildTree, GivenEmptyInputThenEmitsWarning) {
 
 TEST(YamlBuildTree, GivenEmptyLinesThenSkipsThem) {
     NEO::Yaml::LinesCache lines = {
-        Line{NEO::Yaml::Line::LineType::Empty, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::Comment, 0, 0, 0, {}},
-        Line{NEO::Yaml::Line::LineType::FileSection, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::empty, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::comment, 0, 0, 0, {}},
+        Line{NEO::Yaml::Line::LineType::fileSection, 0, 0, 0, {}},
     };
     NEO::Yaml::TokensCache tokens;
     NEO::Yaml::NodesCache tree;

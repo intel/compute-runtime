@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 namespace NEO {
 
 void IndirectHeapFixture::setUp(CommandQueue *pCmdQ) {
-    pDSH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
-    pSSH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096);
-    pIOH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096);
+    pDSH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
+    pSSH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 4096);
+    pIOH = &pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 4096);
 }
 } // namespace NEO

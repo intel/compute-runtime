@@ -43,7 +43,7 @@ class MockGmm : public Gmm {
 
     static GraphicsAllocation *allocateImage2d(MemoryManager &memoryManager) {
         ImageDescriptor imgDesc{};
-        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageType = ImageType::image2D;
         imgDesc.imageWidth = 5;
         imgDesc.imageHeight = 5;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);

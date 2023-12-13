@@ -91,7 +91,7 @@ TEST(UnpackSingleDeviceBinary, GivenUnknownBinaryThenReturnError) {
     EXPECT_TRUE(unpacked.debugData.empty());
     EXPECT_TRUE(unpacked.deviceBinary.empty());
     EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpacked.format);
     EXPECT_EQ(0U, unpacked.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpacked.targetDevice.stepping);
     EXPECT_EQ(4U, unpacked.targetDevice.maxPointerSizeInBytes);
@@ -115,7 +115,7 @@ TEST(UnpackSingleDeviceBinary, GivenPatchtoknsBinaryThenReturnSelf) {
     EXPECT_EQ(patchtokensProgram.storage.data(), unpacked.deviceBinary.begin());
     EXPECT_EQ(patchtokensProgram.storage.size(), unpacked.deviceBinary.size());
     EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
     EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
     EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
     EXPECT_EQ(patchtokensProgram.header->GPUPointerSizeInBytes, unpacked.targetDevice.maxPointerSizeInBytes);
@@ -142,7 +142,7 @@ TEST(UnpackSingleDeviceBinary, GivenOclElfBinaryThenReturnPatchtokensBinary) {
     EXPECT_TRUE(unpacked.buildOptions.empty());
     EXPECT_TRUE(unpacked.debugData.empty());
     EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
     EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
     EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
     EXPECT_EQ(patchtokensProgram.header->GPUPointerSizeInBytes, unpacked.targetDevice.maxPointerSizeInBytes);
@@ -180,7 +180,7 @@ TEST(UnpackSingleDeviceBinary, GivenArBinaryWithOclElfThenReturnPatchtokensBinar
     EXPECT_TRUE(unpacked.buildOptions.empty());
     EXPECT_TRUE(unpacked.debugData.empty());
     EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
     EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
     EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
     EXPECT_EQ(patchtokensProgram.header->GPUPointerSizeInBytes, unpacked.targetDevice.maxPointerSizeInBytes);
@@ -212,7 +212,7 @@ TEST(UnpackSingleDeviceBinary, GivenZebinThenReturnSelf) {
         EXPECT_EQ(zebin->data(), unpacked.deviceBinary.begin());
         EXPECT_EQ(zebin->size(), unpacked.deviceBinary.size());
         EXPECT_TRUE(unpacked.intermediateRepresentation.empty());
-        EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpacked.format);
+        EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpacked.format);
         EXPECT_EQ(requestedTargetDevice.coreFamily, unpacked.targetDevice.coreFamily);
         EXPECT_EQ(requestedTargetDevice.stepping, unpacked.targetDevice.stepping);
         EXPECT_EQ(8U, unpacked.targetDevice.maxPointerSizeInBytes);
@@ -284,7 +284,7 @@ TEST(DecodeSingleDeviceBinary, GivenUnknownFormatThenReturnFalse) {
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Unknown format", decodeErrors.c_str());
 }
@@ -303,7 +303,7 @@ TEST(DecodeSingleDeviceBinary, GivenPatchTokensFormatThenDecodingSucceeds) {
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_TRUE(decodeErrors.empty());
 }
@@ -321,7 +321,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinFormatThenDecodingSucceeds) {
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, format);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
 }
@@ -339,7 +339,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSuccee
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, format);
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
     EXPECT_NE(nullptr, programInfo.linkerInput.get());
     EXPECT_EQ(1, programInfo.linkerInput->getExportedFunctionsSegmentId());
@@ -364,7 +364,7 @@ TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::OclElf, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::oclElf, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Device binary format is packed", decodeErrors.c_str());
 }
@@ -383,7 +383,7 @@ TEST(DecodeSingleDeviceBinary, GivenArFormatThenDecodingFails) {
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Archive, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::archive, format);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Device binary format is packed", decodeErrors.c_str());
 }
@@ -424,7 +424,7 @@ kernels:
     NEO::DeviceBinaryFormat format;
     std::tie(status, format) = NEO::decodeSingleDeviceBinary(programInfo, bin, decodeErrors, decodeWarnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::success, status);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, format);
     EXPECT_TRUE(decodeWarnings.empty());
 
     ASSERT_EQ(1u, programInfo.kernelInfos.size());
@@ -441,7 +441,7 @@ TEST(PackDeviceBinary, GivenRequestToPackThenUsesOclElfFormat) {
     auto packed = NEO::packDeviceBinary(deviceBinary, packErrors, packWarnings);
     EXPECT_TRUE(packErrors.empty());
     EXPECT_TRUE(packWarnings.empty());
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(packed));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::oclElf>(packed));
 }
 
 TEST(PackDeviceBinary, GivenRequestToPackWhenFormatIsAlreadyPackedThenReturnsInput) {
@@ -452,11 +452,11 @@ TEST(PackDeviceBinary, GivenRequestToPackWhenFormatIsAlreadyPackedThenReturnsInp
     auto packed = NEO::packDeviceBinary(deviceBinary, packErrors, packWarnings);
     EXPECT_TRUE(packErrors.empty());
     EXPECT_TRUE(packWarnings.empty());
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(packed));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::oclElf>(packed));
     deviceBinary.deviceBinary = packed;
     auto packed2 = NEO::packDeviceBinary(deviceBinary, packErrors, packWarnings);
     EXPECT_TRUE(packErrors.empty());
     EXPECT_TRUE(packWarnings.empty());
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::OclElf>(packed));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::oclElf>(packed));
     EXPECT_EQ(packed, packed2);
 }

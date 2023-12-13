@@ -105,7 +105,7 @@ struct DispatchWalkerTestForAuxTranslation : DispatchWalkerTest, public ::testin
 
 INSTANTIATE_TEST_CASE_P(,
                         DispatchWalkerTestForAuxTranslation,
-                        testing::ValuesIn({KernelObjForAuxTranslation::Type::MEM_OBJ, KernelObjForAuxTranslation::Type::GFX_ALLOC}));
+                        testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
 
 HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDimensionsIsReturned) {
     const size_t workItems1D[] = {100, 1, 1};
@@ -882,7 +882,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, std::vector<Kernel *>({&kernel1, &kernel2}));
 
     // create Indirect DSH heap
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
 
     indirectHeap.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     auto dshBeforeMultiDisptach = indirectHeap.getUsed();
@@ -1125,7 +1125,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTran
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::auxToNonAux;
 
     builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
@@ -1174,7 +1174,7 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTran
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::nonAuxToAux;
 
     builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
     HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);

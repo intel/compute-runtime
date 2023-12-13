@@ -879,11 +879,11 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
     size_t imageCount = 1;
 
     switch (imgInfo.imgDesc.imageType) {
-    case ImageType::Image3D:
+    case ImageType::image3D:
         imageDepth = imgInfo.imgDesc.imageDepth;
         [[fallthrough]];
-    case ImageType::Image2D:
-    case ImageType::Image2DArray:
+    case ImageType::image2D:
+    case ImageType::image2DArray:
         imageHeight = imgInfo.imgDesc.imageHeight;
         break;
     default:
@@ -1023,7 +1023,7 @@ bool MemoryManager::allocateBindlessSlot(GraphicsAllocation *allocation) {
         auto surfStateCount = isImage ? 2 : 1;
         auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
 
-        auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+        auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);
         if (surfaceStateInfo.heapAllocation == nullptr) {
             return false;
         }

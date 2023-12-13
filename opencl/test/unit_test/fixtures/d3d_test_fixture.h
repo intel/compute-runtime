@@ -88,7 +88,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         imgDesc.imageHeight = 4;
         imgDesc.imageWidth = 4;
         imgDesc.imageDepth = 1;
-        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageType = ImageType::image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
         gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper(), imgInfo, false).release();
         mockGmmResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());

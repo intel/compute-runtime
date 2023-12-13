@@ -20,7 +20,7 @@ std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::stri
     if (NEO::isAnyPackedDeviceBinaryFormat(binary.deviceBinary)) {
         return std::vector<uint8_t>(binary.deviceBinary.begin(), binary.deviceBinary.end());
     }
-    return packDeviceBinary<DeviceBinaryFormat::OclElf>(binary, outErrReason, outWarning);
+    return packDeviceBinary<DeviceBinaryFormat::oclElf>(binary, outErrReason, outWarning);
 }
 
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment) {

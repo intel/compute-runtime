@@ -171,7 +171,7 @@ HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenSurfaceStateI
 
     enqueueCopyImageToBuffer<FamilyType>();
 
-    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0), 0);
+    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), 0);
     const auto &imageDesc = srcImage->getImageDesc();
     // EnqueueReadImage uses multi-byte copies depending on per-pixel-size-in-bytes
     EXPECT_EQ(imageDesc.image_width, surfaceState->getWidth());

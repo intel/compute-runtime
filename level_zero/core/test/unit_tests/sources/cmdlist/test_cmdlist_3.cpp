@@ -1281,7 +1281,7 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
             EXPECT_EQ(device, commandList->getDevice());
-            EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+            EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
             EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
             ze_event_pool_desc_t eventPoolDesc = {};
@@ -1477,7 +1477,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhe
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     if (neoDevice->getInternalCopyEngine()) {
         commandList->csr = neoDevice->getInternalCopyEngine()->commandStreamReceiver;
     } else {

@@ -52,7 +52,7 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext);
 
 class Wddm : public DriverModel {
   public:
-    static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
+    static constexpr DriverModelType driverModelType = DriverModelType::wddm;
     static constexpr std::uint64_t gpuHangIndication{std::numeric_limits<std::uint64_t>::max()};
 
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);

@@ -3891,7 +3891,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::unknown,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -3936,7 +3936,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::unknown,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -3993,7 +3993,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, alignment, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::unknown,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -5852,7 +5852,7 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
     if (CL_SUCCESS == retVal) {
         const auto &symbols = pProgram->getSymbols(pDevice->getRootDeviceIndex());
         auto symbolIt = symbols.find(globalVariableName);
-        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
+        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment == NEO::SegmentType::instructions)) {
             retVal = CL_INVALID_ARG_VALUE;
         } else {
             if (globalVariableSizeRet != nullptr) {
@@ -5886,7 +5886,7 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     if (CL_SUCCESS == retVal) {
         const auto &symbols = pProgram->getSymbols(pDevice->getRootDeviceIndex());
         auto symbolIt = symbols.find(functionName);
-        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment != NEO::SegmentType::Instructions)) {
+        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment != NEO::SegmentType::instructions)) {
             retVal = CL_INVALID_ARG_VALUE;
         } else {
             *functionPointerRet = static_cast<cl_ulong>(symbolIt->second.gpuAddress);

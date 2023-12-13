@@ -328,7 +328,7 @@ HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEna
         for (auto offset : offsets) {
             for (auto size : sizes) {
                 testWriteImageMisaligned<FamilyType>(offset, size, pixelSize);
-                ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::Blit);
+                ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
             }
         }
     }
@@ -342,7 +342,7 @@ HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabl
     }
 
     testWriteImageUnaligned<FamilyType>();
-    ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::Blit);
+    ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
 INSTANTIATE_TEST_CASE_P(AUBWriteImage_simple, AUBWriteImageBCS,

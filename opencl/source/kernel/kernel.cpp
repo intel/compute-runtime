@@ -133,7 +133,7 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
         auto pp = ptrOffset(crossThreadData, arg.stateless);
         patchWithRequiredSize(pp, arg.pointerSize, ptrToPatchInCrossThreadData);
         if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            PatchInfoData patchInfoData(ptrToPatchInCrossThreadData, 0u, PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(crossThreadData), arg.stateless, PatchInfoAllocationType::IndirectObjectHeap, arg.pointerSize);
+            PatchInfoData patchInfoData(ptrToPatchInCrossThreadData, 0u, PatchInfoAllocationType::kernelArg, reinterpret_cast<uint64_t>(crossThreadData), arg.stateless, PatchInfoAllocationType::indirectObjectHeap, arg.pointerSize);
             this->patchInfoDataList.push_back(patchInfoData);
         }
     }
@@ -312,7 +312,7 @@ cl_int Kernel::initialize() {
 
         // set the argument handler
         const auto &arg = explicitArgs[i];
-        if (arg.is<ArgDescriptor::ArgTPointer>()) {
+        if (arg.is<ArgDescriptor::argTPointer>()) {
             if (arg.getTraits().addressQualifier == KernelArgMetadata::AddrLocal) {
                 kernelArgHandlers[i] = &Kernel::setArgLocal;
             } else if (arg.getTraits().typeQualifiers.pipeQual) {
@@ -324,11 +324,11 @@ cl_int Kernel::initialize() {
                 usingBuffers = true;
                 allBufferArgsStateful &= static_cast<uint32_t>(arg.as<ArgDescPointer>().isPureStateful());
             }
-        } else if (arg.is<ArgDescriptor::ArgTImage>()) {
+        } else if (arg.is<ArgDescriptor::argTImage>()) {
             kernelArgHandlers[i] = &Kernel::setArgImage;
             kernelArguments[i].type = IMAGE_OBJ;
             usingImages = true;
-        } else if (arg.is<ArgDescriptor::ArgTSampler>()) {
+        } else if (arg.is<ArgDescriptor::argTSampler>()) {
             if (arg.getExtendedTypeInfo().isAccelerator) {
                 kernelArgHandlers[i] = &Kernel::setArgAccelerator;
             } else {
@@ -958,13 +958,13 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
 
     bool disableL3 = false;
     bool forceNonAuxMode = false;
-    const bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
+    const bool isAuxTranslationKernel = (AuxTranslationDirection::none != auxTranslationDirection);
     auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
     if (isAuxTranslationKernel) {
-        if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
-            ((AuxTranslationDirection::NonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
+        if (((AuxTranslationDirection::auxToNonAux == auxTranslationDirection) && argIndex == 1) ||
+            ((AuxTranslationDirection::nonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
             forceNonAuxMode = true;
         }
         disableL3 = (argIndex == 0);
@@ -1182,16 +1182,16 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 }
 
 void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer) {
-    auto performTunning = TunningType::DISABLED;
+    auto performTunning = TunningType::disabled;
 
     if (debugManager.flags.EnableKernelTunning.get() != -1) {
         performTunning = static_cast<TunningType>(debugManager.flags.EnableKernelTunning.get());
     }
 
-    if (performTunning == TunningType::SIMPLE) {
+    if (performTunning == TunningType::simple) {
         this->singleSubdevicePreferredInCurrentEnqueue = !this->kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
 
-    } else if (performTunning == TunningType::FULL) {
+    } else if (performTunning == TunningType::full) {
         KernelConfig config{gws, lws, offsets};
 
         auto submissionDataIt = this->kernelSubmissionMap.find(config);
@@ -1269,15 +1269,15 @@ bool Kernel::isSingleSubdevicePreferred() const {
 void Kernel::setInlineSamplers() {
     for (auto &inlineSampler : getDescriptor().inlineSamplers) {
         using AddrMode = NEO::KernelDescriptor::InlineSampler::AddrMode;
-        constexpr LookupArray<AddrMode, cl_addressing_mode, 5> addressingModes({{{AddrMode::None, CL_ADDRESS_NONE},
-                                                                                 {AddrMode::Repeat, CL_ADDRESS_REPEAT},
-                                                                                 {AddrMode::ClampEdge, CL_ADDRESS_CLAMP_TO_EDGE},
-                                                                                 {AddrMode::ClampBorder, CL_ADDRESS_CLAMP},
-                                                                                 {AddrMode::Mirror, CL_ADDRESS_MIRRORED_REPEAT}}});
+        constexpr LookupArray<AddrMode, cl_addressing_mode, 5> addressingModes({{{AddrMode::none, CL_ADDRESS_NONE},
+                                                                                 {AddrMode::repeat, CL_ADDRESS_REPEAT},
+                                                                                 {AddrMode::clampEdge, CL_ADDRESS_CLAMP_TO_EDGE},
+                                                                                 {AddrMode::clampBorder, CL_ADDRESS_CLAMP},
+                                                                                 {AddrMode::mirror, CL_ADDRESS_MIRRORED_REPEAT}}});
 
         using FilterMode = NEO::KernelDescriptor::InlineSampler::FilterMode;
-        constexpr LookupArray<FilterMode, cl_filter_mode, 2> filterModes({{{FilterMode::Linear, CL_FILTER_LINEAR},
-                                                                           {FilterMode::Nearest, CL_FILTER_NEAREST}}});
+        constexpr LookupArray<FilterMode, cl_filter_mode, 2> filterModes({{{FilterMode::linear, CL_FILTER_LINEAR},
+                                                                           {FilterMode::nearest, CL_FILTER_NEAREST}}});
 
         cl_int errCode = CL_SUCCESS;
         auto sampler = std::unique_ptr<Sampler>(Sampler::create(&getContext(),
@@ -1482,23 +1482,23 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
             if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
                 PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()),
-                                            PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(crossThreadData),
+                                            PatchInfoAllocationType::kernelArg, reinterpret_cast<uint64_t>(crossThreadData),
                                             static_cast<uint64_t>(argAsPtr.stateless),
-                                            PatchInfoAllocationType::IndirectObjectHeap, argAsPtr.pointerSize);
+                                            PatchInfoAllocationType::indirectObjectHeap, argAsPtr.pointerSize);
                 this->patchInfoDataList.push_back(patchInfoData);
             }
         }
 
         bool disableL3 = false;
         bool forceNonAuxMode = false;
-        bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
+        bool isAuxTranslationKernel = (AuxTranslationDirection::none != auxTranslationDirection);
         auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
         auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
         auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
         if (isAuxTranslationKernel) {
-            if (((AuxTranslationDirection::AuxToNonAux == auxTranslationDirection) && argIndex == 1) ||
-                ((AuxTranslationDirection::NonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
+            if (((AuxTranslationDirection::auxToNonAux == auxTranslationDirection) && argIndex == 1) ||
+                ((AuxTranslationDirection::nonAuxToAux == auxTranslationDirection) && argIndex == 0)) {
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
@@ -1879,7 +1879,7 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
                                                 size_t argSize,
                                                 const void *argValue) const {
     const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex];
-    if (arg.is<ArgDescriptor::ArgTImage>()) {
+    if (arg.is<ArgDescriptor::argTImage>()) {
         cl_mem mem = *(static_cast<const cl_mem *>(argValue));
         MemObj *pMemObj = nullptr;
         withCastToInternal(mem, &pMemObj);
@@ -1903,7 +1903,7 @@ void Kernel::resolveArgs() {
     bool canTransformImageTo2dArray = true;
     const auto &args = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs;
     for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
-        if (args[i].is<ArgDescriptor::ArgTSampler>()) {
+        if (args[i].is<ArgDescriptor::argTSampler>()) {
             auto sampler = castToObject<Sampler>(kernelArguments.at(i).object);
             if (sampler->isTransformable()) {
                 canTransformImageTo2dArray = true;
@@ -1934,7 +1934,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
         if (BUFFER_OBJ == kernelArguments.at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto buffer = castToObject<Buffer>(getKernelArg(i));
             if (buffer && buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation()->isCompressionEnabled()) {
-                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
+                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer});
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     const auto &argExtMeta = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[i];
@@ -1946,7 +1946,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
         if (SVM_ALLOC_OBJ == getKernelArguments().at(i).type && !arg.as<ArgDescPointer>().isPureStateful()) {
             auto svmAlloc = reinterpret_cast<GraphicsAllocation *>(const_cast<void *>(getKernelArg(i)));
             if (svmAlloc && svmAlloc->isCompressionEnabled()) {
-                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, svmAlloc});
+                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, svmAlloc});
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     const auto &argExtMeta = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[i];
@@ -1960,7 +1960,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
     if (CompressionSelector::allowStatelessCompression()) {
         for (auto gfxAllocation : kernelUnifiedMemoryGfxAllocations) {
             if (gfxAllocation->isCompressionEnabled()) {
-                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+                kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ALLOCATION_AUX_TRANSLATION,
@@ -1973,7 +1973,7 @@ std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTra
             for (auto &allocation : getContext().getSVMAllocsManager()->getSVMAllocs()->allocations) {
                 auto gfxAllocation = allocation.second->gpuAllocations.getDefaultGraphicsAllocation();
                 if (gfxAllocation->isCompressionEnabled()) {
-                    kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+                    kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation});
                     auto &context = this->program->getContext();
                     if (context.isProvidingPerformanceHints()) {
                         context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ALLOCATION_AUX_TRANSLATION,
@@ -2077,7 +2077,7 @@ void *Kernel::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t
     auto &gfxCoreHelper = this->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     NEO::BindlessHeapsHelper *bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
-    auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::GLOBAL_SSH);
+    auto ssInHeap = bindlessHeapsHelper->allocateSSInHeap(surfaceStateSize, alloc, NEO::BindlessHeapsHelper::globalSsh);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
     auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
     patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);

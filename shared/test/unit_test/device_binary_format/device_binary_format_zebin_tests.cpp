@@ -25,31 +25,31 @@ extern GFXCORE_FAMILY renderCoreFamily;
 TEST(IsDeviceBinaryFormatZebin, GivenValid32BitExecutableBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_32> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
 }
 
 TEST(IsDeviceBinaryFormatZebin, GivenValidExecutableTypeBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
 }
 
 TEST(IsDeviceBinaryFormatZebin, GivenValidRelocatableTypeBinaryThenReturnTrue) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Elf::ET_REL;
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U)));
 }
 
 TEST(IsDeviceBinaryFormatZebin, GivenInvalidBinaryThenReturnFalse) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> someElf;
-    EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&someElf, 1U)));
+    EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&someElf, 1U)));
 }
 
 TEST(UnpackSingleDeviceBinaryZebin, WhenInvalidElfThenUnpackingFails) {
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>({}, "", {}, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>({}, "", {}, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_TRUE(unpackResult.deviceBinary.empty());
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
@@ -62,8 +62,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenUnhandledElfTypeThenUnpackingFails) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> someElf;
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&someElf, 1U), "", {}, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&someElf, 1U), "", {}, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_TRUE(unpackResult.deviceBinary.empty());
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
@@ -83,8 +83,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTarget
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -103,8 +103,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTarget
     targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine);
     targetFlags.machineEntryUsesGfxCoreInsteadOfProductFamily = true;
     zebin.flags = targetFlags.packed;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -137,9 +137,9 @@ TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinar
     EXPECT_FALSE(fileExists(fileName));
     EXPECT_FALSE(fileExists(fileNameInc));
 
-    NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
     EXPECT_TRUE(fileExistsHasSize(fileName));
-    NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
     EXPECT_TRUE(fileExistsHasSize(fileNameInc));
 
     std::remove(fileName.c_str());
@@ -157,8 +157,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpacki
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -177,8 +177,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpacki
     targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine + 1);
     targetFlags.machineEntryUsesGfxCoreInsteadOfProductFamily = true;
     zebin.flags = targetFlags.packed;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -202,8 +202,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryWithUnsupportedPointerSizeThe
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -232,8 +232,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenNotRequestedThenDontValidateDeviceRevisi
     targetFlags.minHwRevisionId = 5;
     targetFlags.maxHwRevisionId = 7;
     zebin.flags = targetFlags.packed;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -247,8 +247,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenNotRequestedThenDontValidateDeviceRevisi
     EXPECT_TRUE(unpackErrors.empty());
 
     targetDevice.stepping = 8U;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -278,8 +278,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
     targetFlags.minHwRevisionId = 5;
     targetFlags.maxHwRevisionId = 7;
     zebin.flags = targetFlags.packed;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -293,8 +293,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
     unpackErrors.clear();
 
     targetDevice.stepping = 8U;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_EQ(IGFX_UNKNOWN_CORE, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(0U, unpackResult.targetDevice.stepping);
     EXPECT_EQ(4U, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -308,8 +308,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
     unpackErrors.clear();
 
     targetDevice.stepping = 5U;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -323,8 +323,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
     EXPECT_TRUE(unpackErrors.empty());
 
     targetDevice.stepping = 6U;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -338,8 +338,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
     EXPECT_TRUE(unpackErrors.empty());
 
     targetDevice.stepping = 7U;
-    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
     EXPECT_EQ(targetDevice.maxPointerSizeInBytes, unpackResult.targetDevice.maxPointerSizeInBytes);
@@ -376,9 +376,9 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
         inserted.descSize = 4;
     }
 
-    elfNoteSections.at(0).type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
-    elfNoteSections.at(1).type = NEO::Zebin::Elf::IntelGTSectionType::GfxCore;
-    elfNoteSections.at(2).type = NEO::Zebin::Elf::IntelGTSectionType::TargetMetadata;
+    elfNoteSections.at(0).type = NEO::Zebin::Elf::IntelGTSectionType::productFamily;
+    elfNoteSections.at(1).type = NEO::Zebin::Elf::IntelGTSectionType::gfxCore;
+    elfNoteSections.at(2).type = NEO::Zebin::Elf::IntelGTSectionType::targetMetadata;
 
     std::vector<uint8_t *> descDatas;
     uint8_t platformData[4u];
@@ -410,8 +410,8 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_EQ(targetDevice.productFamily, unpackResult.targetDevice.productFamily);
     EXPECT_EQ(targetDevice.coreFamily, unpackResult.targetDevice.coreFamily);
     EXPECT_EQ(targetDevice.stepping, unpackResult.targetDevice.stepping);
@@ -450,8 +450,8 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpirvAndBuildOptionsThenUnpack
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -481,8 +481,8 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinForDifferentTargetDeviceWithInterm
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_STREQ("Invalid target device. Rebuilding from intermediate representation.\n", unpackWarnings.c_str());
 
@@ -506,8 +506,8 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenMiscZebinSectionWithNameDifferentThanBu
 
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::zebin, unpackResult.format);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 

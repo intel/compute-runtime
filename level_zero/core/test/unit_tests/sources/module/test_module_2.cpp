@@ -35,7 +35,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
         modDesc.inputSize = static_cast<uint32_t>(src.size());
         modDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
         ze_result_t result = ZE_RESULT_SUCCESS;
-        module.reset(whiteboxCast(Module::create(device, &modDesc, nullptr, ModuleType::User, &result)));
+        module.reset(whiteboxCast(Module::create(device, &modDesc, nullptr, ModuleType::user, &result)));
         ASSERT_NE(nullptr, module);
     }
 
@@ -50,7 +50,7 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
 using ModuleTests = Test<DeviceFixture>;
 
 TEST_F(ModuleTests, WhenCreatingBuildOptionsThenOptionsParsedCorrectly) {
-    auto module = new ModuleImp(device, nullptr, ModuleType::User);
+    auto module = new ModuleImp(device, nullptr, ModuleType::user);
     ASSERT_NE(nullptr, module); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     std::string buildOptions;
@@ -65,7 +65,7 @@ TEST_F(ModuleTests, WhenCreatingBuildOptionsThenOptionsParsedCorrectly) {
 }
 
 TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {
-    ModuleImp module(device, nullptr, ModuleType::User);
+    ModuleImp module(device, nullptr, ModuleType::user);
 
     std::string buildOptions;
     std::string internalBuildOptions;
@@ -188,7 +188,7 @@ TEST_F(ModuleOnlineCompiled, WhenCreatingFromNativeBinaryThenGenBinaryIsReturned
     modDesc.inputSize = binarySize;
     modDesc.pInputModule = reinterpret_cast<const uint8_t *>(storage.get());
     ze_result_t initResult = ZE_RESULT_SUCCESS;
-    L0::Module *moduleFromNativeBinary = Module::create(device, &modDesc, nullptr, ModuleType::User, &initResult);
+    L0::Module *moduleFromNativeBinary = Module::create(device, &modDesc, nullptr, ModuleType::user, &initResult);
     EXPECT_NE(nullptr, moduleFromNativeBinary);
 
     delete moduleFromNativeBinary;
@@ -303,7 +303,7 @@ TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFl
 
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
-    Module module(device, nullptr, ModuleType::User);
+    Module module(device, nullptr, ModuleType::user);
 
     module.translationUnit.reset(mockTranslationUnit);
 
@@ -334,7 +334,7 @@ TEST_F(ModuleTests, givenAutoGrfFlagSetWhenCreatingModuleThenOverrideInternalFla
 
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
-    Module module(device, nullptr, ModuleType::User);
+    Module module(device, nullptr, ModuleType::user);
 
     module.translationUnit.reset(mockTranslationUnit);
 
@@ -365,7 +365,7 @@ TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternal
 
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
-    Module module(device, nullptr, ModuleType::User);
+    Module module(device, nullptr, ModuleType::user);
 
     module.translationUnit.reset(mockTranslationUnit);
 
@@ -391,7 +391,7 @@ TEST_F(ModuleTests, givenFP64EmulationDisabledWhenCreatingModuleThenEnableFP64Ge
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::Builtin));
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::builtin));
     ASSERT_NE(nullptr, module.get());
     module->initialize(&moduleDesc, device->getNEODevice());
 
@@ -411,7 +411,7 @@ TEST_F(ModuleTests, givenFP64EmulationEnabledWhenCreatingModuleThenEnableFP64Gen
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::Builtin));
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::builtin));
     ASSERT_NE(nullptr, module.get());
     module->initialize(&moduleDesc, device->getNEODevice());
 

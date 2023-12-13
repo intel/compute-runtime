@@ -39,7 +39,7 @@ HWTEST_F(CommandEncodeStatesTest, GivenCommandStreamWhenEncodeCopySamplerStateTh
     uint32_t numSamplers = 1;
     SAMPLER_STATE samplerState{};
 
-    auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto dsh = cmdContainer->getIndirectHeap(HeapType::dynamicState);
     auto usedBefore = dsh->getUsed();
     auto samplerStateOffset = EncodeStates<FamilyType>::copySamplerState(dsh, 0, numSamplers, 0, &samplerState, nullptr, pDevice->getRootDeviceEnvironment());
 
@@ -63,7 +63,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDebugVariableSetWhenCopyingSamplerStateT
 
     EXPECT_EQ(samplerState.getLowQualityFilter(), SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE);
 
-    auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto dsh = cmdContainer->getIndirectHeap(HeapType::dynamicState);
 
     auto samplerStateOffset = EncodeStates<FamilyType>::copySamplerState(dsh, 0, numSamplers, 0, &samplerState, nullptr, pDevice->getRootDeviceEnvironment());
 
@@ -89,7 +89,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
     auto expectedValue = pDevice->getBindlessHeapsHelper()->getDefaultBorderColorOffset();
 
@@ -122,7 +122,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     SAMPLER_STATE samplerState = {};
     memcpy_s(ptrOffset(memory, sizeof(SAMPLER_BORDER_COLOR_STATE)), 4096 - sizeof(SAMPLER_BORDER_COLOR_STATE), &samplerState, sizeof(SAMPLER_BORDER_COLOR_STATE));
 
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, memory, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
     auto expectedValue = pDevice->getBindlessHeapsHelper()->getAlphaBorderColorOffset();
 
@@ -157,7 +157,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
     SAMPLER_STATE samplerState = {};
     memcpy_s(ptrOffset(memory, sizeof(SAMPLER_BORDER_COLOR_STATE)), 4096 - sizeof(SAMPLER_BORDER_COLOR_STATE), &samplerState, sizeof(SAMPLER_BORDER_COLOR_STATE));
 
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
 
     auto usedBefore = dsh->getUsed();
     EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, memory, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
@@ -190,7 +190,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRe
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorRed(0.5);
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
@@ -212,7 +212,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorGreen(0.5);
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
@@ -234,7 +234,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorBlue(0.5);
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
@@ -256,7 +256,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
     samplerState.setBorderColorAlpha(0.5);
-    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+    auto dsh = pDevice->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::globalDsh);
     EXPECT_THROW(EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, &samplerState, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment()), std::exception);
 }
 
@@ -368,9 +368,9 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
 
-    cmdContainer->setHeapDirty(NEO::HeapType::DYNAMIC_STATE);
-    cmdContainer->setHeapDirty(NEO::HeapType::INDIRECT_OBJECT);
-    cmdContainer->setHeapDirty(NEO::HeapType::SURFACE_STATE);
+    cmdContainer->setHeapDirty(NEO::HeapType::dynamicState);
+    cmdContainer->setHeapDirty(NEO::HeapType::indirectObject);
+    cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
 
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
@@ -381,8 +381,8 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
 
     EncodeStateBaseAddress<FamilyType>::encode(args);
 
-    auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
-    auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::dynamicState);
+    auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::surfaceState);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -401,7 +401,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     EXPECT_EQ(sba.getSurfaceStateBaseAddress(), pCmd->getSurfaceStateBaseAddress());
 
     if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
-        auto ioh = cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+        auto ioh = cmdContainer->getIndirectHeap(NEO::HeapType::indirectObject);
 
         EXPECT_EQ(ioh->getHeapGpuBase(), pCmd->getIndirectObjectBaseAddress());
         EXPECT_EQ(sba.getIndirectObjectBaseAddress(), pCmd->getIndirectObjectBaseAddress());
@@ -420,8 +420,8 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCa
 
     EncodeStateBaseAddress<FamilyType>::encode(args);
 
-    auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
-    auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::dynamicState);
+    auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::surfaceState);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -536,7 +536,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotIniti
 
     cmdContainer->enableHeapSharing();
     cmdContainer->dirtyHeaps = 0;
-    cmdContainer->setHeapDirty(NEO::HeapType::SURFACE_STATE);
+    cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
 
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
@@ -570,7 +570,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
     constexpr uint64_t surfaceStateBaseAddress = 0x1200;
     constexpr uint32_t surfaceStateSize = 0x10;
 
-    cmdContainer->setHeapDirty(NEO::HeapType::SURFACE_STATE);
+    cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 

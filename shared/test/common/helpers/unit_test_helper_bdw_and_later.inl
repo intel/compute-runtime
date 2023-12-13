@@ -51,7 +51,7 @@ bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory(HardwareI
 }
 
 template <typename GfxFamily>
-const AuxTranslationMode UnitTestHelper<GfxFamily>::requiredAuxTranslationMode = AuxTranslationMode::Builtin;
+const AuxTranslationMode UnitTestHelper<GfxFamily>::requiredAuxTranslationMode = AuxTranslationMode::builtin;
 
 template <typename GfxFamily>
 uint32_t UnitTestHelper<GfxFamily>::getTdCtlRegisterValue() {

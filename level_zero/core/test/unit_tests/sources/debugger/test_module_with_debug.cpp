@@ -42,7 +42,7 @@ TEST_F(ModuleWithDebuggerL0Test, givenL0DebuggerWhenModuleIsCreatedThenDebugOpti
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::User));
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
     ASSERT_NE(nullptr, module.get());
     module->initialize(&moduleDesc, neoDevice);
 
@@ -92,7 +92,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(subDevice0, moduleBuildLog, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(subDevice0, moduleBuildLog, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(subDevice0);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -139,7 +139,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -186,7 +186,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenBuiltinModuleWhenInitializingModuleThenM
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::Builtin);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::builtin);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
 
     uint32_t kernelHeap = 0;
@@ -232,7 +232,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -286,7 +286,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -332,7 +332,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
@@ -366,7 +366,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
     moduleDesc.pInputModule = binary;
     moduleDesc.inputSize = 10;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
 
     uint32_t kernelHeap = 0;
@@ -411,7 +411,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinNoDebugDataWhenInitializing
     moduleDesc.pInputModule = binary;
     moduleDesc.inputSize = 10;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -442,7 +442,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
@@ -482,7 +482,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
 
     uint32_t kernelHeap = 0;
@@ -533,7 +533,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
     moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
@@ -577,7 +577,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
-    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
@@ -626,7 +626,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
     ModuleBuildLog *moduleBuildLog = nullptr;
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
 
-    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, moduleBuildLog, ModuleType::User);
+    auto module = std::make_unique<WhiteBox<::L0::Module>>(device, moduleBuildLog, ModuleType::user);
     ASSERT_NE(nullptr, module.get());
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
@@ -647,7 +647,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
-    auto moduleBuiltin = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::Builtin));
+    auto moduleBuiltin = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::builtin));
     ASSERT_NE(nullptr, moduleBuiltin.get());
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
@@ -682,7 +682,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::User));
+    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::user));
     ASSERT_NE(nullptr, module.get());
 
     NEO::Linker::RelocationInfo unresolvedRelocation;
@@ -730,7 +730,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::User));
+    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::user));
     ASSERT_NE(nullptr, module.get());
 
     constexpr uint64_t gpuAddress = 0x12345;
@@ -739,7 +739,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     NEO::Linker::RelocationInfo unresolvedRelocation;
     unresolvedRelocation.symbolName = "unresolved";
     unresolvedRelocation.offset = offset;
-    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::address;
     NEO::Linker::UnresolvedExternal unresolvedExternal;
     unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
 
@@ -763,7 +763,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     NEO::SymbolInfo symbolInfo{};
     NEO::Linker::RelocatedSymbol<SymbolInfo> relocatedSymbol{symbolInfo, gpuAddress};
 
-    auto module1 = std::make_unique<Module>(device, nullptr, ModuleType::User);
+    auto module1 = std::make_unique<Module>(device, nullptr, ModuleType::user);
 
     module1->symbols[unresolvedRelocation.symbolName] = relocatedSymbol;
 

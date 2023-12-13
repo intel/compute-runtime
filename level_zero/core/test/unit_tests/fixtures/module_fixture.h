@@ -127,7 +127,7 @@ struct ModuleFixture : public DeviceFixture {
     void setUp(bool skipCreatingModules);
     void setUp() { this->setUp(false); }
 
-    void createModuleFromMockBinary(ModuleType type = ModuleType::User);
+    void createModuleFromMockBinary(ModuleType type = ModuleType::user);
 
     void createKernel();
 

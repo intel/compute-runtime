@@ -23,7 +23,7 @@ std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
 
 bool BuiltinFunctionsLibImpl::initBuiltinsAsyncEnabled(Device *device) {
     return device->getNEODevice()->getRootDeviceEnvironment().osInterface.get() &&
-           device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::DRM &&
+           device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm &&
            device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::CSR_HW &&
            device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isInitBuiltinAsyncSupported(device->getHwInfo());
 }

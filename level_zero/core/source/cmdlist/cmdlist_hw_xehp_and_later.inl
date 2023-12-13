@@ -321,7 +321,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.isCooperative,                             // isCooperative
         isHostSignalScopeEvent,                                 // isHostScopeSignalEvent
         isKernelUsingSystemAllocation,                          // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
+        cmdListType == CommandListType::typeImmediate,          // isKernelDispatchedFromImmediateCmdList
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport,                                   // dcFlushEnable
         this->heaplessModeEnabled,                              // isHeaplessModeEnabled
@@ -354,12 +354,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
-            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::Walker);
+            addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::walker);
         }
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper()) {
-        auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
@@ -466,14 +466,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &n
                                                                      neoDevice.getRootDeviceEnvironment(),
                                                                      0,
                                                                      0,
-                                                                     !(cmdListType == CommandListType::TYPE_IMMEDIATE),
+                                                                     !(cmdListType == CommandListType::typeImmediate),
                                                                      !(this->isFlushTaskSubmissionEnabled || this->dispatchCmdListBatchBufferAsPrimary));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(rootDeviceEnvironment,
-                                                                   !(cmdListType == CommandListType::TYPE_IMMEDIATE),
+                                                                   !(cmdListType == CommandListType::typeImmediate),
                                                                    false);
 }
 

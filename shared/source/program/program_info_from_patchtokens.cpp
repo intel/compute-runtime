@@ -76,18 +76,18 @@ void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPa
         dst.linkerInput->setPointerSize((src.header->GPUPointerSizeInBytes == 4) ? LinkerInput::Traits::PointerSize::Ptr32bit : LinkerInput::Traits::PointerSize::Ptr64bit);
 
         if (false == src.programScopeTokens.allocateConstantMemorySurface.empty()) {
-            dst.linkerInput->addSymbol(globalConstantsSymbolName.data(), {0U, 8U, SegmentType::GlobalConstants});
+            dst.linkerInput->addSymbol(globalConstantsSymbolName.data(), {0U, 8U, SegmentType::globalConstants});
         }
         if (false == src.programScopeTokens.allocateGlobalMemorySurface.empty()) {
-            dst.linkerInput->addSymbol(globalVariablesSymbolName.data(), {0U, 8U, SegmentType::GlobalVariables});
+            dst.linkerInput->addSymbol(globalVariablesSymbolName.data(), {0U, 8U, SegmentType::globalVariables});
         }
     }
 
     for (const auto &globalConstantPointerToken : src.programScopeTokens.constantPointer) {
         NEO::LinkerInput::RelocationInfo relocInfo = {};
-        relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+        relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
         relocInfo.offset = readMisalignedUint64(&globalConstantPointerToken->ConstantPointerOffset);
-        relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
         relocInfo.symbolName = std::string(globalConstantsSymbolName);
         if (iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER != globalConstantPointerToken->BufferType) {
             UNRECOVERABLE_IF(iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER != globalConstantPointerToken->BufferType);
@@ -99,9 +99,9 @@ void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPa
 
     for (const auto &globalVariablePointerToken : src.programScopeTokens.globalPointer) {
         NEO::LinkerInput::RelocationInfo relocInfo = {};
-        relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+        relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
         relocInfo.offset = readMisalignedUint64(&globalVariablePointerToken->GlobalPointerOffset);
-        relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
         relocInfo.symbolName = std::string(globalVariablesSymbolName);
         if (iOpenCL::PROGRAM_SCOPE_GLOBAL_BUFFER != globalVariablePointerToken->BufferType) {
             UNRECOVERABLE_IF(iOpenCL::PROGRAM_SCOPE_CONSTANT_BUFFER != globalVariablePointerToken->BufferType);

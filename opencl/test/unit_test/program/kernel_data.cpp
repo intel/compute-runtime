@@ -180,7 +180,7 @@ TEST_F(KernelDataTest, GivenSamplerArgumentWhenBuildingThenProgramIsCorrect) {
 
     buildAndDecode();
 
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::ArgTSampler>());
+    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::argTSampler>());
     EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->getArgDescriptorAt(3).as<ArgDescSampler>().bindful);
 }
 
@@ -197,7 +197,7 @@ TEST_F(KernelDataTest, GivenAcceleratorArgumentWhenBuildingThenProgramIsCorrect)
 
     buildAndDecode();
 
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::ArgTSampler>());
+    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::argTSampler>());
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->getArgDescriptorAt(3).as<ArgDescSampler>().bindful);
 }
@@ -405,7 +405,7 @@ TEST_P(DataParameterTest, GivenTokenTypeWhenBuildingThenProgramIsCorrect) {
     if (pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size() > 0) {
         EXPECT_EQ(dataParameterToken.ArgumentNumber + 1, pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size());
         const auto &arg = pKernelInfo->getArgDescriptorAt(dataParameterToken.ArgumentNumber);
-        if (arg.is<ArgDescriptor::ArgTPointer>()) {
+        if (arg.is<ArgDescriptor::argTPointer>()) {
             const auto &argAsPtr = arg.as<ArgDescPointer>();
             EXPECT_EQ(GetParam() == DATA_PARAMETER_BUFFER_STATEFUL, argAsPtr.isPureStateful());
         }

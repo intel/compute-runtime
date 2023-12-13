@@ -17,21 +17,21 @@ namespace L0 {
 inline NEO::ImageType convertType(const ze_image_type_t type) {
     switch (type) {
     case ZE_IMAGE_TYPE_2D:
-        return NEO::ImageType::Image2D;
+        return NEO::ImageType::image2D;
     case ZE_IMAGE_TYPE_3D:
-        return NEO::ImageType::Image3D;
+        return NEO::ImageType::image3D;
     case ZE_IMAGE_TYPE_2DARRAY:
-        return NEO::ImageType::Image2DArray;
+        return NEO::ImageType::image2DArray;
     case ZE_IMAGE_TYPE_1D:
-        return NEO::ImageType::Image1D;
+        return NEO::ImageType::image1D;
     case ZE_IMAGE_TYPE_1DARRAY:
-        return NEO::ImageType::Image1DArray;
+        return NEO::ImageType::image1DArray;
     case ZE_IMAGE_TYPE_BUFFER:
-        return NEO::ImageType::Image1DBuffer;
+        return NEO::ImageType::image1DBuffer;
     default:
         break;
     }
-    return NEO::ImageType::Invalid;
+    return NEO::ImageType::invalid;
 }
 
 inline NEO::ImageDescriptor convertDescriptor(const ze_image_desc_t &imageDesc) {

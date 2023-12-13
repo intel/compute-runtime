@@ -153,12 +153,12 @@ struct TimestampPacketHelper {
     static void programSemaphoreForAuxTranslation(LinearStream &cmdStream,
                                                   const TimestampPacketDependencies *timestampPacketDependencies,
                                                   const RootDeviceEnvironment &rootDeviceEnvironment) {
-        auto &container = (auxTranslationDirection == AuxTranslationDirection::AuxToNonAux)
+        auto &container = (auxTranslationDirection == AuxTranslationDirection::auxToNonAux)
                               ? timestampPacketDependencies->auxToNonAuxNodes
                               : timestampPacketDependencies->nonAuxToAuxNodes;
 
         // cache flush after NDR, before NonAuxToAux
-        if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && timestampPacketDependencies->cacheFlushNodes.peekNodes().size() > 0) {
+        if (auxTranslationDirection == AuxTranslationDirection::nonAuxToAux && timestampPacketDependencies->cacheFlushNodes.peekNodes().size() > 0) {
             UNRECOVERABLE_IF(timestampPacketDependencies->cacheFlushNodes.peekNodes().size() != 1);
             auto cacheFlushTimestampPacketGpuAddress = getContextEndGpuAddress(*timestampPacketDependencies->cacheFlushNodes.peekNodes()[0]);
 
@@ -178,7 +178,7 @@ struct TimestampPacketHelper {
     static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(size_t count, const RootDeviceEnvironment &rootDeviceEnvironment, bool cacheFlushForBcsRequired) {
         size_t size = count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
 
-        if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && cacheFlushForBcsRequired) {
+        if (auxTranslationDirection == AuxTranslationDirection::nonAuxToAux && cacheFlushForBcsRequired) {
             size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
         }
 

@@ -60,13 +60,13 @@ inline constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Pro
 
 inline constexpr ConstStringRef intelGTNoteOwnerName = "IntelGT";
 enum IntelGTSectionType : uint32_t {
-    ProductFamily = 1,
-    GfxCore = 2,
-    TargetMetadata = 3,
-    ZebinVersion = 4,
+    productFamily = 1,
+    gfxCore = 2,
+    targetMetadata = 3,
+    zebinVersion = 4,
     vISAAbiVersion = 5, // for debugger only
-    ProductConfig = 6,
-    LastSupported = ProductConfig
+    productConfig = 6,
+    lastSupported = productConfig
 };
 struct IntelGTNote {
     IntelGTSectionType type;

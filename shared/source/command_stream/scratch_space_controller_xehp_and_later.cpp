@@ -125,7 +125,7 @@ size_t ScratchSpaceControllerXeHPAndLater::getOffsetToSurfaceState(uint32_t requ
 }
 
 void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
-    if (heapType == IndirectHeap::Type::SURFACE_STATE) {
+    if (heapType == IndirectHeap::Type::surfaceState) {
         indirectHeap->getSpace(getOffsetToSurfaceState(stateSlotsCount));
     }
 }
@@ -141,7 +141,7 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
     bool scratchSurfaceDirty = false;
     prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
-        bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (privateScratchSpaceSupported ? 2 : 1), scratchAllocation, BindlessHeapsHelper::SPECIAL_SSH);
+        bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (privateScratchSpaceSupported ? 2 : 1), scratchAllocation, BindlessHeapsHelper::specialSsh);
         programSurfaceStateAtPtr(bindlessSS.ssPtr);
         vfeStateDirty = true;
     }

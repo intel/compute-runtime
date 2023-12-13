@@ -116,11 +116,11 @@ HWTEST_F(ClGfxCoreHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThen
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
-    ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::ArgTValue);
+    ArgDescriptor argDescriptorValue(ArgDescriptor::ArgType::argTValue);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorValue);
     EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 
-    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
+    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::argTPointer);
     argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
     EXPECT_TRUE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));

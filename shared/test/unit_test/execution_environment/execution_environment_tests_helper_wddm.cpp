@@ -14,7 +14,7 @@ using namespace NEO;
 void ExecutionEnvironmentSortTests::setupOsSpecifcEnvironment(uint32_t rootDeviceIndex) {
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
     auto osInterface = std::make_unique<OSInterface>();
-    auto driverModel = std::make_unique<MockDriverModel>(DriverModelType::WDDM);
+    auto driverModel = std::make_unique<MockDriverModel>(DriverModelType::wddm);
     driverModel->pciBusInfo = inputBusInfos[rootDeviceIndex];
     osInterface->setDriverModel(std::move(driverModel));
     rootDeviceEnvironment.osInterface = std::move(osInterface);

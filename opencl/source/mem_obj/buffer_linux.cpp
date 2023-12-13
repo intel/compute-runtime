@@ -10,8 +10,8 @@
 
 namespace NEO {
 bool Buffer::validateHandleType(const MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem) {
-    if (memoryProperties.handleType == static_cast<uint64_t>(UnifiedSharingHandleType::LinuxFd)) {
-        extMem.type = UnifiedSharingHandleType::LinuxFd;
+    if (memoryProperties.handleType == static_cast<uint64_t>(UnifiedSharingHandleType::linuxFd)) {
+        extMem.type = UnifiedSharingHandleType::linuxFd;
         return true;
     }
     return false;

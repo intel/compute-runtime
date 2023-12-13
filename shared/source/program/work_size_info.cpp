@@ -33,7 +33,7 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
 
 void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
     for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
-        if (arg.is<ArgDescriptor::ArgTImage>()) {
+        if (arg.is<ArgDescriptor::argTImage>()) {
             imgUsed = true;
             yTiledSurfaces = true;
             return;

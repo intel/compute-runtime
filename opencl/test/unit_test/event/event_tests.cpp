@@ -464,9 +464,9 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), true, 4096, AllocationType::commandBuffer, false, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -516,9 +516,9 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -551,9 +551,9 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -564,7 +564,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
     kernelInfo.addToPrintfStringsMap(0, testString);
 
@@ -603,9 +603,9 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -616,7 +616,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
     kernelInfo.addToPrintfStringsMap(0, testString);
 
@@ -652,9 +652,9 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -665,7 +665,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
     kernelInfo.addToPrintfStringsMap(0, testString);
 
@@ -702,7 +702,7 @@ TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelI
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::map, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -723,7 +723,7 @@ TEST_F(InternalsEventTest, GivenMapOperationNonZeroCopyBufferWhenSubmittingComma
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::map, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -962,7 +962,7 @@ TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event->setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, *pCmdQ)));
+    event->setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::map, buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -988,7 +988,7 @@ TEST_F(InternalsEventTest, GivenUnMapOperationWhenSubmittingCommandsThenTaskLeve
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::unmap, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -1011,7 +1011,7 @@ TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledThenItRelease
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::unmap, *buffer, size, offset, false, *pCmdQ)));
     EXPECT_EQ(currentBufferRefInternal + 1, buffer->getRefInternalCount());
 
     event.submitCommand(false);
@@ -1029,7 +1029,7 @@ TEST_F(InternalsEventTest, GivenUnMapOperationNonZeroCopyBufferWhenSubmittingCom
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::unmap, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -1193,9 +1193,9 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
     MockKernelWithInternals kernel(*pClDevice);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    pCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
-    pCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
-    pCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
@@ -1263,7 +1263,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThe
 
     MemObjSizeArray size = {{4, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, *pCmdQ));
+    auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::map, buffer, size, offset, false, *pCmdQ));
     EXPECT_EQ(0, executionStamp);
     EXPECT_EQ(-1, csr->flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
@@ -1282,7 +1282,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThe
     buffer.dataTransferedStamp = -1;
     buffer.swapCopyDirection();
 
-    auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, size, offset, false, *pCmdQ));
+    auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::unmap, buffer, size, offset, false, *pCmdQ));
     EXPECT_EQ(0, executionStamp);
     EXPECT_EQ(-1, csr->flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
@@ -1762,9 +1762,9 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    pCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    pCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    pCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();

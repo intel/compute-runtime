@@ -58,7 +58,7 @@ struct DebuggerAubFixture : AUBFixtureL0 {
         moduleDesc.inputSize = size;
         moduleDesc.pBuildFlags = "";
 
-        module = new ModuleImp(device, nullptr, ModuleType::User);
+        module = new ModuleImp(device, nullptr, ModuleType::user);
         ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         result = module->initialize(&moduleDesc, device->getNEODevice());
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -150,7 +150,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, instructionBaseAddress)),
                              &instructionHeapBaseAddress, sizeof(instructionHeapBaseAddress));
 
-    auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::surfaceState);
     if (commandListSurfaceHeapAllocation) {
         auto surfaceStateBaseAddress = commandListSurfaceHeapAllocation->getGraphicsAllocation()->getGpuAddress();
         surfaceStateBaseAddress = gmmHelper->canonize(surfaceStateBaseAddress);
@@ -161,7 +161,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
                                  &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
     }
 
-    auto commandListDynamicHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto commandListDynamicHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::dynamicState);
     if (commandListDynamicHeapAllocation) {
         auto dynamicStateBaseAddress = commandListDynamicHeapAllocation->getGraphicsAllocation()->getGpuAddress();
         dynamicStateBaseAddress = gmmHelper->canonize(dynamicStateBaseAddress);

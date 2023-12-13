@@ -189,7 +189,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         return nullptr;
     }
 
-    sharedSurfaceInfo.imgInfo.imgDesc.imageType = ImageType::Image2D;
+    sharedSurfaceInfo.imgInfo.imgDesc.imageType = ImageType::image2D;
 
     bool supportOcl21 = context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features;
 

@@ -19,7 +19,7 @@ CommandStreamReceiver *createCommandStreamReceiver(bool withAubDump,
                                                    uint32_t rootDeviceIndex,
                                                    const DeviceBitfield deviceBitfield) {
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
-    if (rootDeviceEnvironment->osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
+    if (rootDeviceEnvironment->osInterface->getDriverModel()->getDriverModelType() == DriverModelType::drm) {
         return createDrmCommandStreamReceiver<GfxFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
     } else {
         return createWddmCommandStreamReceiver<GfxFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);

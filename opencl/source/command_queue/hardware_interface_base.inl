@@ -247,17 +247,17 @@ void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueu
 
         dshSize = HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(multiDispatchInfo);
 
-        commandQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, dshSize, dsh);
+        commandQueue.allocateHeapMemory(IndirectHeap::Type::dynamicState, dshSize, dsh);
         dsh->getSpace(colorCalcSize);
 
-        commandQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, sshSize, ssh);
-        commandQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT,
+        commandQueue.allocateHeapMemory(IndirectHeap::Type::surfaceState, sshSize, ssh);
+        commandQueue.allocateHeapMemory(IndirectHeap::Type::indirectObject,
                                         HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(multiDispatchInfo), ioh);
 
     } else {
-        dsh = &getIndirectHeap<GfxFamily, IndirectHeap::Type::DYNAMIC_STATE>(commandQueue, multiDispatchInfo);
-        ioh = &getIndirectHeap<GfxFamily, IndirectHeap::Type::INDIRECT_OBJECT>(commandQueue, multiDispatchInfo);
-        ssh = &getIndirectHeap<GfxFamily, IndirectHeap::Type::SURFACE_STATE>(commandQueue, multiDispatchInfo);
+        dsh = &getIndirectHeap<GfxFamily, IndirectHeap::Type::dynamicState>(commandQueue, multiDispatchInfo);
+        ioh = &getIndirectHeap<GfxFamily, IndirectHeap::Type::indirectObject>(commandQueue, multiDispatchInfo);
+        ssh = &getIndirectHeap<GfxFamily, IndirectHeap::Type::surfaceState>(commandQueue, multiDispatchInfo);
     }
 }
 

@@ -274,7 +274,7 @@ size_t writeIntelGTNote(ArrayRef<uint8_t> dst, NEO::Zebin::Elf::IntelGTSectionTy
 size_t writeIntelGTVersionNote(ArrayRef<uint8_t> dst, NEO::ConstStringRef version) {
     std::vector<uint8_t> desc(version.length() + 1U, 0U);
     std::memcpy(desc.data(), version.begin(), version.length());
-    return writeIntelGTNote(dst, NEO::Zebin::Elf::ZebinVersion, {desc.data(), desc.size()});
+    return writeIntelGTNote(dst, NEO::Zebin::Elf::zebinVersion, {desc.data(), desc.size()});
 }
 
 std::vector<uint8_t> createIntelGTNoteSection(NEO::ConstStringRef version, AOT::PRODUCT_CONFIG productConfig) {
@@ -284,7 +284,7 @@ std::vector<uint8_t> createIntelGTNoteSection(NEO::ConstStringRef version, AOT::
     noteOffset += writeIntelGTVersionNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotesSection.data(), noteOffset), intelGTNotesSection.size() - noteOffset), version);
 
     writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotesSection.data(), noteOffset), intelGTNotesSection.size() - noteOffset),
-                     NEO::Zebin::Elf::IntelGTSectionType::ProductConfig,
+                     NEO::Zebin::Elf::IntelGTSectionType::productConfig,
                      ArrayRef<const uint8_t>::fromAny(&productConfig, 1U));
     return intelGTNotesSection;
 }
@@ -294,15 +294,15 @@ std::vector<uint8_t> createIntelGTNoteSection(PRODUCT_FAMILY productFamily, GFXC
     std::vector<uint8_t> intelGTNotes(noteSectionSize, 0);
     size_t noteOffset = 0U;
     noteOffset += writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
-                                   NEO::Zebin::Elf::ProductFamily,
+                                   NEO::Zebin::Elf::productFamily,
                                    ArrayRef<const uint8_t>::fromAny(&productFamily, 1U));
 
     noteOffset += writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
-                                   NEO::Zebin::Elf::GfxCore,
+                                   NEO::Zebin::Elf::gfxCore,
                                    ArrayRef<const uint8_t>::fromAny(&coreFamily, 1U));
 
     noteOffset += writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
-                                   NEO::Zebin::Elf::TargetMetadata,
+                                   NEO::Zebin::Elf::targetMetadata,
                                    ArrayRef<const uint8_t>::fromAny(&flags.packed, 1U));
 
     writeIntelGTVersionNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),

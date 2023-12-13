@@ -17,7 +17,7 @@ namespace NEO {
 static RegisterEmbeddedResource registerVmeSrc(
     createBuiltinResourceName(
         EBuiltInOps::vmeBlockMotionEstimateIntel,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
         .c_str(),
     std::string(
 #include "opencl/source/built_ins/kernels/vme_block_motion_estimate_intel.builtin_kernel"
@@ -26,7 +26,7 @@ static RegisterEmbeddedResource registerVmeSrc(
 static RegisterEmbeddedResource registerVmeAdvancedSrc(
     createBuiltinResourceName(
         EBuiltInOps::vmeBlockAdvancedMotionEstimateCheckIntel,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
         .c_str(),
     std::string(
 #include "opencl/source/built_ins/kernels/vme_block_advanced_motion_estimate_check_intel.builtin_kernel"
@@ -35,7 +35,7 @@ static RegisterEmbeddedResource registerVmeAdvancedSrc(
 static RegisterEmbeddedResource registerVmeAdvancedBidirectionalSrc(
     createBuiltinResourceName(
         EBuiltInOps::vmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
-        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
         .c_str(),
     std::string(
 #include "opencl/source/built_ins/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.builtin_kernel"

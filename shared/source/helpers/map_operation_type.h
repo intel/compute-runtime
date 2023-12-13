@@ -9,9 +9,9 @@
 
 namespace NEO {
 
-enum MapOperationType {
-    MAP,
-    UNMAP
+enum class MapOperationType {
+    map,
+    unmap
 };
 
 } // namespace NEO

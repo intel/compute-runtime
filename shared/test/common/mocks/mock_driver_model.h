@@ -19,7 +19,7 @@ namespace NEO {
 
 class MockDriverModel : public NEO::DriverModel {
   public:
-    MockDriverModel() : MockDriverModel(NEO::DriverModelType::UNKNOWN) {}
+    MockDriverModel() : MockDriverModel(NEO::DriverModelType::unknown) {}
     MockDriverModel(DriverModelType driverModelType) : DriverModel(driverModelType) {}
 
     void setGmmInputArgs(void *args) override {}
@@ -54,14 +54,14 @@ class MockDriverModel : public NEO::DriverModel {
 class MockDriverModelWDDM : public MockDriverModel {
   public:
     MockDriverModelWDDM() : MockDriverModel() {
-        driverModelType = DriverModelType::WDDM;
+        driverModelType = DriverModelType::wddm;
     }
 };
 
 class MockDriverModelDRM : public MockDriverModel {
   public:
     MockDriverModelDRM() : MockDriverModel() {
-        driverModelType = DriverModelType::DRM;
+        driverModelType = DriverModelType::drm;
     }
 };
 } // namespace NEO

@@ -24,7 +24,7 @@ bool OSInterface::gpuIdleImplicitFlush = true;
 bool OSInterface::requiresSupportForWddmTrimNotification = false;
 
 bool OSInterface::isDebugAttachAvailable() const {
-    if (driverModel && driverModel->getDriverModelType() == DriverModelType::DRM) {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::drm) {
         return driverModel->as<Drm>()->isDebugAttachAvailable();
     }
     return false;

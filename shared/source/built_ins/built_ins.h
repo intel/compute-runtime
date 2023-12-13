@@ -38,23 +38,23 @@ inline constexpr CompilerOptions::ConstConcatenation<> mediaKernelsBuildOptions{
 
 struct BuiltinCode {
     enum class ECodeType {
-        Any = 0,          // for requesting "any" code available - priorities as below
-        Binary = 1,       // ISA - highest priority
-        Intermediate = 2, // SPIR/LLVM - medium prioroty
-        Source = 3,       // OCL C - lowest priority
-        COUNT,
-        INVALID
+        any = 0,          // for requesting "any" code available - priorities as below
+        binary = 1,       // ISA - highest priority
+        intermediate = 2, // SPIR/LLVM - medium prioroty
+        source = 3,       // OCL C - lowest priority
+        count,
+        invalid
     };
 
     static const char *getExtension(BuiltinCode::ECodeType ct) {
         switch (ct) {
         default:
             return "";
-        case BuiltinCode::ECodeType::Binary:
+        case BuiltinCode::ECodeType::binary:
             return ".bin";
-        case BuiltinCode::ECodeType::Intermediate:
+        case BuiltinCode::ECodeType::intermediate:
             return ".bc";
-        case BuiltinCode::ECodeType::Source:
+        case BuiltinCode::ECodeType::source:
             return ".cl";
         }
     }

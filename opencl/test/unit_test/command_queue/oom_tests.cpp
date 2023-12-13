@@ -53,7 +53,7 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
         }
 
         if (oomSetting.oomISH) {
-            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, oomSize);
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
 
             // IndirectHeap may be larger than requested so grab what wasnt requested
             ish.getSpace(ish.getAvailableSpace() - oomSize);
@@ -72,7 +72,7 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
 
 HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -88,7 +88,7 @@ HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
 
 HWTEST_P(OOMCommandQueueTest, WhenEnqueingMarkerThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -111,7 +111,7 @@ HWTEST_P(OOMCommandQueueTest, WhenEnqueingMarkerThenMaxAvailableSpaceIsNotExceed
 
 HWTEST_P(OOMCommandQueueTest, WhenEnqueingBarrierThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 

@@ -72,7 +72,7 @@ struct KernelDescriptor {
         AddressingMode imageAddressingMode = Bindful;
         AddressingMode samplerAddressingMode = Bindful;
 
-        DeviceBinaryFormat binaryFormat = DeviceBinaryFormat::Unknown;
+        DeviceBinaryFormat binaryFormat = DeviceBinaryFormat::unknown;
 
         uint8_t workgroupWalkOrder[3] = {0, 1, 2};
         uint8_t workgroupDimensionsOrder[3] = {0, 1, 2};
@@ -128,7 +128,7 @@ struct KernelDescriptor {
         static_assert(sizeof(KernelAttributes::flags) == sizeof(KernelAttributes::flags.packed), "");
 
         bool usesStringMap() const {
-            if (binaryFormat == DeviceBinaryFormat::Patchtokens) {
+            if (binaryFormat == DeviceBinaryFormat::patchtokens) {
                 return flags.usesStringMapForPrintf || flags.requiresImplicitArgs;
             }
             return false;
@@ -196,15 +196,15 @@ struct KernelDescriptor {
 
     struct InlineSampler {
         enum class AddrMode : uint8_t {
-            None,
-            Repeat,
-            ClampEdge,
-            ClampBorder,
-            Mirror
+            none,
+            repeat,
+            clampEdge,
+            clampBorder,
+            mirror
         };
         enum class FilterMode : uint8_t {
-            Nearest,
-            Linear
+            nearest,
+            linear
         };
         static constexpr size_t borderColorStateSize = 64U;
         static constexpr size_t samplerStateSize = 16U;

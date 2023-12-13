@@ -790,25 +790,25 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
     KernelDescriptor kernelDescriptor;
 
     {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.simdSize = 8u;
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false));
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true));
     }
     {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.simdSize = 1u;
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false));
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true));
     }
     {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
         kernelDescriptor.kernelAttributes.simdSize = 1u;
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false));
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true));
     }
     {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
+        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
         kernelDescriptor.kernelAttributes.simdSize = 8u;
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false));
         EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true));

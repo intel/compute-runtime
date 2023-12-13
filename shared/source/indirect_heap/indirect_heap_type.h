@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 
 namespace NEO {
 enum IndirectHeapType {
-    DYNAMIC_STATE = 0,
-    INDIRECT_OBJECT,
-    SURFACE_STATE,
-    NUM_TYPES
+    dynamicState = 0,
+    indirectObject,
+    surfaceState,
+    numTypes
 };
 } // namespace NEO

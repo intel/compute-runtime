@@ -126,13 +126,13 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     }
 
     if (blitCmd.getDestinationCompressible() == MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE &&
-        AuxTranslationDirection::AuxToNonAux != blitProperites.auxTranslationDirection) {
+        AuxTranslationDirection::auxToNonAux != blitProperites.auxTranslationDirection) {
         blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
     } else {
         blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
     }
 
-    DEBUG_BREAK_IF((AuxTranslationDirection::None != blitProperites.auxTranslationDirection) &&
+    DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperites.auxTranslationDirection) &&
                    (dstAllocation != srcAllocation || !dstAllocation->isCompressionEnabled()));
 }
 

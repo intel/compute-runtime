@@ -137,7 +137,7 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreat
               executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase());
 
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getGlobalHeapsBase(),
-              executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::SPECIAL_SSH)->getGraphicsAllocation()->getGpuAddress());
+              executionEnvironment->rootDeviceEnvironments[0]->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::specialSsh)->getGraphicsAllocation()->getGpuAddress());
 
     executionEnvironment->rootDeviceEnvironments[0]->bindlessHeapsHelper.reset();
 }

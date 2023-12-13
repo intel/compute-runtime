@@ -49,7 +49,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
     std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
         using BuiltInCodeType = NEO::BuiltinCode::ECodeType;
 
-        auto builtInCodeType = NEO::debugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::Intermediate : BuiltInCodeType::Binary;
+        auto builtInCodeType = NEO::debugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::intermediate : BuiltInCodeType::binary;
         auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
 
         [[maybe_unused]] ze_result_t res;
@@ -57,10 +57,10 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         L0::Module *module;
         ze_module_handle_t moduleHandle;
         ze_module_desc_t moduleDesc = {};
-        moduleDesc.format = builtInCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.format = builtInCode.type == BuiltInCodeType::binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
         moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtInCode.resource[0]);
         moduleDesc.inputSize = builtInCode.resource.size();
-        res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
+        res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::builtin);
         UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
         module = Module::fromHandle(moduleHandle);
 

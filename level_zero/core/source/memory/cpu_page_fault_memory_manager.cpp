@@ -61,7 +61,7 @@ void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaul
 namespace L0 {
 void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData) {
     bool migration = true;
-    if (pageFaultData.domain == NEO::PageFaultManager::AllocationDomain::Gpu) {
+    if (pageFaultData.domain == NEO::PageFaultManager::AllocationDomain::gpu) {
         L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
         NEO::SvmAllocationData *allocData = deviceImp->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(allocPtr);
 
@@ -87,7 +87,7 @@ void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler
         }
     }
     if (migration) {
-        pageFaultData.domain = NEO::PageFaultManager::AllocationDomain::Cpu;
+        pageFaultData.domain = NEO::PageFaultManager::AllocationDomain::cpu;
     }
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
 }

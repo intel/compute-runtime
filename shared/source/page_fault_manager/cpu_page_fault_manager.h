@@ -33,9 +33,9 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     void removeAllocation(void *ptr);
 
     enum class AllocationDomain {
-        None,
-        Cpu,
-        Gpu,
+        none,
+        cpu,
+        gpu,
     };
 
     struct PageFaultData {

@@ -881,7 +881,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
         bufferSize,
         this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
 
-    PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::Default, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::GUCStartMessage);
+    PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::defaultType, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::gucStartMessage);
     this->flatBatchBufferHelper->setPatchInfoData(patchInfoData);
 }
 

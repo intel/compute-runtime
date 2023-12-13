@@ -219,9 +219,9 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
 
     StackVec<BuiltInCodeType, 2> supportedTypes{};
     if (!NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
-        supportedTypes.push_back(BuiltInCodeType::Binary);
+        supportedTypes.push_back(BuiltInCodeType::binary);
     }
-    supportedTypes.push_back(BuiltInCodeType::Intermediate);
+    supportedTypes.push_back(BuiltInCodeType::intermediate);
 
     NEO::BuiltinCode builtinCode{};
 
@@ -246,10 +246,10 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
         std::unique_ptr<Module> module;
         ze_module_handle_t moduleHandle;
         ze_module_desc_t moduleDesc = {};
-        moduleDesc.format = builtinCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.format = builtinCode.type == BuiltInCodeType::binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
         moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtinCode.resource[0]);
         moduleDesc.inputSize = builtinCode.resource.size();
-        res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
+        res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::builtin);
         UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
 
         module.reset(Module::fromHandle(moduleHandle));

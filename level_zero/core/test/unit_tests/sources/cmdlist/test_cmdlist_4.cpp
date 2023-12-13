@@ -1330,7 +1330,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         auto &commandContainer = commandList->getCmdContainer();
-        auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::SURFACE_STATE)->getMaxAvailableSpace();
+        auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::surfaceState)->getMaxAvailableSpace();
         EXPECT_EQ(NEO::HeapSize::defaultHeapSize, sshSize);
     }
     {
@@ -1340,7 +1340,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         auto &commandContainer = commandList->getCmdContainer();
-        auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::SURFACE_STATE)->getMaxAvailableSpace();
+        auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::surfaceState)->getMaxAvailableSpace();
         EXPECT_EQ(NEO::EncodeStates<FamilyType>::getSshHeapSize(), sshSize);
     }
 }
@@ -1464,9 +1464,9 @@ HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
     sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
 
-    auto csrSshHeap = &ultCsr.getIndirectHeap(HeapType::SURFACE_STATE, MemoryConstants::pageSize64k);
+    auto csrSshHeap = &ultCsr.getIndirectHeap(HeapType::surfaceState, MemoryConstants::pageSize64k);
     auto &commandContainer = commandList->getCmdContainer();
-    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::indirectObject);
     auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioh->getHeapGpuBase());
 
     sbaCmd = genCmdCast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);

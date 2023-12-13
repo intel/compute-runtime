@@ -118,14 +118,14 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
         blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
     }
 
-    if (AuxTranslationDirection::AuxToNonAux == blitProperties.auxTranslationDirection) {
+    if (AuxTranslationDirection::auxToNonAux == blitProperties.auxTranslationDirection) {
         blitCmd.setSpecialModeofOperation(XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
         UNRECOVERABLE_IF(blitCmd.getSourceTiling() != blitCmd.getDestinationTiling());
-    } else if (AuxTranslationDirection::NonAuxToAux == blitProperties.auxTranslationDirection) {
+    } else if (AuxTranslationDirection::nonAuxToAux == blitProperties.auxTranslationDirection) {
         blitCmd.setSourceCompressionEnable(XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
     }
 
-    DEBUG_BREAK_IF((AuxTranslationDirection::None != blitProperties.auxTranslationDirection) &&
+    DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
                    (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);

@@ -31,7 +31,7 @@ CommandList::~CommandList() {
         cmdQImmediate->destroy();
     }
     removeDeallocationContainerData();
-    if (this->cmdListType == CommandListType::TYPE_REGULAR || !this->isFlushTaskSubmissionEnabled) {
+    if (this->cmdListType == CommandListType::typeRegular || !this->isFlushTaskSubmissionEnabled) {
         removeHostPtrAllocations();
     }
     removeMemoryPrefetchAllocations();

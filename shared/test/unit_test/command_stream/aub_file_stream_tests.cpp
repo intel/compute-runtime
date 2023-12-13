@@ -812,8 +812,8 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchI
 
     aubCsr->stream = mockAubFileStream.get();
 
-    PatchInfoData patchInfoData[2] = {{0xAAAAAAAA, 128u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 256u, PatchInfoAllocationType::Default},
-                                      {0xBBBBBBBB, 128u, PatchInfoAllocationType::Default, 0xDDDDDDDD, 256u, PatchInfoAllocationType::Default}};
+    PatchInfoData patchInfoData[2] = {{0xAAAAAAAA, 128u, PatchInfoAllocationType::defaultType, 0xBBBBBBBB, 256u, PatchInfoAllocationType::defaultType},
+                                      {0xBBBBBBBB, 128u, PatchInfoAllocationType::defaultType, 0xDDDDDDDD, 256u, PatchInfoAllocationType::defaultType}};
 
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData[0]));
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData[1]));
@@ -874,7 +874,7 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSource
 
     aubCsr->stream = mockAubFileStream.get();
 
-    PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 0u, PatchInfoAllocationType::Default};
+    PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::defaultType, 0xBBBBBBBB, 0u, PatchInfoAllocationType::defaultType};
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
 
     bool result = aubCsr->addPatchInfoComments();
@@ -915,7 +915,7 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
 
     aubCsr->stream = mockAubFileStream.get();
 
-    PatchInfoData patchInfoData = {0xAAAAAAAA, 0u, PatchInfoAllocationType::Default, 0x0, 0u, PatchInfoAllocationType::Default};
+    PatchInfoData patchInfoData = {0xAAAAAAAA, 0u, PatchInfoAllocationType::defaultType, 0x0, 0u, PatchInfoAllocationType::defaultType};
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
 
     bool result = aubCsr->addPatchInfoComments();

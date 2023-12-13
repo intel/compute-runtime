@@ -150,7 +150,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
         auto cmd = FamilyType::cmdInitStoreDataImm;
         cmd.setDataDword0(1);
 
-        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, reinterpret_cast<void *>(&cmd), nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Sdi);
+        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, reinterpret_cast<void *>(&cmd), nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::sdi);
         patchCmd.patch(2);
 
         EXPECT_EQ(3u, cmd.getDataDword0());
@@ -160,7 +160,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
         auto cmd = FamilyType::cmdInitMiSemaphoreWait;
         cmd.setSemaphoreDataDword(1);
 
-        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
+        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::semaphore);
         patchCmd.patch(2);
         EXPECT_EQ(1u, cmd.getSemaphoreDataDword());
 
@@ -168,7 +168,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
         patchCmd.patch(3);
         EXPECT_EQ(3u, cmd.getSemaphoreDataDword());
 
-        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmdInternal(nullptr, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Semaphore);
+        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmdInternal(nullptr, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::semaphore);
         patchCmdInternal.patch(3);
 
         EXPECT_EQ(4u, cmd.getSemaphoreDataDword());
@@ -182,7 +182,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
 
         inOrderExecInfo->reset();
         inOrderExecInfo->addCounterValue(1);
-        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd1, &cmd2, 1, InOrderPatchCommandHelpers::PatchCmdType::Lri64b);
+        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd1, &cmd2, 1, InOrderPatchCommandHelpers::PatchCmdType::lri64b);
         patchCmd.patch(3);
         EXPECT_EQ(1u, cmd1.getDataDword());
         EXPECT_EQ(1u, cmd2.getDataDword());
@@ -192,14 +192,14 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
         EXPECT_EQ(3u, cmd1.getDataDword());
         EXPECT_EQ(0u, cmd2.getDataDword());
 
-        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmdInternal(nullptr, &cmd1, &cmd2, 1, InOrderPatchCommandHelpers::PatchCmdType::Lri64b);
+        InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmdInternal(nullptr, &cmd1, &cmd2, 1, InOrderPatchCommandHelpers::PatchCmdType::lri64b);
         patchCmdInternal.patch(2);
 
         EXPECT_EQ(3u, cmd1.getDataDword());
         EXPECT_EQ(0u, cmd2.getDataDword());
     }
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::None);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, nullptr, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::none);
     EXPECT_ANY_THROW(patchCmd.patch(1));
 }
 
@@ -214,7 +214,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingWalkerThenSetCorre
 
     auto cmd = FamilyType::cmdInitGpgpuWalker;
 
-    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::Walker);
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::walker);
 
     if constexpr (FamilyType::walkerPostSyncSupport) {
         patchCmd.patch(2);

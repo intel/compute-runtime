@@ -418,7 +418,7 @@ TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvail
     ExecutionEnvironment executionEnvironment{};
 
     std::unique_ptr<OSInterface> osInterface = std::make_unique<OSInterface>();
-    osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::UNKNOWN));
+    osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::unknown));
 
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
@@ -427,7 +427,7 @@ TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvail
 
     EXPECT_EQ(1u, isDriverAvailableCounter);
 
-    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::UNKNOWN));
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::unknown));
 }
 
 TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {

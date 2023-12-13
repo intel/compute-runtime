@@ -63,7 +63,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
     std::unique_ptr<KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo(kernel);
 
-    auto auxTranslationMode = AuxTranslationMode::None;
+    auto auxTranslationMode = AuxTranslationMode::none;
 
     kernel->updateAuxTranslationRequired();
     if (kernel->isAuxTranslationRequired()) {
@@ -75,11 +75,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
         multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     }
 
-    if (AuxTranslationMode::Builtin == auxTranslationMode) {
+    if (AuxTranslationMode::builtin == auxTranslationMode) {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::auxTranslation, getClDevice());
         builtInLock.takeOwnership(builder, this->context);
 
-        dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::AuxToNonAux);
+        dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::auxToNonAux);
     }
 
     if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
@@ -111,11 +111,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
         }
     }
 
-    if (AuxTranslationMode::Builtin == auxTranslationMode) {
-        dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::NonAuxToAux);
+    if (AuxTranslationMode::builtin == auxTranslationMode) {
+        dispatchAuxTranslationBuiltin(multiDispatchInfo, AuxTranslationDirection::nonAuxToAux);
     }
 
-    if (AuxTranslationMode::Blit == auxTranslationMode) {
+    if (AuxTranslationMode::blit == auxTranslationMode) {
         setupBlitAuxTranslation(multiDispatchInfo);
     }
 
@@ -197,7 +197,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     const bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel &&
+        canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::gpuKernel &&
                                                                    productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled(), this->taskCount, computeCommandStreamReceiver);
         if (false == clearDependenciesForSubCapture) {
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
@@ -367,7 +367,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
     if (!blockQueue) {
 
-        if (enqueueProperties.operation == EnqueueProperties::Operation::GpuKernel) {
+        if (enqueueProperties.operation == EnqueueProperties::Operation::gpuKernel) {
             csrDeps.makeResident(computeCommandStreamReceiver);
 
             completionStamp = enqueueNonBlocked(
@@ -402,7 +402,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 nullptr,
                 relaxedOrderingEnabled);
         } else {
-            UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::EnqueueWithoutSubmission);
+            UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::enqueueWithoutSubmission);
 
             auto maxTaskCountCurrentRootDevice = this->taskCount;
 
@@ -616,17 +616,17 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
     auto bufferIndex = 0;
     for (const auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
         GraphicsAllocation *allocation = nullptr;
-        if (kernelObj.type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+        if (kernelObj.type == KernelObjForAuxTranslation::Type::memObj) {
             const auto buffer = static_cast<Buffer *>(kernelObj.object);
             allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
         } else {
-            DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+            DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::gfxAlloc);
             allocation = static_cast<GraphicsAllocation *>(kernelObj.object);
         }
         {
             // Aux to NonAux
             blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(
-                AuxTranslationDirection::AuxToNonAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
+                AuxTranslationDirection::auxToNonAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
             const auto auxToNonAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
         }
@@ -634,7 +634,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
         {
             // NonAux to Aux
             blitPropertiesContainer[bufferIndex + numKernelObjs] = BlitProperties::constructPropertiesForAuxTranslation(
-                AuxTranslationDirection::NonAuxToAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
+                AuxTranslationDirection::nonAuxToAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
             const auto nonAuxToAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
         }
@@ -859,8 +859,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     IndirectHeap *dsh = nullptr;
     IndirectHeap *ioh = nullptr;
 
-    dsh = &getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
-    ioh = &getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u);
+    dsh = &getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
+    ioh = &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u);
 
     auto allocNeedsFlushDC = false;
     if (!device->isFullRangeSvm()) {
@@ -959,7 +959,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         commandStreamStart,
         dsh,
         ioh,
-        &getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+        &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
         taskLevel,
         dispatchFlags,
         getDevice());
@@ -1029,7 +1029,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         storeTimestampPackets = (timestampPacketContainer != nullptr);
     }
 
-    if (enqueueProperties.operation != EnqueueProperties::Operation::GpuKernel) {
+    if (enqueueProperties.operation != EnqueueProperties::Operation::gpuKernel) {
         command = std::make_unique<CommandWithoutKernel>(*this, blockedCommandsData);
     } else {
         // store task data in event
@@ -1102,7 +1102,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
-    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && commandStream == nullptr) {
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::blit) && commandStream == nullptr) {
         flushGpgpuCsr = false;
     } else {
         csrDeps.makeResident(getGpgpuCommandStreamReceiver());
@@ -1124,7 +1124,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             surface->makeResident(getGpgpuCommandStreamReceiver());
         }
         bool stateCacheInvalidationNeeded = false;
-        if (getGpgpuCommandStreamReceiver().getDcFlushSupport() && enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
+        if (getGpgpuCommandStreamReceiver().getDcFlushSupport() && enqueueProperties.operation == EnqueueProperties::Operation::blit) {
             stateCacheInvalidationNeeded = true;
         }
 
@@ -1148,7 +1148,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       // guardCommandBufferWithPipeControl
             false,                                                               // GSBA32BitRequired
             false,                                                               // lowPriority
-            (enqueueProperties.operation == EnqueueProperties::Operation::Blit), // implicitFlush
+            (enqueueProperties.operation == EnqueueProperties::Operation::blit), // implicitFlush
             getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
             false,                                                               // epilogueRequired
             false,                                                               // usePerDssBackedBuffer
@@ -1175,9 +1175,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         completionStamp = getGpgpuCommandStreamReceiver().flushTask(
             *commandStream,
             commandStreamStart,
-            &getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-            &getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-            &getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+            &getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+            &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+            &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
             taskLevel,
             dispatchFlags,
             getDevice());
@@ -1188,7 +1188,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         }
     }
 
-    if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
+    if (enqueueProperties.operation == EnqueueProperties::Operation::blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
         if (newTaskCount > CompletionStamp::notReady) {
@@ -1552,7 +1552,7 @@ template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo) {
     return multiDispatchInfo.getKernelObjsForAuxTranslation() &&
            (multiDispatchInfo.getKernelObjsForAuxTranslation()->size() > 0) &&
-           (GfxCoreHelperHw<GfxFamily>::getAuxTranslationMode(device->getHardwareInfo()) == AuxTranslationMode::Blit);
+           (GfxCoreHelperHw<GfxFamily>::getAuxTranslationMode(device->getHardwareInfo()) == AuxTranslationMode::blit);
 }
 
 template <typename GfxFamily>

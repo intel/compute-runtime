@@ -46,7 +46,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             nullptr,                       // multiRootDeviceEventSync
             blitDirection,                 // blitDirection
             {},                            // csrDependencies
-            AuxTranslationDirection::None, // auxTranslationDirection
+            AuxTranslationDirection::none, // auxTranslationDirection
             memObjAllocation,              // dstAllocation
             hostAllocation,                // srcAllocation
             clearColorAllocation,          // clearColorAllocation
@@ -70,7 +70,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             nullptr,                       // multiRootDeviceEventSync
             blitDirection,                 // blitDirection
             {},                            // csrDependencies
-            AuxTranslationDirection::None, // auxTranslationDirection
+            AuxTranslationDirection::none, // auxTranslationDirection
             hostAllocation,                // dstAllocation
             memObjAllocation,              // srcAllocation
             clearColorAllocation,          // clearColorAllocation
@@ -102,7 +102,7 @@ BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *ds
         nullptr,                                         // multiRootDeviceEventSync
         BlitterConstants::BlitDirection::bufferToBuffer, // blitDirection
         {},                                              // csrDependencies
-        AuxTranslationDirection::None,                   // auxTranslationDirection
+        AuxTranslationDirection::none,                   // auxTranslationDirection
         dstAllocation,                                   // dstAllocation
         srcAllocation,                                   // srcAllocation
         clearColorAllocation,                            // clearColorAllocation

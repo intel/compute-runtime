@@ -458,8 +458,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchi
     auto buffer2 = createBuffer(1, true);
 
     KernelObjsForAuxTranslation kernelObjects;
-    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer0.get()});
-    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer2.get()});
+    kernelObjects.insert({KernelObjForAuxTranslation::Type::memObj, buffer0.get()});
+    kernelObjects.insert({KernelObjForAuxTranslation::Type::memObj, buffer2.get()});
 
     size_t numBuffersToEstimate = 2;
     size_t dependencySize = numBuffersToEstimate * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
@@ -496,8 +496,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredC
     auto buffer2 = createBuffer(1, true);
 
     KernelObjsForAuxTranslation kernelObjects;
-    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer0.get()});
-    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer2.get()});
+    kernelObjects.insert({KernelObjForAuxTranslation::Type::memObj, buffer0.get()});
+    kernelObjects.insert({KernelObjForAuxTranslation::Type::memObj, buffer2.get()});
 
     size_t numBuffersToEstimate = 2;
     size_t dependencySize = numBuffersToEstimate * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();

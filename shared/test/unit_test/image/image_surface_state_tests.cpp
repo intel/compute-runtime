@@ -27,7 +27,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     imageInfo.imgDesc.imageWidth = 7u;
     imageInfo.imgDesc.numMipLevels = 8u;
     imageInfo.imgDesc.numSamples = 9u;
-    imageInfo.imgDesc.imageType = ImageType::Image2DArray;
+    imageInfo.imgDesc.imageType = ImageType::image2DArray;
     SurfaceFormatInfo surfaceFormatInfo;
     surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
@@ -119,7 +119,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsEnabledThenArrayFlag
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    imageInfo.imgDesc.imageType = ImageType::Image2D;
+    imageInfo.imgDesc.imageType = ImageType::image2D;
     imageInfo.imgDesc.imageDepth = 1;
     imageInfo.imgDesc.imageArraySize = 1;
     imageInfo.qPitch = 0;
@@ -143,7 +143,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsDisabledThenArrayFla
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    imageInfo.imgDesc.imageType = ImageType::Image2D;
+    imageInfo.imgDesc.imageType = ImageType::image2D;
     imageInfo.imgDesc.imageDepth = 1;
     imageInfo.imgDesc.imageArraySize = 1;
     imageInfo.qPitch = 0;
@@ -167,7 +167,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsEnabledT
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    imageInfo.imgDesc.imageType = ImageType::Image2DArray;
+    imageInfo.imgDesc.imageType = ImageType::image2DArray;
     imageInfo.imgDesc.imageDepth = 1;
     imageInfo.imgDesc.imageArraySize = 1;
     imageInfo.qPitch = 0;
@@ -191,7 +191,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabled
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    imageInfo.imgDesc.imageType = ImageType::Image2DArray;
+    imageInfo.imgDesc.imageType = ImageType::image2DArray;
     imageInfo.imgDesc.imageDepth = 1;
     imageInfo.imgDesc.imageArraySize = 1;
     imageInfo.qPitch = 0;
@@ -215,7 +215,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlag
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    imageInfo.imgDesc.imageType = ImageType::Image1D;
+    imageInfo.imgDesc.imageType = ImageType::image1D;
     imageInfo.imgDesc.imageDepth = 1;
     imageInfo.imgDesc.imageArraySize = 1;
     imageInfo.qPitch = 0;

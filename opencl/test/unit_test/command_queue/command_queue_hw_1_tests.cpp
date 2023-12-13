@@ -102,7 +102,7 @@ HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationTh
     MultiDispatchInfo multiDispatchInfo;
     HardwareInfo *hwInfo = pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw(context, pClDevice, nullptr);
 
@@ -114,7 +114,7 @@ HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationTh
     EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
-    kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, &buffer});
+    kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, &buffer});
     multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     EXPECT_TRUE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 
@@ -122,7 +122,7 @@ HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationTh
     EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 
     hwInfo->capabilityTable.blitterOperationsSupported = true;
-    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+    debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
     EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 }
 
@@ -138,7 +138,7 @@ HWTEST_F(CommandQueueHwTest, WhenEnqueuingBlockedMapUnmapOperationThenVirtualEve
     MemObjOffsetArray offset = {{0, 0, 0}};
     pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
                                           0,
-                                          MAP,
+                                          MapOperationType::map,
                                           &buffer,
                                           size, offset, false,
                                           eventBuilder);
@@ -213,7 +213,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedMapBufferCallWhenMemObjectIsPassedToCom
     MemObjOffsetArray offset = {{0, 0, 0}};
     pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
                                           0,
-                                          MAP,
+                                          MapOperationType::map,
                                           &buffer,
                                           size, offset, false,
                                           eventBuilder);
@@ -239,7 +239,7 @@ HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingEnqueueBlockedMapUnmap
     MemObjOffsetArray offset = {{0, 0, 0}};
     pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
                                           0,
-                                          MAP,
+                                          MapOperationType::map,
                                           &buffer,
                                           size, offset, false,
                                           eventBuilder);
@@ -267,7 +267,7 @@ HWTEST_F(CommandQueueHwTest, WhenAddMapUnmapToWaitlistEventsThenDependenciesAreN
     MemObjOffsetArray offset = {{0, 0, 0}};
     pHwQ->enqueueBlockedMapUnmapOperation(&eventWaitList,
                                           1,
-                                          MAP,
+                                          MapOperationType::map,
                                           buffer,
                                           size, offset, false,
                                           eventBuilder);
@@ -291,7 +291,7 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenT
     MemObjOffsetArray offset = {{0, 0, 0}};
     mockCmdQueueHw.enqueueBlockedMapUnmapOperation(nullptr,
                                                    0,
-                                                   MAP,
+                                                   MapOperationType::map,
                                                    buffer,
                                                    size, offset, false,
                                                    eventBuilder);
@@ -313,7 +313,7 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedOnNon
     MemObjOffsetArray offset = {{0, 0, 0}};
     mockCmdQueueHw.enqueueBlockedMapUnmapOperation(nullptr,
                                                    0,
-                                                   MAP,
+                                                   MapOperationType::map,
                                                    buffer,
                                                    size, offset, false,
                                                    eventBuilder);
@@ -336,7 +336,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThen
     MemObjOffsetArray offset = {{0, 0, 0}};
     pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
                                           0,
-                                          MAP,
+                                          MapOperationType::map,
                                           buffer,
                                           size, offset, false,
                                           eventBuilder);
@@ -368,7 +368,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThen
     MemObjOffsetArray offset = {{0, 0, 0}};
     pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
                                           0,
-                                          MAP,
+                                          MapOperationType::map,
                                           buffer,
                                           size, offset, false,
                                           eventBuilder);
@@ -515,9 +515,9 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubm
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 4096u);
 
     uint32_t defaultSshUse = UnitTestHelper<FamilyType>::getDefaultSshUsage();
 
@@ -538,9 +538,9 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedComma
 
     cl_event blockedEvent = &userEvent;
 
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 4096u);
 
     auto spaceToUse = 4u;
 
@@ -570,9 +570,9 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
 
     cl_event blockedEvent = &userEvent;
 
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 4096u);
 
     auto iohBase = ioh.getCpuBase();
     auto dshBase = dsh.getCpuBase();

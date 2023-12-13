@@ -34,7 +34,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     cl_uint arrayIndex = 0u;
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc.imageType = ImageType::Image2D;
+    imgInfo.imgDesc.imageType = ImageType::image2D;
 
     D3DTexture2dDesc textureDesc = {};
     sharingFcns->getTexture2dDesc(&textureDesc, d3dTexture);
@@ -136,7 +136,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     void *sharedHandle = nullptr;
     McsSurfaceInfo mcsSurfaceInfo = {};
     ImageInfo imgInfo = {};
-    imgInfo.imgDesc.imageType = ImageType::Image3D;
+    imgInfo.imgDesc.imageType = ImageType::image3D;
 
     D3DTexture3dDesc textureDesc = {};
     sharingFcns->getTexture3dDesc(&textureDesc, d3dTexture);

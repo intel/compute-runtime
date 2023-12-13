@@ -104,11 +104,11 @@ void ModuleImmutableDataFixture::createModuleFromMockBinary(uint32_t perHwThread
 
     module = std::make_unique<MockModule>(device,
                                           moduleBuildLog,
-                                          ModuleType::User,
+                                          ModuleType::user,
                                           perHwThreadPrivateMemorySize,
                                           mockKernelImmData);
 
-    module->type = isInternal ? ModuleType::Builtin : ModuleType::User;
+    module->type = isInternal ? ModuleType::builtin : ModuleType::user;
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = module->initialize(&moduleDesc, device->getNEODevice());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -202,7 +202,7 @@ void MultiDeviceModuleFixture::createModuleFromMockBinary(uint32_t rootDeviceInd
 
     modules[rootDeviceIndex].reset(Module::create(device,
                                                   &moduleDesc,
-                                                  moduleBuildLog, ModuleType::User, &result));
+                                                  moduleBuildLog, ModuleType::user, &result));
 }
 
 void MultiDeviceModuleFixture::createKernel(uint32_t rootDeviceIndex) {
@@ -242,7 +242,7 @@ ModuleWithZebinFixture::MockImmutableData::~MockImmutableData() {
     delete kernelDescriptor;
 }
 
-ModuleWithZebinFixture::MockModuleWithZebin::MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::User) {
+ModuleWithZebinFixture::MockModuleWithZebin::MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::user) {
     isZebinBinary = true;
 }
 void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {

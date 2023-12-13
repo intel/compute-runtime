@@ -206,9 +206,9 @@ HWTEST_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventRes
     MockEvent event;
     event.isCompleted = MockEvent::STATE_SIGNALED;
 
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     auto result = commandList->appendEventReset(event.toHandle());
-    commandList->cmdListType = CommandList::CommandListType::TYPE_REGULAR;
+    commandList->cmdListType = CommandList::CommandListType::typeRegular;
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_EQ(MockEvent::HOST_CACHING_DISABLED, event.isCompleted);
@@ -239,9 +239,9 @@ HWTEST_F(CommandListAppendEventReset, givenRegularCommandListWhenHostCachingDisa
 }
 
 HWTEST_F(CommandListAppendEventReset, givenRegulatCommandListWhenHostCachingDisabledThenEnableAfterCpuReset) {
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->appendEventReset(event->toHandle());
-    commandList->cmdListType = CommandList::CommandListType::TYPE_REGULAR;
+    commandList->cmdListType = CommandList::CommandListType::typeRegular;
 
     EXPECT_FALSE(event->isAlreadyCompleted());
     event->reset();

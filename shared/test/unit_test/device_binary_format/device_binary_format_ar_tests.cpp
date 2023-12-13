@@ -22,19 +22,19 @@
 
 TEST(IsDeviceBinaryFormatAr, GivenValidBinaryThenReturnTrue) {
     auto emptyArchive = ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size());
-    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Archive>(emptyArchive));
+    EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::archive>(emptyArchive));
 }
 
 TEST(IsDeviceBinaryFormatAr, GivenInvalidBinaryThenReturnTrue) {
     const uint8_t binary[] = "not_ar";
-    EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Archive>(binary));
+    EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::archive>(binary));
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenFailedToDecodeArThenUnpackingFails) {
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>({}, "", {}, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>({}, "", {}, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_TRUE(unpackResult.deviceBinary.empty());
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
@@ -47,8 +47,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToFindMatchingBinariesThenUnpackingFa
     auto emptyArchive = ArrayRef<const uint8_t>::fromAny(NEO::Ar::arMagic.begin(), NEO::Ar::arMagic.size());
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(emptyArchive, "", {}, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpackResult.format);
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(emptyArchive, "", {}, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpackResult.format);
     EXPECT_TRUE(unpackResult.deviceBinary.empty());
     EXPECT_TRUE(unpackResult.debugData.empty());
     EXPECT_TRUE(unpackResult.intermediateRepresentation.empty());
@@ -85,7 +85,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -96,7 +96,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
     ASSERT_EQ(4U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[1].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[1].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTargetDeviceBinaryIsSet) {
@@ -127,7 +127,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTar
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_NE(0U, unpacked.packedTargetDeviceBinary.size());
 }
 
@@ -159,7 +159,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch)
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -170,7 +170,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch)
     ASSERT_EQ(4U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[3].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[3].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBestMatchWithProductFamilyIsntFullMatchThenChooseBestMatchButEmitWarnings) {
@@ -191,7 +191,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBestMatchWithProductFamilyIsntFullMatchThen
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_FALSE(unpackWarnings.empty());
     EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
@@ -203,7 +203,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBestMatchWithProductFamilyIsntFullMatchThen
     ASSERT_EQ(3U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[1].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[1].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenBestMatchWithProductConfigIsntFullMatchThenChooseBestMatchButEmitWarnings) {
@@ -224,7 +224,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBestMatchWithProductConfigIsntFullMatchThen
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_FALSE(unpackWarnings.empty());
     EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
@@ -236,7 +236,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBestMatchWithProductConfigIsntFullMatchThen
     ASSERT_EQ(3U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[1].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[1].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTryUnpackAnyUsable) {
@@ -271,7 +271,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty());
 
@@ -282,7 +282,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
     ASSERT_EQ(5U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[3].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[3].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackBestMatchWithProductFamilyThenTryUnpackingAnyUsable) {
@@ -306,7 +306,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackBestMatchWithProductFamilyThe
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_FALSE(unpackWarnings.empty());
     EXPECT_STREQ("Couldn't find perfectly matched binary in AR, using best usable", unpackWarnings.c_str());
@@ -318,7 +318,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackBestMatchWithProductFamilyThe
     ASSERT_EQ(4U, decodedAr.files.size());
     EXPECT_EQ(unpacked.deviceBinary.begin(), decodedAr.files[1].fileData.begin());
     EXPECT_EQ(unpacked.deviceBinary.size(), decodedAr.files[1].fileData.size());
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::patchtokens, unpacked.format);
 }
 
 TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductFamilyAvailableThenUseIr) {
@@ -343,7 +343,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductFamil
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -380,7 +380,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfi
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -411,7 +411,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButGenericIrFileAvail
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -441,7 +441,7 @@ TEST(UnpackSingleDeviceBinaryAr, GivenInvalidGenericIrFileWhenDeviceBinaryNotMat
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -475,7 +475,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryMatchedButHasNoIrAndGenericIrFi
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -524,7 +524,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryMatchedAndHasIrAndGenericIrFile
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -565,7 +565,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenOnlyIrIsAvailableThenUseOneFromBestMatchedB
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
     EXPECT_TRUE(unpackErrors.empty()) << unpackErrors;
     EXPECT_TRUE(unpackWarnings.empty()) << unpackWarnings;
 
@@ -604,8 +604,8 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     auto arData = encoder.encode();
     std::string unpackErrors;
     std::string unpackWarnings;
-    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
-    EXPECT_EQ(NEO::DeviceBinaryFormat::Unknown, unpacked.format);
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::unknown, unpacked.format);
     EXPECT_TRUE(unpacked.deviceBinary.empty());
     EXPECT_TRUE(unpacked.debugData.empty());
     EXPECT_TRUE(unpacked.intermediateRepresentation.empty());

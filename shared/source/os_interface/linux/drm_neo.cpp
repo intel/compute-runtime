@@ -55,7 +55,7 @@
 namespace NEO {
 
 Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
-    : DriverModel(DriverModelType::DRM),
+    : DriverModel(DriverModelType::drm),
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);

@@ -42,7 +42,7 @@ struct UnifiedSharingContextFixture : ::testing::Test {
 
     std::unique_ptr<MockContext> createValidContext() {
         const cl_context_properties contextProperties[] = {
-            static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle), 0,
+            static_cast<cl_context_properties>(UnifiedSharingContextType::deviceHandle), 0,
             CL_CONTEXT_INTEROP_USER_SYNC, 1,
             0};
         return createContext(contextProperties);

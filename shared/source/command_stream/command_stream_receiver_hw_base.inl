@@ -414,15 +414,15 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
         if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
-                                                                  PatchInfoAllocationType::TagAddress,
+                                                                  PatchInfoAllocationType::tagAddress,
                                                                   commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
                                                                   commandStreamTask.getUsed() - 2 * sizeof(uint64_t),
-                                                                  PatchInfoAllocationType::Default));
+                                                                  PatchInfoAllocationType::defaultType));
             flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
-                                                                  PatchInfoAllocationType::TagValue,
+                                                                  PatchInfoAllocationType::tagValue,
                                                                   commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
                                                                   commandStreamTask.getUsed() - sizeof(uint64_t),
-                                                                  PatchInfoAllocationType::Default));
+                                                                  PatchInfoAllocationType::defaultType));
         }
     }
     this->latestSentTaskCount = taskCount + 1;
@@ -1070,11 +1070,11 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     if (imagesSupported) {
         UNRECOVERABLE_IF(!dsh);
-        PatchInfoData dynamicStatePatchInfo = {dsh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+        PatchInfoData dynamicStatePatchInfo = {dsh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::dynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::defaultType};
         flatBatchBufferHelper->setPatchInfoData(dynamicStatePatchInfo);
     }
-    PatchInfoData generalStatePatchInfo = {generalStateBase, 0u, PatchInfoAllocationType::GeneralStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
-    PatchInfoData surfaceStatePatchInfo = {ssh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData generalStatePatchInfo = {generalStateBase, 0u, PatchInfoAllocationType::generalStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::defaultType};
+    PatchInfoData surfaceStatePatchInfo = {ssh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::surfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::defaultType};
 
     flatBatchBufferHelper->setPatchInfoData(generalStatePatchInfo);
     flatBatchBufferHelper->setPatchInfoData(surfaceStatePatchInfo);

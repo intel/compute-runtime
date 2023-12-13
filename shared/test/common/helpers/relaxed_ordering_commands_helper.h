@@ -196,11 +196,11 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
 
     auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
     if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::Less)) {
-        if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::NoopOnResult2Clear)) {
+        if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::noopOnResult2Clear)) {
             return false;
         }
     } else {
-        if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::NoopOnResult2Set)) {
+        if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::noopOnResult2Set)) {
             return false;
         }
     }
@@ -211,7 +211,7 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
     }
 
     predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++bbStartCmd);
-    if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::Disable)) {
+    if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::disable)) {
         return false;
     }
 

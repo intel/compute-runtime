@@ -833,7 +833,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernelSshSize = kernel->getSurfaceStateHeapDataSize();
-    auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
     auto sshHeapSize = ssh->getMaxAvailableSpace();
     auto initialAllocation = ssh->getGraphicsAllocation();
     EXPECT_NE(nullptr, initialAllocation);
@@ -1231,9 +1231,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     ASSERT_EQ(commandListControl->getCmdContainer().getCommandStream()->getUsed(), commandList->getCmdContainer().getCommandStream()->getUsed());
     ASSERT_EQ(commandListControl->getCmdContainer().slmSizeRef(), commandList->getCmdContainer().slmSizeRef());
 
-    for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < NEO::HeapType::numTypes; i++) {
         auto heapType = static_cast<NEO::HeapType>(i);
-        if (NEO::HeapType::DYNAMIC_STATE == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
+        if (NEO::HeapType::dynamicState == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
             ASSERT_EQ(nullptr, commandListControl->getCmdContainer().getIndirectHeapAllocation(heapType));
             ASSERT_EQ(nullptr, commandListControl->getCmdContainer().getIndirectHeap(heapType));
         } else {
@@ -1394,7 +1394,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     createKernel();
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -1410,7 +1410,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     createKernel();
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = false;
-    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);

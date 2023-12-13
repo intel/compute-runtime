@@ -11,7 +11,7 @@
 
 namespace NEO {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel) {
-    if (driverModel == DriverModelType::DRM) {
+    if (driverModel == DriverModelType::drm) {
         return DrmMemoryManager::create(executionEnvironment);
     } else {
         return std::make_unique<WddmMemoryManager>(executionEnvironment);

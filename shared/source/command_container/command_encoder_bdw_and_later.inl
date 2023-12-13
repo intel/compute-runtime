@@ -107,7 +107,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (bindingTableStateCount > 0u) {
             auto ssh = args.surfaceStateHeap;
             if (ssh == nullptr) {
-                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             }
             bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                 *ssh,
@@ -123,7 +123,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto ssh = args.surfaceStateHeap;
             if (ssh == nullptr) {
                 container.prepareBindfulSsh();
-                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             }
             uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
             if (globalBindlessSsh) {
@@ -154,10 +154,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
         auto dsHeap = args.dynamicStateHeap;
         if (dsHeap == nullptr) {
-            dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+            dsHeap = container.getIndirectHeap(HeapType::dynamicState);
             auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor, container.getNumIddPerBlock());
             if (dsHeap->getAvailableSpace() <= dshSizeRequired) {
-                dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dsHeap->getMaxAvailableSpace(), NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
+                dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, dsHeap->getMaxAvailableSpace(), NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
             }
         }
         UNRECOVERABLE_IF(!dsHeap);
@@ -184,14 +184,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     uint64_t offsetThreadData = 0u;
     {
-        auto heapIndirect = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
+        auto heapIndirect = container.getIndirectHeap(HeapType::indirectObject);
         UNRECOVERABLE_IF(!(heapIndirect));
         heapIndirect->align(DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         void *ptr = nullptr;
         if (args.isKernelDispatchedFromImmediateCmdList) {
-            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::INDIRECT_OBJECT, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
+            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);
         } else {
-            ptr = container.getHeapSpaceAllowGrow(HeapType::INDIRECT_OBJECT, iohRequiredSize);
+            ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
         }
         UNRECOVERABLE_IF(!(ptr));
         offsetThreadData = heapIndirect->getHeapGpuStartOffset() + static_cast<uint64_t>(heapIndirect->getUsed() - sizeThreadData);
@@ -329,7 +329,7 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
     if (childDsh != nullptr) {
         heapBase = childDsh->getCpuBase();
     } else {
-        heapBase = container.getIndirectHeap(HeapType::DYNAMIC_STATE)->getCpuBase();
+        heapBase = container.getIndirectHeap(HeapType::dynamicState)->getCpuBase();
     }
 
     auto mediaStateFlush = container.getCommandStream()->getSpaceForCmd<MEDIA_STATE_FLUSH>();
@@ -452,9 +452,9 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 
     auto gmmHelper = device.getGmmHelper();
 
-    auto dsh = args.container->isHeapDirty(HeapType::DYNAMIC_STATE) ? args.container->getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr;
-    auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
-    auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
+    auto dsh = args.container->isHeapDirty(HeapType::dynamicState) ? args.container->getIndirectHeap(HeapType::dynamicState) : nullptr;
+    auto ioh = args.container->isHeapDirty(HeapType::indirectObject) ? args.container->getIndirectHeap(HeapType::indirectObject) : nullptr;
+    auto ssh = args.container->isHeapDirty(HeapType::surfaceState) ? args.container->getIndirectHeap(HeapType::surfaceState) : nullptr;
     auto isDebuggerActive = device.getDebugger() != nullptr;
     uint64_t globalHeapsBase = 0;
     uint64_t bindlessSurfStateBase = 0;

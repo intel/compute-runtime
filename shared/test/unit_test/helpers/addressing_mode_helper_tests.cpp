@@ -13,7 +13,7 @@
 using namespace NEO;
 
 TEST(AddressingModeHelperTest, GivenArgIsNotPointerWhenCheckingForStatefulAccessThenReturnFalse) {
-    auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTValue);
+    auto argDescriptor = ArgDescriptor(ArgDescriptor::argTValue);
 
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
@@ -22,7 +22,7 @@ TEST(AddressingModeHelperTest, GivenArgIsNotPointerWhenCheckingForStatefulAccess
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithInvalidStatefulOffsetWhenCheckingForStatefulAccessThenReturnFalse) {
-    auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
     argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
     argDescriptor.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
 
@@ -33,7 +33,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithInvalidStatefulOffsetWhenChe
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindfulOffsetWhenCheckingForStatefulAccessThenReturnTrue) {
-    auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
     argDescriptor.as<ArgDescPointer>().bindful = 0x40;
     argDescriptor.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
 
@@ -44,7 +44,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindfulOffsetWhenChecki
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindlessOffsetWhenCheckingForStatefulAccessThenReturnTrue) {
-    auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
     argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
     argDescriptor.as<ArgDescPointer>().bindless = 0x40;
 
@@ -55,7 +55,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindlessOffsetWhenCheck
 }
 
 TEST(AddressingModeHelperTest, GivenLastArgIsPointerWithValidBindlessOffsetWhenIgnoreLastArgAndCheckingForStatefulAccessThenReturnFalse) {
-    auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
     argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
     argDescriptor.as<ArgDescPointer>().bindless = 0x40;
 

@@ -23,7 +23,7 @@
 
 namespace NEO {
 template <>
-bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
+bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(const ArrayRef<const uint8_t> binary) {
     return Zebin::isZebin<Elf::EI_CLASS_64>(binary) || Zebin::isZebin<Elf::EI_CLASS_32>(binary);
 };
 
@@ -90,26 +90,26 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
     }
     for (const auto &intelGTNote : intelGTNotes) {
         switch (intelGTNote.type) {
-        case Elf::IntelGTSectionType::ProductFamily: {
+        case Elf::IntelGTSectionType::productFamily: {
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto productFamilyData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
             productFamily = static_cast<PRODUCT_FAMILY>(*productFamilyData);
             break;
         }
-        case Elf::IntelGTSectionType::GfxCore: {
+        case Elf::IntelGTSectionType::gfxCore: {
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto gfxCoreData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
             gfxCore = static_cast<GFXCORE_FAMILY>(*gfxCoreData);
             break;
         }
-        case Elf::IntelGTSectionType::TargetMetadata: {
+        case Elf::IntelGTSectionType::targetMetadata: {
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto targetMetadataPacked = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
             targetMetadata.packed = static_cast<uint32_t>(*targetMetadataPacked);
             generatorType = static_cast<GeneratorType>(targetMetadata.generatorId);
             break;
         }
-        case Elf::IntelGTSectionType::ZebinVersion: {
+        case Elf::IntelGTSectionType::zebinVersion: {
             auto zebinVersionData = reinterpret_cast<const char *>(intelGTNote.data.begin());
             ConstStringRef versionString(zebinVersionData);
             ZeInfo::Types::Version receivedZeInfoVersion{0, 0};
@@ -123,7 +123,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             }
             break;
         }
-        case Elf::IntelGTSectionType::ProductConfig: {
+        case Elf::IntelGTSectionType::productConfig: {
             if (false == targetDevice.applyValidationWorkaround) {
                 DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
                 auto productConfigData = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
@@ -136,7 +136,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             break;
         }
         default:
-            outWarning.append("DeviceBinaryFormat::Zebin : Unrecognized IntelGTNote type: " + std::to_string(intelGTNote.type) + "\n");
+            outWarning.append("DeviceBinaryFormat::zebin : Unrecognized IntelGTNote type: " + std::to_string(intelGTNote.type) + "\n");
             break;
         }
     }
@@ -155,7 +155,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
         auto currOffset = sizeof(Elf::ElfNoteSection) + alignUp(nameSz, 4) + alignUp(descSz, 4);
         if (currentPos + currOffset > sectionSize) {
             intelGTNotes.clear();
-            outErrReason.append("DeviceBinaryFormat::Zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
+            outErrReason.append("DeviceBinaryFormat::zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
                                 ", current section data offset: " + std::to_string(currentPos) + ", next offset : " + std::to_string(currOffset) + "\n");
             return DecodeError::invalidBinary;
         }
@@ -166,21 +166,21 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
         isValidGTNote &= Elf::intelGTNoteOwnerName == ConstStringRef(ownerName, nameSz - 1);
         if (false == isValidGTNote) {
             if (0u == nameSz) {
-                outWarning.append("DeviceBinaryFormat::Zebin : Empty owner name.\n");
+                outWarning.append("DeviceBinaryFormat::zebin : Empty owner name.\n");
             } else {
                 std::string invalidOwnerName{ownerName, nameSz};
                 invalidOwnerName.erase(std::remove_if(invalidOwnerName.begin(),
                                                       invalidOwnerName.end(),
                                                       [](unsigned char c) { return '\0' == c; }));
-                outWarning.append("DeviceBinaryFormat::Zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
+                outWarning.append("DeviceBinaryFormat::zebin : Invalid owner name : " + invalidOwnerName + " for IntelGTNote - note will not be used.\n");
             }
             continue;
         }
         auto notesData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(ptrOffset(ownerName, nameSz)), descSz);
-        if (intelGTNote->type == Elf::IntelGTSectionType::ZebinVersion) {
+        if (intelGTNote->type == Elf::IntelGTSectionType::zebinVersion) {
             isValidGTNote &= notesData[descSz - 1] == '\0';
             if (false == isValidGTNote) {
-                outWarning.append("DeviceBinaryFormat::Zebin :  Versioning string is not null-terminated: " + ConstStringRef(reinterpret_cast<const char *>(notesData.begin()), descSz).str() + " - note will not be used.\n");
+                outWarning.append("DeviceBinaryFormat::zebin :  Versioning string is not null-terminated: " + ConstStringRef(reinterpret_cast<const char *>(notesData.begin()), descSz).str() + " - note will not be used.\n");
                 continue;
             }
         }
@@ -203,7 +203,7 @@ DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::Intel
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &out, std::string &outErrReason, std::string &outWarning) {
     if ((elf.elfFileHeader->shStrNdx >= elf.sectionHeaders.size()) || (NEO::Elf::SHN_UNDEF == elf.elfFileHeader->shStrNdx)) {
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid or missing shStrNdx in elf header\n");
+        outErrReason.append("DeviceBinaryFormat::zebin : Invalid or missing shStrNdx in elf header\n");
         return DecodeError::invalidBinary;
     }
 
@@ -214,7 +214,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         ConstStringRef sectionName = ConstStringRef(sectionHeaderNamesString.begin() + elfSectionHeader.header->name);
         switch (elfSectionHeader.header->type) {
         default:
-            outErrReason.append("DeviceBinaryFormat::Zebin : Unhandled ELF section header type : " + std::to_string(elfSectionHeader.header->type) + "\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Unhandled ELF section header type : " + std::to_string(elfSectionHeader.header->type) + "\n");
             return DecodeError::invalidBinary;
         case Elf::SHT_PROGBITS:
             if (sectionName.startsWith(Elf::SectionNames::textPrefix.data())) {
@@ -231,7 +231,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             } else if (sectionName.startsWith(Elf::SectionNames::debugPrefix.data())) {
                 // ignoring intentionally
             } else {
-                outErrReason.append("DeviceBinaryFormat::Zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
+                outErrReason.append("DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
                 return DecodeError::invalidBinary;
             }
             break;
@@ -248,14 +248,14 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             if (sectionName == Elf::SectionNames::noteIntelGT) {
                 out.noteIntelGTSections.push_back(&elfSectionHeader);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : Unhandled SHT_NOTE section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::noteIntelGT.str() + ".\n");
+                outWarning.append("DeviceBinaryFormat::zebin : Unhandled SHT_NOTE section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::noteIntelGT.str() + ".\n");
             }
             break;
         case Elf::SHT_ZEBIN_MISC:
             if (sectionName == Elf::SectionNames::buildOptions) {
                 out.buildOptionsSection.push_back(&elfSectionHeader);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::buildOptions.str() + ".\n");
+                outWarning.append("DeviceBinaryFormat::zebin : unhandled SHT_ZEBIN_MISC section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::buildOptions.str() + ".\n");
             }
             break;
         case NEO::Elf::SHT_STRTAB:
@@ -269,7 +269,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             if (sectionName.startsWith(Elf::SectionNames::gtpinInfo.data())) {
                 out.gtpinInfoSections.push_back(&elfSectionHeader);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : Unhandled SHT_ZEBIN_GTPIN_INFO section : " + sectionName.str() + ", currently supports only : " + Elf::SectionNames::gtpinInfo.str() + "KERNEL_NAME\n");
+                outWarning.append("DeviceBinaryFormat::zebin : Unhandled SHT_ZEBIN_GTPIN_INFO section : " + sectionName.str() + ", currently supports only : " + Elf::SectionNames::gtpinInfo.str() + "KERNEL_NAME\n");
             }
             break;
         case Elf::SHT_ZEBIN_VISA_ASM:
@@ -284,7 +284,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             } else if (sectionName == Elf::SectionNames::dataGlobalZeroInit) {
                 out.globalZeroInitDataSections.push_back(&elfSectionHeader);
             } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : unhandled SHT_NOBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::dataConstZeroInit.str() + " and " + Elf::SectionNames::dataGlobalZeroInit.str() + ".\n");
+                outWarning.append("DeviceBinaryFormat::zebin : unhandled SHT_NOBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::dataConstZeroInit.str() + " and " + Elf::SectionNames::dataGlobalZeroInit.str() + ".\n");
             }
             break;
         }
@@ -299,7 +299,7 @@ bool validateZebinSectionsCountAtMost(const ContainerT &sectionsContainer, Const
         return true;
     }
 
-    outErrReason.append("DeviceBinaryFormat::Zebin : Expected at most " + std::to_string(max) + " of " + sectionName.str() + " section, got : " + std::to_string(sectionsContainer.size()) + "\n");
+    outErrReason.append("DeviceBinaryFormat::zebin : Expected at most " + std::to_string(max) + " of " + sectionName.str() + " section, got : " + std::to_string(sectionsContainer.size()) + "\n");
     return false;
 }
 
@@ -376,7 +376,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
     }
 
     if (zebinSections.zeInfoSections.empty()) {
-        outWarning.append("DeviceBinaryFormat::Zebin : Expected at least one " + Elf::SectionNames::zeInfo.str() + " section, got 0\n");
+        outWarning.append("DeviceBinaryFormat::zebin : Expected at least one " + Elf::SectionNames::zeInfo.str() + " section, got 0\n");
         return DecodeError::success;
     }
 
@@ -401,7 +401,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         ConstStringRef kernelName(kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
         auto kernelInstructions = getKernelHeap(kernelName, elf, zebinSections);
         if (kernelInstructions.empty()) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Could not find text section for kernel " + kernelName.str() + "\n");
+            outErrReason.append("DeviceBinaryFormat::zebin : Could not find text section for kernel " + kernelName.str() + "\n");
             return DecodeError::invalidBinary;
         }
 

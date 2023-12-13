@@ -577,7 +577,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
-    immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->isFlushTaskSubmissionEnabled = true;
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -672,7 +672,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
-    immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::TYPE_IMMEDIATE;
+    immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->isFlushTaskSubmissionEnabled = false;
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

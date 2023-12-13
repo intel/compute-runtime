@@ -92,7 +92,7 @@ struct HardwareParse {
         previousCS = &commandStream;
 
         sizeUsed = commandStream.getUsed();
-        findHardwareCommands<FamilyType>(&commandStreamReceiver.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0));
+        findHardwareCommands<FamilyType>(&commandStreamReceiver.getIndirectHeap(IndirectHeap::Type::dynamicState, 0));
     }
 
     template <typename FamilyType>

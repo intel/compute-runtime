@@ -566,7 +566,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDev
     allocData.flags.allocateMemory = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = MemoryConstants::pageSize;
     imgDesc.imageHeight = MemoryConstants::pageSize;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
@@ -920,7 +920,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCa
 
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIsAllocatedForImage1DWhenTheSizeReturnedFromGmmIsUnalignedThenCreateBufferObjectWithSizeAlignedTo64KB, NonDefaultIoctlsSupported) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageType = ImageType::image1D;
     imgDesc.imageWidth = 100;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 

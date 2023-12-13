@@ -104,7 +104,7 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
         auto kernel = dispatchInfo.begin()->getKernel();
 
         EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
-        if (kernel->getKernelInfo().getArgDescriptorAt(0).is<ArgDescriptor::ArgTPointer>()) {
+        if (kernel->getKernelInfo().getArgDescriptorAt(0).is<ArgDescriptor::argTPointer>()) {
             EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
         }
 

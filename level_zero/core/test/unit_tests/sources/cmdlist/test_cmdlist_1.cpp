@@ -121,9 +121,9 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     ++numAllocations;
 
     ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
-    for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < NEO::HeapType::numTypes; i++) {
         auto heapType = static_cast<NEO::HeapType>(i);
-        if (NEO::HeapType::DYNAMIC_STATE == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
+        if (NEO::HeapType::dynamicState == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
             ASSERT_EQ(commandList->getCmdContainer().getIndirectHeap(heapType), nullptr);
         } else {
             ASSERT_NE(commandList->getCmdContainer().getIndirectHeap(heapType), nullptr);
@@ -529,7 +529,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
 
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
-    pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.domain = NEO::PageFaultManager::AllocationDomain::gpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(1, flags.cpuMigrationBlocked);
@@ -570,7 +570,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
 
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
-    pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.domain = NEO::PageFaultManager::AllocationDomain::gpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     EXPECT_EQ(0u, device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.size());
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
@@ -645,7 +645,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
 
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
-    pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.domain = NEO::PageFaultManager::AllocationDomain::gpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
@@ -699,7 +699,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
 
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
-    pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.domain = NEO::PageFaultManager::AllocationDomain::gpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
@@ -746,7 +746,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
 
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
-    pageData.domain = NEO::PageFaultManager::AllocationDomain::Cpu;
+    pageData.domain = NEO::PageFaultManager::AllocationDomain::cpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
@@ -793,7 +793,7 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
 
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
-    pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.domain = NEO::PageFaultManager::AllocationDomain::gpu;
     pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     void *alloc = reinterpret_cast<void *>(0x1);
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, alloc, pageData);
@@ -1737,7 +1737,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
 
     cmdList->cmdQImmediate = mockCmdQ.get();
     cmdList->isFlushTaskSubmissionEnabled = true;
-    cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->csr = ultCsr;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->commandContainer.setImmediateCmdListCsr(ultCsr);
@@ -1795,7 +1795,7 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -1842,7 +1842,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1898,7 +1898,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1947,7 +1947,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     whiteBoxCmdList->isFlushTaskSubmissionEnabled = true;
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -1982,7 +1982,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2033,7 +2033,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2083,7 +2083,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2133,7 +2133,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2199,7 +2199,7 @@ HWTEST_F(CommandListCreate, GivenImmediateCommandListWithFlushTaskCreatedThenNum
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     auto &commandContainer = commandList->getCmdContainer();
@@ -2221,7 +2221,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCre
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2478,7 +2478,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -2520,7 +2520,7 @@ TEST_F(ContextCommandListCreate, givenDeferredEngineCreationWhenImmediateCommand
             L0::CommandList *cmdList = L0::CommandList::fromHandle(cmdListHandle);
 
             EXPECT_EQ(device, cmdList->getDevice());
-            EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, cmdList->getCmdListType());
+            EXPECT_EQ(CommandList::CommandListType::typeImmediate, cmdList->getCmdListType());
             EXPECT_NE(nullptr, cmdList);
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             EXPECT_TRUE(expectedCsr->getOsContext().isInitialized());
@@ -2538,7 +2538,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -2555,7 +2555,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -2577,7 +2577,7 @@ TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListF
             auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
             EXPECT_EQ(device, commandList->getDevice());
-            EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+            EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
             EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
         }
     }
@@ -2627,9 +2627,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListCreate, whenCommandListIsCreatedThenPCAnd
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
 
-    auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
-    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
-    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
+    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::indirectObject);
+    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
 
     EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
     EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
@@ -2661,7 +2661,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenCreatedThenStateBase
 
     EXPECT_EQ(cmdList.end(), itor);
 
-    for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
+    for (uint32_t i = 0; i < NEO::HeapType::numTypes; i++) {
         ASSERT_EQ(commandContainer.getIndirectHeap(static_cast<NEO::HeapType>(i)), nullptr);
         ASSERT_EQ(commandContainer.getIndirectHeapAllocation(static_cast<NEO::HeapType>(i)), nullptr);
     }

@@ -86,7 +86,7 @@ template <>
 struct Mock<Module> : public Module {
 
     Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type) : WhiteBox(device, moduleBuildLog, type) {}
-    Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog) : Mock(device, moduleBuildLog, ModuleType::User){};
+    Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog) : Mock(device, moduleBuildLog, ModuleType::user){};
 
     ADDMETHOD_NOBASE(createKernel, ze_result_t, ZE_RESULT_SUCCESS, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *kernelHandle));
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());

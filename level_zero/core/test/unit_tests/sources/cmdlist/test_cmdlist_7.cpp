@@ -599,7 +599,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     commandList->device = device;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
@@ -647,7 +647,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     commandList->device = device;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
@@ -1870,7 +1870,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataT
                                                                      0u,
                                                                      returnValue, false));
     auto &cmdContainer = commandList->getCmdContainer();
-    auto heapAlloc = cmdContainer.getIndirectHeapAllocation(HeapType::INDIRECT_OBJECT);
+    auto heapAlloc = cmdContainer.getIndirectHeapAllocation(HeapType::indirectObject);
     cmdContainer.getDeallocationContainer().push_back(heapAlloc);
     EXPECT_EQ(cmdContainer.getDeallocationContainer().size(), 1u);
     commandList->removeDeallocationContainerData();

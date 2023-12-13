@@ -77,9 +77,9 @@ struct EncodeDispatchKernelArgs {
 };
 
 enum class MiPredicateType : uint32_t {
-    Disable = 0,
-    NoopOnResult2Clear = 1,
-    NoopOnResult2Set = 2
+    disable = 0,
+    noopOnResult2Clear = 1,
+    noopOnResult2Set = 2
 };
 
 enum class CompareOperation : uint32_t {

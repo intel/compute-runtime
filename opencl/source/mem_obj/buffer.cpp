@@ -109,14 +109,14 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
     cl_mem_alloc_flags_intel allocflags = 0;
     cl_mem_flags_intel emptyFlagsIntel = 0;
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                  ClMemoryPropertiesHelper::ObjType::BUFFER, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::buffer, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, emptyFlagsIntel, *pContext))) {
         retVal = CL_INVALID_VALUE;
         return nullptr;
     }
 
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                  ClMemoryPropertiesHelper::ObjType::BUFFER, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::buffer, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, *pContext))) {
         retVal = CL_INVALID_PROPERTY;
         return nullptr;

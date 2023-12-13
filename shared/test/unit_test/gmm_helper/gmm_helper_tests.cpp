@@ -143,7 +143,7 @@ TEST_F(GmmHelperTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleasePar
 
 TEST_F(GmmHelperTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsSizeZero) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageType = ImageType::image1D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
@@ -154,7 +154,7 @@ TEST_F(GmmHelperTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoRe
 TEST_F(GmmHelperTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown) {
     ImageDescriptor imgDesc = {};
     imgDesc.imageWidth = 10;
-    imgDesc.imageType = ImageType::Invalid;
+    imgDesc.imageType = ImageType::invalid;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     EXPECT_THROW(MockGmm::queryImgParams(getGmmHelper(), imgInfo, false), std::exception);
@@ -163,7 +163,7 @@ TEST_F(GmmHelperTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIs
 TEST_F(GmmHelperTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
     const HardwareInfo *hwinfo = defaultHwInfo.get();
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image3D;
+    imgDesc.imageType = ImageType::image3D;
     imgDesc.imageWidth = 17;
     imgDesc.imageHeight = 17;
     imgDesc.imageDepth = 17;
@@ -241,7 +241,7 @@ TEST_F(GmmHelperTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProper
 
 TEST_F(GmmHelperTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageHeight = 4;
     imgDesc.imageWidth = 4;
     imgDesc.imageDepth = 1;
@@ -264,7 +264,7 @@ TEST_F(GmmHelperTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQu
 
 TEST_F(GmmHelperTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 4;
     imgDesc.imageHeight = 4;
     imgDesc.imageDepth = 1;
@@ -279,7 +279,7 @@ TEST_F(GmmHelperTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFla
 
 TEST_F(GmmHelperTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 4;
     imgDesc.imageHeight = 4;
     imgDesc.imageDepth = 1;
@@ -411,7 +411,7 @@ TEST_F(GmmCanonizeTests, WhenCheckingIsValidCanonicalGpuAddressThenOnlyValidAddr
 
 TEST_F(GmmHelperTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturned) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
+    imgDesc.imageType = ImageType::image2D;
     imgDesc.imageWidth = 60;
     imgDesc.imageHeight = 40;
     imgDesc.imageDepth = 1;
@@ -470,7 +470,7 @@ TEST_F(GmmMediaCompressedTests, givenNotMediaAndNotRenderCompressedThenUnifiedAu
 
 TEST_F(GmmHelperTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorrectly) {
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image3D;
+    imgDesc.imageType = ImageType::image3D;
     imgDesc.imageWidth = 17;
     imgDesc.imageHeight = 17;
     imgDesc.imageDepth = 17;
@@ -575,7 +575,7 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingImageResourceThenPrintCompre
     debugManager.flags.PrintGmmCompressionParams.set(true);
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image3D;
+    imgDesc.imageType = ImageType::image3D;
     imgDesc.imageWidth = 17;
     imgDesc.imageHeight = 17;
     imgDesc.imageDepth = 17;
@@ -846,7 +846,7 @@ TEST_F(GmmHelperTests, whenGmmIsCreatedAndForceAllResourcesUncachedIsSetThenReso
     EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm1->resourceParams.Usage);
 
     ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image1D;
+    imgDesc.imageType = ImageType::image1D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto gmm2 = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
     EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm2->resourceParams.Usage);
@@ -1026,7 +1026,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
     }
 
     void setupImgInfo() {
-        imgDesc.imageType = ImageType::Image2D;
+        imgDesc.imageType = ImageType::image2D;
         imgDesc.imageWidth = 2;
         imgDesc.imageHeight = 2;
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);

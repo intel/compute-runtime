@@ -55,11 +55,11 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
                 break;
             case CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR:
                 handle = static_cast<uint64_t>(properties[i + 1]);
-                handleType = static_cast<uint64_t>(UnifiedSharingHandleType::LinuxFd);
+                handleType = static_cast<uint64_t>(UnifiedSharingHandleType::linuxFd);
                 break;
             case CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR:
                 handle = static_cast<uint64_t>(properties[i + 1]);
-                handleType = static_cast<uint64_t>(UnifiedSharingHandleType::Win32Nt);
+                handleType = static_cast<uint64_t>(UnifiedSharingHandleType::win32Nt);
                 break;
             case CL_DEVICE_HANDLE_LIST_KHR:
                 while (properties[i + 1] != CL_DEVICE_HANDLE_LIST_END_KHR) {
@@ -85,10 +85,10 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     memoryProperties.associatedDevices = devices;
 
     switch (objectType) {
-    case ClMemoryPropertiesHelper::ObjType::BUFFER:
+    case ClMemoryPropertiesHelper::ObjType::buffer:
         return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForBufferIntel);
-    case ClMemoryPropertiesHelper::ObjType::IMAGE:
+    case ClMemoryPropertiesHelper::ObjType::image:
         return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:

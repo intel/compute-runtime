@@ -44,7 +44,7 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
 
     SingleDeviceBinary ret;
     ret.deviceBinary = archive;
-    ret.format = NEO::DeviceBinaryFormat::Zebin;
+    ret.format = NEO::DeviceBinaryFormat::zebin;
     ret.targetDevice = requestedTargetDevice;
 
     for (size_t sectionId = 0U; sectionId < elf.sectionHeaders.size(); sectionId++) {
@@ -85,7 +85,7 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
 }
 
 template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                                                             std::string &outErrReason, std::string &outWarning) {
     return Elf::isElf<Elf::EI_CLASS_32>(archive)
                ? unpackSingleZebin<Elf::EI_CLASS_32>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning)
@@ -121,7 +121,7 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
         return decodeError;
     }
 
-    bool isGeneratedByIgc = src.generator == GeneratorType::Igc;
+    bool isGeneratedByIgc = src.generator == GeneratorType::igc;
 
     for (auto &kernelInfo : dst.kernelInfos) {
         kernelInfo->kernelDescriptor.kernelMetadata.isGeneratedByIgc = isGeneratedByIgc;
@@ -136,7 +136,7 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
 }
 
 template <>
-DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     return Elf::isElf<Elf::EI_CLASS_32>(src.deviceBinary)
                ? decodeSingleZebin<Elf::EI_CLASS_32>(dst, src, outErrReason, outWarning)
                : decodeSingleZebin<Elf::EI_CLASS_64>(dst, src, outErrReason, outWarning);

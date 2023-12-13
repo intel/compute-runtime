@@ -47,9 +47,9 @@ HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoTh
 
     std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 4096u, dsh);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 4096u, ioh);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 4096u, ssh);
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
     std::vector<Surface *> v;
 

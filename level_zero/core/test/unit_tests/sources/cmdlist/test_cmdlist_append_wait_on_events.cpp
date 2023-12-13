@@ -155,14 +155,14 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csPredicateResult2);
 
     auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
-    EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::NoopOnResult2Clear), predicateCmd->getPredicateEnable());
+    EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::noopOnResult2Clear), predicateCmd->getPredicateEnable());
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++predicateCmd);
     EXPECT_EQ(1u, bbStartCmd->getPredicationEnable());
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
 
     predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++bbStartCmd);
-    EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::Disable), predicateCmd->getPredicateEnable());
+    EXPECT_EQ(static_cast<typename MI_SET_PREDICATE::PREDICATE_ENABLE>(MiPredicateType::disable), predicateCmd->getPredicateEnable());
 }
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissionAndRelaxedOrderingWhenAppendingApiWaitOnEventsThenUseSemaphore, IsAtLeastXeHpcCore) {

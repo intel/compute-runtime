@@ -56,22 +56,22 @@ inline void assignToken(const T *&dst, const SPatchItemHeader *src) {
     dst = reinterpret_cast<const T *>(src);
 }
 
-inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, size_t argNum, ArgObjectType type = ArgObjectType::None, ArgObjectTypeSpecialized typeSpecialized = ArgObjectTypeSpecialized::None) {
+inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, size_t argNum, ArgObjectType type = ArgObjectType::none, ArgObjectTypeSpecialized typeSpecialized = ArgObjectTypeSpecialized::none) {
     if (kernel.tokens.kernelArgs.size() < argNum + 1) {
         kernel.tokens.kernelArgs.resize(argNum + 1);
     }
     auto &arg = kernel.tokens.kernelArgs[argNum];
-    if (arg.objectType == ArgObjectType::None) {
+    if (arg.objectType == ArgObjectType::none) {
         arg.objectType = type;
-    } else if ((arg.objectType != type) && (type != ArgObjectType::None)) {
+    } else if ((arg.objectType != type) && (type != ArgObjectType::none)) {
         kernel.decodeStatus = DecodeError::invalidBinary;
         DBG_LOG(LogPatchTokens, "\n Mismatched metadata for kernel arg :", argNum);
         DEBUG_BREAK_IF(true);
     }
 
-    if (arg.objectTypeSpecialized == ArgObjectTypeSpecialized::None) {
+    if (arg.objectTypeSpecialized == ArgObjectTypeSpecialized::none) {
         arg.objectTypeSpecialized = typeSpecialized;
-    } else if (typeSpecialized != ArgObjectTypeSpecialized::None) {
+    } else if (typeSpecialized != ArgObjectTypeSpecialized::none) {
         UNRECOVERABLE_IF(arg.objectTypeSpecialized != typeSpecialized);
     }
 
@@ -80,7 +80,7 @@ inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, siz
 
 inline void assignArgInfo(KernelFromPatchtokens &kernel, const SPatchItemHeader *src) {
     auto argInfoToken = reinterpret_cast<const SPatchKernelArgumentInfo *>(src);
-    getKernelArg(kernel, argInfoToken->ArgumentNumber, ArgObjectType::None).argInfo = argInfoToken;
+    getKernelArg(kernel, argInfoToken->ArgumentNumber, ArgObjectType::none).argInfo = argInfoToken;
 }
 
 template <typename T>
@@ -90,16 +90,16 @@ inline uint32_t getArgNum(const SPatchItemHeader *argToken) {
 
 inline void assignArg(KernelFromPatchtokens &kernel, const SPatchItemHeader *src) {
     uint32_t argNum = 0;
-    ArgObjectType type = ArgObjectType::Buffer;
+    ArgObjectType type = ArgObjectType::buffer;
     switch (src->Token) {
     default:
         UNRECOVERABLE_IF(src->Token != PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT);
         argNum = getArgNum<SPatchSamplerKernelArgument>(src);
-        type = ArgObjectType::Sampler;
+        type = ArgObjectType::sampler;
         break;
     case PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT:
         argNum = getArgNum<SPatchImageMemoryObjectKernelArgument>(src);
-        type = ArgObjectType::Image;
+        type = ArgObjectType::image;
         break;
     case PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
         argNum = getArgNum<SPatchGlobalMemoryObjectKernelArgument>(src);
@@ -156,7 +156,7 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
         break;
 
     case DATA_PARAMETER_KERNEL_ARGUMENT:
-        getKernelArg(out, argNum, ArgObjectType::None).byValMap.push_back(token);
+        getKernelArg(out, argNum, ArgObjectType::none).byValMap.push_back(token);
         break;
 
     case DATA_PARAMETER_LOCAL_WORK_SIZE: {
@@ -205,76 +205,76 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
         crossthread.localMemoryStatelessWindowStartAddress = token;
         break;
     case DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES: {
-        auto &kernelArg = getKernelArg(out, argNum, ArgObjectType::Slm);
+        auto &kernelArg = getKernelArg(out, argNum, ArgObjectType::slm);
         kernelArg.byValMap.push_back(token);
         kernelArg.metadata.slm.token = token;
     } break;
 
     case DATA_PARAMETER_BUFFER_OFFSET:
-        getKernelArg(out, argNum, ArgObjectType::Buffer).metadata.buffer.bufferOffset = token;
+        getKernelArg(out, argNum, ArgObjectType::buffer).metadata.buffer.bufferOffset = token;
         break;
     case DATA_PARAMETER_BUFFER_STATEFUL:
-        getKernelArg(out, argNum, ArgObjectType::Buffer).metadata.buffer.pureStateful = token;
+        getKernelArg(out, argNum, ArgObjectType::buffer).metadata.buffer.pureStateful = token;
         break;
 
     case DATA_PARAMETER_IMAGE_WIDTH:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.width = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.width = token;
         break;
     case DATA_PARAMETER_IMAGE_HEIGHT:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.height = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.height = token;
         break;
     case DATA_PARAMETER_IMAGE_DEPTH:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.depth = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.depth = token;
         break;
     case DATA_PARAMETER_IMAGE_CHANNEL_DATA_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.channelDataType = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.channelDataType = token;
         break;
     case DATA_PARAMETER_IMAGE_CHANNEL_ORDER:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.channelOrder = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.channelOrder = token;
         break;
     case DATA_PARAMETER_IMAGE_ARRAY_SIZE:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.arraySize = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.arraySize = token;
         break;
     case DATA_PARAMETER_IMAGE_NUM_SAMPLES:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.numSamples = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.numSamples = token;
         break;
     case DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.numMipLevels = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.numMipLevels = token;
         break;
     case DATA_PARAMETER_FLAT_IMAGE_BASEOFFSET:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.flatBaseOffset = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.flatBaseOffset = token;
         break;
     case DATA_PARAMETER_FLAT_IMAGE_WIDTH:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.flatWidth = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.flatWidth = token;
         break;
     case DATA_PARAMETER_FLAT_IMAGE_HEIGHT:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.flatHeight = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.flatHeight = token;
         break;
     case DATA_PARAMETER_FLAT_IMAGE_PITCH:
-        getKernelArg(out, argNum, ArgObjectType::Image).metadata.image.flatPitch = token;
+        getKernelArg(out, argNum, ArgObjectType::image).metadata.image.flatPitch = token;
         break;
 
     case DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED:
-        getKernelArg(out, argNum, ArgObjectType::Sampler).metadata.sampler.coordinateSnapWaRequired = token;
+        getKernelArg(out, argNum, ArgObjectType::sampler).metadata.sampler.coordinateSnapWaRequired = token;
         break;
     case DATA_PARAMETER_SAMPLER_ADDRESS_MODE:
-        getKernelArg(out, argNum, ArgObjectType::Sampler).metadata.sampler.addressMode = token;
+        getKernelArg(out, argNum, ArgObjectType::sampler).metadata.sampler.addressMode = token;
         break;
     case DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS:
-        getKernelArg(out, argNum, ArgObjectType::Sampler).metadata.sampler.normalizedCoords = token;
+        getKernelArg(out, argNum, ArgObjectType::sampler).metadata.sampler.normalizedCoords = token;
         break;
 
     case DATA_PARAMETER_VME_MB_BLOCK_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::None, ArgObjectTypeSpecialized::Vme).metadataSpecialized.vme.mbBlockType = token;
+        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.mbBlockType = token;
         break;
     case DATA_PARAMETER_VME_SUBPIXEL_MODE:
-        getKernelArg(out, argNum, ArgObjectType::None, ArgObjectTypeSpecialized::Vme).metadataSpecialized.vme.subpixelMode = token;
+        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.subpixelMode = token;
         break;
     case DATA_PARAMETER_VME_SAD_ADJUST_MODE:
-        getKernelArg(out, argNum, ArgObjectType::None, ArgObjectTypeSpecialized::Vme).metadataSpecialized.vme.sadAdjustMode = token;
+        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.sadAdjustMode = token;
         break;
     case DATA_PARAMETER_VME_SEARCH_PATH_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::None, ArgObjectTypeSpecialized::Vme).metadataSpecialized.vme.searchPathType = token;
+        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.searchPathType = token;
         break;
 
     case DATA_PARAMETER_PARENT_EVENT:

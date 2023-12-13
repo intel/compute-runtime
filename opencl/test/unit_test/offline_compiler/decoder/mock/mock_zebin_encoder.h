@@ -30,7 +30,7 @@ struct MockZebinEncoder : public NEO::Zebin::Manipulator::ZebinEncoder<numBits> 
         mockIga = iga.get();
         this->iga = std::move(iga);
         retValGetIntelGTNotes.resize(1);
-        retValGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
+        retValGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::productFamily;
         retValGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1);
     }
 

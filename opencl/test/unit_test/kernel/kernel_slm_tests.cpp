@@ -69,7 +69,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // After creating Mock Kernel now create Indirect Heap
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
 
     const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
@@ -161,7 +161,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
 
     const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();

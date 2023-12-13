@@ -463,8 +463,8 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     kernelImmData.kernelDescriptor = &descriptor;
 
     auto &inlineSampler = descriptor.inlineSamplers.emplace_back();
-    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::Repeat;
-    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::Nearest;
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::repeat;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::nearest;
     inlineSampler.isNormalized = false;
 
     Mock<Module> module(device, nullptr);

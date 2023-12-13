@@ -242,7 +242,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
@@ -316,7 +316,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->getCmdListType());
+    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 

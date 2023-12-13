@@ -22,10 +22,10 @@ class IndirectHeap;
 class BindlessHeapsHelper {
   public:
     enum BindlesHeapType {
-        SPECIAL_SSH = 0,
-        GLOBAL_SSH,
-        GLOBAL_DSH,
-        NUM_HEAP_TYPES
+        specialSsh = 0,
+        globalSsh,
+        globalDsh,
+        numHeapTypes
     };
     BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
@@ -64,7 +64,7 @@ class BindlessHeapsHelper {
     MemoryManager *memManager = nullptr;
     bool isMultiOsContextCapable = false;
     const uint32_t rootDeviceIndex;
-    std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::NUM_HEAP_TYPES];
+    std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::numHeapTypes];
     GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;
 

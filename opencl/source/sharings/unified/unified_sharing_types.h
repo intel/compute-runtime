@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,14 +14,14 @@ namespace NEO {
 using UnifiedSharingMemoryProperties = uint64_t;
 
 enum class UnifiedSharingContextType {
-    DeviceHandle = 0x300B,
-    DeviceGroup = 0x300C
+    deviceHandle = 0x300B,
+    deviceGroup = 0x300C
 };
 
 enum class UnifiedSharingHandleType {
-    LinuxFd = 1,
-    Win32Shared = 2,
-    Win32Nt = 3
+    linuxFd = 1,
+    win32Shared = 2,
+    win32Nt = 3
 };
 
 struct UnifiedSharingMemoryDescription {

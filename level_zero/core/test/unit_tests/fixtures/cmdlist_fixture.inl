@@ -1377,7 +1377,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 
     EXPECT_EQ(sshFirstCmdList->getCpuBase(), sshCoexistingCmdList->getCpuBase());
 
-    auto csrSshHeap = &ultCsr.getIndirectHeap(HeapType::SURFACE_STATE, 0);
+    auto csrSshHeap = &ultCsr.getIndirectHeap(HeapType::surfaceState, 0);
 
     EXPECT_EQ(csrSshHeap->getCpuBase(), sshFirstCmdList->getCpuBase());
 

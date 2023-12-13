@@ -45,21 +45,21 @@ class BuiltInOp<EBuiltInOps::auxTranslation> : public BuiltinDispatchInfoBuilder
                 registerPipeControlProgramming<GfxFamily>(builder.getDispatchInfo(0).dispatchEpilogueCommands, false);
             }
 
-            if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
+            if (AuxTranslationDirection::auxToNonAux == operationParams.auxTranslationDirection) {
                 builder.setKernel(convertToNonAuxKernel[kernelInstanceNumber++].get());
             } else {
-                UNRECOVERABLE_IF(AuxTranslationDirection::NonAuxToAux != operationParams.auxTranslationDirection);
+                UNRECOVERABLE_IF(AuxTranslationDirection::nonAuxToAux != operationParams.auxTranslationDirection);
                 builder.setKernel(convertToAuxKernel[kernelInstanceNumber++].get());
             }
 
             size_t allocationSize = 0;
-            if (kernelObj.type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
+            if (kernelObj.type == KernelObjForAuxTranslation::Type::memObj) {
                 auto buffer = static_cast<Buffer *>(kernelObj.object);
                 builder.setArg(0, buffer);
                 builder.setArg(1, buffer);
                 allocationSize = alignUp(buffer->getSize(), 512);
             } else {
-                DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
+                DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::gfxAlloc);
                 auto svmAlloc = static_cast<GraphicsAllocation *>(kernelObj.object);
                 auto svmPtr = reinterpret_cast<void *>(svmAlloc->getGpuAddressToPatch());
                 builder.setArgSvmAlloc(0, svmPtr, svmAlloc);

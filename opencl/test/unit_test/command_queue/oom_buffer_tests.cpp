@@ -66,7 +66,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         }
 
         if (oomSetting.oomISH) {
-            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, oomSize);
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, oomSize);
 
             // IndirectHeap may be larger than requested so grab what wasnt requested
             ish.getSpace(ish.getAvailableSpace() - oomSize);
@@ -94,7 +94,7 @@ HWTEST_P(OOMCommandQueueBufferTest, WhenCopyingBufferThenMaxAvailableSpaceIsNotE
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -118,7 +118,7 @@ HWTEST_P(OOMCommandQueueBufferTest, WhenFillingBufferThenMaxAvailableSpaceIsNotE
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -142,7 +142,7 @@ HWTEST_P(OOMCommandQueueBufferTest, WhenReadingBufferThenMaxAvailableSpaceIsNotE
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -166,7 +166,7 @@ HWTEST_P(OOMCommandQueueBufferTest, WhenWritingBufferThenMaxAvailableSpaceIsNotE
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -190,7 +190,7 @@ HWTEST_P(OOMCommandQueueBufferTest, WhenWritingBufferRectThenMaxAvailableSpaceIs
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -215,7 +215,7 @@ HWTEST_P(OOMCommandQueueBufferTest, GivenHelloWorldWhenEnqueingKernelThenMaxAvai
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
@@ -245,7 +245,7 @@ HWTEST_P(OOMCommandQueueBufferTest, GivenSimpleArgWhenEnqueingKernelThenMaxAvail
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 10);
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 

@@ -190,16 +190,16 @@ bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEngine
 template <typename Family>
 void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDispatchInfo) {
     multiDispatchInfo.begin()->dispatchInitCommands.registerMethod(
-        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::AuxToNonAux>);
+        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::auxToNonAux>);
 
     multiDispatchInfo.begin()->dispatchInitCommands.registerCommandsSizeEstimationMethod(
-        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::AuxToNonAux>);
+        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::auxToNonAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerMethod(
-        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::NonAuxToAux>);
+        TimestampPacketHelper::programSemaphoreForAuxTranslation<Family, AuxTranslationDirection::nonAuxToAux>);
 
     multiDispatchInfo.rbegin()->dispatchEpilogueCommands.registerCommandsSizeEstimationMethod(
-        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::NonAuxToAux>);
+        TimestampPacketHelper::getRequiredCmdStreamSizeForAuxTranslationNodeDependency<Family, AuxTranslationDirection::nonAuxToAux>);
 }
 
 template <typename Family>
@@ -208,8 +208,8 @@ bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, 
         return true;
     }
 
-    bool required = (latestSentEnqueueType != EnqueueProperties::Operation::Blit) &&
-                    (latestSentEnqueueType != EnqueueProperties::Operation::None) &&
+    bool required = (latestSentEnqueueType != EnqueueProperties::Operation::blit) &&
+                    (latestSentEnqueueType != EnqueueProperties::Operation::none) &&
                     (isCacheFlushForBcsRequired() || !(getGpgpuCommandStreamReceiver().getDispatchMode() == DispatchMode::immediateDispatch || getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed()));
 
     if (debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 1) {

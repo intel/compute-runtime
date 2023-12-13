@@ -55,7 +55,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
     sharingFcns->updateDevice(surfaceInfo->resource);
 
-    imgInfo.imgDesc.imageType = ImageType::Image2D;
+    imgInfo.imgDesc.imageType = ImageType::image2D;
 
     D3D9SurfaceDesc surfaceDesc = {};
     sharingFcns->getTexture2dDesc(&surfaceDesc, surfaceInfo->resource);

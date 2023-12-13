@@ -107,9 +107,9 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
 
     debugManager.flags.DisableDcFlushInEpilogue.set(true);
     csr.flushTask(l3FlushCmdStream, offset,
-                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE, 0),
-                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT, 0),
-                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE, 0),
+                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::dynamicState, 0),
+                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::indirectObject, 0),
+                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::surfaceState, 0),
                   pCmdQ->taskLevel,
                   flags,
                   pCmdQ->getDevice());
@@ -203,9 +203,9 @@ HWTEST2_F(RangeBasedFlushTest, givenL3ControlWhenPostSyncIsSetThenExpectPostSync
     debugManager.flags.DisableDcFlushInEpilogue.set(true);
     csr.makeResident(*postSyncBuffer->getGraphicsAllocation(rootDeviceIndex));
     csr.flushTask(l3FlushCmdStream, offset,
-                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE, 0),
-                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT, 0),
-                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE, 0),
+                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::dynamicState, 0),
+                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::indirectObject, 0),
+                  &pCmdQ->getIndirectHeap(NEO::IndirectHeap::Type::surfaceState, 0),
                   pCmdQ->taskLevel,
                   flags,
                   pCmdQ->getDevice());

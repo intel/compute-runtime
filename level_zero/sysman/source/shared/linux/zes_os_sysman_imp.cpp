@@ -38,7 +38,7 @@ ze_result_t LinuxSysmanImp::init() {
     }
 
     NEO::OSInterface &osInterface = *pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
-    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 

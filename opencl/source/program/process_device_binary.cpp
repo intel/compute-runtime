@@ -192,7 +192,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
             this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinarySize);
             this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinarySize;
 
-            this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::Igc;
+            this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::igc;
 
         } else {
             return CL_INVALID_BINARY;
@@ -352,7 +352,7 @@ void Program::createDebugData(ClDevice *clDevice) {
     auto rootDeviceIndex = clDevice->getRootDeviceIndex();
     auto &buildInfo = this->buildInfos[rootDeviceIndex];
     auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
         createDebugZebin(rootDeviceIndex);
     } else {
         processDebugData(rootDeviceIndex);
@@ -363,7 +363,7 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
     auto &buildInfo = this->buildInfos[rootDeviceIndex];
     auto extractAndDecodeMetadata = [&]() {
         auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-        if (false == NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+        if (false == NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
             return;
         }
         std::string errors{}, warnings{};
@@ -398,7 +398,7 @@ void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceInd
                 auto &argTypeTraits = kernelArg.getTraits();
                 argMetadataExtended.argName = std::string("arg" + std::to_string(argIndex));
 
-                if (kernelArg.is<ArgDescriptor::ArgTValue>()) {
+                if (kernelArg.is<ArgDescriptor::argTValue>()) {
                     const auto &argAsValue = kernelArg.as<ArgDescValue>(false);
                     uint16_t maxSourceOffset = 0u, elemSize = 0u;
                     for (const auto &elem : argAsValue.elements) {
@@ -415,10 +415,10 @@ void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceInd
                     ensureTypeNone(argTypeTraits);
                     argTypeTraits.addressQualifier = KernelArgMetadata::AddrPrivate;
                     argTypeTraits.accessQualifier = KernelArgMetadata::AccessNone;
-                } else if (kernelArg.is<ArgDescriptor::ArgTPointer>()) {
+                } else if (kernelArg.is<ArgDescriptor::argTPointer>()) {
                     const auto &argAsPtr = kernelArg.as<ArgDescPointer>(false);
                     argMetadataExtended.type = std::string("__opaque_ptr;" + std::to_string(argAsPtr.pointerSize));
-                } else if (kernelArg.is<ArgDescriptor::ArgTImage>()) {
+                } else if (kernelArg.is<ArgDescriptor::argTImage>()) {
                     const auto &argAsImage = kernelArg.as<ArgDescImage>(false);
                     switch (argAsImage.imageType) {
                     case NEOImageType::imageTypeBuffer:
@@ -458,7 +458,7 @@ void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceInd
                         argMetadataExtended.type = std::string("image2d_t");
                         break;
                     }
-                } else if (kernelArg.is<ArgDescriptor::ArgTSampler>()) {
+                } else if (kernelArg.is<ArgDescriptor::argTSampler>()) {
                     argMetadataExtended.type = std::string("sampler_t");
                 }
                 kernelInfo->kernelDescriptor.explicitArgsExtendedMetadata.at(argIndex) = std::move(argMetadataExtended);

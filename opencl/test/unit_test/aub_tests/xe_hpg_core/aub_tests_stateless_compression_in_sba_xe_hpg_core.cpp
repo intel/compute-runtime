@@ -29,7 +29,7 @@ struct XeHpgCoreStatelessCompressionInSBA : public KernelAUBFixture<StatelessCop
         debugManager.flags.RenderCompressedImagesEnabled.set(true);
         debugManager.flags.EnableLocalMemory.set(true);
         debugManager.flags.NodeOrdinal.set(GetParam());
-        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
         KernelAUBFixture<StatelessCopyKernelFixture>::setUp();
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
@@ -262,7 +262,7 @@ struct XeHpgCoreUmStatelessCompressionInSBA : public KernelAUBFixture<StatelessK
         debugManager.flags.RenderCompressedImagesEnabled.set(true);
         debugManager.flags.EnableLocalMemory.set(true);
         debugManager.flags.NodeOrdinal.set(GetParam());
-        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
         KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::setUp();
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
@@ -485,7 +485,7 @@ struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextAubFixture
                                                    public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableStatelessCompression.set(1);
-        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
+        debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
         debugManager.flags.EnableBlitterOperationsSupport.set(true);
         MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
         StatelessCopyKernelFixture::setUp(tileDevices[0], context.get());

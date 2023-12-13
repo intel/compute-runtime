@@ -24,8 +24,8 @@ struct ModuleBuildLog;
 struct KernelImmutableData;
 
 enum class ModuleType {
-    Builtin,
-    User
+    builtin,
+    user
 };
 
 struct Module : _ze_module_handle_t {

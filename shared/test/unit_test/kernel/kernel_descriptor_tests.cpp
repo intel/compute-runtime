@@ -134,14 +134,14 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessArgsWhenInitBindlessOffsetsToS
     desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     desc.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
 
-    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x40;
 
     desc.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor2.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor2.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor2.as<NEO::ArgDescPointer>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
@@ -149,14 +149,14 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessArgsWhenInitBindlessOffsetsToS
 
     desc.payloadMappings.explicitArgs.push_back(argDescriptor2);
 
-    auto argDescriptor3 = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTImage);
+    auto argDescriptor3 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
     argDescriptor3.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
     argDescriptor3.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor3.as<NEO::ArgDescImage>().bindless = 0x100;
 
     desc.payloadMappings.explicitArgs.push_back(argDescriptor3);
 
-    auto argDescriptor4 = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTImage);
+    auto argDescriptor4 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
     argDescriptor4.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
     argDescriptor4.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor4.as<NEO::ArgDescImage>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
@@ -188,7 +188,7 @@ TEST(KernelDescriptor, GivenDescriptorWithoutStatefulArgsWhenInitBindlessOffsets
     desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     desc.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
 
-    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
@@ -196,7 +196,7 @@ TEST(KernelDescriptor, GivenDescriptorWithoutStatefulArgsWhenInitBindlessOffsets
 
     desc.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTPointer);
+    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor2.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor2.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor2.as<NEO::ArgDescPointer>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
@@ -206,7 +206,7 @@ TEST(KernelDescriptor, GivenDescriptorWithoutStatefulArgsWhenInitBindlessOffsets
 
     NEO::ArgDescValue::Element argValueElement;
     argValueElement.offset = 0x80;
-    auto argDescriptor3 = NEO::ArgDescriptor(NEO::ArgDescriptor::ArgTValue);
+    auto argDescriptor3 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTValue);
     argDescriptor3.as<NEO::ArgDescValue>().elements.push_back(argValueElement);
     desc.payloadMappings.explicitArgs.push_back(argDescriptor3);
 

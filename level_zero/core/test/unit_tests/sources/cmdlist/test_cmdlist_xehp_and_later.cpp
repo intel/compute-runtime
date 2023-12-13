@@ -74,7 +74,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
 
     if (device->getNEODevice()->getDeviceInfo().imageSupport) {
-        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
         EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
@@ -84,7 +84,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
         EXPECT_FALSE(cmdSba->getDynamicStateBufferSizeModifyEnable());
     }
 
-    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
     EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
 
@@ -160,7 +160,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     if (device->getNEODevice()->getDeviceInfo().imageSupport) {
-        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
         EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
@@ -169,7 +169,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
         EXPECT_FALSE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_FALSE(cmdSba->getDynamicStateBufferSizeModifyEnable());
     }
-    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
     EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
 
@@ -1915,7 +1915,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
 
     auto globalSurfaceHeap = commandListImmediate->csr->getGlobalStatelessHeap();
 
-    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
 
     auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
@@ -2032,7 +2032,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
         dsBaseAddress = dsHeap->getHeapGpuBase();
     }
 
-    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
 
     GenCmdList cmdList;
@@ -2275,12 +2275,12 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &container = commandList->getCmdContainer();
-    auto sshRegularHeap = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshRegularHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssRegularBaseAddress = sshRegularHeap->getHeapGpuBase();
 
     uint64_t dsRegularBaseAddress = static_cast<uint64_t>(-1);
     if (this->dshRequired) {
-        auto dshRegularHeap = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dshRegularHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
         dsRegularBaseAddress = dshRegularHeap->getHeapGpuBase();
     }
 
@@ -2331,16 +2331,16 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto ssHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
     auto ssBaseAddress = ssHeap->getHeapGpuBase();
 
     uint64_t dsBaseAddress = 0;
     if (dshRequired) {
-        auto dsHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::dynamicState);
         dsBaseAddress = dsHeap->getHeapGpuBase();
     }
 
-    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
 
     GenCmdList cmdList;
@@ -2363,7 +2363,7 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     EXPECT_TRUE(csrImmediate.isMadeResident(ioHeap->getGraphicsAllocation()));
     EXPECT_TRUE(csrImmediate.isMadeResident(ssHeap->getGraphicsAllocation()));
     if (dshRequired) {
-        auto dsHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto dsHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::dynamicState);
         EXPECT_TRUE(csrImmediate.isMadeResident(dsHeap->getGraphicsAllocation()));
     }
 

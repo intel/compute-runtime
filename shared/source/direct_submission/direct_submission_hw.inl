@@ -126,7 +126,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
 
     // 1. Init section
     {
-        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::disable);
 
         EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR9);
         EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR9 + 4);
@@ -149,7 +149,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         UNRECOVERABLE_IF(schedulerCmdStream.getUsed() != RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart);
 
-        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::disable);
 
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR6, 8, true);
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR6 + 4, 0, true);
@@ -179,7 +179,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         UNRECOVERABLE_IF(schedulerCmdStream.getUsed() != RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::removeTaskSectionStart);
 
-        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::disable);
 
         EncodeMathMMIO<GfxFamily>::encodeDecrement(schedulerCmdStream, AluRegisters::R_1);
         EncodeMathMMIO<GfxFamily>::encodeDecrement(schedulerCmdStream, AluRegisters::R_2);
@@ -219,7 +219,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         UNRECOVERABLE_IF(schedulerCmdStream.getUsed() != RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::tasksListLoopCheckSectionStart);
 
-        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::disable);
 
         EncodeMathMMIO<GfxFamily>::encodeIncrement(schedulerCmdStream, AluRegisters::R_2);
 
@@ -839,7 +839,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
 
     LinearStream stream(preinitializedTaskStoreSection.get(), RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
 
-    EncodeMiPredicate<GfxFamily>::encode(stream, MiPredicateType::Disable);
+    EncodeMiPredicate<GfxFamily>::encode(stream, MiPredicateType::disable);
 
     uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
     LriHelper<GfxFamily>::program(&stream, RegisterOffsets::csGprR6, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
@@ -889,14 +889,14 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
     {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-        EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::Disable);
+        EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::disable);
 
         EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(schedulerStream, 0, 0, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false);
     }
 
     // 3. End section
     {
-        EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::Disable);
+        EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::disable);
 
         LriHelper<GfxFamily>::program(&schedulerStream, RegisterOffsets::csGprR5, 0, true);
     }

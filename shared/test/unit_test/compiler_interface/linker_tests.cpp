@@ -32,10 +32,10 @@
 #include <string>
 
 TEST(SegmentTypeTests, givenSegmentTypeWhenAsStringIsCalledThenProperRepresentationIsReturned) {
-    EXPECT_STREQ("UNKOWN", NEO::asString(NEO::SegmentType::Unknown));
-    EXPECT_STREQ("GLOBAL_CONSTANTS", NEO::asString(NEO::SegmentType::GlobalConstants));
-    EXPECT_STREQ("GLOBAL_VARIABLES", NEO::asString(NEO::SegmentType::GlobalVariables));
-    EXPECT_STREQ("INSTRUCTIONS", NEO::asString(NEO::SegmentType::Instructions));
+    EXPECT_STREQ("UNKOWN", NEO::asString(NEO::SegmentType::unknown));
+    EXPECT_STREQ("GLOBAL_CONSTANTS", NEO::asString(NEO::SegmentType::globalConstants));
+    EXPECT_STREQ("GLOBAL_VARIABLES", NEO::asString(NEO::SegmentType::globalVariables));
+    EXPECT_STREQ("INSTRUCTIONS", NEO::asString(NEO::SegmentType::instructions));
 }
 
 TEST(LinkerInputTraitsTests, whenPointerSizeNotSizeThenDefaultsToHostPointerSize) {
@@ -78,13 +78,13 @@ TEST(LinkerInputTests, givenGlobalsSymbolTableThenProperlyDecodesGlobalVariables
     ASSERT_NE(linkerInput.getSymbols().end(), symbolA);
     EXPECT_EQ(entry[0].s_offset, symbolA->second.offset);
     EXPECT_EQ(entry[0].s_size, symbolA->second.size);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, symbolA->second.segment);
+    EXPECT_EQ(NEO::SegmentType::globalVariables, symbolA->second.segment);
 
     auto symbolB = linkerInput.getSymbols().find("B");
     ASSERT_NE(linkerInput.getSymbols().end(), symbolB);
     EXPECT_EQ(entry[1].s_offset, symbolB->second.offset);
     EXPECT_EQ(entry[1].s_size, symbolB->second.size);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, symbolB->second.segment);
+    EXPECT_EQ(NEO::SegmentType::globalConstants, symbolB->second.segment);
 
     auto symbolC = linkerInput.getSymbols().find("C");
     EXPECT_EQ(linkerInput.getSymbols().end(), symbolC);
@@ -124,13 +124,13 @@ TEST(LinkerInputTests, givenFunctionsSymbolTableThenProperlyDecodesGlobalVariabl
     ASSERT_NE(linkerInput.getSymbols().end(), symbolA);
     EXPECT_EQ(entry[0].s_offset, symbolA->second.offset);
     EXPECT_EQ(entry[0].s_size, symbolA->second.size);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, symbolA->second.segment);
+    EXPECT_EQ(NEO::SegmentType::globalVariables, symbolA->second.segment);
 
     auto symbolB = linkerInput.getSymbols().find("B");
     ASSERT_NE(linkerInput.getSymbols().end(), symbolB);
     EXPECT_EQ(entry[1].s_offset, symbolB->second.offset);
     EXPECT_EQ(entry[1].s_size, symbolB->second.size);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, symbolB->second.segment);
+    EXPECT_EQ(NEO::SegmentType::globalConstants, symbolB->second.segment);
 
     auto symbolC = linkerInput.getSymbols().find("C");
     EXPECT_EQ(linkerInput.getSymbols().end(), symbolC);
@@ -182,13 +182,13 @@ TEST(LinkerInputTests, givenFunctionsSymbolTableThenProperlyDecodesExportedFunct
     ASSERT_NE(linkerInput.getSymbols().end(), symbolA);
     EXPECT_EQ(entry[0].s_offset, symbolA->second.offset);
     EXPECT_EQ(entry[0].s_size, symbolA->second.size);
-    EXPECT_EQ(NEO::SegmentType::Instructions, symbolA->second.segment);
+    EXPECT_EQ(NEO::SegmentType::instructions, symbolA->second.segment);
 
     auto symbolB = linkerInput.getSymbols().find("B");
     ASSERT_NE(linkerInput.getSymbols().end(), symbolB);
     EXPECT_EQ(entry[1].s_offset, symbolB->second.offset);
     EXPECT_EQ(entry[1].s_size, symbolB->second.size);
-    EXPECT_EQ(NEO::SegmentType::Instructions, symbolB->second.segment);
+    EXPECT_EQ(NEO::SegmentType::instructions, symbolB->second.segment);
 
     EXPECT_EQ(3, linkerInput.getExportedFunctionsSegmentId());
 }
@@ -259,9 +259,9 @@ TEST(LinkerInputTests, whenDataRelocationsAreAddedThenProperTraitsAreSet) {
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 7U;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocInfo.symbolName = "aaa";
-    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput.addDataRelocationInfo(relocInfo);
     ASSERT_EQ(1U, linkerInput.getDataRelocations().size());
     EXPECT_EQ(relocInfo.offset, linkerInput.getDataRelocations()[0].offset);
@@ -275,7 +275,7 @@ TEST(LinkerInputTests, whenDataRelocationsAreAddedThenProperTraitsAreSet) {
     linkerInput = {};
     EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
     EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
     linkerInput.addDataRelocationInfo(relocInfo);
     ASSERT_EQ(1U, linkerInput.getDataRelocations().size());
     EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
@@ -293,19 +293,19 @@ TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsRetur
     auto segmentGlobalZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit.str());
     auto segmentGlobalConstZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataConstZeroInit.str());
 
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentConst);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentGlobalConst);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, segmentGlobal);
-    EXPECT_EQ(NEO::SegmentType::GlobalStrings, segmentConstString);
-    EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions);
-    EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions2);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariablesZeroInit, segmentGlobalZeroInit);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstantsZeroInit, segmentGlobalConstZeroInit);
+    EXPECT_EQ(NEO::SegmentType::globalConstants, segmentConst);
+    EXPECT_EQ(NEO::SegmentType::globalConstants, segmentGlobalConst);
+    EXPECT_EQ(NEO::SegmentType::globalVariables, segmentGlobal);
+    EXPECT_EQ(NEO::SegmentType::globalStrings, segmentConstString);
+    EXPECT_EQ(NEO::SegmentType::instructions, segmentInstructions);
+    EXPECT_EQ(NEO::SegmentType::instructions, segmentInstructions2);
+    EXPECT_EQ(NEO::SegmentType::globalVariablesZeroInit, segmentGlobalZeroInit);
+    EXPECT_EQ(NEO::SegmentType::globalConstantsZeroInit, segmentGlobalConstZeroInit);
 }
 
 TEST(LinkerInputTests, WhenGettingSegmentForUnknownSectionNameThenUnknownSegmentIsReturned) {
     auto segment = NEO::LinkerInput::getSegmentForSection("Not_a_valid_section_name");
-    EXPECT_EQ(NEO::SegmentType::Unknown, segment);
+    EXPECT_EQ(NEO::SegmentType::unknown, segment);
 }
 
 TEST(LinkerInputTests, WhenAddingElfTextRelocationForSegmentIndexThenInstructionSegmentForRelocationAndProperTraitsAreSet) {
@@ -316,10 +316,10 @@ TEST(LinkerInputTests, WhenAddingElfTextRelocationForSegmentIndexThenInstruction
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 7u;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocInfo.symbolName = "test";
-    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
 
     linkerInput.addElfTextSegmentRelocation(relocInfo, 5);
 
@@ -330,7 +330,7 @@ TEST(LinkerInputTests, WhenAddingElfTextRelocationForSegmentIndexThenInstruction
 
     ASSERT_EQ(1u, relocs.size());
 
-    EXPECT_EQ(NEO::SegmentType::Instructions, relocs[0].relocationSegment);
+    EXPECT_EQ(NEO::SegmentType::instructions, relocs[0].relocationSegment);
     EXPECT_EQ(std::string("test"), relocs[0].symbolName);
     EXPECT_EQ(7u, relocs[0].offset);
 
@@ -344,10 +344,10 @@ TEST(LinkerInputTests, WhenAddingTwoElfTextRelocationForSingleSegmentIndexThenBo
     NEO::LinkerInput linkerInput = {};
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 7u;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocInfo.symbolName = "test";
-    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-    relocInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
 
     linkerInput.addElfTextSegmentRelocation(relocInfo, 0);
 
@@ -363,13 +363,13 @@ TEST(LinkerInputTests, WhenAddingTwoElfTextRelocationForSingleSegmentIndexThenBo
 }
 
 TEST(LinkerInputTests, GivenVarDataSegmentThenIsVarDataSegmentReturnsTrue) {
-    EXPECT_TRUE(isVarDataSegment(SegmentType::GlobalVariables));
-    EXPECT_TRUE(isVarDataSegment(SegmentType::GlobalVariablesZeroInit));
+    EXPECT_TRUE(isVarDataSegment(SegmentType::globalVariables));
+    EXPECT_TRUE(isVarDataSegment(SegmentType::globalVariablesZeroInit));
 }
 
 TEST(LinkerInputTests, GivenConstDataSegmentThenIsConstDataSegmentReturnsTrue) {
-    EXPECT_TRUE(isConstDataSegment(SegmentType::GlobalConstants));
-    EXPECT_TRUE(isConstDataSegment(SegmentType::GlobalConstantsZeroInit));
+    EXPECT_TRUE(isConstDataSegment(SegmentType::globalConstants));
+    EXPECT_TRUE(isConstDataSegment(SegmentType::globalConstantsZeroInit));
 }
 
 TEST(LinkerInputTests, GivenTwoGlobalSymbolsOfTypeFunctionEachPointingToDifferentInstructionSectionWhenDecodingElfThenLinkerInputIsInvalid) {
@@ -413,7 +413,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataGlobalSectionW
     auto &symbol = linkerInput.getSymbols().at("0");
     EXPECT_EQ(0x20U, symbol.offset);
     EXPECT_EQ(8U, symbol.size);
-    EXPECT_EQ(SegmentType::GlobalVariables, symbol.segment);
+    EXPECT_EQ(SegmentType::globalVariables, symbol.segment);
     EXPECT_TRUE(symbol.global);
 }
 
@@ -436,7 +436,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataConstSectionWh
     auto &symbol = linkerInput.getSymbols().at("0");
     EXPECT_EQ(0U, symbol.offset);
     EXPECT_EQ(8U, symbol.size);
-    EXPECT_EQ(SegmentType::GlobalConstants, symbol.segment);
+    EXPECT_EQ(SegmentType::globalConstants, symbol.segment);
     EXPECT_TRUE(symbol.global);
 }
 
@@ -461,7 +461,7 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeFuncPointingToFunctionsSectionWhen
     auto &symbol = linkerInput.getSymbols().at("0");
     EXPECT_EQ(0U, symbol.offset);
     EXPECT_EQ(32U, symbol.size);
-    EXPECT_EQ(SegmentType::Instructions, symbol.segment);
+    EXPECT_EQ(SegmentType::instructions, symbol.segment);
     EXPECT_EQ(1U, symbol.instructionSegmentId);
     EXPECT_TRUE(symbol.global);
 }
@@ -590,14 +590,14 @@ TEST(LinkerInputTests, GivenGlobalDataRelocationWithLocalSymbolPointingToConstDa
     EXPECT_FALSE(symbol.global);
     EXPECT_EQ(0U, symbol.offset);
     EXPECT_EQ(8U, symbol.size);
-    EXPECT_EQ(SegmentType::GlobalConstants, symbol.segment);
+    EXPECT_EQ(SegmentType::globalConstants, symbol.segment);
     auto &dataRelocations = linkerInput.getDataRelocations();
     EXPECT_EQ(1U, dataRelocations.size());
     EXPECT_EQ(64U, dataRelocations[0].offset);
     EXPECT_EQ(10U, dataRelocations[0].addend);
-    EXPECT_EQ(SegmentType::GlobalVariables, dataRelocations[0].relocationSegment);
+    EXPECT_EQ(SegmentType::globalVariables, dataRelocations[0].relocationSegment);
     EXPECT_EQ("0", dataRelocations[0].symbolName);
-    EXPECT_EQ(LinkerInput::RelocationInfo::Type::Address, dataRelocations[0].type);
+    EXPECT_EQ(LinkerInput::RelocationInfo::Type::address, dataRelocations[0].type);
     EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
 }
 
@@ -623,7 +623,7 @@ TEST(LinkerInputTests, GivenInstructionRelocationWithLocalSymbolPointingToFuncti
     EXPECT_FALSE(symbol.global);
     EXPECT_EQ(0x10U, symbol.offset);
     EXPECT_EQ(0x40U, symbol.size);
-    EXPECT_EQ(SegmentType::Instructions, symbol.segment);
+    EXPECT_EQ(SegmentType::instructions, symbol.segment);
     EXPECT_EQ(1U, symbol.instructionSegmentId);
 
     auto &instructionRelocsPerSeg = linkerInput.getRelocationsInInstructionSegments();
@@ -632,9 +632,9 @@ TEST(LinkerInputTests, GivenInstructionRelocationWithLocalSymbolPointingToFuncti
     EXPECT_EQ(1U, relocations.size());
     EXPECT_EQ(64U, relocations[0].offset);
     EXPECT_EQ(10U, relocations[0].addend);
-    EXPECT_EQ(SegmentType::Instructions, relocations[0].relocationSegment);
+    EXPECT_EQ(SegmentType::instructions, relocations[0].relocationSegment);
     EXPECT_EQ("0", relocations[0].symbolName);
-    EXPECT_EQ(LinkerInput::RelocationInfo::Type::Address, relocations[0].type);
+    EXPECT_EQ(LinkerInput::RelocationInfo::Type::address, relocations[0].type);
     EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
 }
 
@@ -643,7 +643,7 @@ using LinkerTests = Test<DeviceFixture>;
 TEST_F(LinkerTests, GivenSymbolToInstructionsAndNoCorrespondingInstructionSegmentWhenRelocatingSymbolsThenFail) {
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["func"];
-    symbol.segment = SegmentType::Instructions;
+    symbol.segment = SegmentType::instructions;
     symbol.instructionSegmentId = 4;
 
     WhiteBox<NEO::Linker> linker(linkerInput);
@@ -655,7 +655,7 @@ TEST_F(LinkerTests, GivenSymbolToInstructionsAndNoCorrespondingInstructionSegmen
 TEST_F(LinkerTests, GivenSymbolToInstructionBiggerThanCorrespondingInstructionSegmentWhenRelocatingSymbolsThenFail) {
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["func"];
-    symbol.segment = SegmentType::Instructions;
+    symbol.segment = SegmentType::instructions;
     symbol.instructionSegmentId = 0;
     symbol.offset = 8;
     symbol.size = 8;
@@ -671,7 +671,7 @@ TEST_F(LinkerTests, GivenSymbolToInstructionBiggerThanCorrespondingInstructionSe
 TEST_F(LinkerTests, GivenValidSymbolToInstructionsWhenRelocatingSymbolsThenSymbolIsProperlyRelocated) {
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["func"];
-    symbol.segment = SegmentType::Instructions;
+    symbol.segment = SegmentType::instructions;
     symbol.instructionSegmentId = 0;
     symbol.offset = 4;
     symbol.size = 8;
@@ -693,9 +693,9 @@ TEST_F(LinkerTests, GivenRelocationToInstructionSegmentWithLocalUndefinedSymbolW
     NEO::LinkerInput::RelocationInfo rela;
     rela.offset = 0U;
     rela.addend = 128U;
-    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::address;
     rela.symbolName = "";
-    rela.relocationSegment = NEO::SegmentType::Instructions;
+    rela.relocationSegment = NEO::SegmentType::instructions;
     linkerInput.textRelocations.push_back({rela});
 
     WhiteBox<NEO::Linker> linker(linkerInput);
@@ -787,10 +787,10 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledT
     NEO::LinkerInput linkerInput;
     LinkerMock linker(linkerInput);
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    unresolvedExternals.push_back({{"__SubDeviceID", 0, NEO::Linker::RelocationInfo::Type::AddressLow, NEO::SegmentType::Instructions}, 0u, false});
-    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 156, NEO::Linker::RelocationInfo::Type::AddressLow, NEO::SegmentType::Instructions}, 0u, false});
-    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 140, NEO::Linker::RelocationInfo::Type::AddressHigh, NEO::SegmentType::Instructions}, 0u, false});
-    unresolvedExternals.push_back({{"__SubDeviceID", 64, NEO::Linker::RelocationInfo::Type::AddressHigh, NEO::SegmentType::Instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__SubDeviceID", 0, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 156, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 140, NEO::Linker::RelocationInfo::Type::addressHigh, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__SubDeviceID", 64, NEO::Linker::RelocationInfo::Type::addressHigh, NEO::SegmentType::instructions}, 0u, false});
 
     std::vector<char> instructionSegment;
     instructionSegment.resize(128u);
@@ -820,10 +820,10 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalsWhenLinkThenSubDeviceIDSymbolsAreC
     NEO::Linker linker(linkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    unresolvedExternals.push_back({{"__SubDeviceID", 0, NEO::Linker::RelocationInfo::Type::AddressLow, NEO::SegmentType::Instructions}, 0u, false});
-    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 156, NEO::Linker::RelocationInfo::Type::AddressLow, NEO::SegmentType::Instructions}, 0u, false});
-    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 140, NEO::Linker::RelocationInfo::Type::AddressHigh, NEO::SegmentType::Instructions}, 0u, false});
-    unresolvedExternals.push_back({{"__SubDeviceID", 64, NEO::Linker::RelocationInfo::Type::AddressHigh, NEO::SegmentType::Instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__SubDeviceID", 0, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 156, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 140, NEO::Linker::RelocationInfo::Type::addressHigh, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__SubDeviceID", 64, NEO::Linker::RelocationInfo::Type::addressHigh, NEO::SegmentType::instructions}, 0u, false});
 
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
@@ -1163,7 +1163,7 @@ HWTEST_F(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocati
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
     ASSERT_EQ(1U, linkerInput.symbols.count("A"));
-    linkerInput.symbols["A"].segment = NEO::SegmentType::Unknown;
+    linkerInput.symbols["A"].segment = NEO::SegmentType::unknown;
     auto linkResult = linker.link(
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
@@ -1173,7 +1173,7 @@ HWTEST_F(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocati
     EXPECT_EQ(0U, relocatedSymbols.size());
     ASSERT_EQ(0U, unresolvedExternals.size());
 
-    linkerInput.symbols["A"].segment = NEO::SegmentType::GlobalVariables;
+    linkerInput.symbols["A"].segment = NEO::SegmentType::globalVariables;
     linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                              patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
                              unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
@@ -1194,16 +1194,16 @@ HWTEST_F(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsP
     WhiteBox<NEO::LinkerInput> linkerInput;
 
     SymbolInfo strSymbol;
-    strSymbol.segment = SegmentType::GlobalStrings;
+    strSymbol.segment = SegmentType::globalStrings;
     strSymbol.offset = 0U;
     strSymbol.size = 8U;
     linkerInput.symbols.insert({".str", strSymbol});
 
     NEO::LinkerInput::RelocationInfo relocation;
     relocation.offset = 0x8U;
-    relocation.relocationSegment = NEO::SegmentType::Instructions;
+    relocation.relocationSegment = NEO::SegmentType::instructions;
     relocation.symbolName = ".str";
-    relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput.textRelocations.push_back({relocation});
 
     linkerInput.traits.requiresPatchingOfInstructionSegments = true;
@@ -1258,25 +1258,25 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &fun1 = linkerInput.symbols["fun1"];
     fun1.global = true;
-    fun1.segment = SegmentType::Instructions;
+    fun1.segment = SegmentType::instructions;
     fun1.offset = 0U;
     fun1.size = 8U;
 
     auto &fun2 = linkerInput.symbols["fun2"];
     fun2.global = true;
-    fun2.segment = SegmentType::Instructions;
+    fun2.segment = SegmentType::instructions;
     fun2.offset = 8U;
     fun2.size = 8U;
 
     auto &var1 = linkerInput.symbols["var1"];
     var1.global = true;
-    var1.segment = SegmentType::GlobalVariables;
+    var1.segment = SegmentType::globalVariables;
     var1.offset = 8U;
     var1.size = 8U;
 
     auto &const1 = linkerInput.symbols["const1"];
     const1.global = true;
-    const1.segment = SegmentType::GlobalConstants;
+    const1.segment = SegmentType::globalConstants;
     const1.offset = 8U;
     const1.size = 8U;
 
@@ -1313,9 +1313,9 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalConstants;
+        relocation.relocationSegment = NEO::SegmentType::globalConstants;
         relocation.symbolName = "var1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.dataRelocations.push_back(relocation);
     }
 
@@ -1324,9 +1324,9 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalVariables;
+        relocation.relocationSegment = NEO::SegmentType::globalVariables;
         relocation.symbolName = "const1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.dataRelocations.push_back(relocation);
     }
     // fun1 -> Const
@@ -1334,9 +1334,9 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0x10U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalConstants;
+        relocation.relocationSegment = NEO::SegmentType::globalConstants;
         relocation.symbolName = "fun1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.dataRelocations.push_back(relocation);
     }
 
@@ -1346,9 +1346,9 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
         {
             NEO::LinkerInput::RelocationInfo relocation;
             relocation.offset = 0x10U;
-            relocation.relocationSegment = NEO::SegmentType::GlobalVariables;
+            relocation.relocationSegment = NEO::SegmentType::globalVariables;
             relocation.symbolName = "fun2";
-            relocation.type = NEO::LinkerInput::RelocationInfo::Type::AddressLow;
+            relocation.type = NEO::LinkerInput::RelocationInfo::Type::addressLow;
             linkerInput.dataRelocations.push_back(relocation);
         }
         // fun2_HI -> var
@@ -1356,9 +1356,9 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
         {
             NEO::LinkerInput::RelocationInfo relocation;
             relocation.offset = 0x14U;
-            relocation.relocationSegment = NEO::SegmentType::GlobalVariables;
+            relocation.relocationSegment = NEO::SegmentType::globalVariables;
             relocation.symbolName = "fun2";
-            relocation.type = NEO::LinkerInput::RelocationInfo::Type::AddressHigh;
+            relocation.type = NEO::LinkerInput::RelocationInfo::Type::addressHigh;
             linkerInput.dataRelocations.push_back(relocation);
         }
     }
@@ -1436,22 +1436,22 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchi
     linkerInput.traits.requiresPatchingOfInstructionSegments = true;
 
     auto &var1 = linkerInput.symbols["var1"];
-    var1.segment = SegmentType::GlobalVariables;
+    var1.segment = SegmentType::globalVariables;
     var1.offset = 0U;
     var1.size = 8U;
 
     auto &bssVar = linkerInput.symbols["bssVar"];
-    bssVar.segment = SegmentType::GlobalVariablesZeroInit;
+    bssVar.segment = SegmentType::globalVariablesZeroInit;
     bssVar.offset = 0U;
     bssVar.size = 8U;
 
     auto &const1 = linkerInput.symbols["const1"];
-    const1.segment = SegmentType::GlobalConstants;
+    const1.segment = SegmentType::globalConstants;
     const1.offset = 0U;
     const1.size = 8U;
 
     auto &bssConst = linkerInput.symbols["bssConst"];
-    bssConst.segment = SegmentType::GlobalConstantsZeroInit;
+    bssConst.segment = SegmentType::globalConstantsZeroInit;
     bssConst.offset = 0U;
     bssConst.size = 8U;
 
@@ -1480,18 +1480,18 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchi
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalConstantsZeroInit;
+        relocation.relocationSegment = NEO::SegmentType::globalConstantsZeroInit;
         relocation.symbolName = "var1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.dataRelocations.push_back(relocation);
     }
     // bssGlobal[0] = &const1
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalVariablesZeroInit;
+        relocation.relocationSegment = NEO::SegmentType::globalVariablesZeroInit;
         relocation.symbolName = "const1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.dataRelocations.push_back(relocation);
     }
     // Relocation for step 2.
@@ -1499,18 +1499,18 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchi
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::Instructions;
+        relocation.relocationSegment = NEO::SegmentType::instructions;
         relocation.symbolName = "bssConst";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.textRelocations.push_back({relocation});
     }
     // instructions[1] = &bssVar
     {
         NEO::LinkerInput::RelocationInfo relocation;
         relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::Instructions;
+        relocation.relocationSegment = NEO::SegmentType::instructions;
         relocation.symbolName = "bssVar";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+        relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
         linkerInput.textRelocations.push_back({relocation});
     }
 
@@ -1556,9 +1556,9 @@ HWTEST_F(LinkerTests, givenInvalidSymbolWhenPatchingDataSegmentsThenRelocationIs
     WhiteBox<NEO::LinkerInput> linkerInput;
     NEO::LinkerInput::RelocationInfo relocationInfo;
     relocationInfo.offset = 0U;
-    relocationInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocationInfo.symbolName = "symbol";
-    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput.dataRelocations.push_back(relocationInfo);
 
     NEO::Linker linker(linkerInput);
@@ -1589,15 +1589,15 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenRe
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["symbol"];
-    symbol.segment = SegmentType::GlobalVariables;
+    symbol.segment = SegmentType::globalVariables;
     symbol.offset = 0U;
     symbol.size = 8U;
 
     NEO::LinkerInput::RelocationInfo relocationInfo;
     relocationInfo.offset = globalConstantsSegmentInfo.segmentSize + 1U;
-    relocationInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocationInfo.symbolName = "symbol";
-    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput.dataRelocations.push_back(relocationInfo);
 
     NEO::Linker linker(linkerInput);
@@ -1615,14 +1615,14 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenRe
 HWTEST_F(LinkerTests, givenInvalidRelocationSegmentWhenPatchingDataSegmentsThenRelocationIsUnresolved) {
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["symbol"];
-    symbol.segment = SegmentType::GlobalVariables;
+    symbol.segment = SegmentType::globalVariables;
     symbol.offset = 0U;
     symbol.size = 8U;
     NEO::LinkerInput::RelocationInfo relocationInfo;
     relocationInfo.offset = 0U;
-    relocationInfo.relocationSegment = NEO::SegmentType::Unknown;
+    relocationInfo.relocationSegment = NEO::SegmentType::unknown;
     relocationInfo.symbolName = "symbol";
-    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput.dataRelocations.push_back(relocationInfo);
     NEO::Linker linker(linkerInput);
     NEO::Linker::UnresolvedExternals unresolvedExternals;
@@ -1655,15 +1655,15 @@ HWTEST_F(LinkerTests, given32BitBinaryWithValidSymbolsAndRelocationsWhenPatching
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.setPointerSize(NEO::LinkerInput::Traits::PointerSize::Ptr32bit);
     auto &fun1 = linkerInput.symbols["symbol"];
-    fun1.segment = SegmentType::GlobalVariables;
+    fun1.segment = SegmentType::globalVariables;
     fun1.offset = 0U;
     fun1.size = 8U;
 
     NEO::LinkerInput::RelocationInfo relocationInfo;
     relocationInfo.offset = 0U;
-    relocationInfo.relocationSegment = NEO::SegmentType::GlobalConstants;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocationInfo.symbolName = "symbol";
-    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     linkerInput.dataRelocations.push_back(relocationInfo);
 
     NEO::Linker linker(linkerInput);
@@ -1696,7 +1696,7 @@ TEST(LinkerErrorMessageTests, givenListOfUnresolvedExternalsThenSymbolNameOrSymb
     unresolvedExternal.internalError = false;
     unresolvedExternal.unresolvedRelocation.offset = 64;
     unresolvedExternal.unresolvedRelocation.symbolName = "arrayABC";
-    unresolvedExternal.unresolvedRelocation.relocationSegment = NEO::SegmentType::Instructions;
+    unresolvedExternal.unresolvedRelocation.relocationSegment = NEO::SegmentType::instructions;
     unresolvedExternals.push_back(unresolvedExternal);
     auto err = NEO::constructLinkerErrorMessage(unresolvedExternals, segmentsNames);
 
@@ -1718,19 +1718,19 @@ TEST(LinkerErrorMessageTests, givenListOfUnresolvedExternalsThenSymbolNameOrSymb
     EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
     EXPECT_TRUE(hasSubstr(err, "internal linker error"));
 
-    unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::GlobalConstants;
+    unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::globalConstants;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::GlobalConstants)));
+    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::globalConstants)));
     EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
 
-    unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::GlobalVariables;
+    unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::globalVariables;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::GlobalVariables)));
+    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::globalVariables)));
     EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
 
-    unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::Unknown;
+    unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::unknown;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::Unknown)));
+    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::unknown)));
     EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
 }
 
@@ -1745,17 +1745,17 @@ TEST(RelocationsDebugMessageTests, givenListOfRelocatedSymbolsThenReturnProperDe
     auto &funcSymbol = symbols["foo"];
     auto &constDataSymbol = symbols["constInt"];
     auto &globalVarSymbol = symbols["intX"];
-    funcSymbol.symbol.segment = NEO::SegmentType::Instructions;
+    funcSymbol.symbol.segment = NEO::SegmentType::instructions;
     funcSymbol.symbol.offset = 64U;
     funcSymbol.symbol.size = 1024U;
     funcSymbol.gpuAddress = 4096U;
 
-    constDataSymbol.symbol.segment = NEO::SegmentType::GlobalConstants;
+    constDataSymbol.symbol.segment = NEO::SegmentType::globalConstants;
     constDataSymbol.symbol.offset = 32U;
     constDataSymbol.symbol.size = 16U;
     constDataSymbol.gpuAddress = 8U;
 
-    globalVarSymbol.symbol.segment = NEO::SegmentType::GlobalVariables;
+    globalVarSymbol.symbol.segment = NEO::SegmentType::globalVariables;
     globalVarSymbol.symbol.offset = 72U;
     globalVarSymbol.symbol.size = 8U;
     globalVarSymbol.gpuAddress = 256U;
@@ -2293,9 +2293,9 @@ TEST_F(LinkerTests, givenRelaWhenPatchingInstructionsSegmentThenAddendIsAdded) {
     NEO::LinkerInput::RelocationInfo rela;
     rela.offset = 0U;
     rela.addend = 128U;
-    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::address;
     rela.symbolName = "symbol";
-    rela.relocationSegment = NEO::SegmentType::Instructions;
+    rela.relocationSegment = NEO::SegmentType::instructions;
     linkerInput.textRelocations.push_back({rela});
 
     WhiteBox<NEO::Linker> linker(linkerInput);
@@ -2326,9 +2326,9 @@ HWTEST_F(LinkerTests, givenRelaWhenPatchingDataSegmentThenAddendIsAdded) {
     NEO::LinkerInput::RelocationInfo rela;
     rela.offset = 0U;
     rela.addend = 128U;
-    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::address;
     rela.symbolName = "symbol";
-    rela.relocationSegment = NEO::SegmentType::GlobalConstants;
+    rela.relocationSegment = NEO::SegmentType::globalConstants;
     linkerInput.dataRelocations.push_back({rela});
 
     WhiteBox<NEO::Linker> linker(linkerInput);
@@ -2353,9 +2353,9 @@ HWTEST_F(LinkerTests, givenRelocationInfoWhenPatchingDataSegmentWithGlobalVariab
     NEO::LinkerInput::RelocationInfo relocationInfo;
     relocationInfo.offset = 0U;
     relocationInfo.addend = 128U;
-    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
     relocationInfo.symbolName = "symbol";
-    relocationInfo.relocationSegment = NEO::SegmentType::GlobalVariables;
+    relocationInfo.relocationSegment = NEO::SegmentType::globalVariables;
     linkerInput.dataRelocations.push_back({relocationInfo});
 
     WhiteBox<NEO::Linker> linker(linkerInput);
@@ -2372,8 +2372,8 @@ TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationWhenPatchingInstruction
     linkerInput.traits.requiresPatchingOfInstructionSegments = true;
     NEO::LinkerInput::RelocationInfo rel;
     rel.offset = 0x4;
-    rel.type = NEO::LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset;
-    rel.relocationSegment = NEO::SegmentType::Instructions;
+    rel.type = NEO::LinkerInput::RelocationInfo::Type::perThreadPayloadOffset;
+    rel.relocationSegment = NEO::SegmentType::instructions;
     linkerInput.textRelocations.push_back({rel});
 
     NEO::Linker::KernelDescriptorsT kernelDescriptors;

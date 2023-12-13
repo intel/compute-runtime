@@ -436,7 +436,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
 
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
 

@@ -330,7 +330,7 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
         for (auto offset : offsets) {
             for (auto size : sizes) {
                 testReadImageMisaligned<FamilyType>(offset, size, pixelSize);
-                ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::Blit);
+                ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
             }
         }
     }
@@ -345,7 +345,7 @@ HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnable
     }
 
     testReadImageUnaligned<FamilyType>();
-    ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::Blit);
+    ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
 INSTANTIATE_TEST_CASE_P(

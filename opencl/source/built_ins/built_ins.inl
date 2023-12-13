@@ -25,11 +25,11 @@ void BuiltInOp<EBuiltInOps::auxTranslation>::resizeKernelInstances(size_t size) 
         cl_int retVal{CL_SUCCESS};
         auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, retVal);
         UNRECOVERABLE_IF(CL_SUCCESS != retVal);
-        clonedNonAuxToAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::NonAuxToAux);
+        clonedNonAuxToAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::nonAuxToAux);
 
         auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, retVal);
         UNRECOVERABLE_IF(CL_SUCCESS != retVal);
-        clonedAuxToNonAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::AuxToNonAux);
+        clonedAuxToNonAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::auxToNonAux);
 
         clonedNonAuxToAuxKernel->cloneKernel(baseKernel);
         clonedAuxToNonAuxKernel->cloneKernel(baseKernel);

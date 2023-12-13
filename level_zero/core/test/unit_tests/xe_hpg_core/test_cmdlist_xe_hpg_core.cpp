@@ -64,7 +64,7 @@ HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAdd
 
         NEO::StateBaseAddressHelper<FamilyType>::programBindingTableBaseAddress(
             linearStream,
-            *commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE),
+            *commandContainer.getIndirectHeap(NEO::HeapType::surfaceState),
             gmmHelper);
 
         auto expectedCommand = reinterpret_cast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(streamBuffer);

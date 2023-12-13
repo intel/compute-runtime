@@ -32,19 +32,19 @@ namespace NEO {
 
 SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {
     if (name == NEO::Zebin::Elf::SectionNames::dataConst || name == NEO::Zebin::Elf::SectionNames::dataGlobalConst) {
-        return NEO::SegmentType::GlobalConstants;
+        return NEO::SegmentType::globalConstants;
     } else if (name == NEO::Zebin::Elf::SectionNames::dataGlobal) {
-        return NEO::SegmentType::GlobalVariables;
+        return NEO::SegmentType::globalVariables;
     } else if (name == NEO::Zebin::Elf::SectionNames::dataConstString) {
-        return NEO::SegmentType::GlobalStrings;
+        return NEO::SegmentType::globalStrings;
     } else if (name.startsWith(NEO::Elf::SpecialSectionNames::text.data())) {
-        return NEO::SegmentType::Instructions;
+        return NEO::SegmentType::instructions;
     } else if (name == NEO::Zebin::Elf::SectionNames::dataConstZeroInit) {
-        return NEO::SegmentType::GlobalConstantsZeroInit;
+        return NEO::SegmentType::globalConstantsZeroInit;
     } else if (name == NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit) {
-        return NEO::SegmentType::GlobalVariablesZeroInit;
+        return NEO::SegmentType::globalVariablesZeroInit;
     }
-    return NEO::SegmentType::Unknown;
+    return NEO::SegmentType::unknown;
 }
 
 bool LinkerInput::decodeGlobalVariablesSymbolTable(const void *data, uint32_t numEntries) {
@@ -63,11 +63,11 @@ bool LinkerInput::decodeGlobalVariablesSymbolTable(const void *data, uint32_t nu
             this->valid = false;
             return false;
         case vISA::S_GLOBAL_VAR:
-            symbolInfo.segment = SegmentType::GlobalVariables;
+            symbolInfo.segment = SegmentType::globalVariables;
             traits.exportsGlobalVariables = true;
             break;
         case vISA::S_GLOBAL_VAR_CONST:
-            symbolInfo.segment = SegmentType::GlobalConstants;
+            symbolInfo.segment = SegmentType::globalConstants;
             traits.exportsGlobalConstants = true;
             break;
         }
@@ -93,15 +93,15 @@ bool LinkerInput::decodeExportedFunctionsSymbolTable(const void *data, uint32_t 
             symbols.erase(symbolEntryIt->s_name);
             break;
         case vISA::S_GLOBAL_VAR:
-            symbolInfo.segment = SegmentType::GlobalVariables;
+            symbolInfo.segment = SegmentType::globalVariables;
             traits.exportsGlobalVariables = true;
             break;
         case vISA::S_GLOBAL_VAR_CONST:
-            symbolInfo.segment = SegmentType::GlobalConstants;
+            symbolInfo.segment = SegmentType::globalConstants;
             traits.exportsGlobalConstants = true;
             break;
         case vISA::S_FUNC:
-            symbolInfo.segment = SegmentType::Instructions;
+            symbolInfo.segment = SegmentType::instructions;
             symbolInfo.instructionSegmentId = instructionsSegmentId;
             traits.exportsFunctions = true;
             UNRECOVERABLE_IF((this->exportedFunctionsSegmentId != -1) && (this->exportedFunctionsSegmentId != static_cast<int32_t>(instructionsSegmentId)));
@@ -127,23 +127,23 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
         RelocationInfo relocInfo{};
         relocInfo.offset = relocEntryIt->r_offset;
         relocInfo.symbolName = relocEntryIt->r_symbol;
-        relocInfo.relocationSegment = SegmentType::Instructions;
+        relocInfo.relocationSegment = SegmentType::instructions;
         switch (relocEntryIt->r_type) {
         default:
             DEBUG_BREAK_IF(true);
             this->valid = false;
             return false;
         case vISA::R_SYM_ADDR:
-            relocInfo.type = RelocationInfo::Type::Address;
+            relocInfo.type = RelocationInfo::Type::address;
             break;
         case vISA::R_SYM_ADDR_32:
-            relocInfo.type = RelocationInfo::Type::AddressLow;
+            relocInfo.type = RelocationInfo::Type::addressLow;
             break;
         case vISA::R_SYM_ADDR_32_HI:
-            relocInfo.type = RelocationInfo::Type::AddressHigh;
+            relocInfo.type = RelocationInfo::Type::addressHigh;
             break;
         case vISA::R_PER_THREAD_PAYLOAD_OFFSET_32:
-            relocInfo.type = RelocationInfo::Type::PerThreadPayloadOffset;
+            relocInfo.type = RelocationInfo::Type::perThreadPayloadOffset;
             break;
         }
         outRelocInfo.push_back(std::move(relocInfo));
@@ -152,9 +152,9 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
 }
 
 void LinkerInput::addDataRelocationInfo(const RelocationInfo &relocationInfo) {
-    DEBUG_BREAK_IF((relocationInfo.relocationSegment != SegmentType::GlobalConstants) && (relocationInfo.relocationSegment != SegmentType::GlobalVariables));
-    this->traits.requiresPatchingOfGlobalVariablesBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalVariables);
-    this->traits.requiresPatchingOfGlobalConstantsBuffer |= (relocationInfo.relocationSegment == SegmentType::GlobalConstants);
+    DEBUG_BREAK_IF((relocationInfo.relocationSegment != SegmentType::globalConstants) && (relocationInfo.relocationSegment != SegmentType::globalVariables));
+    this->traits.requiresPatchingOfGlobalVariablesBuffer |= (relocationInfo.relocationSegment == SegmentType::globalVariables);
+    this->traits.requiresPatchingOfGlobalConstantsBuffer |= (relocationInfo.relocationSegment == SegmentType::globalConstants);
     this->dataRelocations.push_back(relocationInfo);
 }
 
@@ -168,7 +168,7 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
 
     auto &outRelocInfo = textRelocations[instructionsSegmentId];
 
-    relocationInfo.relocationSegment = SegmentType::Instructions;
+    relocationInfo.relocationSegment = SegmentType::instructions;
 
     outRelocInfo.push_back(std::move(relocationInfo));
 }
@@ -186,7 +186,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
     relocationInfo.type = static_cast<LinkerInput::RelocationInfo::Type>(reloc.relocType);
     relocationInfo.relocationSegment = getSegmentForSection(sectionName);
 
-    if (SegmentType::Instructions == relocationInfo.relocationSegment) {
+    if (SegmentType::instructions == relocationInfo.relocationSegment) {
         auto kernelName = sectionName.substr(Zebin::Elf::SectionNames::textPrefix.length());
         if (auto instructionSegmentId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             addElfTextSegmentRelocation(relocationInfo, *instructionSegmentId);
@@ -226,7 +226,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
     auto symbolName = elf.getSymbolName(elfSymbol.name);
     auto symbolSectionName = elf.getSectionName(elfSymbol.shndx);
     auto segment = getSegmentForSection(symbolSectionName);
-    if (segment == SegmentType::Unknown) {
+    if (segment == SegmentType::unknown) {
         return false;
     }
 
@@ -342,7 +342,7 @@ bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentIn
                              const PatchableSegments &instructionsSegments, size_t globalConstantsInitDataSize, size_t globalVariablesInitDataSize) {
     relocatedSymbols.reserve(data.getSymbols().size());
     for (const auto &[symbolName, symbolInfo] : data.getSymbols()) {
-        if (symbolInfo.segment == SegmentType::Instructions && false == symbolInfo.global) {
+        if (symbolInfo.segment == SegmentType::instructions && false == symbolInfo.global) {
             if (symbolInfo.instructionSegmentId >= instructionsSegments.size()) {
                 return false;
             }
@@ -358,24 +358,24 @@ bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentIn
             default:
                 DEBUG_BREAK_IF(true);
                 return false;
-            case SegmentType::GlobalVariables:
+            case SegmentType::globalVariables:
                 seg = &globalVariables;
                 break;
-            case SegmentType::GlobalVariablesZeroInit:
+            case SegmentType::globalVariablesZeroInit:
                 seg = &globalVariables;
                 offset += globalVariablesInitDataSize;
                 break;
-            case SegmentType::GlobalConstants:
+            case SegmentType::globalConstants:
                 seg = &globalConstants;
                 break;
-            case SegmentType::GlobalConstantsZeroInit:
+            case SegmentType::globalConstantsZeroInit:
                 seg = &globalConstants;
                 offset += globalConstantsInitDataSize;
                 break;
-            case SegmentType::GlobalStrings:
+            case SegmentType::globalStrings:
                 seg = &globalStrings;
                 break;
-            case SegmentType::Instructions:
+            case SegmentType::instructions:
                 seg = &exportedFunctions;
                 break;
             }
@@ -391,19 +391,19 @@ bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentIn
 }
 
 uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationtype) {
-    return (relocationtype == LinkerInput::RelocationInfo::Type::Address) ? sizeof(uintptr_t) : sizeof(uint32_t);
+    return (relocationtype == LinkerInput::RelocationInfo::Type::address) ? sizeof(uintptr_t) : sizeof(uint32_t);
 }
 
 void Linker::patchAddress(void *relocAddress, const uint64_t value, const Linker::RelocationInfo &relocation) {
     switch (relocation.type) {
     default:
-        UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocation.type);
+        UNRECOVERABLE_IF(RelocationInfo::Type::address != relocation.type);
         *reinterpret_cast<uint64_t *>(relocAddress) = value;
         break;
-    case RelocationInfo::Type::AddressLow:
+    case RelocationInfo::Type::addressLow:
         *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>(value & 0xffffffff);
         break;
-    case RelocationInfo::Type::AddressHigh:
+    case RelocationInfo::Type::addressHigh:
         *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>((value >> 32) & 0xffffffff);
         break;
     }
@@ -439,7 +439,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             }
 
             auto relocAddress = ptrOffset(segment.hostPointer, static_cast<uintptr_t>(relocation.offset));
-            if (relocation.type == LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset) {
+            if (relocation.type == LinkerInput::RelocationInfo::Type::perThreadPayloadOffset) {
                 *reinterpret_cast<uint32_t *>(relocAddress) = kernelDescriptors.at(segId)->kernelAttributes.crossThreadDataSize;
             } else if (relocation.symbolName == implicitArgsRelocationSymbolName) {
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(reinterpret_cast<uint32_t *>(relocAddress));
@@ -479,22 +479,22 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
 
         ArrayRef<uint8_t> dst{};
         const void *initData = nullptr;
-        if (SegmentType::GlobalConstants == relocation.relocationSegment) {
+        if (SegmentType::globalConstants == relocation.relocationSegment) {
             dst = {constantsData.data(), constantsInitDataSize};
             initData = constantsInitData;
-        } else if (SegmentType::GlobalConstantsZeroInit == relocation.relocationSegment) {
+        } else if (SegmentType::globalConstantsZeroInit == relocation.relocationSegment) {
             dst = {constantsData.data() + constantsInitDataSize, constantsData.size() - constantsInitDataSize};
-        } else if (SegmentType::GlobalVariables == relocation.relocationSegment) {
+        } else if (SegmentType::globalVariables == relocation.relocationSegment) {
             dst = {variablesData.data(), variablesInitDataSize};
             initData = variablesInitData;
-        } else if (SegmentType::GlobalVariablesZeroInit == relocation.relocationSegment) {
+        } else if (SegmentType::globalVariablesZeroInit == relocation.relocationSegment) {
             dst = {variablesData.data() + variablesInitDataSize, variablesData.size() - variablesInitDataSize};
         } else {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
             continue;
         }
 
-        auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::AddressLow : relocation.type;
+        auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::addressLow : relocation.type;
         bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst.size();
         DEBUG_BREAK_IF(invalidOffset);
         if (invalidOffset) {
@@ -506,14 +506,14 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         isAnyRelocationPerformed = true;
         switch (relocType) {
         default:
-            UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocType);
+            UNRECOVERABLE_IF(RelocationInfo::Type::address != relocType);
             patchIncrement<uint64_t>(dst.begin(), static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
-        case RelocationInfo::Type::AddressLow:
+        case RelocationInfo::Type::addressLow:
             incrementValue = incrementValue & 0xffffffff;
             patchIncrement<uint32_t>(dst.begin(), static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
-        case RelocationInfo::Type::AddressHigh:
+        case RelocationInfo::Type::addressHigh:
             incrementValue = (incrementValue >> 32) & 0xffffffff;
             patchIncrement<uint32_t>(dst.begin(), static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
@@ -546,7 +546,7 @@ std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unres
                 errorStream << "error : unresolved external symbol ";
             }
 
-            if (unresExtern.unresolvedRelocation.relocationSegment == NEO::SegmentType::Instructions) {
+            if (unresExtern.unresolvedRelocation.relocationSegment == NEO::SegmentType::instructions) {
                 errorStream << unresExtern.unresolvedRelocation.symbolName << " at offset " << unresExtern.unresolvedRelocation.offset
                             << " in instructions segment #" << unresExtern.instructionsSegmentId;
                 if (instructionsSegmentsNames.size() > unresExtern.instructionsSegmentId) {

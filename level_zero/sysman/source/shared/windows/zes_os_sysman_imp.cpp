@@ -21,7 +21,7 @@ ze_result_t WddmSysmanImp::init() {
     NEO::OSInterface &osInterface = *(pParentSysmanDeviceImp->getRootDeviceEnvironment()).osInterface;
     auto driverModel = osInterface.getDriverModel();
 
-    if (driverModel && (driverModel->getDriverModelType() == NEO::DriverModelType::WDDM)) {
+    if (driverModel && (driverModel->getDriverModelType() == NEO::DriverModelType::wddm)) {
         pWddm = driverModel->as<NEO::Wddm>();
     } else {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

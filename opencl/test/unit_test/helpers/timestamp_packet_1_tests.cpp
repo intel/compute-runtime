@@ -1520,7 +1520,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel}));
 
     auto &cmdStream = mockCmdQ->getCS(0);
-    mockCmdQ->updateLatestSentEnqueueType(NEO::EnqueueProperties::Operation::Blit);
+    mockCmdQ->updateLatestSentEnqueueType(NEO::EnqueueProperties::Operation::blit);
     const cl_uint eventsOnWaitlist = 1;
     MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 

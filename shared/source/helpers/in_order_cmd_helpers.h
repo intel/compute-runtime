@@ -74,11 +74,11 @@ inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
 }
 
 enum class PatchCmdType {
-    None,
-    Lri64b,
-    Sdi,
-    Semaphore,
-    Walker
+    none,
+    lri64b,
+    sdi,
+    semaphore,
+    walker
 };
 
 template <typename GfxFamily>
@@ -92,16 +92,16 @@ struct PatchCmd {
 
     void patch(uint64_t appendCounterValue) {
         switch (patchCmdType) {
-        case PatchCmdType::Sdi:
+        case PatchCmdType::sdi:
             patchSdi(appendCounterValue);
             break;
-        case PatchCmdType::Semaphore:
+        case PatchCmdType::semaphore:
             patchSemaphore(appendCounterValue);
             break;
-        case PatchCmdType::Walker:
+        case PatchCmdType::walker:
             patchComputeWalker(appendCounterValue);
             break;
-        case PatchCmdType::Lri64b:
+        case PatchCmdType::lri64b:
             patchLri64b(appendCounterValue);
             break;
         default:
@@ -116,7 +116,7 @@ struct PatchCmd {
     void *cmd1 = nullptr;
     void *cmd2 = nullptr;
     const uint64_t baseCounterValue = 0;
-    const PatchCmdType patchCmdType = PatchCmdType::None;
+    const PatchCmdType patchCmdType = PatchCmdType::none;
 
   protected:
     void patchSdi(uint64_t appendCounterValue) {

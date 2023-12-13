@@ -30,9 +30,9 @@ BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMulti
                                                                                                           rootDeviceIndex(rootDeviceIndex),
                                                                                                           deviceBitfield(deviceBitfield) {
 
-    for (auto heapType = 0; heapType < BindlesHeapType::NUM_HEAP_TYPES; heapType++) {
+    for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
         auto size = MemoryConstants::pageSize64k;
-        auto heapAllocation = getHeapAllocation(size, MemoryConstants::pageSize64k, heapType == BindlesHeapType::SPECIAL_SSH);
+        auto heapAllocation = getHeapAllocation(size, MemoryConstants::pageSize64k, heapType == BindlesHeapType::specialSsh);
         UNRECOVERABLE_IF(heapAllocation == nullptr);
         ssHeapsAllocations.push_back(heapAllocation);
         surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, true);
@@ -79,7 +79,7 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
     auto heap = surfaceStateHeaps[heapType].get();
 
     std::lock_guard<std::mutex> autolock(this->mtx);
-    if (heapType == BindlesHeapType::GLOBAL_SSH) {
+    if (heapType == BindlesHeapType::globalSsh) {
 
         if (!allocateFromReusePool) {
             if ((surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() + surfaceStateInHeapVectorReuse[releasePoolIndex][1].size()) > reuseSlotCountThreshold) {
@@ -140,7 +140,7 @@ void *BindlessHeapsHelper::getSpaceInHeap(size_t ssSize, BindlesHeapType heapTyp
 }
 
 uint64_t BindlessHeapsHelper::getGlobalHeapsBase() {
-    return surfaceStateHeaps[BindlesHeapType::GLOBAL_SSH]->getGraphicsAllocation()->getGpuBaseAddress();
+    return surfaceStateHeaps[BindlesHeapType::globalSsh]->getGraphicsAllocation()->getGpuBaseAddress();
 }
 
 uint32_t BindlessHeapsHelper::getDefaultBorderColorOffset() {

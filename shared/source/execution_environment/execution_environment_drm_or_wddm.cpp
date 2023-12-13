@@ -14,7 +14,7 @@
 namespace NEO {
 
 void ExecutionEnvironment::adjustRootDeviceEnvironments() {
-    if (!rootDeviceEnvironments.empty() && rootDeviceEnvironments[0]->osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
+    if (!rootDeviceEnvironments.empty() && rootDeviceEnvironments[0]->osInterface->getDriverModel()->getDriverModelType() == DriverModelType::drm) {
         for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
             auto drmMemoryOperationsHandler = static_cast<DrmMemoryOperationsHandler *>(rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
             drmMemoryOperationsHandler->setRootDeviceIndex(rootDeviceIndex);

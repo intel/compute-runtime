@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ bool FlatBatchBufferHelper::registerBatchBufferStartAddress(uint64_t commandAddr
 
 void FlatBatchBufferHelper::fixCrossThreadDataInfo(std::vector<PatchInfoData> &data, size_t offsetCrossThreadData, uint64_t gpuAddress) {
     for (auto &patchInfoData : data) {
-        if (patchInfoData.sourceType == PatchInfoAllocationType::KernelArg) {
+        if (patchInfoData.sourceType == PatchInfoAllocationType::kernelArg) {
             patchInfoData.targetAllocation = gpuAddress;
             patchInfoData.targetAllocationOffset += offsetCrossThreadData;
         }

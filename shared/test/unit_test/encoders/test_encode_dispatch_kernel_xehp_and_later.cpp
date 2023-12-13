@@ -203,7 +203,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndIma
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
-    auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     ssh->getSpace(0x20);
     uint32_t sizeUsed = static_cast<uint32_t>(ssh->getUsed());
     auto expectedOffset = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
@@ -242,7 +242,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
-    auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     ssh->getSpace(0x20);
     uint32_t sizeUsed = static_cast<uint32_t>(ssh->getUsed());
     auto expectedOffset = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
@@ -279,7 +279,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhe
     uint32_t numBindingTable = 0;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
-    auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     uint32_t sizeUsed = 0x20;
     ssh->getSpace(sizeUsed);
 
@@ -332,7 +332,7 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
     SAMPLER_STATE samplerState;
     memset(&samplerState, 2, sizeof(SAMPLER_STATE));
 
-    auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto dsh = cmdContainer->getIndirectHeap(HeapType::dynamicState);
     auto usedBefore = dsh->getUsed();
 
     uint32_t dims[] = {2, 1, 1};
@@ -347,8 +347,8 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::surfaceState);
+    dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::dynamicState);
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -595,7 +595,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
     size_t expectedSizeIOH = dispatchInterface->getCrossThreadDataSize() +
                              dispatchInterface->getPerThreadDataSizeForWholeThreadGroup() -
                              inlineDataSize;
-    auto heap = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(expectedSizeIOH, heap->getUsed());
 }
 
@@ -621,7 +621,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsF
 
     size_t expectedSizeIOH = dispatchInterface->getCrossThreadDataSize() +
                              dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
-    auto heap = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(expectedSizeIOH, heap->getUsed());
 }
 
@@ -646,7 +646,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(0u, cmd->getEmitInlineParameter());
 
-    auto heap = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
+    auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(dispatchInterface->getPerThreadDataSizeForWholeThreadGroup(), heap->getUsed());
 }
 

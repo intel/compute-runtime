@@ -30,7 +30,7 @@
 namespace NEO {
 
 template <typename Family>
-const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Builtin;
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::builtin;
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
@@ -184,9 +184,9 @@ AuxTranslationMode GfxCoreHelperHw<Family>::getAuxTranslationMode(const Hardware
         mode = static_cast<AuxTranslationMode>(debugManager.flags.ForceAuxTranslationMode.get());
     }
 
-    if (mode == AuxTranslationMode::Blit && !hwInfo.capabilityTable.blitterOperationsSupported) {
+    if (mode == AuxTranslationMode::blit && !hwInfo.capabilityTable.blitterOperationsSupported) {
         DEBUG_BREAK_IF(true);
-        mode = AuxTranslationMode::Builtin;
+        mode = AuxTranslationMode::builtin;
     }
 
     return mode;

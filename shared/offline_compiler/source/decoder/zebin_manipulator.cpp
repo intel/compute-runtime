@@ -28,11 +28,11 @@ ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Zebin::Elf::IntelG
     size_t productConfigNoteId = std::numeric_limits<size_t>::max();
 
     for (size_t i = 0; i < intelGTNotes.size(); i++) {
-        if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::ProductFamily) {
+        if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::productFamily) {
             productFamilyNoteId = i;
-        } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::GfxCore) {
+        } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::gfxCore) {
             gfxCoreNoteId = i;
-        } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::ProductConfig) {
+        } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::productConfig) {
             productConfigNoteId = i;
         }
     }
@@ -139,7 +139,7 @@ BinaryFormats getBinaryFormatForDisassemble(OclocArgHelper *argHelper, const std
     if (it != args.end() && (it + 1) != args.end()) {
         auto file = argHelper->readBinaryFile(*(it + 1));
         auto fileRef = ArrayRef<const uint8_t>::fromAny(file.data(), file.size());
-        if (NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(fileRef)) {
+        if (NEO::isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(fileRef)) {
             auto numBits = Elf::getElfNumBits(fileRef);
             return numBits == Elf::EI_CLASS_64 ? BinaryFormats::Zebin64b : BinaryFormats::Zebin32b;
         }

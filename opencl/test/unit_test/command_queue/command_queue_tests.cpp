@@ -594,7 +594,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedFor
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
-    if (this->GetParam() == IndirectHeap::Type::INDIRECT_OBJECT && commandStreamReceiver.canUse4GbHeaps) {
+    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps) {
         EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
     } else {
         EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
@@ -606,7 +606,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, GivenIndirectHeapWhenGettingAvailableSpac
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
-    if (this->GetParam() == IndirectHeap::Type::SURFACE_STATE) {
+    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
         size_t expectedSshUse = cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
         EXPECT_EQ(expectedSshUse, indirectHeap.getAvailableSpace());
     } else {
@@ -633,7 +633,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAv
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
     ASSERT_NE(nullptr, &indirectHeap);
-    if (this->GetParam() == IndirectHeap::Type::SURFACE_STATE) {
+    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
         // no matter what SSH is always capped
         EXPECT_EQ(cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
                   indirectHeap.getMaxAvailableSpace());
@@ -673,11 +673,11 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
 
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
     auto allocationType = AllocationType::linearStream;
-    if (this->GetParam() == IndirectHeap::Type::INDIRECT_OBJECT && commandStreamReceiver.canUse4GbHeaps) {
+    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps) {
         allocationType = AllocationType::internalHeap;
     }
     allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType, pDevice->getDeviceBitfield()});
-    if (this->GetParam() == IndirectHeap::Type::SURFACE_STATE) {
+    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
         allocation->setSize(commandStreamReceiver.defaultSshSize * 2);
     }
 
@@ -692,7 +692,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
 
     // if we obtain heap from reusable pool, we need to keep the size of allocation
     // surface state heap is an exception, it is capped at (max_ssh_size_for_HW - page_size)
-    if (this->GetParam() == IndirectHeap::Type::SURFACE_STATE) {
+    if (this->GetParam() == IndirectHeap::Type::surfaceState) {
         EXPECT_EQ(commandStreamReceiver.defaultSshSize - MemoryConstants::pageSize, indirectHeap.getMaxAvailableSpace());
     } else {
         EXPECT_EQ(allocationSize, indirectHeap.getMaxAvailableSpace());
@@ -821,7 +821,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCal
 
     auto heapType = this->GetParam();
 
-    bool requireInternalHeap = IndirectHeap::Type::INDIRECT_OBJECT == heapType && commandStreamReceiver.canUse4GbHeaps;
+    bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType && commandStreamReceiver.canUse4GbHeaps;
     const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
     auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
     ASSERT_NE(nullptr, indirectHeapAllocation);
@@ -853,7 +853,7 @@ TEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryI
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
 
     IndirectHeap *indirectHeap = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 100, indirectHeap);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::indirectObject, 100, indirectHeap);
     EXPECT_NE(nullptr, indirectHeap);
     EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
     EXPECT_EQ(indirectHeap->getAvailableSpace(), 64 * MemoryConstants::megaByte);
@@ -880,9 +880,9 @@ INSTANTIATE_TEST_CASE_P(
     Device,
     CommandQueueIndirectHeapTest,
     testing::Values(
-        IndirectHeap::Type::DYNAMIC_STATE,
-        IndirectHeap::Type::INDIRECT_OBJECT,
-        IndirectHeap::Type::SURFACE_STATE));
+        IndirectHeap::Type::dynamicState,
+        IndirectHeap::Type::indirectObject,
+        IndirectHeap::Type::surfaceState));
 
 using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphicsAllocationIsReused) {

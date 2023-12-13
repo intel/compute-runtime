@@ -23,7 +23,7 @@ using UnifiedSharingImageTestsWithInvalidMemoryManager = UnifiedSharingFixture<t
 static UnifiedSharingMemoryDescription getValidUnifiedSharingDesc() {
     UnifiedSharingMemoryDescription desc{};
     desc.handle = reinterpret_cast<void *>(0x1234);
-    desc.type = UnifiedSharingHandleType::Win32Nt;
+    desc.type = UnifiedSharingHandleType::win32Nt;
     return desc;
 }
 

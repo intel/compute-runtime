@@ -256,7 +256,7 @@ HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalse
     const_cast<NEO::HardwareInfo *>(mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo())->featureTable.flags.ftrLocalMemory = 1u;
 
     NEO::ImageDescriptor imgDesc = {};
-    imgDesc.imageType = NEO::ImageType::Image2DArray;
+    imgDesc.imageType = NEO::ImageType::image2DArray;
     imgDesc.imageWidth = 60;
     imgDesc.imageHeight = 1;
     imgDesc.imageDepth = 1;

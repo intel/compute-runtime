@@ -445,7 +445,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     QueuePriority priority = QueuePriority::MEDIUM;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
-    EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::None;
+    EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::none;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     std::array<CopyEngineState, bcsInfoMaskSize> bcsStates = {};
 

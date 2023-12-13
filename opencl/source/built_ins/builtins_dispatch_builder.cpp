@@ -837,11 +837,11 @@ std::unique_ptr<Program> BuiltinDispatchInfoBuilder::createProgramFromCode(const
     switch (bc.type) {
     default:
         break;
-    case BuiltinCode::ECodeType::Source:
-    case BuiltinCode::ECodeType::Intermediate:
+    case BuiltinCode::ECodeType::source:
+    case BuiltinCode::ECodeType::intermediate:
         ret.reset(Program::createBuiltInFromSource(data, nullptr, deviceVector, &err));
         break;
-    case BuiltinCode::ECodeType::Binary:
+    case BuiltinCode::ECodeType::binary:
         ret.reset(Program::createBuiltInFromGenBinary(nullptr, deviceVector, data, dataLen, &err));
         break;
     }

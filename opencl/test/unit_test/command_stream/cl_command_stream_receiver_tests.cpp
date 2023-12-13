@@ -106,7 +106,7 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
     EXPECT_EQ(expectedRootDeviceIndex, debugSurface->getRootDeviceIndex());
 
     // Indirect heaps
-    IndirectHeap::Type heapTypes[]{IndirectHeap::Type::DYNAMIC_STATE, IndirectHeap::Type::INDIRECT_OBJECT, IndirectHeap::Type::SURFACE_STATE};
+    IndirectHeap::Type heapTypes[]{IndirectHeap::Type::dynamicState, IndirectHeap::Type::indirectObject, IndirectHeap::Type::surfaceState};
     for (auto heapType : heapTypes) {
         IndirectHeap *heap = nullptr;
         commandStreamReceiver->allocateHeapMemory(heapType, MemoryConstants::pageSize, heap);

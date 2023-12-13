@@ -21,7 +21,7 @@ struct OsEnvironment;
 
 class HwDeviceIdWddm : public HwDeviceId {
   public:
-    static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
+    static constexpr DriverModelType driverModelType = DriverModelType::wddm;
 
     HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, uint32_t adapterNodeMaskIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator);
     Gdi *getGdi() const;

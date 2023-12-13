@@ -25,7 +25,7 @@ DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *os
 };
 
 DriverInfoLinux::DriverInfoLinux(bool imageSupport, const PhysicalDevicePciBusInfo &pciBusInfo)
-    : DriverInfo(DriverInfoType::LINUX), imageSupport(imageSupport) {
+    : DriverInfo(DriverInfoType::linuxType), imageSupport(imageSupport) {
     this->pciBusInfo = pciBusInfo;
 }
 

@@ -47,17 +47,17 @@ ze_result_t CommandListImp::destroy() {
         static_cast<DeviceImp *>(this->device)->bcsSplit.releaseResources();
     }
 
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
+    if (this->cmdListType == CommandListType::typeImmediate && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
     }
 
-    if (this->cmdListType == CommandListType::TYPE_REGULAR &&
+    if (this->cmdListType == CommandListType::typeRegular &&
         !isCopyOnly() &&
         this->stateBaseAddressTracking &&
         this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
 
-        auto surfaceStateHeap = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        auto surfaceStateHeap = this->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (surfaceStateHeap) {
             auto heapAllocation = surfaceStateHeap->getGraphicsAllocation();
 
@@ -89,7 +89,7 @@ ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handl
 }
 
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
-    if (cmdListType == CommandListType::TYPE_IMMEDIATE && isFlushTaskSubmissionEnabled) {
+    if (cmdListType == CommandListType::typeImmediate && isFlushTaskSubmissionEnabled) {
         this->device->activateMetricGroups();
     }
 
@@ -163,7 +163,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
         commandList->csr = csr;
         commandList->internalUsage = internalUsage;
-        commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
+        commandList->cmdListType = CommandListType::typeImmediate;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
 
         if (!internalUsage) {
@@ -248,7 +248,7 @@ void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
     inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(*inOrderDependencyCounterAllocation, hostCounterAllocation, *device->getMemoryManager(), this->partitionCount,
-                                                             (this->cmdListType == TYPE_REGULAR), inOrderAtomicSignallingEnabled());
+                                                             (this->cmdListType == typeRegular), inOrderAtomicSignallingEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

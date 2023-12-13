@@ -279,7 +279,7 @@ TEST(MemObjHelperMultiTile, givenOneSubDeviceSelectedWhenParsingMemoryProperties
         auto deviceIdProperty = reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(pClDevice));
         cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_ID_INTEL, deviceIdProperty, 0};
         return ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocFlagsIntel,
-                                                               ClMemoryPropertiesHelper::ObjType::BUFFER, context);
+                                                               ClMemoryPropertiesHelper::ObjType::buffer, context);
     };
 
     EXPECT_TRUE(parseMemoryProperties(deviceFactory.subDevices[0], multiTileContext));

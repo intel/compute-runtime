@@ -1786,7 +1786,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndDetectIndirect
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
-    auto ptrByValueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
+    auto ptrByValueArg = ArgDescriptor(ArgDescriptor::argTValue);
     ArgDescValue::Element element;
     element.isPtr = true;
     ptrByValueArg.as<ArgDescValue>().elements.push_back(element);
@@ -2618,7 +2618,7 @@ TEST(KernelTest, givenBuiltInProgramWhenCallingInitializeThenAuxTranslationRequi
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     KernelInfo info{};
 
-    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::ArgTPointer);
+    ArgDescriptor argDescriptorPointer(ArgDescriptor::ArgType::argTPointer);
     argDescriptorPointer.as<ArgDescPointer>().accessedUsingStatelessAddressingMode = true;
     info.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPointer);
 
@@ -3495,8 +3495,8 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     MockKernelWithInternals kernel(*device);
 
     auto &inlineSampler = kernel.kernelInfo.kernelDescriptor.inlineSamplers.emplace_back();
-    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::Repeat;
-    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::Nearest;
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::repeat;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::nearest;
     inlineSampler.isNormalized = false;
 
     std::array<uint8_t, 64 + 16> dsh = {0};
