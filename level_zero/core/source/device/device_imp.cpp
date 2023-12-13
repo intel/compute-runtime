@@ -1476,7 +1476,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
     allocData.gpuAllocations.addAllocation(allocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
-    allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;
+    allocData.memoryType = InternalMemoryType::notSpecified;
     allocData.device = nullptr;
     driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
 

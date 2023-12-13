@@ -3083,7 +3083,7 @@ TEST_F(MemoryExportImportFailTest,
 TEST_F(MemoryExportImportFailTest,
        whenParsingMemoryTypeWithNotSpecifidTypeThenUnknownTypeIsReturned) {
 
-    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    InternalMemoryType memoryType = InternalMemoryType::notSpecified;
     ze_memory_type_t usmType = L0::Context::parseUSMType(memoryType);
     EXPECT_EQ(usmType, ZE_MEMORY_TYPE_UNKNOWN);
 }
@@ -4048,7 +4048,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto &residentAllocations = csr->getResidencyAllocations();
     EXPECT_EQ(0u, residentAllocations.size());
-    svmManager->makeInternalAllocationsResident(*csr, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    svmManager->makeInternalAllocationsResident(*csr, static_cast<uint32_t>(InternalMemoryType::deviceUnifiedMemory));
     EXPECT_EQ(1u, residentAllocations.size());
     EXPECT_EQ(residentAllocations[0]->getGpuAddress(), reinterpret_cast<uint64_t>(ptr1));
 
@@ -5439,7 +5439,7 @@ TEST_F(ImportFdUncachedTests,
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::hostUnifiedMemory);
 
     context->freeMem(ptr);
 }
@@ -5454,7 +5454,7 @@ TEST_F(ImportFdUncachedTests,
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
 
     context->freeMem(ptr);
 }

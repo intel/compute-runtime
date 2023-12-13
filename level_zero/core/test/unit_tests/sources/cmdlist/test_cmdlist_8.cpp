@@ -470,146 +470,146 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     const auto hostUSM2Found = device->getDriverHandle()->findAllocationDataForRange(hostPtr2, 1024, notSpecifiedAllocData);
     EXPECT_TRUE(hostUSM2Found);
 
-    notSpecifiedAllocData->memoryType = InternalMemoryType::NOT_SPECIFIED;
+    notSpecifiedAllocData->memoryType = InternalMemoryType::notSpecified;
     CpuMemCopyInfo copyInfoHostNonUsmToNotSpecified(hostPtr2, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToNotSpecified.dstAllocData = notSpecifiedAllocData;
     copyInfoHostNonUsmToNotSpecified.srcAllocData = hostNonUSMAllocData;
-    EXPECT_EQ(TRANSFER_TYPE_UNKNOWN, cmdList.getTransferType(copyInfoHostNonUsmToNotSpecified));
+    EXPECT_EQ(TransferType::unknown, cmdList.getTransferType(copyInfoHostNonUsmToNotSpecified));
 
     CpuMemCopyInfo copyInfoHostNonUsmToHostUsm(hostPtr, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToHostUsm.dstAllocData = hostUSMAllocData;
     copyInfoHostNonUsmToHostUsm.srcAllocData = hostNonUSMAllocData;
-    EXPECT_EQ(HOST_NON_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoHostNonUsmToHostUsm));
+    EXPECT_EQ(TransferType::hostNonUsmToHostUsm, cmdList.getTransferType(copyInfoHostNonUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToDeviceUsm(devicePtr, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
     copyInfoHostNonUsmToDeviceUsm.srcAllocData = hostNonUSMAllocData;
-    EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(copyInfoHostNonUsmToDeviceUsm));
+    EXPECT_EQ(TransferType::hostNonUsmToDeviceUsm, cmdList.getTransferType(copyInfoHostNonUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToSharedUsm(sharedPtr, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
     copyInfoHostNonUsmToSharedUsm.srcAllocData = hostNonUSMAllocData;
-    EXPECT_EQ(HOST_NON_USM_TO_SHARED_USM, cmdList.getTransferType(copyInfoHostNonUsmToSharedUsm));
+    EXPECT_EQ(TransferType::hostNonUsmToSharedUsm, cmdList.getTransferType(copyInfoHostNonUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToHostNonUsm(nonUsmHostPtr, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
     copyInfoHostNonUsmToHostNonUsm.srcAllocData = hostNonUSMAllocData;
-    EXPECT_EQ(HOST_NON_USM_TO_HOST_NON_USM, cmdList.getTransferType(copyInfoHostNonUsmToHostNonUsm));
+    EXPECT_EQ(TransferType::hostNonUsmToHostNonUsm, cmdList.getTransferType(copyInfoHostNonUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoHostNonUsmToHostImported(importedPtr, nonUsmHostPtr, 1024);
     copyInfoHostNonUsmToHostImported.dstIsImportedHostPtr = true;
     copyInfoHostNonUsmToHostImported.dstAllocData = nullptr;
     copyInfoHostNonUsmToHostImported.srcAllocData = hostNonUSMAllocData;
-    EXPECT_EQ(HOST_NON_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoHostNonUsmToHostImported));
+    EXPECT_EQ(TransferType::hostNonUsmToHostUsm, cmdList.getTransferType(copyInfoHostNonUsmToHostImported));
 
     CpuMemCopyInfo copyInfoHostImportedToHostUsm(hostPtr, importedPtr, 1024);
     copyInfoHostImportedToHostUsm.dstAllocData = hostUSMAllocData;
     copyInfoHostImportedToHostUsm.srcIsImportedHostPtr = true;
     copyInfoHostImportedToHostUsm.srcAllocData = nullptr;
-    EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoHostImportedToHostUsm));
+    EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostImportedToHostUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToDeviceUsm(devicePtr, importedPtr, 1024);
     copyInfoHostImportedToDeviceUsm.dstAllocData = deviceUSMAllocData;
     copyInfoHostImportedToDeviceUsm.srcIsImportedHostPtr = true;
     copyInfoHostImportedToDeviceUsm.srcAllocData = nullptr;
-    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(copyInfoHostImportedToDeviceUsm));
+    EXPECT_EQ(TransferType::hostUsmToDeviceUsm, cmdList.getTransferType(copyInfoHostImportedToDeviceUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToSharedUsm(sharedPtr, importedPtr, 1024);
     copyInfoHostImportedToSharedUsm.dstAllocData = sharedUSMAllocData;
     copyInfoHostImportedToSharedUsm.srcIsImportedHostPtr = true;
     copyInfoHostImportedToSharedUsm.srcAllocData = nullptr;
-    EXPECT_EQ(HOST_USM_TO_SHARED_USM, cmdList.getTransferType(copyInfoHostImportedToSharedUsm));
+    EXPECT_EQ(TransferType::hostUsmToSharedUsm, cmdList.getTransferType(copyInfoHostImportedToSharedUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToHostNonUsm(nonUsmHostPtr, importedPtr, 1024);
     copyInfoHostImportedToHostNonUsm.dstAllocData = hostNonUSMAllocData;
     copyInfoHostImportedToHostNonUsm.srcIsImportedHostPtr = true;
     copyInfoHostImportedToHostNonUsm.srcAllocData = nullptr;
-    EXPECT_EQ(HOST_USM_TO_HOST_NON_USM, cmdList.getTransferType(copyInfoHostImportedToHostNonUsm));
+    EXPECT_EQ(TransferType::hostUsmToHostNonUsm, cmdList.getTransferType(copyInfoHostImportedToHostNonUsm));
 
     CpuMemCopyInfo copyInfoHostImportedToHostImported(importedPtr, importedPtr, 1024);
     copyInfoHostImportedToHostImported.dstIsImportedHostPtr = true;
     copyInfoHostImportedToHostImported.dstAllocData = nullptr;
     copyInfoHostImportedToHostImported.srcIsImportedHostPtr = true;
     copyInfoHostImportedToHostImported.srcAllocData = nullptr;
-    EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoHostImportedToHostImported));
+    EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostImportedToHostImported));
 
     CpuMemCopyInfo copyInfoHostUsmToHostUsm(hostPtr, hostPtr, 1024);
     copyInfoHostUsmToHostUsm.dstAllocData = hostUSMAllocData;
     copyInfoHostUsmToHostUsm.srcAllocData = hostUSMAllocData;
-    EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoHostUsmToHostUsm));
+    EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToDeviceUsm(devicePtr, hostPtr, 1024);
     copyInfoHostUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
     copyInfoHostUsmToDeviceUsm.srcAllocData = hostUSMAllocData;
-    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(copyInfoHostUsmToDeviceUsm));
+    EXPECT_EQ(TransferType::hostUsmToDeviceUsm, cmdList.getTransferType(copyInfoHostUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToSharedUsm(sharedPtr, hostPtr, 1024);
     copyInfoHostUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
     copyInfoHostUsmToSharedUsm.srcAllocData = hostUSMAllocData;
-    EXPECT_EQ(HOST_USM_TO_SHARED_USM, cmdList.getTransferType(copyInfoHostUsmToSharedUsm));
+    EXPECT_EQ(TransferType::hostUsmToSharedUsm, cmdList.getTransferType(copyInfoHostUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToHostNonUsm(nonUsmHostPtr, hostPtr, 1024);
     copyInfoHostUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
     copyInfoHostUsmToHostNonUsm.srcAllocData = hostUSMAllocData;
-    EXPECT_EQ(HOST_USM_TO_HOST_NON_USM, cmdList.getTransferType(copyInfoHostUsmToHostNonUsm));
+    EXPECT_EQ(TransferType::hostUsmToHostNonUsm, cmdList.getTransferType(copyInfoHostUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoHostUsmToHostImported(importedPtr, hostPtr, 1024);
     copyInfoHostUsmToHostImported.dstIsImportedHostPtr = true;
     copyInfoHostUsmToHostImported.dstAllocData = nullptr;
     copyInfoHostUsmToHostImported.srcAllocData = hostUSMAllocData;
-    EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoHostUsmToHostImported));
+    EXPECT_EQ(TransferType::hostUsmToHostUsm, cmdList.getTransferType(copyInfoHostUsmToHostImported));
 
     CpuMemCopyInfo copyInfoDeviceUsmToHostUsm(hostPtr, devicePtr, 1024);
     copyInfoDeviceUsmToHostUsm.dstAllocData = hostUSMAllocData;
     copyInfoDeviceUsmToHostUsm.srcAllocData = deviceUSMAllocData;
-    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoDeviceUsmToHostUsm));
+    EXPECT_EQ(TransferType::deviceUsmToHostUsm, cmdList.getTransferType(copyInfoDeviceUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToDeviceUsm(devicePtr, devicePtr, 1024);
     copyInfoDeviceUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
     copyInfoDeviceUsmToDeviceUsm.srcAllocData = deviceUSMAllocData;
-    EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(copyInfoDeviceUsmToDeviceUsm));
+    EXPECT_EQ(TransferType::deviceUsmToDeviceUsm, cmdList.getTransferType(copyInfoDeviceUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToSharedUsm(sharedPtr, devicePtr, 1024);
     copyInfoDeviceUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
     copyInfoDeviceUsmToSharedUsm.srcAllocData = deviceUSMAllocData;
-    EXPECT_EQ(DEVICE_USM_TO_SHARED_USM, cmdList.getTransferType(copyInfoDeviceUsmToSharedUsm));
+    EXPECT_EQ(TransferType::deviceUsmToSharedUsm, cmdList.getTransferType(copyInfoDeviceUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToHostNonUsm(nonUsmHostPtr, devicePtr, 1024);
     copyInfoDeviceUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
     copyInfoDeviceUsmToHostNonUsm.srcAllocData = deviceUSMAllocData;
-    EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(copyInfoDeviceUsmToHostNonUsm));
+    EXPECT_EQ(TransferType::deviceUsmToHostNonUsm, cmdList.getTransferType(copyInfoDeviceUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoDeviceUsmToHostImported(importedPtr, devicePtr, 1024);
     copyInfoDeviceUsmToHostImported.dstIsImportedHostPtr = true;
     copyInfoDeviceUsmToHostImported.dstAllocData = nullptr;
     copyInfoDeviceUsmToHostImported.srcAllocData = deviceUSMAllocData;
-    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoDeviceUsmToHostImported));
+    EXPECT_EQ(TransferType::deviceUsmToHostUsm, cmdList.getTransferType(copyInfoDeviceUsmToHostImported));
 
     CpuMemCopyInfo copyInfoSharedUsmToHostUsm(hostPtr, sharedPtr, 1024);
     copyInfoSharedUsmToHostUsm.dstAllocData = hostUSMAllocData;
     copyInfoSharedUsmToHostUsm.srcAllocData = sharedUSMAllocData;
-    EXPECT_EQ(SHARED_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoSharedUsmToHostUsm));
+    EXPECT_EQ(TransferType::sharedUsmToHostUsm, cmdList.getTransferType(copyInfoSharedUsmToHostUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToDeviceUsm(devicePtr, sharedPtr, 1024);
     copyInfoSharedUsmToDeviceUsm.dstAllocData = deviceUSMAllocData;
     copyInfoSharedUsmToDeviceUsm.srcAllocData = sharedUSMAllocData;
-    EXPECT_EQ(SHARED_USM_TO_DEVICE_USM, cmdList.getTransferType(copyInfoSharedUsmToDeviceUsm));
+    EXPECT_EQ(TransferType::sharedUsmToDeviceUsm, cmdList.getTransferType(copyInfoSharedUsmToDeviceUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToSharedUsm(sharedPtr, sharedPtr, 1024);
     copyInfoSharedUsmToSharedUsm.dstAllocData = sharedUSMAllocData;
     copyInfoSharedUsmToSharedUsm.srcAllocData = sharedUSMAllocData;
-    EXPECT_EQ(SHARED_USM_TO_SHARED_USM, cmdList.getTransferType(copyInfoSharedUsmToSharedUsm));
+    EXPECT_EQ(TransferType::sharedUsmToSharedUsm, cmdList.getTransferType(copyInfoSharedUsmToSharedUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToHostNonUsm(nonUsmHostPtr, sharedPtr, 1024);
     copyInfoSharedUsmToHostNonUsm.dstAllocData = hostNonUSMAllocData;
     copyInfoSharedUsmToHostNonUsm.srcAllocData = sharedUSMAllocData;
-    EXPECT_EQ(SHARED_USM_TO_HOST_NON_USM, cmdList.getTransferType(copyInfoSharedUsmToHostNonUsm));
+    EXPECT_EQ(TransferType::sharedUsmToHostNonUsm, cmdList.getTransferType(copyInfoSharedUsmToHostNonUsm));
 
     CpuMemCopyInfo copyInfoSharedUsmToHostImported(importedPtr, sharedPtr, 1024);
     copyInfoSharedUsmToHostImported.dstIsImportedHostPtr = true;
     copyInfoSharedUsmToHostImported.dstAllocData = nullptr;
     copyInfoSharedUsmToHostImported.srcAllocData = sharedUSMAllocData;
-    EXPECT_EQ(SHARED_USM_TO_HOST_USM, cmdList.getTransferType(copyInfoSharedUsmToHostImported));
+    EXPECT_EQ(TransferType::sharedUsmToHostUsm, cmdList.getTransferType(copyInfoSharedUsmToHostImported));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getDriverHandle()->releaseImportedPointer(importedPtr));
     free(importedPtr);
@@ -620,41 +620,41 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTh
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(TRANSFER_TYPE_UNKNOWN));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::unknown));
 
-    EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_HOST_USM));
-    EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(HOST_NON_USM_TO_SHARED_USM));
-    EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::hostNonUsmToHostUsm));
+    EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::hostNonUsmToSharedUsm));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::hostNonUsmToHostNonUsm));
 
-    EXPECT_EQ(200 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_USM));
-    EXPECT_EQ(50 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_DEVICE_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(HOST_USM_TO_SHARED_USM));
-    EXPECT_EQ(500 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(200 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(TransferType::hostUsmToHostUsm));
+    EXPECT_EQ(50 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(TransferType::hostUsmToDeviceUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::hostUsmToSharedUsm));
+    EXPECT_EQ(500 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(TransferType::hostUsmToHostNonUsm));
 
-    EXPECT_EQ(128u, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_DEVICE_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_SHARED_USM));
-    EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(128u, cmdList.getTransferThreshold(TransferType::deviceUsmToHostUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::deviceUsmToDeviceUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::deviceUsmToSharedUsm));
+    EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(TransferType::deviceUsmToHostNonUsm));
 
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_HOST_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_DEVICE_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_SHARED_USM));
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::sharedUsmToHostUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::sharedUsmToDeviceUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::sharedUsmToSharedUsm));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::sharedUsmToHostNonUsm));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebugFlagSetWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastSkl) {
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
-    EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(TransferType::deviceUsmToHostNonUsm));
 
     debugManager.flags.ExperimentalH2DCpuCopyThreshold.set(5 * MemoryConstants::megaByte);
-    EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
+    EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::hostNonUsmToDeviceUsm));
 
     debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(6 * MemoryConstants::megaByte);
-    EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::deviceUsmToHostNonUsm));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastSkl) {

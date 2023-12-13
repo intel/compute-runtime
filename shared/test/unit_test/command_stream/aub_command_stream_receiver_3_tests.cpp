@@ -577,7 +577,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
     RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, pDevice->getDeviceBitfield()}};
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, 1, rootDeviceIndices, deviceBitfields);
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = pDevice;
     auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
     ASSERT_NE(nullptr, ptr);

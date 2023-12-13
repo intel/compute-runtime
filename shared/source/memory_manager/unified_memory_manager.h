@@ -55,7 +55,7 @@ struct SvmAllocationData {
     VirtualMemoryReservation *virtualReservationData = nullptr;
     size_t size = 0;
     size_t pageSizeForAlignment = 0;
-    InternalMemoryType memoryType = InternalMemoryType::SVM;
+    InternalMemoryType memoryType = InternalMemoryType::svm;
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
     bool isImportedAllocation = false;
@@ -137,7 +137,7 @@ class SVMAllocsManager {
                                                                                                 rootDeviceIndices(rootDeviceIndices),
                                                                                                 subdeviceBitfields(subdeviceBitfields){};
         uint32_t getRootDeviceIndex() const;
-        InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+        InternalMemoryType memoryType = InternalMemoryType::notSpecified;
         MemoryProperties allocationFlags;
         Device *device = nullptr;
         size_t alignment;

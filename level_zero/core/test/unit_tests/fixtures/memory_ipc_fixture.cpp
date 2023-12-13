@@ -302,7 +302,7 @@ ze_result_t ContextGetIpcHandleMock::getIpcMemHandle(const void *ptr, ze_ipc_mem
     ipcData.handle = handle;
     auto type = Context::parseUSMType(allocData->memoryType);
     if (type == ZE_MEMORY_TYPE_HOST) {
-        ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
+        ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -393,7 +393,7 @@ ze_result_t ContextIpcMock::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t
     ipcData.handle = handle;
     auto type = Context::parseUSMType(allocData->memoryType);
     if (type == ZE_MEMORY_TYPE_HOST) {
-        ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
+        ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
     }
 
     return ZE_RESULT_SUCCESS;

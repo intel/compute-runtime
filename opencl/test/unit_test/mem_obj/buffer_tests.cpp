@@ -1205,7 +1205,7 @@ TEST_P(ValidHostPtr, GivenUsmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
         auto memoryManager = static_cast<MockMemoryManager *>(context->getDevice(0)->getMemoryManager());
         memoryManager->localMemorySupported[pDevice->getRootDeviceIndex()] = true;
 
-        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
         auto ptr = context->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
 
         auto buffer = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);

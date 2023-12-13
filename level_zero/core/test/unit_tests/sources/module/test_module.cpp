@@ -3139,8 +3139,8 @@ kernels:
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     auto globalConstBufferAllocType = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress()))->memoryType;
     auto globalVarBufferAllocType = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(moduleTu.globalVarBuffer->getGpuAddress()))->memoryType;
-    EXPECT_EQ(DEVICE_UNIFIED_MEMORY, globalConstBufferAllocType);
-    EXPECT_EQ(DEVICE_UNIFIED_MEMORY, globalVarBufferAllocType);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, globalConstBufferAllocType);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, globalVarBufferAllocType);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingBuildFromSpirvThenFailureReturned) {

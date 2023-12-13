@@ -36,7 +36,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingWrite, size, const_cast<void *>(ptr),
                                                  numEventsInWaitList, eventWaitList);
-    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    InternalMemoryType memoryType = InternalMemoryType::notSpecified;
 
     if (!mapAllocation) {
         cl_int retVal = getContext().tryGetExistingHostPtrAllocation(ptr, size, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);

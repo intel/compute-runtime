@@ -231,7 +231,7 @@ HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithHostBufferMemoryAllocation
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::hostUnifiedMemory);
 
     ze_result_t result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -250,7 +250,7 @@ HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithBufferMemoryAllocationType
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
 
     ze_result_t result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

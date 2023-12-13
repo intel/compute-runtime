@@ -93,7 +93,7 @@ TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSvmAllocationExistsThen
     allocData.gpuAllocations.addAllocation(usmAllocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = usmSize;
-    allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;
+    allocData.memoryType = InternalMemoryType::notSpecified;
     allocData.device = nullptr;
     hostDriverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
@@ -123,7 +123,7 @@ TEST_F(HostPointerManagerTest, givenSvmAllocationExistsWhenGettingExistingAlloca
     allocData.gpuAllocations.addAllocation(usmAllocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = usmSize;
-    allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;
+    allocData.memoryType = InternalMemoryType::notSpecified;
     allocData.device = nullptr;
     hostDriverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
 

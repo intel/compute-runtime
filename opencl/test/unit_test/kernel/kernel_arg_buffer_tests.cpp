@@ -358,12 +358,12 @@ TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHa
     mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 
-    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
     deviceProperties.device = &pClDevice->getDevice();
     auto unifiedDeviceMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
     EXPECT_FALSE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 
-    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
+    auto hostProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, mockKernel.getContext().getRootDeviceIndices(), mockKernel.getContext().getDeviceBitfields());
     auto unifiedHostMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, hostProperties);
     EXPECT_TRUE(mockKernel.hasIndirectStatelessAccessToHostMemory());
 

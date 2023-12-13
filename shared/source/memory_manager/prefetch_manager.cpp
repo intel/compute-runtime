@@ -18,7 +18,7 @@ std::unique_ptr<PrefetchManager> PrefetchManager::create() {
 
 void PrefetchManager::insertAllocation(PrefetchContext &context, const void *usmPtr, SvmAllocationData &allocData) {
     std::unique_lock<SpinLock> lock{context.lock};
-    if (allocData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+    if (allocData.memoryType == InternalMemoryType::sharedUnifiedMemory) {
         context.allocations.push_back(usmPtr);
     }
 }

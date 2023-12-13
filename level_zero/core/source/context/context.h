@@ -28,11 +28,11 @@ struct Image;
 struct Context : _ze_context_handle_t {
     inline static ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
         switch (memoryType) {
-        case InternalMemoryType::SHARED_UNIFIED_MEMORY:
+        case InternalMemoryType::sharedUnifiedMemory:
             return ZE_MEMORY_TYPE_SHARED;
-        case InternalMemoryType::DEVICE_UNIFIED_MEMORY:
+        case InternalMemoryType::deviceUnifiedMemory:
             return ZE_MEMORY_TYPE_DEVICE;
-        case InternalMemoryType::HOST_UNIFIED_MEMORY:
+        case InternalMemoryType::hostUnifiedMemory:
             return ZE_MEMORY_TYPE_HOST;
         default:
             return ZE_MEMORY_TYPE_UNKNOWN;

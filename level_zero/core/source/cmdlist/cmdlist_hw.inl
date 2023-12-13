@@ -1882,8 +1882,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     NEO::SvmAllocationData *allocData = nullptr;
     bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
     if (dstAllocFound) {
-        if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
-            allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+        if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
+            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
             hostPointerNeedsFlush = true;
         }
     } else {
@@ -2274,15 +2274,15 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &alignedPtr, nullptr);
             alignedPtr += offset;
 
-            if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+            if (allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
                 commandContainer.addToResidencyContainer(allocData->gpuAllocations.getDefaultGraphicsAllocation());
             }
         } else {
             alignedPtr = sourcePtr;
         }
 
-        if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
-            allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+        if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
+            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
             hostPointerNeedsFlush = true;
         }
         if (allocData->virtualReservationData) {

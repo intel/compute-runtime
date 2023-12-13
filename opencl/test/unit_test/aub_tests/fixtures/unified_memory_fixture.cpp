@@ -29,13 +29,13 @@ void *UnifiedMemoryAubFixture::allocateUSM(InternalMemoryType type) {
     void *ptr = nullptr;
     if (!this->skipped) {
         switch (type) {
-        case DEVICE_UNIFIED_MEMORY:
+        case InternalMemoryType::deviceUnifiedMemory:
             ptr = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, dataSize, 0, &retVal);
             break;
-        case HOST_UNIFIED_MEMORY:
+        case InternalMemoryType::hostUnifiedMemory:
             ptr = clHostMemAllocINTEL(this->context, nullptr, dataSize, 0, &retVal);
             break;
-        case SHARED_UNIFIED_MEMORY:
+        case InternalMemoryType::sharedUnifiedMemory:
             ptr = clSharedMemAllocINTEL(this->context, this->device.get(), nullptr, dataSize, 0, &retVal);
             break;
         default:
@@ -51,9 +51,9 @@ void *UnifiedMemoryAubFixture::allocateUSM(InternalMemoryType type) {
 void UnifiedMemoryAubFixture::freeUSM(void *ptr, InternalMemoryType type) {
     if (!this->skipped) {
         switch (type) {
-        case DEVICE_UNIFIED_MEMORY:
-        case HOST_UNIFIED_MEMORY:
-        case SHARED_UNIFIED_MEMORY:
+        case InternalMemoryType::deviceUnifiedMemory:
+        case InternalMemoryType::hostUnifiedMemory:
+        case InternalMemoryType::sharedUnifiedMemory:
             retVal = clMemFreeINTEL(this->context, ptr);
             break;
         default:
@@ -67,7 +67,7 @@ void UnifiedMemoryAubFixture::freeUSM(void *ptr, InternalMemoryType type) {
 void UnifiedMemoryAubFixture::writeToUsmMemory(std::vector<char> data, void *ptr, InternalMemoryType type) {
     if (!this->skipped) {
         switch (type) {
-        case DEVICE_UNIFIED_MEMORY:
+        case InternalMemoryType::deviceUnifiedMemory:
             retVal = clEnqueueMemcpyINTEL(this->pCmdQ, true, ptr, data.data(), dataSize, 0, nullptr, nullptr);
             break;
         default:

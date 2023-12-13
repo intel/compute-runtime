@@ -553,7 +553,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
     SvmAllocationData allocData(0);
     allocData.gpuAllocations.addAllocation(&gfxAllocation);
-    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData.device = &pDevice->getDevice();
     context->getSVMAllocsManager()->insertSVMAlloc(allocData);
 

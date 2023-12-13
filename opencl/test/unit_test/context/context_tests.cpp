@@ -635,7 +635,7 @@ struct AllocationReuseContextTest : ContextTest {
         svmEntry.memoryType = type;
         svmEntry.size = allocation.getUnderlyingBufferSize();
         svmEntry.gpuAllocations.addAllocation(&allocation);
-        if (type != InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+        if (type != InternalMemoryType::deviceUnifiedMemory) {
             svmEntry.cpuAllocation = &allocation;
         }
         context->getSVMAllocsManager()->insertSVMAlloc(svmEntry);
@@ -648,7 +648,7 @@ TEST_F(AllocationReuseContextTest, givenSharedSvmAllocPresentWhenGettingExisting
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
     MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
-    addSvmPtr(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation);
+    addSvmPtr(InternalMemoryType::sharedUnifiedMemory, allocation);
 
     GraphicsAllocation *retrievedAllocation{};
     InternalMemoryType retrievedMemoryType{};
@@ -657,7 +657,7 @@ TEST_F(AllocationReuseContextTest, givenSharedSvmAllocPresentWhenGettingExisting
                                                       retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(&allocation, retrievedAllocation);
-    EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, retrievedMemoryType);
+    EXPECT_EQ(InternalMemoryType::sharedUnifiedMemory, retrievedMemoryType);
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
 
@@ -667,7 +667,7 @@ TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentWhenGettingExistingHo
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
     MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
-    addSvmPtr(InternalMemoryType::HOST_UNIFIED_MEMORY, allocation);
+    addSvmPtr(InternalMemoryType::hostUnifiedMemory, allocation);
 
     GraphicsAllocation *retrievedAllocation{};
     InternalMemoryType retrievedMemoryType{};
@@ -676,7 +676,7 @@ TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentWhenGettingExistingHo
                                                       retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(&allocation, retrievedAllocation);
-    EXPECT_EQ(InternalMemoryType::HOST_UNIFIED_MEMORY, retrievedMemoryType);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, retrievedMemoryType);
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
 
@@ -686,7 +686,7 @@ TEST_F(AllocationReuseContextTest, givenDeviceSvmAllocPresentWhenGettingExisting
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
     MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
-    addSvmPtr(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation);
+    addSvmPtr(InternalMemoryType::deviceUnifiedMemory, allocation);
 
     GraphicsAllocation *retrievedAllocation{};
     InternalMemoryType retrievedMemoryType{};
@@ -695,7 +695,7 @@ TEST_F(AllocationReuseContextTest, givenDeviceSvmAllocPresentWhenGettingExisting
                                                       retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(&allocation, retrievedAllocation);
-    EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, retrievedMemoryType);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, retrievedMemoryType);
     EXPECT_FALSE(retrievedCpuCopyStatus);
 }
 
@@ -705,7 +705,7 @@ TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentButRequestingTooBigSi
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
     MockGraphicsAllocation allocation{svmPtr, svmPtrGpu, 400};
-    addSvmPtr(InternalMemoryType::HOST_UNIFIED_MEMORY, allocation);
+    addSvmPtr(InternalMemoryType::hostUnifiedMemory, allocation);
 
     size_t ptrSizeToRetrieve = allocation.getUnderlyingBufferSize() + 1;
     GraphicsAllocation *retrievedAllocation{};
@@ -730,7 +730,7 @@ TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageWhenG
                                                       retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(&allocation, retrievedAllocation);
-    EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
+    EXPECT_EQ(InternalMemoryType::notSpecified, retrievedMemoryType);
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
 
@@ -749,7 +749,7 @@ TEST_F(AllocationReuseContextTest, givenHostPtrNotStoredInMapOperationsStorageWh
                                                       retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, retrievedAllocation);
-    EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
+    EXPECT_EQ(InternalMemoryType::notSpecified, retrievedMemoryType);
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
 
@@ -768,7 +768,7 @@ TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageAndRe
                                                       retrievedAllocation, retrievedMemoryType, retrievedCpuCopyStatus);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, retrievedAllocation);
-    EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
+    EXPECT_EQ(InternalMemoryType::notSpecified, retrievedMemoryType);
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
 

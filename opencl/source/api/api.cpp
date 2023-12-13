@@ -3885,7 +3885,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, alignment,
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, alignment,
                                                                       neoContext->getRootDeviceIndices(), neoContext->getDeviceBitfields());
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
@@ -3930,7 +3930,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     auto subDeviceBitfields = neoContext->getDeviceBitfields();
     subDeviceBitfields[neoDevice->getRootDeviceIndex()] = neoDevice->getDeviceBitfield();
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, alignment,
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment,
                                                                       neoContext->getRootDeviceIndices(), subDeviceBitfields);
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
@@ -3990,7 +3990,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     } else {
         neoDevice = neoContext->getDevice(0);
     }
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, alignment, neoContext->getRootDeviceIndices(), subDeviceBitfields);
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, alignment, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
                                                          allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
@@ -4072,10 +4072,10 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
         if (!unifiedMemoryAllocation) {
             retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_UNKNOWN_INTEL));
             return retVal;
-        } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+        } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::hostUnifiedMemory) {
             retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_HOST_INTEL));
             return retVal;
-        } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+        } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::deviceUnifiedMemory) {
             retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(CL_MEM_TYPE_DEVICE_INTEL));
             return retVal;
         } else {

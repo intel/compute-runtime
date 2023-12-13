@@ -98,7 +98,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
 
     NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                                            1,
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);

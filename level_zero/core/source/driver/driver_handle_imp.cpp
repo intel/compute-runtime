@@ -621,7 +621,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
     allocDataTmp->cpuAllocation = nullptr;
     allocDataTmp->size = alloc->getUnderlyingBufferSize();
     allocDataTmp->memoryType =
-        isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+        isHostIpcAllocation ? InternalMemoryType::hostUnifiedMemory : InternalMemoryType::deviceUnifiedMemory;
     allocDataTmp->device = neoDevice;
     allocDataTmp->isImportedAllocation = true;
     allocDataTmp->setAllocId(this->getSvmAllocsManager()->allocationsCounter++);
@@ -675,7 +675,7 @@ void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_fla
     allocDataTmp->gpuAllocations.addAllocation(alloc);
     allocDataTmp->cpuAllocation = nullptr;
     allocDataTmp->size = alloc->getUnderlyingBufferSize();
-    allocDataTmp->memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocDataTmp->memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocDataTmp->device = neoDevice;
     allocDataTmp->isImportedAllocation = true;
     allocDataTmp->setAllocId(this->getSvmAllocsManager()->allocationsCounter++);
@@ -767,7 +767,7 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
         uint32_t numHandles = alloc->getNumHandles();
 
         // Don't attempt to use the peerMapAddress for reserved memory due to the limitations in the address reserved.
-        if (allocData->memoryType == InternalMemoryType::RESERVED_DEVICE_MEMORY) {
+        if (allocData->memoryType == InternalMemoryType::reservedDeviceMemory) {
             peerMapAddress = nullptr;
         }
 
@@ -847,7 +847,7 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
     allocData.cpuAllocation = nullptr;
     allocData.size = alloc->getUnderlyingBufferSize();
     allocData.memoryType =
-        isHostIpcAllocation ? InternalMemoryType::HOST_UNIFIED_MEMORY : InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+        isHostIpcAllocation ? InternalMemoryType::hostUnifiedMemory : InternalMemoryType::deviceUnifiedMemory;
     allocData.device = neoDevice;
     allocData.isImportedAllocation = true;
     allocData.setAllocId(this->getSvmAllocsManager()->allocationsCounter++);
@@ -863,8 +863,8 @@ ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const v
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (allocation->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
-        allocation->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)
+    if (allocation->memoryType == InternalMemoryType::hostUnifiedMemory ||
+        allocation->memoryType == InternalMemoryType::sharedUnifiedMemory)
         return ZE_RESULT_SUCCESS;
 
     if (allocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex()) != nullptr) {

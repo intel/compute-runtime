@@ -53,7 +53,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
 
     const size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     const uint32_t rootDeviceIndex = getDevice().getRootDeviceIndex();
-    InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    InternalMemoryType memoryType = InternalMemoryType::notSpecified;
     GraphicsAllocation *mapAllocation = nullptr;
     bool isCpuCopyAllowed = false;
     getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);

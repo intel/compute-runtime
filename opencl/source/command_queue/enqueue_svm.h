@@ -303,7 +303,7 @@ inline std::tuple<SvmAllocationData *, GraphicsAllocation *, PtrType> getExistin
     } else {
         context->tryGetExistingMapAllocation(ptr, size, allocation);
         if (allocation) {
-            ptr = CommandQueue::convertAddressWithOffsetToGpuVa(ptr, InternalMemoryType::NOT_SPECIFIED, *allocation);
+            ptr = CommandQueue::convertAddressWithOffsetToGpuVa(ptr, InternalMemoryType::notSpecified, *allocation);
         }
     }
     return std::make_tuple(svmData, allocation, ptr);

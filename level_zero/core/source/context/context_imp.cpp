@@ -119,7 +119,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
         return ZE_RESULT_SUCCESS;
     }
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                                            alignment,
                                                                            this->rootDeviceIndices,
                                                                            this->deviceBitfields);
@@ -246,7 +246,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
@@ -323,7 +323,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     }
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory,
                                                                            alignment,
                                                                            this->rootDeviceIndices,
                                                                            deviceBitfields);
@@ -478,7 +478,7 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
 
     if (ZE_RESULT_SUCCESS == res) {
         auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-        if (allocData && allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+        if (allocData && allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
             DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(device->getDriverHandle());
             std::lock_guard<std::mutex> lock(driverHandleImp->sharedMakeResidentAllocationsLock);
             driverHandleImp->sharedMakeResidentAllocations.insert({ptr, allocation});
@@ -609,8 +609,8 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
         IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
         auto type = allocData->memoryType;
         uint8_t ipcType = 0;
-        if (type == HOST_UNIFIED_MEMORY) {
-            ipcType = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
+        if (type == InternalMemoryType::hostUnifiedMemory) {
+            ipcType = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory);
         }
         setIPCHandleData(graphicsAllocation, handle, ipcData, reinterpret_cast<uint64_t>(ptr), ipcType);
 
@@ -663,9 +663,9 @@ ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
         }
 
         auto type = allocData->memoryType;
-        auto ipcType = InternalIpcMemoryType::IPC_DEVICE_UNIFIED_MEMORY;
-        if (type == HOST_UNIFIED_MEMORY) {
-            ipcType = InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY;
+        auto ipcType = InternalIpcMemoryType::deviceUnifiedMemory;
+        if (type == InternalMemoryType::hostUnifiedMemory) {
+            ipcType = InternalIpcMemoryType::hostUnifiedMemory;
         }
 
         for (uint32_t i = 0; i < *numIpcHandles; i++) {
@@ -694,9 +694,9 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     uint8_t type = ipcData.type;
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
-    if (type == static_cast<uint8_t>(InternalIpcMemoryType::IPC_DEVICE_UNIFIED_MEMORY)) {
+    if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
         allocationType = NEO::AllocationType::buffer;
-    } else if (type == static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY)) {
+    } else if (type == static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory)) {
         allocationType = NEO::AllocationType::bufferHostMemory;
     } else {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -725,7 +725,7 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
         const IpcMemoryData &ipcData = *reinterpret_cast<const IpcMemoryData *>(pIpcHandles[i].data);
         uint64_t handle = ipcData.handle;
 
-        if (ipcData.type != static_cast<uint8_t>(InternalIpcMemoryType::IPC_DEVICE_UNIFIED_MEMORY)) {
+        if (ipcData.type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -1178,7 +1178,7 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         allocData.size = size;
         allocData.pageSizeForAlignment = MemoryConstants::pageSize64k;
         allocData.setAllocId(this->driverHandle->svmAllocsManager->allocationsCounter++);
-        allocData.memoryType = InternalMemoryType::RESERVED_DEVICE_MEMORY;
+        allocData.memoryType = InternalMemoryType::reservedDeviceMemory;
         allocData.virtualReservationData = virtualMemoryReservation;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;

@@ -26,8 +26,6 @@
 #include <cstdint>
 #include <optional>
 
-enum InternalMemoryType : uint32_t;
-
 namespace NEO {
 class BarrierCommand;
 class Buffer;
@@ -488,7 +486,7 @@ template <typename PtrType>
 PtrType CommandQueue::convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation) {
     // If this is device or shared USM pointer, it is already a gpuVA and we don't have to do anything.
     // Otherwise, we assume this is a cpuVA and we have to convert to gpuVA, while preserving offset from allocation start.
-    const bool isCpuPtr = (memoryType != DEVICE_UNIFIED_MEMORY) && (memoryType != SHARED_UNIFIED_MEMORY);
+    const bool isCpuPtr = (memoryType != InternalMemoryType::deviceUnifiedMemory) && (memoryType != InternalMemoryType::sharedUnifiedMemory);
     if (isCpuPtr) {
         size_t dstOffset = ptrDiff(ptr, allocation.getUnderlyingBuffer());
         ptr = reinterpret_cast<PtrType>(allocation.getGpuAddress() + dstOffset);

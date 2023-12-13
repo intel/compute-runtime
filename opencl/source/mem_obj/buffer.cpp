@@ -380,7 +380,7 @@ Buffer *Buffer::create(Context *context,
             if (svmManager) {
                 auto svmData = svmManager->getSVMAlloc(hostPtr);
                 if (svmData) {
-                    if ((svmData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) && memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
+                    if ((svmData->memoryType == InternalMemoryType::hostUnifiedMemory) && memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
                         allocationInfo.memory = nullptr;
                         allocationInfo.allocationType = AllocationType::buffer;
                         allocationInfo.isHostPtrSVM = false;

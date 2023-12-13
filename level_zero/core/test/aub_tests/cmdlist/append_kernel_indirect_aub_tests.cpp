@@ -56,7 +56,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
                                                groupSize[2] * groupCount[2]};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                                            1,
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
@@ -101,7 +101,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     const uint32_t groupCount[] = {4, 3, 1};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                                            1,
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
@@ -147,7 +147,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     const uint32_t groupCount2[] = {7, 6, 4};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                                            1,
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
@@ -206,7 +206,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
 }
 
 TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyProgrammed) {
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                                            1,
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);

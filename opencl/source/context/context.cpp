@@ -121,7 +121,7 @@ cl_int Context::tryGetExistingSvmAllocation(const void *ptr,
             }
             allocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
             if (isCpuCopyAllowed) {
-                if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
+                if (svmEntry->memoryType == InternalMemoryType::deviceUnifiedMemory) {
                     isCpuCopyAllowed = false;
                 }
             }

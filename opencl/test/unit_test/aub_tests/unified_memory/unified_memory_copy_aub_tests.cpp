@@ -48,10 +48,10 @@ HWTEST_P(UnifiedMemoryCopyAubTest, givenTwoUnifiedMemoryAllocsWhenCopyingOneToAn
     expectMemory<FamilyType>(dstPtr, srcValues.data(), dataSize);
 }
 
-InternalMemoryType memoryTypes[] = {InternalMemoryType::HOST_UNIFIED_MEMORY,
-                                    InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                    InternalMemoryType::SHARED_UNIFIED_MEMORY,
-                                    InternalMemoryType::NOT_SPECIFIED};
+InternalMemoryType memoryTypes[] = {InternalMemoryType::hostUnifiedMemory,
+                                    InternalMemoryType::deviceUnifiedMemory,
+                                    InternalMemoryType::sharedUnifiedMemory,
+                                    InternalMemoryType::notSpecified};
 
 INSTANTIATE_TEST_CASE_P(UnifiedMemoryCopyAubTest,
                         UnifiedMemoryCopyAubTest,

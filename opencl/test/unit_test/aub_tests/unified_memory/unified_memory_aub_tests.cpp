@@ -36,7 +36,7 @@ class UnifiedMemoryAubTest : public UnifiedMemoryAubFixture,
 };
 
 HWTEST_F(UnifiedMemoryAubTest, givenDeviceMemoryAllocWhenWriteIntoItThenValuesMatch) {
-    auto unifiedMemoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    auto unifiedMemoryType = InternalMemoryType::deviceUnifiedMemory;
     auto unifiedMemoryPtr = allocateUSM(unifiedMemoryType);
     writeToUsmMemory(values, unifiedMemoryPtr, unifiedMemoryType);
 
@@ -46,7 +46,7 @@ HWTEST_F(UnifiedMemoryAubTest, givenDeviceMemoryAllocWhenWriteIntoItThenValuesMa
 }
 
 HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoCPUPartThenValuesMatchAfterUsingAllocAsKernelParam) {
-    auto unifiedMemoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    auto unifiedMemoryType = InternalMemoryType::sharedUnifiedMemory;
     auto unifiedMemoryPtr = allocateUSM(unifiedMemoryType);
     retVal = clEnqueueMemsetINTEL(this->pCmdQ, unifiedMemoryPtr, 0, dataSize, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -65,7 +65,7 @@ HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoCPUPartThenVal
 }
 
 HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoGPUPartThenValuesMatchAfterUsingAlloc) {
-    auto unifiedMemoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    auto unifiedMemoryType = InternalMemoryType::sharedUnifiedMemory;
 
     auto unifiedMemoryPtr = allocateUSM(unifiedMemoryType);
     std::vector<char> input(dataSize, 11);

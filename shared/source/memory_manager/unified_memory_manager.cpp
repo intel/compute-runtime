@@ -141,7 +141,7 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
             continue;
         }
 
-        if (!(allocation.second->memoryType & requestedTypesMask) ||
+        if (!(static_cast<uint32_t>(allocation.second->memoryType) & requestedTypesMask) ||
             (nullptr == allocation.second->gpuAllocations.getGraphicsAllocation(rootDeviceIndex))) {
             continue;
         }
@@ -154,7 +154,7 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
 void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask) {
     std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->svmAllocs.allocations) {
-        if (allocation.second->memoryType & requestedTypesMask) {
+        if (static_cast<uint32_t>(allocation.second->memoryType) & requestedTypesMask) {
             auto gpuAllocation = allocation.second->gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
             if (gpuAllocation == nullptr) {
                 continue;
@@ -189,7 +189,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     if (!memoryManager->isLocalMemorySupported(*rootDeviceIndices.begin())) {
         return createZeroCopySvmAllocation(size, svmProperties, rootDeviceIndices, subdeviceBitfields);
     } else {
-        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::NOT_SPECIFIED, 1, rootDeviceIndices, subdeviceBitfields);
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::notSpecified, 1, rootDeviceIndices, subdeviceBitfields);
         return createUnifiedAllocationWithDeviceStorage(size, svmProperties, unifiedMemoryProperties);
     }
 }
@@ -283,7 +283,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled || memoryProperties.allocationFlags.flags.compressedHint;
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
 
-    if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+    if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
         if (this->usmDeviceAllocationsCacheEnabled) {
             void *allocationFromCache = this->usmDeviceAllocationsCache.get(size, memoryProperties, this);
@@ -291,7 +291,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                 return allocationFromCache;
             }
         }
-    } else if (memoryProperties.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+    } else if (memoryProperties.memoryType == InternalMemoryType::hostUnifiedMemory) {
         unifiedMemoryProperties.flags.isUSMHostAllocation = true;
     } else {
         unifiedMemoryProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
@@ -299,7 +299,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties, externalPtr);
     if (!unifiedMemoryAllocation) {
-        if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY &&
+        if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory &&
             this->usmDeviceAllocationsCacheEnabled) {
             this->trimUSMDeviceAllocCache();
             unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties, externalPtr);
@@ -434,7 +434,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     }
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
-        if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
+        if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
             this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
             return true;
@@ -457,7 +457,7 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
 
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
-        if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
+        if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
             this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
             return true;
@@ -666,7 +666,7 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
 bool SVMAllocsManager::hasHostAllocations() {
     std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->svmAllocs.allocations) {
-        if (allocation.second->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+        if (allocation.second->memoryType == InternalMemoryType::hostUnifiedMemory) {
             return true;
         }
     }
@@ -751,7 +751,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
     compressionEnabled = false;
 
     AllocationType allocationType = AllocationType::bufferHostMemory;
-    if (unifiedMemoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+    if (unifiedMemoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         if (unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
             allocationType = AllocationType::writeCombined;
         } else {
@@ -797,12 +797,12 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
     bool isChunkingNeededForDeviceAllocations = false;
     if (NEO::debugManager.flags.EnableBOChunkingDevMemPrefetch.get() &&
         memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
-        (svmData.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY)) {
+        (svmData.memoryType == InternalMemoryType::deviceUnifiedMemory)) {
         isChunkingNeededForDeviceAllocations = true;
     }
 
     if ((memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
-         (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) ||
+         (svmData.memoryType == InternalMemoryType::sharedUnifiedMemory)) ||
         isChunkingNeededForDeviceAllocations) {
         auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
         auto subDeviceIds = commandStreamReceiver.getActivePartitions() > 1 ? getSubDeviceIds(commandStreamReceiver) : SubDeviceIdsVec{getSubDeviceId(device)};

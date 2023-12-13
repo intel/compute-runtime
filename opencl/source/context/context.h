@@ -23,7 +23,7 @@
 
 #include <map>
 
-enum InternalMemoryType : uint32_t;
+enum class InternalMemoryType : uint32_t;
 
 namespace NEO {
 struct MemoryProperties;

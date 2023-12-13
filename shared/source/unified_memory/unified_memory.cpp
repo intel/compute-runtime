@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,13 +10,13 @@
 uint32_t UnifiedMemoryControls::generateMask() {
     uint32_t resourceMask = 0u;
     if (this->indirectHostAllocationsAllowed) {
-        resourceMask |= InternalMemoryType::HOST_UNIFIED_MEMORY;
+        resourceMask |= static_cast<uint32_t>(InternalMemoryType::hostUnifiedMemory);
     }
     if (this->indirectDeviceAllocationsAllowed) {
-        resourceMask |= InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+        resourceMask |= static_cast<uint32_t>(InternalMemoryType::deviceUnifiedMemory);
     }
     if (this->indirectSharedAllocationsAllowed) {
-        resourceMask |= InternalMemoryType::SHARED_UNIFIED_MEMORY;
+        resourceMask |= static_cast<uint32_t>(InternalMemoryType::sharedUnifiedMemory);
     }
 
     return resourceMask;

@@ -974,8 +974,8 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     bool cpuMemCopyEnabled = false;
 
     switch (transferType) {
-    case HOST_USM_TO_DEVICE_USM:
-    case DEVICE_USM_TO_HOST_USM: {
+    case TransferType::hostUsmToDeviceUsm:
+    case TransferType::deviceUsmToHostUsm: {
         if (this->dependenciesPresent) {
             cpuMemCopyEnabled = false;
             break;
@@ -990,8 +990,8 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         cpuMemCopyEnabled = allEventsCompleted;
         break;
     }
-    case HOST_NON_USM_TO_DEVICE_USM:
-    case DEVICE_USM_TO_HOST_NON_USM:
+    case TransferType::hostNonUsmToDeviceUsm:
+    case TransferType::deviceUsmToHostNonUsm:
         cpuMemCopyEnabled = true;
         break;
     default:
@@ -1004,19 +1004,19 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc) {
-    return alloc && (alloc->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY);
+    return alloc && (alloc->memoryType == InternalMemoryType::hostUnifiedMemory);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc) {
-    return alloc && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
+    return alloc && (alloc->memoryType == InternalMemoryType::deviceUnifiedMemory) &&
            alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex()) &&
            alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc) {
-    return alloc && (alloc->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    return alloc && (alloc->memoryType == InternalMemoryType::sharedUnifiedMemory);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1138,58 +1138,58 @@ TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(cons
     const bool dstHostNonUSM = (cpuMemCopyInfo.dstAllocData == nullptr) && !cpuMemCopyInfo.dstIsImportedHostPtr;
 
     if (srcHostNonUSM && dstHostUSM) {
-        return HOST_NON_USM_TO_HOST_USM;
+        return TransferType::hostNonUsmToHostUsm;
     }
     if (srcHostNonUSM && dstDeviceUSM) {
-        return HOST_NON_USM_TO_DEVICE_USM;
+        return TransferType::hostNonUsmToDeviceUsm;
     }
     if (srcHostNonUSM && dstSharedUSM) {
-        return HOST_NON_USM_TO_SHARED_USM;
+        return TransferType::hostNonUsmToSharedUsm;
     }
     if (srcHostNonUSM && dstHostNonUSM) {
-        return HOST_NON_USM_TO_HOST_NON_USM;
+        return TransferType::hostNonUsmToHostNonUsm;
     }
 
     if (srcHostUSM && dstHostUSM) {
-        return HOST_USM_TO_HOST_USM;
+        return TransferType::hostUsmToHostUsm;
     }
     if (srcHostUSM && dstDeviceUSM) {
-        return HOST_USM_TO_DEVICE_USM;
+        return TransferType::hostUsmToDeviceUsm;
     }
     if (srcHostUSM && dstSharedUSM) {
-        return HOST_USM_TO_SHARED_USM;
+        return TransferType::hostUsmToSharedUsm;
     }
     if (srcHostUSM && dstHostNonUSM) {
-        return HOST_USM_TO_HOST_NON_USM;
+        return TransferType::hostUsmToHostNonUsm;
     }
 
     if (srcDeviceUSM && dstHostUSM) {
-        return DEVICE_USM_TO_HOST_USM;
+        return TransferType::deviceUsmToHostUsm;
     }
     if (srcDeviceUSM && dstDeviceUSM) {
-        return DEVICE_USM_TO_DEVICE_USM;
+        return TransferType::deviceUsmToDeviceUsm;
     }
     if (srcDeviceUSM && dstSharedUSM) {
-        return DEVICE_USM_TO_SHARED_USM;
+        return TransferType::deviceUsmToSharedUsm;
     }
     if (srcDeviceUSM && dstHostNonUSM) {
-        return DEVICE_USM_TO_HOST_NON_USM;
+        return TransferType::deviceUsmToHostNonUsm;
     }
 
     if (srcSharedUSM && dstHostUSM) {
-        return SHARED_USM_TO_HOST_USM;
+        return TransferType::sharedUsmToHostUsm;
     }
     if (srcSharedUSM && dstDeviceUSM) {
-        return SHARED_USM_TO_DEVICE_USM;
+        return TransferType::sharedUsmToDeviceUsm;
     }
     if (srcSharedUSM && dstSharedUSM) {
-        return SHARED_USM_TO_SHARED_USM;
+        return TransferType::sharedUsmToSharedUsm;
     }
     if (srcSharedUSM && dstHostNonUSM) {
-        return SHARED_USM_TO_HOST_NON_USM;
+        return TransferType::sharedUsmToHostNonUsm;
     }
 
-    return TRANSFER_TYPE_UNKNOWN;
+    return TransferType::unknown;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1197,52 +1197,52 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
     size_t retVal = 0u;
 
     switch (transferType) {
-    case HOST_NON_USM_TO_HOST_USM:
+    case TransferType::hostNonUsmToHostUsm:
         retVal = 1 * MemoryConstants::megaByte;
         break;
-    case HOST_NON_USM_TO_DEVICE_USM:
+    case TransferType::hostNonUsmToDeviceUsm:
         retVal = 4 * MemoryConstants::megaByte;
         if (NEO::debugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
             retVal = NEO::debugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
         }
         break;
-    case HOST_NON_USM_TO_SHARED_USM:
+    case TransferType::hostNonUsmToSharedUsm:
         retVal = 0u;
         break;
-    case HOST_NON_USM_TO_HOST_NON_USM:
+    case TransferType::hostNonUsmToHostNonUsm:
         retVal = 1 * MemoryConstants::megaByte;
         break;
-    case HOST_USM_TO_HOST_USM:
+    case TransferType::hostUsmToHostUsm:
         retVal = 200 * MemoryConstants::kiloByte;
         break;
-    case HOST_USM_TO_DEVICE_USM:
+    case TransferType::hostUsmToDeviceUsm:
         retVal = 50 * MemoryConstants::kiloByte;
         break;
-    case HOST_USM_TO_SHARED_USM:
+    case TransferType::hostUsmToSharedUsm:
         retVal = 0u;
         break;
-    case HOST_USM_TO_HOST_NON_USM:
+    case TransferType::hostUsmToHostNonUsm:
         retVal = 500 * MemoryConstants::kiloByte;
         break;
-    case DEVICE_USM_TO_DEVICE_USM:
+    case TransferType::deviceUsmToDeviceUsm:
         retVal = 0u;
         break;
-    case DEVICE_USM_TO_SHARED_USM:
+    case TransferType::deviceUsmToSharedUsm:
         retVal = 0u;
         break;
-    case DEVICE_USM_TO_HOST_USM:
+    case TransferType::deviceUsmToHostUsm:
         retVal = 128u;
         break;
-    case DEVICE_USM_TO_HOST_NON_USM:
+    case TransferType::deviceUsmToHostNonUsm:
         retVal = 1 * MemoryConstants::kiloByte;
         if (NEO::debugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
             retVal = NEO::debugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
         }
         break;
-    case SHARED_USM_TO_HOST_USM:
-    case SHARED_USM_TO_DEVICE_USM:
-    case SHARED_USM_TO_SHARED_USM:
-    case SHARED_USM_TO_HOST_NON_USM:
+    case TransferType::sharedUsmToHostUsm:
+    case TransferType::sharedUsmToDeviceUsm:
+    case TransferType::sharedUsmToSharedUsm:
+    case TransferType::sharedUsmToHostNonUsm:
         retVal = 0u;
         break;
     default:

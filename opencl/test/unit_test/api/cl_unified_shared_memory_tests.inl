@@ -39,7 +39,7 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesH
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::hostUnifiedMemory);
     EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
               castToUint64(unifiedMemoryHostAllocation));
 
@@ -139,7 +139,7 @@ TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocate
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::deviceUnifiedMemory);
     EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
               castToUint64(unifiedMemoryDeviceAllocation));
 
@@ -206,7 +206,7 @@ TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAllocate
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::sharedUnifiedMemory);
     EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
               castToUint64(unifiedMemorySharedAllocation));
 
@@ -356,7 +356,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnif
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
 
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemoryHostAllocation, CL_MEM_ALLOC_TYPE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::hostUnifiedMemory);
     EXPECT_EQ(CL_MEM_TYPE_HOST_INTEL, paramValue);
     EXPECT_EQ(sizeof(cl_int), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -521,7 +521,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnif
 
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemoryDeviceAllocation, CL_MEM_ALLOC_TYPE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
 
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::deviceUnifiedMemory);
     EXPECT_EQ(CL_MEM_TYPE_DEVICE_INTEL, paramValue);
     EXPECT_EQ(sizeof(cl_int), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -543,7 +543,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnif
 
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_TYPE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
 
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::sharedUnifiedMemory);
     EXPECT_EQ(CL_MEM_TYPE_SHARED_INTEL, paramValue);
     EXPECT_EQ(sizeof(cl_int), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -644,7 +644,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
 
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_BASE_PTR_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
 
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::sharedUnifiedMemory);
     EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(), paramValue);
     EXPECT_EQ(sizeof(uint64_t), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -669,7 +669,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
 
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemoryHostAllocation, CL_MEM_ALLOC_SIZE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
 
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::hostUnifiedMemory);
     EXPECT_EQ(graphicsAllocation->size, paramValue);
     EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1104,7 +1104,7 @@ TEST(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocInt
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
     auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::deviceUnifiedMemory);
     EXPECT_EQ(AllocationType::buffer, gpuAllocation->getAllocationType());
     EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryDeviceAllocation));
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
@@ -1127,7 +1127,7 @@ TEST(clUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocInte
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
     auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
-    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::deviceUnifiedMemory);
     EXPECT_EQ(gpuAllocation->getAllocationType(), AllocationType::writeCombined);
     EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryDeviceAllocation));
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
@@ -1286,7 +1286,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalle
     auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
 
     EXPECT_EQ(svmAllocation->size, 4u);
-    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::hostUnifiedMemory);
 
     EXPECT_NE(graphicsAllocation1, nullptr);
     EXPECT_NE(graphicsAllocation2, nullptr);
@@ -1323,7 +1323,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     auto graphicsAllocation2 = svmAllocation->gpuAllocations.getGraphicsAllocation(2u);
 
     EXPECT_EQ(svmAllocation->size, 4u);
-    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    EXPECT_EQ(svmAllocation->memoryType, InternalMemoryType::sharedUnifiedMemory);
 
     EXPECT_NE(graphicsAllocation1, nullptr);
     EXPECT_NE(graphicsAllocation2, nullptr);
