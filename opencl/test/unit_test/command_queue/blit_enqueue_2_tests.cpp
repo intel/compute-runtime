@@ -180,7 +180,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
-    mockCommandQueue->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCommandQueue->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCommandQueue->getGpgpuCommandStreamReceiver().postInitFlagsSetup();
 
     auto buffer = createBuffer(1, false);
@@ -218,7 +218,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenImmediateDi
 
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
-    mockCommandQueue->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    mockCommandQueue->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::immediateDispatch);
     mockCommandQueue->getGpgpuCommandStreamReceiver().postInitFlagsSetup();
 
     auto buffer = createBuffer(1, false);

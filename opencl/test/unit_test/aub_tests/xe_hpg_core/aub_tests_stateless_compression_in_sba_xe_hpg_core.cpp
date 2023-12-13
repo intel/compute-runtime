@@ -49,7 +49,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, GENERATEONLY_givenCompress
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
-    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto unCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_UNCOMPRESSED_HINT_INTEL, bufferSize, nullptr, retVal));
     auto unCompressedAllocation = unCompressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -101,7 +101,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, GENERATEONLY_givenCompress
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
-    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto compressedDeviceMemAllocPtr1 = clDeviceMemAllocINTEL(context, device.get(), nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -153,7 +153,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleBufferI
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
-    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto unCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_UNCOMPRESSED_HINT_INTEL, bufferSize, nullptr, retVal));
     auto unCompressedAllocation = unCompressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -203,7 +203,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleHostMem
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
-    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto compressedDeviceMemAllocPtr = clDeviceMemAllocINTEL(context, device.get(), nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

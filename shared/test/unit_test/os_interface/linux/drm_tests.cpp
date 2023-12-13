@@ -45,12 +45,12 @@ std::string getLinuxDevicesPath(const char *file) {
 }
 
 TEST(DrmTest, whenGettingSubmissionStatusFromReturnCodeThenProperValueIsReturned) {
-    EXPECT_EQ(SubmissionStatus::SUCCESS, Drm::getSubmissionStatusFromReturnCode(0));
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, Drm::getSubmissionStatusFromReturnCode(EWOULDBLOCK));
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, Drm::getSubmissionStatusFromReturnCode(ENOSPC));
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, Drm::getSubmissionStatusFromReturnCode(ENOMEM));
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, Drm::getSubmissionStatusFromReturnCode(ENXIO));
-    EXPECT_EQ(SubmissionStatus::FAILED, Drm::getSubmissionStatusFromReturnCode(EBUSY));
+    EXPECT_EQ(SubmissionStatus::success, Drm::getSubmissionStatusFromReturnCode(0));
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, Drm::getSubmissionStatusFromReturnCode(EWOULDBLOCK));
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, Drm::getSubmissionStatusFromReturnCode(ENOSPC));
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, Drm::getSubmissionStatusFromReturnCode(ENOMEM));
+    EXPECT_EQ(SubmissionStatus::outOfMemory, Drm::getSubmissionStatusFromReturnCode(ENXIO));
+    EXPECT_EQ(SubmissionStatus::failed, Drm::getSubmissionStatusFromReturnCode(EBUSY));
 }
 
 TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned) {

@@ -76,11 +76,11 @@ HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenComma
     auto clDevice = castToObject<ClDevice>(testedClDevice);
     auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
     auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(cmdq));
-    EXPECT_EQ(DispatchMode::BatchedDispatch, queue->getGpgpuCommandStreamReceiver().getDispatchMode());
+    EXPECT_EQ(DispatchMode::batchedDispatch, queue->getGpgpuCommandStreamReceiver().getDispatchMode());
     retVal = clReleaseCommandQueue(cmdq);
 }
 
@@ -94,27 +94,27 @@ HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedAndUpdate
     auto clDevice = castToObject<ClDevice>(testedClDevice);
     auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
     auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(cmdq));
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, queue->getGpgpuCommandStreamReceiver().getDispatchMode());
+    EXPECT_EQ(DispatchMode::immediateDispatch, queue->getGpgpuCommandStreamReceiver().getDispatchMode());
     retVal = clReleaseCommandQueue(cmdq);
 }
 
 HWTEST_F(ClCreateCommandQueueTest, givenForcedDispatchModeAndOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::immediateDispatch));
 
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto clDevice = castToObject<ClDevice>(testedClDevice);
     auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
     retVal = clReleaseCommandQueue(cmdq);
 }
 

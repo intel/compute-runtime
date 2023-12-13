@@ -1053,7 +1053,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
 
     if (this->dependenciesPresent) {
         auto submissionStatus = this->csr->flushTagUpdate();
-        if (submissionStatus != NEO::SubmissionStatus::SUCCESS) {
+        if (submissionStatus != NEO::SubmissionStatus::success) {
             return getErrorCodeForSubmissionStatus(submissionStatus);
         }
     }

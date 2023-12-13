@@ -80,7 +80,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWh
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhenDependencyIsResolvedThenDecrementCounterOnGpu) {
     MockContext context(pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
-    pCommandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pCommandStreamReceiver->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     const size_t bufferSize = 1024;
     auto retVal = CL_SUCCESS;

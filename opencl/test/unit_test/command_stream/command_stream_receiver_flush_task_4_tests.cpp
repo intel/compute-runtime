@@ -674,7 +674,7 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenUnflushedQueueAndEventI
     auto pCmdQ1 = context.get()->getSpecialQueue(1u);
     auto pCmdQ2 = context.get()->getSpecialQueue(2u);
 
-    pCmdQ1->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pCmdQ1->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
     cl_event outputEvent{};
     cl_event inputEvent;
 
@@ -710,7 +710,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
     ASSERT_NE(nullptr, mockCsr.getWorkPartitionAllocation());
 
-    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.storeMakeResidentAllocations = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

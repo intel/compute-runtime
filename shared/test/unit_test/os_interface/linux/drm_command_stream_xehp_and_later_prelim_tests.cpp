@@ -616,7 +616,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
             EXPECT_EQ(0u, processResidencyCalled);
             EXPECT_EQ(0u, handleId);
             processResidencyCalled++;
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
 
         uint32_t execCalled = 0;
@@ -651,7 +651,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
         }
         SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(execCalled, handleId);
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
 
         uint32_t execCalled = 0;

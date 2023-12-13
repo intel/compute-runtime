@@ -64,15 +64,15 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
 SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {
     switch (retCode) {
     case 0:
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     case EWOULDBLOCK:
     case ENOMEM:
     case ENOSPC:
-        return SubmissionStatus::OUT_OF_HOST_MEMORY;
+        return SubmissionStatus::outOfHostMemory;
     case ENXIO:
-        return SubmissionStatus::OUT_OF_MEMORY;
+        return SubmissionStatus::outOfMemory;
     default:
-        return SubmissionStatus::FAILED;
+        return SubmissionStatus::failed;
     }
 }
 

@@ -149,7 +149,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueWithLowerTaskLevelThenCsrWhenItIsSubmitt
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChange) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
@@ -166,7 +166,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDone
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsThenTheyHaveHigherTaskLevel) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
@@ -187,7 +187,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndBarrierThenCsrTaskLevelIncreases) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
@@ -209,7 +209,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndMarkerThenCsrTaskLevelIsNotIncreasing) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
@@ -231,7 +231,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqueueThenSecondHasHigherTaskLevelThenFirst) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
 

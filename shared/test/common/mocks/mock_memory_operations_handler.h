@@ -20,21 +20,21 @@ class GraphicsAllocation;
 class MockMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandler() {}
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override { return MemoryOperationsStatus::UNSUPPORTED; }
-    MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
-    MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override { return MemoryOperationsStatus::UNSUPPORTED; }
-    MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::UNSUPPORTED; }
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
 };
 
 class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandlerTests() {}
-    ADDMETHOD_NOBASE(makeResident, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations));
-    ADDMETHOD_NOBASE(evict, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (Device * device, GraphicsAllocation &gfxAllocation));
-    ADDMETHOD_NOBASE(isResident, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (Device * device, GraphicsAllocation &gfxAllocation));
-    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable));
-    ADDMETHOD_NOBASE(evictWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (OsContext * osContext, GraphicsAllocation &gfxAllocation));
+    ADDMETHOD_NOBASE(makeResident, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations));
+    ADDMETHOD_NOBASE(evict, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, GraphicsAllocation &gfxAllocation));
+    ADDMETHOD_NOBASE(isResident, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, GraphicsAllocation &gfxAllocation));
+    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable));
+    ADDMETHOD_NOBASE(evictWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, GraphicsAllocation &gfxAllocation));
 };
 
 class MockMemoryOperations : public MemoryOperationsHandler {
@@ -50,7 +50,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
                 }
             }
         }
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
         evictCalledCount++;
@@ -58,23 +58,23 @@ class MockMemoryOperations : public MemoryOperationsHandler {
             auto allocIterator = std::find(gfxAllocationsForMakeResident.begin(), gfxAllocationsForMakeResident.end(), &gfxAllocation);
             if (allocIterator != gfxAllocationsForMakeResident.end()) {
                 gfxAllocationsForMakeResident.erase(allocIterator);
-                return MemoryOperationsStatus::SUCCESS;
+                return MemoryOperationsStatus::success;
             } else {
-                return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+                return MemoryOperationsStatus::memoryNotFound;
             }
         }
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override {
         isResidentCalledCount++;
         if (captureGfxAllocationsForMakeResident) {
             if (std::find(gfxAllocationsForMakeResident.begin(), gfxAllocationsForMakeResident.end(), &gfxAllocation) != gfxAllocationsForMakeResident.end()) {
-                return MemoryOperationsStatus::SUCCESS;
+                return MemoryOperationsStatus::success;
             } else {
-                return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+                return MemoryOperationsStatus::memoryNotFound;
             }
         }
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
@@ -87,11 +87,11 @@ class MockMemoryOperations : public MemoryOperationsHandler {
                 gfxAllocationsForMakeResident.push_back(gfxAllocation);
             }
         }
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
         evictCalledCount++;
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
 
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};

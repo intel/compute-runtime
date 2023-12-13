@@ -74,7 +74,7 @@ class AUBFixture : public CommandQueueHwFixture {
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
@@ -97,7 +97,7 @@ class AUBFixture : public CommandQueueHwFixture {
     template <typename FamilyType>
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
         CommandStreamReceiver *csrtemp = csr;
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             csrtemp = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get();
         }
 
@@ -112,7 +112,7 @@ class AUBFixture : public CommandQueueHwFixture {
     void expectNotEqualMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
@@ -128,7 +128,7 @@ class AUBFixture : public CommandQueueHwFixture {
     void expectCompressedMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryCompressed(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(

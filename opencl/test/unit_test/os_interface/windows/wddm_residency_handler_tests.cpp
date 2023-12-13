@@ -57,45 +57,45 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
 };
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenMakingResidentAllocationThenMakeResidentCalled) {
-    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::success);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenFragmentedAllocationWhenMakingResidentAllocationThenMakeResidentCalled) {
     allocationPtr = wddmFragmentedAllocation.get();
 
-    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::success);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenMakingResidentAllocationThenMakeResidentCalled) {
-    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(allocationData)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(allocationData)), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::success);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenEvictingResidentAllocationThenEvictCalled) {
     wddm->callBaseEvict = true;
-    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::success);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::memoryNotFound);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenFragmentedAllocationWhenEvictingResidentAllocationThenEvictCalled) {
     allocationPtr = wddmFragmentedAllocation.get();
 
-    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::memoryNotFound);
 }
 
 TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenEvictingResidentAllocationThenEvictCalled) {
-    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(allocationData)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(allocationData)), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmAllocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(wddmMemoryOperationsHandler->evict(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::memoryNotFound);
 }
 
 TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItIsMadeResidentUponCreation) {
@@ -118,7 +118,7 @@ TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItI
     auto bufferAllocation = neoBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
     auto status = memoryOperationsHandler->isResident(nullptr, *bufferAllocation);
 
-    EXPECT_EQ(status, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(status, MemoryOperationsStatus::success);
 
     clReleaseMemObject(clBuffer);
 }

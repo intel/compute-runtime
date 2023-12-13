@@ -67,7 +67,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     size_t sizeBatchBuffer = 0xffffu;
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
-        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch, pDevice->getDeviceBitfield()),
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::immediateDispatch, pDevice->getDeviceBitfield()),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_NE(nullptr, flatBatchBuffer->getUnderlyingBuffer());
     EXPECT_EQ(alignUp(128u + 128u, MemoryConstants::pageSize), sizeBatchBuffer);
@@ -92,7 +92,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     size_t sizeBatchBuffer = 0xffffu;
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
-        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch, pDevice->getDeviceBitfield()),
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::immediateDispatch, pDevice->getDeviceBitfield()),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_EQ(nullptr, flatBatchBuffer.get());
     EXPECT_EQ(0xffffu, sizeBatchBuffer);
@@ -119,7 +119,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     size_t sizeBatchBuffer = 0xffffu;
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
-        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::AdaptiveDispatch, pDevice->getDeviceBitfield()),
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::adaptiveDispatch, pDevice->getDeviceBitfield()),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_EQ(nullptr, flatBatchBuffer.get());
     EXPECT_EQ(0xffffu, sizeBatchBuffer);
@@ -183,7 +183,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucS
 
 HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInBatchedDispatchModeThenNewCombinedBatchBufferIsCreated) {
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
@@ -235,7 +235,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedB
     size_t sizeBatchBuffer = 0u;
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
-        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::BatchedDispatch, pDevice->getDeviceBitfield()),
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::batchedDispatch, pDevice->getDeviceBitfield()),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
 
     EXPECT_NE(nullptr, flatBatchBuffer.get());
@@ -346,7 +346,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
@@ -384,7 +384,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
@@ -408,7 +408,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();

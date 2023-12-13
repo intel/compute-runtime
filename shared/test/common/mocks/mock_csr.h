@@ -109,7 +109,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     }
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     CompletionStamp flushTask(
@@ -167,7 +167,7 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
         uint32_t rootDeviceIndex = 0u;
         BatchBuffer batchBuffer = {};
         size_t sizeBatchBuffer = 0u;
-        DispatchMode dispatchMode = DispatchMode::DeviceDefault;
+        DispatchMode dispatchMode = DispatchMode::deviceDefault;
         DeviceBitfield deviceBitfield = {};
     };
 

@@ -53,10 +53,10 @@ class TestedBufferObject : public BufferObject {
         }
 
         if (!waitForCompletion) {
-            return MemoryOperationsStatus::SUCCESS;
+            return MemoryOperationsStatus::success;
         }
 
-        return MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION;
+        return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
     }
 
     uint64_t receivedCompletionGpuAddress = 0;

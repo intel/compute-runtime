@@ -503,7 +503,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }
     std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer rootDeviceIndices) override { return std::unique_ptr<TagAllocatorBase>(nullptr); }
 
-    SubmissionStatus flushTagUpdate() override { return SubmissionStatus::SUCCESS; };
+    SubmissionStatus flushTagUpdate() override { return SubmissionStatus::success; };
     void updateTagFromWait() override{};
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
@@ -535,7 +535,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
 
     NEO::SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return NEO::SubmissionStatus::SUCCESS;
+        return NEO::SubmissionStatus::success;
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
@@ -572,7 +572,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
 
     SubmissionStatus sendRenderStateCacheFlush() override {
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     bool flushBatchedSubmissions() override { return true; }
@@ -599,7 +599,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
 
     void postInitFlagsSetup() override {}
-    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::SUCCESS; }
+    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::success; }
 
     std::map<const void *, size_t> residency;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;

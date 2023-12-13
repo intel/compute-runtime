@@ -81,7 +81,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
         debugManager.flags.RenderCompressedBuffersEnabled.set(1);
         debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
-        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::immediateDispatch));
         debugManager.flags.EnableLocalMemory.set(1);
 
         device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,13 @@
 namespace NEO {
 
 enum class MemoryOperationsStatus : uint32_t {
-    SUCCESS = 0,
-    FAILED,
-    MEMORY_NOT_FOUND,
-    OUT_OF_MEMORY,
-    UNSUPPORTED,
-    DEVICE_UNINITIALIZED,
-    GPU_HANG_DETECTED_DURING_OPERATION,
+    success = 0,
+    failed,
+    memoryNotFound,
+    outOfMemory,
+    unsupported,
+    deviceUninitialized,
+    gpuHangDetectedDuringOperation,
 };
 
 } // namespace NEO

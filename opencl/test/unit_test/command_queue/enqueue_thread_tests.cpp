@@ -49,7 +49,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
         EXPECT_TRUE(this->ownershipMutex.try_lock());
         this->ownershipMutex.unlock();
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     ~CommandStreamReceiverMock() override {

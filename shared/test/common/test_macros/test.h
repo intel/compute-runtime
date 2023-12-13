@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ struct Test
 
 #define TEST_MAX_LENGTH 140
 #define CHECK_TEST_NAME_LENGTH_WITH_MAX(test_fixture, test_name, max_length) \
-    static_assert((NEO::defaultTestMode != NEO::TestMode::AubTests && NEO::defaultTestMode != NEO::TestMode::AubTestsWithTbx) || (sizeof(#test_fixture) + sizeof(#test_name) <= max_length), "Test and fixture names length exceeds max allowed size: " TO_STR(max_length));
+    static_assert((NEO::defaultTestMode != NEO::TestMode::aubTests && NEO::defaultTestMode != NEO::TestMode::aubTestsWithTbx) || (sizeof(#test_fixture) + sizeof(#test_name) <= max_length), "Test and fixture names length exceeds max allowed size: " TO_STR(max_length));
 #define CHECK_TEST_NAME_LENGTH(test_fixture, test_name) \
     CHECK_TEST_NAME_LENGTH_WITH_MAX(test_fixture, test_name, TEST_MAX_LENGTH)
 

@@ -35,7 +35,7 @@ class AUBCommandStreamFixture : public AUBFixture, public CommandStreamFixture {
     template <typename FamilyType>
     AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() const {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get();
         }
         return static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);

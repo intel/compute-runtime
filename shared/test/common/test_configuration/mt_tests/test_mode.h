@@ -10,5 +10,5 @@
 #include "shared/test/common/tests_configuration.h"
 
 namespace NEO {
-inline constexpr TestMode defaultTestMode = TestMode::UnitTests;
+inline constexpr TestMode defaultTestMode = TestMode::unitTests;
 } // namespace NEO

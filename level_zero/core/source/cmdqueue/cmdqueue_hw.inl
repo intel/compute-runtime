@@ -1214,7 +1214,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::handleSubmissionAndCompletionResults(
     NEO::SubmissionStatus submitRet,
     ze_result_t completionRet) {
 
-    if ((submitRet != NEO::SubmissionStatus::SUCCESS) || (completionRet == ZE_RESULT_ERROR_DEVICE_LOST)) {
+    if ((submitRet != NEO::SubmissionStatus::success) || (completionRet == ZE_RESULT_ERROR_DEVICE_LOST)) {
         for (auto &gfx : this->csr->getResidencyAllocations()) {
             if (this->csr->peekLatestFlushedTaskCount() == 0) {
                 gfx->releaseUsageInOsContext(this->csr->getOsContext().getContextId());

@@ -81,7 +81,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     stream = streamProvider->getStream();
     UNRECOVERABLE_IF(nullptr == stream);
 
-    this->dispatchMode = DispatchMode::BatchedDispatch;
+    this->dispatchMode = DispatchMode::batchedDispatch;
     if (debugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }
@@ -323,7 +323,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
                     pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
                 }
             }
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
     }
 
@@ -377,7 +377,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     }
 
     getAubStream()->flush();
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>
@@ -757,7 +757,7 @@ template <typename GfxFamily>
 SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
     }
 
@@ -779,7 +779,7 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const R
     }
 
     dumpAubNonWritable = false;
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>

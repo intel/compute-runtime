@@ -31,7 +31,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
     std::vector<PatchInfoData> indirectPatchInfo;
     std::unique_ptr<char[]> indirectPatchCommands(getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
 
-    if (dispatchMode == DispatchMode::ImmediateDispatch) {
+    if (dispatchMode == DispatchMode::immediateDispatch) {
         if (batchBuffer.chainedBatchBuffer) {
             batchBuffer.chainedBatchBuffer->setAubWritable(false, GraphicsAllocation::defaultBank);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
@@ -55,7 +55,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
             sizeBatchBuffer = flatBatchBufferProperties.size;
             patchInfoCollection.insert(std::end(patchInfoCollection), std::begin(indirectPatchInfo), std::end(indirectPatchInfo));
         }
-    } else if (dispatchMode == DispatchMode::BatchedDispatch) {
+    } else if (dispatchMode == DispatchMode::batchedDispatch) {
         CommandChunk firstChunk;
         for (auto &chunk : commandChunkList) {
             bool found = false;

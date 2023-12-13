@@ -37,7 +37,7 @@ struct FreeGpuVirtualAddressCall : CallResult {
     uint64_t sizePassed = -1;
 };
 struct MemoryOperationResult : CallResult {
-    MemoryOperationsStatus operationSuccess = MemoryOperationsStatus::UNSUPPORTED;
+    MemoryOperationsStatus operationSuccess = MemoryOperationsStatus::unsupported;
 };
 
 struct SubmitResult : CallResult {

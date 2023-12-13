@@ -48,7 +48,7 @@ const char *fSeparator = "/";
 
 bool checkAubTestsExecutionPathValidity() {
     bool valid = true;
-    if ((testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
+    if ((testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx)) {
         std::ofstream testFile;
         std::string aubPath = folderAUB;
         aubPath += fSeparator;
@@ -195,8 +195,8 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { // disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
-            if (testMode == TestMode::AubTests) {
-                testMode = TestMode::AubTestsWithTbx;
+            if (testMode == TestMode::aubTests) {
+                testMode = TestMode::aubTestsWithTbx;
             }
             initialHardwareTag = 0;
         } else if (!strcmp("--rev_id", argv[i])) {
@@ -261,17 +261,17 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp("--generate_random_inputs", argv[i])) {
             generateRandomInput = true;
-        } else if (!strcmp("--read-config", argv[i]) && (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
+        } else if (!strcmp("--read-config", argv[i]) && (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx)) {
             if (debugManager.registryReadAvailable()) {
                 debugManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
                 debugManager.injectSettingsFromReader();
             }
-        } else if (!strcmp("--dump_buffer_format", argv[i]) && testMode == TestMode::AubTests) {
+        } else if (!strcmp("--dump_buffer_format", argv[i]) && testMode == TestMode::aubTests) {
             ++i;
             std::string dumpBufferFormat(argv[i]);
             std::transform(dumpBufferFormat.begin(), dumpBufferFormat.end(), dumpBufferFormat.begin(), ::toupper);
             debugManager.flags.AUBDumpBufferFormat.set(dumpBufferFormat);
-        } else if (!strcmp("--dump_image_format", argv[i]) && testMode == TestMode::AubTests) {
+        } else if (!strcmp("--dump_image_format", argv[i]) && testMode == TestMode::aubTests) {
             ++i;
             std::string dumpImageFormat(argv[i]);
             std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
@@ -407,7 +407,7 @@ int main(int argc, char **argv) {
 
         if (!sipInitialized) {
             MockSipData::mockSipKernel.reset(new MockSipKernel());
-            if (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx) {
+            if (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx) {
                 MockSipData::useMockSip = false;
             }
             sipInitialized = true;

@@ -773,7 +773,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -891,7 +891,7 @@ HWTEST_F(EnqueueKernelTest, givenDefaultCommandStreamReceiverWhenClFlushIsCalled
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKernelWhenFlushIsCalledThenKernelIsSubmitted) {
     auto mockCsrmockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsrmockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsrmockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsrmockCsr->useNewResourceImplicitFlush = false;
     mockCsrmockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsrmockCsr);
@@ -914,7 +914,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKe
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKernelWhenFlushIsCalledTwiceThenNothingChanges) {
     auto mockCsrmockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsrmockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsrmockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsrmockCsr);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -935,7 +935,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKe
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIsEnqueuedTwiceThenTwoSubmissionsAreRecorded) {
     auto &mockCsrmockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    mockCsrmockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsrmockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsrmockCsr.useNewResourceImplicitFlush = false;
     mockCsrmockCsr.useGpuIdleImplicitFlush = false;
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -966,7 +966,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenFlushIsCalledOnTwoBatchedKernelsThenTheyAreExecutedInOrder) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -986,7 +986,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenFlushIsC
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinSameCommandBufferWhenBatchedThenNoBBSBetweenThem) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1010,7 +1010,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinS
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1031,7 +1031,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenThressEnqueueKernelsAreCalledThenBatchesSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1053,7 +1053,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenThressEnqueueKernelsAreCal
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledThenBatchedSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1079,7 +1079,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledThenB
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandIsFlushedThenFlushStampIsUpdatedInCommandQueueCsrAndEvent) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1116,7 +1116,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandIsFlushedThenFlushS
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenNonBlockingMapFollowsNdrCallThenFlushStampIsUpdatedProperly) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     EXPECT_TRUE(this->destBuffer->isMemObjZeroCopy());
@@ -1134,7 +1134,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenNonBlockingMapFollowsNdrCa
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowedByCommandWithoutEventThenFlushStampIsUpdatedInCommandQueueCsrAndEvent) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1171,7 +1171,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowed
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenClFlushIsCalledThenQueueFlushStampIsUpdated) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1190,7 +1190,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenClFlushIsCalledThenQueueFl
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledWithUnflushedTaskCountThenBatchedSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -1214,7 +1214,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledWithU
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledWithUnflushedTaskCountThenBatchedSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -1241,7 +1241,7 @@ HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelIsMadeTh
     auto ooq = clCreateCommandQueueWithProperties(context, pClDevice, props, nullptr);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1265,7 +1265,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pClDevice, props, nullptr);
 
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.useNewResourceImplicitFlush = false;
     mockCsr.useGpuIdleImplicitFlush = false;
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -1287,7 +1287,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pClDevice, props, nullptr);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1310,7 +1310,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
 
 HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasSharedObjectsAsArgIsMadeThenPipeControlDoesntHaveDcFlush) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1326,7 +1326,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pClDevice, props, nullptr);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->timestampPacketWriteEnabled = false;
@@ -1355,7 +1355,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pClDevice, props, nullptr);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1381,7 +1381,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
 
 HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelReturningEventIsMadeThenPipeControlPositionIsRecorded) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1411,7 +1411,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenBlockingCallIsMadeThenEven
     DebugManagerStateRestore stateRestore;
     debugManager.flags.MakeEachEnqueueBlocking.set(true);
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -1610,7 +1610,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInLe
 
 HWTEST_F(EnqueueKernelTest, givenVMEKernelWhenEnqueueKernelThenDispatchFlagsHaveMediaSamplerRequired) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1622,7 +1622,7 @@ HWTEST_F(EnqueueKernelTest, givenVMEKernelWhenEnqueueKernelThenDispatchFlagsHave
 
 HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsSetWhenEnqueueKernelThenDispatchFlagsUseGlobalAtomicsIsSet) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1634,7 +1634,7 @@ HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsSetWhenEnqueueKernelThenDispatc
 
 HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsIsNotSetWhenEnqueueKernelThenDispatchFlagsUseGlobalAtomicsIsNotSet) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1646,7 +1646,7 @@ HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsIsNotSetWhenEnqueueKernelThenDi
 
 HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenDispatchFlagsHaveCorrectInfoAboutMultipleSubDevicesInContext) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
@@ -1662,7 +1662,7 @@ HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenD
 
 HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsDoesntHaveMediaSamplerRequired) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);

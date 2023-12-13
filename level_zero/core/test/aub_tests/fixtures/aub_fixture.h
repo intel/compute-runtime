@@ -60,7 +60,7 @@ class AUBFixtureL0 {
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
 
-        if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
+        if (NEO::testMode == NEO::TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
@@ -76,7 +76,7 @@ class AUBFixtureL0 {
     void expectNotEqualMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
 
-        if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
+        if (NEO::testMode == NEO::TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
@@ -91,7 +91,7 @@ class AUBFixtureL0 {
     template <typename FamilyType>
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
         NEO::AUBCommandStreamReceiverHw<FamilyType> *aubCsr = static_cast<NEO::AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-        if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
+        if (NEO::testMode == NEO::TestMode::aubTestsWithTbx) {
             aubCsr = static_cast<NEO::AUBCommandStreamReceiverHw<FamilyType> *>(static_cast<NEO::CommandStreamReceiverWithAUBDump<NEO::TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
         }
 

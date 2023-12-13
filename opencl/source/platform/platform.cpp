@@ -60,7 +60,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     auto retVal = CL_INVALID_VALUE;
     const std::string *param = nullptr;
     size_t paramSize = GetInfo::invalidSourceSize;
-    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
+    auto getInfoStatus = GetInfoStatus::invalidValue;
 
     switch (paramName) {
     case CL_PLATFORM_HOST_TIMER_RESOLUTION: {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnv
     setMockAubCenter(rootDeviceEnvironment, CommandStreamReceiverType::CSR_AUB);
 }
 void MockAubCenterFixture::setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType) {
-    if (testMode != TestMode::AubTests && testMode != TestMode::AubTestsWithTbx) {
+    if (testMode != TestMode::aubTests && testMode != TestMode::aubTestsWithTbx) {
         rootDeviceEnvironment.initGmm();
         auto mockAubCenter = std::make_unique<MockAubCenter>(rootDeviceEnvironment, false, "", commandStreamReceiverType);
         if (!mockAubCenter->aubManager) {

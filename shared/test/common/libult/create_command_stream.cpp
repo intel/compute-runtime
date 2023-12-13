@@ -33,7 +33,7 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
     }
 
     if (ultHwConfig.aubTestName != nullptr) {
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             return TbxCommandStreamReceiver::create(ultHwConfig.aubTestName, true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         } else {
             return AUBCommandStreamReceiver::create(ultHwConfig.aubTestName, true, executionEnvironment, rootDeviceIndex, deviceBitfield);

@@ -91,7 +91,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
 
 template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>
@@ -184,7 +184,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext() const
 template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                                                  const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) {
-    UNRECOVERABLE_IF(this->dispatchMode != DispatchMode::ImmediateDispatch);
+    UNRECOVERABLE_IF(this->dispatchMode != DispatchMode::immediateDispatch);
 
     uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamTaskStart;
 
@@ -239,7 +239,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
-    if (submissionStatus != SubmissionStatus::SUCCESS) {
+    if (submissionStatus != SubmissionStatus::success) {
         updateStreamTaskCount(streamToSubmit, taskCount);
         CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
         return completionStamp;
@@ -375,7 +375,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool hasStallingCmdsOnTaskStream = false;
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
-        if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
+        if (this->dispatchMode == DispatchMode::immediateDispatch) {
             // for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
             // for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
             levelClosed = true;
@@ -599,7 +599,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed());
     bool submitCommandStreamFromCsr = false;
     void *bbEndLocation = nullptr;
-    auto bbEndPaddingSize = this->dispatchMode == DispatchMode::ImmediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
+    auto bbEndPaddingSize = this->dispatchMode == DispatchMode::immediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
     size_t chainedBatchBufferStartOffset = 0;
     GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool directSubmissionEnabled = isDirectSubmissionEnabled();
@@ -654,9 +654,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     if (submitCSR || submitTask) {
-        if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
+        if (this->dispatchMode == DispatchMode::immediateDispatch) {
             auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
-            if (submissionStatus != SubmissionStatus::SUCCESS) {
+            if (submissionStatus != SubmissionStatus::success) {
                 updateStreamTaskCount(streamToSubmit, taskCount);
                 CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
                 return completionStamp;
@@ -680,7 +680,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         this->makeSurfacePackNonResident(this->getResidencyAllocations(), true);
     }
 
-    if (this->dispatchMode == DispatchMode::BatchedDispatch) {
+    if (this->dispatchMode == DispatchMode::batchedDispatch) {
         // check if we are not over the budget, if we are do implicit flush
         if (getMemoryManager()->isMemoryBudgetExhausted()) {
             if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
@@ -754,7 +754,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrie
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
-    if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
+    if (this->dispatchMode == DispatchMode::immediateDispatch) {
         return true;
     }
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
@@ -854,7 +854,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             primaryCmdBuffer->batchBuffer.endCmdPtr = currentBBendLocation;
 
-            if (this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit) != SubmissionStatus::SUCCESS) {
+            if (this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit) != SubmissionStatus::success) {
                 submitResult = false;
                 break;
             }
@@ -1251,7 +1251,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     updateStreamTaskCount(commandStream, newTaskCount);
 
     auto flushSubmissionStatus = flush(batchBuffer, getResidencyAllocations());
-    if (flushSubmissionStatus != SubmissionStatus::SUCCESS) {
+    if (flushSubmissionStatus != SubmissionStatus::success) {
         updateStreamTaskCount(commandStream, taskCount);
         return CompletionStamp::getTaskCountFromSubmissionStatusError(flushSubmissionStatus);
     }
@@ -1287,7 +1287,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
             return this->flushPipeControl(false);
         }
     }
-    return SubmissionStatus::DEVICE_UNINITIALIZED;
+    return SubmissionStatus::deviceUninitialized;
 }
 
 template <typename GfxFamily>
@@ -1373,7 +1373,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
 
     this->latestSentTaskCount = taskCount + 1;
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
-    if (submissionStatus == SubmissionStatus::SUCCESS) {
+    if (submissionStatus == SubmissionStatus::success) {
         taskCount++;
     }
     return submissionStatus;
@@ -1503,7 +1503,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
                     directSubmissionController->registerDirectSubmission(this);
                 }
                 if (this->isUpdateTagFromWaitEnabled()) {
-                    this->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+                    this->overrideDispatchPolicy(DispatchMode::immediateDispatch);
                 }
             }
         }
@@ -2186,7 +2186,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
-    if (submissionStatus != SubmissionStatus::SUCCESS) {
+    if (submissionStatus != SubmissionStatus::success) {
         --this->latestSentTaskCount;
         updateStreamTaskCount(streamToSubmit, taskCount);
 

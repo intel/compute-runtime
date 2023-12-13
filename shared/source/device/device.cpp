@@ -397,7 +397,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
             if (osContext->isDebuggableContext() ||
                 this->isInitDeviceWithFirstSubmissionSupported(commandStreamReceiver->getType())) {
-                if (SubmissionStatus::SUCCESS != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
+                if (SubmissionStatus::success != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
                     return false;
                 }
             }

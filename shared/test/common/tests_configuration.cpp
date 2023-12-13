@@ -25,7 +25,7 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     uint32_t threadsPerEu = releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u;
 
     // set Gt and FeatureTable to initial state
-    bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
+    bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::aubTests ? true : false;
     hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig, releaseHelper.get());
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 

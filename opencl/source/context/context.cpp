@@ -332,7 +332,7 @@ cl_int Context::getInfo(cl_context_info paramName, size_t paramValueSize,
         break;
     }
 
-    GetInfoStatus getInfoStatus = GetInfoStatus::SUCCESS;
+    GetInfoStatus getInfoStatus = GetInfoStatus::success;
     if (callGetinfo) {
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pValue, valueSize);
     }

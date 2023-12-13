@@ -11,11 +11,11 @@
 
 namespace NEO {
 struct HardwareInfo;
-enum class TestMode { NotSpecified,
-                      UnitTests,
-                      AubTests,
-                      AubTestsWithTbx,
-                      TbxTests };
+enum class TestMode { notSpecified,
+                      unitTests,
+                      aubTests,
+                      aubTestsWithTbx,
+                      tbxTests };
 
 extern TestMode testMode;
 

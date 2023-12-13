@@ -12,13 +12,13 @@
 
 static inline cl_int changeGetInfoStatusToCLResultType(GetInfoStatus status) {
     switch (status) {
-    case GetInfoStatus::SUCCESS:
+    case GetInfoStatus::success:
         return CL_SUCCESS;
 
-    case GetInfoStatus::INVALID_CONTEXT:
+    case GetInfoStatus::invalidContext:
         return CL_INVALID_CONTEXT;
 
-    case GetInfoStatus::INVALID_VALUE:
+    case GetInfoStatus::invalidValue:
         return CL_INVALID_VALUE;
     }
 

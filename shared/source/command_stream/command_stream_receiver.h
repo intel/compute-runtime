@@ -67,11 +67,11 @@ template <typename T1>
 class TagAllocator;
 
 enum class DispatchMode {
-    DeviceDefault = 0,          // default for given device
-    ImmediateDispatch,          // everything is submitted to the HW immediately
-    AdaptiveDispatch,           // dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
-    BatchedDispatchWithCounter, // dispatching is batched, after n commands there is implicit flush (not implemented)
-    BatchedDispatch             // dispatching is batched, explicit clFlush is required
+    deviceDefault = 0,          // default for given device
+    immediateDispatch,          // everything is submitted to the HW immediately
+    adaptiveDispatch,           // dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
+    batchedDispatchWithCounter, // dispatching is batched, after n commands there is implicit flush (not implemented)
+    batchedDispatch             // dispatching is batched, explicit clFlush is required
 };
 
 class CommandStreamReceiver {
@@ -521,7 +521,7 @@ class CommandStreamReceiver {
 
     std::atomic<uint32_t> numClients = 0u;
 
-    DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
+    DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
 

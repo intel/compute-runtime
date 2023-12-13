@@ -51,7 +51,7 @@ struct MockDrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandlerBin
             return DrmMemoryOperationsHandlerBind::evictUnusedAllocations(waitForCompletion, isLockNeeded);
         }
 
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
     int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) override {
         EXPECT_EQ(this->rootDeviceIndex, gfxAllocation.getRootDeviceIndex());
@@ -269,8 +269,8 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, givenOperationHandler
     EXPECT_EQ(operationHandlerDefault->getRootDeviceIndex(), 1u);
     EXPECT_EQ(operationHandler->getRootDeviceIndex(), 0u);
 
-    EXPECT_EQ(operationHandlerDefault->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->evict(device, *allocationDefault), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandlerDefault->evict(device, *allocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->evict(device, *allocationDefault), MemoryOperationsStatus::success);
 
     operationHandlerDefault->setRootDeviceIndex(0u);
     operationHandler->setRootDeviceIndex(1u);
@@ -295,7 +295,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest2, whenNoSpaceLeftOnDevi
 
     EXPECT_EQ(operationHandler->evictUnusedCalled, 0u);
     auto res = operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
-    EXPECT_EQ(MemoryOperationsStatus::OUT_OF_MEMORY, res);
+    EXPECT_EQ(MemoryOperationsStatus::outOfMemory, res);
     EXPECT_EQ(operationHandler->evictUnusedCalled, 1u);
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -309,17 +309,17 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenObjectAlwaysResidentAndNotUsedWh
     for (auto &engine : device->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(GraphicsAllocation::objectNotUsed, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(0u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(1u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(GraphicsAllocation::objectNotUsed, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
 
     EXPECT_EQ(mock->context.vmBindCalled, 2u);
@@ -375,17 +375,17 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, whenEvictUnusedResourcesWithWaitFor
     for (auto &engine : device->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(0u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(1u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     *device->getSubDevice(1u)->getDefaultEngine().commandStreamReceiver->getTagAddress() = 5;
 
@@ -393,7 +393,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, whenEvictUnusedResourcesWithWaitFor
     csr.latestWaitForCompletionWithTimeoutTaskCount.store(123u);
 
     const auto status = operationHandler->evictUnusedAllocations(true, true);
-    EXPECT_EQ(MemoryOperationsStatus::SUCCESS, status);
+    EXPECT_EQ(MemoryOperationsStatus::success, status);
 
     auto latestWaitTaskCount = csr.latestWaitForCompletionWithTimeoutTaskCount.load();
     EXPECT_NE(latestWaitTaskCount, 123u);
@@ -409,7 +409,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenGpuHangWhenEvictUnusedResource
     csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
     const auto status = operationHandler->evictUnusedAllocations(true, true);
-    EXPECT_EQ(MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION, status);
+    EXPECT_EQ(MemoryOperationsStatus::gpuHangDetectedDuringOperation, status);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -420,17 +420,17 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenRunningOutOfMemoryThenUnusedAlloc
     for (auto &engine : device->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(0u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(1u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 10;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     *device->getSubDevice(1u)->getDefaultEngine().commandStreamReceiver->getTagAddress() = 5;
 
@@ -450,17 +450,17 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsedAllocationInBothSubdevicesWh
     for (auto &engine : device->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 5;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(0u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 5;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
     for (auto &engine : device->getSubDevice(1u)->getAllEngines()) {
         *engine.commandStreamReceiver->getTagAddress() = 5;
         allocation->updateTaskCount(8u, engine.osContext->getContextId());
-        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+        EXPECT_EQ(operationHandler->makeResidentWithinOsContext(engine.osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     }
 
     EXPECT_EQ(mock->context.vmBindCalled, 2u);
@@ -479,7 +479,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenResidencyWithinOsContextFailsThe
             : DrmMemoryOperationsHandlerBind(rootDeviceEnvironment, rootDeviceIndex) {}
 
         MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
-            return NEO::MemoryOperationsStatus::FAILED;
+            return NEO::MemoryOperationsStatus::failed;
         }
     };
 
@@ -489,7 +489,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenResidencyWithinOsContextFailsThe
 
     auto &engines = device->getAllEngines();
     for (const auto &engine : engines) {
-        EXPECT_NE(operationsHandlerResidency->mergeWithResidencyContainer(engine.osContext, residencyContainer), MemoryOperationsStatus::SUCCESS);
+        EXPECT_NE(operationsHandlerResidency->mergeWithResidencyContainer(engine.osContext, residencyContainer), MemoryOperationsStatus::success);
     }
 }
 
@@ -499,7 +499,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenEvictWithinOsContextFailsThenEvi
             : DrmMemoryOperationsHandlerBind(rootDeviceEnvironment, rootDeviceIndex) {}
 
         MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
-            return NEO::MemoryOperationsStatus::FAILED;
+            return NEO::MemoryOperationsStatus::failed;
         }
     };
 
@@ -507,7 +507,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenEvictWithinOsContextFailsThenEvi
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerBindEvictFail(*executionEnvironment->rootDeviceEnvironments[0], 0u));
     MockDrmMemoryOperationsHandlerBindEvictFail *operationsHandlerEvict = static_cast<MockDrmMemoryOperationsHandlerBindEvictFail *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
 
-    EXPECT_NE(operationsHandlerEvict->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_NE(operationsHandlerEvict->evict(device, *allocation), MemoryOperationsStatus::success);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -527,7 +527,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenEvictImplFailsThenEvictWithinOsC
     MockDrmMemoryOperationsHandlerBindEvictImplFail *operationsHandlerEvict = static_cast<MockDrmMemoryOperationsHandlerBindEvictImplFail *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
     auto &engines = device->getAllEngines();
     for (const auto &engine : engines) {
-        EXPECT_NE(operationsHandlerEvict->evictWithinOsContext(engine.osContext, *allocation), MemoryOperationsStatus::SUCCESS);
+        EXPECT_NE(operationsHandlerEvict->evictWithinOsContext(engine.osContext, *allocation), MemoryOperationsStatus::success);
     }
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -552,7 +552,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResi
     auto allocation = new MockDrmAllocationBOsResident(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     auto graphicsAllocation = static_cast<GraphicsAllocation *>(allocation);
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::OUT_OF_MEMORY);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::outOfMemory);
     delete allocation;
 }
 
@@ -581,19 +581,19 @@ TEST_F(DrmMemoryOperationsHandlerBindTest,
     allocation->storageInfo.subDeviceBitfield = 0b0011;
     auto graphicsAllocation = static_cast<GraphicsAllocation *>(allocation);
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false), MemoryOperationsStatus::success);
     delete allocation;
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeResidentWithinOsContextEvictableAllocationThenAllocationIsNotMarkedAsAlwaysResident) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::success);
     EXPECT_TRUE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
 
-    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     EXPECT_FALSE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -603,12 +603,12 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeRe
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     allocation->storageInfo.isChunked = true;
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::success);
     EXPECT_TRUE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
 
-    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     EXPECT_FALSE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -619,12 +619,12 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeRe
     allocation->storageInfo.isChunked = true;
     allocation->storageInfo.memoryBanks = 0x5;
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::success);
     EXPECT_TRUE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
 
-    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
 
-    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::success);
     EXPECT_FALSE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -633,11 +633,11 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeRe
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenChangingResidencyThenOperationIsHandledProperly) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -645,30 +645,30 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenChangi
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDeviceWithMultipleSubdevicesWhenMakeResidentWithSubdeviceThenAllocationIsBindedOnlyInItsOsContexts) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::memoryNotFound);
 
     auto retVal = operationHandler->makeResident(device->getSubDevice(1u), ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
-    EXPECT_EQ(retVal, MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(retVal, MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::success);
 
     retVal = operationHandler->evict(device->getSubDevice(0u), *allocation);
 
-    EXPECT_EQ(retVal, MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(retVal, MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::success);
 
     retVal = operationHandler->evict(device->getSubDevice(1u), *allocation);
 
-    EXPECT_EQ(retVal, MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(retVal, MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(0u), *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->isResident(device->getSubDevice(1u), *allocation), MemoryOperationsStatus::memoryNotFound);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -676,13 +676,13 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDeviceWithMultipleSubdevicesWhen
 TEST_F(DrmMemoryOperationsHandlerBindTest, whenIoctlFailDuringEvictingThenUnrecoverableIsThrown) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::memoryNotFound);
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::success);
 
     mock->context.vmUnbindReturn = -1;
 
-    EXPECT_NE(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_NE(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
 
     mock->context.vmUnbindReturn = 0;
     memoryManager->freeGraphicsMemory(allocation);
@@ -691,9 +691,9 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenIoctlFailDuringEvictingThenUnreco
 TEST_F(DrmMemoryOperationsHandlerBindTest, whenMakeResidentTwiceThenAllocIsBoundOnlyOnce) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(operationHandler->isResident(device, *allocation), MemoryOperationsStatus::success);
 
     EXPECT_EQ(mock->context.vmBindCalled, 2u);
 

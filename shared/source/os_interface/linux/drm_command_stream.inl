@@ -54,10 +54,10 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
     auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hwInfo);
 
-    this->dispatchMode = localMemoryEnabled ? DispatchMode::BatchedDispatch : DispatchMode::ImmediateDispatch;
+    this->dispatchMode = localMemoryEnabled ? DispatchMode::batchedDispatch : DispatchMode::immediateDispatch;
 
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
-        this->dispatchMode = DispatchMode::ImmediateDispatch;
+        this->dispatchMode = DispatchMode::immediateDispatch;
     }
 
     if (debugManager.flags.CsrDispatchMode.get()) {
@@ -110,7 +110,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
 
     BufferObject *bb = alloc->getBO();
     if (bb == nullptr) {
-        return SubmissionStatus::OUT_OF_MEMORY;
+        return SubmissionStatus::outOfMemory;
     }
 
     if (this->lastSentSliceCount != batchBuffer.sliceCount) {
@@ -127,7 +127,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     }
 
     auto submissionStatus = this->printBOsForSubmit(allocationsForResidency, *batchBuffer.commandBufferAllocation);
-    if (submissionStatus != SubmissionStatus::SUCCESS) {
+    if (submissionStatus != SubmissionStatus::success) {
         return submissionStatus;
     }
 
@@ -136,11 +136,11 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     }
 
     MemoryOperationsStatus retVal = memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
-    if (retVal != MemoryOperationsStatus::SUCCESS) {
-        if (retVal == MemoryOperationsStatus::OUT_OF_MEMORY) {
-            return SubmissionStatus::OUT_OF_MEMORY;
+    if (retVal != MemoryOperationsStatus::success) {
+        if (retVal == MemoryOperationsStatus::outOfMemory) {
+            return SubmissionStatus::outOfMemory;
         }
-        return SubmissionStatus::FAILED;
+        return SubmissionStatus::failed;
     }
 
     if (this->directSubmission.get()) {
@@ -149,7 +149,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         if (ret == false) {
             return Drm::getSubmissionStatusFromReturnCode(this->directSubmission->getDispatchErrorCode());
         }
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
     if (this->blitterDirectSubmission.get()) {
         this->startControllingDirectSubmissions();
@@ -157,7 +157,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         if (ret == false) {
             return Drm::getSubmissionStatusFromReturnCode(this->blitterDirectSubmission->getDispatchErrorCode());
         }
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     if (isUserFenceWaitActive()) {
@@ -214,7 +214,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(Residenc
         }
         printf("\n");
     }
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>
@@ -261,7 +261,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     if (drm->isVmBindAvailable()) {
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
     int ret = 0;
     for (auto &alloc : inputAllocationsForResidency) {
@@ -347,7 +347,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
             }
 
             auto processResidencySuccess = this->processResidency(allocationsForResidency, tileIterator);
-            if (processResidencySuccess != SubmissionStatus::SUCCESS) {
+            if (processResidencySuccess != SubmissionStatus::success) {
                 return processResidencySuccess;
             }
 
@@ -363,12 +363,12 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
             contextIndex++;
 
             if (debugManager.flags.EnableWalkerPartition.get() == 0) {
-                return SubmissionStatus::SUCCESS;
+                return SubmissionStatus::success;
             }
         }
     }
 
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>

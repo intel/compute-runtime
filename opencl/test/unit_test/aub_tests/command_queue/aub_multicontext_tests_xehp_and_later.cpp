@@ -562,9 +562,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleAllocationWhe
     buffer->forceDisallowCPUCopy = true;
 
     auto simulatedCsr0 = getSimulatedCsr<FamilyType>(0, 0);
-    simulatedCsr0->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    simulatedCsr0->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     auto simulatedCsr1 = getSimulatedCsr<FamilyType>(0, 1);
-    simulatedCsr1->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    simulatedCsr1->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     commandQueues[0][0]->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, halfBufferSize, writePattern1, nullptr, 0, nullptr, nullptr);
     commandQueues[0][1]->enqueueWriteBuffer(buffer.get(), CL_FALSE, halfBufferSize, halfBufferSize, writePattern2, nullptr, 0, nullptr, nullptr);

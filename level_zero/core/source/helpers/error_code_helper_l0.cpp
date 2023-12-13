@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,13 @@
 namespace L0 {
 ze_result_t getErrorCodeForSubmissionStatus(NEO::SubmissionStatus status) {
     switch (status) {
-    case NEO::SubmissionStatus::SUCCESS:
+    case NEO::SubmissionStatus::success:
         return ZE_RESULT_SUCCESS;
         break;
-    case NEO::SubmissionStatus::OUT_OF_MEMORY:
+    case NEO::SubmissionStatus::outOfMemory:
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         break;
-    case NEO::SubmissionStatus::OUT_OF_HOST_MEMORY:
+    case NEO::SubmissionStatus::outOfHostMemory:
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         break;
     default:

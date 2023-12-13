@@ -108,14 +108,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSet
     DebugManagerStateRestore stateRestore;
     debugManager.flags.CsrDispatchMode.set(0);
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    EXPECT_EQ(DispatchMode::BatchedDispatch, aubCsr->peekDispatchMode());
+    EXPECT_EQ(DispatchMode::batchedDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDebugSettingsThenItHasProperDispatchModeEnabled) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, aubCsr->peekDispatchMode());
+    EXPECT_EQ(DispatchMode::immediateDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenMemoryManagerIsNotNull) {
@@ -371,7 +371,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
     // First flush typically includes a preamble and chain to command buffer
-    aubCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    aubCsr->overrideDispatchPolicy(DispatchMode::immediateDispatch);
     aubCsr->flush(batchBuffer, allocationsForResidency);
     EXPECT_EQ(0ull, aubCsr->engineInfo.tailRingBuffer % ringTailAlignment);
 
@@ -564,7 +564,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    aubCsr->overrideDispatchPolicy(DispatchMode::immediateDispatch);
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
@@ -607,7 +607,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_FALSE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    aubCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));
@@ -677,7 +677,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_FALSE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    aubCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));

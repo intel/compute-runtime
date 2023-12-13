@@ -263,7 +263,7 @@ HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitFor
 
     auto &ultCommandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    ultCommandStreamReceiver.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    ultCommandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     cl_event eventFromNdr = nullptr;
     size_t gws[] = {1};

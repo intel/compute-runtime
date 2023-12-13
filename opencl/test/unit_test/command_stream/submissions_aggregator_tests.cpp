@@ -553,7 +553,7 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
 
     void overrideCsr(CommandStreamReceiver *newCsr) {
         device->resetCommandStreamReceiver(newCsr);
-        newCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+        newCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     }
 
     std::unique_ptr<MockClDevice> device;

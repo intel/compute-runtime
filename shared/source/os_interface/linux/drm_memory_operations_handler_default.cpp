@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = defaul
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
     std::lock_guard<std::mutex> lock(mutex);
     this->residency.insert(gfxAllocations.begin(), gfxAllocations.end());
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
@@ -32,7 +32,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *d
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
     this->residency.erase(&gfxAllocation);
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evict(Device *device, GraphicsAllocation &gfxAllocation) {
@@ -44,9 +44,9 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::isResident(Device *dev
     std::lock_guard<std::mutex> lock(mutex);
     auto ret = this->residency.find(&gfxAllocation);
     if (ret == this->residency.end()) {
-        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+        return MemoryOperationsStatus::memoryNotFound;
     }
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
@@ -56,7 +56,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::mergeWithResidencyCont
             residencyContainer.push_back(*gfxAllocation);
         }
     }
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 std::unique_lock<std::mutex> DrmMemoryOperationsHandlerDefault::lockHandlerIfUsed() {
@@ -68,7 +68,7 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerDefault::lockHandlerIfUse
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 } // namespace NEO

@@ -67,7 +67,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     submissionAggregator.reset(new SubmissionAggregator());
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
-        this->dispatchMode = DispatchMode::ImmediateDispatch;
+        this->dispatchMode = DispatchMode::immediateDispatch;
     }
     if (debugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
@@ -134,7 +134,7 @@ SubmissionStatus CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuff
 
     SubmissionStatus retVal = this->flush(batchBuffer, allocationsForResidency);
 
-    if (retVal != NEO::SubmissionStatus::SUCCESS) {
+    if (retVal != NEO::SubmissionStatus::success) {
         return retVal;
     }
     if (!isUpdateTagFromWaitEnabled()) {
@@ -163,7 +163,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
         }
 
         gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
-        if (this->dispatchMode == DispatchMode::BatchedDispatch) {
+        if (this->dispatchMode == DispatchMode::batchedDispatch) {
             checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
             if (!gfxAllocation.isResident(osContext->getContextId())) {
                 this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
@@ -202,7 +202,7 @@ void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &alloc
 }
 
 SubmissionStatus CommandStreamReceiver::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
@@ -483,7 +483,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
 
     TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
-        if (this->flushTagUpdate() != NEO::SubmissionStatus::SUCCESS) {
+        if (this->flushTagUpdate() != NEO::SubmissionStatus::success) {
             return WaitStatus::notReady;
         }
     }
@@ -1081,13 +1081,13 @@ bool CommandStreamReceiver::isTbxMode() const {
 
 TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {
     switch (status) {
-    case SubmissionStatus::OUT_OF_HOST_MEMORY:
+    case SubmissionStatus::outOfHostMemory:
         return CompletionStamp::outOfHostMemory;
-    case SubmissionStatus::OUT_OF_MEMORY:
+    case SubmissionStatus::outOfMemory:
         return CompletionStamp::outOfDeviceMemory;
-    case SubmissionStatus::FAILED:
+    case SubmissionStatus::failed:
         return CompletionStamp::failed;
-    case SubmissionStatus::UNSUPPORTED:
+    case SubmissionStatus::unsupported:
         return CompletionStamp::unsupported;
     default:
         return 0;

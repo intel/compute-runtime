@@ -30,9 +30,9 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
 
     cl_int retVal = CL_SUCCESS;
-    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
     debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
-    if (testMode == TestMode::AubTestsWithTbx) {
+    if (testMode == TestMode::aubTestsWithTbx) {
         debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
     } else {
         debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));

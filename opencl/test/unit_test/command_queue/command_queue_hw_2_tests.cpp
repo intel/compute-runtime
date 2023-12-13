@@ -1058,7 +1058,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterNotFlush
     auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
     auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
-    pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     size_t offset = 0;

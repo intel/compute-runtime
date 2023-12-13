@@ -27,7 +27,7 @@ using namespace NEO;
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionValueThenTaskCountOfAllocationIsReturned) {
@@ -98,7 +98,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalTh
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     auto ret = static_cast<MockDrmCsr<FamilyType> *>(csr)->flushInternal(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, ret);
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, ret);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDefaultDrmCSRWhenItIsCreatedThenGemCloseWorkerModeIsInactive) {
@@ -692,7 +692,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedWithFailingExec, GivenFailingExecThen
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
     NEO::SubmissionStatus ret = csr->flush(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::failed);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenNotAlignedWhenFlushingThenSucceeds) {
@@ -1360,10 +1360,10 @@ struct MockMergeResidencyContainerMemoryOperationsHandler : public DrmMemoryOper
     MockMergeResidencyContainerMemoryOperationsHandler(uint32_t rootDeviceIndex)
         : DrmMemoryOperationsHandlerDefault(rootDeviceIndex){};
 
-    ADDMETHOD_NOBASE(mergeWithResidencyContainer, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::SUCCESS,
+    ADDMETHOD_NOBASE(mergeWithResidencyContainer, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::success,
                      (OsContext * osContext, ResidencyContainer &residencyContainer));
 
-    ADDMETHOD_NOBASE(makeResidentWithinOsContext, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::SUCCESS,
+    ADDMETHOD_NOBASE(makeResidentWithinOsContext, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::success,
                      (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable));
 };
 
@@ -1371,13 +1371,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
         SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
     };
 
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockMergeResidencyContainerMemoryOperationsHandler(rootDeviceIndex));
     auto operationHandler = static_cast<MockMergeResidencyContainerMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
-    operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::FAILED;
+    operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::failed;
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
@@ -1394,7 +1394,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     mockCsr.setupContext(*osContext.get());
     auto res = mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
     EXPECT_GT(operationHandler->mergeWithResidencyContainerCalled, 0u);
-    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+    EXPECT_EQ(NEO::SubmissionStatus::failed, res);
 
     mm->freeGraphicsMemory(commandBuffer);
 }
@@ -1403,13 +1403,13 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     struct MockDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
         SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
     };
 
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(new MockMergeResidencyContainerMemoryOperationsHandler(rootDeviceIndex));
     auto operationHandler = static_cast<MockMergeResidencyContainerMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.get());
-    operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::OUT_OF_MEMORY;
+    operationHandler->mergeWithResidencyContainerResult = NEO::MemoryOperationsStatus::outOfMemory;
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0u,
                                                       EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
@@ -1425,7 +1425,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     mockCsr.setupContext(*osContext.get());
     auto res = mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
     EXPECT_GT(operationHandler->mergeWithResidencyContainerCalled, 0u);
-    EXPECT_EQ(NEO::SubmissionStatus::OUT_OF_MEMORY, res);
+    EXPECT_EQ(NEO::SubmissionStatus::outOfMemory, res);
 
     mm->freeGraphicsMemory(commandBuffer);
 }
@@ -1441,7 +1441,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationH
             auto memoryOperationsInterface = static_cast<MockDrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
             EXPECT_TRUE(memoryOperationsInterface->mutex.try_lock());
             memoryOperationsInterface->mutex.unlock();
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
     };
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -1472,7 +1472,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
         SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
             auto memoryOperationsInterface = static_cast<MockDrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
             EXPECT_FALSE(memoryOperationsInterface->mutex.try_lock());
-            return SubmissionStatus::SUCCESS;
+            return SubmissionStatus::success;
         }
     };
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();

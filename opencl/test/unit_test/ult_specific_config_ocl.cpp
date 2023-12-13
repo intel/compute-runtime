@@ -42,7 +42,7 @@ void setupTestFiles(std::string testBinaryFiles, int32_t revId) {
 }
 
 std::string getBaseExecutionDir() {
-    if (testMode != TestMode::AubTests) {
+    if (testMode != TestMode::aubTests) {
         return "opencl/";
     }
     return "";

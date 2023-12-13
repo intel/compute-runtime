@@ -176,7 +176,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     ASSERT_NE(nullptr, pCmdQ2);
 
     auto &csr = pCmdQ2->getGpgpuCommandStreamReceiver();
-    csr.overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    csr.overrideDispatchPolicy(DispatchMode::immediateDispatch);
 
     retVal = pCmdQ2->enqueueKernel(
         pMultiDeviceKernel0->getKernel(rootDeviceIndex),

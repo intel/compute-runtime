@@ -21,7 +21,7 @@ class UnifiedMemoryAubTest : public UnifiedMemoryAubFixture,
     std::vector<char> values;
 
     void SetUp() override {
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
         } else {
             debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));

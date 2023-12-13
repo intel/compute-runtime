@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 TbxSockets *TbxSockets::create() {
-    if (testMode == TestMode::AubTestsWithTbx) {
+    if (testMode == TestMode::aubTestsWithTbx) {
         return new TbxSocketsImp;
     }
     return new MockTbxSockets;

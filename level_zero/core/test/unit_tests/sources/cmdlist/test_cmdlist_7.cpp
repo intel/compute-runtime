@@ -483,12 +483,12 @@ HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenError
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     CpuMemCopyInfo cpuMemCopyInfo(nullptr, nullptr, 8);
     returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 6, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
 
     returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 6, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);

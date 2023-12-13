@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeWhenGettingInfoThenSrcCopiedToDs
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(&dest, sizeof(dest), &src, sizeof(src));
-    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::success, retVal);
     EXPECT_EQ(src, dest);
 }
 
@@ -23,7 +23,7 @@ TEST(getInfo, GivenSrcSizeGreaterThanEqualDstSizeAndDstNullPtrWhenGettingInfoThe
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(nullptr, 0, &src, sizeof(src));
-    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::success, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -32,7 +32,7 @@ TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeAndDstIsNullPtrWhenGettingInfoTh
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(nullptr, sizeof(dest), &src, sizeof(src));
-    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::success, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -41,7 +41,7 @@ TEST(getInfo, GivenSrcSizeGreaterThanDstSizeAndDstIsNotNullPtrWhenGettingInfoThe
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(&dest, 0, &src, sizeof(src));
-    EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
+    EXPECT_EQ(GetInfoStatus::invalidValue, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -50,7 +50,7 @@ TEST(getInfo, GivenNullSrcPtrWhenGettingInfoThenInvalidValueErrorIsReturned) {
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(&dest, sizeof(dest), nullptr, sizeof(src));
-    EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
+    EXPECT_EQ(GetInfoStatus::invalidValue, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -59,7 +59,7 @@ TEST(getInfo, GivenZeroSrcSizeWhenGettingInfoThenSuccessIsReturned) {
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(&dest, sizeof(dest), &src, 0);
-    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::success, retVal);
     EXPECT_NE(src, dest);
 }
 
@@ -68,22 +68,22 @@ TEST(getInfo, GivenInvalidSrcSizeWhenGettingInfoThenInvalidValueErrorIsReturned)
     float src = 1.0f;
 
     auto retVal = GetInfo::getInfo(&dest, sizeof(dest), &src, GetInfo::invalidSourceSize);
-    EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
+    EXPECT_EQ(GetInfoStatus::invalidValue, retVal);
     EXPECT_NE(src, dest);
 }
 
 TEST(getInfo, GivenInvalidInputWhenSettingParamValueReturnSizeThenNothingHappens) {
     size_t paramValueReturnSize = 0u;
 
-    GetInfo::setParamValueReturnSize(nullptr, 1, GetInfoStatus::SUCCESS);
-    GetInfo::setParamValueReturnSize(&paramValueReturnSize, 1, GetInfoStatus::INVALID_VALUE);
+    GetInfo::setParamValueReturnSize(nullptr, 1, GetInfoStatus::success);
+    GetInfo::setParamValueReturnSize(&paramValueReturnSize, 1, GetInfoStatus::invalidValue);
     EXPECT_EQ(0u, paramValueReturnSize);
 }
 
 TEST(getInfo, GivenValidInputWhenSettingParamValueReturnSizeThenValueIsUpdated) {
     size_t paramValueReturnSize = 0u;
 
-    GetInfo::setParamValueReturnSize(&paramValueReturnSize, 1, GetInfoStatus::SUCCESS);
+    GetInfo::setParamValueReturnSize(&paramValueReturnSize, 1, GetInfoStatus::success);
     EXPECT_EQ(1u, paramValueReturnSize);
 }
 
@@ -92,7 +92,7 @@ TEST(getInfoHelper, GivenInstanceOfGetInfoHelperAndNullPtrParamsThenSuccessIsRet
     GetInfoHelper info(nullptr, 0, nullptr, &retVal);
 
     info.set(1);
-    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
+    EXPECT_EQ(GetInfoStatus::success, retVal);
 }
 
 TEST(getInfoHelper, GivenPointerWhenSettingValueThenValueIsSetCorrectly) {

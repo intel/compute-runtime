@@ -52,10 +52,10 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
         commandBufferHeader->NeedsMidBatchPreEmptionSupport = true;
     }
 
-    this->dispatchMode = DispatchMode::BatchedDispatch;
+    this->dispatchMode = DispatchMode::batchedDispatch;
 
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
-        this->dispatchMode = DispatchMode::ImmediateDispatch;
+        this->dispatchMode = DispatchMode::immediateDispatch;
     }
 
     if (debugManager.flags.CsrDispatchMode.get()) {
@@ -79,7 +79,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
 
     auto submissionStatus = this->processResidency(allocationsForResidency, 0u);
-    if (submissionStatus != SubmissionStatus::SUCCESS) {
+    if (submissionStatus != SubmissionStatus::success) {
         return submissionStatus;
     }
     batchBuffer.allocationsForResidency = &allocationsForResidency;
@@ -87,17 +87,17 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
         this->startControllingDirectSubmissions();
         auto ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
-            return SubmissionStatus::FAILED;
+            return SubmissionStatus::failed;
         }
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
     if (this->blitterDirectSubmission.get()) {
         this->startControllingDirectSubmissions();
         auto ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
-            return SubmissionStatus::FAILED;
+            return SubmissionStatus::failed;
         }
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
@@ -130,15 +130,15 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 
     this->flushStamp->setStamp(submitArgs.monitorFence->lastSubmittedFence);
     if (status == false) {
-        return SubmissionStatus::FAILED;
+        return SubmissionStatus::failed;
     }
 
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>
 SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency) ? SubmissionStatus::SUCCESS : SubmissionStatus::OUT_OF_MEMORY;
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 template <typename GfxFamily>

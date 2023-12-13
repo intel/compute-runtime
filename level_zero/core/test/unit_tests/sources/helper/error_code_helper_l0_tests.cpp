@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,10 @@ namespace L0 {
 namespace ult {
 
 TEST(ErrorCodeHelperTest, givenSubmissionStatusWhenGettingErrorCodeThenProperValueIsReturned) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::SUCCESS));
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::OUT_OF_MEMORY));
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::OUT_OF_HOST_MEMORY));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::FAILED));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::success));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::outOfMemory));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::outOfHostMemory));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, getErrorCodeForSubmissionStatus(NEO::SubmissionStatus::failed));
 }
 
 } // namespace ult

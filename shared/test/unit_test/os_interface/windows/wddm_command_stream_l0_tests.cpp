@@ -83,7 +83,7 @@ struct MockWddmCsrL0 : public WddmCommandStreamReceiver<GfxFamily> {
                 directSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(*this);
                 ret = directSubmission->initialize(true, false);
-                this->dispatchMode = DispatchMode::ImmediateDispatch;
+                this->dispatchMode = DispatchMode::immediateDispatch;
             } else {
                 blitterDirectSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(*this);
@@ -108,6 +108,6 @@ HWTEST_F(WddmSimpleTestL0, givenL0ApiAndDefaultWddmCsrWhenItIsCreatedThenImmedia
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
     {
         std::unique_ptr<MockWddmCsrL0<FamilyType>> mockCsr(new MockWddmCsrL0<FamilyType>(*executionEnvironment, 0, 1));
-        EXPECT_EQ(DispatchMode::ImmediateDispatch, mockCsr->dispatchMode);
+        EXPECT_EQ(DispatchMode::immediateDispatch, mockCsr->dispatchMode);
     }
 }

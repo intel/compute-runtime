@@ -84,7 +84,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
-    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto compressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, bufferSize, nullptr, retVal));
     auto compressedAllocation = compressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -126,7 +126,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
     uint8_t writePattern[bufferSize];
     std::fill(writePattern, writePattern + sizeof(writePattern), 1);
 
-    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    device->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto compressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_COPY_HOST_PTR | CL_MEM_COMPRESSED_HINT_INTEL, bufferSize, writePattern, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);

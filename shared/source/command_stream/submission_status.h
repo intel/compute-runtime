@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,12 @@
 namespace NEO {
 
 enum class SubmissionStatus : uint32_t {
-    SUCCESS = 0,
-    FAILED,
-    OUT_OF_MEMORY,
-    OUT_OF_HOST_MEMORY,
-    UNSUPPORTED,
-    DEVICE_UNINITIALIZED,
+    success = 0,
+    failed,
+    outOfMemory,
+    outOfHostMemory,
+    unsupported,
+    deviceUninitialized,
 };
 
 } // namespace NEO

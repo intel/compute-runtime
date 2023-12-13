@@ -1130,7 +1130,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
 
 TEST_F(WddmLockWithMakeResidentTests, givenNoTemporaryResourcesWhenEvictingAllTemporaryResourcesThenEvictionIsNotApplied) {
     wddm->getTemporaryResourcesContainer()->evictAllResources();
-    EXPECT_EQ(MemoryOperationsStatus::MEMORY_NOT_FOUND, mockTemporaryResources->evictAllResourcesResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, mockTemporaryResources->evictAllResourcesResult.operationSuccess);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenEvictingAllTemporaryResourcesThenAcquireTemporaryResourcesLock) {
@@ -1146,7 +1146,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingAllTemporaryResourcesAndAllEvi
     mockTemporaryResources->resourceHandles.push_back(allocation.handle);
     mockWddm.getTemporaryResourcesContainer()->evictAllResources();
     EXPECT_EQ(1u, mockTemporaryResources->evictAllResourcesResult.called);
-    EXPECT_EQ(MemoryOperationsStatus::SUCCESS, mockTemporaryResources->evictAllResourcesResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::success, mockTemporaryResources->evictAllResourcesResult.operationSuccess);
     EXPECT_EQ(1u, mockWddm.evictResult.called);
 }
 
@@ -1171,13 +1171,13 @@ TEST_F(WddmLockWithMakeResidentTests, givenThreeAllocationsWhenEvictingAllTempor
         mockTemporaryResources->resourceHandles.push_back(i);
     }
     mockWddm.getTemporaryResourcesContainer()->evictAllResources();
-    EXPECT_EQ(MemoryOperationsStatus::FAILED, mockTemporaryResources->evictAllResourcesResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::failed, mockTemporaryResources->evictAllResourcesResult.operationSuccess);
     EXPECT_EQ(1u, mockWddm.evictResult.called);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, givenNoTemporaryResourcesWhenEvictingTemporaryResourceThenEvictionIsNotApplied) {
     wddm->getTemporaryResourcesContainer()->evictResource(ALLOCATION_HANDLE);
-    EXPECT_EQ(MemoryOperationsStatus::MEMORY_NOT_FOUND, mockTemporaryResources->evictResourceResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, mockTemporaryResources->evictResourceResult.operationSuccess);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceThenAcquireTemporaryResourcesLock) {
@@ -1191,7 +1191,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingNonExistingTemporaryResourceTh
     EXPECT_FALSE(mockTemporaryResources->resourceHandles.empty());
     wddm->getTemporaryResourcesContainer()->evictResource(ALLOCATION_HANDLE + 1);
     EXPECT_FALSE(mockTemporaryResources->resourceHandles.empty());
-    EXPECT_EQ(MemoryOperationsStatus::MEMORY_NOT_FOUND, mockTemporaryResources->evictResourceResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, mockTemporaryResources->evictResourceResult.operationSuccess);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceAndEvictFailsThenReturnFail) {
@@ -1201,7 +1201,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceAndEvictFails
     mockTemporaryResources->resourceHandles.push_back(ALLOCATION_HANDLE);
     mockWddm.getTemporaryResourcesContainer()->evictResource(ALLOCATION_HANDLE);
     EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
-    EXPECT_EQ(MemoryOperationsStatus::FAILED, mockTemporaryResources->evictResourceResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::failed, mockTemporaryResources->evictResourceResult.operationSuccess);
     EXPECT_EQ(1u, mockWddm.evictResult.called);
 }
 
@@ -1211,7 +1211,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceAndEvictSucce
     mockTemporaryResources->resourceHandles.push_back(ALLOCATION_HANDLE);
     mockWddm.getTemporaryResourcesContainer()->evictResource(ALLOCATION_HANDLE);
     EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
-    EXPECT_EQ(MemoryOperationsStatus::SUCCESS, mockTemporaryResources->evictResourceResult.operationSuccess);
+    EXPECT_EQ(MemoryOperationsStatus::success, mockTemporaryResources->evictResourceResult.operationSuccess);
     EXPECT_EQ(1u, mockWddm.evictResult.called);
 }
 

@@ -191,9 +191,9 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFix
     template <typename FamilyType>
     void writeMemory(GraphicsAllocation *allocation) {
         AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;
-        if (testMode == TestMode::AubTests) {
+        if (testMode == TestMode::aubTests) {
             aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
-        } else if (testMode == TestMode::AubTestsWithTbx) {
+        } else if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxWithAubCsr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver);
             aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(tbxWithAubCsr->aubCSR.get());
             tbxWithAubCsr->writeMemory(*allocation);
@@ -345,7 +345,7 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 
     pCmdQ->getGpgpuCommandStreamReceiver().overwriteFlatBatchBufferHelper(new FlatBatchBufferHelperHw<FamilyType>(*pCmdQ->getDevice().getExecutionEnvironment()));
 
-    pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::immediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(
         pKernel,

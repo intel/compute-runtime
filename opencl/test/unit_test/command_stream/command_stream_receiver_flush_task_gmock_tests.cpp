@@ -53,7 +53,7 @@ using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
 HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
           givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected, MatchAny) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
@@ -69,7 +69,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();

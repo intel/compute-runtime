@@ -5342,31 +5342,31 @@ TEST_F(ContextMemoryTest, givenSystemAllocatedPointerThenGetAllocPropertiesRetur
 }
 
 TEST_F(ContextMemoryTest, givenCallTochangeMemoryOperationStatusToL0ResultTypeThenExpectedValueIsReturned) {
-    NEO::MemoryOperationsStatus status = NEO::MemoryOperationsStatus::SUCCESS;
+    NEO::MemoryOperationsStatus status = NEO::MemoryOperationsStatus::success;
     ze_result_t res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    status = NEO::MemoryOperationsStatus::FAILED;
+    status = NEO::MemoryOperationsStatus::failed;
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_DEVICE_LOST);
 
-    status = NEO::MemoryOperationsStatus::MEMORY_NOT_FOUND;
+    status = NEO::MemoryOperationsStatus::memoryNotFound;
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
-    status = NEO::MemoryOperationsStatus::OUT_OF_MEMORY;
+    status = NEO::MemoryOperationsStatus::outOfMemory;
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 
-    status = NEO::MemoryOperationsStatus::UNSUPPORTED;
+    status = NEO::MemoryOperationsStatus::unsupported;
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 
-    status = NEO::MemoryOperationsStatus::DEVICE_UNINITIALIZED;
+    status = NEO::MemoryOperationsStatus::deviceUninitialized;
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_UNINITIALIZED);
 
-    status = static_cast<NEO::MemoryOperationsStatus>(static_cast<uint32_t>(NEO::MemoryOperationsStatus::DEVICE_UNINITIALIZED) + 1);
+    status = static_cast<NEO::MemoryOperationsStatus>(static_cast<uint32_t>(NEO::MemoryOperationsStatus::deviceUninitialized) + 1);
     res = changeMemoryOperationStatusToL0ResultType(status);
     EXPECT_EQ(res, ZE_RESULT_ERROR_UNKNOWN);
 }
@@ -5765,7 +5765,7 @@ struct MultipleDevicePeerImageTest : public ::testing::Test {
 
         auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
         bool enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(*defaultHwInfo);
-        bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
+        bool aubUsage = (testMode == TestMode::aubTests) || (testMode == TestMode::aubTestsWithTbx);
         deviceFactoryMemoryManager = new MockSharedHandleMemoryManager(false, enableLocalMemory, aubUsage, *executionEnvironment);
         executionEnvironment->memoryManager.reset(deviceFactoryMemoryManager);
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);

@@ -213,7 +213,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
 
     if (ret != 0) {
         const auto status = evictUnusedAllocations(true, true);
-        if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
+        if (status == MemoryOperationsStatus::gpuHangDetectedDuringOperation) {
             PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
             return gpuHangDetected;
         }

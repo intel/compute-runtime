@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,19 +30,19 @@ struct DrmMemoryOperationsHandlerBaseTest : public ::testing::Test {
 };
 
 TEST_F(DrmMemoryOperationsHandlerBaseTest, whenMakingAllocationResidentThenAllocationIsResident) {
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
-    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, graphicsAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, graphicsAllocation), MemoryOperationsStatus::success);
 }
 
 TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingResidentAllocationThenAllocationIsNotResident) {
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, graphicsAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, graphicsAllocation), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
-    EXPECT_EQ(drmMemoryOperationsHandler->evict(nullptr, graphicsAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, graphicsAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(drmMemoryOperationsHandler->evict(nullptr, graphicsAllocation), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, graphicsAllocation), MemoryOperationsStatus::memoryNotFound);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
 }

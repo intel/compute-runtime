@@ -64,7 +64,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
             auto binarySize = buildInfos[rootDeviceIndex].packedDeviceBinarySize;
             memcpy_s(outputBinaries[i], binarySize, buildInfos[rootDeviceIndex].packedDeviceBinary.get(), binarySize);
         }
-        GetInfo::setParamValueReturnSize(paramValueSizeRet, requiredSize, GetInfoStatus::SUCCESS);
+        GetInfo::setParamValueReturnSize(paramValueSizeRet, requiredSize, GetInfoStatus::success);
         return CL_SUCCESS;
     } break;
 
@@ -179,7 +179,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
             auto dbgDataSize = buildInfos[rootDeviceIndex].debugDataSize;
             memcpy_s(outputDebugData[i], dbgDataSize, buildInfos[rootDeviceIndex].debugData.get(), dbgDataSize);
         }
-        GetInfo::setParamValueReturnSize(paramValueSizeRet, requiredSize, GetInfoStatus::SUCCESS);
+        GetInfo::setParamValueReturnSize(paramValueSizeRet, requiredSize, GetInfoStatus::success);
         return CL_SUCCESS;
     } break;
 
@@ -194,7 +194,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
     }
 
-    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
+    auto getInfoStatus = GetInfoStatus::invalidValue;
     if (retVal == CL_SUCCESS) {
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
         retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
@@ -246,7 +246,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
     }
 
-    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
+    auto getInfoStatus = GetInfoStatus::invalidValue;
     if (retVal == CL_SUCCESS) {
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
         retVal = changeGetInfoStatusToCLResultType(getInfoStatus);

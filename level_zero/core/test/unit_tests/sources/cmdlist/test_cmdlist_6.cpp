@@ -206,7 +206,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecu
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false));
 }
 
@@ -218,7 +218,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExe
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false));
 }
 

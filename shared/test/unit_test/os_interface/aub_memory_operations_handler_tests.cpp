@@ -18,7 +18,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenNullPtrAsAubManagerWhenMakeResident
     getMemoryOperationsHandler()->setAubManager(nullptr);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::DEVICE_UNINITIALIZED);
+    EXPECT_EQ(result, MemoryOperationsStatus::deviceUninitialized);
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThenTrueReturnedAndWriteCalled) {
@@ -26,7 +26,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_TRUE(aubManager.writeMemory2Called);
 
     auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
@@ -36,7 +36,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     aubManager.writeMemory2Called = false;
 
     result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_TRUE(aubManager.writeMemory2Called);
 
     itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
@@ -52,7 +52,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationOfOneTimeAub
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_TRUE(aubManager.writeMemory2Called);
 
     auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
@@ -62,7 +62,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationOfOneTimeAub
     aubManager.writeMemory2Called = false;
 
     result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_FALSE(aubManager.writeMemory2Called);
 
     itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
@@ -78,7 +78,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnW
     allocPtr->setWriteMemoryOnly(true);
 
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_TRUE(aubManager.writeMemory2Called);
 
     auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
@@ -87,7 +87,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnW
 
     aubManager.writeMemory2Called = false;
     result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_TRUE(aubManager.writeMemory2Called);
 
     itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
@@ -112,7 +112,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationInLocalMemor
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
     EXPECT_FALSE(aubManager.writeMemory2Called);
     EXPECT_EQ(1u, csr->writeMemoryAubCalled);
 
@@ -136,7 +136,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnC
     allocPtr->setDefaultGmm(&gmm);
 
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
 
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(1u, aubManager.storedAllocationParams.size());
@@ -160,7 +160,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnU
     allocPtr->setDefaultGmm(&gmm);
 
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
 
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(1u, aubManager.storedAllocationParams.size());
@@ -180,7 +180,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenIsResident
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->isResident(nullptr, allocation);
-    EXPECT_EQ(result, MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(result, MemoryOperationsStatus::memoryNotFound);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenIsResidentCalledThenTrueReturned) {
     MockAubManager aubManager;
@@ -188,14 +188,14 @@ TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenIsResidentCal
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     auto result = memoryOperationsInterface->isResident(nullptr, allocation);
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenNonResidentAllocationWhenEvictCalledThenFalseReturned) {
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->evict(nullptr, allocation);
-    EXPECT_EQ(result, MemoryOperationsStatus::MEMORY_NOT_FOUND);
+    EXPECT_EQ(result, MemoryOperationsStatus::memoryNotFound);
 }
 TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenEvictCalledThenTrueReturned) {
     MockAubManager aubManager;
@@ -203,7 +203,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenResidentAllocationWhenEvictCalledTh
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     auto result = memoryOperationsInterface->evict(nullptr, allocation);
-    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryAndNonLocalMemoryAllocationWithStorageInfoNonZeroWhenGetMemoryBanksBitfieldThenBanksBitfieldForSystemMemoryIsReturned) {

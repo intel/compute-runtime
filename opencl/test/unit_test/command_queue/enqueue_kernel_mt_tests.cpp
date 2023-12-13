@@ -19,7 +19,7 @@ typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();

@@ -366,7 +366,7 @@ HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhen
     const ze_command_queue_desc_t desc = {};
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     commandQueue->initialize(false, false, false);
-    commandQueue->submitBatchBufferReturnValue = NEO::SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandQueue->submitBatchBufferReturnValue = NEO::SubmissionStatus::outOfHostMemory;
 
     Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
@@ -591,7 +591,7 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
     TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
-    EXPECT_EQ(ret, NEO::SubmissionStatus::SUCCESS);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::success);
     EXPECT_EQ((peekTaskCountBefore + 1), commandQueue->csr->peekTaskCount());
     EXPECT_EQ((flushedTaskCountBefore + 1), commandQueue->csr->peekLatestFlushedTaskCount());
     EXPECT_EQ(commandQueue->commandStream.getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
@@ -617,7 +617,7 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
     TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
     TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
-    EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::failed);
     EXPECT_EQ(peekTaskCountBefore, commandQueue->csr->peekTaskCount());
     EXPECT_EQ(flushedTaskCountBefore, commandQueue->csr->peekLatestFlushedTaskCount());
     EXPECT_EQ(commandQueue->commandStream.getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
@@ -641,7 +641,7 @@ HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMe
     commandQueue->startingCmdBuffer = &commandQueue->commandStream;
     ResidencyContainer container;
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
-    EXPECT_EQ(ret, NEO::SubmissionStatus::OUT_OF_MEMORY);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::outOfMemory);
 
     commandQueue->destroy();
 }
@@ -663,7 +663,7 @@ TEST_F(CommandQueueCreate, WhenSubmitBatchBufferThenDisableFlatRingBuffer) {
     ResidencyContainer container;
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
 
-    EXPECT_EQ(ret, NEO::SubmissionStatus::SUCCESS);
+    EXPECT_EQ(ret, NEO::SubmissionStatus::success);
     EXPECT_TRUE(csr->latestFlushedBatchBuffer.disableFlatRingBuffer);
 
     commandQueue->destroy();
@@ -1173,7 +1173,7 @@ class MockCommandQueueSubmitBatchBuffer : public MockCommandQueue<gfxCoreFamily>
   public:
     MockCommandQueueSubmitBatchBuffer(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : MockCommandQueue<gfxCoreFamily>(device, csr, desc) {}
 
-    ADDMETHOD_NOBASE(submitBatchBuffer, NEO::SubmissionStatus, NEO::SubmissionStatus::SUCCESS,
+    ADDMETHOD_NOBASE(submitBatchBuffer, NEO::SubmissionStatus, NEO::SubmissionStatus::success,
                      (size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
                       bool isCooperative));
 };
@@ -1183,7 +1183,7 @@ HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteC
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::OUT_OF_MEMORY;
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::outOfMemory;
 
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
@@ -1283,7 +1283,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenExecuteComma
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
 
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
@@ -1305,7 +1305,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
 
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
 
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
@@ -1336,7 +1336,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
 
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
 
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
@@ -1365,7 +1365,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompl
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::failed;
 
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
@@ -1388,7 +1388,7 @@ HWTEST2_F(ExecuteCommandListTests, givenSuccessfulSubmitBatchBufferThenExecuteCo
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::SUCCESS;
+    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::success;
 
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();

@@ -63,7 +63,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceCsrFlushingDebugVariable
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceImplicitFlushDebugVariableSetWhenFlushingThenFlushBatchedSubmissionsShouldBeCalled) {
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
+    commandStreamReceiver.dispatchMode = DispatchMode::batchedDispatch;
 
     debugManager.flags.ForceImplicitFlush.set(true);
 
@@ -107,7 +107,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenconfigureC
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.timestampPacketWriteEnabled = false;
 
     configureCSRtoNonDirtyState<FamilyType>(false);
@@ -129,7 +129,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCommandStreamThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -178,7 +178,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIoh
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.useNewResourceImplicitFlush = false;
     mockCsr.useGpuIdleImplicitFlush = false;
 
@@ -250,7 +250,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushThenCommandBufferAlreadyH
             EXPECT_EQ(batchBuffer.commandBufferAllocation->getResidencyTaskCount(this->osContext->getContextId()), this->taskCount + 1);
             EXPECT_EQ(batchBuffer.commandBufferAllocation->getTaskCount(this->osContext->getContextId()), this->taskCount + 1);
             EXPECT_EQ(std::find(allocationsForResidency.begin(), allocationsForResidency.end(), batchBuffer.commandBufferAllocation), allocationsForResidency.end());
-            return NEO::SubmissionStatus::SUCCESS;
+            return NEO::SubmissionStatus::success;
         }
     };
 
@@ -992,7 +992,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         ++flushCount;
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     int flushCount = 0;

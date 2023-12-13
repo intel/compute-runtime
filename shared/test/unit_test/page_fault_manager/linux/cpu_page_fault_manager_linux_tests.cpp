@@ -34,7 +34,7 @@ struct MockOperationsInterface : public MockMemoryOperationsHandler {
     bool evictCalled = false;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
         this->evictCalled = true;
-        return MemoryOperationsStatus::UNSUPPORTED;
+        return MemoryOperationsStatus::unsupported;
     }
 };
 

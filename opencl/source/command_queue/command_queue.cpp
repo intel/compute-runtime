@@ -226,7 +226,7 @@ void CommandQueue::initializeGpgpuInternals() const {
     gpgpuEngine->commandStreamReceiver->initDirectSubmission();
 
     if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) && !this->gpgpuEngine->commandStreamReceiver->isUpdateTagFromWaitEnabled()) {
-        this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+        this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::batchedDispatch);
         if (debugManager.flags.CsrDispatchMode.get() != 0) {
             this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(static_cast<DispatchMode>(debugManager.flags.CsrDispatchMode.get()));
         }

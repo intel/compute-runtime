@@ -75,7 +75,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
-    SubmissionStatus flushTagUpdate() override { return SubmissionStatus::SUCCESS; };
+    SubmissionStatus flushTagUpdate() override { return SubmissionStatus::success; };
     void updateTagFromWait() override{};
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
@@ -128,7 +128,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
                                  const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
 
     SubmissionStatus sendRenderStateCacheFlush() override {
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     bool flushBatchedSubmissions() override {
@@ -203,7 +203,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
         return isLocked;
     }
-    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::SUCCESS; }
+    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::success; }
 
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
@@ -234,7 +234,7 @@ class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStream
     MockCommandStreamReceiverWithFailingSubmitBatch(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return SubmissionStatus::FAILED;
+        return SubmissionStatus::failed;
     }
 };
 
@@ -243,7 +243,7 @@ class MockCommandStreamReceiverWithOutOfMemorySubmitBatch : public MockCommandSt
     MockCommandStreamReceiverWithOutOfMemorySubmitBatch(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return SubmissionStatus::OUT_OF_MEMORY;
+        return SubmissionStatus::outOfMemory;
     }
 };
 
@@ -252,7 +252,7 @@ class MockCommandStreamReceiverWithFailingFlush : public MockCommandStreamReceiv
     MockCommandStreamReceiverWithFailingFlush(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        return SubmissionStatus::FAILED;
+        return SubmissionStatus::failed;
     }
 };
 
@@ -315,7 +315,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         }
         copyOfAllocations = allocationsForResidency;
         flushStamp->setStamp(flushStamp->peekStamp() + 1);
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,

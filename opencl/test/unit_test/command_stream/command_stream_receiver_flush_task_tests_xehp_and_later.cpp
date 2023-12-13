@@ -220,7 +220,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.timestampPacketWriteEnabled = false;
 
     configureCSRtoNonDirtyState<FamilyType>(true);
@@ -504,7 +504,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -540,7 +540,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -805,7 +805,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     commandStreamReceiver.taskCount = 3;
     EXPECT_TRUE(commandStreamReceiver.staticWorkPartitioningEnabled);
     flushTask(commandStreamReceiver, true);
-    EXPECT_EQ(SubmissionStatus::SUCCESS, commandStreamReceiver.flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushTagUpdate());
     EXPECT_EQ(2u, commandStreamReceiver.activePartitionsConfig);
 
     prepareLinearStream<FamilyType>(commandStream, 0);
@@ -898,7 +898,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
     commandStreamReceiver.staticWorkPartitioningEnabled = false;
-    EXPECT_EQ(SubmissionStatus::SUCCESS, commandStreamReceiver.flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushTagUpdate());
 
     prepareLinearStream<FamilyType>(commandStreamReceiver.commandStream, 0);
     verifyPipeControl<FamilyType>(commandStreamReceiver, 4, false);

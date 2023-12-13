@@ -261,7 +261,7 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         subCaptureManager->disableSubCapture();
     }
 
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>
@@ -538,7 +538,7 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const R
     }
 
     dumpTbxNonWritable = false;
-    return SubmissionStatus::SUCCESS;
+    return SubmissionStatus::success;
 }
 
 template <typename GfxFamily>

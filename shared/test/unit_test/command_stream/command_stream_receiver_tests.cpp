@@ -546,23 +546,23 @@ HWTEST_F(CommandStreamReceiverTest, givenFlushUnsuccessWhenWaitingForTaskCountTh
     csr.activePartitions = 1;
 
     constexpr auto taskCountToWait = 1;
-    csr.flushReturnValue = SubmissionStatus::FAILED;
+    csr.flushReturnValue = SubmissionStatus::failed;
     auto waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
-    csr.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    csr.flushReturnValue = SubmissionStatus::outOfMemory;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
-    csr.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    csr.flushReturnValue = SubmissionStatus::outOfHostMemory;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
-    csr.flushReturnValue = SubmissionStatus::UNSUPPORTED;
+    csr.flushReturnValue = SubmissionStatus::unsupported;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::notReady, waitStatus);
 
-    csr.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
+    csr.flushReturnValue = SubmissionStatus::deviceUninitialized;
     waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::notReady, waitStatus);
 }
@@ -672,13 +672,13 @@ TEST_F(CommandStreamReceiverTest, givenForced32BitAddressingWhenDebugSurfaceIsAl
 
 HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenL0CommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetIndirectHeapIsCalledThenHeapIsReturned) {
@@ -2862,11 +2862,11 @@ HWTEST_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerfor
 }
 
 TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCountValueThenProperValueIsReturned) {
-    EXPECT_EQ(0u, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::SUCCESS));
-    EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_HOST_MEMORY));
-    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_MEMORY));
-    EXPECT_EQ(CompletionStamp::failed, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::FAILED));
-    EXPECT_EQ(CompletionStamp::unsupported, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::UNSUPPORTED));
+    EXPECT_EQ(0u, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::success));
+    EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::outOfHostMemory));
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::outOfMemory));
+    EXPECT_EQ(CompletionStamp::failed, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::failed));
+    EXPECT_EQ(CompletionStamp::unsupported, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::unsupported));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThenErrorIsPropagated) {
@@ -2881,18 +2881,18 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThen
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
     EXPECT_EQ(CompletionStamp::outOfHostMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
     EXPECT_EQ(CompletionStamp::failed, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
 
     auto completionStamp = commandStreamReceiver.flushTask(commandStream,
                                                            0,
@@ -2908,7 +2908,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlus
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfDeviceMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
     auto completionStamp = commandStreamReceiver.flushTask(commandStream,
                                                            0,
@@ -2925,7 +2925,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfDeviceMemoryFailureOnFlushWhenFl
 HWTEST_F(CommandStreamReceiverHwTest, givenFailedFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
 
     auto completionStamp = commandStreamReceiver.flushTask(commandStream,
                                                            0,
@@ -2944,23 +2944,23 @@ HWTEST_F(CommandStreamReceiverHwTest, givenUnsuccessOnFlushWhenFlushingSmallTask
     auto &stream = commandStreamReceiver.getCS(4096u);
 
     commandStreamReceiver.taskCount = 1u;
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
     commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
     commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::UNSUPPORTED;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::unsupported;
     commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::deviceUninitialized;
     commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 }
@@ -2968,45 +2968,45 @@ HWTEST_F(CommandStreamReceiverHwTest, givenUnsuccessOnFlushWhenFlushingSmallTask
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingMiDWThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, commandStreamReceiver.flushMiFlushDW());
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.flushMiFlushDW());
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.flushMiFlushDW());
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.flushMiFlushDW());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingPipeControlThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, commandStreamReceiver.flushPipeControl(false));
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.flushPipeControl(false));
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.flushPipeControl(false));
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.flushPipeControl(false));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingTagUpdateThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, commandStreamReceiver.flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.flushTagUpdate());
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.flushTagUpdate());
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.flushTagUpdate());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenInitializingDeviceWithFirstSubmissionThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, commandStreamReceiver.initializeDeviceWithFirstSubmission());
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission());
 
-    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.initializeDeviceWithFirstSubmission());
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
@@ -3014,7 +3014,7 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag)
 
     ultCsr.recordFlusheBatchBuffer = true;
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, ultCsr.flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, ultCsr.flushTagUpdate());
 
     EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 }
@@ -3028,7 +3028,7 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
     ultCsr.registerClient(&client1);
     ultCsr.registerClient(&client2);
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, ultCsr.flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, ultCsr.flushTagUpdate());
 
     EXPECT_EQ(ultCsr.getNumClients(), ultCsr.latestFlushedBatchBuffer.numCsrClients);
 }
@@ -4258,7 +4258,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
 
     immediateFlushTaskFlags.blockingAppend = true;
-    commandStreamReceiver.flushReturnValue = NEO::SubmissionStatus::FAILED;
+    commandStreamReceiver.flushReturnValue = NEO::SubmissionStatus::failed;
     auto completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
 
     auto csrCmdBufferAllocation = commandStreamReceiver.commandStream.getGraphicsAllocation();

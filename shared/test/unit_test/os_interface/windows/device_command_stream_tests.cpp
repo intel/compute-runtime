@@ -48,7 +48,7 @@ class WddmCommandStreamFixture {
 
     void setUp() {
         HardwareInfo *hwInfo = nullptr;
-        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
         debugManager.flags.SetAmountOfReusableAllocations.set(0);
         auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
 
@@ -112,7 +112,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
                 directSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(*this);
                 ret = directSubmission->initialize(true, false);
-                this->dispatchMode = DispatchMode::ImmediateDispatch;
+                this->dispatchMode = DispatchMode::immediateDispatch;
             } else {
                 blitterDirectSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(*this);
@@ -151,7 +151,7 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
         gdi = new MockGdi();
         wddm->resetGdi(gdi);
         ASSERT_NE(wddm, nullptr);
-        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
         auto mockCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 0, 1);
         this->csr = mockCsr;
         memoryManager = new WddmMemoryManager(*executionEnvironment);
@@ -315,7 +315,7 @@ TEST_F(WddmCommandStreamTest, givenFailureFromMakeResidentWhenFlushingThenOutOfM
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
     SubmissionStatus retVal = csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, retVal);
+    EXPECT_EQ(SubmissionStatus::outOfMemory, retVal);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -345,7 +345,7 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
 
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
-    csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    csr->overrideDispatchPolicy(DispatchMode::immediateDispatch);
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     OsContextWin osContext(*wddm, csr->getRootDeviceIndex(), 0u,
@@ -372,7 +372,7 @@ TEST_F(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIs
 
     auto csr = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment, 0, 1);
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
-    csr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    csr->overrideDispatchPolicy(DispatchMode::immediateDispatch);
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     OsContextWin osContext(*wddm, csr->getRootDeviceIndex(), 0u,
@@ -900,7 +900,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
     }
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
 
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
 
@@ -987,7 +987,7 @@ HWTEST_F(WddmSimpleTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedO
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
     {
         std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*executionEnvironment, 0, 1));
-        EXPECT_EQ(DispatchMode::BatchedDispatch, mockCsr->dispatchMode);
+        EXPECT_EQ(DispatchMode::batchedDispatch, mockCsr->dispatchMode);
     }
 }
 
@@ -1073,7 +1073,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 1u));
 
     auto mockWddmCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 1, device->getDeviceBitfield());
-    mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockWddmCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto memoryManager = executionEnvironment->memoryManager.get();
@@ -1196,7 +1196,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
 
     mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+    EXPECT_EQ(NEO::SubmissionStatus::failed, res);
 
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_GT(directSubmission->dispatchCommandBufferCalled, 0u);

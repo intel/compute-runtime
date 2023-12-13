@@ -1117,7 +1117,7 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
 
         debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
         debugManager.flags.UpdateTaskCountFromWait.set(1);
-        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::immediateDispatch));
 
         ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
 

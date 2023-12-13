@@ -138,7 +138,7 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
 
     csr->setActivePartitions(partitionCount);
     auto ret = csr->submitBatchBuffer(batchBuffer, csr->getResidencyAllocations());
-    if (ret != NEO::SubmissionStatus::SUCCESS) {
+    if (ret != NEO::SubmissionStatus::success) {
         commandStream.getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
         commandStream.getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount(), csr->getOsContext().getContextId());
         return ret;

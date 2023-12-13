@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
                                  size_t *paramValueSizeRet) const {
     cl_int result = CL_SUCCESS;
     size_t ret = GetInfo::invalidSourceSize;
-    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
+    auto getInfoStatus = GetInfoStatus::invalidValue;
 
     switch (paramName) {
     case CL_ACCELERATOR_DESCRIPTOR_INTEL: {
@@ -56,7 +56,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
     break;
 
     default:
-        getInfoStatus = GetInfoStatus::INVALID_VALUE;
+        getInfoStatus = GetInfoStatus::invalidValue;
         break;
     }
 

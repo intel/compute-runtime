@@ -220,7 +220,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenMiFlushDwIsFlushed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, bcsCsr->flushTagUpdate());
 
     auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
 
@@ -233,7 +233,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmd
 
     ultCsr->recordFlusheBatchBuffer = true;
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, bcsCsr->flushTagUpdate());
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
@@ -241,7 +241,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmd
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenInitializeDeviceWithFirstSubmissionThenMiFlushDwIsFlushed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->initializeDeviceWithFirstSubmission());
+    EXPECT_EQ(SubmissionStatus::success, bcsCsr->initializeDeviceWithFirstSubmission());
 
     auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
 

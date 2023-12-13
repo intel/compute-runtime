@@ -394,8 +394,8 @@ TEST_F(HostPointerManagerTest, givenNoPointerRegisteredWhenAllocationCreationFai
 TEST_F(HostPointerManagerTest, givenHostAllocationImportedWhenMakingResidentAddressThenAllocationMadeResident) {
     void *testPtr = heapPointer;
 
-    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
-    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::success;
 
     auto result = context->makeMemoryResident(device, testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);

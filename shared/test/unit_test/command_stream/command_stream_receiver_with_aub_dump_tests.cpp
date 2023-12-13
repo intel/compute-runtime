@@ -48,7 +48,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         flushParametrization.receivedAllocationsForResidency = &allocationsForResidency;
         processResidency(allocationsForResidency, 0u);
         flushStamp->setStamp(flushParametrization.flushStampToReturn);
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
@@ -60,7 +60,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
     SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
         processResidencyParameterization.wasCalled = true;
         processResidencyParameterization.receivedAllocationsForResidency = &allocationsForResidency;
-        return SubmissionStatus::SUCCESS;
+        return SubmissionStatus::success;
     }
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {

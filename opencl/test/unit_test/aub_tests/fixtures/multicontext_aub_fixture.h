@@ -38,7 +38,7 @@ struct MulticontextAubFixture {
         using SimulatedCsr = CommandStreamReceiverSimulatedCommonHw<FamilyType>;
         SimulatedCsr *simulatedCsr = nullptr;
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto csrWithAubDump = static_cast<CsrWithAubDump *>(&commandQueues[tile][engine]->getGpgpuCommandStreamReceiver());
             simulatedCsr = static_cast<SimulatedCsr *>(csrWithAubDump);
         } else {
@@ -52,7 +52,7 @@ struct MulticontextAubFixture {
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t tile, uint32_t engine) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>(tile, engine);
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
@@ -68,7 +68,7 @@ struct MulticontextAubFixture {
     void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length, uint32_t tile, uint32_t engine) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>(tile, engine);
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
@@ -84,7 +84,7 @@ struct MulticontextAubFixture {
     void expectMemoryCompressed(void *gfxAddress, const void *srcAddress, size_t length, uint32_t tile, uint32_t engine) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>(tile, engine);
 
-        if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
             EXPECT_TRUE(tbxCsr->expectMemoryCompressed(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(

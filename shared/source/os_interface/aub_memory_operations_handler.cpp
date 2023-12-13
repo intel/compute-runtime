@@ -28,7 +28,7 @@ AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *a
 
 MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     if (!aubManager) {
-        return MemoryOperationsStatus::DEVICE_UNINITIALIZED;
+        return MemoryOperationsStatus::deviceUninitialized;
     }
     auto lock = acquireLock(resourcesLock);
     int hint = AubMemDump::DataTypeHintValues::TraceNotype;
@@ -66,17 +66,17 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
             setAubWritable(false, *allocation, device);
         }
     }
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);
     if (itor == residentAllocations.end()) {
-        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+        return MemoryOperationsStatus::memoryNotFound;
     } else {
         residentAllocations.erase(itor, itor + 1);
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
 }
 
@@ -92,9 +92,9 @@ MemoryOperationsStatus AubMemoryOperationsHandler::isResident(Device *device, Gr
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);
     if (itor == residentAllocations.end()) {
-        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+        return MemoryOperationsStatus::memoryNotFound;
     } else {
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
 }
 

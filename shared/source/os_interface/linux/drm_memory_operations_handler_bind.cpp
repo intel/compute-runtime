@@ -28,11 +28,11 @@ DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     auto &engines = device->getAllEngines();
-    MemoryOperationsStatus result = MemoryOperationsStatus::SUCCESS;
+    MemoryOperationsStatus result = MemoryOperationsStatus::success;
     for (const auto &engine : engines) {
         engine.commandStreamReceiver->initializeResources();
         result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
-        if (result != MemoryOperationsStatus::SUCCESS) {
+        if (result != MemoryOperationsStatus::success) {
             break;
         }
     }
@@ -61,7 +61,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
             if (!bo->bindInfo[bo->getOsContextId(osContext)][drmIterator]) {
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
                 if (result) {
-                    return MemoryOperationsStatus::OUT_OF_MEMORY;
+                    return MemoryOperationsStatus::outOfMemory;
                 }
             }
 
@@ -71,28 +71,28 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
         }
     }
 
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     auto &engines = device->getAllEngines();
-    auto retVal = MemoryOperationsStatus::SUCCESS;
+    auto retVal = MemoryOperationsStatus::success;
     for (const auto &engine : engines) {
         retVal = this->evictWithinOsContext(engine.osContext, gfxAllocation);
-        if (retVal != MemoryOperationsStatus::SUCCESS) {
+        if (retVal != MemoryOperationsStatus::success) {
             return retVal;
         }
     }
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
     int retVal = evictImpl(osContext, gfxAllocation, osContext->getDeviceBitfield());
     if (retVal) {
-        return MemoryOperationsStatus::FAILED;
+        return MemoryOperationsStatus::failed;
     }
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 int DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) {
@@ -119,9 +119,9 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
     }
 
     if (isResident) {
-        return MemoryOperationsStatus::SUCCESS;
+        return MemoryOperationsStatus::success;
     }
-    return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+    return MemoryOperationsStatus::memoryNotFound;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
@@ -134,11 +134,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContain
     }
 
     auto retVal = this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
-    if (retVal != MemoryOperationsStatus::SUCCESS) {
+    if (retVal != MemoryOperationsStatus::success) {
         return retVal;
     }
 
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed() {
@@ -159,12 +159,12 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bo
              this->evictUnusedAllocationsImpl(memoryManager->getSysMemAllocs(), waitForCompletion),
              this->evictUnusedAllocationsImpl(memoryManager->getLocalMemAllocs(this->rootDeviceIndex), waitForCompletion)}) {
 
-        if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
-            return MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION;
+        if (status == MemoryOperationsStatus::gpuHangDetectedDuringOperation) {
+            return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
         }
     }
 
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
@@ -189,7 +189,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
                     if (waitForCompletion) {
                         const auto waitStatus = engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
                         if (waitStatus == WaitStatus::gpuHang) {
-                            return MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION;
+                            return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
                         }
                     }
 
@@ -217,7 +217,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
         evictCandidates.clear();
     }
 
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::success;
 }
 
 } // namespace NEO

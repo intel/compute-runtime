@@ -563,7 +563,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
     EXPECT_FALSE(csr.isMadeResident(csr.globalFenceAllocation));
     EXPECT_FALSE(csr.isMadeNonResident(csr.globalFenceAllocation));
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, flushSmallTask(csr));
+    EXPECT_EQ(SubmissionStatus::success, flushSmallTask(csr));
 
     EXPECT_TRUE(csr.isMadeResident(csr.globalFenceAllocation));
     EXPECT_TRUE(csr.isMadeNonResident(csr.globalFenceAllocation));
@@ -581,7 +581,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
 
     EXPECT_EQ(nullptr, csr.globalFenceAllocation);
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, flushSmallTask(csr));
+    EXPECT_EQ(SubmissionStatus::success, flushSmallTask(csr));
 
     ASSERT_EQ(nullptr, csr.globalFenceAllocation);
 }
@@ -1163,7 +1163,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1395,7 +1395,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenInit
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenCsrIsMarkedWithNewResourceThenCallBatchedSubmission) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
+    commandStreamReceiver.dispatchMode = DispatchMode::batchedDispatch;
     commandStreamReceiver.newResources = true;
 
     flushTask(commandStreamReceiver);
@@ -1405,7 +1405,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenCsrIsMarkedWithNewResourceThen
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenGpuIsIdleWhenCsrIsEnabledToFlushOnGpuIdleThenCallBatchedSubmission) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
+    commandStreamReceiver.dispatchMode = DispatchMode::batchedDispatch;
     commandStreamReceiver.useGpuIdleImplicitFlush = true;
     commandStreamReceiver.taskCount = 1u;
     *commandStreamReceiver.getTagAddress() = 1u;

@@ -1577,7 +1577,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenFlushTagUpdateThenBatc
     bool initRet = directSubmission->initialize(true, false);
     EXPECT_TRUE(initRet);
 
-    EXPECT_EQ(SubmissionStatus::SUCCESS, csr.flushTagUpdate());
+    EXPECT_EQ(SubmissionStatus::success, csr.flushTagUpdate());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0u);

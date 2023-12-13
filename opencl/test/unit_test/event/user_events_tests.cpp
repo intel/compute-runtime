@@ -548,7 +548,7 @@ TEST_F(MockEventTests, givenDebugVariableWhenStatusIsQueriedThenNoFlushHappens) 
     debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    csr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    csr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     csr.postInitFlagsSetup();
 
     cl_event retEvent = nullptr;
