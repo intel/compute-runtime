@@ -156,19 +156,19 @@ int Drm::getParamIoctl(DrmParam param, int *dstValue) {
 }
 
 int Drm::getExecSoftPin(int &execSoftPin) {
-    return getParamIoctl(DrmParam::ParamHasExecSoftpin, &execSoftPin);
+    return getParamIoctl(DrmParam::paramHasExecSoftpin, &execSoftPin);
 }
 
 bool Drm::queryI915DeviceIdAndRevision() {
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     int deviceId = hwInfo->platform.usDeviceID;
     int revisionId = hwInfo->platform.usRevId;
-    auto ret = getParamIoctl(DrmParam::ParamChipsetId, &deviceId);
+    auto ret = getParamIoctl(DrmParam::paramChipsetId, &deviceId);
     if (ret != 0) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
         return false;
     }
-    ret = getParamIoctl(DrmParam::ParamRevision, &revisionId);
+    ret = getParamIoctl(DrmParam::paramRevision, &revisionId);
     if (ret != 0) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
         return false;
@@ -187,7 +187,7 @@ int Drm::enableTurboBoost() {
 }
 
 int Drm::getEnabledPooledEu(int &enabled) {
-    return getParamIoctl(DrmParam::ParamHasPooledEu, &enabled);
+    return getParamIoctl(DrmParam::paramHasPooledEu, &enabled);
 }
 
 std::string Drm::getSysFsPciPath() {
@@ -227,7 +227,7 @@ bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &re
 
 int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     GemContextParam contextParam = {0};
-    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamGttSize);
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamGttSize);
 
     int ret = ioctlHelper->ioctl(DrmIoctl::gemContextGetparam, &contextParam);
     if (ret == 0) {
@@ -260,8 +260,8 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
 
 void Drm::checkPreemptionSupport() {
     int value = 0;
-    auto ret = getParamIoctl(DrmParam::ParamHasScheduler, &value);
-    auto schedulerCapPreemption = ioctlHelper->getDrmParamValue(DrmParam::SchedulerCapPreemption);
+    auto ret = getParamIoctl(DrmParam::paramHasScheduler, &value);
+    auto schedulerCapPreemption = ioctlHelper->getDrmParamValue(DrmParam::schedulerCapPreemption);
     preemptionSupported = ((0 == ret) && (value & schedulerCapPreemption));
 }
 
@@ -272,7 +272,7 @@ void Drm::checkQueueSliceSupport() {
 void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     GemContextParam gcp = {};
     gcp.contextId = drmContextId;
-    gcp.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamPriority);
+    gcp.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamPriority);
     gcp.value = -1023;
 
     auto retVal = ioctlHelper->ioctl(DrmIoctl::gemContextSetparam, &gcp);
@@ -281,9 +281,9 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
 
 int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     GemContextParam contextParam = {};
-    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamSseu);
-    sseu->engine.engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender);
-    sseu->engine.engineInstance = ioctlHelper->getDrmParamValue(DrmParam::ExecDefault);
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamSseu);
+    sseu->engine.engineClass = ioctlHelper->getDrmParamValue(DrmParam::engineClassRender);
+    sseu->engine.engineInstance = ioctlHelper->getDrmParamValue(DrmParam::execDefault);
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
     contextParam.size = sizeof(struct GemContextParamSseu);
 
@@ -298,7 +298,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
         GemContextParam contextParam = {};
         sseu.sliceMask = getSliceMask(sliceCount);
 
-        contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamSseu);
+        contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamSseu);
         contextParam.contextId = 0;
         contextParam.value = reinterpret_cast<uint64_t>(&sseu);
         contextParam.size = sizeof(struct GemContextParamSseu);
@@ -312,7 +312,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
 
 void Drm::checkNonPersistentContextsSupport() {
     GemContextParam contextParam = {};
-    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamPersistence);
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamPersistence);
 
     auto retVal = ioctlHelper->ioctl(DrmIoctl::gemContextGetparam, &contextParam);
     if (retVal == 0 && contextParam.value == 1) {
@@ -325,7 +325,7 @@ void Drm::checkNonPersistentContextsSupport() {
 void Drm::setNonPersistentContext(uint32_t drmContextId) {
     GemContextParam contextParam = {};
     contextParam.contextId = drmContextId;
-    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamPersistence);
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamPersistence);
 
     ioctlHelper->ioctl(DrmIoctl::gemContextSetparam, &contextParam);
 }
@@ -333,7 +333,7 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
 void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     GemContextParam contextParam = {};
     contextParam.contextId = drmContextId;
-    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamRecoverable);
+    contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamRecoverable);
     contextParam.value = 0;
     contextParam.size = 0;
 
@@ -353,11 +353,11 @@ int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bo
     GemContextCreateExtSetParam extSetparam = {};
 
     if (drmVmId > 0) {
-        extSetparam.base.name = ioctlHelper->getDrmParamValue(DrmParam::ContextCreateExtSetparam);
-        extSetparam.param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamVm);
+        extSetparam.base.name = ioctlHelper->getDrmParamValue(DrmParam::contextCreateExtSetparam);
+        extSetparam.param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamVm);
         extSetparam.param.value = drmVmId;
         gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
-        gcc.flags |= ioctlHelper->getDrmParamValue(DrmParam::ContextCreateFlagsUseExtensions);
+        gcc.flags |= ioctlHelper->getDrmParamValue(DrmParam::contextCreateFlagsUseExtensions);
     }
 
     if (debugManager.flags.CreateContextWithAccessCounters.get() > 0) {
@@ -398,7 +398,7 @@ int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
     GemContextParam param{};
     param.contextId = drmContextId;
     param.value = 0;
-    param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamVm);
+    param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamVm);
     auto retVal = ioctlHelper->ioctl(DrmIoctl::gemContextGetparam, &param);
 
     vmId = static_cast<uint32_t>(param.value);
@@ -411,15 +411,15 @@ std::unique_lock<std::mutex> Drm::lockBindFenceMutex() {
 }
 
 int Drm::getEuTotal(int &euTotal) {
-    return getParamIoctl(DrmParam::ParamEuTotal, &euTotal);
+    return getParamIoctl(DrmParam::paramEuTotal, &euTotal);
 }
 
 int Drm::getSubsliceTotal(int &subsliceTotal) {
-    return getParamIoctl(DrmParam::ParamSubsliceTotal, &subsliceTotal);
+    return getParamIoctl(DrmParam::paramSubsliceTotal, &subsliceTotal);
 }
 
 int Drm::getMinEuInPool(int &minEUinPool) {
-    return getParamIoctl(DrmParam::ParamMinEuInPool, &minEUinPool);
+    return getParamIoctl(DrmParam::paramMinEuInPool, &minEUinPool);
 }
 
 int Drm::getErrno() {
@@ -766,12 +766,12 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
 
 int Drm::getTimestampFrequency(int &frequency) {
     frequency = 0;
-    return getParamIoctl(DrmParam::ParamCsTimestampFrequency, &frequency);
+    return getParamIoctl(DrmParam::paramCsTimestampFrequency, &frequency);
 }
 
 int Drm::getOaTimestampFrequency(int &frequency) {
     frequency = 0;
-    return getParamIoctl(DrmParam::ParamOATimestampFrequency, &frequency);
+    return getParamIoctl(DrmParam::paramOATimestampFrequency, &frequency);
 }
 
 bool Drm::queryEngineInfo() {
@@ -949,7 +949,7 @@ int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWi
 }
 
 bool Drm::querySystemInfo() {
-    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryHwconfigTable);
+    auto request = ioctlHelper->getDrmParamValue(DrmParam::queryHwconfigTable);
     auto deviceBlobQuery = this->query<uint32_t>(request, 0);
     if (deviceBlobQuery.empty()) {
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
@@ -960,7 +960,7 @@ bool Drm::querySystemInfo() {
 }
 
 std::vector<uint64_t> Drm::getMemoryRegions() {
-    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryMemoryRegions);
+    auto request = ioctlHelper->getDrmParamValue(DrmParam::queryMemoryRegions);
     return this->query<uint64_t>(request, 0);
 }
 
@@ -1079,14 +1079,14 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
     bool setupVirtualEngines = false;
     unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);
-    if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute) && numberOfCCS > 1u) {
+    if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute) && numberOfCCS > 1u) {
         numEnginesInContext = numberOfCCS + 1;
         balancer.numSiblings = numberOfCCS;
         setupVirtualEngines = true;
     }
 
     bool includeMainCopyEngineInGroup = false;
-    if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy) && numberOfBCS > 1u) {
+    if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy) && numberOfBCS > 1u) {
         numEnginesInContext = static_cast<uint32_t>(numberOfBCS) + 1;
         balancer.numSiblings = numberOfBCS;
         setupVirtualEngines = true;
@@ -1101,13 +1101,13 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     }
 
     if (setupVirtualEngines) {
-        balancer.base.name = ioctlHelper->getDrmParamValue(DrmParam::ContextEnginesExtLoadBalance);
+        balancer.base.name = ioctlHelper->getDrmParamValue(DrmParam::contextEnginesExtLoadBalance);
         contextEngines.extensions = castToUint64(&balancer);
-        contextEngines.engines[0].engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid);
-        contextEngines.engines[0].engineInstance = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone);
+        contextEngines.engines[0].engineClass = ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalid);
+        contextEngines.engines[0].engineInstance = ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalidNone);
 
         for (auto engineIndex = 0u; engineIndex < engineCount; engineIndex++) {
-            if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
+            if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
                 auto mappedBcsEngineType = static_cast<aub_stream::EngineType>(EngineHelpers::mapBcsIndexToEngineType(engineIndex, includeMainCopyEngineInGroup));
                 bool isBcsEnabled = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.test(EngineHelpers::getBcsIndex(mappedBcsEngineType));
 
@@ -1119,7 +1119,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
             }
             UNRECOVERABLE_IF(!engine);
 
-            if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
+            if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute)) {
                 engine = engineInfo->getEngineInstance(deviceIndex, static_cast<aub_stream::EngineType>(EngineHelpers::mapCcsIndexToEngineType(engineIndex)));
             }
             UNRECOVERABLE_IF(!engine);
@@ -1131,13 +1131,13 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     GemContextParam param{};
     param.contextId = drmContextId;
     param.size = static_cast<uint32_t>(ptrDiff(contextEngines.engines + numEnginesInContext, &contextEngines));
-    param.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamEngines);
+    param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamEngines);
     param.value = castToUint64(&contextEngines);
 
     auto ioctlValue = ioctlHelper->ioctl(DrmIoctl::gemContextSetparam, &param);
     UNRECOVERABLE_IF(ioctlValue != 0);
 
-    retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmParam::ExecDefault));
+    retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmParam::execDefault));
     return retVal;
 }
 

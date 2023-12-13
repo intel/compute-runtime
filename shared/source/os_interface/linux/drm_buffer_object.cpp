@@ -84,7 +84,7 @@ BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex
     : drm(drm), refCount(1), rootDeviceIndex(rootDeviceIndex), handle(std::move(handle)), size(size) {
 
     auto ioctlHelper = drm->getIoctlHelper();
-    this->tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
+    this->tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingNone);
     this->lockedAddress = nullptr;
     this->patIndex = patIndex;
 

@@ -82,17 +82,17 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamStringThenProperStringIsReturned) {
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamChipsetId).c_str(), "I915_PARAM_CHIPSET_ID");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamRevision).c_str(), "I915_PARAM_REVISION");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamHasExecSoftpin).c_str(), "I915_PARAM_HAS_EXEC_SOFTPIN");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamHasPooledEu).c_str(), "I915_PARAM_HAS_POOLED_EU");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamHasScheduler).c_str(), "I915_PARAM_HAS_SCHEDULER");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamEuTotal).c_str(), "I915_PARAM_EU_TOTAL");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamSubsliceTotal).c_str(), "I915_PARAM_SUBSLICE_TOTAL");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamMinEuInPool).c_str(), "I915_PARAM_MIN_EU_IN_POOL");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamCsTimestampFrequency).c_str(), "I915_PARAM_CS_TIMESTAMP_FREQUENCY");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamHasVmBind).c_str(), "PRELIM_I915_PARAM_HAS_VM_BIND");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::ParamHasPageFault).c_str(), "PRELIM_I915_PARAM_HAS_PAGE_FAULT");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramChipsetId).c_str(), "I915_PARAM_CHIPSET_ID");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramRevision).c_str(), "I915_PARAM_REVISION");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasExecSoftpin).c_str(), "I915_PARAM_HAS_EXEC_SOFTPIN");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasPooledEu).c_str(), "I915_PARAM_HAS_POOLED_EU");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasScheduler).c_str(), "I915_PARAM_HAS_SCHEDULER");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramEuTotal).c_str(), "I915_PARAM_EU_TOTAL");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramSubsliceTotal).c_str(), "I915_PARAM_SUBSLICE_TOTAL");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramMinEuInPool).c_str(), "I915_PARAM_MIN_EU_IN_POOL");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramCsTimestampFrequency).c_str(), "I915_PARAM_CS_TIMESTAMP_FREQUENCY");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasVmBind).c_str(), "PRELIM_I915_PARAM_HAS_VM_BIND");
+    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasPageFault).c_str(), "PRELIM_I915_PARAM_HAS_PAGE_FAULT");
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsReturned) {
@@ -134,50 +134,50 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturned) {
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextCreateExtSetparam), static_cast<int>(I915_CONTEXT_CREATE_EXT_SETPARAM));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextCreateFlagsUseExtensions), static_cast<int>(I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextEnginesExtLoadBalance), static_cast<int>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamEngines), static_cast<int>(I915_CONTEXT_PARAM_ENGINES));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamGttSize), static_cast<int>(I915_CONTEXT_PARAM_GTT_SIZE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamPersistence), static_cast<int>(I915_CONTEXT_PARAM_PERSISTENCE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamPriority), static_cast<int>(I915_CONTEXT_PARAM_PRIORITY));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamRecoverable), static_cast<int>(I915_CONTEXT_PARAM_RECOVERABLE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamSseu), static_cast<int>(I915_CONTEXT_PARAM_SSEU));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ContextParamVm), static_cast<int>(I915_CONTEXT_PARAM_VM));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), static_cast<int>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideo), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideoEnhance), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalid), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalidNone), static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecBlt), static_cast<int>(I915_EXEC_BLT));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecDefault), static_cast<int>(I915_EXEC_DEFAULT));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecNoReloc), static_cast<int>(I915_EXEC_NO_RELOC));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecRender), static_cast<int>(I915_EXEC_RENDER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MmapOffsetWb), static_cast<int>(I915_MMAP_OFFSET_WB));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MmapOffsetWc), static_cast<int>(I915_MMAP_OFFSET_WC));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamChipsetId), static_cast<int>(I915_PARAM_CHIPSET_ID));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamRevision), static_cast<int>(I915_PARAM_REVISION));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasPooledEu), static_cast<int>(I915_PARAM_HAS_POOLED_EU));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasScheduler), static_cast<int>(I915_PARAM_HAS_SCHEDULER));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamEuTotal), static_cast<int>(I915_PARAM_EU_TOTAL));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamSubsliceTotal), static_cast<int>(I915_PARAM_SUBSLICE_TOTAL));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamMinEuInPool), static_cast<int>(I915_PARAM_MIN_EU_IN_POOL));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamCsTimestampFrequency), static_cast<int>(I915_PARAM_CS_TIMESTAMP_FREQUENCY));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasVmBind), static_cast<int>(PRELIM_I915_PARAM_HAS_VM_BIND));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasPageFault), static_cast<int>(PRELIM_I915_PARAM_HAS_PAGE_FAULT));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryEngineInfo), static_cast<int>(DRM_I915_QUERY_ENGINE_INFO));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryHwconfigTable), static_cast<int>(PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryMemoryRegions), static_cast<int>(DRM_I915_QUERY_MEMORY_REGIONS));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryComputeSlices), static_cast<int>(PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryTopologyInfo), static_cast<int>(DRM_I915_QUERY_TOPOLOGY_INFO));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::SchedulerCapPreemption), static_cast<int>(I915_SCHEDULER_CAP_PREEMPTION));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::TilingNone), static_cast<int>(I915_TILING_NONE));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::TilingY), static_cast<int>(I915_TILING_Y));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextCreateExtSetparam), static_cast<int>(I915_CONTEXT_CREATE_EXT_SETPARAM));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextCreateFlagsUseExtensions), static_cast<int>(I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextEnginesExtLoadBalance), static_cast<int>(I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamEngines), static_cast<int>(I915_CONTEXT_PARAM_ENGINES));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamGttSize), static_cast<int>(I915_CONTEXT_PARAM_GTT_SIZE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamPersistence), static_cast<int>(I915_CONTEXT_PARAM_PERSISTENCE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamPriority), static_cast<int>(I915_CONTEXT_PARAM_PRIORITY));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamRecoverable), static_cast<int>(I915_CONTEXT_PARAM_RECOVERABLE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamSseu), static_cast<int>(I915_CONTEXT_PARAM_SSEU));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::contextParamVm), static_cast<int>(I915_CONTEXT_PARAM_VM));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassCompute), static_cast<int>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassRender), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassCopy), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassVideo), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassVideoEnhance), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassInvalid), static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::engineClassInvalidNone), static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::execBlt), static_cast<int>(I915_EXEC_BLT));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::execDefault), static_cast<int>(I915_EXEC_DEFAULT));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::execNoReloc), static_cast<int>(I915_EXEC_NO_RELOC));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::execRender), static_cast<int>(I915_EXEC_RENDER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::memoryClassDevice), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::memoryClassSystem), static_cast<int>(drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::mmapOffsetWb), static_cast<int>(I915_MMAP_OFFSET_WB));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::mmapOffsetWc), static_cast<int>(I915_MMAP_OFFSET_WC));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramChipsetId), static_cast<int>(I915_PARAM_CHIPSET_ID));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramRevision), static_cast<int>(I915_PARAM_REVISION));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasPooledEu), static_cast<int>(I915_PARAM_HAS_POOLED_EU));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasScheduler), static_cast<int>(I915_PARAM_HAS_SCHEDULER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramEuTotal), static_cast<int>(I915_PARAM_EU_TOTAL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramSubsliceTotal), static_cast<int>(I915_PARAM_SUBSLICE_TOTAL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramMinEuInPool), static_cast<int>(I915_PARAM_MIN_EU_IN_POOL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramCsTimestampFrequency), static_cast<int>(I915_PARAM_CS_TIMESTAMP_FREQUENCY));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasVmBind), static_cast<int>(PRELIM_I915_PARAM_HAS_VM_BIND));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasPageFault), static_cast<int>(PRELIM_I915_PARAM_HAS_PAGE_FAULT));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryEngineInfo), static_cast<int>(DRM_I915_QUERY_ENGINE_INFO));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryHwconfigTable), static_cast<int>(PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryMemoryRegions), static_cast<int>(DRM_I915_QUERY_MEMORY_REGIONS));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryComputeSlices), static_cast<int>(PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryTopologyInfo), static_cast<int>(DRM_I915_QUERY_TOPOLOGY_INFO));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::schedulerCapPreemption), static_cast<int>(I915_SCHEDULER_CAP_PREEMPTION));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::tilingNone), static_cast<int>(I915_TILING_NONE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::tilingY), static_cast<int>(I915_TILING_Y));
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenReturnSameData) {
@@ -295,8 +295,8 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetDirectSubmissionFlagThenCorrec
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToEngineCapsThenReturnSameData) {
     std::vector<EngineCapabilities> expectedEngines(2);
-    expectedEngines[0] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender)), 0}, 0};
-    expectedEngines[1] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy)), 1}, 0};
+    expectedEngines[0] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::engineClassRender)), 0}, 0};
+    expectedEngines[1] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::engineClassCopy)), 1}, 0};
 
     auto engineInfo = getEngineInfo(expectedEngines);
 
@@ -577,11 +577,11 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
     EXPECT_EQ(std::nullopt, ioctlHelper.getPreferredLocationRegion(PreferredLocation::none, 0));
 
     auto region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::system, 0);
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassSystem), region->memoryClass);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::memoryClassSystem), region->memoryClass);
     EXPECT_EQ(0u, region->memoryInstance);
 
     region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::device, 1);
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::memoryClassDevice), region->memoryClass);
     EXPECT_EQ(1u, region->memoryInstance);
 
     region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::clear, 1);
@@ -590,7 +590,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
 
     debugManager.flags.SetVmAdvisePreferredLocation.set(3);
     region = ioctlHelper.getPreferredLocationRegion(PreferredLocation::none, 1);
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::MemoryClassDevice), region->memoryClass);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::memoryClassDevice), region->memoryClass);
     EXPECT_EQ(1u, region->memoryInstance);
 }
 

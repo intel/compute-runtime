@@ -48,7 +48,7 @@ int IoctlHelperXe::xeGetQuery(Query *data) {
         QueryItem *queryItem = reinterpret_cast<QueryItem *>(data->itemsPtr);
         std::vector<uint32_t> *queryData = nullptr;
         switch (queryItem->queryId) {
-        case static_cast<int>(DrmParam::QueryHwconfigTable):
+        case static_cast<int>(DrmParam::queryHwconfigTable):
             queryData = &hwconfigFakei915;
             break;
         default:
@@ -242,11 +242,11 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         engineClassInstance.engineInstance = queriedEngines[i].engine_instance;
         xeLog("\t%s:%d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance);
 
-        if (engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassCompute) ||
-            engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassRender) ||
-            engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassCopy) ||
-            (isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassVideo) ||
-                                 engineClassInstance.engineClass == getDrmParamValue(DrmParam::EngineClassVideoEnhance)))) {
+        if (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
+            engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
+            engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCopy) ||
+            (isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideo) ||
+                                 engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideoEnhance)))) {
 
             if (enginesPerTile.size() <= tile) {
                 enginesPerTile.resize(tile + 1);
@@ -893,21 +893,21 @@ int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x %s\n", __FUNCTION__, drmParam, getDrmParamString(drmParam).c_str());
 
     switch (drmParam) {
-    case DrmParam::MemoryClassDevice:
+    case DrmParam::memoryClassDevice:
         return DRM_XE_MEM_REGION_CLASS_VRAM;
-    case DrmParam::MemoryClassSystem:
+    case DrmParam::memoryClassSystem:
         return DRM_XE_MEM_REGION_CLASS_SYSMEM;
-    case DrmParam::EngineClassRender:
+    case DrmParam::engineClassRender:
         return DRM_XE_ENGINE_CLASS_RENDER;
-    case DrmParam::EngineClassCopy:
+    case DrmParam::engineClassCopy:
         return DRM_XE_ENGINE_CLASS_COPY;
-    case DrmParam::EngineClassVideo:
+    case DrmParam::engineClassVideo:
         return DRM_XE_ENGINE_CLASS_VIDEO_DECODE;
-    case DrmParam::EngineClassVideoEnhance:
+    case DrmParam::engineClassVideoEnhance:
         return DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE;
-    case DrmParam::EngineClassCompute:
+    case DrmParam::engineClassCompute:
         return DRM_XE_ENGINE_CLASS_COMPUTE;
-    case DrmParam::EngineClassInvalid:
+    case DrmParam::engineClassInvalid:
         return -1;
 
     default:
@@ -927,22 +927,22 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         struct GetParam *d = (struct GetParam *)arg;
         ret = 0;
         switch (d->param) {
-        case static_cast<int>(DrmParam::ParamChipsetId):
+        case static_cast<int>(DrmParam::paramChipsetId):
             *d->value = chipsetId;
             break;
-        case static_cast<int>(DrmParam::ParamRevision):
+        case static_cast<int>(DrmParam::paramRevision):
             *d->value = revId;
             break;
-        case static_cast<int>(DrmParam::ParamHasPageFault):
+        case static_cast<int>(DrmParam::paramHasPageFault):
             *d->value = 0;
             break;
-        case static_cast<int>(DrmParam::ParamHasExecSoftpin):
+        case static_cast<int>(DrmParam::paramHasExecSoftpin):
             *d->value = 1;
             break;
-        case static_cast<int>(DrmParam::ParamHasScheduler):
+        case static_cast<int>(DrmParam::paramHasScheduler):
             *d->value = static_cast<int>(0x80000037);
             break;
-        case static_cast<int>(DrmParam::ParamCsTimestampFrequency): {
+        case static_cast<int>(DrmParam::paramCsTimestampFrequency): {
             uint64_t frequency = 0;
             if (getTimestampFrequency(frequency)) {
                 *d->value = static_cast<int>(frequency);
@@ -996,13 +996,13 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         auto addressSpace = drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.gpuAddressSpace;
         ret = 0;
         switch (d->param) {
-        case static_cast<int>(DrmParam::ContextParamGttSize):
+        case static_cast<int>(DrmParam::contextParamGttSize):
             d->value = addressSpace + 1u;
             break;
-        case static_cast<int>(DrmParam::ContextParamSseu):
+        case static_cast<int>(DrmParam::contextParamSseu):
             d->value = 0x55fdd94d4e40;
             break;
-        case static_cast<int>(DrmParam::ContextParamPersistence):
+        case static_cast<int>(DrmParam::contextParamPersistence):
             d->value = 0x1;
             break;
         default:
@@ -1014,11 +1014,11 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemContextSetparam: {
         GemContextParam *d = static_cast<GemContextParam *>(arg);
         switch (d->param) {
-        case static_cast<int>(DrmParam::ContextParamPersistence):
+        case static_cast<int>(DrmParam::contextParamPersistence):
             if (d->value == 0)
                 ret = 0;
             break;
-        case static_cast<int>(DrmParam::ContextParamEngines): {
+        case static_cast<int>(DrmParam::contextParamEngines): {
             i915_context_param_engines *contextEngine = reinterpret_cast<i915_context_param_engines *>(d->value);
             int items = (d->size - sizeof(uint64_t)) / sizeof(uint32_t);
             contextParamEngine.clear();
@@ -1165,13 +1165,13 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     xeLog("createDrmContext VM=0x%x\n", drmVmId);
     auto engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
     switch (engineFlag) {
-    case static_cast<int>(DrmParam::ExecRender):
+    case static_cast<int>(DrmParam::execRender):
         requestClass = DRM_XE_ENGINE_CLASS_RENDER;
         break;
-    case static_cast<int>(DrmParam::ExecBlt):
+    case static_cast<int>(DrmParam::execBlt):
         requestClass = DRM_XE_ENGINE_CLASS_COPY;
         break;
-    case static_cast<int>(DrmParam::ExecDefault):
+    case static_cast<int>(DrmParam::execDefault):
         requestClass = DRM_XE_ENGINE_CLASS_COMPUTE;
         break;
     default:
@@ -1320,93 +1320,93 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
 std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::ContextCreateExtSetparam:
+    case DrmParam::contextCreateExtSetparam:
         return "ContextCreateExtSetparam";
-    case DrmParam::ContextCreateFlagsUseExtensions:
+    case DrmParam::contextCreateFlagsUseExtensions:
         return "ContextCreateFlagsUseExtensions";
-    case DrmParam::ContextEnginesExtLoadBalance:
+    case DrmParam::contextEnginesExtLoadBalance:
         return "ContextEnginesExtLoadBalance";
-    case DrmParam::ContextParamEngines:
+    case DrmParam::contextParamEngines:
         return "ContextParamEngines";
-    case DrmParam::ContextParamGttSize:
+    case DrmParam::contextParamGttSize:
         return "ContextParamGttSize";
-    case DrmParam::ContextParamPersistence:
+    case DrmParam::contextParamPersistence:
         return "ContextParamPersistence";
-    case DrmParam::ContextParamPriority:
+    case DrmParam::contextParamPriority:
         return "ContextParamPriority";
-    case DrmParam::ContextParamRecoverable:
+    case DrmParam::contextParamRecoverable:
         return "ContextParamRecoverable";
-    case DrmParam::ContextParamSseu:
+    case DrmParam::contextParamSseu:
         return "ContextParamSseu";
-    case DrmParam::ContextParamVm:
+    case DrmParam::contextParamVm:
         return "ContextParamVm";
-    case DrmParam::EngineClassRender:
+    case DrmParam::engineClassRender:
         return "EngineClassRender";
-    case DrmParam::EngineClassCompute:
+    case DrmParam::engineClassCompute:
         return "EngineClassCompute";
-    case DrmParam::EngineClassCopy:
+    case DrmParam::engineClassCopy:
         return "EngineClassCopy";
-    case DrmParam::EngineClassVideo:
+    case DrmParam::engineClassVideo:
         return "EngineClassVideo";
-    case DrmParam::EngineClassVideoEnhance:
+    case DrmParam::engineClassVideoEnhance:
         return "EngineClassVideoEnhance";
-    case DrmParam::EngineClassInvalid:
+    case DrmParam::engineClassInvalid:
         return "EngineClassInvalid";
-    case DrmParam::EngineClassInvalidNone:
+    case DrmParam::engineClassInvalidNone:
         return "EngineClassInvalidNone";
-    case DrmParam::ExecBlt:
+    case DrmParam::execBlt:
         return "ExecBlt";
-    case DrmParam::ExecDefault:
+    case DrmParam::execDefault:
         return "ExecDefault";
-    case DrmParam::ExecNoReloc:
+    case DrmParam::execNoReloc:
         return "ExecNoReloc";
-    case DrmParam::ExecRender:
+    case DrmParam::execRender:
         return "ExecRender";
-    case DrmParam::MemoryClassDevice:
+    case DrmParam::memoryClassDevice:
         return "MemoryClassDevice";
-    case DrmParam::MemoryClassSystem:
+    case DrmParam::memoryClassSystem:
         return "MemoryClassSystem";
-    case DrmParam::MmapOffsetWb:
+    case DrmParam::mmapOffsetWb:
         return "MmapOffsetWb";
-    case DrmParam::MmapOffsetWc:
+    case DrmParam::mmapOffsetWc:
         return "MmapOffsetWc";
-    case DrmParam::ParamChipsetId:
+    case DrmParam::paramChipsetId:
         return "ParamChipsetId";
-    case DrmParam::ParamRevision:
+    case DrmParam::paramRevision:
         return "ParamRevision";
-    case DrmParam::ParamHasExecSoftpin:
+    case DrmParam::paramHasExecSoftpin:
         return "ParamHasExecSoftpin";
-    case DrmParam::ParamHasPooledEu:
+    case DrmParam::paramHasPooledEu:
         return "ParamHasPooledEu";
-    case DrmParam::ParamHasScheduler:
+    case DrmParam::paramHasScheduler:
         return "ParamHasScheduler";
-    case DrmParam::ParamEuTotal:
+    case DrmParam::paramEuTotal:
         return "ParamEuTotal";
-    case DrmParam::ParamSubsliceTotal:
+    case DrmParam::paramSubsliceTotal:
         return "ParamSubsliceTotal";
-    case DrmParam::ParamMinEuInPool:
+    case DrmParam::paramMinEuInPool:
         return "ParamMinEuInPool";
-    case DrmParam::ParamCsTimestampFrequency:
+    case DrmParam::paramCsTimestampFrequency:
         return "ParamCsTimestampFrequency";
-    case DrmParam::ParamHasVmBind:
+    case DrmParam::paramHasVmBind:
         return "ParamHasVmBind";
-    case DrmParam::ParamHasPageFault:
+    case DrmParam::paramHasPageFault:
         return "ParamHasPageFault";
-    case DrmParam::QueryEngineInfo:
+    case DrmParam::queryEngineInfo:
         return "QueryEngineInfo";
-    case DrmParam::QueryHwconfigTable:
+    case DrmParam::queryHwconfigTable:
         return "QueryHwconfigTable";
-    case DrmParam::QueryComputeSlices:
+    case DrmParam::queryComputeSlices:
         return "QueryComputeSlices";
-    case DrmParam::QueryMemoryRegions:
+    case DrmParam::queryMemoryRegions:
         return "QueryMemoryRegions";
-    case DrmParam::QueryTopologyInfo:
+    case DrmParam::queryTopologyInfo:
         return "QueryTopologyInfo";
-    case DrmParam::SchedulerCapPreemption:
+    case DrmParam::schedulerCapPreemption:
         return "SchedulerCapPreemption";
-    case DrmParam::TilingNone:
+    case DrmParam::tilingNone:
         return "TilingNone";
-    case DrmParam::TilingY:
+    case DrmParam::tilingY:
         return "TilingY";
     default:
         return "DrmParam::<missing>";

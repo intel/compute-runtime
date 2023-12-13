@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,11 @@ namespace NEO {
 
 DrmParam DrmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
     if (EngineHelpers::isCcs(engineType)) {
-        return DrmParam::ExecDefault;
+        return DrmParam::execDefault;
     } else if (aub_stream::ENGINE_BCS == engineType || EngineHelpers::isLinkBcs(engineType)) {
-        return DrmParam::ExecBlt;
+        return DrmParam::execBlt;
     }
     UNRECOVERABLE_IF(engineType != aub_stream::ENGINE_RCS && engineType != aub_stream::ENGINE_CCCS);
-    return DrmParam::ExecRender;
+    return DrmParam::execRender;
 }
 } // namespace NEO

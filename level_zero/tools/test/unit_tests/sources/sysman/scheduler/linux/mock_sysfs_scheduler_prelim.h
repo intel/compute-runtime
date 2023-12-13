@@ -38,11 +38,11 @@ struct MockSchedulerNeoDrm : public Drm {
 
     bool sysmanQueryEngineInfo() override {
 
-        uint16_t engineClassCopy = ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy);
-        uint16_t engineClassCompute = ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute);
-        uint16_t engineClassVideo = ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo);
-        uint16_t engineClassVideoEnhance = ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance);
-        uint16_t engineClassInvalid = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid);
+        uint16_t engineClassCopy = ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy);
+        uint16_t engineClassCompute = ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute);
+        uint16_t engineClassVideo = ioctlHelper->getDrmParamValue(DrmParam::engineClassVideo);
+        uint16_t engineClassVideoEnhance = ioctlHelper->getDrmParamValue(DrmParam::engineClassVideoEnhance);
+        uint16_t engineClassInvalid = ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalid);
 
         // Fill distanceInfos vector with dummy values
         std::vector<NEO::DistanceInfo> distanceInfos = {

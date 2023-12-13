@@ -225,7 +225,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
     DEBUG_BREAK_IF(!bb);
 
     auto osContextLinux = static_cast<OsContextLinux *>(this->osContext);
-    auto execFlags = osContextLinux->getEngineFlag() | drm->getIoctlHelper()->getDrmParamValue(DrmParam::ExecNoReloc);
+    auto execFlags = osContextLinux->getEngineFlag() | drm->getIoctlHelper()->getDrmParamValue(DrmParam::execNoReloc);
 
     // requiredSize determinant:
     // * vmBind UNAVAILABLE => residency holds all allocations except for the command buffer

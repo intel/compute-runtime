@@ -59,9 +59,9 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
 
     auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
     std::vector<EngineCapabilities> engines(2);
-    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
     engines[0].capabilities = 0;
-    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 0};
+    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
     engines[1].capabilities = 0;
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
 
@@ -78,7 +78,7 @@ TEST(EngineInfoTest, whenCallingGetEngineTileInfoCorrectValuesAreReturned) {
     auto ioctlHelper = drm->getIoctlHelper();
 
     std::vector<EngineCapabilities> engines(1);
-    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
     engines[0].capabilities = 0;
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
 
@@ -95,10 +95,10 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
 
     auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
     std::vector<EngineCapabilities> engines(2);
-    uint16_t ccsClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute);
+    uint16_t ccsClass = ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute);
     engines[0].engine = {ccsClass, 0};
     engines[0].capabilities = 0;
-    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 0};
+    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
     engines[1].capabilities = 0;
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
 
@@ -115,13 +115,13 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
     auto ioctlHelper = drm->getIoctlHelper();
 
     std::vector<EngineCapabilities> engines(4);
-    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
     engines[0].capabilities = 0;
-    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 0};
+    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
     engines[1].capabilities = 0;
-    engines[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 1};
+    engines[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 1};
     engines[2].capabilities = 0;
-    engines[3].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 1};
+    engines[3].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 1};
     engines[3].capabilities = 0;
 
     std::vector<DistanceInfo> distances(4);
@@ -155,7 +155,7 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
     EXPECT_EQ(0u, engineInfo->getEngineTileIndex(engines[0].engine));
     EXPECT_EQ(1u, engineInfo->getEngineTileIndex(engines[2].engine));
 
-    EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 2}));
+    EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 2}));
 }
 
 TEST(EngineInfoTest, whenCreateEngineInfoAndInvalidQueryThenNoEnginesSet) {
@@ -164,13 +164,13 @@ TEST(EngineInfoTest, whenCreateEngineInfoAndInvalidQueryThenNoEnginesSet) {
     auto ioctlHelper = drm->getIoctlHelper();
 
     std::vector<EngineCapabilities> engines(4);
-    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
     engines[0].capabilities = 0;
-    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 0};
+    engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
     engines[1].capabilities = 0;
-    engines[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 1};
+    engines[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 1};
     engines[2].capabilities = 0;
-    engines[3].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 1};
+    engines[3].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 1};
     engines[3].capabilities = 0;
 
     std::vector<DistanceInfo> distances(4);
@@ -201,5 +201,5 @@ TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
     std::vector<QueryItem> queryItems;
 
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), 0, distances, queryItems, engines);
-    EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 1}));
+    EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 1}));
 }

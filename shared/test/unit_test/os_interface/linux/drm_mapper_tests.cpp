@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,10 @@ TEST(DrmMapperTests, GivenEngineWhenMappingNodeThenCorrectEngineReturned) {
     auto flagRcs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
     auto flagCcs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS);
     auto flagCccs = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCCS);
-    auto expectedBcs = DrmParam::ExecBlt;
-    auto expectedRcs = DrmParam::ExecRender;
-    auto expectedCcs = DrmParam::ExecDefault;
-    auto expectedCccs = DrmParam::ExecRender;
+    auto expectedBcs = DrmParam::execBlt;
+    auto expectedRcs = DrmParam::execRender;
+    auto expectedCcs = DrmParam::execDefault;
+    auto expectedCccs = DrmParam::execRender;
     EXPECT_EQ(expectedBcs, flagBcs);
     EXPECT_EQ(expectedRcs, flagRcs);
     EXPECT_EQ(expectedCcs, flagCcs);
@@ -36,12 +36,12 @@ TEST(DrmMapperTests, givenLinkCopyEngineWhenMapperCalledThenReturnDefaultBltEngi
                                                                    aub_stream::ENGINE_BCS7, aub_stream::ENGINE_BCS8}};
 
     for (auto engine : bcsLinkEngines) {
-        EXPECT_EQ(DrmParam::ExecBlt, DrmEngineMapper::engineNodeMap(engine));
+        EXPECT_EQ(DrmParam::execBlt, DrmEngineMapper::engineNodeMap(engine));
     }
 }
 
 TEST(DrmMapperTests, GivenCcsWhenGettingEngineNodeMapThenReturnDefault) {
-    auto expected = DrmParam::ExecDefault;
+    auto expected = DrmParam::execDefault;
     EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS), expected);
     EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS1), expected);
     EXPECT_EQ(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_CCS2), expected);

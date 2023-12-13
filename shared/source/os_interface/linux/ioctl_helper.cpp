@@ -213,85 +213,85 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
 
 int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::ContextCreateExtSetparam:
+    case DrmParam::contextCreateExtSetparam:
         return I915_CONTEXT_CREATE_EXT_SETPARAM;
-    case DrmParam::ContextCreateFlagsUseExtensions:
+    case DrmParam::contextCreateFlagsUseExtensions:
         return I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
-    case DrmParam::ContextEnginesExtLoadBalance:
+    case DrmParam::contextEnginesExtLoadBalance:
         return I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
-    case DrmParam::ContextParamEngines:
+    case DrmParam::contextParamEngines:
         return I915_CONTEXT_PARAM_ENGINES;
-    case DrmParam::ContextParamGttSize:
+    case DrmParam::contextParamGttSize:
         return I915_CONTEXT_PARAM_GTT_SIZE;
-    case DrmParam::ContextParamPersistence:
+    case DrmParam::contextParamPersistence:
         return I915_CONTEXT_PARAM_PERSISTENCE;
-    case DrmParam::ContextParamPriority:
+    case DrmParam::contextParamPriority:
         return I915_CONTEXT_PARAM_PRIORITY;
-    case DrmParam::ContextParamRecoverable:
+    case DrmParam::contextParamRecoverable:
         return I915_CONTEXT_PARAM_RECOVERABLE;
-    case DrmParam::ContextParamSseu:
+    case DrmParam::contextParamSseu:
         return I915_CONTEXT_PARAM_SSEU;
-    case DrmParam::ContextParamVm:
+    case DrmParam::contextParamVm:
         return I915_CONTEXT_PARAM_VM;
-    case DrmParam::EngineClassRender:
+    case DrmParam::engineClassRender:
         return drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
-    case DrmParam::EngineClassCopy:
+    case DrmParam::engineClassCopy:
         return drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY;
-    case DrmParam::EngineClassVideo:
+    case DrmParam::engineClassVideo:
         return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
-    case DrmParam::EngineClassVideoEnhance:
+    case DrmParam::engineClassVideoEnhance:
         return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE;
-    case DrmParam::EngineClassInvalid:
+    case DrmParam::engineClassInvalid:
         return drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID;
-    case DrmParam::EngineClassInvalidNone:
+    case DrmParam::engineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
-    case DrmParam::ExecBlt:
+    case DrmParam::execBlt:
         return I915_EXEC_BLT;
-    case DrmParam::ExecDefault:
+    case DrmParam::execDefault:
         return I915_EXEC_DEFAULT;
-    case DrmParam::ExecNoReloc:
+    case DrmParam::execNoReloc:
         return I915_EXEC_NO_RELOC;
-    case DrmParam::ExecRender:
+    case DrmParam::execRender:
         return I915_EXEC_RENDER;
-    case DrmParam::MemoryClassDevice:
+    case DrmParam::memoryClassDevice:
         return drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE;
-    case DrmParam::MemoryClassSystem:
+    case DrmParam::memoryClassSystem:
         return drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM;
-    case DrmParam::MmapOffsetWb:
+    case DrmParam::mmapOffsetWb:
         return I915_MMAP_OFFSET_WB;
-    case DrmParam::MmapOffsetWc:
+    case DrmParam::mmapOffsetWc:
         return I915_MMAP_OFFSET_WC;
-    case DrmParam::ParamChipsetId:
+    case DrmParam::paramChipsetId:
         return I915_PARAM_CHIPSET_ID;
-    case DrmParam::ParamRevision:
+    case DrmParam::paramRevision:
         return I915_PARAM_REVISION;
-    case DrmParam::ParamHasExecSoftpin:
+    case DrmParam::paramHasExecSoftpin:
         return I915_PARAM_HAS_EXEC_SOFTPIN;
-    case DrmParam::ParamHasPooledEu:
+    case DrmParam::paramHasPooledEu:
         return I915_PARAM_HAS_POOLED_EU;
-    case DrmParam::ParamHasScheduler:
+    case DrmParam::paramHasScheduler:
         return I915_PARAM_HAS_SCHEDULER;
-    case DrmParam::ParamEuTotal:
+    case DrmParam::paramEuTotal:
         return I915_PARAM_EU_TOTAL;
-    case DrmParam::ParamSubsliceTotal:
+    case DrmParam::paramSubsliceTotal:
         return I915_PARAM_SUBSLICE_TOTAL;
-    case DrmParam::ParamMinEuInPool:
+    case DrmParam::paramMinEuInPool:
         return I915_PARAM_MIN_EU_IN_POOL;
-    case DrmParam::ParamCsTimestampFrequency:
+    case DrmParam::paramCsTimestampFrequency:
         return I915_PARAM_CS_TIMESTAMP_FREQUENCY;
-    case DrmParam::QueryEngineInfo:
+    case DrmParam::queryEngineInfo:
         return DRM_I915_QUERY_ENGINE_INFO;
-    case DrmParam::QueryMemoryRegions:
+    case DrmParam::queryMemoryRegions:
         return DRM_I915_QUERY_MEMORY_REGIONS;
-    case DrmParam::QueryTopologyInfo:
+    case DrmParam::queryTopologyInfo:
         return DRM_I915_QUERY_TOPOLOGY_INFO;
-    case DrmParam::SchedulerCapPreemption:
+    case DrmParam::schedulerCapPreemption:
         return I915_SCHEDULER_CAP_PREEMPTION;
-    case DrmParam::TilingNone:
+    case DrmParam::tilingNone:
         return I915_TILING_NONE;
-    case DrmParam::TilingY:
+    case DrmParam::tilingY:
         return I915_TILING_Y;
-    case DrmParam::ParamOATimestampFrequency:
+    case DrmParam::paramOATimestampFrequency:
         return I915_PARAM_OA_TIMESTAMP_FREQUENCY;
     default:
         UNRECOVERABLE_IF(true);
@@ -301,25 +301,25 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
 
 std::string IoctlHelper::getDrmParamStringBase(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::ParamChipsetId:
+    case DrmParam::paramChipsetId:
         return "I915_PARAM_CHIPSET_ID";
-    case DrmParam::ParamRevision:
+    case DrmParam::paramRevision:
         return "I915_PARAM_REVISION";
-    case DrmParam::ParamHasExecSoftpin:
+    case DrmParam::paramHasExecSoftpin:
         return "I915_PARAM_HAS_EXEC_SOFTPIN";
-    case DrmParam::ParamHasPooledEu:
+    case DrmParam::paramHasPooledEu:
         return "I915_PARAM_HAS_POOLED_EU";
-    case DrmParam::ParamHasScheduler:
+    case DrmParam::paramHasScheduler:
         return "I915_PARAM_HAS_SCHEDULER";
-    case DrmParam::ParamEuTotal:
+    case DrmParam::paramEuTotal:
         return "I915_PARAM_EU_TOTAL";
-    case DrmParam::ParamSubsliceTotal:
+    case DrmParam::paramSubsliceTotal:
         return "I915_PARAM_SUBSLICE_TOTAL";
-    case DrmParam::ParamMinEuInPool:
+    case DrmParam::paramMinEuInPool:
         return "I915_PARAM_MIN_EU_IN_POOL";
-    case DrmParam::ParamCsTimestampFrequency:
+    case DrmParam::paramCsTimestampFrequency:
         return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
-    case DrmParam::ParamOATimestampFrequency:
+    case DrmParam::paramOATimestampFrequency:
         return "I915_PARAM_OA_TIMESTAMP_FREQUENCY";
     default:
         UNRECOVERABLE_IF(true);
@@ -394,7 +394,7 @@ bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest)
 }
 
 std::unique_ptr<MemoryInfo> IoctlHelper::createMemoryInfo() {
-    auto request = getDrmParamValue(DrmParam::QueryMemoryRegions);
+    auto request = getDrmParamValue(DrmParam::queryMemoryRegions);
     auto dataQuery = drm.query<uint64_t>(request, 0);
     if (!dataQuery.empty()) {
         auto memRegions = translateToMemoryRegions(dataQuery);
@@ -405,7 +405,7 @@ std::unique_ptr<MemoryInfo> IoctlHelper::createMemoryInfo() {
 
 bool IoctlHelper::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
-    auto request = this->getDrmParamValue(DrmParam::QueryTopologyInfo);
+    auto request = this->getDrmParamValue(DrmParam::queryTopologyInfo);
     auto dataQuery = drm.query<uint64_t>(request, 0);
     if (dataQuery.empty()) {
         return false;
@@ -490,7 +490,7 @@ bool IoctlHelper::translateTopologyInfo(const QueryTopologyInfo *queryTopologyIn
 }
 
 std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) {
-    auto request = getDrmParamValue(DrmParam::QueryEngineInfo);
+    auto request = getDrmParamValue(DrmParam::queryEngineInfo);
     auto enginesQuery = drm.query<uint64_t>(request, 0);
     if (enginesQuery.empty()) {
         return {};
@@ -509,21 +509,21 @@ std::unique_ptr<EngineInfo> IoctlHelper::createEngineInfo(bool isSysmanEnabled) 
     auto tileCount = 0u;
     std::vector<DistanceInfo> distanceInfos;
     for (const auto &region : memoryRegions) {
-        if (getDrmParamValue(DrmParam::MemoryClassDevice) == region.region.memoryClass) {
+        if (getDrmParamValue(DrmParam::memoryClassDevice) == region.region.memoryClass) {
             tileCount++;
             DistanceInfo distanceInfo{};
             distanceInfo.region = region.region;
 
             for (const auto &engine : engines) {
-                if (engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassCompute) ||
-                    engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassRender) ||
-                    engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassCopy)) {
+                if (engine.engine.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
+                    engine.engine.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
+                    engine.engine.engineClass == getDrmParamValue(DrmParam::engineClassCopy)) {
                     distanceInfo.engine = engine.engine;
                     distanceInfos.push_back(distanceInfo);
                 } else if (isSysmanEnabled) {
 
-                    if (engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassVideo) ||
-                        engine.engine.engineClass == getDrmParamValue(DrmParam::EngineClassVideoEnhance)) {
+                    if (engine.engine.engineClass == getDrmParamValue(DrmParam::engineClassVideo) ||
+                        engine.engine.engineClass == getDrmParamValue(DrmParam::engineClassVideoEnhance)) {
                         distanceInfo.engine = engine.engine;
                         distanceInfos.push_back(distanceInfo);
                     }

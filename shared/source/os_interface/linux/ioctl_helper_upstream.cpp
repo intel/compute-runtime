@@ -280,11 +280,11 @@ unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) co
 
 int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::EngineClassCompute:
+    case DrmParam::engineClassCompute:
         return 4;
-    case DrmParam::QueryHwconfigTable:
+    case DrmParam::queryHwconfigTable:
         return DRM_I915_QUERY_HWCONFIG_BLOB;
-    case DrmParam::QueryComputeSlices:
+    case DrmParam::queryComputeSlices:
         return 0;
     default:
         return getDrmParamValueBase(drmParam);

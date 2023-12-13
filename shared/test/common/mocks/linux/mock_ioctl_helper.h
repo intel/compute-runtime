@@ -33,7 +33,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     };
 
     int getDrmParamValue(DrmParam drmParam) const override {
-        if (drmParam == DrmParam::MemoryClassSystem || drmParam == DrmParam::MemoryClassDevice) {
+        if (drmParam == DrmParam::memoryClassSystem || drmParam == DrmParam::memoryClassDevice) {
             return IoctlHelperPrelim20::getDrmParamValue(drmParam);
         }
         return drmParamValue;

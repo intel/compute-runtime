@@ -679,7 +679,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     }
     bo->setAddress(gpuRange);
 
-    [[maybe_unused]] auto ret2 = bo->setTiling(ioctlHelper->getDrmParamValue(DrmParam::TilingY), static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
+    [[maybe_unused]] auto ret2 = bo->setTiling(ioctlHelper->getDrmParamValue(DrmParam::tilingY), static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), nullptr, gpuRange, allocationData.imgInfo->size, memoryPool);
@@ -1055,7 +1055,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         ret = ioctlHelper->getGemTiling(&getTiling);
 
         if (ret) {
-            if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::TilingNone))) {
+            if (getTiling.tilingMode == static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::tilingNone))) {
                 properties.imgInfo->linearStorage = true;
             }
         }
@@ -2166,7 +2166,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
 
         uint64_t offset = 0;
         auto ioctlHelper = drm.getIoctlHelper();
-        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
             releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             this->munmapFunction(cpuPointer, size);
@@ -2219,7 +2219,7 @@ void *DrmMemoryManager::lockBufferObject(BufferObject *bo) {
     auto rootDeviceIndex = this->getRootDeviceIndex(drm);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    uint64_t mmapOffsetWc = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWc);
+    uint64_t mmapOffsetWc = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWc);
     uint64_t offset = 0;
     if (!retrieveMmapOffsetForBufferObject(rootDeviceIndex, *bo, mmapOffsetWc, offset)) {
         return nullptr;
@@ -2362,7 +2362,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
-        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         uint64_t offset = 0;
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
@@ -2503,7 +2503,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         bo->setAddress(reinterpret_cast<uintptr_t>(cpuPointer));
 
-        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         uint64_t offset = 0;
         if (!retrieveMmapOffsetForBufferObject(properties.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
             this->munmapFunction(cpuPointer, size);

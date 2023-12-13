@@ -41,9 +41,9 @@ int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper) {
         return ioctlHelper->getDrmParamValue(drmParam);
     }
     switch (drmParam) {
-    case DrmParam::ParamChipsetId:
+    case DrmParam::paramChipsetId:
         return I915_PARAM_CHIPSET_ID;
-    case DrmParam::ParamRevision:
+    case DrmParam::paramRevision:
         return I915_PARAM_REVISION;
     default:
         UNRECOVERABLE_IF(true);
@@ -56,9 +56,9 @@ std::string getDrmParamString(DrmParam drmParam, IoctlHelper *ioctlHelper) {
         return ioctlHelper->getDrmParamString(drmParam);
     }
     switch (drmParam) {
-    case DrmParam::ParamChipsetId:
+    case DrmParam::paramChipsetId:
         return "I915_PARAM_CHIPSET_ID";
-    case DrmParam::ParamRevision:
+    case DrmParam::paramRevision:
         return "I915_PARAM_REVISION";
     default:
         UNRECOVERABLE_IF(true);

@@ -22,8 +22,8 @@ namespace NEO {
 MemoryInfo::MemoryInfo(const RegionContainer &regionInfo, const Drm &inputDrm)
     : drm(inputDrm), drmQueryRegions(regionInfo), systemMemoryRegion(drmQueryRegions[0]) {
     auto ioctlHelper = drm.getIoctlHelper();
-    const auto memoryClassSystem = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassSystem);
-    const auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    const auto memoryClassSystem = ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem);
+    const auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
     UNRECOVERABLE_IF(this->systemMemoryRegion.region.memoryClass != memoryClassSystem);
     std::copy_if(drmQueryRegions.begin(), drmQueryRegions.end(), std::back_inserter(localMemoryRegions),
                  [&](const MemoryRegion &memoryRegionInfo) {

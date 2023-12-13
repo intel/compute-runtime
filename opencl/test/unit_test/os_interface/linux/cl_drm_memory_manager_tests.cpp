@@ -352,7 +352,7 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imageSize, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
@@ -402,7 +402,7 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imageSize, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
@@ -517,7 +517,7 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreat
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imageSize, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
@@ -595,7 +595,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZ
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingNone);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(0u, this->mock->setTilingStride);
     EXPECT_EQ(0u, this->mock->setTilingHandle);
@@ -645,7 +645,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountN
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingNone);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(0u, this->mock->setTilingStride);
     EXPECT_EQ(0u, this->mock->setTilingHandle);
@@ -688,7 +688,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreat
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingNone);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(0u, this->mock->setTilingStride);
     EXPECT_EQ(0u, this->mock->setTilingHandle);
@@ -745,7 +745,7 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShar
     mock->ioctlExpected.gemClose = 1;
     mock->ioctlExpected.gemGetTiling = 1;
     auto ioctlHelper = this->mock->getIoctlHelper();
-    mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
+    mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::tilingNone);
 
     osHandle handle = 1u;
     uint32_t boHandle = 2u;
@@ -788,7 +788,7 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedH
     mock->ioctlExpected.gemClose = 1;
     mock->ioctlExpected.gemGetTiling = 1;
     auto ioctlHelper = this->mock->getIoctlHelper();
-    mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
+    mock->getTilingModeOut = ioctlHelper->getDrmParamValue(DrmParam::tilingY);
 
     osHandle handle = 1u;
     uint32_t boHandle = 2u;

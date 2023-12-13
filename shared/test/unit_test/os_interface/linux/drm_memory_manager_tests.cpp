@@ -1991,7 +1991,7 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imgInfo.size, this->mock->createParamsSize);
     auto ioctlHelper = this->mock->getIoctlHelper();
-    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingY);
+    uint32_t tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingY);
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(imgInfo.rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);

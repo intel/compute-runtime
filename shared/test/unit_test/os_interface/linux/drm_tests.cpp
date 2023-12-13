@@ -1468,11 +1468,11 @@ TEST(DrmWrapperTest, WhenGettingDrmIoctlVersionValueThenIoctlHelperIsNotNeeded) 
 }
 
 TEST(DrmWrapperTest, WhenGettingChipsetIdParamValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getDrmParamValue(DrmParam::ParamChipsetId, nullptr), static_cast<int>(I915_PARAM_CHIPSET_ID));
+    EXPECT_EQ(getDrmParamValue(DrmParam::paramChipsetId, nullptr), static_cast<int>(I915_PARAM_CHIPSET_ID));
 }
 
 TEST(DrmWrapperTest, WhenGettingRevisionParamValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getDrmParamValue(DrmParam::ParamRevision, nullptr), static_cast<int>(I915_PARAM_REVISION));
+    EXPECT_EQ(getDrmParamValue(DrmParam::paramRevision, nullptr), static_cast<int>(I915_PARAM_REVISION));
 }
 
 TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhenAvailable) {
@@ -1483,8 +1483,8 @@ TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhe
     EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper), ioctlHelper.ioctlRequestValue);
     EXPECT_NE(getIoctlRequestValue(DrmIoctl::getparam, nullptr), getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper));
 
-    EXPECT_EQ(getDrmParamValue(DrmParam::ParamChipsetId, &ioctlHelper), ioctlHelper.drmParamValue);
-    EXPECT_NE(getDrmParamValue(DrmParam::ParamChipsetId, nullptr), getDrmParamValue(DrmParam::ParamChipsetId, &ioctlHelper));
+    EXPECT_EQ(getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper), ioctlHelper.drmParamValue);
+    EXPECT_NE(getDrmParamValue(DrmParam::paramChipsetId, nullptr), getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper));
 }
 
 TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
@@ -1501,24 +1501,24 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
 
     MockIoctlHelper ioctlHelper{drm};
     std::map<DrmParam, const char *> ioctlCodeStringMap = {
-        {DrmParam::ParamHasExecSoftpin, "I915_PARAM_HAS_EXEC_SOFTPIN"},
-        {DrmParam::ParamHasPooledEu, "I915_PARAM_HAS_POOLED_EU"},
-        {DrmParam::ParamHasScheduler, "I915_PARAM_HAS_SCHEDULER"},
-        {DrmParam::ParamEuTotal, "I915_PARAM_EU_TOTAL"},
-        {DrmParam::ParamSubsliceTotal, "I915_PARAM_SUBSLICE_TOTAL"},
-        {DrmParam::ParamMinEuInPool, "I915_PARAM_MIN_EU_IN_POOL"},
-        {DrmParam::ParamCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"}};
+        {DrmParam::paramHasExecSoftpin, "I915_PARAM_HAS_EXEC_SOFTPIN"},
+        {DrmParam::paramHasPooledEu, "I915_PARAM_HAS_POOLED_EU"},
+        {DrmParam::paramHasScheduler, "I915_PARAM_HAS_SCHEDULER"},
+        {DrmParam::paramEuTotal, "I915_PARAM_EU_TOTAL"},
+        {DrmParam::paramSubsliceTotal, "I915_PARAM_SUBSLICE_TOTAL"},
+        {DrmParam::paramMinEuInPool, "I915_PARAM_MIN_EU_IN_POOL"},
+        {DrmParam::paramCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"}};
     for (auto &ioctlCodeString : ioctlCodeStringMap) {
         EXPECT_STREQ(getDrmParamString(ioctlCodeString.first, &ioctlHelper).c_str(), ioctlCodeString.second);
         EXPECT_THROW(getDrmParamString(ioctlCodeString.first, nullptr), std::runtime_error);
     }
 
-    EXPECT_STREQ(getDrmParamString(DrmParam::ParamChipsetId, &ioctlHelper).c_str(), "I915_PARAM_CHIPSET_ID");
-    EXPECT_STREQ(getDrmParamString(DrmParam::ParamChipsetId, nullptr).c_str(), "I915_PARAM_CHIPSET_ID");
-    EXPECT_STREQ(getDrmParamString(DrmParam::ParamRevision, &ioctlHelper).c_str(), "I915_PARAM_REVISION");
-    EXPECT_STREQ(getDrmParamString(DrmParam::ParamRevision, nullptr).c_str(), "I915_PARAM_REVISION");
+    EXPECT_STREQ(getDrmParamString(DrmParam::paramChipsetId, &ioctlHelper).c_str(), "I915_PARAM_CHIPSET_ID");
+    EXPECT_STREQ(getDrmParamString(DrmParam::paramChipsetId, nullptr).c_str(), "I915_PARAM_CHIPSET_ID");
+    EXPECT_STREQ(getDrmParamString(DrmParam::paramRevision, &ioctlHelper).c_str(), "I915_PARAM_REVISION");
+    EXPECT_STREQ(getDrmParamString(DrmParam::paramRevision, nullptr).c_str(), "I915_PARAM_REVISION");
 
-    EXPECT_THROW(getDrmParamString(DrmParam::EngineClassRender, &ioctlHelper), std::runtime_error);
+    EXPECT_THROW(getDrmParamString(DrmParam::engineClassRender, &ioctlHelper), std::runtime_error);
 }
 
 TEST(DrmWrapperTest, givenEAgainOrEIntrOrEBusyWhenCheckingIfReinvokeRequiredThenTrueIsReturned) {
@@ -1555,14 +1555,14 @@ TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto ioctlHelper = drm.getIoctlHelper();
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid));
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ioctlHelper->getDrmParamValue(DrmParam::engineClassVideo));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ioctlHelper->getDrmParamValue(DrmParam::engineClassVideoEnhance));
+    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalid));
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE), ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalidNone));
 
-    EXPECT_THROW(ioctlHelper->getDrmParamValueBase(DrmParam::EngineClassCompute), std::runtime_error);
+    EXPECT_THROW(ioctlHelper->getDrmParamValueBase(DrmParam::engineClassCompute), std::runtime_error);
 }
 
 TEST(IoctlHelperTest, whenGettingFileNameForFrequencyFilesThenProperStringIsReturned) {
@@ -1608,9 +1608,9 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     auto memoryInfo = std::make_unique<MemoryInfo>(memRegions, drm);
 
     std::vector<EngineClassInstance> engines(3);
-    engines[0] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
-    engines[1] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 0};
-    engines[2] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 2};
+    engines[0] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
+    engines[1] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
+    engines[2] = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 2};
 
     auto distances = std::vector<DistanceInfo>();
     for (const auto &region : memRegions) {

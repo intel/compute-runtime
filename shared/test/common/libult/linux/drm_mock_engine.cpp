@@ -18,7 +18,7 @@ DrmMockEngine::DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : Drm
 }
 
 void DrmMockEngine::handleQueryItem(QueryItem *queryItem) {
-    if (queryItem->queryId == static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::QueryEngineInfo))) {
+    if (queryItem->queryId == static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::queryEngineInfo))) {
         if (queryEngineInfoSuccessCount == 0) {
             queryItem->length = -EINVAL;
         } else {
@@ -32,13 +32,13 @@ void DrmMockEngine::handleQueryItem(QueryItem *queryItem) {
                 auto queryEnginenInfo = reinterpret_cast<drm_i915_query_engine_info *>(queryItem->dataPtr);
                 EXPECT_EQ(0u, queryEnginenInfo->num_engines);
                 queryEnginenInfo->num_engines = numberOfEngines;
-                queryEnginenInfo->engines[0].engine.engine_class = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender));
+                queryEnginenInfo->engines[0].engine.engine_class = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
                 queryEnginenInfo->engines[0].engine.engine_instance = 1;
-                queryEnginenInfo->engines[1].engine.engine_class = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy));
+                queryEnginenInfo->engines[1].engine.engine_class = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
                 queryEnginenInfo->engines[1].engine.engine_instance = 1;
             }
         }
-    } else if (queryItem->queryId == static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::QueryHwconfigTable))) {
+    } else if (queryItem->queryId == static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::queryHwconfigTable))) {
         if (failQueryDeviceBlob) {
             queryItem->length = -EINVAL;
         } else {

@@ -61,13 +61,13 @@ EngineInfo::EngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineIn
     for (const auto &engineInfo : engineInfos) {
         auto &engine = engineInfo.engine;
         tileToEngineMap.emplace(0, engine);
-        if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)) {
+        if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)) {
             tileToEngineToInstanceMap[0][EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment)] = engine;
-        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
+        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
             const auto &hwInfo = rootDeviceEnvironment.getHardwareInfo();
             assignCopyEngine(EngineInfo::getBaseCopyEngineType(ioctlHelper, engineInfo.capabilities, hwInfo->capabilityTable.isIntegratedDevice), 0, engine,
                              bcsInfoMask, numHostLinkCopyEngines, numScaleUpLinkCopyEngines);
-        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
+        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute)) {
             tileToEngineToInstanceMap[0][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEngines)] = engine;
             computeEngines++;
         }
@@ -85,12 +85,12 @@ EngineInfo::EngineInfo(Drm *drm, const StackVec<std::vector<EngineClassInstance>
         computeEnginesPerTile = 0u;
         for (const auto &engine : engineClassInstancePerTile[tile]) {
             tileToEngineMap.emplace(tile, engine);
-            if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)) {
+            if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)) {
                 tileToEngineToInstanceMap[tile][EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment)] = engine;
-            } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
+            } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
                 tileToEngineToInstanceMap[tile][DrmEngineMappingHelper::engineMapping[copyEnginesPerTile]] = engine;
                 copyEnginesPerTile++;
-            } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
+            } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute)) {
                 tileToEngineToInstanceMap[tile][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEnginesPerTile)] = engine;
                 computeEnginesPerTile++;
             }
@@ -118,12 +118,12 @@ EngineInfo::EngineInfo(Drm *drm, uint32_t tileCount, const std::vector<DistanceI
 
         auto engine = distanceInfos[i].engine;
         tileToEngineMap.emplace(tile, engine);
-        if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)) {
+        if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)) {
             tileToEngineToInstanceMap[tile][EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment)] = engine;
-        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
+        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
             tileToEngineToInstanceMap[tile][DrmEngineMappingHelper::engineMapping[copyEnginesPerTile]] = engine;
             copyEnginesPerTile++;
-        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
+        } else if (engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute)) {
             tileToEngineToInstanceMap[tile][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEnginesPerTile)] = engine;
             computeEnginesPerTile++;
         }

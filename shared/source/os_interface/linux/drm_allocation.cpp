@@ -196,7 +196,7 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
     auto bo = this->getBO();
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
     auto subDeviceIds = getSubDeviceIds(storageInfo.subDeviceBitfield);
 
     uint32_t chunksPerSubDevice = this->storageInfo.numOfChunks / subDeviceIds.size();
@@ -302,7 +302,7 @@ int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vecto
 bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId) {
     auto drm = bo->peekDrm();
     auto ioctlHelper = drm->getIoctlHelper();
-    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
     auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
     auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
 

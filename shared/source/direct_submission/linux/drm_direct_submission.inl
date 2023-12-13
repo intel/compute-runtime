@@ -128,7 +128,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
     auto &drm = osContextLinux->getDrm();
-    auto execFlags = osContextLinux->getEngineFlag() | drm.getIoctlHelper()->getDrmParamValue(DrmParam::ExecNoReloc);
+    auto execFlags = osContextLinux->getEngineFlag() | drm.getIoctlHelper()->getDrmParamValue(DrmParam::execNoReloc);
     auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     ExecObject execObject{};

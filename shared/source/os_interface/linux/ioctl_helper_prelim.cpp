@@ -74,7 +74,7 @@ bool IoctlHelperPrelim20::isChunkingAvailable() {
 
 bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
-    auto request = this->getDrmParamValue(DrmParam::QueryComputeSlices);
+    auto request = this->getDrmParamValue(DrmParam::queryComputeSlices);
     auto engineInfo = drm.getEngineInfo();
     auto nTiles = hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount;
 
@@ -343,12 +343,12 @@ std::optional<MemoryClassInstance> IoctlHelperPrelim20::getPreferredLocationRegi
         region.memoryInstance = 0;
         break;
     case PreferredLocation::system:
-        region.memoryClass = getDrmParamValue(DrmParam::MemoryClassSystem);
+        region.memoryClass = getDrmParamValue(DrmParam::memoryClassSystem);
         region.memoryInstance = 0;
         break;
     case PreferredLocation::device:
     default:
-        region.memoryClass = getDrmParamValue(DrmParam::MemoryClassDevice);
+        region.memoryClass = getDrmParamValue(DrmParam::memoryClassDevice);
         region.memoryInstance = memoryInstance;
         break;
     case PreferredLocation::none:
@@ -518,7 +518,7 @@ int IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std:
 }
 
 std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
-    return DrmParam::ParamHasPageFault;
+    return DrmParam::paramHasPageFault;
 };
 
 bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
@@ -773,15 +773,15 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
 
 int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::EngineClassCompute:
+    case DrmParam::engineClassCompute:
         return prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
-    case DrmParam::ParamHasVmBind:
+    case DrmParam::paramHasVmBind:
         return PRELIM_I915_PARAM_HAS_VM_BIND;
-    case DrmParam::ParamHasPageFault:
+    case DrmParam::paramHasPageFault:
         return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
-    case DrmParam::QueryHwconfigTable:
+    case DrmParam::queryHwconfigTable:
         return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
-    case DrmParam::QueryComputeSlices:
+    case DrmParam::queryComputeSlices:
         return PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES;
     default:
         return getDrmParamValueBase(drmParam);
@@ -789,9 +789,9 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
 }
 std::string IoctlHelperPrelim20::getDrmParamString(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::ParamHasVmBind:
+    case DrmParam::paramHasVmBind:
         return "PRELIM_I915_PARAM_HAS_VM_BIND";
-    case DrmParam::ParamHasPageFault:
+    case DrmParam::paramHasPageFault:
         return "PRELIM_I915_PARAM_HAS_PAGE_FAULT";
     default:
         return getDrmParamStringBase(drmParam);
@@ -929,7 +929,7 @@ void IoctlHelperPrelim20::setupIpVersion() {
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::EngineClassRender)), 0};
+    EngineClassInstance engineInfo = {static_cast<uint16_t>(getDrmParamValue(DrmParam::engineClassRender)), 0};
     int ret = 0;
 
     auto isPlatformQuerySupported = productHelper.isPlatformQuerySupported();
