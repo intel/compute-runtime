@@ -137,7 +137,7 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     return result;
 }
 
-struct HardwareInfo {
+struct HardwareInfo { // NOLINT(clang-analyzer-optin.performance.Padding)
     HardwareInfo() = default;
     HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,
                  const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable);
@@ -148,7 +148,6 @@ struct HardwareInfo {
     alignas(4) GT_SYSTEM_INFO gtSystemInfo{};
     alignas(8) RuntimeCapabilityTable capabilityTable{};
     alignas(8) HardwareIpVersion ipVersion{};
-    uint8_t reserved[4]{}; // to keep optimal alignment
 };
 
 // Global table of hardware prefixes
