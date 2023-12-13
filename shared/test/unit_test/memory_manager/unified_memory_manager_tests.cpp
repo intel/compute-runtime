@@ -223,7 +223,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenMultiplePointerWithOffsetPassedThenPrope
     allocationData.memoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
     allocationData.size = mockAllocation.getUnderlyingBufferSize();
     allocationData.gpuAllocations.addAllocation(&mockAllocation);
-    svmManager->svmAllocs.insert(allocationData);
+    svmManager->svmAllocs.insert(unalignedPointer, allocationData);
 
     auto offsetedPointer = ptrOffset(ptr, 2048);
     auto usmAllocationData = svmManager->getSVMAlloc(offsetedPointer);
@@ -234,7 +234,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenMultiplePointerWithOffsetPassedThenPrope
     usmAllocationData = svmManager->getSVMAlloc(unalignedPointer);
     EXPECT_NE(nullptr, usmAllocationData);
 
-    svmManager->svmAllocs.remove(allocationData);
+    svmManager->svmAllocs.remove(reinterpret_cast<void *>(allocationData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
     svmManager->freeSVMAlloc(ptr, true);
     svmManager->freeSVMAlloc(ptr2, true);
 }

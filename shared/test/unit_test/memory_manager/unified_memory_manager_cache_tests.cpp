@@ -35,12 +35,12 @@ TEST(SortedVectorBasedAllocationTrackerTests, givenSortedVectorBasedAllocationTr
     for (uint32_t i = graphicsAllocationsSize - 1; i >= graphicsAllocationsSize / 2; --i) {
         data.gpuAllocations.addAllocation(&graphicsAllocations[i]);
         data.device = reinterpret_cast<Device *>(graphicsAllocations[i].getGpuAddress());
-        tracker.insert(data);
+        tracker.insert(reinterpret_cast<void *>(data.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), data);
     }
     for (uint32_t i = 0; i < graphicsAllocationsSize / 2; ++i) {
         data.gpuAllocations.addAllocation(&graphicsAllocations[i]);
         data.device = reinterpret_cast<Device *>(graphicsAllocations[i].getGpuAddress());
-        tracker.insert(data);
+        tracker.insert(reinterpret_cast<void *>(data.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), data);
     }
 
     EXPECT_EQ(tracker.getNumAllocs(), graphicsAllocationsSize);
@@ -56,7 +56,7 @@ TEST(SortedVectorBasedAllocationTrackerTests, givenSortedVectorBasedAllocationTr
     MockGraphicsAllocation graphicsAlloc{reinterpret_cast<void *>(0x0), MemoryConstants::pageSize64k};
     data.gpuAllocations.addAllocation(&graphicsAlloc);
     data.device = reinterpret_cast<Device *>(graphicsAlloc.getGpuAddress());
-    tracker.insert(data);
+    tracker.insert(reinterpret_cast<void *>(data.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), data);
 
     EXPECT_EQ(tracker.getNumAllocs(), graphicsAllocationsSize + 1);
     for (uint64_t i = 0; i < graphicsAllocationsSize + 1; ++i) {
@@ -69,7 +69,7 @@ TEST(SortedVectorBasedAllocationTrackerTests, givenSortedVectorBasedAllocationTr
     auto data2 = tracker.get(addr2);
     EXPECT_EQ(data1->device, addr1);
     EXPECT_EQ(data2->device, addr2);
-    tracker.remove(*data2);
+    tracker.remove(addr2);
     EXPECT_EQ(tracker.getNumAllocs(), graphicsAllocationsSize);
     for (uint64_t i = 0; i < graphicsAllocationsSize; ++i) {
         if (i < 2) {

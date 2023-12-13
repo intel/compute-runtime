@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/sorted_vector.h"
 
 #include "memory_properties_flags.h"
 
@@ -84,18 +85,13 @@ struct SvmMapOperation {
 
 class SVMAllocsManager {
   public:
-    class SortedVectorBasedAllocationTracker {
-        friend class SVMAllocsManager;
-
-      public:
-        using SvmAllocationContainer = std::vector<std::pair<const void *, std::unique_ptr<SvmAllocationData>>>;
-        void insert(const SvmAllocationData &);
-        void remove(const SvmAllocationData &);
-        SvmAllocationData *get(const void *);
-        size_t getNumAllocs() const { return allocations.size(); };
-
-        SvmAllocationContainer allocations;
+    struct CompareAcceptOffsetSvmPointers {
+        bool operator()(const std::unique_ptr<SvmAllocationData> &svmData, const void *ptr, const void *otherPtr) {
+            return ptr == otherPtr || (otherPtr < ptr &&
+                                       (reinterpret_cast<uintptr_t>(ptr) < (reinterpret_cast<uintptr_t>(otherPtr) + svmData->size)));
+        }
     };
+    using SortedVectorBasedAllocationTracker = BaseSortedPointerWithValueVector<SvmAllocationData, CompareAcceptOffsetSvmPointers>;
 
     class MapBasedAllocationTracker {
         friend class SVMAllocsManager;

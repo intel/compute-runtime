@@ -42,25 +42,6 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData
     allocations.erase(iter);
 }
 
-void SVMAllocsManager::SortedVectorBasedAllocationTracker::insert(const SvmAllocationData &allocationsPair) {
-    allocations.push_back(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), std::make_unique<SvmAllocationData>(allocationsPair)));
-    for (size_t i = allocations.size() - 1; i > 0; --i) {
-        if (allocations[i].first < allocations[i - 1].first) {
-            std::iter_swap(allocations.begin() + i, allocations.begin() + i - 1);
-        } else {
-            break;
-        }
-    }
-}
-
-void SVMAllocsManager::SortedVectorBasedAllocationTracker::remove(const SvmAllocationData &allocationsPair) {
-    auto gpuAddress = reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
-    auto removeIt = std::remove_if(allocations.begin(), allocations.end(), [&gpuAddress](const auto &other) {
-        return gpuAddress == other.first;
-    });
-    allocations.erase(removeIt);
-}
-
 void SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
     std::lock_guard<std::mutex> lock(this->mtx);
     allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr);
@@ -129,34 +110,6 @@ SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *
             return svmAllocData;
         }
     }
-    return nullptr;
-}
-
-SvmAllocationData *SVMAllocsManager::SortedVectorBasedAllocationTracker::get(const void *ptr) {
-    if (allocations.size() == 0) {
-        return nullptr;
-    }
-    if (!ptr) {
-        return nullptr;
-    }
-
-    int begin = 0;
-    int end = static_cast<int>(allocations.size() - 1);
-    while (end >= begin) {
-        int currentPos = (begin + end) / 2;
-        const auto &allocation = allocations[currentPos];
-        if (allocation.first == ptr || (allocation.first < ptr &&
-                                        (reinterpret_cast<uintptr_t>(ptr) < (reinterpret_cast<uintptr_t>(allocation.first) + allocation.second->size)))) {
-            return allocation.second.get();
-        } else if (ptr < allocation.first) {
-            end = currentPos - 1;
-            continue;
-        } else {
-            begin = currentPos + 1;
-            continue;
-        }
-    }
-
     return nullptr;
 }
 
@@ -286,7 +239,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(allocData);
+    this->svmAllocs.insert(usmPtr, allocData);
 
     return usmPtr;
 }
@@ -368,9 +321,9 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(allocData);
 
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
+    this->svmAllocs.insert(retPtr, allocData);
     UNRECOVERABLE_IF(useExternalHostPtrForCpu && (externalPtr != retPtr));
 
     return retPtr;
@@ -455,8 +408,9 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(allocData);
-    return allocationGpu->getUnderlyingBuffer();
+    auto retPtr = allocationGpu->getUnderlyingBuffer();
+    this->svmAllocs.insert(retPtr, allocData);
+    return retPtr;
 }
 
 void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties) {
@@ -466,12 +420,12 @@ void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *alloca
 
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
-    svmAllocs.insert(svmAllocData);
+    svmAllocs.insert(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), svmAllocData);
 }
 
 void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
-    svmAllocs.remove(svmAllocData);
+    svmAllocs.remove(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
@@ -608,7 +562,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
     allocData.size = size;
 
     std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(allocData);
+    this->svmAllocs.insert(usmPtr, allocData);
     return usmPtr;
 }
 
@@ -676,14 +630,14 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(allocData);
+    this->svmAllocs.insert(svmPtr, allocData);
     return svmPtr;
 }
 
 void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     std::unique_lock<std::shared_mutex> lock(mtx);
-    svmAllocs.remove(*svmData);
+    svmAllocs.remove(reinterpret_cast<void *>(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
