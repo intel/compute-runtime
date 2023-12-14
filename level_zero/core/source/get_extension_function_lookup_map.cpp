@@ -26,6 +26,9 @@ std::unordered_map<std::string, void *> getExtensionFunctionsLookupMap() {
     addToMap(lookupMap, zexCommandListAppendWaitOnMemory);
     addToMap(lookupMap, zexCommandListAppendWaitOnMemory64);
     addToMap(lookupMap, zexCommandListAppendWriteToMemory);
+
+    addToMap(lookupMap, zexCounterBasedEventCreate);
+    addToMap(lookupMap, zexEventGetDeviceAddress);
 #undef addToMap
 
     return lookupMap;
