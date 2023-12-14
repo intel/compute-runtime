@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include <cmath>
@@ -378,44 +379,30 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
 }
 
 void LinuxFrequencyImp::init() {
-    const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
-    if (pSysfsAccess->directoryExists(baseDir)) {
-        minFreqFile = baseDir + "rps_min_freq_mhz";
-        maxFreqFile = baseDir + "rps_max_freq_mhz";
-        minDefaultFreqFile = baseDir + ".defaults/rps_min_freq_mhz";
-        maxDefaultFreqFile = baseDir + ".defaults/rps_max_freq_mhz";
-        boostFreqFile = baseDir + "rps_boost_freq_mhz";
-        requestFreqFile = baseDir + "punit_req_freq_mhz";
-        tdpFreqFile = baseDir + "rapl_PL1_freq_mhz";
-        actualFreqFile = baseDir + "rps_act_freq_mhz";
-        efficientFreqFile = baseDir + "rps_RP1_freq_mhz";
-        maxValFreqFile = baseDir + "rps_RP0_freq_mhz";
-        minValFreqFile = baseDir + "rps_RPn_freq_mhz";
-        throttleReasonStatusFile = baseDir + "throttle_reason_status";
-        throttleReasonPL1File = baseDir + "throttle_reason_pl1";
-        throttleReasonPL2File = baseDir + "throttle_reason_pl2";
-        throttleReasonPL4File = baseDir + "throttle_reason_pl4";
-        throttleReasonThermalFile = baseDir + "throttle_reason_thermal";
-    } else {
-        minFreqFile = "gt_min_freq_mhz";
-        maxFreqFile = "gt_max_freq_mhz";
-        boostFreqFile = "gt_boost_freq_mhz";
-        requestFreqFile = "gt_cur_freq_mhz";
-        tdpFreqFile = "rapl_PL1_freq_mhz";
-        actualFreqFile = "gt_act_freq_mhz";
-        efficientFreqFile = "gt_RP1_freq_mhz";
-        maxValFreqFile = "gt_RP0_freq_mhz";
-        minValFreqFile = "gt_RPn_freq_mhz";
-        throttleReasonStatusFile = "gt_throttle_reason_status";
-        throttleReasonPL1File = "gt_throttle_reason_status_pl1";
-        throttleReasonPL2File = "gt_throttle_reason_status_pl2";
-        throttleReasonPL4File = "gt_throttle_reason_status_pl4";
-        throttleReasonThermalFile = "gt_throttle_reason_status_thermal";
-    }
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
+    bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
+
+    minFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, subdeviceId, baseDirectoryExists);
+    minDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinDefaultFrequency, subdeviceId, baseDirectoryExists);
+    maxFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, subdeviceId, baseDirectoryExists);
+    maxDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxDefaultFrequency, subdeviceId, baseDirectoryExists);
+    boostFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameBoostFrequency, subdeviceId, baseDirectoryExists);
+    requestFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCurrentFrequency, subdeviceId, baseDirectoryExists);
+    tdpFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameTdpFrequency, subdeviceId, baseDirectoryExists);
+    actualFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameActualFrequency, subdeviceId, baseDirectoryExists);
+    efficientFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, subdeviceId, baseDirectoryExists);
+    maxValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, subdeviceId, baseDirectoryExists);
+    minValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinValueFrequency, subdeviceId, baseDirectoryExists);
+    throttleReasonStatusFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, subdeviceId, baseDirectoryExists);
+    throttleReasonPL1File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL1, subdeviceId, baseDirectoryExists);
+    throttleReasonPL2File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, subdeviceId, baseDirectoryExists);
+    throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
+    throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
 }
 
 LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), frequencyDomainNumber(frequencyDomainNumber) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     init();
 }

@@ -14,6 +14,7 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanKmdInterface;
 class SysFsAccessInterface;
 
 class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
@@ -40,6 +41,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     ~LinuxFrequencyImp() override = default;
 
   protected:
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     ze_result_t getMin(double &min);
     ze_result_t setMin(double min);
