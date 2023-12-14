@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,12 @@ namespace NEO {
 namespace WaitUtils {
 
 constexpr uint32_t defaultWaitCount = 1u;
+
+extern uint64_t counterValue;
+extern uint32_t controlValue;
 extern uint32_t waitCount;
+extern bool waitpkgSupport;
+extern bool waitpkgUse;
 
 template <typename T>
 inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedValue, std::function<bool(T, T)> predicate) {
