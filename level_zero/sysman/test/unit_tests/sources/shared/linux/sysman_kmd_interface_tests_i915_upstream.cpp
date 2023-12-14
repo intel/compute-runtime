@@ -145,6 +145,13 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheck
     EXPECT_FALSE(pSysmanKmdInterface->isSystemPowerBalanceAvailable());
 }
 
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
+    EXPECT_TRUE(pSysmanKmdInterface->isBoostFrequencyAvailable());
+    EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
+}
+
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetNativeUnitWithProperSysfsNameThenValidValuesAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_EQ(SysmanKmdInterface::SysfsValueUnit::milliSecond, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerTimeout));

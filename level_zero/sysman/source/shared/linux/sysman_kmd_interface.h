@@ -133,6 +133,9 @@ class SysmanKmdInterface {
                                const uint64_t srcValue, uint64_t &dstValue) const;
     virtual std::optional<std::string> getEngineClassString(uint16_t engineClass) = 0;
     virtual uint32_t getEventType(const bool isIntegratedDevice) = 0;
+    virtual bool isDefaultFrequencyAvailable() const = 0;
+    virtual bool isBoostFrequencyAvailable() const = 0;
+    virtual bool isTdpFrequencyAvailable() const = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -176,6 +179,9 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return false; }
     bool isSystemPowerBalanceAvailable() const override { return false; }
+    bool isDefaultFrequencyAvailable() const override { return true; }
+    bool isBoostFrequencyAvailable() const override { return true; }
+    bool isTdpFrequencyAvailable() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -214,6 +220,9 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return false; }
     bool isSystemPowerBalanceAvailable() const override { return false; }
+    bool isDefaultFrequencyAvailable() const override { return true; }
+    bool isBoostFrequencyAvailable() const override { return true; }
+    bool isTdpFrequencyAvailable() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -252,6 +261,9 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return true; }
     bool isSystemPowerBalanceAvailable() const override { return true; }
+    bool isDefaultFrequencyAvailable() const override { return false; }
+    bool isBoostFrequencyAvailable() const override { return false; }
+    bool isTdpFrequencyAvailable() const override { return false; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

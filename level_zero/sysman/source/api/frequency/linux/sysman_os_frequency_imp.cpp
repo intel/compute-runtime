@@ -64,21 +64,25 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
 ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimits) {
     double newMin = round(pLimits->min);
     double newMax = round(pLimits->max);
-    if (newMax == -1 && newMin == -1) {
-        double maxDefault = 0, minDefault = 0;
-        ze_result_t result1, result2, result;
-        result1 = pSysfsAccess->read(maxDefaultFreqFile, maxDefault);
-        result2 = pSysfsAccess->read(minDefaultFreqFile, minDefault);
-        if (result1 == ZE_RESULT_SUCCESS && result2 == ZE_RESULT_SUCCESS) {
-            result = setMax(maxDefault);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                      "error@<%s> <setMax(maxDefault) returned 0x%x>\n", __func__, result);
-                return result;
+
+    if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
+        if (newMax == -1 && newMin == -1) {
+            double maxDefault = 0, minDefault = 0;
+            ze_result_t result1, result2, result;
+            result1 = pSysfsAccess->read(maxDefaultFreqFile, maxDefault);
+            result2 = pSysfsAccess->read(minDefaultFreqFile, minDefault);
+            if (result1 == ZE_RESULT_SUCCESS && result2 == ZE_RESULT_SUCCESS) {
+                result = setMax(maxDefault);
+                if (ZE_RESULT_SUCCESS != result) {
+                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                          "error@<%s> <setMax(maxDefault) returned 0x%x>\n", __func__, result);
+                    return result;
+                }
+                return setMin(minDefault);
             }
-            return setMin(minDefault);
         }
     }
+
     double currentMax = 0.0;
     ze_result_t result = getMax(currentMax);
     if (ZE_RESULT_SUCCESS != result) {
@@ -279,7 +283,12 @@ ze_result_t LinuxFrequencyImp::setMax(double max) {
                               "error@<%s> <failed to write file %s> <result: 0x%x>\n", __func__, maxFreqFile.c_str(), result);
         return result;
     }
-    return pSysfsAccess->write(boostFreqFile, max);
+
+    if (pSysmanKmdInterface->isBoostFrequencyAvailable()) {
+        result = pSysfsAccess->write(boostFreqFile, max);
+    }
+
+    return result;
 }
 
 ze_result_t LinuxFrequencyImp::getRequest(double &request) {
@@ -299,19 +308,25 @@ ze_result_t LinuxFrequencyImp::getRequest(double &request) {
 }
 
 ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
-    double intval;
+    ze_result_t result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    double freqVal = 0;
 
-    ze_result_t result = pSysfsAccess->read(tdpFreqFile, intval);
-    if (ZE_RESULT_SUCCESS != result) {
-        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
-            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (pSysmanKmdInterface->isTdpFrequencyAvailable()) {
+        result = pSysfsAccess->read(tdpFreqFile, freqVal);
+        if (ZE_RESULT_SUCCESS != result) {
+            if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, tdpFreqFile.c_str(), result);
+            return result;
         }
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, tdpFreqFile.c_str(), result);
-        return result;
+        tdp = freqVal;
+    } else {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    tdp = intval;
-    return ZE_RESULT_SUCCESS;
+
+    return result;
 }
 
 ze_result_t LinuxFrequencyImp::getActual(double &actual) {
@@ -383,12 +398,8 @@ void LinuxFrequencyImp::init() {
     bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
 
     minFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, subdeviceId, baseDirectoryExists);
-    minDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinDefaultFrequency, subdeviceId, baseDirectoryExists);
     maxFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, subdeviceId, baseDirectoryExists);
-    maxDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxDefaultFrequency, subdeviceId, baseDirectoryExists);
-    boostFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameBoostFrequency, subdeviceId, baseDirectoryExists);
     requestFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCurrentFrequency, subdeviceId, baseDirectoryExists);
-    tdpFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameTdpFrequency, subdeviceId, baseDirectoryExists);
     actualFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameActualFrequency, subdeviceId, baseDirectoryExists);
     efficientFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, subdeviceId, baseDirectoryExists);
     maxValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, subdeviceId, baseDirectoryExists);
@@ -398,6 +409,19 @@ void LinuxFrequencyImp::init() {
     throttleReasonPL2File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, subdeviceId, baseDirectoryExists);
     throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
     throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
+
+    if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
+        minDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinDefaultFrequency, subdeviceId, baseDirectoryExists);
+        maxDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxDefaultFrequency, subdeviceId, baseDirectoryExists);
+    }
+
+    if (pSysmanKmdInterface->isBoostFrequencyAvailable()) {
+        boostFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameBoostFrequency, subdeviceId, baseDirectoryExists);
+    }
+
+    if (pSysmanKmdInterface->isTdpFrequencyAvailable()) {
+        tdpFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameTdpFrequency, subdeviceId, baseDirectoryExists);
+    }
 }
 
 LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), frequencyDomainNumber(frequencyDomainNumber) {

@@ -107,6 +107,13 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCalling
     EXPECT_EQ(0u, pSysmanKmdInterface->getEventType(true));
 }
 
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    EXPECT_TRUE(pSysmanKmdInterface->isDefaultFrequencyAvailable());
+    EXPECT_TRUE(pSysmanKmdInterface->isBoostFrequencyAvailable());
+    EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
+}
+
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineClassStringThenInvalidValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_EQ(std::nullopt, pSysmanKmdInterface->getEngineClassString(EngineClass::ENGINE_CLASS_COMPUTE));
