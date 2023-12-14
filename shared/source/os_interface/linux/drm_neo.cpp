@@ -1315,7 +1315,6 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             UNRECOVERABLE_IF(bo->peekPatIndex() == CommonConstants::unsupportedPatIndex);
             ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, bo->peekPatIndex(), castToUint64(extensions.get()));
             vmBind.extensions = castToUint64(vmBindExtSetPat);
-            vmBind.patIndex = bo->peekPatIndex();
         } else {
             vmBind.extensions = castToUint64(extensions.get());
         }

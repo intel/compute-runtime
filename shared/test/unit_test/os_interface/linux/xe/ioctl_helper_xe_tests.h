@@ -151,8 +151,7 @@ class DrmMockXe : public DrmMockCustom {
             this->createParamsSize = createParams->size;
             this->createParamsFlags = createParams->flags;
             this->createParamsHandle = createParams->handle = testValueGemCreate;
-            this->createParamsCpuCaching = createParams->cpu_caching;
-            if (0 == this->createParamsSize || 0 == this->createParamsFlags || 0 == this->createParamsCpuCaching) {
+            if (0 == this->createParamsSize || 0 == this->createParamsFlags) {
                 return EINVAL;
             }
             ret = 0;
@@ -270,6 +269,5 @@ class DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_sync, 1> syncInputs;
     int waitUserFenceReturn = 0;
     uint32_t createParamsFlags = 0u;
-    uint16_t createParamsCpuCaching = 0u;
     bool ioctlCalled = false;
 };

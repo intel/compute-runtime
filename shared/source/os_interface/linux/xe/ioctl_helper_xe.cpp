@@ -533,15 +533,6 @@ void IoctlHelperXe::setDefaultEngine() {
     }
 }
 
-uint16_t IoctlHelperXe::getCpuCachingMode() {
-    uint16_t cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WC;
-    if (debugManager.flags.OverrideCpuCaching.get() != -1) {
-        cpuCachingMode = debugManager.flags.OverrideCpuCaching.get();
-    }
-
-    return cpuCachingMode;
-}
-
 int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
@@ -562,7 +553,6 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
         memoryInstances.set(memoryClassInstance.memoryInstance);
     }
     create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode();
 
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
@@ -596,7 +586,6 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
         memoryInstances.set(regionClassAndInstance.memoryInstance);
     }
     create.flags = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode();
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
     updateBindInfo(create.handle, 0u, create.size);
@@ -1265,7 +1254,6 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
         bind.bind.flags = DRM_XE_VM_BIND_FLAG_ASYNC;
         bind.bind.obj_offset = vmBindParams.offset;
-        bind.bind.pat_index = vmBindParams.patIndex;
 
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
