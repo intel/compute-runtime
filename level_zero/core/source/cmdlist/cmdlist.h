@@ -48,6 +48,7 @@ struct CmdListKernelLaunchParams {
     bool isDestinationAllocationInSystemMemory = false;
     bool isHostSignalScopeEvent = false;
     bool skipInOrderNonWalkerSignaling = false;
+    bool pipeControlSignalling = false;
 };
 
 struct CmdListReturnPoint {

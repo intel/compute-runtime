@@ -1456,6 +1456,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     launchParams.isKernelSplitOperation = kernelCounter > 1;
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
+    launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || dstAllocationStruct.needsFlush;
+
     appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
 
     if (isCopyOnly()) {
@@ -1525,7 +1527,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
-        bool emitPipeControl = !isCopyOnly() && eventSignalPipeControl(launchParams.isKernelSplitOperation, signalEvent ? getDcFlushRequired(signalEvent->isSignalScope()) : false);
+        bool emitPipeControl = !isCopyOnly() && launchParams.pipeControlSignalling;
 
         if (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl) {
             if (!signalEvent && !isCopyOnly()) {

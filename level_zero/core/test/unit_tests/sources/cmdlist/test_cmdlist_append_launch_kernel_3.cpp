@@ -1729,7 +1729,8 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKer
 
     auto offset = cmdStream->getUsed();
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-    uint32_t copyData = 0;
+
+    void *alloc = allocDeviceMem(16384u);
 
     auto findSemaphores = [&](size_t expectedNumSemaphores) {
         GenCmdList cmdList;
@@ -1745,14 +1746,53 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKer
     uint32_t numSemaphores = immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope())) ? 1 : 2;
 
     offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(alloc, alloc, 1, eventHandle, 0, nullptr, false, false);
     findSemaphores(numSemaphores); // implicit dependency + optional chaining
 
     numSemaphores = immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope())) ? 1 : 0;
 
     offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(alloc, alloc, 1, nullptr, 0, nullptr, false, false);
     findSemaphores(numSemaphores); // implicit dependency for Compact event or no semaphores for non-compact
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, eventHandle, 0, nullptr, false, false);
+    findSemaphores(2); // implicit dependency + chaining
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    findSemaphores(0); // no implicit dependency
+
+    context->freeMem(alloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyAndFlushRequiredWhenDispatchingKernelThenProgramSemaphoreOnce, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedImplicitlyDisabled();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto eventHandle = events[0]->toHandle();
+
+    auto offset = cmdStream->getUsed();
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+    uint32_t copyData = 0;
+
+    auto findSemaphores = [&](size_t expectedNumSemaphores) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+        auto cmds = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(expectedNumSemaphores, cmds.size());
+    };
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+    findSemaphores(1); // implicit dependency
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    findSemaphores(1); // implicit dependency
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, eventHandle, 0, nullptr, false, false);
@@ -1776,10 +1816,10 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
 
     auto eventHandle = events[0]->toHandle();
 
-    uint32_t copyData = 0;
+    void *alloc = allocDeviceMem(16384u);
 
     auto offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(alloc, alloc, 1, eventHandle, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
@@ -1800,6 +1840,44 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
         EXPECT_EQ(1u, postSync.getImmediateData());
         EXPECT_EQ(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), postSync.getDestinationAddress());
+    }
+
+    context->freeMem(alloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhenDispatchingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto eventHandle = events[0]->toHandle();
+
+    uint32_t copyData = 0;
+
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope()))) {
+        EXPECT_NE(cmdList.end(), sdiItor);
+    } else {
+        EXPECT_NE(cmdList.end(), sdiItor);
+
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), sdiCmd->getAddress());
+
+        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), walkerItor);
+        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto &postSync = walkerCmd->getPostSync();
+
+        EXPECT_NE(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), postSync.getDestinationAddress());
     }
 }
 
@@ -3089,9 +3167,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDon
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    void *alloc = allocDeviceMem(16384u);
 
-    immCmdList->appendMemoryCopy(alignedPtr, alignedPtr, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(alloc, alloc, 1, nullptr, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -3106,6 +3184,36 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDon
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     EXPECT_EQ(cmdList.end(), sdiItor);
+
+    context->freeMem(alloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyThenSingalFromSdi, IsAtLeastXeHpCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+
+    immCmdList->appendMemoryCopy(alignedPtr, alignedPtr, 1, nullptr, 0, nullptr, false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto &postSync = walkerCmd->getPostSync();
+    EXPECT_EQ(0u, postSync.getDestinationAddress());
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
+    EXPECT_NE(cmdList.end(), sdiItor);
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress(), sdiCmd->getAddress());
 
     alignedFree(alignedPtr);
 }

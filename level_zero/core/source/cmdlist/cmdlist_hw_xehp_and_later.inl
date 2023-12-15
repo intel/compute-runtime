@@ -277,7 +277,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         appendEventForProfilingAllWalkers(compactEvent, true, true);
     }
 
-    bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation);
+    bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
     bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
 
     uint64_t inOrderCounterValue = 0;

@@ -164,6 +164,14 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         return ptr;
     }
 
+    void *allocDeviceMem(size_t size) {
+        void *alloc = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 4096u, &alloc);
+
+        return alloc;
+    }
+
     template <typename GfxFamily>
     bool verifyInOrderDependency(GenCmdList::iterator &cmd, uint64_t counter, uint64_t syncVa, bool qwordCounter);
 
