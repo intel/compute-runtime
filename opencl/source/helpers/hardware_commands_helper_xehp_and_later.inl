@@ -11,7 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -94,7 +94,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
         auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !generationOfLocalIdsByRuntime, gfxCoreHelper);
 
-        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
+        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - ImplicitArgs::getSize();
         offsetCrossThreadData += sizeForLocalIdsProgramming;
 
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);

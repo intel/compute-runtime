@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"

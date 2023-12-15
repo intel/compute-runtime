@@ -9,7 +9,7 @@
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/program/program_initialization.h"
@@ -1977,7 +1977,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWi
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
+    EXPECT_EQ(ImplicitArgs::getSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2039,7 +2039,7 @@ TEST_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebugg
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
+    EXPECT_EQ(ImplicitArgs::getSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2246,7 +2246,7 @@ TEST_F(LinkerTests, givenMultipleImplicitArgsRelocationsWithinSingleKernelWhenLi
 
     for (const auto &reloc : relocs) {
         auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-        EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
+        EXPECT_EQ(ImplicitArgs::getSize(), *addressToPatch);
         EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
     }
 }

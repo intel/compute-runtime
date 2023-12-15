@@ -15,7 +15,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -5715,7 +5715,7 @@ struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKe
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             const auto &gfxCoreHelper = device->getGfxCoreHelper();
             auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), !kernel.kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
-            return implicitArgsProgrammingSize - sizeof(ImplicitArgs);
+            return implicitArgsProgrammingSize - ImplicitArgs::getSize();
         } else {
             return 0u;
         }

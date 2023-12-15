@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -62,7 +62,7 @@ TEST(ImplicitArgsHelperTest, givenNoImplicitArgsWhenGettingSizeForImplicitArgsPr
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
-    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs implicitArgs{ImplicitArgs::getSize()};
 
     KernelDescriptor kernelDescriptor{};
 
@@ -77,11 +77,11 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, 32u /* grfSize */, 3u /* num channels */, totalWorkgroupSize, false, *gfxCoreHelper.get()), MemoryConstants::cacheLineSize);
-    EXPECT_EQ(localIdsSize + sizeof(NEO::ImplicitArgs), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get()));
+    EXPECT_EQ(localIdsSize + ImplicitArgs::getSize(), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get()));
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
-    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs implicitArgs{ImplicitArgs::getSize()};
 
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;
@@ -96,7 +96,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
-    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs implicitArgs{ImplicitArgs::getSize()};
 
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 0;
@@ -131,7 +131,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
         EXPECT_NE(pattern, memoryToPatch.get()[offset]) << offset;
     }
 
-    for (; offset < totalSizeForPatching - sizeof(implicitArgs); offset++) {
+    for (; offset < totalSizeForPatching - ImplicitArgs::getSize(); offset++) {
         EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
     }
 
@@ -141,7 +141,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
-    ImplicitArgs implicitArgs{offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs implicitArgs{ImplicitArgs::getSize()};
 
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;
@@ -154,7 +154,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
     auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, *gfxCoreHelper.get());
 
-    EXPECT_EQ(0x80u, totalSizeForPatching);
+    EXPECT_EQ(alignUp(ImplicitArgs::getSize(), MemoryConstants::cacheLineSize), totalSizeForPatching);
 
     auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
 
@@ -168,7 +168,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
 
     uint32_t offset = 0;
 
-    for (; offset < sizeof(implicitArgs); offset++) {
+    for (; offset < ImplicitArgs::getSize(); offset++) {
         EXPECT_NE(pattern, memoryToPatch.get()[offset]);
     }
 

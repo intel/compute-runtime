@@ -16,7 +16,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -648,7 +648,7 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                 UNRECOVERABLE_IF(!pDevice);
                 kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-                    *pImplicitArgsReloc = sizeof(ImplicitArgs);
+                    *pImplicitArgsReloc = ImplicitArgs::getSize();
                 }
             }
         }

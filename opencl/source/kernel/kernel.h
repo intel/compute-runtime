@@ -11,7 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/vec.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/unified_memory/unified_memory.h"

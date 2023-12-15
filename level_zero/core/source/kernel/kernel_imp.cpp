@@ -24,7 +24,7 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -1020,7 +1020,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->structSize = offsetof(NEO::ImplicitArgs, reserved);
+        pImplicitArgs->structSize = NEO::ImplicitArgs::getSize();
         pImplicitArgs->structVersion = 0;
         pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
     }

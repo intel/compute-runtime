@@ -7,7 +7,7 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/gen9/hw_cmds_base.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.inl"

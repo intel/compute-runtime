@@ -10,7 +10,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_work_size.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"

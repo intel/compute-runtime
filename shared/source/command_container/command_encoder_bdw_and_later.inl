@@ -22,7 +22,7 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 
 #include <algorithm>
 

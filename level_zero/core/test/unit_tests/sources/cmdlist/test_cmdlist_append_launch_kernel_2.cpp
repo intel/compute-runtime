@@ -11,7 +11,7 @@
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -931,6 +931,9 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
 
     void SetUp() override {
         CmdlistAppendLaunchKernelTests::SetUp();
+        memset(&expectedImplicitArgs, 0, sizeof(ImplicitArgs));
+        expectedImplicitArgs.structSize = ImplicitArgs::getSize();
+
         expectedImplicitArgs.numWorkDim = 3;
         expectedImplicitArgs.simdWidth = 32;
         expectedImplicitArgs.localSizeX = 2;
@@ -1006,7 +1009,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
     }
     std::unique_ptr<L0::CommandList> commandList;
     GraphicsAllocation *indirectHeapAllocation = nullptr;
-    ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs expectedImplicitArgs = {ImplicitArgs::getSize()};
     std::array<uint8_t, 3> workgroupDimOrder{0, 1, 2};
     uint32_t implicitArgsProgrammingSize = 0u;
 
@@ -1025,27 +1028,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
-    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - sizeof(ImplicitArgs), MemoryConstants::cacheLineSize);
+    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
     const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, gfxCoreHelper);
 
-    auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
+    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
     size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenPreXeHpPlatformWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto implicitArgsInIndirectData = indirectHeapAllocation->getUnderlyingBuffer();
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
 
-    auto crossThreadDataInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), 0x80);
+    auto crossThreadDataInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), alignUp(ImplicitArgs::getSize(), 64));
 
     auto programmedImplicitArgsGpuVA = reinterpret_cast<uint64_t *>(crossThreadDataInIndirectData)[0];
     EXPECT_EQ(indirectHeapAllocation->getGpuAddress(), programmedImplicitArgsGpuVA);
@@ -1071,18 +1074,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
-    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - sizeof(ImplicitArgs), MemoryConstants::cacheLineSize);
+    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
     const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, gfxCoreHelper);
 
-    auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
+    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
     size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenXeHpAndLaterPlatformWhenAppendLaunchKernelWithImplicitArgsAndSimd1ThenLocalIdsAreGeneratedCorrectly) {
@@ -1104,12 +1107,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeof(expectedLocalIds)));
 
-    auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
+    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
 
     EXPECT_EQ(alignUp(sizeof(expectedLocalIds), MemoryConstants::cacheLineSize), localIdsProgrammingSize);
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
 }
 
 HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppendLaunchKernelThenImplicitArgsAreNotSentToIndirectHeap) {

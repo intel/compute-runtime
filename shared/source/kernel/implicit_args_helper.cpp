@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/kernel/implicit_args_helper.h"
+
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_walk_order.h"
@@ -13,7 +15,6 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/vec.h"
-#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
 namespace NEO {
@@ -46,7 +47,7 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
     if (!pImplicitArgs) {
         return 0;
     }
-    auto implicitArgsSize = static_cast<uint32_t>(sizeof(NEO::ImplicitArgs));
+    auto implicitArgsSize = static_cast<uint32_t>(ImplicitArgs::getSize());
     auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     if (patchImplicitArgsBufferInCrossThread) {
         return alignUp(implicitArgsSize, MemoryConstants::cacheLineSize);
@@ -82,10 +83,10 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
                                      static_cast<uint16_t>(implicitArgs.localSizeZ)}},
             dimensionOrder,
             false, grfSize, gfxCoreHelper);
-        auto sizeForLocalIdsProgramming = totalSizeToProgram - sizeof(NEO::ImplicitArgs);
+        auto sizeForLocalIdsProgramming = totalSizeToProgram - ImplicitArgs::getSize();
         ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
     }
-    memcpy_s(ptrToPatch, sizeof(NEO::ImplicitArgs), &implicitArgs, sizeof(NEO::ImplicitArgs));
+    memcpy_s(ptrToPatch, ImplicitArgs::getSize(), &implicitArgs, ImplicitArgs::getSize());
 
     return retVal;
 }

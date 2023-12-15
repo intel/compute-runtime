@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/string.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"

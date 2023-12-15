@@ -27,7 +27,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/local_ids_cache.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -176,7 +176,7 @@ cl_int Kernel::initialize() {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->structSize = offsetof(ImplicitArgs, reserved);
+        pImplicitArgs->structSize = ImplicitArgs::getSize();
         pImplicitArgs->structVersion = 0;
         pImplicitArgs->simdWidth = maxSimdSize;
     }
@@ -426,7 +426,7 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
     }
 
     if (pImplicitArgs) {
-        memcpy_s(pImplicitArgs.get(), sizeof(ImplicitArgs), pSourceKernel->getImplicitArgs(), sizeof(ImplicitArgs));
+        memcpy_s(pImplicitArgs.get(), ImplicitArgs::getSize(), pSourceKernel->getImplicitArgs(), ImplicitArgs::getSize());
     }
     this->isBuiltIn = pSourceKernel->isBuiltIn;
 

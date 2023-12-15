@@ -27,7 +27,7 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -255,7 +255,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
 
         if (pImplicitArgs) {
-            offsetThreadData -= sizeof(ImplicitArgs);
+            offsetThreadData -= ImplicitArgs::getSize();
             pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
             ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder), gfxCoreHelper);
         }
@@ -269,7 +269,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
             uint64_t implicitArgsGpuPtr = 0u;
             if (pImplicitArgs) {
-                implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeof(ImplicitArgs);
+                implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - ImplicitArgs::getSize();
             }
             EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr);
         }

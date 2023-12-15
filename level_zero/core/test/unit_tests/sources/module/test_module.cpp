@@ -18,7 +18,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
@@ -1732,7 +1732,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithInternalRelocationAndUnresolvedExt
 
     uint32_t internalRelocationOffset = 0x10;
     linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, internalRelocationOffset, LinkerInput::RelocationInfo::Type::Address, SegmentType::Instructions}});
-    uint32_t expectedInternalRelocationValue = sizeof(ImplicitArgs);
+    uint32_t expectedInternalRelocationValue = ImplicitArgs::getSize();
 
     uint32_t externalRelocationOffset = 0x20;
     constexpr auto externalSymbolName = "unresolved";
@@ -4437,7 +4437,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
     auto status = pModule->linkBinary();
     EXPECT_TRUE(status);
 
-    EXPECT_EQ(sizeof(ImplicitArgs), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+    EXPECT_EQ(ImplicitArgs::getSize(), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
 
     EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }

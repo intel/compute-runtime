@@ -15,7 +15,7 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/kernel_info_from_patchtokens.h"
@@ -3477,7 +3477,7 @@ TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenIm
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    EXPECT_EQ(112u, pImplicitArgs->structSize);
+    EXPECT_EQ(ImplicitArgs::getSize(), pImplicitArgs->structSize);
     EXPECT_EQ(0u, pImplicitArgs->structVersion);
 }
 
@@ -3497,7 +3497,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    ImplicitArgs expectedImplicitArgs{offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs expectedImplicitArgs{ImplicitArgs::getSize()};
 
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = simd;
@@ -3519,7 +3519,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     kernel->setGroupCount(3, 2, 1);
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
-    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, ImplicitArgs::getSize()));
 }
 
 using BindlessKernelTest = Test<DeviceFixture>;

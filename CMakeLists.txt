@@ -833,6 +833,7 @@ include_directories(${NEO_SHARED_DIRECTORY}/command_container/definitions${BRANC
 include_directories(${NEO_SHARED_DIRECTORY}/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/debug_settings/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/kernel/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/gen_common${BRANCH_DIR_SUFFIX})
 if(WIN32)
   include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory${BRANCH_DIR_SUFFIX})

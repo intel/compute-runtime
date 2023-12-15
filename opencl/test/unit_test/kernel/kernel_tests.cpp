@@ -14,7 +14,7 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -3322,8 +3322,8 @@ TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStr
 
         ASSERT_NE(nullptr, pImplicitArgs);
 
-        ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved), 0, 0, 32};
-        EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, sizeof(ImplicitArgs)));
+        ImplicitArgs expectedImplicitArgs = {ImplicitArgs::getSize(), 0, 0, 32};
+        EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, ImplicitArgs::getSize()));
     }
 }
 
@@ -3341,7 +3341,7 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParam
 
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs expectedImplicitArgs = {ImplicitArgs::getSize()};
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = 32;
     expectedImplicitArgs.localSizeX = 4;
@@ -3363,7 +3363,7 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParam
     kernel.setGlobalWorkOffsetValues(1, 2, 3);
     kernel.setNumWorkGroupsValues(3, 2, 1);
 
-    EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, ImplicitArgs::getSize()));
 }
 
 TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenCloneKernelThenImplicitArgsAreCopied) {
@@ -3379,7 +3379,7 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenCloneKernelThenImp
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
 
-    ImplicitArgs expectedImplicitArgs = {offsetof(ImplicitArgs, reserved)};
+    ImplicitArgs expectedImplicitArgs = {ImplicitArgs::getSize()};
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = 32;
     expectedImplicitArgs.localSizeX = 4;
@@ -3407,7 +3407,7 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenCloneKernelThenImp
 
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, sizeof(ImplicitArgs)));
+    EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, ImplicitArgs::getSize()));
 }
 
 TEST_F(KernelImplicitArgsTest, givenKernelWithoutImplicitArgsWhenSettingKernelParamsThenImplicitArgsAreNotSet) {

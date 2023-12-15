@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/kernel/implicit_args.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
