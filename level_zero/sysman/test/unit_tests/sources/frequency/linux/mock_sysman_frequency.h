@@ -11,7 +11,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp_prelim.h"
+#include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "gtest/gtest.h"

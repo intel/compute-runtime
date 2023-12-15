@@ -8,6 +8,8 @@
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
@@ -19,7 +21,6 @@
 
 namespace L0 {
 namespace Sysman {
-
 const bool LinuxFrequencyImp::canControl = true; // canControl is true on i915 (GEN9 Hardcode)
 
 ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &properties) {
@@ -118,7 +119,6 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     }
     return setMax(newMax);
 }
-
 bool LinuxFrequencyImp::getThrottleReasonStatus(void) {
     uint32_t val = 0;
     auto result = pSysfsAccess->read(throttleReasonStatusFile, val);
@@ -237,9 +237,8 @@ ze_result_t LinuxFrequencyImp::setOcTjMax(double ocTjMax) {
 }
 
 ze_result_t LinuxFrequencyImp::getMin(double &min) {
-    double intval;
-
-    ze_result_t result = pSysfsAccess->read(minFreqFile, intval);
+    double freqVal = 0;
+    ze_result_t result = pSysfsAccess->read(minFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -248,7 +247,7 @@ ze_result_t LinuxFrequencyImp::getMin(double &min) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, minFreqFile.c_str(), result);
         return result;
     }
-    min = intval;
+    min = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -266,9 +265,8 @@ ze_result_t LinuxFrequencyImp::setMin(double min) {
 }
 
 ze_result_t LinuxFrequencyImp::getMax(double &max) {
-    double intval;
-
-    ze_result_t result = pSysfsAccess->read(maxFreqFile, intval);
+    double freqVal = 0;
+    ze_result_t result = pSysfsAccess->read(maxFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -277,7 +275,7 @@ ze_result_t LinuxFrequencyImp::getMax(double &max) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, maxFreqFile.c_str(), result);
         return result;
     }
-    max = intval;
+    max = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -300,9 +298,9 @@ ze_result_t LinuxFrequencyImp::setMax(double max) {
 }
 
 ze_result_t LinuxFrequencyImp::getRequest(double &request) {
-    double intval;
+    double freqVal = 0;
 
-    ze_result_t result = pSysfsAccess->read(requestFreqFile, intval);
+    ze_result_t result = pSysfsAccess->read(requestFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -311,7 +309,7 @@ ze_result_t LinuxFrequencyImp::getRequest(double &request) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, requestFreqFile.c_str(), result);
         return result;
     }
-    request = intval;
+    request = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -333,14 +331,13 @@ ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
     } else {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-
     return result;
 }
 
 ze_result_t LinuxFrequencyImp::getActual(double &actual) {
-    double intval;
+    double freqVal = 0;
 
-    ze_result_t result = pSysfsAccess->read(actualFreqFile, intval);
+    ze_result_t result = pSysfsAccess->read(actualFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -349,14 +346,14 @@ ze_result_t LinuxFrequencyImp::getActual(double &actual) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, actualFreqFile.c_str(), result);
         return result;
     }
-    actual = intval;
+    actual = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxFrequencyImp::getEfficient(double &efficient) {
-    double intval;
+    double freqVal = 0;
 
-    ze_result_t result = pSysfsAccess->read(efficientFreqFile, intval);
+    ze_result_t result = pSysfsAccess->read(efficientFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -365,14 +362,14 @@ ze_result_t LinuxFrequencyImp::getEfficient(double &efficient) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, efficientFreqFile.c_str(), result);
         return result;
     }
-    efficient = intval;
+    efficient = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxFrequencyImp::getMaxVal(double &maxVal) {
-    double intval;
+    double freqVal = 0;
 
-    ze_result_t result = pSysfsAccess->read(maxValFreqFile, intval);
+    ze_result_t result = pSysfsAccess->read(maxValFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -381,14 +378,14 @@ ze_result_t LinuxFrequencyImp::getMaxVal(double &maxVal) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, maxValFreqFile.c_str(), result);
         return result;
     }
-    maxVal = intval;
+    maxVal = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
-    double intval;
+    double freqVal = 0;
 
-    ze_result_t result = pSysfsAccess->read(minValFreqFile, intval);
+    ze_result_t result = pSysfsAccess->read(minValFreqFile, freqVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -397,13 +394,18 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
                               "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, minValFreqFile.c_str(), result);
         return result;
     }
-    minVal = intval;
+    minVal = freqVal;
     return ZE_RESULT_SUCCESS;
 }
 
 void LinuxFrequencyImp::init() {
+
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
-    bool baseDirectoryExists = pSysfsAccess->directoryExists(baseDir);
+    bool baseDirectoryExists = false;
+
+    if (pSysfsAccess->directoryExists(baseDir)) {
+        baseDirectoryExists = true;
+    }
 
     minFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, subdeviceId, baseDirectoryExists);
     maxFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, subdeviceId, baseDirectoryExists);
@@ -434,9 +436,9 @@ void LinuxFrequencyImp::init() {
 
 LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), frequencyDomainNumber(frequencyDomainNumber) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     productFamily = pLinuxSysmanImp->getProductFamily();
+    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     init();
 }
 
@@ -446,7 +448,19 @@ OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
 }
 
 std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
-    std::vector<zes_freq_domain_t> freqDomains = {ZES_FREQ_DOMAIN_GPU};
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    auto &productHelper = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    auto releaseHelper = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getReleaseHelper();
+    std::vector<zes_freq_domain_t> freqDomains = {};
+    uint32_t mediaFreqTileIndex;
+    if (productHelper.getMediaFrequencyTileIndex(releaseHelper, mediaFreqTileIndex) == true) {
+        auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+        const std::string baseDir = "gt/gt" + std::to_string(mediaFreqTileIndex) + "/";
+        if (pSysfsAccess->directoryExists(baseDir)) {
+            freqDomains.push_back(ZES_FREQ_DOMAIN_MEDIA);
+        }
+    }
+    freqDomains.push_back(ZES_FREQ_DOMAIN_GPU);
     return freqDomains;
 }
 

@@ -11,6 +11,7 @@
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
 
+#include "igfxfmid.h"
 namespace L0 {
 namespace Sysman {
 
@@ -58,9 +59,9 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   private:
     std::string minFreqFile;
     std::string maxFreqFile;
+    std::string boostFreqFile;
     std::string minDefaultFreqFile;
     std::string maxDefaultFreqFile;
-    std::string boostFreqFile;
     std::string requestFreqFile;
     std::string tdpFreqFile;
     std::string actualFreqFile;

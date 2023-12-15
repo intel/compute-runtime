@@ -27,6 +27,8 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
+    std::unique_ptr<ProductHelper> pProductHelper;
+    std::unique_ptr<ProductHelper> pProductHelperOld;
     uint32_t numClocks = 0;
     double step = 0;
 
@@ -39,6 +41,9 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->pSysfsAccess.get();
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
 
+        pProductHelper = std::make_unique<MockProductHelperFreq>();
+        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         pSysmanKmdInterface->pSysfsAccess->setVal(minFreqFile, minFreq);
         pSysmanKmdInterface->pSysfsAccess->setVal(maxFreqFile, maxFreq);
         pSysmanKmdInterface->pSysfsAccess->setVal(requestFreqFile, request);
@@ -48,7 +53,6 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
         pSysmanKmdInterface->pSysfsAccess->setVal(minValFreqFile, minVal);
         step = 50;
         numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
-
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
             delete handle;
         }
@@ -57,6 +61,8 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
+        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         SysmanDeviceFixture::TearDown();
     }
 
