@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -590,34 +590,6 @@ void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, u
     }
 }
 
-ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
-                                        ze_ipc_mem_handle_t *pIpcHandle) {
-    NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    if (allocData) {
-        auto *memoryManager = driverHandle->getMemoryManager();
-        auto *graphicsAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-
-        uint64_t handle = 0;
-        int ret = graphicsAllocation->createInternalHandle(memoryManager, 0u, handle);
-        if (ret < 0) {
-            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-        }
-
-        memoryManager->registerIpcExportedAllocation(graphicsAllocation);
-
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-        auto type = allocData->memoryType;
-        uint8_t ipcType = 0;
-        if (type == HOST_UNIFIED_MEMORY) {
-            ipcType = static_cast<uint8_t>(InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY);
-        }
-        setIPCHandleData(graphicsAllocation, handle, ipcData, reinterpret_cast<uint64_t>(ptr), ipcType);
-
-        return ZE_RESULT_SUCCESS;
-    }
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-}
-
 ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lock = this->driverHandle->lockIPCHandleMap();
@@ -644,43 +616,61 @@ ze_result_t ContextImp::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
-                                         uint32_t *numIpcHandles,
-                                         ze_ipc_mem_handle_t *pIpcHandles) {
+ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
+                                             uint32_t *numIpcHandles,
+                                             ze_ipc_mem_handle_t *pIpcHandles) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    if (allocData) {
-        auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-        uint32_t numHandles = alloc->getNumHandles();
-        UNRECOVERABLE_IF(numIpcHandles == nullptr);
+    if (!allocData) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
+    auto memoryManager = this->driverHandle->getMemoryManager();
+    auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    if (numIpcHandles) {
+        uint32_t numHandles = alloc->getNumHandles();
         if (*numIpcHandles == 0 || *numIpcHandles > numHandles) {
             *numIpcHandles = numHandles;
         }
+    }
 
-        if (pIpcHandles == nullptr) {
-            return ZE_RESULT_SUCCESS;
-        }
-
-        auto type = allocData->memoryType;
-        auto ipcType = InternalIpcMemoryType::IPC_DEVICE_UNIFIED_MEMORY;
-        if (type == HOST_UNIFIED_MEMORY) {
-            ipcType = InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY;
-        }
-
-        for (uint32_t i = 0; i < *numIpcHandles; i++) {
-            uint64_t handle = 0;
-            int ret = allocData->gpuAllocations.getDefaultGraphicsAllocation()->createInternalHandle(this->driverHandle->getMemoryManager(), i, handle);
-            if (ret < 0) {
-                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-            }
-
-            IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
-            setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType));
-        }
-
+    if (pIpcHandles == nullptr) {
         return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    auto type = allocData->memoryType;
+    auto ipcType = InternalIpcMemoryType::IPC_DEVICE_UNIFIED_MEMORY;
+    if (type == HOST_UNIFIED_MEMORY) {
+        ipcType = InternalIpcMemoryType::IPC_HOST_UNIFIED_MEMORY;
+    }
+
+    uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
+    for (uint32_t i = 0u; i < loopCount; i++) {
+        uint64_t handle = 0;
+        int ret = alloc->createInternalHandle(memoryManager, i, handle);
+        if (ret < 0) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        memoryManager->registerIpcExportedAllocation(alloc);
+
+        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
+        setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType));
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
+                                        ze_ipc_mem_handle_t *pIpcHandle) {
+    return getIpcMemHandlesImpl(ptr, nullptr, pIpcHandle);
+}
+
+ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
+                                         uint32_t *numIpcHandles,
+                                         ze_ipc_mem_handle_t *pIpcHandles) {
+    DEBUG_BREAK_IF(numIpcHandles == nullptr);
+    return getIpcMemHandlesImpl(ptr, numIpcHandles, pIpcHandles);
 }
 
 ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
