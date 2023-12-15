@@ -2462,7 +2462,7 @@ TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandl
 TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithNoSharingResourcesThenDifferentAllocationsAreReturned) {
     mock->ioctlExpected.primeFdToHandle = 4;
     mock->ioctlExpected.gemWait = 2;
-    mock->ioctlExpected.gemClose = 4;
+    mock->ioctlExpected.gemClose = 2;
 
     std::vector<NEO::osHandle> handles{6, 7};
     size_t size = 65536u * 2;

@@ -834,7 +834,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
             auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
 
-            bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, boHandle, size, maxOsContextCount);
+            bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
             i++;
         }
         bos.push_back(bo);

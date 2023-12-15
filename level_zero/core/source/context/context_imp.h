@@ -176,6 +176,7 @@ struct ContextImp : Context {
     ze_result_t checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr);
 
   protected:
+    ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type);
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
     size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
