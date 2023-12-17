@@ -55,8 +55,8 @@ NAMEDDEVICE(0x56C1, Dg2HwConfig, "Intel(R) Data Center GPU Flex 140")
 #endif
 #ifdef SUPPORT_MTL
 DEVICE(0x7D40, MtlHwConfig)
-DEVICE(0x7D55, MtlHwConfig)
-DEVICE(0x7DD5, MtlHwConfig)
+NAMEDDEVICE(0x7D55, MtlHwConfig, "Intel(R) Arc(TM) Graphics")
+NAMEDDEVICE(0x7DD5, MtlHwConfig, "Intel(R) Graphics")
 DEVICE(0x7D45, MtlHwConfig)
 DEVICE(0x7D60, MtlHwConfig)
 #endif
