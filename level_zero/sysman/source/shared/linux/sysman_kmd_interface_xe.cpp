@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,27 +124,7 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t
 }
 
 int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
-    uint64_t config = UINT64_MAX;
-
-    switch (engineGroup) {
-    case ZES_ENGINE_GROUP_ALL:
-        config = DRM_XE_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_COMPUTE_ALL:
-    case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = DRM_XE_PMU_RENDER_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_COPY_ALL:
-        config = DRM_XE_PMU_COPY_GROUP_BUSY(subDeviceId);
-        break;
-    case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = DRM_XE_PMU_MEDIA_GROUP_BUSY(subDeviceId);
-        break;
-    default:
-        break;
-    }
-
-    return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {

@@ -81,8 +81,6 @@ const char *IoctlHelperXe::xeGetBindFlagsName(int bindFlags) {
     switch (bindFlags) {
     case DRM_XE_VM_BIND_FLAG_READONLY:
         return "READ_ONLY";
-    case DRM_XE_VM_BIND_FLAG_ASYNC:
-        return "ASYNC";
     case DRM_XE_VM_BIND_FLAG_IMMEDIATE:
         return "IMMEDIATE";
     case DRM_XE_VM_BIND_FLAG_NULL:
@@ -575,17 +573,15 @@ CacheRegion IoctlHelperXe::closFree(CacheRegion closIndex) {
     return CacheRegion::none;
 }
 
-int IoctlHelperXe::xeWaitUserFence(uint64_t mask, uint16_t op, uint64_t addr, uint64_t value,
+int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint64_t mask, uint16_t op, uint64_t addr, uint64_t value,
                                    int64_t timeout) {
     struct drm_xe_wait_user_fence wait = {};
     wait.addr = addr;
     wait.op = op;
-    wait.flags = DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP;
     wait.value = value;
     wait.mask = mask;
     wait.timeout = timeout;
-    wait.num_engines = 0;
-    wait.instances = 0;
+    wait.exec_queue_id = ctxId;
     auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &wait);
     xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
           timeout, wait.flags, retVal);
@@ -615,7 +611,7 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
         timeout = TimeoutControls::maxTimeout;
     }
     if (address) {
-        return xeWaitUserFence(mask, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout);
+        return xeWaitUserFence(ctxId, mask, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout);
     }
     return 0;
 }
@@ -1073,8 +1069,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemVmCreate: {
         GemVmControl *d = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_create args = {};
-        args.flags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
-                     DRM_XE_VM_CREATE_FLAG_LR_MODE;
+        args.flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
         if (drm.hasPageFaultSupport()) {
             args.flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         }
@@ -1267,7 +1262,6 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         bind.syncs = reinterpret_cast<uintptr_t>(&sync);
         bind.bind.range = vmBindParams.length;
         bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
-        bind.bind.flags = DRM_XE_VM_BIND_FLAG_ASYNC;
         bind.bind.obj_offset = vmBindParams.offset;
         bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
 
@@ -1309,7 +1303,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             return ret;
         }
 
-        return xeWaitUserFence(DRM_XE_UFENCE_WAIT_MASK_U64, DRM_XE_UFENCE_WAIT_OP_EQ,
+        return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_MASK_U64, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
                                sync[0].timeline_value, XE_ONE_SEC);
     }

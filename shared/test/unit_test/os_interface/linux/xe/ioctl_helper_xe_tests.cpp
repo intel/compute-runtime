@@ -471,7 +471,6 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeOperationBindName("Unknown operation", -1);
 
     verifyXeFlagsBindName("READ_ONLY", DRM_XE_VM_BIND_FLAG_READONLY);
-    verifyXeFlagsBindName("ASYNC", DRM_XE_VM_BIND_FLAG_ASYNC);
     verifyXeFlagsBindName("IMMEDIATE", DRM_XE_VM_BIND_FLAG_IMMEDIATE);
     verifyXeFlagsBindName("NULL", DRM_XE_VM_BIND_FLAG_NULL);
     verifyXeFlagsBindName("Unknown flag", -1);
@@ -543,16 +542,14 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     {
         GemVmControl test = {};
         drm.pageFaultSupported = false;
-        uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
-                                         DRM_XE_VM_CREATE_FLAG_LR_MODE;
+        uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
         EXPECT_EQ(test.flags, expectedVmCreateFlags);
 
         drm.pageFaultSupported = true;
-        expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_ASYNC_DEFAULT |
-                                DRM_XE_VM_CREATE_FLAG_LR_MODE |
+        expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_LR_MODE |
                                 DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
@@ -1421,12 +1418,11 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP), waitUserFence.flags);
+        EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_MASK_U64), waitUserFence.mask);
         EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
-        EXPECT_EQ(0u, waitUserFence.num_engines);
-        EXPECT_EQ(0u, waitUserFence.instances);
+        EXPECT_EQ(0u, waitUserFence.exec_queue_id);
     }
     drm.vmBindInputs.clear();
     drm.syncInputs.clear();
@@ -1445,12 +1441,11 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_FLAG_SOFT_OP), waitUserFence.flags);
+        EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_MASK_U64), waitUserFence.mask);
         EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
-        EXPECT_EQ(0u, waitUserFence.num_engines);
-        EXPECT_EQ(0u, waitUserFence.instances);
+        EXPECT_EQ(0u, waitUserFence.exec_queue_id);
     }
 }
 
