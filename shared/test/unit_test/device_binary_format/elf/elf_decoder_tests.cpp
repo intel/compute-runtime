@@ -627,6 +627,80 @@ TEST(ElfDecoder, GivenElfWithStringTableSectionWhenGettingSectionNameThenCorrect
     EXPECT_STREQ("section1", section1.c_str());
 }
 
+TEST(ElfDecoder, givenSectionHeaderIndexGreaterThanAvailableWhenGettingSectionNameThenReturnEmptyString) {
+    std::vector<uint8_t> storage;
+    ElfFileHeader<EI_CLASS_64> header;
+    header.shOff = header.ehSize;
+    header.shNum = 3;
+    header.shStrNdx = 4;
+
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&header), reinterpret_cast<const uint8_t *>(&header + 1));
+    ElfSectionHeader<EI_CLASS_64> sectionHeader0;
+    sectionHeader0.size = sizeof(sectionHeader0) * 2;
+    sectionHeader0.offset = header.shOff;
+
+    ElfSectionHeader<EI_CLASS_64> sectionHeader1;
+    sectionHeader1.size = 0;
+    sectionHeader1.offset = header.shOff + sizeof(sectionHeader0);
+
+    std::string_view strTab("\000123456789\0section0\0section1\0", 30);
+    sectionHeader0.name = static_cast<uint32_t>(strTab.find("section0"));
+    sectionHeader1.name = static_cast<uint32_t>(strTab.find("section1"));
+
+    ElfSectionHeader<EI_CLASS_64> sectionHeaderStrTab;
+    sectionHeaderStrTab.size = strTab.size();
+    sectionHeaderStrTab.offset = header.shOff + 3 * sizeof(ElfSectionHeader<EI_CLASS_64>);
+
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeader0), reinterpret_cast<const uint8_t *>(&sectionHeader0 + 1));
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeader1), reinterpret_cast<const uint8_t *>(&sectionHeader1 + 1));
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeaderStrTab), reinterpret_cast<const uint8_t *>(&sectionHeaderStrTab + 1));
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(strTab.data()), reinterpret_cast<const uint8_t *>(strTab.data() + strTab.size()));
+
+    std::string decodeWarnings;
+    std::string decodeErrors;
+    auto elf64 = decodeElf<EI_CLASS_64>(storage, decodeErrors, decodeWarnings);
+
+    auto emptySection = elf64.getSectionName(0);
+    EXPECT_STREQ("", emptySection.c_str());
+}
+
+TEST(ElfDecoder, givenArgumentIndexGreaterThanAvailableWhenGettingSectionNameThenReturnEmptyString) {
+    std::vector<uint8_t> storage;
+    ElfFileHeader<EI_CLASS_64> header;
+    header.shOff = header.ehSize;
+    header.shNum = 3;
+    header.shStrNdx = 2;
+
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&header), reinterpret_cast<const uint8_t *>(&header + 1));
+    ElfSectionHeader<EI_CLASS_64> sectionHeader0;
+    sectionHeader0.size = sizeof(sectionHeader0) * 2;
+    sectionHeader0.offset = header.shOff;
+
+    ElfSectionHeader<EI_CLASS_64> sectionHeader1;
+    sectionHeader1.size = 0;
+    sectionHeader1.offset = header.shOff + sizeof(sectionHeader0);
+
+    std::string_view strTab("\000123456789\0section0\0section1\0", 30);
+    sectionHeader0.name = static_cast<uint32_t>(strTab.find("section0"));
+    sectionHeader1.name = static_cast<uint32_t>(strTab.find("section1"));
+
+    ElfSectionHeader<EI_CLASS_64> sectionHeaderStrTab;
+    sectionHeaderStrTab.size = strTab.size();
+    sectionHeaderStrTab.offset = header.shOff + 3 * sizeof(ElfSectionHeader<EI_CLASS_64>);
+
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeader0), reinterpret_cast<const uint8_t *>(&sectionHeader0 + 1));
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeader1), reinterpret_cast<const uint8_t *>(&sectionHeader1 + 1));
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeaderStrTab), reinterpret_cast<const uint8_t *>(&sectionHeaderStrTab + 1));
+    storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(strTab.data()), reinterpret_cast<const uint8_t *>(strTab.data() + strTab.size()));
+
+    std::string decodeWarnings;
+    std::string decodeErrors;
+    auto elf64 = decodeElf<EI_CLASS_64>(storage, decodeErrors, decodeWarnings);
+
+    auto emptySection = elf64.getSectionName(3);
+    EXPECT_STREQ("", emptySection.c_str());
+}
+
 TEST(ElfDecoder, GivenElfWithStringTableSectionWhenGettingSymbolNameThenCorrectNameIsReturned) {
     std::vector<uint8_t> storage;
     ElfFileHeader<EI_CLASS_64> header;
