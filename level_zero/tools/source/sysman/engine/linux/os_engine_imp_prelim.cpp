@@ -10,11 +10,13 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 
-using NEO::PrelimI915::I915_SAMPLE_BUSY;
+constexpr std::string_view pathForNumberOfVfs = "device/sriov_numvfs";
+using NEO::PrelimI915::drm_i915_pmu_engine_sample::I915_SAMPLE_BUSY;
 
 static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
@@ -70,20 +72,64 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
-    if (fd < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d it's returning error:0x%x \n", __FUNCTION__, fd, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    uint64_t data[2] = {};
-    auto ret = pPmuInterface->pmuRead(static_cast<int>(fd), data, sizeof(data));
+static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
+    uint64_t data[4] = {};
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
     if (ret < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    // In data[], First u64 is "active time", And second u64 is "timestamp". Both in nanoseconds
-    pStats->activeTime = data[0] / microSecondsToNanoSeconds;
-    pStats->timestamp = data[1] / microSecondsToNanoSeconds;
+    // In data[], First u64 is "active time", And second u64 is "timestamp". Both in ticks
+    pStats->activeTime = data[2];
+    pStats->timestamp = data[3];
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
+    // read from global busyness fd
+    return readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
+}
+
+LinuxEngineImp::~LinuxEngineImp() {
+
+    for (auto &fdPair : fdList) {
+        if (fdPair.first != -1) {
+            close(static_cast<int>(fdPair.first));
+        }
+        if (fdPair.second != -1) {
+            close(static_cast<int>(fdPair.second));
+        }
+    }
+    fdList.clear();
+}
+
+ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
+
+    if (numberOfVfs == 0) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (*pCount == 0) {
+        // +1 for PF
+        *pCount = numberOfVfs + 1;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    *pCount = std::min(*pCount, numberOfVfs + 1);
+    memset(pStats, 0, *pCount * sizeof(zes_engine_stats_t));
+    for (uint32_t i = 0; i < *pCount; i++) {
+        // +1 to consider the global busyness value
+        const auto fdListIndex = i + 1;
+        if (fdList[fdListIndex].first >= 0) {
+            auto status = readBusynessFromGroupFd(pPmuInterface, fdList[fdListIndex], &pStats[i]);
+            if (status != ZE_RESULT_SUCCESS) {
+                return status;
+            }
+            continue;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -98,29 +144,44 @@ void LinuxEngineImp::init() {
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
-        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY_TICKS(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_COMPUTE_ALL:
     case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY_TICKS(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_COPY_ALL:
-        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY_TICKS(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(subDeviceId);
         break;
     default:
         auto i915EngineClass = engineToI915Map.find(engineGroup);
-        config = I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance);
+        config = PRELIM_I915_PMU_ENGINE_BUSY_TICKS(i915EngineClass->second, engineInstance);
         break;
     }
-    fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+    int64_t fd[2];
+
+    // Fds for global busyness
+    fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    fdList.push_back(std::make_pair(fd[0], fd[1]));
+
+    pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
+    // +1 to include PF
+    for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
+        uint64_t functionConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
+
+        fd[0] = pPmuInterface->pmuInterfaceOpen(functionConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        fdList.push_back(std::make_pair(fd[0], fd[1]));
+    }
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
-    if (fd < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fd);
+    if (fdList[0].second < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fdList[0].second);
         return false;
     }
     return true;
@@ -131,11 +192,12 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     pDrm = &pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     init();
 }
 
 std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
-    std::unique_ptr<LinuxEngineImp> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
+    std::unique_ptr<OsEngine> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
     return pLinuxEngineImp;
 }
 

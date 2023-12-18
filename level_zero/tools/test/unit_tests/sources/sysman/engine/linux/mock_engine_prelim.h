@@ -21,7 +21,6 @@ namespace ult {
 constexpr int64_t mockPmuFd = 10;
 constexpr uint64_t mockTimestamp = 87654321;
 constexpr uint64_t mockActiveTime = 987654321;
-const uint32_t microSecondsToNanoSeconds = 1000u;
 constexpr uint16_t invalidEngineClass = UINT16_MAX;
 const std::string deviceDir("device");
 constexpr uint32_t numberOfMockedEnginesForSingleTileDevice = 7u;
@@ -106,10 +105,13 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
+    uint32_t mockPerfEventOpenFailAtCount = 1;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
-        if (mockPerfEventOpenRead == true) {
+        mockPerfEventOpenFailAtCount = std::max(mockPerfEventOpenFailAtCount - 1, 1u);
+        const bool shouldCheckForError = (mockPerfEventOpenFailAtCount == 1);
+        if (shouldCheckForError && mockPerfEventOpenRead == true) {
             return mockedPerfEventOpenAndFailureReturn(attr, pid, cpu, groupFd, flags);
         }
 
@@ -122,12 +124,18 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
 
     int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override {
 
+        if (fd < 0) {
+            return -1;
+        }
+
         if (mockPmuRead == true) {
             return mockedPmuReadAndFailureReturn(fd, data, sizeOfdata);
         }
 
         data[0] = mockActiveTime;
         data[1] = mockTimestamp;
+        data[2] = mockActiveTime;
+        data[3] = mockTimestamp;
         return 0;
     }
 
@@ -160,6 +168,7 @@ struct MockEngineSysfsAccess : public SysfsAccess {
 
     bool mockReadSymLinkFailure = false;
     bool mockReadSymLinkSuccess = false;
+    uint32_t mockReadVal = 0;
 
     ze_result_t readSymLink(const std::string file, std::string &val) override {
 
@@ -180,11 +189,17 @@ struct MockEngineSysfsAccess : public SysfsAccess {
             val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0";
             return ZE_RESULT_SUCCESS;
         }
+
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     ze_result_t getValStringSymLinkFailure(const std::string file, std::string &val) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t read(const std::string file, uint32_t &val) override {
+        val = mockReadVal;
+        return ZE_RESULT_SUCCESS;
     }
 
     MockEngineSysfsAccess() = default;
