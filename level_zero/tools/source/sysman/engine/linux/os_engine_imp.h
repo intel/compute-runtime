@@ -10,7 +10,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/tools/source/sysman/engine/os_engine.h"
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include <unistd.h>
@@ -21,13 +20,20 @@ struct Device;
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
-    ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
+    ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
     bool isEngineModuleSupported() override;
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     LinuxEngineImp() = default;
     LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice);
-    ~LinuxEngineImp() override;
+    ~LinuxEngineImp() override {
+        if (fd != -1) {
+            close(static_cast<int>(fd));
+            fd = -1;
+        }
+    }
 
   protected:
     zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
@@ -37,12 +43,10 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     Device *pDevice = nullptr;
     uint32_t subDeviceId = 0;
     ze_bool_t onSubDevice = false;
-    uint32_t numberOfVfs = 0;
-    SysfsAccess *pSysfsAccess = nullptr;
 
   private:
     void init();
-    std::vector<std::pair<int64_t, int64_t>> fdList{};
+    int64_t fd = -1;
 };
 
 } // namespace L0

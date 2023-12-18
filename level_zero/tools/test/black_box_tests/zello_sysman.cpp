@@ -856,16 +856,6 @@ std::string getEngineType(zes_engine_group_t engineGroup) {
 void testSysmanEngine(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Engine tests ---- " << std::endl;
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    VALIDATECALL(zeDeviceGetProperties(device, &deviceProperties));
-    if (verbose) {
-        std::cout << "Device UUID: ";
-        for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
-            std::cout << static_cast<uint32_t>(deviceProperties.uuid.id[i]) << " ";
-        }
-        std::cout << std::endl;
-    }
-
     uint32_t count = 0;
     VALIDATECALL(zesDeviceEnumEngineGroups(device, &count, nullptr));
     if (count == 0) {
@@ -874,33 +864,26 @@ void testSysmanEngine(ze_device_handle_t &device) {
     }
     std::vector<zes_engine_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumEngineGroups(device, &count, handles.data()));
-    for (uint32_t i = 0; i < 10; i++) {
-        std::cout << "[" << i << "]" << std::endl;
-        for (const auto &handle : handles) {
-            zes_engine_properties_t engineProperties = {};
-            zes_engine_stats_t engineStats = {};
+    for (const auto &handle : handles) {
+        zes_engine_properties_t engineProperties = {};
+        zes_engine_stats_t engineStats = {};
 
-            VALIDATECALL(zesEngineGetProperties(handle, &engineProperties));
+        VALIDATECALL(zesEngineGetProperties(handle, &engineProperties));
 
-            if (verbose) {
-                std::cout << "Engine Type = " << getEngineType(engineProperties.type);
-                if (engineProperties.onSubdevice) {
-                    std::cout << " || Subdevice Id = " << engineProperties.subdeviceId;
-                }
+        if (verbose) {
+            std::cout << "Engine Type = " << getEngineType(engineProperties.type) << std::endl;
+            if (engineProperties.onSubdevice) {
+                std::cout << "Subdevice Id = " << engineProperties.subdeviceId << std::endl;
             }
-
-            VALIDATECALL(zesEngineGetActivity(handle, &engineStats));
-            if (verbose) {
-                std::cout << " || Active Time = " << engineStats.activeTime;
-                std::cout << " || Timestamp = " << engineStats.timestamp;
-            }
-            std::cout << std::endl;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+
+        VALIDATECALL(zesEngineGetActivity(handle, &engineStats));
+        if (verbose) {
+            std::cout << "Active Time = " << engineStats.activeTime << std::endl;
+            std::cout << "Timestamp = " << engineStats.timestamp << std::endl;
+        }
     }
 }
-
 std::string getSchedulerModeName(zes_sched_mode_t mode) {
     static const std::map<zes_sched_mode_t, std::string> mgetSchedulerModeName{
         {ZES_SCHED_MODE_TIMEOUT, "ZES_SCHED_MODE_TIMEOUT"},

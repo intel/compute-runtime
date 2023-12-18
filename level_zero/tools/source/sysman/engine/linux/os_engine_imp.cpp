@@ -51,12 +51,12 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
 }
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
-    if (fdList.size() == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No Valid Fds returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    if (fd < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d it's returning error:0x%x \n", __FUNCTION__, fd, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     uint64_t data[2] = {};
-    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0].first), data, sizeof(data));
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fd), data, sizeof(data));
     if (ret < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -77,24 +77,12 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 void LinuxEngineImp::init() {
     auto i915EngineClass = engineToI915Map.find(engineGroup);
     // I915_PMU_ENGINE_BUSY macro provides the perf type config which we want to listen to get the engine busyness.
-    auto fd = pPmuInterface->pmuInterfaceOpen(I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance), -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
-    if (fd >= 0) {
-        fdList.push_back(std::make_pair(fd, -1));
-    }
-}
-
-LinuxEngineImp::~LinuxEngineImp() {
-    for (auto &fdPair : fdList) {
-        if (fdPair.first != -1) {
-            close(static_cast<int>(fdPair.first));
-        }
-    }
-    fdList.clear();
+    fd = pPmuInterface->pmuInterfaceOpen(I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance), -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
-    if (fdList.size() == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
+    if (fd < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fd);
         return false;
     }
     return true;
