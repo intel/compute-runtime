@@ -13,6 +13,8 @@
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include "igfxfmid.h"
+
 #include <cmath>
 
 namespace L0 {
@@ -41,7 +43,13 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &p
 }
 
 double LinuxFrequencyImp::osFrequencyGetStepSize() {
-    return 50.0 / 3; // Step of 16.6666667 Mhz (GEN9 Hardcode);
+    double stepSize;
+    if (productFamily >= IGFX_XE_HP_SDV) {
+        stepSize = 50.0;
+    } else {
+        stepSize = 50.0 / 3; // Step of 16.6666667 Mhz (GEN9 Hardcode)
+    }
+    return stepSize;
 }
 
 ze_result_t LinuxFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
@@ -428,6 +436,7 @@ LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice,
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    productFamily = pLinuxSysmanImp->getProductFamily();
     init();
 }
 

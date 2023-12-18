@@ -76,6 +76,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_GPU;
+    PRODUCT_FAMILY productFamily;
     void init();
 };
 

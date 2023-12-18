@@ -17,6 +17,8 @@ else()
   list(APPEND L0_TESTS_SYSMAN_FREQUENCY_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_frequency.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_frequency.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_frequency_xe.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_frequency_xe.h
   )
 endif()
 
