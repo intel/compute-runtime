@@ -151,6 +151,10 @@ struct KernelDescriptor {
             CrossThreadDataOffset enqueuedLocalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset numWorkGroups[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset workDim = undefined<CrossThreadDataOffset>;
+
+            CrossThreadDataOffset regionGroupSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
+            CrossThreadDataOffset regionGroupDimension = undefined<CrossThreadDataOffset>;
+            CrossThreadDataOffset regionGroupWgCount = undefined<CrossThreadDataOffset>;
         } dispatchTraits;
 
         struct {

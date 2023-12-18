@@ -1343,6 +1343,15 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::argTypeVmeSearchPathType:
         return populateWithOffset(getVmeDescriptor()->searchPathType);
+
+    case Types::Kernel::argTypeRegionGroupSize:
+        return populateArgVec(dst.payloadMappings.dispatchTraits.regionGroupSize, Tags::Kernel::PayloadArgument::ArgType::regionGroupSize);
+
+    case Types::Kernel::argTypeRegionGroupDimension:
+        return populateWithOffsetChecked(dst.payloadMappings.dispatchTraits.regionGroupDimension, sizeof(int32_t), Tags::Kernel::PayloadArgument::ArgType::regionGroupDimension);
+
+    case Types::Kernel::argTypeRegionGroupWgCount:
+        return populateWithOffsetChecked(dst.payloadMappings.dispatchTraits.regionGroupWgCount, sizeof(int32_t), Tags::Kernel::PayloadArgument::ArgType::regionGroupWgCount);
     }
 
     UNREACHABLE();
