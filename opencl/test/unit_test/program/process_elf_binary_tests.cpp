@@ -91,7 +91,7 @@ TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryT
     auto header = elf.elfFileHeader;
     ASSERT_NE(nullptr, header);
 
-    // check if ELF binary contains section SECTION_HEADER_TYPE_SPIRV
+    // check if ELF binary contains section SectionHeaderType_SPIRV
     bool hasSpirvSection = false;
     for (const auto &elfSectionHeader : elf.sectionHeaders) {
         if (elfSectionHeader.header->type == NEO::Elf::SHT_OPENCL_SPIRV) {
@@ -126,7 +126,7 @@ class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsi
 };
 
 TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThenProgramIsProperlyResolved) {
-    auto mockElf = std::make_unique<MockElfBinaryPatchtokens<enabledIrFormat::enableSpirv>>(device->getHardwareInfo());
+    auto mockElf = std::make_unique<MockElfBinaryPatchtokens<EnabledIrFormat::spirv>>(device->getHardwareInfo());
     auto pBinary = mockElf->storage;
     auto binarySize = mockElf->storage.size();
 

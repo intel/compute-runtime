@@ -63,13 +63,13 @@ struct IntelTracingMtTest : public Test<PlatformFixture> {
         }
     }
 
-    static void callback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
+    static void callback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {
         ASSERT_NE(nullptr, userData);
         IntelTracingMtTest *base = (IntelTracingMtTest *)userData;
         base->vcallback(fid, callbackData, nullptr);
     }
 
-    virtual void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
+    virtual void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {
         if (fid == CL_FUNCTION_clGetDeviceInfo ||
             fid == CL_FUNCTION_clGetPlatformInfo) {
             ++count;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include <cstdint>
 
 // Sampler Patch Token Enums
-enum SAMPLER_PATCH_ENUM {
+enum SamplerPatchEnum {
     CLK_DEFAULT_SAMPLER = 0x00,
     CLK_ADDRESS_NONE = 0x00,
     CLK_ADDRESS_CLAMP = 0x01,
@@ -25,7 +25,7 @@ enum SAMPLER_PATCH_ENUM {
     CLK_FILTER_LINEAR = 0x00,
 };
 
-inline SAMPLER_PATCH_ENUM getAddrModeEnum(cl_addressing_mode addressingMode) {
+inline SamplerPatchEnum getAddrModeEnum(cl_addressing_mode addressingMode) {
     switch (addressingMode) {
     case CL_ADDRESS_REPEAT:
         return CLK_ADDRESS_REPEAT;
@@ -41,7 +41,7 @@ inline SAMPLER_PATCH_ENUM getAddrModeEnum(cl_addressing_mode addressingMode) {
     return CLK_ADDRESS_NONE;
 }
 
-inline SAMPLER_PATCH_ENUM getNormCoordsEnum(cl_bool normalizedCoords) {
+inline SamplerPatchEnum getNormCoordsEnum(cl_bool normalizedCoords) {
     if (normalizedCoords == CL_TRUE) {
         return CLK_NORMALIZED_COORDS_TRUE;
     } else {

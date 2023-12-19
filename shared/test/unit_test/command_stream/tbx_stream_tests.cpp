@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,17 +23,17 @@ TEST(TbxStreamTests, givenTbxStreamWhenWriteMemoryIsCalledThenMemTypeIsSetCorrec
 
     uint32_t addressSpace = AubMemDump::AddressSpaceValues::TraceLocal;
     mockTbxStream->writeMemory(0, nullptr, 0, addressSpace, 0);
-    EXPECT_EQ(mem_types::MEM_TYPE_LOCALMEM, mockTbxSocket->typeCapturedFromWriteMemory);
+    EXPECT_EQ(MemType::local, mockTbxSocket->typeCapturedFromWriteMemory);
 
     addressSpace = AubMemDump::AddressSpaceValues::TraceNonlocal;
     mockTbxStream->writeMemory(0, nullptr, 0, addressSpace, 0);
-    EXPECT_EQ(mem_types::MEM_TYPE_SYSTEM, mockTbxSocket->typeCapturedFromWriteMemory);
+    EXPECT_EQ(MemType::system, mockTbxSocket->typeCapturedFromWriteMemory);
 
     addressSpace = AubMemDump::AddressSpaceValues::TraceLocal;
     mockTbxStream->writePTE(0, 0, addressSpace);
-    EXPECT_EQ(mem_types::MEM_TYPE_LOCALMEM, mockTbxSocket->typeCapturedFromWriteMemory);
+    EXPECT_EQ(MemType::local, mockTbxSocket->typeCapturedFromWriteMemory);
 
     addressSpace = AubMemDump::AddressSpaceValues::TraceNonlocal;
     mockTbxStream->writePTE(0, 0, addressSpace);
-    EXPECT_EQ(mem_types::MEM_TYPE_SYSTEM, mockTbxSocket->typeCapturedFromWriteMemory);
+    EXPECT_EQ(MemType::system, mockTbxSocket->typeCapturedFromWriteMemory);
 }

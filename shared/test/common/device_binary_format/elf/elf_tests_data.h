@@ -18,13 +18,13 @@
 
 using namespace NEO;
 
-enum class enabledIrFormat {
+enum class EnabledIrFormat {
     none,
-    enableSpirv,
-    enableLlvm
+    spirv,
+    llvm
 };
 
-template <enabledIrFormat irFormat = enabledIrFormat::none>
+template <EnabledIrFormat irFormat = EnabledIrFormat::none>
 struct MockElfBinaryPatchtokens {
     MockElfBinaryPatchtokens(const HardwareInfo &hwInfo) : MockElfBinaryPatchtokens(std::string{}, hwInfo){};
     MockElfBinaryPatchtokens(const std::string &buildOptions, const HardwareInfo &inputHwInfo) {
@@ -54,9 +54,9 @@ struct MockElfBinaryPatchtokens {
         enc.getElfFileHeader().identity = Elf::ElfFileHeaderIdentity(Elf::EI_CLASS_64);
         enc.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
         enc.appendSection(Elf::SHT_OPENCL_DEV_BINARY, Elf::SectionNamesOpenCl::deviceBinary, ArrayRef<const uint8_t>::fromAny(mockDevBinaryData, mockDevBinaryDataSize));
-        if (irFormat == enabledIrFormat::enableSpirv)
+        if (irFormat == EnabledIrFormat::spirv)
             enc.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvBinaryData, mockSpirvBinaryDataSize));
-        else if (irFormat == enabledIrFormat::enableLlvm)
+        else if (irFormat == EnabledIrFormat::llvm)
             enc.appendSection(Elf::SHT_OPENCL_LLVM_BINARY, Elf::SectionNamesOpenCl::llvmObject, ArrayRef<const uint8_t>::fromAny(mockLlvmBinaryData, mockLlvmBinaryDataSize));
         if (false == buildOptions.empty())
             enc.appendSection(Elf::SHT_OPENCL_OPTIONS, Elf::SectionNamesOpenCl::buildOptions, ArrayRef<const uint8_t>::fromAny(buildOptions.data(), buildOptions.size()));

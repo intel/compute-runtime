@@ -15,7 +15,7 @@
 
 namespace NEO {
 namespace MockGmmParams {
-static SurfaceFormatInfo mockSurfaceFormat = {GMM_FORMAT_R8G8B8A8_UNORM_TYPE, GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4};
+static SurfaceFormatInfo mockSurfaceFormat = {GMM_FORMAT_R8G8B8A8_UNORM_TYPE, SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4};
 }
 
 class MockGmm : public Gmm {

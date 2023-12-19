@@ -16,7 +16,7 @@ namespace NEO {
 
 namespace Elf {
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 const ElfFileHeader<numBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary) {
     if (binary.size() < sizeof(ElfFileHeader<numBits>)) {
         return nullptr;
@@ -35,7 +35,7 @@ const ElfFileHeader<numBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> 
 template const ElfFileHeader<EI_CLASS_32> *decodeElfFileHeader<EI_CLASS_32>(const ArrayRef<const uint8_t>);
 template const ElfFileHeader<EI_CLASS_64> *decodeElfFileHeader<EI_CLASS_64>(const ArrayRef<const uint8_t>);
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std::string &outWarning) {
     Elf<numBits> ret = {};
     ret.elfFileHeader = decodeElfFileHeader<numBits>(binary);
@@ -86,9 +86,9 @@ Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
     return ret;
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 bool Elf<numBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
-    if (sectionHeaderData.header->type == SECTION_HEADER_TYPE::SHT_SYMTAB) {
+    if (sectionHeaderData.header->type == SectionHeaderType::SHT_SYMTAB) {
         auto symSize = sizeof(ElfSymbolEntry<numBits>);
         if (symSize != sectionHeaderData.header->entsize) {
             outError.append("Invalid symbol table entries size - expected : " + std::to_string(symSize) + ", got : " + std::to_string(sectionHeaderData.header->entsize) + "\n");
@@ -106,9 +106,9 @@ bool Elf<numBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::st
     return true;
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 bool Elf<numBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
-    if (sectionHeaderData.header->type == SECTION_HEADER_TYPE::SHT_RELA) {
+    if (sectionHeaderData.header->type == SectionHeaderType::SHT_RELA) {
         auto relaSize = sizeof(ElfRela<numBits>);
         if (relaSize != sectionHeaderData.header->entsize) {
             outError.append("Invalid rela entries size - expected : " + std::to_string(relaSize) + ", got : " + std::to_string(sectionHeaderData.header->entsize) + "\n");
@@ -142,7 +142,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
         }
     }
 
-    if (sectionHeaderData.header->type == SECTION_HEADER_TYPE::SHT_REL) {
+    if (sectionHeaderData.header->type == SectionHeaderType::SHT_REL) {
         auto relSize = sizeof(ElfRel<numBits>);
         if (relSize != sectionHeaderData.header->entsize) {
             outError.append("Invalid rel entries size - expected : " + std::to_string(relSize) + ", got : " + std::to_string(sectionHeaderData.header->entsize) + "\n");
@@ -179,7 +179,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, st
     return true;
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 bool Elf<numBits>::decodeSections(std::string &outError) {
     bool success = true;
     for (size_t i = 0; i < sectionHeaders.size(); i++) {
@@ -194,7 +194,7 @@ bool Elf<numBits>::decodeSections(std::string &outError) {
     return success;
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 bool Elf<numBits>::isDebugDataRelocation(ConstStringRef sectionName) {
     if (sectionName.startsWith(NEO::Elf::SpecialSectionNames::debug.data())) {
         return true;

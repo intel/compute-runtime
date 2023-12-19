@@ -46,23 +46,11 @@ struct MI_REPORT_PERF_COUNT { // NOLINT(readability-identifier-naming)
     uint64_t memoryAddress : BITFIELD_RANGE(6, 63);
     uint32_t reportId;
 
-    typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x2,
-    } DWORD_LENGTH;
-
-    typedef enum tagMI_COMMAND_OPCODE {
-        MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT = 0x28,
-    } MI_COMMAND_OPCODE;
-
-    typedef enum tagCOMMAND_TYPE {
-        COMMAND_TYPE_MI_COMMAND = 0x0,
-    } COMMAND_TYPE;
-
     inline void init(void) {
         memset(this, 0, sizeof(MI_REPORT_PERF_COUNT));
-        dwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        miCommandOpcode = MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT;
-        commandType = COMMAND_TYPE_MI_COMMAND;
+        dwordLength = 0x2;      // DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        miCommandOpcode = 0x28; // MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT;
+        commandType = 0x0;      // COMMAND_TYPE_MI_COMMAND;
     }
 };
 

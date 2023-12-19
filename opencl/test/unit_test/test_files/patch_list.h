@@ -10,41 +10,42 @@
 #pragma pack( push, 1 )
 
 #include <cstdint>
+// NOLINTBEGIN(readability-identifier-naming)
 
-const uint32_t MAGIC_CL = 0x494E5443; // NOLINT(readability-identifier-naming)
+const uint32_t MAGIC_CL = 0x494E5443; 
 struct SProgramBinaryHeader
 {
-	uint32_t   Magic;   // NOLINT(readability-identifier-naming)
-	uint32_t   Version; // NOLINT(readability-identifier-naming)
+	uint32_t   Magic;   
+	uint32_t   Version; 
 
-	uint32_t   Device;                // NOLINT(readability-identifier-naming)
-    uint32_t   GPUPointerSizeInBytes; // NOLINT(readability-identifier-naming)
+	uint32_t   Device;                
+    uint32_t   GPUPointerSizeInBytes; 
 
-    uint32_t   NumberOfKernels; // NOLINT(readability-identifier-naming)
+    uint32_t   NumberOfKernels; 
 
-    uint32_t   SteppingId; // NOLINT(readability-identifier-naming)
+    uint32_t   SteppingId; 
 
-    uint32_t   PatchListSize; // NOLINT(readability-identifier-naming)
+    uint32_t   PatchListSize; 
 };
 static_assert( sizeof( SProgramBinaryHeader ) == 28 , "The size of SProgramBinaryHeader is not what is expected" );
 
 struct SKernelBinaryHeader
 {
-    uint32_t   CheckSum;       // NOLINT(readability-identifier-naming)
-    uint64_t   ShaderHashCode; // NOLINT(readability-identifier-naming)
-    uint32_t   KernelNameSize; // NOLINT(readability-identifier-naming)
-    uint32_t   PatchListSize;  // NOLINT(readability-identifier-naming)
+    uint32_t   CheckSum;       
+    uint64_t   ShaderHashCode; 
+    uint32_t   KernelNameSize; 
+    uint32_t   PatchListSize;  
 };
 static_assert( sizeof( SKernelBinaryHeader ) == 20 , "The size of SKernelBinaryHeader is not what is expected" );
 
 struct SKernelBinaryHeaderCommon :
        SKernelBinaryHeader
 {
-    uint32_t   KernelHeapSize;       // NOLINT(readability-identifier-naming)
-    uint32_t   GeneralStateHeapSize; // NOLINT(readability-identifier-naming)
-    uint32_t   DynamicStateHeapSize; // NOLINT(readability-identifier-naming)
-    uint32_t   SurfaceStateHeapSize; // NOLINT(readability-identifier-naming)
-    uint32_t   KernelUnpaddedSize;   // NOLINT(readability-identifier-naming)
+    uint32_t   KernelHeapSize;       
+    uint32_t   GeneralStateHeapSize; 
+    uint32_t   DynamicStateHeapSize; 
+    uint32_t   SurfaceStateHeapSize; 
+    uint32_t   KernelUnpaddedSize;   
 };
 static_assert( sizeof( SKernelBinaryHeaderCommon ) == ( 20 + sizeof( SKernelBinaryHeader ) ) , "The size of SKernelBinaryHeaderCommon is not what is expected" );
 
@@ -109,49 +110,50 @@ enum PATCH_TOKEN
 
 struct SPatchItemHeader
 {
-    uint32_t   Token; // NOLINT(readability-identifier-naming)
-    uint32_t   Size;  // NOLINT(readability-identifier-naming)
+    uint32_t   Token; 
+    uint32_t   Size;  
 };
 
 struct SPatchDataParameterBuffer :
        SPatchItemHeader
 {
-    uint32_t   Type;                // NOLINT(readability-identifier-naming)
-    uint32_t   ArgumentNumber;      // NOLINT(readability-identifier-naming)
-    uint32_t   Offset;              // NOLINT(readability-identifier-naming)
-    uint32_t   DataSize;            // NOLINT(readability-identifier-naming)
-    uint32_t   SourceOffset;        // NOLINT(readability-identifier-naming)
-    uint32_t   LocationIndex;       // NOLINT(readability-identifier-naming)
-    uint32_t   LocationIndex2;      // NOLINT(readability-identifier-naming)
-    uint32_t   IsEmulationArgument; // NOLINT(readability-identifier-naming)
+    uint32_t   Type;                
+    uint32_t   ArgumentNumber;      
+    uint32_t   Offset;              
+    uint32_t   DataSize;            
+    uint32_t   SourceOffset;        
+    uint32_t   LocationIndex;       
+    uint32_t   LocationIndex2;      
+    uint32_t   IsEmulationArgument; 
 };
 
 struct SPatchMediaInterfaceDescriptorLoad :
        SPatchItemHeader
 {
-    uint32_t   InterfaceDescriptorDataOffset; // NOLINT(readability-identifier-naming)
+    uint32_t   InterfaceDescriptorDataOffset; 
 };
 static_assert( sizeof( SPatchMediaInterfaceDescriptorLoad ) == ( 4 + sizeof( SPatchItemHeader ) ) , "The size of SPatchMediaInterfaceDescriptorLoad is not what is expected" );
 struct SPatchStateSIP :
        SPatchItemHeader
 {
-    uint32_t   SystemKernelOffset; // NOLINT(readability-identifier-naming)
+    uint32_t   SystemKernelOffset; 
 };
 
 struct SPatchSamplerStateArray :
        SPatchItemHeader
 {
-    uint32_t   Offset;            // NOLINT(readability-identifier-naming)
-    uint32_t   Count;             // NOLINT(readability-identifier-naming)
-    uint32_t   BorderColorOffset; // NOLINT(readability-identifier-naming)
+    uint32_t   Offset;            
+    uint32_t   Count;             
+    uint32_t   BorderColorOffset; 
 };
 
 struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :
     SPatchItemHeader
 {
-    uint32_t   ConstantBufferIndex; // NOLINT(readability-identifier-naming)
-    uint32_t   InlineDataSize;      // NOLINT(readability-identifier-naming)
+    uint32_t   ConstantBufferIndex; 
+    uint32_t   InlineDataSize;      
 };
 static_assert( sizeof( SPatchAllocateConstantMemorySurfaceProgramBinaryInfo ) == ( 8 + sizeof( SPatchItemHeader ) ) , "The size of SPatchAllocateConstantMemorySurfaceProgramBinaryInfo is not what is expected" );
+// NOLINTEND(readability-identifier-naming)
 #pragma pack( pop )
 // clang-format on

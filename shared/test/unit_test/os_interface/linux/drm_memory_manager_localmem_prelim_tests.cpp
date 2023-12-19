@@ -2191,7 +2191,7 @@ using DrmMemoryManagerCopyMemoryToAllocationPrelimTest = DrmMemoryManagerLocalMe
 struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
     using DrmMemoryManager::allocateGraphicsMemoryInDevicePool;
     DrmMemoryManagerToTestCopyMemoryToAllocation(ExecutionEnvironment &executionEnvironment, bool localMemoryEnabled, size_t lockableLocalMemorySize)
-        : DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
+        : DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
         std::fill(this->localMemorySupported.begin(), this->localMemorySupported.end(), localMemoryEnabled);
         lockedLocalMemorySize = lockableLocalMemorySize;
     }

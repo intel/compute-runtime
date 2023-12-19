@@ -3715,7 +3715,7 @@ kernels:
     constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
     MockElfEncoder<numBits> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
-    elfEncoder.appendSection(Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(invalidZeInfo.data(), invalidZeInfo.size()));
+    elfEncoder.appendSection(Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(invalidZeInfo.data(), invalidZeInfo.size()));
     auto storage = elfEncoder.encode();
     buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
     buildInfo.unpackedDeviceBinarySize = storage.size();
@@ -3755,7 +3755,7 @@ kernels_misc_info:
     constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
     MockElfEncoder<numBits> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
-    elfEncoder.appendSection(Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+    elfEncoder.appendSection(Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
     auto storage = elfEncoder.encode();
     buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
     buildInfo.unpackedDeviceBinarySize = storage.size();

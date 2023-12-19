@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,16 +20,16 @@ struct TracingHandle {
   public:
     TracingHandle(cl_tracing_callback callback, void *userData) : callback(callback), userData(userData) {}
 
-    void call(cl_function_id fid, cl_callback_data *callbackData) {
+    void call(ClFunctionId fid, cl_callback_data *callbackData) {
         callback(fid, callbackData, userData);
     }
 
-    void setTracingPoint(cl_function_id fid, bool enable) {
+    void setTracingPoint(ClFunctionId fid, bool enable) {
         DEBUG_BREAK_IF(static_cast<uint32_t>(fid) >= CL_FUNCTION_COUNT);
         mask[static_cast<uint32_t>(fid)] = enable;
     }
 
-    bool getTracingPoint(cl_function_id fid) const {
+    bool getTracingPoint(ClFunctionId fid) const {
         DEBUG_BREAK_IF(static_cast<uint32_t>(fid) >= CL_FUNCTION_COUNT);
         return mask[static_cast<uint32_t>(fid)];
     }

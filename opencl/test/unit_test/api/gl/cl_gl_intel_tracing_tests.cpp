@@ -25,7 +25,7 @@ struct IntelGlTracingTest : public ApiTests {
         ASSERT_EQ(CL_SUCCESS, status);
 
         for (uint32_t i = 0; i < CL_FUNCTION_COUNT; ++i) {
-            status = clSetTracingPointINTEL(handle, static_cast<cl_function_id>(i), CL_TRUE);
+            status = clSetTracingPointINTEL(handle, static_cast<ClFunctionId>(i), CL_TRUE);
             ASSERT_EQ(CL_SUCCESS, status);
         }
 
@@ -44,13 +44,13 @@ struct IntelGlTracingTest : public ApiTests {
     }
 
   protected:
-    static void callback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
+    static void callback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {
         ASSERT_NE(nullptr, userData);
         IntelGlTracingTest *base = reinterpret_cast<IntelGlTracingTest *>(userData);
         base->vcallback(fid, callbackData, nullptr);
     }
 
-    virtual void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
+    virtual void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {
         if (fid == functionId) {
             if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
                 ++enterCount;
@@ -108,7 +108,7 @@ struct IntelGlTracingTest : public ApiTests {
 
     uint16_t enterCount = 0;
     uint16_t exitCount = 0;
-    cl_function_id functionId = CL_FUNCTION_COUNT;
+    ClFunctionId functionId = CL_FUNCTION_COUNT;
 };
 
 TEST_F(IntelGlTracingTest, GivenAllFunctionsWhenSettingTracingPointThenTracingOnAllFunctionsIsPerformed) {
@@ -119,7 +119,7 @@ TEST_F(IntelGlTracingTest, GivenAllFunctionsWhenSettingTracingPointThenTracingOn
 
 TEST_F(IntelGlTracingTest, GivenNoFunctionsWhenSettingTracingPointThenNoTracingIsPerformed) {
     for (uint32_t i = 0; i < CL_FUNCTION_COUNT; ++i) {
-        status = clSetTracingPointINTEL(handle, static_cast<cl_function_id>(i), CL_FALSE);
+        status = clSetTracingPointINTEL(handle, static_cast<ClFunctionId>(i), CL_FALSE);
         EXPECT_EQ(CL_SUCCESS, status);
     }
 

@@ -22,19 +22,19 @@ namespace NEO {
 
 bool DeviceTimeWddm::runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
     if (wddm) {
-        D3DKMT_ESCAPE escapeCommand = {0};
+        D3DKMT_ESCAPE escapeCommand = {};
 
-        GTDIGetGpuCpuTimestampsIn in = {GTDI_FNC_GET_GPU_CPU_TIMESTAMPS};
-        uint32_t outSize = sizeof(GTDIGetGpuCpuTimestampsOut);
+        GetGpuCpuTimestampsIn in{};
+        uint32_t outSize = sizeof(GetGpuCpuTimestampsOut);
 
         escapeInfo.header.EscapeCode = static_cast<decltype(escapeInfo.header.EscapeCode)>(GFX_ESCAPE_IGPA_INSTRUMENTATION_CONTROL);
         escapeInfo.header.Size = outSize;
         escapeInfo.data.in = in;
 
         escapeCommand.Flags.Value = 0;
-        escapeCommand.hAdapter = (D3DKMT_HANDLE)0;
-        escapeCommand.hContext = (D3DKMT_HANDLE)0;
-        escapeCommand.hDevice = (D3DKMT_HANDLE)wddm->getDeviceHandle();
+        escapeCommand.hAdapter = 0;
+        escapeCommand.hContext = 0;
+        escapeCommand.hDevice = static_cast<D3DKMT_HANDLE>(wddm->getDeviceHandle());
         escapeCommand.pPrivateDriverData = &escapeInfo;
         escapeCommand.PrivateDriverDataSize = sizeof(escapeInfo);
         escapeCommand.Type = D3DKMT_ESCAPE_DRIVERPRIVATE;

@@ -11,7 +11,7 @@
 
 #include "opencl/test/unit_test/offline_compiler/decoder/mock/mock_iga_wrapper.h"
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
+template <NEO::Elf::ElfIdentifierClass numBits>
 struct MockZebinEncoder : public NEO::Zebin::Manipulator::ZebinEncoder<numBits> {
     using Base = NEO::Zebin::Manipulator::ZebinEncoder<numBits>;
     using ErrorCode = NEO::Zebin::Manipulator::ErrorCode;

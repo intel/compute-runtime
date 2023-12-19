@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,18 +18,18 @@ namespace NEO {
 
 namespace Elf {
 
-enum ELF_TYPE_OPENCL : uint16_t {
+enum ElfTypeOpencl : uint16_t {
     ET_OPENCL_SOURCE = 0xff01,     // format used to pass CL text sections to FE
     ET_OPENCL_OBJECTS = 0xff02,    // format used to pass LLVM objects / store LLVM binary output
     ET_OPENCL_LIBRARY = 0xff03,    // format used to store LLVM archive output
     ET_OPENCL_EXECUTABLE = 0xff04, // format used to store executable output
     ET_OPENCL_DEBUG = 0xff05,      // format used to store debug output
 };
-static_assert(sizeof(ELF_TYPE_OPENCL) == sizeof(ELF_TYPE), "");
+static_assert(sizeof(ElfTypeOpencl) == sizeof(ElfType), "");
 static_assert(static_cast<uint16_t>(ET_OPENCL_SOURCE) == static_cast<uint16_t>(ET_OPENCL_RESERVED_START), "");
 static_assert(static_cast<uint16_t>(ET_OPENCL_DEBUG) == static_cast<uint16_t>(ET_OPENCL_RESERVED_END), "");
 
-enum SHT_OPENCL : uint32_t {
+enum SectionHeaderTypeOpencl : uint32_t {
     SHT_OPENCL_SOURCE = 0xff000000,                  // CL source to link into LLVM binary
     SHT_OPENCL_HEADER = 0xff000001,                  // CL header to link into LLVM binary
     SHT_OPENCL_LLVM_TEXT = 0xff000002,               // LLVM text
@@ -44,7 +44,7 @@ enum SHT_OPENCL : uint32_t {
     SHT_OPENCL_SPIRV_SC_IDS = 0xff00000b,            // Specialization Constants IDs
     SHT_OPENCL_SPIRV_SC_VALUES = 0xff00000c          // Specialization Constants values
 };
-static_assert(sizeof(SHT_OPENCL) == sizeof(SECTION_HEADER_TYPE), "");
+static_assert(sizeof(SectionHeaderTypeOpencl) == sizeof(SectionHeaderType), "");
 static_assert(static_cast<uint32_t>(SHT_OPENCL_SOURCE) == static_cast<uint32_t>(SHT_OPENCL_RESERVED_START), "");
 static_assert(static_cast<uint32_t>(SHT_OPENCL_SPIRV_SC_VALUES) == static_cast<uint32_t>(SHT_OPENCL_RESERVED_END), "");
 

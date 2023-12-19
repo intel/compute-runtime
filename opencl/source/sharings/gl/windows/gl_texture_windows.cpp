@@ -122,7 +122,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
     auto surfaceFormatInfo = *surfaceFormatInfoAddress;
     if (texInfo.glInternalFormat != GL_RGB10) {
-        surfaceFormatInfo.surfaceFormat.genxSurfaceFormat = (GFX3DSTATE_SURFACEFORMAT)texInfo.glHWFormat;
+        surfaceFormatInfo.surfaceFormat.genxSurfaceFormat = (SurfaceFormat)texInfo.glHWFormat;
     }
 
     GraphicsAllocation *mcsAlloc = nullptr;

@@ -35,7 +35,7 @@ void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst) {
 
 template bool isZebin<Elf::EI_CLASS_32>(ArrayRef<const uint8_t> binary);
 template bool isZebin<Elf::EI_CLASS_64>(ArrayRef<const uint8_t> binary);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 bool isZebin(ArrayRef<const uint8_t> binary) {
     auto fileHeader = Elf::decodeElfFileHeader<numBits>(binary);
     return fileHeader != nullptr &&
@@ -43,7 +43,7 @@ bool isZebin(ArrayRef<const uint8_t> binary) {
             fileHeader->type == Elf::ET_ZEBIN_EXE);
 }
 
-bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_CLASS numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
+bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
     if (targetDevice.maxPointerSizeInBytes == 4 && static_cast<uint32_t>(numBits == Elf::EI_CLASS_64)) {
         return false;
     }
@@ -77,7 +77,7 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_
 
 template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType);
 template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
@@ -143,7 +143,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
     return validateTargetDevice(targetDevice, numBits, productFamily, gfxCore, productConfig, targetMetadata);
 }
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
     uint64_t currentPos = 0;
     auto sectionSize = intelGTNotesSection.size();
@@ -189,7 +189,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
     return DecodeError::success;
 }
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::IntelGTNote> &intelGTNotes, std::string &outErrReason, std::string &outWarning) {
     for (size_t i = 0; i < elf.sectionHeaders.size(); i++) {
         auto section = elf.sectionHeaders[i];
@@ -200,7 +200,7 @@ DecodeError getIntelGTNotes(const Elf::Elf<numBits> &elf, std::vector<Elf::Intel
     return DecodeError::success;
 }
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &out, std::string &outErrReason, std::string &outWarning) {
     if ((elf.elfFileHeader->shStrNdx >= elf.sectionHeaders.size()) || (NEO::Elf::SHN_UNDEF == elf.elfFileHeader->shStrNdx)) {
         outErrReason.append("DeviceBinaryFormat::zebin : Invalid or missing shStrNdx in elf header\n");
@@ -305,7 +305,7 @@ bool validateZebinSectionsCountAtMost(const ContainerT &sectionsContainer, Const
 
 template DecodeError validateZebinSectionsCount<Elf::EI_CLASS_32>(const ZebinSections<Elf::EI_CLASS_32> &sections, std::string &outErrReason, std::string &outWarning);
 template DecodeError validateZebinSectionsCount<Elf::EI_CLASS_64>(const ZebinSections<Elf::EI_CLASS_64> &sections, std::string &outErrReason, std::string &outWarning);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, std::string &outErrReason, std::string &outWarning) {
     bool valid = validateZebinSectionsCountAtMost(sections.zeInfoSections, Elf::SectionNames::zeInfo, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.globalDataSections, Elf::SectionNames::dataGlobal, 1U, outErrReason, outWarning);
@@ -319,7 +319,7 @@ DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, s
     return valid ? DecodeError::success : DecodeError::invalidBinary;
 }
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 ConstStringRef extractZeInfoMetadataString(const ArrayRef<const uint8_t> zebin, std::string &outErrReason, std::string &outWarning) {
     auto decodedElf = NEO::Elf::decodeElf<numBits>(zebin, outErrReason, outWarning);
     for (const auto &sectionHeader : decodedElf.sectionHeaders) {
@@ -339,7 +339,7 @@ ConstStringRef getZeInfoFromZebin(const ArrayRef<const uint8_t> zebin, std::stri
 
 template DecodeError decodeZebin<Elf::EI_CLASS_32>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_32> &elf, std::string &outErrReason, std::string &outWarning);
 template DecodeError decodeZebin<Elf::EI_CLASS_64>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning) {
     ZebinSections<numBits> zebinSections;
     auto extractError = extractZebinSections(elf, zebinSections, outErrReason, outWarning);
@@ -428,7 +428,7 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
 
 template ArrayRef<const uint8_t> getKernelHeap<Elf::EI_CLASS_32>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_32> &elf, const ZebinSections<Elf::EI_CLASS_32> &zebinSections);
 template ArrayRef<const uint8_t> getKernelHeap<Elf::EI_CLASS_64>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_64> &elf, const ZebinSections<Elf::EI_CLASS_64> &zebinSections);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 ArrayRef<const uint8_t> getKernelHeap(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections) {
     auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
@@ -444,7 +444,7 @@ ArrayRef<const uint8_t> getKernelHeap(ConstStringRef &kernelName, Elf::Elf<numBi
 
 template ArrayRef<const uint8_t> getKernelGtpinInfo<Elf::EI_CLASS_32>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_32> &elf, const ZebinSections<Elf::EI_CLASS_32> &zebinSections);
 template ArrayRef<const uint8_t> getKernelGtpinInfo<Elf::EI_CLASS_64>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_64> &elf, const ZebinSections<Elf::EI_CLASS_64> &zebinSections);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections) {
     auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());

@@ -17,46 +17,46 @@ namespace NEO {
 namespace Elf {
 
 // Elf identifier class
-enum ELF_IDENTIFIER_CLASS : uint8_t {
+enum ElfIdentifierClass : uint8_t {
     EI_CLASS_NONE = 0, // undefined
     EI_CLASS_32 = 1,   // 32-bit elf file
     EI_CLASS_64 = 2,   // 64-bit elf file
 };
 
 // Elf identifier data
-enum ELF_IDENTIFIER_DATA : uint8_t {
+enum ElfIdentifierData : uint8_t {
     EI_DATA_NONE = 0,          // undefined
     EI_DATA_LITTLE_ENDIAN = 1, // little-endian
     EI_DATA_BIG_ENDIAN = 2,    // big-endian
 };
 
 // Target machine
-enum ELF_MACHINE : uint16_t {
+enum ElfMachine : uint16_t {
     EM_NONE = 0, // No specific instruction set
     EM_INTELGT = 205,
 };
 
 // Elf version
-enum ELF_VERSION_ : uint8_t {
+enum ElfVersion : uint8_t {
     EV_INVALID = 0, // undefined
     EV_CURRENT = 1, // current
 };
 
 // Elf type
-enum ELF_TYPE : uint16_t {
+enum ElfType : uint16_t {
     ET_NONE = 0,                       // undefined
     ET_REL = 1,                        // relocatable
     ET_EXEC = 2,                       // executable
     ET_DYN = 3,                        // shared object
     ET_CORE = 4,                       // core file
     ET_LOPROC = 0xff00,                // start of processor-specific type
-    ET_OPENCL_RESERVED_START = 0xff01, // start of Intel OCL ELF_TYPES
-    ET_OPENCL_RESERVED_END = 0xff05,   // end of Intel OCL ELF_TYPES
+    ET_OPENCL_RESERVED_START = 0xff01, // start of Intel OCL ElfTypeS
+    ET_OPENCL_RESERVED_END = 0xff05,   // end of Intel OCL ElfTypeS
     ET_HIPROC = 0xffff                 // end of processor-specific types
 };
 
 // Section header type
-enum SECTION_HEADER_TYPE : uint32_t {
+enum SectionHeaderType : uint32_t {
     SHT_NULL = 0,                           // inactive section header
     SHT_PROGBITS = 1,                       // program data
     SHT_SYMTAB = 2,                         // symbol table
@@ -80,11 +80,11 @@ enum SECTION_HEADER_TYPE : uint32_t {
     SHT_OPENCL_RESERVED_END = 0xff00000c    // end of Intel OCL SHT_TYPES
 };
 
-enum SPECIAL_SECTION_HEADER_NUMBER : uint16_t {
+enum SpecialSectionHeaderNumber : uint16_t {
     SHN_UNDEF = 0U, // undef section
 };
 
-enum SECTION_HEADER_FLAGS : uint32_t {
+enum SectionHeaderFlags : uint32_t {
     SHF_NONE = 0x0,            // no flags
     SHF_WRITE = 0x1,           // writeable data
     SHF_ALLOC = 0x2,           // occupies memory during execution
@@ -100,7 +100,7 @@ enum SECTION_HEADER_FLAGS : uint32_t {
     SHF_MASKPROC = 0xf0000000, // processor-specific flags
 };
 
-enum PROGRAM_HEADER_TYPE {
+enum ProgramHeaderType {
     PT_NULL = 0x0,          // unused segment
     PT_LOAD = 0x1,          // loadable segment
     PT_DYNAMIC = 0x2,       // dynamic linking information
@@ -115,7 +115,7 @@ enum PROGRAM_HEADER_TYPE {
     PT_HIPROC = 0x7FFFFFFF  // end processor-specific segments
 };
 
-enum PROGRAM_HEADER_FLAGS : uint32_t {
+enum ProgramHeaderFlags : uint32_t {
     PF_NONE = 0x0,           // all access denied
     PF_X = 0x1,              // execute
     PF_W = 0x2,              // write
@@ -125,14 +125,14 @@ enum PROGRAM_HEADER_FLAGS : uint32_t {
 
 };
 
-enum SYMBOL_TABLE_TYPE : uint32_t {
+enum SymbolTableType : uint32_t {
     STT_NOTYPE = 0,
     STT_OBJECT = 1,
     STT_FUNC = 2,
     STT_SECTION = 3
 };
 
-enum SYMBOL_TABLE_BIND : uint32_t {
+enum SymbolTableBind : uint32_t {
     STB_LOCAL = 0,
     STB_GLOBAL = 1
 };
@@ -140,7 +140,7 @@ enum SYMBOL_TABLE_BIND : uint32_t {
 inline constexpr const char elfMagic[4] = {0x7f, 'E', 'L', 'F'};
 
 struct ElfFileHeaderIdentity {
-    ElfFileHeaderIdentity(ELF_IDENTIFIER_CLASS classBits)
+    ElfFileHeaderIdentity(ElfIdentifierClass classBits)
         : eClass(classBits) {
     }
     char magic[4] = {elfMagic[0], elfMagic[1], elfMagic[2], elfMagic[3]}; // should match elfMagic
@@ -258,7 +258,7 @@ struct ElfSectionHeader {
 static_assert(sizeof(ElfSectionHeader<EI_CLASS_32>) == 0x28, "");
 static_assert(sizeof(ElfSectionHeader<EI_CLASS_64>) == 0x40, "");
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 struct ElfFileHeaderTypes;
 
 template <>
@@ -295,7 +295,7 @@ struct ElfFileHeaderTypes<EI_CLASS_64> {
     using ShStrNdx = uint16_t;
 };
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 struct ElfFileHeader {
     ElfFileHeaderIdentity identity = ElfFileHeaderIdentity(numBits);                               // elf file identity
     typename ElfFileHeaderTypes<numBits>::Type type = ET_NONE;                                     // elf file type
@@ -346,7 +346,7 @@ struct ElfSymbolEntryTypes<EI_CLASS_64> {
     using Size = uint64_t;
 };
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 struct ElfSymbolEntry;
 
 template <>
@@ -506,7 +506,7 @@ constexpr ElfRelocationEntryTypes<EI_CLASS_64>::Info setRelocationType(ElfReloca
 }
 } // namespace RelocationFuncs
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 struct ElfRel {
     using Offset = typename ElfRelocationEntryTypes<numBits>::Offset;
     using Info = typename ElfRelocationEntryTypes<numBits>::Info;

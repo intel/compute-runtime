@@ -1008,7 +1008,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     return CL_SUCCESS;
 }
 
-void Kernel::storeKernelArg(uint32_t argIndex, kernelArgType argType, void *argObject,
+void Kernel::storeKernelArg(uint32_t argIndex, KernelArgType argType, void *argObject,
                             const void *argValue, size_t argSize,
                             GraphicsAllocation *argSvmAlloc, cl_mem_flags argSvmFlags) {
     kernelArguments[argIndex].type = argType;

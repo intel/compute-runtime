@@ -17,12 +17,12 @@ namespace NEO {
 
 namespace Elf {
 
-enum class RELOCATION_X8664_TYPE : uint32_t {
+enum class RelocationX8664Type : uint32_t {
     relocation64 = 0x1,
     relocation32 = 0xa
 };
 
-template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
+template <ElfIdentifierClass numBits = EI_CLASS_64>
 struct Elf {
     struct ProgramHeaderAndData {
         const ElfProgramHeader<numBits> *header = nullptr;
@@ -111,17 +111,17 @@ struct Elf {
     Relocations debugInfoRelocations;
 };
 
-template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
+template <ElfIdentifierClass numBits = EI_CLASS_64>
 const ElfFileHeader<numBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary);
 extern template const ElfFileHeader<EI_CLASS_32> *decodeElfFileHeader<EI_CLASS_32>(const ArrayRef<const uint8_t>);
 extern template const ElfFileHeader<EI_CLASS_64> *decodeElfFileHeader<EI_CLASS_64>(const ArrayRef<const uint8_t>);
 
-template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
+template <ElfIdentifierClass numBits = EI_CLASS_64>
 Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std::string &outWarning);
 extern template Elf<EI_CLASS_32> decodeElf<EI_CLASS_32>(const ArrayRef<const uint8_t>, std::string &, std::string &);
 extern template Elf<EI_CLASS_64> decodeElf<EI_CLASS_64>(const ArrayRef<const uint8_t>, std::string &, std::string &);
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 inline bool isElf(const ArrayRef<const uint8_t> binary) {
     return (nullptr != decodeElfFileHeader<numBits>(binary));
 }
@@ -130,7 +130,7 @@ inline bool isElf(const ArrayRef<const uint8_t> binary) {
     return isElf<EI_CLASS_32>(binary) || isElf<EI_CLASS_64>(binary);
 }
 
-inline ELF_IDENTIFIER_CLASS getElfNumBits(const ArrayRef<const uint8_t> binary) {
+inline ElfIdentifierClass getElfNumBits(const ArrayRef<const uint8_t> binary) {
     if (isElf<EI_CLASS_32>(binary)) {
         return EI_CLASS_32;
     } else if (isElf<EI_CLASS_64>(binary)) {

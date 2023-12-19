@@ -1365,7 +1365,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenM
         unifiedMemoryAllocation,
         4096u,
         gpuAllocation,
-        Kernel::kernelArgType::SVM_ALLOC_OBJ};
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(false);
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -1402,7 +1402,7 @@ HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelDoesNotRequireUnifiedMemorySy
         unifiedMemoryAllocation,
         4096u,
         gpuAllocation,
-        Kernel::kernelArgType::SVM_ALLOC_OBJ};
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(false);
     std::vector<NEO::Surface *> residencySurfaces;
     mockKernel.mockKernel->getResidency(residencySurfaces);
@@ -1431,7 +1431,7 @@ HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelRequireUnifiedMemorySyncThenS
         unifiedMemoryAllocation,
         4096u,
         gpuAllocation,
-        Kernel::kernelArgType::SVM_ALLOC_OBJ};
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(true);
     std::vector<NEO::Surface *> residencySurfaces;
     mockKernel.mockKernel->getResidency(residencySurfaces);
@@ -1462,7 +1462,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeRes
         unifiedMemoryAllocation,
         4096u,
         gpuAllocation,
-        Kernel::kernelArgType::SVM_ALLOC_OBJ};
+        Kernel::KernelArgType::SVM_ALLOC_OBJ};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(true);
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -2070,7 +2070,7 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultMa
 
     Kernel::SimpleKernelArgInfo kernelArgInfo;
     kernelArgInfo.object = unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation();
-    kernelArgInfo.type = Kernel::kernelArgType::SVM_ALLOC_OBJ;
+    kernelArgInfo.type = Kernel::KernelArgType::SVM_ALLOC_OBJ;
 
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
     kernelArguments.resize(1);
@@ -2096,7 +2096,7 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenIsUnifiedMemorySyncRequiredIs
 
     Kernel::SimpleKernelArgInfo kernelArgInfo;
     kernelArgInfo.object = unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation();
-    kernelArgInfo.type = Kernel::kernelArgType::SVM_ALLOC_OBJ;
+    kernelArgInfo.type = Kernel::KernelArgType::SVM_ALLOC_OBJ;
 
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
     kernelArguments.resize(1);

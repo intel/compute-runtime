@@ -16,6 +16,9 @@ namespace Sysman {
 class FirmwareUtil;
 struct OsSysman;
 
+static constexpr uint8_t eccStateDisable = 0;
+static constexpr uint8_t eccStateEnable = 1;
+static constexpr uint8_t eccStateNone = 0xFF;
 class EccImp : public Ecc, NEO::NonCopyableOrMovableClass {
   public:
     void init() override {}
@@ -30,12 +33,6 @@ class EccImp : public Ecc, NEO::NonCopyableOrMovableClass {
   private:
     OsSysman *pOsSysman = nullptr;
     FirmwareUtil *pFwInterface = nullptr;
-
-    enum eccState : uint8_t {
-        eccStateDisable = 0,
-        eccStateEnable = 1,
-        eccStateNone = 0xFF
-    };
 
     zes_device_ecc_state_t getEccState(uint8_t state);
     static FirmwareUtil *getFirmwareUtilInterface(OsSysman *pOsSysman);

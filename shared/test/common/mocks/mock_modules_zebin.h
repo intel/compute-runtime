@@ -27,7 +27,7 @@ inline std::string versionToString(NEO::Zebin::ZeInfo::Types::Version version) {
 
 namespace ZebinTestData {
 
-enum class appendElfAdditionalSection {
+enum class AppendElfAdditionalSection {
     none,
     spirv,
     global,
@@ -35,7 +35,7 @@ enum class appendElfAdditionalSection {
     constantString
 };
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>
+template <NEO::Elf::ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct ValidEmptyProgram {
     static constexpr char kernelName[19] = "valid_empty_kernel";
 
@@ -84,8 +84,8 @@ functions:
 };
 
 struct ZebinWithL0TestCommonModule {
-    ZebinWithL0TestCommonModule(const NEO::HardwareInfo &hwInfo) : ZebinWithL0TestCommonModule(hwInfo, std::initializer_list<appendElfAdditionalSection>{}) {}
-    ZebinWithL0TestCommonModule(const NEO::HardwareInfo &hwInfo, std::initializer_list<appendElfAdditionalSection> additionalSections, bool forceRecompilation = false);
+    ZebinWithL0TestCommonModule(const NEO::HardwareInfo &hwInfo) : ZebinWithL0TestCommonModule(hwInfo, std::initializer_list<AppendElfAdditionalSection>{}) {}
+    ZebinWithL0TestCommonModule(const NEO::HardwareInfo &hwInfo, std::initializer_list<AppendElfAdditionalSection> additionalSections, bool forceRecompilation = false);
 
     void recalcPtr();
 
@@ -263,7 +263,7 @@ kernels:
 -)===";
 };
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
+template <NEO::Elf::ElfIdentifierClass numBits>
 struct ZebinCopyBufferSimdModule {
     ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
     inline size_t getLocalIdSize(const NEO::HardwareInfo &hwInfo, uint8_t simdSize) {

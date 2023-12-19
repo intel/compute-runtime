@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3988,92 +3988,6 @@ struct Marshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
     template <typename GmmResourceInfoWinStructT>
     static TOKSTR_GmmResourceInfoWinStruct marshall(const GmmResourceInfoWinStructT &src) {
         TOKSTR_GmmResourceInfoWinStruct ret = {};
-        ::marshall(ret, src);
-        return ret;
-    }
-};
-
-template <typename GFX_ESCAPE_HEADERT>
-inline void marshall(TOKSTR_GFX_ESCAPE_HEADER &dst, const GFX_ESCAPE_HEADERT &src) {
-    dst = {};
-    dst.Size.setValue(src.Size);
-    dst.CheckSum.setValue(src.CheckSum);
-    dst.EscapeCode.setValue(src.EscapeCode);
-    dst.ulReserved.setValue(src.ulReserved);
-    dst.ulReserved1.setValue(src.ulReserved1);
-    dst.usEscapeVersion.setValue(src.usEscapeVersion);
-    dst.usFileVersion.setValue(src.usFileVersion);
-    dst.ulMajorEscapeCode.setValue(src.ulMajorEscapeCode);
-    dst.uiMinorEscapeCode.setValue(src.uiMinorEscapeCode);
-}
-template <>
-struct Marshaller<TOK_S_GFX_ESCAPE_HEADER> {
-    template <typename GFX_ESCAPE_HEADERT>
-    static TOKSTR_GFX_ESCAPE_HEADER marshall(const GFX_ESCAPE_HEADERT &src) {
-        TOKSTR_GFX_ESCAPE_HEADER ret = {};
-        ::marshall(ret, src);
-        return ret;
-    }
-};
-
-template <typename GTDIBaseInStructT>
-inline void marshall(TOKSTR_GTDIBaseInStruct &dst, const GTDIBaseInStructT &src) {
-    dst = {};
-    dst.Function.setValue(src.Function);
-}
-template <>
-struct Marshaller<TOK_S_GTDIBASE_IN_STRUCT> {
-    template <typename GTDIBaseInStructT>
-    static TOKSTR_GTDIBaseInStruct marshall(const GTDIBaseInStructT &src) {
-        TOKSTR_GTDIBaseInStruct ret = {};
-        ::marshall(ret, src);
-        return ret;
-    }
-};
-
-template <typename GTDIGetGpuCpuTimestampsOutStructT>
-inline void marshall(TOKSTR_GTDIGetGpuCpuTimestampsOutStruct &dst, const GTDIGetGpuCpuTimestampsOutStructT &src) {
-    dst = {};
-    dst.RetCode.setValue(src.RetCode);
-    dst.gpuPerfTicks.setValue(src.gpuPerfTicks);
-    dst.cpuPerfTicks.setValue(src.cpuPerfTicks);
-    dst.gpuPerfFreq.setValue(src.gpuPerfFreq);
-    dst.cpuPerfFreq.setValue(src.cpuPerfFreq);
-}
-template <>
-struct Marshaller<TOK_S_GTDIGET_GPU_CPU_TIMESTAMPS_OUT_STRUCT> {
-    template <typename GTDIGetGpuCpuTimestampsOutStructT>
-    static TOKSTR_GTDIGetGpuCpuTimestampsOutStruct marshall(const GTDIGetGpuCpuTimestampsOutStructT &src) {
-        TOKSTR_GTDIGetGpuCpuTimestampsOutStruct ret = {};
-        ::marshall(ret, src);
-        return ret;
-    }
-};
-
-template <typename TimeStampDataHeaderT>
-inline void marshall(TOKSTR_TimeStampDataHeader &dst, const TimeStampDataHeaderT &src) {
-    dst = {};
-    dst.m_Header.Size.setValue(src.m_Header.Size);
-    dst.m_Header.CheckSum.setValue(src.m_Header.CheckSum);
-    dst.m_Header.EscapeCode.setValue(src.m_Header.EscapeCode);
-    dst.m_Header.ulReserved.setValue(src.m_Header.ulReserved);
-    dst.m_Header.ulReserved1.setValue(src.m_Header.ulReserved1);
-    dst.m_Header.usEscapeVersion.setValue(src.m_Header.usEscapeVersion);
-    dst.m_Header.usFileVersion.setValue(src.m_Header.usFileVersion);
-    dst.m_Header.ulMajorEscapeCode.setValue(src.m_Header.ulMajorEscapeCode);
-    dst.m_Header.uiMinorEscapeCode.setValue(src.m_Header.uiMinorEscapeCode);
-    dst.m_Data.m_In.Function.setValue(src.m_Data.m_In.Function);
-    dst.m_Data.m_Out.RetCode.setValue(src.m_Data.m_Out.RetCode);
-    dst.m_Data.m_Out.gpuPerfTicks.setValue(src.m_Data.m_Out.gpuPerfTicks);
-    dst.m_Data.m_Out.cpuPerfTicks.setValue(src.m_Data.m_Out.cpuPerfTicks);
-    dst.m_Data.m_Out.gpuPerfFreq.setValue(src.m_Data.m_Out.gpuPerfFreq);
-    dst.m_Data.m_Out.cpuPerfFreq.setValue(src.m_Data.m_Out.cpuPerfFreq);
-}
-template <>
-struct Marshaller<TOK_S_TIME_STAMP_DATA_HEADER> {
-    template <typename TimeStampDataHeaderT>
-    static TOKSTR_TimeStampDataHeader marshall(const TimeStampDataHeaderT &src) {
-        TOKSTR_TimeStampDataHeader ret = {};
         ::marshall(ret, src);
         return ret;
     }

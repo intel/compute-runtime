@@ -29,13 +29,13 @@ std::stringstream callbackOutput{};
         std::abort();                                                 \
     }
 
-auto callback = [](cl_function_id fid,
+auto callback = [](ClFunctionId fid,
                    cl_callback_data *callbackData,
                    void *userData) {
     callbackOutput << "Function " << callbackData->functionName << " is called (" << (callbackData->site == CL_CALLBACK_SITE_ENTER ? "enter" : "exit") << ")" << std::endl;
 };
 
-auto contextNestedCallback = [](cl_function_id fid,
+auto contextNestedCallback = [](ClFunctionId fid,
                                 cl_callback_data *callbackData,
                                 void *userData) {
     static int numCalled = 0;

@@ -41,7 +41,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                              uint32_t rootDeviceIndex,
                              const DeviceBitfield deviceBitfield,
-                             gemCloseWorkerMode mode = gemCloseWorkerMode::gemCloseWorkerActive);
+                             GemCloseWorkerMode mode = GemCloseWorkerMode::gemCloseWorkerActive);
     ~DrmCommandStreamReceiver() override;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
@@ -54,12 +54,12 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     DrmMemoryManager *getMemoryManager() const;
     GmmPageTableMngr *createPageTableManager() override;
 
-    gemCloseWorkerMode peekGemCloseWorkerOperationMode() const {
+    GemCloseWorkerMode peekGemCloseWorkerOperationMode() const {
         return this->gemCloseWorkerOperationMode;
     }
 
     void initializeDefaultsForInternalEngine() override {
-        gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
+        gemCloseWorkerOperationMode = GemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
     SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
@@ -77,7 +77,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     std::vector<BufferObject *> residency;
     std::vector<ExecObject> execObjectsStorage;
     Drm *drm;
-    gemCloseWorkerMode gemCloseWorkerOperationMode;
+    GemCloseWorkerMode gemCloseWorkerOperationMode;
 
     volatile uint32_t reserved = 0;
     int32_t kmdWaitTimeout = -1;

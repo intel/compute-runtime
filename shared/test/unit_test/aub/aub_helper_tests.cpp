@@ -67,10 +67,10 @@ TEST(AubHelper, WhenMaskPTEntryBitsIsCalledThenLocalMemoryBitIsMasked) {
 
 TEST(AubHelper, WhenGetMemTypeIsCalledWithAGivenAddressSpaceThenCorrectMemTypeIsReturned) {
     uint32_t addressSpace = AubHelper::getMemType(AubMemDump::AddressSpaceValues::TraceLocal);
-    EXPECT_EQ(mem_types::MEM_TYPE_LOCALMEM, addressSpace);
+    EXPECT_EQ(MemType::local, addressSpace);
 
     addressSpace = AubHelper::getMemType(AubMemDump::AddressSpaceValues::TraceNonlocal);
-    EXPECT_EQ(mem_types::MEM_TYPE_SYSTEM, addressSpace);
+    EXPECT_EQ(MemType::system, addressSpace);
 }
 
 TEST(AubHelper, WhenHBMSizePerTileInGigabytesIsSetThenGetMemBankSizeReturnsCorrectValue) {

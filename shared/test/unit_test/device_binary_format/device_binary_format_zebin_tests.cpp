@@ -356,7 +356,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
 TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsValidThenReturnSelf) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.elfHeader->type = NEO::Elf::ET_REL;
-    zebin.elfHeader->machine = NEO::Elf::ELF_MACHINE::EM_INTELGT;
+    zebin.elfHeader->machine = NEO::Elf::ElfMachine::EM_INTELGT;
 
     NEO::TargetDevice targetDevice;
     targetDevice.maxPointerSizeInBytes = 8;

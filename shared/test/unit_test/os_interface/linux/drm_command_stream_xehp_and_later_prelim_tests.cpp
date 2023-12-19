@@ -293,7 +293,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         }
         MockDrmCommandStreamReceiver<GfxFamily>(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex,
                                                 DeviceBitfield deviceBitfield,
-                                                gemCloseWorkerMode mode, uint32_t inputHandleId)
+                                                GemCloseWorkerMode mode, uint32_t inputHandleId)
             : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, mode), expectedHandleId(inputHandleId) {
         }
 
@@ -326,12 +326,12 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         csr = new MockDrmCommandStreamReceiver<GfxFamily>(executionEnvironment,
                                                           rootDeviceIndex,
                                                           3,
-                                                          gemCloseWorkerMode::gemCloseWorkerActive,
+                                                          GemCloseWorkerMode::gemCloseWorkerActive,
                                                           expectedHandleId);
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
-        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive,
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
@@ -434,7 +434,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), DeviceBitfield(0b11)));
         osContext->ensureContextInitialized();
 
-        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive, debugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive, debugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
     }
 
@@ -447,7 +447,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
 
     template <typename FamilyType>
     std::unique_ptr<DrmCommandStreamReceiver<FamilyType>> createCsr() {
-        auto csr = std::make_unique<DrmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 0b11, gemCloseWorkerMode::gemCloseWorkerActive);
+        auto csr = std::make_unique<DrmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 0b11, GemCloseWorkerMode::gemCloseWorkerActive);
         csr->setupContext(*osContext);
         return csr;
     }
@@ -532,7 +532,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized();
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         gemCloseWorkerMode::gemCloseWorkerActive);
+                                         GemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);
 
     auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
@@ -575,7 +575,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
         uint32_t execCalled = 0;
     };
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         gemCloseWorkerMode::gemCloseWorkerActive);
+                                         GemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);
 
     auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
@@ -623,7 +623,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
         uint32_t processResidencyCalled = 0;
     };
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         gemCloseWorkerMode::gemCloseWorkerActive);
+                                         GemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);
 
     const auto size = 1024u;
@@ -657,7 +657,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
         uint32_t execCalled = 0;
     };
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         gemCloseWorkerMode::gemCloseWorkerActive);
+                                         GemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);
 
     const auto size = 1024u;

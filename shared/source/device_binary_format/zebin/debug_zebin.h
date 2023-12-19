@@ -48,8 +48,8 @@ class DebugZebinCreator {
     inline std::vector<uint8_t> getDebugZebin() { return debugZebin; }
 
   protected:
-    void applyRelocation(uintptr_t addr, uint64_t value, NEO::Zebin::Elf::RELOC_TYPE_ZEBIN type);
-    bool isRelocTypeSupported(NEO::Zebin::Elf::RELOC_TYPE_ZEBIN type);
+    void applyRelocation(uintptr_t addr, uint64_t value, NEO::Zebin::Elf::RelocTypeZebin type);
+    bool isRelocTypeSupported(NEO::Zebin::Elf::RelocTypeZebin type);
     const Segments::Segment *getSegmentByName(ConstStringRef sectionName);
     const Segments::Segment *getTextSegmentByName(ConstStringRef textSegmentName);
     bool isCpuSegment(ConstStringRef sectionName);

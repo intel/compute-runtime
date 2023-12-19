@@ -118,13 +118,13 @@ struct LinkerInput {
 
     void addElfTextSegmentRelocation(RelocationInfo relocationInfo, uint32_t instructionsSegmentId);
 
-    template <Elf::ELF_IDENTIFIER_CLASS numBits>
+    template <Elf::ElfIdentifierClass numBits>
     void decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
 
-    template <Elf::ELF_IDENTIFIER_CLASS numBits>
+    template <Elf::ElfIdentifierClass numBits>
     bool addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, size_t symId);
 
-    template <Elf::ELF_IDENTIFIER_CLASS numBits>
+    template <Elf::ElfIdentifierClass numBits>
     bool addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &relocation);
 
     std::optional<uint32_t> getInstructionSegmentId(const SectionNameToSegmentIdMap &kernelNameToSegId, const std::string &kernelName);

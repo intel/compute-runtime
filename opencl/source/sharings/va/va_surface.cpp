@@ -270,7 +270,7 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     if (formatFourCC == VA_FOURCC_P010) {
         static const ClSurfaceFormatInfo formatInfoP010 = {{CL_NV12_INTEL, CL_UNORM_INT16},
                                                            {GMM_RESOURCE_FORMAT::GMM_FORMAT_P010,
-                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
+                                                            static_cast<SurfaceFormat>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
                                                             0,
                                                             1,
                                                             2,
@@ -280,7 +280,7 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     if (formatFourCC == VA_FOURCC_P016) {
         static const ClSurfaceFormatInfo formatInfoP016 = {{CL_NV12_INTEL, CL_UNORM_INT16},
                                                            {GMM_RESOURCE_FORMAT::GMM_FORMAT_P016,
-                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
+                                                            static_cast<SurfaceFormat>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
                                                             0,
                                                             1,
                                                             2,
@@ -290,7 +290,7 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     if (formatFourCC == VA_FOURCC_RGBP) {
         static const ClSurfaceFormatInfo formatInfoRGBP = {{CL_NV12_INTEL, CL_UNORM_INT8},
                                                            {GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP,
-                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_R8_UNORM), // not used for plane images
+                                                            static_cast<SurfaceFormat>(GFX3DSTATE_SURFACEFORMAT_R8_UNORM), // not used for plane images
                                                             0,
                                                             1,
                                                             1,
@@ -300,7 +300,7 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     if (formatFourCC == VA_FOURCC_YUY2) {
         static const ClSurfaceFormatInfo formatInfoYUY2 = {{CL_YUYV_INTEL, CL_UNORM_INT8},
                                                            {GMM_RESOURCE_FORMAT::GMM_FORMAT_YUY2,
-                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL),
+                                                            static_cast<SurfaceFormat>(GFX3DSTATE_SURFACEFORMAT_YCRCB_NORMAL),
                                                             0,
                                                             2,
                                                             1,
@@ -310,7 +310,7 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     if (formatFourCC == VA_FOURCC_Y210) {
         static const ClSurfaceFormatInfo formatInfoY210 = {{CL_RGBA, CL_UNORM_INT16},
                                                            {GMM_RESOURCE_FORMAT::GMM_FORMAT_Y210,
-                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM),
+                                                            static_cast<SurfaceFormat>(GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_UNORM),
                                                             0,
                                                             4,
                                                             2,
@@ -321,7 +321,7 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
     if (formatFourCC == VA_FOURCC_ARGB) {
         static const ClSurfaceFormatInfo formatInfoARGB = {{CL_RGBA, CL_UNORM_INT8},
                                                            {GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM_TYPE,
-                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM),
+                                                            static_cast<SurfaceFormat>(GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM),
                                                             0,
                                                             4,
                                                             1,

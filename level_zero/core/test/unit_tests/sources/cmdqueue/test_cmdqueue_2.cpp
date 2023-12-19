@@ -723,7 +723,7 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
         }
     }
 
-    EXPECT_EQ(static_cast<uint32_t>(CommandQueueImp::CommandBufferManager::BUFFER_ALLOCATION::COUNT), cmdBufferAllocationsFound);
+    EXPECT_EQ(static_cast<uint32_t>(CommandQueueImp::CommandBufferManager::BufferAllocation::count), cmdBufferAllocationsFound);
 
     commandQueue->destroy();
 }

@@ -15,7 +15,7 @@ namespace NEO {
 
 namespace Elf {
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 ElfEncoder<numBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignemnt)
     : addUndefSectionHeader(addUndefSectionHeader), addHeaderSectionNamesSection(addHeaderSectionNamesSection), defaultDataAlignment(defaultDataAlignemnt) {
     // add special strings
@@ -28,7 +28,7 @@ ElfEncoder<numBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectio
     }
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 void ElfEncoder<numBits>::appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData) {
     sectionHeaders.push_back(sectionHeader);
     if ((SHT_NOBITS != sectionHeader.type) && (false == sectionData.empty())) {
@@ -44,7 +44,7 @@ void ElfEncoder<numBits>::appendSection(const ElfSectionHeader<numBits> &section
     }
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 void ElfEncoder<numBits>::appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData) {
     maxDataAlignmentNeeded = std::max<uint64_t>(maxDataAlignmentNeeded, static_cast<uint64_t>(programHeader.align));
     programHeaders.push_back(programHeader);
@@ -61,15 +61,15 @@ void ElfEncoder<numBits>::appendSegment(const ElfProgramHeader<numBits> &program
     }
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 uint32_t ElfEncoder<numBits>::getSectionHeaderIndex(const ElfSectionHeader<numBits> &sectionHeader) {
     UNRECOVERABLE_IF(&sectionHeader < sectionHeaders.begin());
     UNRECOVERABLE_IF(&sectionHeader >= sectionHeaders.begin() + sectionHeaders.size());
     return static_cast<uint32_t>(&sectionHeader - &*sectionHeaders.begin());
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
-ElfSectionHeader<numBits> &ElfEncoder<numBits>::appendSection(SECTION_HEADER_TYPE sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
+template <ElfIdentifierClass numBits>
+ElfSectionHeader<numBits> &ElfEncoder<numBits>::appendSection(SectionHeaderType sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
     ElfSectionHeader<numBits> section = {};
     section.type = static_cast<decltype(section.type)>(sectionType);
     section.flags = static_cast<decltype(section.flags)>(SHF_NONE);
@@ -93,8 +93,8 @@ ElfSectionHeader<numBits> &ElfEncoder<numBits>::appendSection(SECTION_HEADER_TYP
     return *sectionHeaders.rbegin();
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
-ElfProgramHeader<numBits> &ElfEncoder<numBits>::appendSegment(PROGRAM_HEADER_TYPE segmentType, const ArrayRef<const uint8_t> segmentData) {
+template <ElfIdentifierClass numBits>
+ElfProgramHeader<numBits> &ElfEncoder<numBits>::appendSegment(ProgramHeaderType segmentType, const ArrayRef<const uint8_t> segmentData) {
     ElfProgramHeader<numBits> segment = {};
     segment.type = static_cast<decltype(segment.type)>(segmentType);
     segment.flags = static_cast<decltype(segment.flags)>(PF_NONE);
@@ -104,15 +104,15 @@ ElfProgramHeader<numBits> &ElfEncoder<numBits>::appendSegment(PROGRAM_HEADER_TYP
     return *programHeaders.rbegin();
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 void ElfEncoder<numBits>::appendProgramHeaderLoad(size_t sectionId, uint64_t vAddr, uint64_t segSize) {
     programSectionLookupTable.push_back({programHeaders.size(), sectionId});
-    auto &programHeader = appendSegment(PROGRAM_HEADER_TYPE::PT_LOAD, {});
+    auto &programHeader = appendSegment(ProgramHeaderType::PT_LOAD, {});
     programHeader.vAddr = static_cast<decltype(programHeader.vAddr)>(vAddr);
     programHeader.memSz = static_cast<decltype(programHeader.memSz)>(segSize);
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 uint32_t ElfEncoder<numBits>::appendSectionName(ConstStringRef str) {
     if (false == addHeaderSectionNamesSection) {
         return strSecBuilder.undef();
@@ -120,7 +120,7 @@ uint32_t ElfEncoder<numBits>::appendSectionName(ConstStringRef str) {
     return strSecBuilder.appendString(str);
 }
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 std::vector<uint8_t> ElfEncoder<numBits>::encode() const {
     ElfFileHeader<numBits> elfFileHeader = this->elfFileHeader;
     StackVec<ElfProgramHeader<numBits>, 32> programHeaders = this->programHeaders;

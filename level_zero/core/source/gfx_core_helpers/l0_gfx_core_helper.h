@@ -29,12 +29,10 @@ class Debugger;
 
 namespace L0 {
 
-typedef enum _ze_rtas_device_format_internal_t {
-    ZE_RTAS_DEVICE_FORMAT_EXP_INVALID = 0,   // invalid acceleration structure format
-    ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_1 = 1, // acceleration structure format version 1
-    ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_2 = 2, // acceleration structure format version 2
-    ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_MAX = 2
-} ze_rtas_device_format_internal_t;
+enum class RTASDeviceFormatInternal {
+    version1 = 1,
+    version2 = 2,
+};
 
 struct Event;
 struct Device;

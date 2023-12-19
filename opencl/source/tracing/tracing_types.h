@@ -14,10 +14,10 @@ struct _cl_tracing_handle;
 typedef _cl_tracing_handle *cl_tracing_handle;
 
 //! Enumeration of callback call sites
-typedef enum _cl_callback_site {
+enum ClCallbackSite {
     CL_CALLBACK_SITE_ENTER = 0, //!< Before the function
     CL_CALLBACK_SITE_EXIT = 1   //!< After the function
-} cl_callback_site;
+};
 
 /*!
     \brief Callback data structure
@@ -32,7 +32,7 @@ typedef enum _cl_callback_site {
     Return value will be available only within on-exit callback
 */
 typedef struct _cl_callback_data {
-    cl_callback_site site;      //!< Call site, can be ENTER or EXIT
+    ClCallbackSite site;        //!< Call site, can be ENTER or EXIT
     cl_uint correlationId;      //!< Correlation identifier, the same for ENTER
                                 //!< and EXIT callbacks
     cl_ulong *correlationData;  //!< Pointer to correlation data repository,
@@ -45,7 +45,7 @@ typedef struct _cl_callback_data {
 } cl_callback_data;
 
 //! Enumeration of supported functions for tracing
-typedef enum _cl_function_id {
+enum ClFunctionId {
     CL_FUNCTION_clBuildProgram = 0,
     CL_FUNCTION_clCloneKernel = 1,
     CL_FUNCTION_clCompileProgram = 2,
@@ -165,7 +165,7 @@ typedef enum _cl_function_id {
     CL_FUNCTION_clUnloadPlatformCompiler = 116,
     CL_FUNCTION_clWaitForEvents = 117,
     CL_FUNCTION_COUNT = 118,
-} cl_function_id;
+};
 
 /*!
     User-defined tracing callback prototype
@@ -177,7 +177,7 @@ typedef enum _cl_function_id {
 
         Thread Safety: must be guaranteed by customer
 */
-typedef void (*cl_tracing_callback)(cl_function_id fid, cl_callback_data *callbackData, void *userData);
+typedef void (*cl_tracing_callback)(ClFunctionId fid, cl_callback_data *callbackData, void *userData);
 
 typedef struct _cl_params_clBuildProgram {
     cl_program *program;

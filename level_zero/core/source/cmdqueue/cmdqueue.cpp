@@ -283,34 +283,34 @@ ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, si
         secondBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
 
-    buffers[BUFFER_ALLOCATION::FIRST] = firstBuffer;
-    buffers[BUFFER_ALLOCATION::SECOND] = secondBuffer;
+    buffers[BufferAllocation::first] = firstBuffer;
+    buffers[BufferAllocation::second] = secondBuffer;
 
-    if (!buffers[BUFFER_ALLOCATION::FIRST] || !buffers[BUFFER_ALLOCATION::SECOND]) {
+    if (!buffers[BufferAllocation::first] || !buffers[BufferAllocation::second]) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    flushId[BUFFER_ALLOCATION::FIRST] = std::make_pair(0u, 0u);
-    flushId[BUFFER_ALLOCATION::SECOND] = std::make_pair(0u, 0u);
+    flushId[BufferAllocation::first] = std::make_pair(0u, 0u);
+    flushId[BufferAllocation::second] = std::make_pair(0u, 0u);
     return ZE_RESULT_SUCCESS;
 }
 
 void CommandQueueImp::CommandBufferManager::destroy(Device *device) {
-    if (buffers[BUFFER_ALLOCATION::FIRST]) {
-        device->storeReusableAllocation(*buffers[BUFFER_ALLOCATION::FIRST]);
-        buffers[BUFFER_ALLOCATION::FIRST] = nullptr;
+    if (buffers[BufferAllocation::first]) {
+        device->storeReusableAllocation(*buffers[BufferAllocation::first]);
+        buffers[BufferAllocation::first] = nullptr;
     }
-    if (buffers[BUFFER_ALLOCATION::SECOND]) {
-        device->storeReusableAllocation(*buffers[BUFFER_ALLOCATION::SECOND]);
-        buffers[BUFFER_ALLOCATION::SECOND] = nullptr;
+    if (buffers[BufferAllocation::second]) {
+        device->storeReusableAllocation(*buffers[BufferAllocation::second]);
+        buffers[BufferAllocation::second] = nullptr;
     }
 }
 
 NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {
-    if (bufferUse == BUFFER_ALLOCATION::FIRST) {
-        bufferUse = BUFFER_ALLOCATION::SECOND;
+    if (bufferUse == BufferAllocation::first) {
+        bufferUse = BufferAllocation::second;
     } else {
-        bufferUse = BUFFER_ALLOCATION::FIRST;
+        bufferUse = BufferAllocation::first;
     }
 
     auto waitStatus{NEO::WaitStatus::ready};

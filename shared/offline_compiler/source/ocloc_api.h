@@ -18,6 +18,7 @@
 #define OCLOC_MAKE_VERSION(_major, _minor) ((_major << 16) | (_minor & 0x0000ffff))
 #endif // OCLOC_MAKE_VERSION
 
+// NOLINTBEGIN(readability-identifier-naming)
 typedef enum _ocloc_version_t {
     OCLOC_VERSION_1_0 = OCLOC_MAKE_VERSION(1, 0),     ///< version 1.0
     OCLOC_VERSION_CURRENT = OCLOC_MAKE_VERSION(1, 0), ///< latest known version
@@ -40,6 +41,7 @@ typedef struct _ocloc_name_version {
     unsigned int version;
     char name[OCLOC_NAME_VERSION_MAX_NAME_SIZE];
 } ocloc_name_version;
+// NOLINTEND(readability-identifier-naming)
 
 #ifdef _WIN32
 #define SIGNATURE __declspec(dllexport) int __cdecl

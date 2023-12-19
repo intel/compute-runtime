@@ -57,12 +57,12 @@ class DrmCommandStreamTest : public ::testing::Test {
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         osContext->ensureContextInitialized();
 
-        csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
         mock->ioctlCallsCount = 0u;
-        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive,
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
@@ -130,7 +130,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
         ASSERT_NE(nullptr, csr);
-        mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
+        mm = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                   debugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);
@@ -211,7 +211,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
 
         csr = new TestedDrmCommandStreamReceiverWithFailingExec<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
         ASSERT_NE(nullptr, csr);
-        mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
+        mm = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                   debugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);

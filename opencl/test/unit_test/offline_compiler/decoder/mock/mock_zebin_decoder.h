@@ -9,7 +9,7 @@
 #include "shared/offline_compiler/source/decoder/zebin_manipulator.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
+template <NEO::Elf::ElfIdentifierClass numBits>
 struct MockZebinDecoder : public NEO::Zebin::Manipulator::ZebinDecoder<numBits> {
     using Base = NEO::Zebin::Manipulator::ZebinDecoder<numBits>;
     using ErrorCode = NEO::Zebin::Manipulator::ErrorCode;

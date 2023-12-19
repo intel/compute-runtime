@@ -18,7 +18,7 @@
 
 using namespace NEO::Elf;
 
-using ELF_CLASS = NEO::Elf::ELF_IDENTIFIER_CLASS;
+using ELF_CLASS = NEO::Elf::ElfIdentifierClass;
 
 class TestElf {
   public:
@@ -29,19 +29,19 @@ class TestElf {
     std::vector<uint8_t> createRelocateableElfWithDebugData() {
         MockElfEncoder<> elfEncoder;
 
-        elfEncoder.getElfFileHeader().type = ELF_TYPE::ET_REL;
-        elfEncoder.getElfFileHeader().machine = ELF_MACHINE::EM_NONE;
+        elfEncoder.getElfFileHeader().type = ElfType::ET_REL;
+        elfEncoder.getElfFileHeader().machine = ElfMachine::EM_NONE;
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::text.str(), ArrayRef<const uint8_t>(dummyData, sizeof(dummyData)));
         auto textSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
         ElfRela<ELF_CLASS::EI_CLASS_64> relocationsWithAddend[2];
         relocationsWithAddend[0].addend = relaAddend;
-        relocationsWithAddend[0].info = relaSymbolIndexes[0] << 32 | uint32_t(RELOCATION_X8664_TYPE::relocation64);
+        relocationsWithAddend[0].info = relaSymbolIndexes[0] << 32 | uint32_t(RelocationX8664Type::relocation64);
         relocationsWithAddend[0].offset = relaOffsets[0];
 
         relocationsWithAddend[1].addend = relaAddend;
-        relocationsWithAddend[1].info = relaSymbolIndexes[1] << 32 | uint32_t(RELOCATION_X8664_TYPE::relocation32);
+        relocationsWithAddend[1].info = relaSymbolIndexes[1] << 32 | uint32_t(RelocationX8664Type::relocation32);
         relocationsWithAddend[1].offset = relaOffsets[1];
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::debug, ArrayRef<const uint8_t>(dummyData, sizeof(dummyData)));
@@ -55,10 +55,10 @@ class TestElf {
         relaDebugSection->info = debugSectionIndex;
 
         ElfRel<ELF_CLASS::EI_CLASS_64> relocations[2];
-        relocations[0].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::relocation64);
+        relocations[0].info = relSymbolIndex << 32 | uint64_t(RelocationX8664Type::relocation64);
         relocations[0].offset = relOffsets[0];
 
-        relocations[1].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::relocation64);
+        relocations[1].info = relSymbolIndex << 32 | uint64_t(RelocationX8664Type::relocation64);
         relocations[1].offset = relOffsets[1];
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::line, std::string{"dummy_line_data______________________"});
@@ -91,21 +91,21 @@ class TestElf {
         symbols[0].value = 0;
 
         symbols[1].name = elfEncoder.appendSectionName(NEO::ConstStringRef("local_function_symbol_1"));
-        symbols[1].info = SYMBOL_TABLE_TYPE::STT_FUNC | SYMBOL_TABLE_BIND::STB_LOCAL << 4;
+        symbols[1].info = SymbolTableType::STT_FUNC | SymbolTableBind::STB_LOCAL << 4;
         symbols[1].shndx = textSectionIndex;
         symbols[1].size = 8;
         symbols[1].value = 0;
         symbols[1].other = 0;
 
         symbols[2].name = elfEncoder.appendSectionName(NEO::ConstStringRef("section_symbol_2"));
-        symbols[2].info = SYMBOL_TABLE_TYPE::STT_SECTION | SYMBOL_TABLE_BIND::STB_LOCAL << 4;
+        symbols[2].info = SymbolTableType::STT_SECTION | SymbolTableBind::STB_LOCAL << 4;
         symbols[2].shndx = textSectionIndex;
         symbols[2].size = 0;
         symbols[2].value = 0;
         symbols[2].other = 0;
 
         symbols[3].name = elfEncoder.appendSectionName(NEO::ConstStringRef("global_object_symbol_0"));
-        symbols[3].info = SYMBOL_TABLE_TYPE::STT_OBJECT | SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+        symbols[3].info = SymbolTableType::STT_OBJECT | SymbolTableBind::STB_GLOBAL << 4;
         symbols[3].shndx = dataSectionIndex;
         symbols[3].size = 4;
         symbols[3].value = 7; // offset to "data" string in data section
@@ -474,7 +474,7 @@ TEST(ElfDecoder, WhenElfContainsInvalidSymbolSectionHeaderThenDecodingFailsAndEr
     header.shNum = 1;
     storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&header), reinterpret_cast<const uint8_t *>(&header + 1));
     ElfSectionHeader<EI_CLASS_64> sectionHeader0;
-    sectionHeader0.type = SECTION_HEADER_TYPE::SHT_SYMTAB;
+    sectionHeader0.type = SectionHeaderType::SHT_SYMTAB;
     sectionHeader0.size = sizeof(sectionHeader0);
     sectionHeader0.offset = header.shOff;
     sectionHeader0.entsize = sizeof(ElfSymbolEntry<EI_CLASS_64>) + 4; // invalid entSize
@@ -504,7 +504,7 @@ TEST(ElfDecoder, WhenElfContainsInvalidRelocationSectionHeaderThenDecodingFailsA
     sectionHeader0.size = sizeof(sectionHeader0);
     sectionHeader0.offset = header.shOff;
 
-    SECTION_HEADER_TYPE types[] = {SECTION_HEADER_TYPE::SHT_REL, SECTION_HEADER_TYPE::SHT_RELA};
+    SectionHeaderType types[] = {SectionHeaderType::SHT_REL, SectionHeaderType::SHT_RELA};
     size_t entSizes[] = {sizeof(ElfRel<EI_CLASS_64>) + 4, sizeof(ElfRela<EI_CLASS_64>) + 4};
     std::string errors[] = {"Invalid rel entries size - expected : ",
                             "Invalid rela entries size - expected : "};
@@ -536,19 +536,19 @@ TEST(ElfDecoder, GivenElf64WhenExtractingDataFromElfRelocationThenCorrectRelocTy
     elf.elfFileHeader = &header64;
 
     ElfRela<EI_CLASS_64> rela;
-    rela.info = decltype(ElfRela<EI_CLASS_64>::info)(RELOCATION_X8664_TYPE::relocation64) | decltype(ElfRela<EI_CLASS_64>::info)(5) << 32;
+    rela.info = decltype(ElfRela<EI_CLASS_64>::info)(RelocationX8664Type::relocation64) | decltype(ElfRela<EI_CLASS_64>::info)(5) << 32;
     auto type = elf.extractRelocType(rela);
     auto symbolIndex = elf.extractSymbolIndex(rela);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), type);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation64), type);
     EXPECT_EQ(5, symbolIndex);
 
     ElfRel<EI_CLASS_64> rel;
-    rel.info = decltype(ElfRela<EI_CLASS_64>::info)(RELOCATION_X8664_TYPE::relocation32) | decltype(ElfRela<EI_CLASS_64>::info)(6) << 32;
+    rel.info = decltype(ElfRela<EI_CLASS_64>::info)(RelocationX8664Type::relocation32) | decltype(ElfRela<EI_CLASS_64>::info)(6) << 32;
     type = elf.extractRelocType(rel);
     symbolIndex = elf.extractSymbolIndex(rel);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), type);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation32), type);
     EXPECT_EQ(6, symbolIndex);
 }
 
@@ -558,19 +558,19 @@ TEST(ElfDecoder, GivenElf32WhenExtractingDataFromElfRelocationThenCorrectRelocTy
     elf.elfFileHeader = &header64;
 
     ElfRela<EI_CLASS_32> rela;
-    rela.info = decltype(ElfRela<EI_CLASS_32>::info)(RELOCATION_X8664_TYPE::relocation32) | decltype(ElfRela<EI_CLASS_32>::info)(5) << 8;
+    rela.info = decltype(ElfRela<EI_CLASS_32>::info)(RelocationX8664Type::relocation32) | decltype(ElfRela<EI_CLASS_32>::info)(5) << 8;
     auto type = elf.extractRelocType(rela);
     auto symbolIndex = elf.extractSymbolIndex(rela);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), type);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation32), type);
     EXPECT_EQ(5, symbolIndex);
 
     ElfRel<EI_CLASS_32> rel;
-    rel.info = decltype(ElfRel<EI_CLASS_32>::info)(RELOCATION_X8664_TYPE::relocation32) | decltype(ElfRel<EI_CLASS_32>::info)(6) << 8;
+    rel.info = decltype(ElfRel<EI_CLASS_32>::info)(RelocationX8664Type::relocation32) | decltype(ElfRel<EI_CLASS_32>::info)(6) << 8;
     type = elf.extractRelocType(rel);
     symbolIndex = elf.extractSymbolIndex(rel);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), type);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation32), type);
     EXPECT_EQ(6, symbolIndex);
 }
 
@@ -580,12 +580,12 @@ TEST(ElfDecoder, GivenElfWhenExtractingDataFromElfSymbolThenCorrectTypeAndBindIs
     elf.elfFileHeader = &header64;
 
     ElfSymbolEntry<EI_CLASS_64> symbolEntry;
-    symbolEntry.info = SYMBOL_TABLE_TYPE::STT_OBJECT | SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbolEntry.info = SymbolTableType::STT_OBJECT | SymbolTableBind::STB_GLOBAL << 4;
     auto type = elf.extractSymbolType(symbolEntry);
     auto symbolBind = elf.extractSymbolBind(symbolEntry);
 
-    EXPECT_EQ(SYMBOL_TABLE_TYPE::STT_OBJECT, type);
-    EXPECT_EQ(SYMBOL_TABLE_BIND::STB_GLOBAL, symbolBind);
+    EXPECT_EQ(SymbolTableType::STT_OBJECT, type);
+    EXPECT_EQ(SymbolTableBind::STB_GLOBAL, symbolBind);
 }
 
 TEST(ElfDecoder, GivenElfWithStringTableSectionWhenGettingSectionNameThenCorrectNameIsReturned) {
@@ -731,7 +731,7 @@ TEST(ElfDecoder, GivenElfWithStringTableSectionWhenGettingSymbolNameThenCorrectN
 TEST(ElfDecoder, WhenGettingSymbolAddressThenCorectValueIsReturned) {
     MockElf<EI_CLASS_64> elf;
     ElfSymbolEntry<EI_CLASS_64> symbol;
-    symbol.info = SYMBOL_TABLE_TYPE::STT_OBJECT;
+    symbol.info = SymbolTableType::STT_OBJECT;
     symbol.name = 0;
     symbol.shndx = 1;
     symbol.size = 8;
@@ -767,7 +767,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(testElf.relaAddend, debugRelocations[0].addend);
     EXPECT_EQ(testElf.relaOffsets[0], debugRelocations[0].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), debugRelocations[0].relocType);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation64), debugRelocations[0].relocType);
     EXPECT_STREQ("global_object_symbol_0", debugRelocations[0].symbolName.c_str());
     EXPECT_EQ(7, debugRelocations[0].symbolSectionIndex);
     EXPECT_EQ(3, debugRelocations[0].symbolTableIndex);
@@ -775,7 +775,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(testElf.relaAddend, debugRelocations[1].addend);
     EXPECT_EQ(testElf.relaOffsets[1], debugRelocations[1].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), debugRelocations[1].relocType);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation32), debugRelocations[1].relocType);
     EXPECT_STREQ("local_function_symbol_1", debugRelocations[1].symbolName.c_str());
     EXPECT_EQ(1, debugRelocations[1].symbolSectionIndex);
     EXPECT_EQ(1, debugRelocations[1].symbolTableIndex);
@@ -783,7 +783,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(0u, debugRelocations[2].addend);
     EXPECT_EQ(testElf.relOffsets[1], debugRelocations[2].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), debugRelocations[2].relocType);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation64), debugRelocations[2].relocType);
     EXPECT_STREQ("section_symbol_2", debugRelocations[2].symbolName.c_str());
     EXPECT_EQ(1, debugRelocations[2].symbolSectionIndex);
     EXPECT_EQ(2, debugRelocations[2].symbolTableIndex);
@@ -791,7 +791,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(0u, relocations[0].addend);
     EXPECT_EQ(testElf.relOffsets[0], relocations[0].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), relocations[0].relocType);
+    EXPECT_EQ(uint32_t(RelocationX8664Type::relocation64), relocations[0].relocType);
     EXPECT_STREQ("section_symbol_2", relocations[0].symbolName.c_str());
     EXPECT_EQ(1, relocations[0].symbolSectionIndex);
     EXPECT_EQ(2, relocations[0].symbolTableIndex);
@@ -800,15 +800,15 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
     auto symbolTable = elf64.getSymbols();
     ASSERT_EQ(4u, symbolTable.size());
 
-    EXPECT_EQ(SYMBOL_TABLE_TYPE::STT_NOTYPE, elf64.extractSymbolType(symbolTable[0]));
-    EXPECT_EQ(SYMBOL_TABLE_BIND::STB_LOCAL, elf64.extractSymbolBind(symbolTable[0]));
+    EXPECT_EQ(SymbolTableType::STT_NOTYPE, elf64.extractSymbolType(symbolTable[0]));
+    EXPECT_EQ(SymbolTableBind::STB_LOCAL, elf64.extractSymbolBind(symbolTable[0]));
 
-    EXPECT_EQ(SYMBOL_TABLE_TYPE::STT_FUNC, elf64.extractSymbolType(symbolTable[1]));
-    EXPECT_EQ(SYMBOL_TABLE_BIND::STB_LOCAL, elf64.extractSymbolBind(symbolTable[1]));
+    EXPECT_EQ(SymbolTableType::STT_FUNC, elf64.extractSymbolType(symbolTable[1]));
+    EXPECT_EQ(SymbolTableBind::STB_LOCAL, elf64.extractSymbolBind(symbolTable[1]));
 
-    EXPECT_EQ(SYMBOL_TABLE_TYPE::STT_SECTION, elf64.extractSymbolType(symbolTable[2]));
-    EXPECT_EQ(SYMBOL_TABLE_BIND::STB_LOCAL, elf64.extractSymbolBind(symbolTable[2]));
+    EXPECT_EQ(SymbolTableType::STT_SECTION, elf64.extractSymbolType(symbolTable[2]));
+    EXPECT_EQ(SymbolTableBind::STB_LOCAL, elf64.extractSymbolBind(symbolTable[2]));
 
-    EXPECT_EQ(SYMBOL_TABLE_TYPE::STT_OBJECT, elf64.extractSymbolType(symbolTable[3]));
-    EXPECT_EQ(SYMBOL_TABLE_BIND::STB_GLOBAL, elf64.extractSymbolBind(symbolTable[3]));
+    EXPECT_EQ(SymbolTableType::STT_OBJECT, elf64.extractSymbolType(symbolTable[3]));
+    EXPECT_EQ(SymbolTableBind::STB_GLOBAL, elf64.extractSymbolBind(symbolTable[3]));
 }

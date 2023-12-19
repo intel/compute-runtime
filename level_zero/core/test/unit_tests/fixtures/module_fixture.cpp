@@ -88,7 +88,7 @@ void ModuleImmutableDataFixture::setUp() {
     DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
 }
 
-void ModuleImmutableDataFixture::createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData, std::initializer_list<ZebinTestData::appendElfAdditionalSection> additionalSections) {
+void ModuleImmutableDataFixture::createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData, std::initializer_list<ZebinTestData::AppendElfAdditionalSection> additionalSections) {
     DebugManagerStateRestore restore;
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
 

@@ -74,7 +74,7 @@ NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel() c
 
 template <typename Family>
 ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormat() const {
-    return static_cast<ze_rtas_format_exp_t>(ZE_RTAS_DEVICE_FORMAT_EXP_VERSION_1);
+    return static_cast<ze_rtas_format_exp_t>(RTASDeviceFormatInternal::version1);
 }
 
 template <typename Family>

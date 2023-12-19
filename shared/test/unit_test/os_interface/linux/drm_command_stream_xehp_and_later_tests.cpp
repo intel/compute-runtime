@@ -45,7 +45,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0, false);
 
-        memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              *executionEnvironment);

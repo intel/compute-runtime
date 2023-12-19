@@ -37,9 +37,9 @@ uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
 
 uint32_t AubHelper::getMemType(uint32_t addressSpace) {
     if (addressSpace == AubMemDump::AddressSpaceValues::TraceLocal) {
-        return mem_types::MEM_TYPE_LOCALMEM;
+        return MemType::local;
     }
-    return mem_types::MEM_TYPE_SYSTEM;
+    return MemType::system;
 }
 
 uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {

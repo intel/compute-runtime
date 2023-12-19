@@ -69,7 +69,7 @@ class DrmGemCloseWorkerFixture {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drmMock, 0u, false);
 
-        this->mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
+        this->mm = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                         false,
                                         false,
                                         executionEnvironment);

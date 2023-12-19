@@ -11,7 +11,7 @@
 
 #include <unordered_map>
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>
+template <NEO::Elf::ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct MockElf : public NEO::Elf::Elf<numBits> {
     using BaseClass = NEO::Elf::Elf<numBits>;
 
@@ -67,7 +67,7 @@ struct MockElf : public NEO::Elf::Elf<numBits> {
     bool overrideSymbolName = false;
 };
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>
+template <NEO::Elf::ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
     using NEO::Elf::ElfEncoder<numBits>::sectionHeaders;
 
@@ -82,16 +82,16 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
     static std::vector<uint8_t> createRelocateableDebugDataElf() {
         MockElfEncoder<> elfEncoder;
 
-        elfEncoder.getElfFileHeader().type = NEO::Elf::ELF_TYPE::ET_REL;
-        elfEncoder.getElfFileHeader().machine = NEO::Elf::ELF_MACHINE::EM_NONE;
+        elfEncoder.getElfFileHeader().type = NEO::Elf::ElfType::ET_REL;
+        elfEncoder.getElfFileHeader().machine = NEO::Elf::ElfMachine::EM_NONE;
 
         uint8_t dummyData[16];
         elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SpecialSectionNames::text.str(), ArrayRef<const uint8_t>(dummyData, sizeof(dummyData)));
         auto textSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
-        NEO::Elf::ElfRela<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> relocationsWithAddend;
+        NEO::Elf::ElfRela<NEO::Elf::ElfIdentifierClass::EI_CLASS_64> relocationsWithAddend;
         relocationsWithAddend.addend = 0x1a8;
-        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RELOCATION_X8664_TYPE::relocation64);
+        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RelocationX8664Type::relocation64);
         relocationsWithAddend.offset = 8;
 
         elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SpecialSectionNames::debugInfo, ArrayRef<const uint8_t>(dummyData, sizeof(dummyData)));
@@ -108,7 +108,7 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
         relaDebugSection->info = debugSectionIndex;
 
         relocationsWithAddend.addend = 0;
-        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RELOCATION_X8664_TYPE::relocation64);
+        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RelocationX8664Type::relocation64);
         relocationsWithAddend.offset = 0;
 
         elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Elf::SpecialSectionNames::debug.str() + "_line",
@@ -118,9 +118,9 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
         relaDebugLineSection->info = debugLineSectionIndex;
 
         std::vector<uint8_t> symbolTable;
-        symbolTable.resize(2 * sizeof(NEO::Elf::ElfSymbolEntry<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64>));
+        symbolTable.resize(2 * sizeof(NEO::Elf::ElfSymbolEntry<NEO::Elf::ElfIdentifierClass::EI_CLASS_64>));
 
-        auto symbols = reinterpret_cast<NEO::Elf::ElfSymbolEntry<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> *>(symbolTable.data());
+        auto symbols = reinterpret_cast<NEO::Elf::ElfSymbolEntry<NEO::Elf::ElfIdentifierClass::EI_CLASS_64> *>(symbolTable.data());
         symbols[0].name = 0; // undef
         symbols[0].info = 0;
         symbols[0].shndx = 0;
@@ -128,7 +128,7 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
         symbols[0].value = 0;
 
         symbols[1].name = elfEncoder.appendSectionName(NEO::ConstStringRef(".text"));
-        symbols[1].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_SECTION | NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL << 4;
+        symbols[1].info = NEO::Elf::SymbolTableType::STT_SECTION | NEO::Elf::SymbolTableBind::STB_LOCAL << 4;
         symbols[1].shndx = static_cast<decltype(symbols[1].shndx)>(textSectionIndex);
         symbols[1].size = 0;
         symbols[1].value = 0;

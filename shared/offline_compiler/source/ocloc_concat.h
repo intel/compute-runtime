@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace AOT {
-enum PRODUCT_CONFIG : uint32_t;
+enum PRODUCT_CONFIG : uint32_t; // NOLINT(readability-identifier-naming)
 }
 class OclocArgHelper;
 namespace NEO {

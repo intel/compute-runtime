@@ -29,7 +29,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
     imageInfo.imgDesc.numSamples = 9u;
     imageInfo.imgDesc.imageType = ImageType::image2DArray;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
     SurfaceOffsets surfaceOffsets;
     surfaceOffsets.offset = 0u;
@@ -126,7 +126,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsEnabledThenArrayFlag
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -150,7 +150,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DWhen2dImageWAIsDisabledThenArrayFla
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -174,7 +174,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsEnabledT
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -198,7 +198,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabled
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;
@@ -222,7 +222,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlag
     SurfaceOffsets surfaceOffsets = {0, 0, 0, 0};
     const uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
     SurfaceFormatInfo surfaceFormatInfo;
-    surfaceFormatInfo.genxSurfaceFormat = GFX3DSTATE_SURFACEFORMAT::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
+    surfaceFormatInfo.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_A32_FLOAT;
     imageInfo.surfaceFormat = &surfaceFormatInfo;
 
     const uint64_t gpuAddress = 0x000001a78a8a8000;

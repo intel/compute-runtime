@@ -47,7 +47,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
   public:
     static const uint32_t kernelBinaryAlignment = 64;
 
-    enum kernelArgType {
+    enum KernelArgType {
         NONE_OBJ,
         IMAGE_OBJ,
         BUFFER_OBJ,
@@ -66,7 +66,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         const void *value;
         size_t size;
         GraphicsAllocation *svmAllocation;
-        kernelArgType type;
+        KernelArgType type;
         uint32_t allocId;
         uint32_t allocIdMemoryManagerCounter;
         bool isPatched = false;
@@ -118,7 +118,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     ~Kernel() override;
 
-    static bool isMemObj(kernelArgType kernelArg) {
+    static bool isMemObj(KernelArgType kernelArg) {
         return kernelArg == BUFFER_OBJ || kernelArg == IMAGE_OBJ || kernelArg == PIPE_OBJ;
     }
 
@@ -268,7 +268,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
                              const void *argVal);
 
     void storeKernelArg(uint32_t argIndex,
-                        kernelArgType argType,
+                        KernelArgType argType,
                         void *argObject,
                         const void *argValue,
                         size_t argSize,

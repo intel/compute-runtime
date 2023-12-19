@@ -24,6 +24,8 @@ CheckOptions:
     value:           CamelCase
   - key:             readability-identifier-naming.StructIgnoredRegexp
     value:           '(_|TOKSTR_).+'
+  - key:             readability-identifier-naming.EnumCase
+    value:           CamelCase
   - key:             readability-identifier-naming.MethodCase
     value:           camelBack
   - key:             readability-identifier-naming.PrivateMethodCase

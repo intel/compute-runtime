@@ -29,11 +29,11 @@ NTSTATUS gGetDeviceStatePageFaultReturnValue = STATUS_SUCCESS;
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
     ++perfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.retCode = NEO::GTDI_RET_OK;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.gpuPerfTicks = ++perfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.cpuPerfTicks = perfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.gpuPerfFreq = 1;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->data.out.cpuPerfFreq = 1;
+    auto &getGpuCpuOut = reinterpret_cast<NEO::TimeStampDataHeader *>(pData->pPrivateDriverData)->data.out;
+    getGpuCpuOut.gpuPerfTicks = ++perfTicks;
+    getGpuCpuOut.cpuPerfTicks = perfTicks;
+    getGpuCpuOut.gpuPerfFreq = 1;
+    getGpuCpuOut.cpuPerfFreq = 1;
 
     return STATUS_SUCCESS;
 }

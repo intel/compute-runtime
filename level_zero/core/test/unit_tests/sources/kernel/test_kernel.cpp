@@ -719,7 +719,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsCopiedWh
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
 
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::global};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::global};
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get(), additionalSections);
 
     size_t copyForGlobalSurface = 1u;
@@ -799,7 +799,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenIsaIs
     size_t previouscopyMemoryToAllocationCalledTimes =
         mockMemoryManager->copyMemoryToAllocationCalledTimes;
 
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::global};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::global};
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get(), additionalSections);
 
     size_t copyForGlobalSurface = 1u;

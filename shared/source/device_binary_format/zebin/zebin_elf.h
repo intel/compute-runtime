@@ -12,13 +12,13 @@
 
 namespace NEO::Zebin::Elf {
 using namespace NEO::Elf;
-enum ELF_TYPE_ZEBIN : uint16_t {
+enum ElfTypeZebin : uint16_t {
     ET_ZEBIN_REL = 0xff11, // A relocatable ZE binary file
     ET_ZEBIN_EXE = 0xff12, // An executable ZE binary file
     ET_ZEBIN_DYN = 0xff13, // A shared object ZE binary file
 };
 
-enum SHT_ZEBIN : uint32_t {
+enum SectionHeaderTypeZebin : uint32_t {
     SHT_ZEBIN_SPIRV = 0xff000009,      // .spv.kernel section, value the same as SHT_OPENCL_SPIRV
     SHT_ZEBIN_ZEINFO = 0xff000011,     // .ze_info section
     SHT_ZEBIN_GTPIN_INFO = 0xff000012, // .gtpin_info section
@@ -26,7 +26,7 @@ enum SHT_ZEBIN : uint32_t {
     SHT_ZEBIN_MISC = 0xff000014        // .misc section
 };
 
-enum RELOC_TYPE_ZEBIN : uint32_t {
+enum RelocTypeZebin : uint32_t {
     R_ZE_NONE,
     R_ZE_SYM_ADDR,
     R_ZE_SYM_ADDR_32,

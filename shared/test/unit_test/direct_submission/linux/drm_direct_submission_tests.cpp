@@ -44,7 +44,7 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
         DrmMemoryManagerBasic::SetUp();
         executionEnvironment.incRefInternal();
 
-        executionEnvironment.memoryManager = std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerInactive,
+        executionEnvironment.memoryManager = std::make_unique<DrmMemoryManager>(GemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                 debugManager.flags.EnableForcePin.get(),
                                                                                 true,
                                                                                 executionEnvironment);

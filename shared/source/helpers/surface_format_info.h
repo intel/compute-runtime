@@ -11,7 +11,7 @@
 #include "third_party/opencl_headers/CL/cl_ext.h"
 
 namespace NEO {
-enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
+enum SurfaceFormat : unsigned short {
     GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_FLOAT = 0x000,
     GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_SINT = 0x001,
     GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_UINT = 0x002,
@@ -196,7 +196,7 @@ enum class ImagePlane {
 
 struct SurfaceFormatInfo {
     GMM_RESOURCE_FORMAT gmmSurfaceFormat;
-    GFX3DSTATE_SURFACEFORMAT genxSurfaceFormat;
+    SurfaceFormat genxSurfaceFormat;
     uint32_t gmmTileWalk;
     uint32_t numChannels;
     uint32_t perChannelSizeInBytes;

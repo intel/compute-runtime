@@ -89,7 +89,7 @@ cl_int CL_API_CALL clCreateTracingHandleINTEL(cl_device_id device, cl_tracing_ca
     return CL_SUCCESS;
 }
 
-cl_int CL_API_CALL clSetTracingPointINTEL(cl_tracing_handle handle, cl_function_id fid, cl_bool enable) {
+cl_int CL_API_CALL clSetTracingPointINTEL(cl_tracing_handle handle, ClFunctionId fid, cl_bool enable) {
     if (handle == nullptr) {
         return CL_INVALID_VALUE;
     }

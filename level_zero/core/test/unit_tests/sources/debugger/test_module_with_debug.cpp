@@ -614,7 +614,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
-    auto elfAdditionalSections = {ZebinTestData::appendElfAdditionalSection::constant}; // for const surface allocation copy
+    auto elfAdditionalSections = {ZebinTestData::AppendElfAdditionalSection::constant}; // for const surface allocation copy
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), elfAdditionalSections);
     const auto &src = zebinData->storage;
 

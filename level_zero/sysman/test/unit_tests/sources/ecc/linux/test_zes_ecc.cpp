@@ -13,11 +13,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-enum eccState : uint8_t {
-    eccStateEnable = 1,
-    eccStateNone = 0xFF
-};
-
 class ZesEccFixture : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;

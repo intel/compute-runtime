@@ -23,10 +23,10 @@ namespace NEO {
 namespace Elf {
 struct IntelGTNote;
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 struct Elf;
 
-template <ELF_IDENTIFIER_CLASS numBits>
+template <ElfIdentifierClass numBits>
 struct ElfEncoder;
 } // namespace Elf
 
@@ -61,7 +61,7 @@ bool is64BitZebin(OclocArgHelper *argHelper, const std::string &sectionsInfoFile
 
 constexpr ConstStringRef sectionsInfoFilename = "sections.txt";
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 class ZebinDecoder {
   public:
     using ElfT = Elf::Elf<numBits>;
@@ -95,7 +95,7 @@ class ZebinDecoder {
     std::unique_ptr<IgaWrapper> iga;
 };
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 class ZebinEncoder {
   public:
     using ElfEncoderT = Elf::ElfEncoder<numBits>;

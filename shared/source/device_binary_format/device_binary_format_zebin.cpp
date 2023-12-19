@@ -21,7 +21,7 @@
 
 namespace NEO {
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                      std::string &outErrReason, std::string &outWarning) {
     if (1 == NEO::debugManager.flags.DumpZEBin.get()) {
@@ -58,7 +58,7 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
     }
 
     bool validForTarget = true;
-    if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
+    if (elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {
         validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret.generator);
     } else {
         const auto &flags = reinterpret_cast<const NEO::Zebin::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
@@ -92,7 +92,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(cons
                : unpackSingleZebin<Elf::EI_CLASS_64>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
 }
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<numBits> &elf) {
     programInfo.prepareLinkerInputStorage();
 
@@ -107,7 +107,7 @@ void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<numBits> &elf
     programInfo.linkerInput->decodeElfSymbolTableAndRelocations(elf, nameToKernelId);
 }
 
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
     auto elf = Elf::decodeElf<numBits>(src.deviceBinary, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {

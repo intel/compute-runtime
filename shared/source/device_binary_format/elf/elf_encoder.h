@@ -49,7 +49,7 @@ struct StringSectionBuilder {
     uint32_t undefStringIdx;
 };
 
-template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>
+template <ElfIdentifierClass numBits = EI_CLASS_64>
 struct ElfEncoder {
     ElfEncoder(bool addUndefSectionHeader = true, bool addHeaderSectionNamesSection = true,
                typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignment = 8U);
@@ -57,19 +57,19 @@ struct ElfEncoder {
     void appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
     void appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData);
 
-    ElfSectionHeader<numBits> &appendSection(SECTION_HEADER_TYPE sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
-    ElfProgramHeader<numBits> &appendSegment(PROGRAM_HEADER_TYPE segmentType, const ArrayRef<const uint8_t> segmentData);
+    ElfSectionHeader<numBits> &appendSection(SectionHeaderType sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
+    ElfProgramHeader<numBits> &appendSegment(ProgramHeaderType segmentType, const ArrayRef<const uint8_t> segmentData);
     uint32_t getSectionHeaderIndex(const ElfSectionHeader<numBits> &sectionHeader);
     void appendProgramHeaderLoad(size_t sectionId, uint64_t vAddr, uint64_t segSize);
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
-        return appendSection(static_cast<SECTION_HEADER_TYPE>(sectionType), sectionLabel, sectionData);
+        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, sectionData);
     }
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const std::string &sectionData) {
-        return appendSection(static_cast<SECTION_HEADER_TYPE>(sectionType), sectionLabel,
+        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel,
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(sectionData.c_str()), sectionData.size() + 1));
     }
 

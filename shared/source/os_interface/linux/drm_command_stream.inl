@@ -33,7 +33,7 @@ template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                                               uint32_t rootDeviceIndex,
                                                               const DeviceBitfield deviceBitfield,
-                                                              gemCloseWorkerMode mode)
+                                                              GemCloseWorkerMode mode)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), gemCloseWorkerOperationMode(mode) {
 
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
@@ -43,11 +43,11 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     execObjectsStorage.reserve(512);
 
     if (this->drm->isVmBindAvailable()) {
-        gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
+        gemCloseWorkerOperationMode = GemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
     if (debugManager.flags.EnableGemCloseWorker.get() != -1) {
-        gemCloseWorkerOperationMode = debugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
+        gemCloseWorkerOperationMode = debugManager.flags.EnableGemCloseWorker.get() ? GemCloseWorkerMode::gemCloseWorkerActive : GemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
@@ -175,7 +175,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
 
     auto ret = this->flushInternal(batchBuffer, allocationsForResidency);
 
-    if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerActive) {
+    if (this->gemCloseWorkerOperationMode == GemCloseWorkerMode::gemCloseWorkerActive) {
         bb->reference();
         this->getMemoryManager()->peekGemCloseWorker()->push(bb);
     }

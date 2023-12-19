@@ -22,17 +22,17 @@ class DrmAllocation;
 class OsContextLinux;
 enum class AtomicAccessMode : uint32_t;
 
-enum class gemCloseWorkerMode;
+enum class GemCloseWorkerMode;
 
 class DrmMemoryManager : public MemoryManager {
   public:
-    DrmMemoryManager(gemCloseWorkerMode mode,
+    DrmMemoryManager(GemCloseWorkerMode mode,
                      bool forcePinAllowed,
                      bool validateHostPtrMemory,
                      ExecutionEnvironment &executionEnvironment);
     ~DrmMemoryManager() override;
 
-    void initialize(gemCloseWorkerMode mode);
+    void initialize(GemCloseWorkerMode mode);
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;

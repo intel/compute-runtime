@@ -24,12 +24,12 @@
 #include <fstream>
 #include <platforms.h>
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
+template <NEO::Elf::ElfIdentifierClass numBits>
 struct MockZebin {
     MockZebin() {
         NEO::Elf::ElfEncoder<numBits> encoder;
-        encoder.getElfFileHeader().machine = NEO::Elf::ELF_MACHINE::EM_INTELGT;
-        encoder.getElfFileHeader().type = NEO::Zebin::Elf::ELF_TYPE_ZEBIN::ET_ZEBIN_EXE;
+        encoder.getElfFileHeader().machine = NEO::Elf::ElfMachine::EM_INTELGT;
+        encoder.getElfFileHeader().type = NEO::Zebin::Elf::ElfTypeZebin::ET_ZEBIN_EXE;
 
         uint8_t kernelData[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38};
         encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "exit_kernel", {kernelData, 8});
@@ -68,7 +68,7 @@ kernels:
 
         NEO::Elf::ElfRel<numBits> dataRelocation;
         dataRelocation.offset = 0x4;
-        dataRelocation.setRelocationType(NEO::Zebin::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+        dataRelocation.setRelocationType(NEO::Zebin::Elf::RelocTypeZebin::R_ZE_SYM_ADDR);
         dataRelocation.setSymbolTableIndex(2);
         auto &dataRelSec = encoder.appendSection(NEO::Elf::SHT_REL, NEO::Elf::SpecialSectionNames::relPrefix.str() + NEO::Zebin::Elf::SectionNames::dataGlobal.str(),
                                                  {reinterpret_cast<const uint8_t *>(&dataRelocation), sizeof(dataRelocation)});
@@ -77,7 +77,7 @@ kernels:
 
         NEO::Elf::ElfRela<numBits> debugRelocation;
         debugRelocation.offset = 0x4;
-        debugRelocation.setRelocationType(NEO::Zebin::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+        debugRelocation.setRelocationType(NEO::Zebin::Elf::RelocTypeZebin::R_ZE_SYM_ADDR);
         debugRelocation.setSymbolTableIndex(1);
         auto &debugDataRelaSec = encoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Zebin::Elf::SectionNames::debugInfo.str(),
                                                        {reinterpret_cast<const uint8_t *>(&debugRelocation), sizeof(debugRelocation)});
@@ -88,14 +88,14 @@ kernels:
         symbols[1].shndx = 1;
         symbols[1].value = 0x0;
         symbols[1].name = encoder.appendSectionName("exit_kernel");
-        symbols[1].setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL);
-        symbols[1].setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC);
+        symbols[1].setBinding(NEO::Elf::SymbolTableBind::STB_LOCAL);
+        symbols[1].setType(NEO::Elf::SymbolTableType::STT_FUNC);
 
         symbols[2].shndx = 2;
         symbols[2].value = 0x0;
         symbols[2].name = encoder.appendSectionName("var_x");
-        symbols[2].setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL);
-        symbols[2].setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT);
+        symbols[2].setBinding(NEO::Elf::SymbolTableBind::STB_GLOBAL);
+        symbols[2].setType(NEO::Elf::SymbolTableType::STT_OBJECT);
 
         auto &symtabSec = encoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Zebin::Elf::SectionNames::symtab,
                                                 {reinterpret_cast<const uint8_t *>(symbols), sizeof(symbols)});
@@ -354,7 +354,7 @@ TEST(ZebinManipulatorTests, GivenInvalidSectionsInfoWhenCheckingIfIs64BitZebinTh
     EXPECT_FALSE(retVal);
 }
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
+template <NEO::Elf::ElfIdentifierClass numBits>
 struct ZebinDecoderFixture {
     ZebinDecoderFixture() : argHelper(filesMap), decoder(&argHelper) {
         argHelper.messagePrinter.setSuppressMessages(true);
@@ -501,7 +501,7 @@ TEST_F(ZebinDecoderTests, WhenPrintHelpIsCalledThenHelpIsPrinted) {
     EXPECT_FALSE(getOutput().empty());
 }
 
-template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
+template <NEO::Elf::ElfIdentifierClass numBits>
 struct ZebinEncoderFixture {
     ZebinEncoderFixture() : argHelper(filesMap), encoder(&argHelper) {
         argHelper.messagePrinter.setSuppressMessages(true);

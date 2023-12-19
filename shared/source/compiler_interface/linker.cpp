@@ -175,7 +175,7 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
 
 template bool LinkerInput::addRelocation(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_32>::RelocationInfo &reloc);
 template bool LinkerInput::addRelocation(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<Elf::EI_CLASS_64>::RelocationInfo &reloc);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &reloc) {
     auto sectionName = elf.getSectionName(reloc.targetSectionIndex);
 
@@ -214,7 +214,7 @@ std::optional<uint32_t> LinkerInput::getInstructionSegmentId(const SectionNameTo
 
 template bool LinkerInput::addSymbol(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, size_t symId);
 template bool LinkerInput::addSymbol(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, size_t symId);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, size_t symId) {
     auto &elfSymbols = elf.getSymbols();
     if (symId >= elfSymbols.size()) {
@@ -271,7 +271,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
 
 template void LinkerInput::decodeElfSymbolTableAndRelocations<Elf::EI_CLASS_32>(Elf::Elf<Elf::EI_CLASS_32> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
 template void LinkerInput::decodeElfSymbolTableAndRelocations<Elf::EI_CLASS_64>(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
-template <Elf::ELF_IDENTIFIER_CLASS numBits>
+template <Elf::ElfIdentifierClass numBits>
 void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId) {
     symbols.reserve(elf.getSymbols().size());
 
@@ -603,9 +603,9 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
         auto targetSectionOffset = decodedElf.sectionHeaders[reloc.targetSectionIndex].header->offset;
         auto relocLocation = reinterpret_cast<uint64_t>(inputOutputElf.begin()) + targetSectionOffset + reloc.offset;
 
-        if (static_cast<Elf::RELOCATION_X8664_TYPE>(reloc.relocType) == Elf::RELOCATION_X8664_TYPE::relocation64) {
+        if (static_cast<Elf::RelocationX8664Type>(reloc.relocType) == Elf::RelocationX8664Type::relocation64) {
             *reinterpret_cast<uint64_t *>(relocLocation) = symbolAddress;
-        } else if (static_cast<Elf::RELOCATION_X8664_TYPE>(reloc.relocType) == Elf::RELOCATION_X8664_TYPE::relocation32) {
+        } else if (static_cast<Elf::RelocationX8664Type>(reloc.relocType) == Elf::RelocationX8664Type::relocation32) {
             *reinterpret_cast<uint32_t *>(relocLocation) = static_cast<uint32_t>(symbolAddress & uint32_t(-1));
         }
     }

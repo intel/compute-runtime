@@ -108,7 +108,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     void setUp();
 
     void createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData,
-                                    std::initializer_list<ZebinTestData::appendElfAdditionalSection> additionalSections = {});
+                                    std::initializer_list<ZebinTestData::AppendElfAdditionalSection> additionalSections = {});
 
     void createKernel(MockKernel *kernel);
 

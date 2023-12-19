@@ -643,7 +643,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
     }
 
     void runTest() {
-        auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+        auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
         zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
         const auto &src = zebinData->storage;
 
@@ -682,7 +682,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
     }
 
     void runTestStatic() {
-        auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+        auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
         zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
         const auto &src = zebinData->storage;
 
@@ -775,7 +775,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
     auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
     const auto &src = zebinData->storage;
 
@@ -806,7 +806,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
 }
 
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenUserPassTooMuchConstsIdsThenModuleInitFails) {
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
     const auto &src = zebinData->storage;
 
@@ -862,7 +862,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
     auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
     const auto &src = zebinData->storage;
 
@@ -925,7 +925,7 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
     }
 
     void loadModules(bool multiple) {
-        auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+        auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
         zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections);
         const auto &storage = zebinData->storage;
 
@@ -2846,7 +2846,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
     DebugManagerStateRestore dgbRestorer;
     NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     bool forceRecompilation = true;
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections, forceRecompilation);
     const auto &src = zebinData->storage;
@@ -2881,7 +2881,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
     DebugManagerStateRestore dgbRestorer;
     NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
 
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::spirv};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::spirv};
     bool forceRecompilation = true;
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo(), additionalSections, forceRecompilation);
     const auto &src = zebinData->storage;
@@ -3003,8 +3003,8 @@ kernels:
 
     uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
-    zebin.removeSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
-    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_default_maxWGS", {kernelIsa, sizeof(kernelIsa)});
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_reduced_maxWGS", {kernelIsa, sizeof(kernelIsa)});
     zebin.elfHeader->machine = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
@@ -3050,8 +3050,8 @@ kernels:
 
     uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
-    zebin.removeSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
-    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_default_maxWGS", {kernelIsa, sizeof(kernelIsa)});
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_reduced_maxWGS", {kernelIsa, sizeof(kernelIsa)});
     zebin.elfHeader->machine = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
@@ -3109,15 +3109,15 @@ kernels:
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, std::string{"12345678"});
     auto dataGlobalSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> symbolTable[2] = {};
+    NEO::Elf::ElfSymbolEntry<NEO::Elf::ElfIdentifierClass::EI_CLASS_64> symbolTable[2] = {};
     symbolTable[0].name = decltype(symbolTable[0].name)(elfEncoder.appendSectionName("const.data"));
-    symbolTable[0].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbolTable[0].info = NEO::Elf::SymbolTableType::STT_OBJECT | NEO::Elf::SymbolTableBind::STB_GLOBAL << 4;
     symbolTable[0].shndx = decltype(symbolTable[0].shndx)(dataConstSectionIndex);
     symbolTable[0].size = 4;
     symbolTable[0].value = 0;
 
     symbolTable[1].name = decltype(symbolTable[1].name)(elfEncoder.appendSectionName("global.data"));
-    symbolTable[1].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
+    symbolTable[1].info = NEO::Elf::SymbolTableType::STT_OBJECT | NEO::Elf::SymbolTableBind::STB_GLOBAL << 4;
     symbolTable[1].shndx = decltype(symbolTable[1].shndx)(dataGlobalSectionIndex);
     symbolTable[1].size = 4;
     symbolTable[1].value = 0;
@@ -4525,7 +4525,7 @@ TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {
 
     uint32_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
 
-    auto additionalSections = {ZebinTestData::appendElfAdditionalSection::global};
+    auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::global};
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get(), additionalSections);
 
     uint32_t numOfKernels = static_cast<uint32_t>(module->getKernelImmutableDataVector().size());

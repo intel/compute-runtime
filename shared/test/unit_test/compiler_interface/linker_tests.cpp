@@ -1826,7 +1826,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc0 = {};
     reloc0.offset = 64;
-    reloc0.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation64);
+    reloc0.relocType = static_cast<uint32_t>(Elf::RelocationX8664Type::relocation64);
     reloc0.symbolName = ".debug_abbrev";
     reloc0.symbolSectionIndex = 3;
     reloc0.symbolTableIndex = 0;
@@ -1837,7 +1837,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc1 = {};
     reloc1.offset = 32;
-    reloc1.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation32);
+    reloc1.relocType = static_cast<uint32_t>(Elf::RelocationX8664Type::relocation32);
     reloc1.symbolName = ".debug_line";
     reloc1.symbolSectionIndex = 4;
     reloc1.symbolTableIndex = 0;
@@ -1848,7 +1848,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2 = {};
     reloc2.offset = 32;
-    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation64);
+    reloc2.relocType = static_cast<uint32_t>(Elf::RelocationX8664Type::relocation64);
     reloc2.symbolName = ".text";
     reloc2.symbolSectionIndex = 0;
     reloc2.symbolTableIndex = 0;
@@ -1859,7 +1859,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3 = {};
     reloc3.offset = 0;
-    reloc3.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation64);
+    reloc3.relocType = static_cast<uint32_t>(Elf::RelocationX8664Type::relocation64);
     reloc3.symbolName = ".data";
     reloc3.symbolSectionIndex = 1;
     reloc3.symbolTableIndex = 0;

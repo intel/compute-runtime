@@ -27,13 +27,13 @@ struct IntelTracingTest : public ApiTests {
     }
 
   protected:
-    static void callback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
+    static void callback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {
         ASSERT_NE(nullptr, userData);
         IntelTracingTest *base = (IntelTracingTest *)userData;
         base->vcallback(fid, callbackData, nullptr);
     }
 
-    virtual void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {}
+    virtual void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {}
 
   protected:
     cl_tracing_handle handle = nullptr;
@@ -230,7 +230,7 @@ struct IntelAllTracingTest : public IntelTracingTest {
         ASSERT_EQ(CL_SUCCESS, status);
 
         for (uint32_t i = 0; i < CL_FUNCTION_COUNT; ++i) {
-            status = clSetTracingPointINTEL(handle, static_cast<cl_function_id>(i), CL_TRUE);
+            status = clSetTracingPointINTEL(handle, static_cast<ClFunctionId>(i), CL_TRUE);
             ASSERT_EQ(CL_SUCCESS, status);
         }
 
@@ -249,7 +249,7 @@ struct IntelAllTracingTest : public IntelTracingTest {
     }
 
   protected:
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         if (fid == functionId) {
             if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
                 ++enterCount;
@@ -707,7 +707,7 @@ struct IntelAllTracingTest : public IntelTracingTest {
   protected:
     uint16_t enterCount = 0;
     uint16_t exitCount = 0;
-    cl_function_id functionId = CL_FUNCTION_COUNT;
+    ClFunctionId functionId = CL_FUNCTION_COUNT;
 };
 
 TEST_F(IntelAllTracingTest, GivenValidFunctionWhenTracingThenTracingIsPerformed) {
@@ -718,7 +718,7 @@ TEST_F(IntelAllTracingTest, GivenValidFunctionWhenTracingThenTracingIsPerformed)
 
 TEST_F(IntelAllTracingTest, GivenNoFunctionsWhenTracingThenTracingIsNotPerformed) {
     for (uint32_t i = 0; i < CL_FUNCTION_COUNT; ++i) {
-        status = clSetTracingPointINTEL(handle, static_cast<cl_function_id>(i), CL_FALSE);
+        status = clSetTracingPointINTEL(handle, static_cast<ClFunctionId>(i), CL_FALSE);
         EXPECT_EQ(CL_SUCCESS, status);
     }
 
@@ -743,7 +743,7 @@ struct IntelAllTracingWithMaxHandlesTest : public IntelAllTracingTest {
 
         for (size_t i = 0; i < HostSideTracing::tracingMaxHandleCount; ++i) {
             for (uint32_t j = 0; j < CL_FUNCTION_COUNT; ++j) {
-                status = clSetTracingPointINTEL(handleList[i], static_cast<cl_function_id>(j), CL_TRUE);
+                status = clSetTracingPointINTEL(handleList[i], static_cast<ClFunctionId>(j), CL_TRUE);
                 ASSERT_EQ(CL_SUCCESS, status);
             }
         }
@@ -786,7 +786,7 @@ struct IntelClGetDeviceInfoTracingCollectTest : public IntelAllTracingTest {
         status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &paramValueSizeRet);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         EXPECT_EQ(CL_FUNCTION_clGetDeviceInfo, fid);
         EXPECT_NE(nullptr, callbackData);
 
@@ -853,7 +853,7 @@ struct IntelClGetDeviceInfoTracingChangeParamsTest : public IntelAllTracingTest 
         status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &paramValueSizeRet);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
             cl_params_clGetDeviceInfo *params = (cl_params_clGetDeviceInfo *)callbackData->functionParams;
             *params->paramValueSize = paramValueSize;
@@ -886,7 +886,7 @@ struct IntelClGetDeviceInfoTracingChangeRetValTest : public IntelAllTracingTest 
         status = clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &paramValueSizeRet);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         if (callbackData->site == CL_CALLBACK_SITE_EXIT) {
             cl_int *retVal = reinterpret_cast<cl_int *>(callbackData->functionReturnValue);
             *retVal = CL_INVALID_VALUE;
@@ -976,7 +976,7 @@ struct IntelClCreateContextFromTypeTracingTest : public IntelTracingTest, Platfo
         context = clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, nullptr);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         ASSERT_EQ(CL_FUNCTION_clCreateContextFromType, fid);
         if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
             ++enterCount;
@@ -1039,7 +1039,7 @@ struct IntelClLinkProgramTracingTest : public IntelTracingTest, PlatformFixture 
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         ASSERT_EQ(CL_FUNCTION_clLinkProgram, fid);
         if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
             ++enterCount;
@@ -1103,7 +1103,7 @@ struct IntelClCloneKernelTracingTest : public IntelTracingTest, PlatformFixture 
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         ASSERT_EQ(CL_FUNCTION_clCloneKernel, fid);
         if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
             ++enterCount;
@@ -1162,7 +1162,7 @@ struct IntelClCreateSubDevicesTracingTest : public IntelTracingTest {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) override {
+    void vcallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) override {
         ASSERT_EQ(CL_FUNCTION_clCreateSubDevices, fid);
         if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
             ++enterCount;

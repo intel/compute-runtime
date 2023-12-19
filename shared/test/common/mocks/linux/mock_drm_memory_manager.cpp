@@ -22,7 +22,7 @@ namespace NEO {
 std::atomic<int> closeInputFd(0);
 std::atomic<int> closeCalledCount(0);
 
-TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
+TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(GemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  false,
                                                                                                                  false,
                                                                                                                  executionEnvironment) {
@@ -38,7 +38,7 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
                                                bool allowForcePin,
                                                bool validateHostPtrMemory,
                                                ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory,
-                                                                                                                 gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                                                 GemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  allowForcePin,
                                                                                                                  validateHostPtrMemory,
                                                                                                                  executionEnvironment) {

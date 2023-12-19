@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-enum HAS_MSG_TYPE {
+enum HasMsgType {
     HAS_MMIO_REQ_TYPE = 0,
     HAS_MMIO_RES_TYPE = 1,
     HAS_GTT_REQ_TYPE = 2,
@@ -53,7 +53,7 @@ enum HAS_MSG_TYPE {
 struct HasHdr {
     union {
         uint32_t msgType;
-        HAS_MSG_TYPE type;
+        HasMsgType type;
     };
     uint32_t transID;
     uint32_t size;
@@ -77,7 +77,7 @@ struct HasMmioReq {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_MMIO_REQ_TYPE
+        HasMsgType = HAS_MMIO_REQ_TYPE
     };
 };
 
@@ -86,7 +86,7 @@ struct HasMmioExtReq {
     uint32_t sourceid : 8;
     uint32_t reserved1 : 24;
     enum {
-        HAS_MSG_TYPE = HAS_MMIO_REQ_TYPE
+        HasMsgType = HAS_MMIO_REQ_TYPE
     };
 };
 
@@ -94,7 +94,7 @@ struct HasMmioRes {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_MMIO_RES_TYPE
+        HasMsgType = HAS_MMIO_RES_TYPE
     };
 };
 
@@ -106,7 +106,7 @@ struct HasGtt32Req {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_GTT_REQ_TYPE
+        HasMsgType = HAS_GTT_REQ_TYPE
     };
 };
 
@@ -114,7 +114,7 @@ struct HasGtt32Res {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_GTT_RES_TYPE
+        HasMsgType = HAS_GTT_RES_TYPE
     };
 };
 
@@ -127,7 +127,7 @@ struct HasGtt64Req {
     uint32_t dataH;
 
     enum {
-        HAS_MSG_TYPE = HAS_GTT_REQ_TYPE
+        HasMsgType = HAS_GTT_REQ_TYPE
     };
 };
 
@@ -136,7 +136,7 @@ struct HasGtt64Res {
     uint32_t dataH;
 
     enum {
-        HAS_MSG_TYPE = HAS_GTT_RES_TYPE
+        HasMsgType = HAS_GTT_RES_TYPE
     };
 };
 
@@ -154,7 +154,7 @@ struct HasWriteDataReq {
     uint32_t size;
 
     enum {
-        HAS_MSG_TYPE = HAS_WRITE_DATA_REQ_TYPE
+        HasMsgType = HAS_WRITE_DATA_REQ_TYPE
     };
 };
 
@@ -170,7 +170,7 @@ struct HasReadDataReq {
     uint32_t size;
 
     enum {
-        HAS_MSG_TYPE = HAS_READ_DATA_REQ_TYPE
+        HasMsgType = HAS_READ_DATA_REQ_TYPE
     };
 };
 
@@ -185,7 +185,7 @@ struct HasReadDataRes {
     uint32_t size;
 
     enum {
-        HAS_MSG_TYPE = HAS_READ_DATA_RES_TYPE
+        HasMsgType = HAS_READ_DATA_RES_TYPE
     };
 };
 
@@ -221,7 +221,7 @@ struct HasControlReq {
     uint32_t reservedMask : 3;      // [31:29]
 
     enum {
-        HAS_MSG_TYPE = HAS_CONTROL_REQ_TYPE
+        HasMsgType = HAS_CONTROL_REQ_TYPE
     };
 };
 
@@ -229,7 +229,7 @@ struct HasReportRendEndReq {
     uint32_t timeout;
 
     enum {
-        HAS_MSG_TYPE = HAS_REPORT_REND_END_REQ_TYPE
+        HasMsgType = HAS_REPORT_REND_END_REQ_TYPE
     };
 };
 
@@ -238,7 +238,7 @@ struct HasReportRendEndRes {
     uint32_t reserved : 31;
 
     enum {
-        HAS_MSG_TYPE = HAS_REPORT_REND_END_RES_TYPE
+        HasMsgType = HAS_REPORT_REND_END_RES_TYPE
     };
 };
 
@@ -253,7 +253,7 @@ struct HasPcicfgReq {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_PCICFG_REQ_TYPE
+        HasMsgType = HAS_PCICFG_REQ_TYPE
     };
 };
 
@@ -267,7 +267,7 @@ struct HasGttParamsReq {
     uint32_t size : 24;
 
     enum {
-        HAS_MSG_TYPE = HAS_GTT_PARAMS_REQ_TYPE
+        HasMsgType = HAS_GTT_PARAMS_REQ_TYPE
     };
 };
 
@@ -276,7 +276,7 @@ struct HasEventObsoleteReq {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_EVENT_REQ_TYPE
+        HasMsgType = HAS_EVENT_REQ_TYPE
     };
 };
 
@@ -287,7 +287,7 @@ struct HasEventReq {
     uint32_t reserved : 30;
 
     enum {
-        HAS_MSG_TYPE = HAS_EVENT_REQ_TYPE
+        HasMsgType = HAS_EVENT_REQ_TYPE
     };
 };
 
@@ -299,7 +299,7 @@ struct HasInnerVarReq {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_INNER_VAR_REQ_TYPE
+        HasMsgType = HAS_INNER_VAR_REQ_TYPE
     };
 };
 
@@ -307,7 +307,7 @@ struct HasInnerVarRes {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_INNER_VAR_RES_TYPE
+        HasMsgType = HAS_INNER_VAR_RES_TYPE
     };
 };
 
@@ -315,7 +315,7 @@ struct HasInnerVarListRes {
     uint32_t size;
 
     enum {
-        HAS_MSG_TYPE = HAS_INNER_VAR_LIST_RES_TYPE
+        HasMsgType = HAS_INNER_VAR_LIST_RES_TYPE
     };
 };
 
@@ -334,7 +334,7 @@ struct HasFunnyIoReq {
     uint32_t value;
 
     enum {
-        HAS_MSG_TYPE = HAS_FUNNY_IO_REQ_TYPE
+        HasMsgType = HAS_FUNNY_IO_REQ_TYPE
     };
 };
 
@@ -342,7 +342,7 @@ struct HasFunnyIoRes {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_FUNNY_IO_RES_TYPE
+        HasMsgType = HAS_FUNNY_IO_RES_TYPE
     };
 };
 
@@ -355,7 +355,7 @@ struct HasIoReq {
     uint32_t value;
 
     enum {
-        HAS_MSG_TYPE = HAS_IO_REQ_TYPE
+        HasMsgType = HAS_IO_REQ_TYPE
     };
 };
 
@@ -363,7 +363,7 @@ struct HasIoRes {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_IO_RES_TYPE
+        HasMsgType = HAS_IO_RES_TYPE
     };
 };
 
@@ -371,7 +371,7 @@ struct HasRpcReq {
     uint32_t size;
 
     enum {
-        HAS_MSG_TYPE = HAS_RPC_REQ_TYPE
+        HasMsgType = HAS_RPC_REQ_TYPE
     };
 };
 
@@ -380,7 +380,7 @@ struct HasRpcRes {
     uint32_t size;
 
     enum {
-        HAS_MSG_TYPE = HAS_RPC_RES_TYPE
+        HasMsgType = HAS_RPC_RES_TYPE
     };
 };
 
@@ -393,7 +393,7 @@ struct HasClFlushReq {
     uint32_t delay;
 
     enum {
-        HAS_MSG_TYPE = HAS_CL_FLUSH_REQ_TYPE
+        HasMsgType = HAS_CL_FLUSH_REQ_TYPE
     };
 };
 
@@ -401,7 +401,7 @@ struct HasClFlushRes {
     uint32_t data;
 
     enum {
-        HAS_MSG_TYPE = HAS_CL_FLUSH_RES_TYPE
+        HasMsgType = HAS_CL_FLUSH_RES_TYPE
     };
 };
 
@@ -410,7 +410,7 @@ struct HasSimtimeRes {
     uint32_t dataH;
 
     enum {
-        HAS_MSG_TYPE = HAS_SIMTIME_RES_TYPE
+        HasMsgType = HAS_SIMTIME_RES_TYPE
     };
 };
 
@@ -419,7 +419,7 @@ struct HasGd2Message {
     uint32_t data[1];
 
     enum {
-        HAS_MSG_TYPE = HAS_GD2_MESSAGE_TYPE
+        HasMsgType = HAS_GD2_MESSAGE_TYPE
     };
 };
 
@@ -460,10 +460,9 @@ struct HasMsg {
     union HasMsgBody u;
 };
 
-enum mem_types : uint32_t {
-    MEM_TYPE_SYSTEM = 0,
-    MEM_TYPE_LOCALMEM = 1,
-    MEM_TYPE_MAX = 4
+enum MemType : uint32_t {
+    system = 0,
+    local = 1,
 };
 
 } // namespace NEO

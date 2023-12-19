@@ -53,7 +53,7 @@ namespace NEO {
 
 using AllocationStatus = MemoryManager::AllocationStatus;
 
-DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
+DrmMemoryManager::DrmMemoryManager(GemCloseWorkerMode mode,
                                    bool forcePinAllowed,
                                    bool validateHostPtrMemory,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
@@ -73,7 +73,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
     initialize(mode);
 }
 
-void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
+void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
     bool disableGemCloseWorker = true;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
@@ -87,14 +87,14 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
     }
 
     if (disableGemCloseWorker) {
-        mode = gemCloseWorkerMode::gemCloseWorkerInactive;
+        mode = GemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
     if (debugManager.flags.EnableGemCloseWorker.get() != -1) {
-        mode = debugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
+        mode = debugManager.flags.EnableGemCloseWorker.get() ? GemCloseWorkerMode::gemCloseWorkerActive : GemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
-    if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
+    if (mode != GemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));
     }
 
@@ -1491,7 +1491,7 @@ std::unique_ptr<MemoryManager> DrmMemoryManager::create(ExecutionEnvironment &ex
         validateHostPtr = debugManager.flags.EnableHostPtrValidation.get();
     }
 
-    return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerActive,
+    return std::make_unique<DrmMemoryManager>(GemCloseWorkerMode::gemCloseWorkerActive,
                                               debugManager.flags.EnableForcePin.get(),
                                               validateHostPtr,
                                               executionEnvironment);

@@ -36,10 +36,10 @@ struct Kernel;
 struct CommandQueueImp : public CommandQueue {
     class CommandBufferManager {
       public:
-        enum BUFFER_ALLOCATION : uint32_t {
-            FIRST = 0,
-            SECOND,
-            COUNT
+        enum BufferAllocation : uint32_t {
+            first = 0,
+            second,
+            count
         };
 
         ze_result_t initialize(Device *device, size_t sizeRequested);
@@ -58,9 +58,9 @@ struct CommandQueueImp : public CommandQueue {
         }
 
       private:
-        NEO::GraphicsAllocation *buffers[BUFFER_ALLOCATION::COUNT]{};
-        std::pair<TaskCountType, NEO::FlushStamp> flushId[BUFFER_ALLOCATION::COUNT];
-        BUFFER_ALLOCATION bufferUse = BUFFER_ALLOCATION::FIRST;
+        NEO::GraphicsAllocation *buffers[BufferAllocation::count]{};
+        std::pair<TaskCountType, NEO::FlushStamp> flushId[BufferAllocation::count];
+        BufferAllocation bufferUse = BufferAllocation::first;
     };
     static constexpr size_t defaultQueueCmdBufferSize = 128 * MemoryConstants::kiloByte;
     static constexpr size_t minCmdBufferPtrAlign = 8;

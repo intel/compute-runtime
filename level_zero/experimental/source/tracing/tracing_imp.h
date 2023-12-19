@@ -51,11 +51,11 @@ typedef struct TracerArray {
     tracer_array_entry_t *tracerArrayEntries;
 } tracer_array_t;
 
-typedef enum tracingState {
+enum TracingState {
     disabledState,        // tracing has never been enabled
     enabledState,         // tracing is enabled.
     disabledWaitingState, // tracing has been disabled, but not waited for
-} tracingState_t;
+};
 
 struct APITracerImp : APITracer {
     ze_result_t destroyTracer(zet_tracer_exp_handle_t phTracer) override;
@@ -64,7 +64,7 @@ struct APITracerImp : APITracer {
     ze_result_t enableTracer(ze_bool_t enable) override;
 
     tracer_array_entry_t tracerFunctions{};
-    tracingState_t tracingState = disabledState;
+    TracingState tracingState = disabledState;
 
   private:
 };

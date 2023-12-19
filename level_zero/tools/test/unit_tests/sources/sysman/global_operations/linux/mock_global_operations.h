@@ -53,7 +53,7 @@ const std::string mockDeviceDir("devices/pci0000:89/0000:89:02.0/0000:8a:00.0/00
 const std::string mockFunctionResetPath(mockDeviceDir + "/reset");
 const std::string mockDeviceName("/MOCK_DEVICE_NAME");
 
-enum mockEnumListProcessCall {
+enum MockEnumListProcessCall {
     DEVICE_IN_USE = 0,
     DEVICE_UNUSED = 1,
     RETURN_ERROR = 2
@@ -349,7 +349,7 @@ struct MockGlobalOperationsProcfsAccess : public ProcfsAccess {
     ::pid_t ourDevicePid = 0;
     int ourDeviceFd = 0;
 
-    std::vector<mockEnumListProcessCall> mockListProcessCall{};
+    std::vector<MockEnumListProcessCall> mockListProcessCall{};
     std::vector<bool> isRepeated{};
     ze_result_t listProcessesResult = ZE_RESULT_SUCCESS;
     uint32_t listProcessCalled = 0u;
@@ -358,17 +358,17 @@ struct MockGlobalOperationsProcfsAccess : public ProcfsAccess {
         list = pidList;
 
         if (!mockListProcessCall.empty()) {
-            mockEnumListProcessCall mockListProcessCallValue = mockListProcessCall.front();
-            if (mockListProcessCallValue == mockEnumListProcessCall::DEVICE_IN_USE) {
+            MockEnumListProcessCall mockListProcessCallValue = mockListProcessCall.front();
+            if (mockListProcessCallValue == MockEnumListProcessCall::DEVICE_IN_USE) {
                 if (ourDevicePid) {
                     list.push_back(ourDevicePid);
                 }
             }
 
-            else if (mockListProcessCallValue == mockEnumListProcessCall::DEVICE_UNUSED) {
+            else if (mockListProcessCallValue == MockEnumListProcessCall::DEVICE_UNUSED) {
             }
 
-            else if (mockListProcessCallValue == mockEnumListProcessCall::RETURN_ERROR) {
+            else if (mockListProcessCallValue == MockEnumListProcessCall::RETURN_ERROR) {
                 listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
 

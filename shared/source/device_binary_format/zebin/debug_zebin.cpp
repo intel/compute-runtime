@@ -99,7 +99,7 @@ void patchWithValue(uintptr_t addr, T value) {
     }
 }
 
-void DebugZebinCreator::applyRelocation(uintptr_t addr, uint64_t value, RELOC_TYPE_ZEBIN type) {
+void DebugZebinCreator::applyRelocation(uintptr_t addr, uint64_t value, RelocTypeZebin type) {
     switch (type) {
     default:
         UNRECOVERABLE_IF(type != R_ZE_SYM_ADDR)
@@ -138,7 +138,7 @@ void DebugZebinCreator::applyRelocations() {
 
     for (const auto *relocations : {&elf.getDebugInfoRelocations(), &elf.getRelocations()}) {
         for (const auto &reloc : *relocations) {
-            auto relocType = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
+            auto relocType = static_cast<RelocTypeZebin>(reloc.relocType);
             if (isRelocTypeSupported(relocType) == false) {
                 continue;
             }
@@ -150,10 +150,10 @@ void DebugZebinCreator::applyRelocations() {
     }
 }
 
-bool DebugZebinCreator::isRelocTypeSupported(RELOC_TYPE_ZEBIN type) {
-    return type == RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR ||
-           type == RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32 ||
-           type == RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
+bool DebugZebinCreator::isRelocTypeSupported(RelocTypeZebin type) {
+    return type == RelocTypeZebin::R_ZE_SYM_ADDR ||
+           type == RelocTypeZebin::R_ZE_SYM_ADDR_32 ||
+           type == RelocTypeZebin::R_ZE_SYM_ADDR_32_HI;
 }
 
 const Segments::Segment *DebugZebinCreator::getSegmentByName(ConstStringRef sectionName) {
