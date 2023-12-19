@@ -44,6 +44,11 @@ bool ReleaseHelperHw<release>::getMediaFrequencyTileIndex(uint32_t &tileIndex) c
     return true;
 }
 
+template <>
+inline bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe_lpg.inl"

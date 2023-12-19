@@ -40,7 +40,7 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPWhenGettingDpSupportThenReturn
     bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
     bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
     EXPECT_TRUE(dp4a);
-    EXPECT_TRUE(dpas);
+    EXPECT_FALSE(dpas);
 }
 
 using CommandQueueGroupTest = Test<DeviceFixture>;

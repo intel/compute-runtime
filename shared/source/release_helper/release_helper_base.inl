@@ -14,6 +14,10 @@ bool ReleaseHelperHw<releaseType>::isMatrixMultiplyAccumulateSupported() const {
     return true;
 }
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isDotProductAccumulateSystolicSupported() const {
+    return true;
+}
+template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isAdjustWalkOrderAvailable() const {
     return false;
 }

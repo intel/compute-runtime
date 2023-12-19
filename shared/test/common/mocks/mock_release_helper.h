@@ -15,6 +15,7 @@ class MockReleaseHelper : public ReleaseHelper {
     MockReleaseHelper() : ReleaseHelper(0) {}
     ADDMETHOD_CONST_NOBASE(isAdjustWalkOrderAvailable, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isMatrixMultiplyAccumulateSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDotProductAccumulateSystolicSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToNonPipelinedStateCommandsWARequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToPipelineSelectWaRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isProgramAllStateComputeCommandFieldsWARequired, bool, false, ());

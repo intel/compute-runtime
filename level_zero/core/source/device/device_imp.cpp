@@ -828,11 +828,13 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             ze_intel_device_module_dp_exp_properties_t *dpProperties =
                 reinterpret_cast<ze_intel_device_module_dp_exp_properties_t *>(extendedProperties);
             dpProperties->flags = 0u;
-            if (productHelper.isPlatformDp4aSupported()) {
+            if (compilerProductHelper.isDotAccumulateSupported()) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
             }
 
-            if (productHelper.isPlatformDpasSupported()) {
+            auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
+            auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+            if (compilerProductHelper.isDotProductAccumulateSystolicSupported(releaseHelper)) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
             }
         }

@@ -142,11 +142,30 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccu
     }
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenDotProductAccumulateSystolicIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
+    if (releaseHelper) {
+
+        EXPECT_EQ(releaseHelper->isDotProductAccumulateSystolicSupported(), compilerProductHelper.isDotProductAccumulateSystolicSupported(releaseHelper));
+    } else {
+        EXPECT_FALSE(compilerProductHelper.isDotProductAccumulateSystolicSupported(releaseHelper));
+    }
+}
+
 HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccumulateIsSupported, IsXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
 
     EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenDotProductAccumulateSystolicIsSupported, IsXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isDotProductAccumulateSystolicSupported(releaseHelper));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {

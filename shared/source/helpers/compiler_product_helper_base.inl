@@ -249,6 +249,15 @@ bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isDotProductAccumulateSystolicSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isDotProductAccumulateSystolicSupported();
+    }
+
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->isSplitMatrixMultiplyAccumulateSupported();

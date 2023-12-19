@@ -167,8 +167,6 @@ class ProductHelper {
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual uint32_t getCommandBuffersPreallocatedPerCommandQueue() const = 0;
     virtual uint32_t getInternalHeapsPreallocated() const = 0;
-    virtual bool isPlatformDpasSupported() const = 0;
-    virtual bool isPlatformDp4aSupported() const = 0;
     virtual bool overrideAllocationCacheable(const AllocationData &allocationData) const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;

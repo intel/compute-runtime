@@ -380,12 +380,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenSettingCapabilityCoherencyFla
     EXPECT_TRUE(coherency);
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenDotProductSupportThenReturnsFalse, IsAtMostGen11) {
-
-    EXPECT_FALSE(productHelper->isPlatformDp4aSupported());
-    EXPECT_FALSE(productHelper->isPlatformDpasSupported());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isAdditionalMediaSamplerProgrammingRequired());

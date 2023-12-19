@@ -34,6 +34,7 @@ class ReleaseHelper {
 
     virtual bool isAdjustWalkOrderAvailable() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported() const = 0;
+    virtual bool isDotProductAccumulateSystolicSupported() const = 0;
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const = 0;
     virtual bool isPipeControlPriorToPipelineSelectWaRequired() const = 0;
     virtual bool isProgramAllStateComputeCommandFieldsWARequired() const = 0;
@@ -68,6 +69,7 @@ class ReleaseHelperHw : public ReleaseHelper {
 
     bool isAdjustWalkOrderAvailable() const override;
     bool isMatrixMultiplyAccumulateSupported() const override;
+    bool isDotProductAccumulateSystolicSupported() const override;
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const override;
     bool isPipeControlPriorToPipelineSelectWaRequired() const override;
     bool isProgramAllStateComputeCommandFieldsWARequired() const override;
