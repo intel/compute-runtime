@@ -27,10 +27,10 @@ components:
     revision: V0.8.9
     repository: https://github.com/intel/igsc.git
   infra:
-    branch: master
+    branch: neo/releases/23.22
     dest_dir: infra
     fetch_tags: true
-    revision: v4908
+    revision: v4908.664.7
     type: git
   internal:
     branch: master
