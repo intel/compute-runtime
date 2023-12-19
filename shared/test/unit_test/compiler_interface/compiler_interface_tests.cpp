@@ -153,7 +153,7 @@ TEST(CompilerInterfaceCreateInstance, WhenInitializeFailedThenReturnNull) {
 TEST_F(CompilerInterfaceTest, WhenCompilingToIsaThenSuccessIsReturned) {
     TranslationOutput translationOutput;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
 TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedThenPreserveIt) {
@@ -165,14 +165,14 @@ TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedTh
     inputArgs.preferredIntermediateType = IGC::CodeType::llvmLl;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(IGC::CodeType::llvmLl, translationOutput.intermediateCodeType);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenBuildFailsGracefully) {
     pCompilerInterface->igcMain.reset(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
 }
 
 TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenBuildFailsGracefully) {
@@ -184,7 +184,7 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenBuildFailsGrace
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateFclTranslationCtx = false;
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
 TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenBuildFailsGracefully) {
@@ -196,7 +196,7 @@ TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenBuildFailsGrace
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateIgcTranslationCtx = true;
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
 TEST_F(CompilerInterfaceTest, GivenOptionsWhenCompilingToIsaThenSuccessIsReturned) {
@@ -216,7 +216,7 @@ TEST_F(CompilerInterfaceTest, GivenOptionsWhenCompilingToIsaThenSuccessIsReturne
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -228,7 +228,7 @@ TEST_F(CompilerInterfaceTest, WhenCompilingToIrThenSuccessIsReturned) {
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -237,19 +237,19 @@ TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenDo
     TranslationOutput translationOutput = {};
     inputArgs.srcType = IGC::CodeType::spirV;
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::AlreadyCompiled, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::alreadyCompiled, err);
 
     inputArgs.srcType = IGC::CodeType::llvmBc;
     err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::AlreadyCompiled, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::alreadyCompiled, err);
 
     inputArgs.srcType = IGC::CodeType::llvmLl;
     err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::AlreadyCompiled, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::alreadyCompiled, err);
 
     inputArgs.srcType = IGC::CodeType::oclGenBin;
     err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::AlreadyCompiled, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::alreadyCompiled, err);
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCompileFailsGracefully) {
@@ -260,7 +260,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCompileFailsGraceful
     pCompilerInterface->setIgcMain(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -273,7 +273,7 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenCompileFailsGra
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateFclTranslationCtx = false;
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -285,7 +285,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCompilingToIrThenCompila
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilationFailure, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilationFailure, err);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -297,7 +297,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenLinkingIrThenLinkFailure
     gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::LinkFailure, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::linkFailure, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -310,7 +310,7 @@ TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenOclGenBinIsTheTranslationTarge
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     gEnvironment->igcPopDebugVars();
-    ASSERT_EQ(TranslationOutput::ErrorCode::Success, err);
+    ASSERT_EQ(TranslationOutput::ErrorCode::success, err);
     ASSERT_EQ(1u, pCompilerInterface->requestedTranslationCtxs.size());
 
     MockCompilerInterface::TranslationOpT translation = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
@@ -325,7 +325,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenLinkFailsGracefully)
     pCompilerInterface->setIgcMain(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -338,7 +338,7 @@ TEST_F(CompilerInterfaceTest, whenSrcAllocationFailsThenLinkFailsGracefully) {
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     MockCIFBuffer::failAllocations = false;
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -351,7 +351,7 @@ TEST_F(CompilerInterfaceTest, whenTranslateReturnsNullptrThenLinkFailsGracefully
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateIgcTranslationCtx = false;
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -364,7 +364,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCreatingLibraryThenLinkF
     gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::LinkFailure, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::linkFailure, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -377,7 +377,7 @@ TEST_F(CompilerInterfaceTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsInterme
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
     gEnvironment->igcPopDebugVars();
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     ASSERT_EQ(1U, pCompilerInterface->requestedTranslationCtxs.size());
 
     EXPECT_EQ(IGC::CodeType::llvmBc, pCompilerInterface->requestedTranslationCtxs[0].second);
@@ -391,7 +391,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCreateLibraryFailsGr
     pCompilerInterface->setIgcMain(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -404,7 +404,7 @@ TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsNullptrThenCreateLibraryFa
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
     pCompilerInterface->failCreateIgcTranslationCtx = false;
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -424,7 +424,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenFclBuildingThenBuildFail
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, err);
 
     gEnvironment->fclPopDebugVars();
 }
@@ -444,7 +444,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenIgcBuildingThenBuildFail
 
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, err);
 
     gEnvironment->igcPopDebugVars();
 }
@@ -760,7 +760,7 @@ TEST_F(CompilerInterfaceTest, givenUpdatedSpecConstValuesWhenBuildProgramThenPro
     TranslationOutput translationOutput;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
 
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenDeviceCtxIsNotAvailableThenCreateNewDeviceCtxAndUseItToReturnValidTranslationCtx) {
@@ -1010,7 +1010,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSipKernelBinaryFa
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
     EXPECT_EQ(0U, sipBinary.size());
 }
 
@@ -1022,7 +1022,7 @@ TEST_F(CompilerInterfaceTest, whenIgcReturnsErrorThenGetSipKernelBinaryFailsGrac
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
     EXPECT_EQ(0U, sipBinary.size());
 
     gEnvironment->igcPopDebugVars();
@@ -1034,7 +1034,7 @@ TEST_F(CompilerInterfaceTest, whenGetIgcDeviceCtxReturnsNullptrThenGetSipKernelB
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
 TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutputAsSipBinary) {
@@ -1044,7 +1044,7 @@ TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutpu
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
 
     gEnvironment->igcPopDebugVars();
@@ -1056,17 +1056,17 @@ TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperSystemRouti
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::contextSaveRestore, getIgcDebugVars().typeOfSystemRoutine);
 
     err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::dbgCsr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
 
     err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::dbgCsrLocal, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debugSlm, getIgcDebugVars().typeOfSystemRoutine);
 
@@ -1079,19 +1079,19 @@ TEST_F(CompilerInterfaceTest, WhenRequestingBindlessDebugSipThenProperSystemRout
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::contextSaveRestore, getIgcDebugVars().typeOfSystemRoutine);
     EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindful, getIgcDebugVars().receivedSipAddressingType);
 
     err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::dbgCsrLocal, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debugSlm, getIgcDebugVars().typeOfSystemRoutine);
     EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindful, getIgcDebugVars().receivedSipAddressingType);
 
     err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::dbgBindless, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_NE(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
     EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindless, getIgcDebugVars().receivedSipAddressingType);
@@ -1105,7 +1105,7 @@ TEST_F(CompilerInterfaceTest, whenRequestingInvalidSipKernelBinaryThenErrorIsRet
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::count, sipBinary, stateAreaHeader);
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
     EXPECT_EQ(0U, sipBinary.size());
     EXPECT_EQ(IGC::SystemRoutineType::undefined, getIgcDebugVars().typeOfSystemRoutine);
 
@@ -1116,7 +1116,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSpecializationCon
     pCompilerInterface->igcMain.reset();
     NEO::SpecConstantInfo sci;
     auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, ArrayRef<char>{}, sci);
-    EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
 }
 
 TEST_F(CompilerInterfaceTest, givenCompilerInterfacewhenGettingIgcFeaturesAndWorkaroundsThenValidPointerIsReturned) {
@@ -1233,14 +1233,14 @@ TEST_F(CompilerInterfaceTest, whenIgcTranlationContextCreationFailsThenErrorIsRe
     pCompilerInterface->failCreateIgcTranslationCtx = true;
     NEO::SpecConstantInfo specConstInfo;
     auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo);
-    EXPECT_EQ(TranslationOutput::ErrorCode::UnknownError, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
 TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstantsThenSuccesIsReturned) {
     TranslationOutput translationOutput;
     NEO::SpecConstantInfo specConstInfo;
     auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 }
 
 struct UnknownInterfaceCIFMain : MockCIFMain {

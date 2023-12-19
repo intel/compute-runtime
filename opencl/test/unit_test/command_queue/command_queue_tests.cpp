@@ -1982,7 +1982,7 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndAssignBCSAtEnque
     builtinOpParams.dstMemObj = &dstMemObj;
 
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-    args.direction = TransferDirection::LocalToHost;
+    args.direction = TransferDirection::localToHost;
 
     auto &csr = queue->selectCsrForBuiltinOperation(args);
 

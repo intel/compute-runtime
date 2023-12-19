@@ -189,7 +189,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
                                           Vec3<size_t> size) -> NEO::BlitOperationResult {
         memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
         blitterCalled++;
-        return BlitOperationResult::Success;
+        return BlitOperationResult::success;
     };
     VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
@@ -769,7 +769,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
         FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
         NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
                                                                ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
-            return NEO::TranslationOutput::ErrorCode::CompilerNotAvailable;
+            return NEO::TranslationOutput::ErrorCode::compilerNotAvailable;
         }
     };
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
@@ -856,7 +856,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
         FailingMockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(moduleNumSpecConstants) {}
         NEO::TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device,
                                                                ArrayRef<const char> srcSpirV, NEO::SpecConstantInfo &output) override {
-            return NEO::TranslationOutput::ErrorCode::CompilerNotAvailable;
+            return NEO::TranslationOutput::ErrorCode::compilerNotAvailable;
         }
     };
     mockCompiler = new FailingMockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);

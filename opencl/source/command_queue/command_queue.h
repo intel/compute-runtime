@@ -47,9 +47,9 @@ struct MultiDispatchInfo;
 struct TimestampPacketDependencies;
 
 enum class QueuePriority {
-    LOW,
-    MEDIUM,
-    HIGH
+    low,
+    medium,
+    high
 };
 
 template <>
@@ -443,7 +443,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_uint queueIndexWithinFamily = 0;
     bool queueFamilySelected = false;
 
-    QueuePriority priority = QueuePriority::MEDIUM;
+    QueuePriority priority = QueuePriority::medium;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::none;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;

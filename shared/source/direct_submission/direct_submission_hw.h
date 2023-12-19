@@ -42,9 +42,9 @@ struct TagData {
 };
 
 enum class DirectSubmissionSfenceMode : int32_t {
-    Disabled = 0,
-    BeforeSemaphoreOnly = 1,
-    BeforeAndAfterSemaphore = 2
+    disabled = 0,
+    beforeSemaphoreOnly = 1,
+    beforeAndAfterSemaphore = 2
 };
 
 namespace UllsDefaults {
@@ -225,7 +225,7 @@ class DirectSubmissionHw {
     uint32_t activeTiles = 1u;
     uint32_t immWritePostSyncOffset = 0u;
     uint32_t currentRelaxedOrderingQueueSize = 0;
-    DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::BeforeAndAfterSemaphore;
+    DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::beforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;
     uint32_t dispatchErrorCode = 0;
     QueueThrottle lastSubmittedThrottle = QueueThrottle::MEDIUM;

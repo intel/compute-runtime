@@ -26,7 +26,7 @@ TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArg
         allocation1.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_WRITE_BUFFER, {}, &buffer1, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToHost, args.direction);
+        EXPECT_EQ(TransferDirection::hostToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.dstResource.allocation);
     }
@@ -34,7 +34,7 @@ TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArg
         allocation1.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_WRITE_BUFFER, {}, &buffer1, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToLocal, args.direction);
+        EXPECT_EQ(TransferDirection::hostToLocal, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.dstResource.allocation);
     }
@@ -43,7 +43,7 @@ TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArg
         allocation1.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_READ_BUFFER, &buffer1, {}, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER), args.cmdType);
-        EXPECT_EQ(TransferDirection::LocalToHost, args.direction);
+        EXPECT_EQ(TransferDirection::localToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
     }
@@ -51,7 +51,7 @@ TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArg
         allocation1.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_READ_BUFFER, &buffer1, {}, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToHost, args.direction);
+        EXPECT_EQ(TransferDirection::hostToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
     }
@@ -61,7 +61,7 @@ TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArg
         allocation2.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &buffer1, &buffer2, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_COPY_BUFFER), args.cmdType);
-        EXPECT_EQ(TransferDirection::LocalToHost, args.direction);
+        EXPECT_EQ(TransferDirection::localToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
         EXPECT_EQ(&allocation2, args.dstResource.allocation);
@@ -71,7 +71,7 @@ TEST(CsrSelectionArgsTests, givenBuffersWhenCreatingCsrSelectionArgsThenSetupArg
         allocation2.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &buffer1, &buffer2, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_COPY_BUFFER), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToLocal, args.direction);
+        EXPECT_EQ(TransferDirection::hostToLocal, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
         EXPECT_EQ(&allocation2, args.dstResource.allocation);
@@ -93,7 +93,7 @@ TEST(CsrSelectionArgsTests, givenImagesWhenCreatingCsrSelectionArgsThenSetupArgs
         allocation1.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, {}, &image1, rootDeviceIndex, size, nullptr, origin1};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_WRITE_IMAGE), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToHost, args.direction);
+        EXPECT_EQ(TransferDirection::hostToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&image1, args.dstResource.image);
         EXPECT_EQ(&allocation1, args.dstResource.allocation);
@@ -103,7 +103,7 @@ TEST(CsrSelectionArgsTests, givenImagesWhenCreatingCsrSelectionArgsThenSetupArgs
         allocation1.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, {}, &image1, rootDeviceIndex, size, nullptr, origin1};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_WRITE_IMAGE), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToLocal, args.direction);
+        EXPECT_EQ(TransferDirection::hostToLocal, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&image1, args.dstResource.image);
         EXPECT_EQ(&allocation1, args.dstResource.allocation);
@@ -114,7 +114,7 @@ TEST(CsrSelectionArgsTests, givenImagesWhenCreatingCsrSelectionArgsThenSetupArgs
         allocation1.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_READ_IMAGE, &image1, nullptr, rootDeviceIndex, size, origin1, nullptr};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_READ_IMAGE), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToHost, args.direction);
+        EXPECT_EQ(TransferDirection::hostToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&image1, args.srcResource.image);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
@@ -124,7 +124,7 @@ TEST(CsrSelectionArgsTests, givenImagesWhenCreatingCsrSelectionArgsThenSetupArgs
         allocation1.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_READ_IMAGE, &image1, nullptr, rootDeviceIndex, size, origin1, nullptr};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_READ_IMAGE), args.cmdType);
-        EXPECT_EQ(TransferDirection::LocalToHost, args.direction);
+        EXPECT_EQ(TransferDirection::localToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&image1, args.srcResource.image);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
@@ -136,7 +136,7 @@ TEST(CsrSelectionArgsTests, givenImagesWhenCreatingCsrSelectionArgsThenSetupArgs
         allocation2.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_IMAGE, &image1, &image2, rootDeviceIndex, size, origin1, origin2};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_COPY_IMAGE), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToLocal, args.direction);
+        EXPECT_EQ(TransferDirection::hostToLocal, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&image1, args.srcResource.image);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
@@ -150,7 +150,7 @@ TEST(CsrSelectionArgsTests, givenImagesWhenCreatingCsrSelectionArgsThenSetupArgs
         allocation2.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_COPY_IMAGE, &image1, &image2, rootDeviceIndex, size, origin1, origin2};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_COPY_IMAGE), args.cmdType);
-        EXPECT_EQ(TransferDirection::LocalToHost, args.direction);
+        EXPECT_EQ(TransferDirection::localToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&image1, args.srcResource.image);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
@@ -175,7 +175,7 @@ TEST(CsrSelectionArgsTests, givenGraphicsAllocationsWhenCreatingCsrSelectionArgs
         allocation2.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &multiAlloc1, &multiAlloc2, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToHost, args.direction);
+        EXPECT_EQ(TransferDirection::hostToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
         EXPECT_EQ(&allocation2, args.dstResource.allocation);
@@ -185,7 +185,7 @@ TEST(CsrSelectionArgsTests, givenGraphicsAllocationsWhenCreatingCsrSelectionArgs
         allocation2.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &multiAlloc1, &multiAlloc2, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY), args.cmdType);
-        EXPECT_EQ(TransferDirection::HostToLocal, args.direction);
+        EXPECT_EQ(TransferDirection::hostToLocal, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
         EXPECT_EQ(&allocation2, args.dstResource.allocation);
@@ -195,7 +195,7 @@ TEST(CsrSelectionArgsTests, givenGraphicsAllocationsWhenCreatingCsrSelectionArgs
         allocation2.memoryPool = MemoryPool::system4KBPages;
         CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &multiAlloc1, &multiAlloc2, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY), args.cmdType);
-        EXPECT_EQ(TransferDirection::LocalToHost, args.direction);
+        EXPECT_EQ(TransferDirection::localToHost, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
         EXPECT_EQ(&allocation2, args.dstResource.allocation);
@@ -205,7 +205,7 @@ TEST(CsrSelectionArgsTests, givenGraphicsAllocationsWhenCreatingCsrSelectionArgs
         allocation2.memoryPool = MemoryPool::localMemory;
         CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &multiAlloc1, &multiAlloc2, rootDeviceIndex, size};
         EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY), args.cmdType);
-        EXPECT_EQ(TransferDirection::LocalToLocal, args.direction);
+        EXPECT_EQ(TransferDirection::localToLocal, args.direction);
         EXPECT_EQ(size, args.size);
         EXPECT_EQ(&allocation1, args.srcResource.allocation);
         EXPECT_EQ(&allocation2, args.dstResource.allocation);

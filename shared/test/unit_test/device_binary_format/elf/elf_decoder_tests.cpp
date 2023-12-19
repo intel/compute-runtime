@@ -37,11 +37,11 @@ class TestElf {
 
         ElfRela<ELF_CLASS::EI_CLASS_64> relocationsWithAddend[2];
         relocationsWithAddend[0].addend = relaAddend;
-        relocationsWithAddend[0].info = relaSymbolIndexes[0] << 32 | uint32_t(RELOCATION_X8664_TYPE::R_X8664_64);
+        relocationsWithAddend[0].info = relaSymbolIndexes[0] << 32 | uint32_t(RELOCATION_X8664_TYPE::relocation64);
         relocationsWithAddend[0].offset = relaOffsets[0];
 
         relocationsWithAddend[1].addend = relaAddend;
-        relocationsWithAddend[1].info = relaSymbolIndexes[1] << 32 | uint32_t(RELOCATION_X8664_TYPE::R_X8664_32);
+        relocationsWithAddend[1].info = relaSymbolIndexes[1] << 32 | uint32_t(RELOCATION_X8664_TYPE::relocation32);
         relocationsWithAddend[1].offset = relaOffsets[1];
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::debug, ArrayRef<const uint8_t>(dummyData, sizeof(dummyData)));
@@ -55,10 +55,10 @@ class TestElf {
         relaDebugSection->info = debugSectionIndex;
 
         ElfRel<ELF_CLASS::EI_CLASS_64> relocations[2];
-        relocations[0].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::R_X8664_64);
+        relocations[0].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::relocation64);
         relocations[0].offset = relOffsets[0];
 
-        relocations[1].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::R_X8664_64);
+        relocations[1].info = relSymbolIndex << 32 | uint64_t(RELOCATION_X8664_TYPE::relocation64);
         relocations[1].offset = relOffsets[1];
 
         elfEncoder.appendSection(SHT_PROGBITS, SpecialSectionNames::line, std::string{"dummy_line_data______________________"});
@@ -536,19 +536,19 @@ TEST(ElfDecoder, GivenElf64WhenExtractingDataFromElfRelocationThenCorrectRelocTy
     elf.elfFileHeader = &header64;
 
     ElfRela<EI_CLASS_64> rela;
-    rela.info = decltype(ElfRela<EI_CLASS_64>::info)(RELOCATION_X8664_TYPE::R_X8664_64) | decltype(ElfRela<EI_CLASS_64>::info)(5) << 32;
+    rela.info = decltype(ElfRela<EI_CLASS_64>::info)(RELOCATION_X8664_TYPE::relocation64) | decltype(ElfRela<EI_CLASS_64>::info)(5) << 32;
     auto type = elf.extractRelocType(rela);
     auto symbolIndex = elf.extractSymbolIndex(rela);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), type);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), type);
     EXPECT_EQ(5, symbolIndex);
 
     ElfRel<EI_CLASS_64> rel;
-    rel.info = decltype(ElfRela<EI_CLASS_64>::info)(RELOCATION_X8664_TYPE::R_X8664_32) | decltype(ElfRela<EI_CLASS_64>::info)(6) << 32;
+    rel.info = decltype(ElfRela<EI_CLASS_64>::info)(RELOCATION_X8664_TYPE::relocation32) | decltype(ElfRela<EI_CLASS_64>::info)(6) << 32;
     type = elf.extractRelocType(rel);
     symbolIndex = elf.extractSymbolIndex(rel);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_32), type);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), type);
     EXPECT_EQ(6, symbolIndex);
 }
 
@@ -558,19 +558,19 @@ TEST(ElfDecoder, GivenElf32WhenExtractingDataFromElfRelocationThenCorrectRelocTy
     elf.elfFileHeader = &header64;
 
     ElfRela<EI_CLASS_32> rela;
-    rela.info = decltype(ElfRela<EI_CLASS_32>::info)(RELOCATION_X8664_TYPE::R_X8664_32) | decltype(ElfRela<EI_CLASS_32>::info)(5) << 8;
+    rela.info = decltype(ElfRela<EI_CLASS_32>::info)(RELOCATION_X8664_TYPE::relocation32) | decltype(ElfRela<EI_CLASS_32>::info)(5) << 8;
     auto type = elf.extractRelocType(rela);
     auto symbolIndex = elf.extractSymbolIndex(rela);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_32), type);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), type);
     EXPECT_EQ(5, symbolIndex);
 
     ElfRel<EI_CLASS_32> rel;
-    rel.info = decltype(ElfRel<EI_CLASS_32>::info)(RELOCATION_X8664_TYPE::R_X8664_32) | decltype(ElfRel<EI_CLASS_32>::info)(6) << 8;
+    rel.info = decltype(ElfRel<EI_CLASS_32>::info)(RELOCATION_X8664_TYPE::relocation32) | decltype(ElfRel<EI_CLASS_32>::info)(6) << 8;
     type = elf.extractRelocType(rel);
     symbolIndex = elf.extractSymbolIndex(rel);
 
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_32), type);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), type);
     EXPECT_EQ(6, symbolIndex);
 }
 
@@ -693,7 +693,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(testElf.relaAddend, debugRelocations[0].addend);
     EXPECT_EQ(testElf.relaOffsets[0], debugRelocations[0].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), debugRelocations[0].relocType);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), debugRelocations[0].relocType);
     EXPECT_STREQ("global_object_symbol_0", debugRelocations[0].symbolName.c_str());
     EXPECT_EQ(7, debugRelocations[0].symbolSectionIndex);
     EXPECT_EQ(3, debugRelocations[0].symbolTableIndex);
@@ -701,7 +701,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(testElf.relaAddend, debugRelocations[1].addend);
     EXPECT_EQ(testElf.relaOffsets[1], debugRelocations[1].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_32), debugRelocations[1].relocType);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation32), debugRelocations[1].relocType);
     EXPECT_STREQ("local_function_symbol_1", debugRelocations[1].symbolName.c_str());
     EXPECT_EQ(1, debugRelocations[1].symbolSectionIndex);
     EXPECT_EQ(1, debugRelocations[1].symbolTableIndex);
@@ -709,7 +709,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(0u, debugRelocations[2].addend);
     EXPECT_EQ(testElf.relOffsets[1], debugRelocations[2].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), debugRelocations[2].relocType);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), debugRelocations[2].relocType);
     EXPECT_STREQ("section_symbol_2", debugRelocations[2].symbolName.c_str());
     EXPECT_EQ(1, debugRelocations[2].symbolSectionIndex);
     EXPECT_EQ(2, debugRelocations[2].symbolTableIndex);
@@ -717,7 +717,7 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(0u, relocations[0].addend);
     EXPECT_EQ(testElf.relOffsets[0], relocations[0].offset);
-    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::R_X8664_64), relocations[0].relocType);
+    EXPECT_EQ(uint32_t(RELOCATION_X8664_TYPE::relocation64), relocations[0].relocType);
     EXPECT_STREQ("section_symbol_2", relocations[0].symbolName.c_str());
     EXPECT_EQ(1, relocations[0].symbolSectionIndex);
     EXPECT_EQ(2, relocations[0].symbolTableIndex);

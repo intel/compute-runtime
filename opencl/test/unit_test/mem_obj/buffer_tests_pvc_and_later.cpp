@@ -121,7 +121,7 @@ HWTEST2_F(PvcAndLaterBufferTests, givenCompressedBufferInSystemAndBlitterSupport
     blitMemoryToAllocationFuncBackup = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset,
                                           const void *hostPtr, Vec3<size_t> size) -> NEO::BlitOperationResult {
         ADD_FAILURE();
-        return BlitOperationResult::Fail;
+        return BlitOperationResult::fail;
     };
     cl_mem_flags flags = CL_MEM_COPY_HOST_PTR | CL_MEM_COMPRESSED_HINT_INTEL;
     uint32_t hostPtr = 0;

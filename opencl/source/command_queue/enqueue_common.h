@@ -890,7 +890,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         multiDispatchInfo.usesSlm(),                                                                            // useSLM
         !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled() || commandType == CL_COMMAND_FILL_BUFFER, // guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                                               // GSBA32BitRequired
-        (QueuePriority::LOW == priority),                                                                       // lowPriority
+        (QueuePriority::low == priority),                                                                       // lowPriority
         implicitFlush,                                                                                          // implicitFlush
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),             // outOfOrderExecutionAllowed
         false,                                                                                                  // epilogueRequired
@@ -1236,7 +1236,7 @@ bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection trans
     auto bcsSplit = getDevice().isBcsSplitSupported() &&
                     csr.getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
                     transferSize >= minimalSizeForBcsSplit &&
-                    transferDirection != TransferDirection::LocalToLocal;
+                    transferDirection != TransferDirection::localToLocal;
 
     if (bcsSplit) {
         this->constructBcsEnginesForSplit();
@@ -1263,9 +1263,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     StackVec<CommandStreamReceiver *, 2u> copyEngines;
 
     auto splitEngines = this->splitEngines;
-    if (dispatchInfo.peekBuiltinOpParams().direction == NEO::TransferDirection::HostToLocal) {
+    if (dispatchInfo.peekBuiltinOpParams().direction == NEO::TransferDirection::hostToLocal) {
         splitEngines = this->h2dEngines;
-    } else if (dispatchInfo.peekBuiltinOpParams().direction == NEO::TransferDirection::LocalToHost) {
+    } else if (dispatchInfo.peekBuiltinOpParams().direction == NEO::TransferDirection::localToHost) {
         splitEngines = this->d2hEngines;
     }
 

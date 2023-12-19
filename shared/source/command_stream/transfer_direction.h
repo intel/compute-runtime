@@ -9,24 +9,24 @@
 
 namespace NEO {
 enum class TransferDirection {
-    HostToHost,
-    HostToLocal,
-    LocalToHost,
-    LocalToLocal,
+    hostToHost,
+    hostToLocal,
+    localToHost,
+    localToLocal,
 };
 
 inline TransferDirection createTransferDirection(bool srcLocal, bool dstLocal) {
     if (srcLocal) {
         if (dstLocal) {
-            return TransferDirection::LocalToLocal;
+            return TransferDirection::localToLocal;
         } else {
-            return TransferDirection::LocalToHost;
+            return TransferDirection::localToHost;
         }
     } else {
         if (dstLocal) {
-            return TransferDirection::HostToLocal;
+            return TransferDirection::hostToLocal;
         } else {
-            return TransferDirection::HostToHost;
+            return TransferDirection::hostToHost;
         }
     }
 }

@@ -126,7 +126,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
     }
 
     Linker::UnresolvedExternals unresolvedExternalsInfo;
-    bool linkSuccess = LinkingStatus::LinkedFully == linker.link(globals, constants, exportedFunctions, strings,
+    bool linkSuccess = LinkingStatus::linkedFully == linker.link(globals, constants, exportedFunctions, strings,
                                                                  globalsForPatching, constantsForPatching,
                                                                  isaSegmentsForPatching, unresolvedExternalsInfo,
                                                                  pDevice, constantsInitData, constantsInitDataSize,

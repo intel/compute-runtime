@@ -111,12 +111,12 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
     i = 0;
     while (i < logLws) {
         if (val & (1 << i)) {
-            EncodeMath<Family>::addition(container, AluRegisters::R_1,
-                                         AluRegisters::R_0, AluRegisters::R_2);
+            EncodeMath<Family>::addition(container, AluRegisters::gpr1,
+                                         AluRegisters::gpr0, AluRegisters::gpr2);
             EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR1, RegisterOffsets::csGprR2);
         }
-        EncodeMath<Family>::addition(container, AluRegisters::R_0,
-                                     AluRegisters::R_0, AluRegisters::R_2);
+        EncodeMath<Family>::addition(container, AluRegisters::gpr0,
+                                     AluRegisters::gpr0, AluRegisters::gpr2);
         EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, RegisterOffsets::csGprR2);
         i++;
     }
@@ -136,9 +136,9 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
     EncodeSetMMIO<Family>::encodeMEM(container, RegisterOffsets::csGprR0, firstOperand);
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR1, secondOperand, true);
 
-    /* RegisterOffsets::csGprR* registers map to AluRegisters::R_* registers */
-    EncodeMath<Family>::greaterThan(container, AluRegisters::R_0,
-                                    AluRegisters::R_1, AluRegisters::R_2);
+    /* RegisterOffsets::csGprR* registers map to AluRegisters::gpr* registers */
+    EncodeMath<Family>::greaterThan(container, AluRegisters::gpr0,
+                                    AluRegisters::gpr1, AluRegisters::gpr2);
 
     EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csPredicateResult, RegisterOffsets::csGprR2);
 }
@@ -152,9 +152,9 @@ void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, ui
                                                  bool workloadPartition) {
     EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR13, regOffset);
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR14, immVal, true);
-    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_13,
-                                   AluRegisters::R_14,
-                                   AluRegisters::R_15);
+    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::gpr13,
+                                   AluRegisters::gpr14,
+                                   AluRegisters::gpr15);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
                                     RegisterOffsets::csGprR15, dstAddress, workloadPartition);
 }
@@ -175,15 +175,15 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRe
     MI_MATH_ALU_INST_INLINE aluParam;
 
     aluParam.DW0.Value = 0x0;
-    aluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
-    aluParam.DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCA);
+    aluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoad);
+    aluParam.DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::srca);
     aluParam.DW0.BitField.Operand2 = static_cast<uint32_t>(srcA);
     *pAluParam = aluParam;
     pAluParam++;
 
     aluParam.DW0.Value = 0x0;
-    aluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
-    aluParam.DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_SRCB);
+    aluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoad);
+    aluParam.DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::srcb);
     aluParam.DW0.BitField.Operand2 = static_cast<uint32_t>(srcB);
     *pAluParam = aluParam;
     pAluParam++;
@@ -197,7 +197,7 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRe
     pAluParam++;
 
     aluParam.DW0.Value = 0x0;
-    aluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_STORE);
+    aluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeStore);
     aluParam.DW0.BitField.Operand1 = static_cast<uint32_t>(finalResultRegister);
     aluParam.DW0.BitField.Operand2 = static_cast<uint32_t>(postOperationStateRegister);
     *pAluParam = aluParam;
@@ -230,13 +230,13 @@ void EncodeMathMMIO<Family>::encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam,
                                           AluRegisters firstOperandRegister,
                                           AluRegisters secondOperandRegister,
                                           AluRegisters finalResultRegister) {
-    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::OPCODE_ADD, finalResultRegister, AluRegisters::R_ACCU);
+    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::opcodeAdd, finalResultRegister, AluRegisters::accu);
 }
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeAluSubStoreCarry(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters regA, AluRegisters regB, AluRegisters finalResultRegister) {
     /* regB is subtracted from regA */
-    encodeAlu(pAluParam, regA, regB, AluRegisters::OPCODE_SUB, finalResultRegister, AluRegisters::R_CF);
+    encodeAlu(pAluParam, regA, regB, AluRegisters::opcodeSub, finalResultRegister, AluRegisters::cf);
 }
 
 template <typename Family>
@@ -244,7 +244,7 @@ void EncodeMathMMIO<Family>::encodeAluAnd(MI_MATH_ALU_INST_INLINE *pAluParam,
                                           AluRegisters firstOperandRegister,
                                           AluRegisters secondOperandRegister,
                                           AluRegisters finalResultRegister) {
-    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::OPCODE_AND, finalResultRegister, AluRegisters::R_ACCU);
+    encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::opcodeAnd, finalResultRegister, AluRegisters::accu);
 }
 
 template <typename Family>
@@ -253,23 +253,23 @@ void EncodeMathMMIO<Family>::encodeIncrementOrDecrement(LinearStream &cmdStream,
     LriHelper<Family>::program(&cmdStream, RegisterOffsets::csGprR7 + 4, 0, true);
 
     EncodeAluHelper<Family, 4> aluHelper;
-    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, operandRegister);
-    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7);
-    aluHelper.setNextAlu((operationType == IncrementOrDecrementOperation::Increment) ? AluRegisters::OPCODE_ADD
-                                                                                     : AluRegisters::OPCODE_SUB);
-    aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, operandRegister, AluRegisters::R_ACCU);
+    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, operandRegister);
+    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr7);
+    aluHelper.setNextAlu((operationType == IncrementOrDecrementOperation::increment) ? AluRegisters::opcodeAdd
+                                                                                     : AluRegisters::opcodeSub);
+    aluHelper.setNextAlu(AluRegisters::opcodeStore, operandRegister, AluRegisters::accu);
 
     aluHelper.copyToCmdStream(cmdStream);
 }
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeIncrement(LinearStream &cmdStream, AluRegisters operandRegister) {
-    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::Increment);
+    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::increment);
 }
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeDecrement(LinearStream &cmdStream, AluRegisters operandRegister) {
-    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::Decrement);
+    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::decrement);
 }
 
 /*
@@ -614,7 +614,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
     if (NEO::isValidOffset(workDimOffset)) {
         auto dstPtr = ptrOffset(crossThreadAddress, workDimOffset);
         constexpr uint32_t resultRegister = RegisterOffsets::csGprR0;
-        constexpr AluRegisters resultAluRegister = AluRegisters::R_0;
+        constexpr AluRegisters resultAluRegister = AluRegisters::gpr0;
         const uint32_t offset = static_cast<uint32_t>((1ull << 8 * (dstPtr & 0b11)) - 1);
         const uint32_t memoryMask = std::numeric_limits<uint32_t>::max() - static_cast<uint32_t>((1ull << 8 * ((dstPtr & 0b11) + 1)) - 1) + offset;
 
@@ -629,33 +629,33 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
         } else {
 
             constexpr uint32_t groupCount2Register = RegisterOffsets::csGprR1;
-            constexpr AluRegisters groupCount2AluRegister = AluRegisters::R_1;
+            constexpr AluRegisters groupCount2AluRegister = AluRegisters::gpr1;
 
             constexpr uint32_t groupSize1Register = RegisterOffsets::csGprR0;
-            constexpr AluRegisters groupSize1AluRegister = AluRegisters::R_0;
+            constexpr AluRegisters groupSize1AluRegister = AluRegisters::gpr0;
 
             constexpr uint32_t groupCount1Register = RegisterOffsets::csGprR1;
-            constexpr AluRegisters groupCount1AluRegister = AluRegisters::R_1;
+            constexpr AluRegisters groupCount1AluRegister = AluRegisters::gpr1;
 
-            constexpr AluRegisters sumAluRegister = AluRegisters::R_0;
+            constexpr AluRegisters sumAluRegister = AluRegisters::gpr0;
 
-            constexpr AluRegisters workDimEq3AluRegister = AluRegisters::R_3;
+            constexpr AluRegisters workDimEq3AluRegister = AluRegisters::gpr3;
 
-            constexpr AluRegisters workDimGe2AluRegister = AluRegisters::R_4;
+            constexpr AluRegisters workDimGe2AluRegister = AluRegisters::gpr4;
 
             constexpr uint32_t constantOneRegister = RegisterOffsets::csGprR5;
-            constexpr AluRegisters constantOneAluRegister = AluRegisters::R_5;
+            constexpr AluRegisters constantOneAluRegister = AluRegisters::gpr5;
             constexpr uint32_t constantTwoRegister = RegisterOffsets::csGprR6;
-            constexpr AluRegisters constantTwoAluRegister = AluRegisters::R_6;
+            constexpr AluRegisters constantTwoAluRegister = AluRegisters::gpr6;
 
             constexpr uint32_t backupRegister = RegisterOffsets::csGprR7;
-            constexpr AluRegisters backupAluRegister = AluRegisters::R_7;
+            constexpr AluRegisters backupAluRegister = AluRegisters::gpr7;
 
             constexpr uint32_t memoryMaskRegister = RegisterOffsets::csGprR8;
-            constexpr AluRegisters memoryMaskAluRegister = AluRegisters::R_8;
+            constexpr AluRegisters memoryMaskAluRegister = AluRegisters::gpr8;
 
             constexpr uint32_t offsetRegister = RegisterOffsets::csGprR8;
-            constexpr AluRegisters offsetAluRegister = AluRegisters::R_8;
+            constexpr AluRegisters offsetAluRegister = AluRegisters::gpr8;
 
             if (offset) {
                 EncodeSetMMIO<Family>::encodeMEM(container, backupRegister, dstPtr);
@@ -877,7 +877,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferSt
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8, compareDataLow, true);
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8 + 4, compareDataHigh, true);
 
-    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::gpr7, AluRegisters::gpr8, compareOperation, indirect);
 }
 
 template <typename Family>
@@ -896,7 +896,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataRegBatchBufferSt
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8, compareDataLow, true);
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8 + 4, compareDataHigh, true);
 
-    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::gpr7, AluRegisters::gpr8, compareOperation, indirect);
 }
 
 template <typename Family>
@@ -915,21 +915,21 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegMemBatchBufferSta
     EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR8, compareReg);
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8 + 4, 0, true);
 
-    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::gpr7, AluRegisters::gpr8, compareOperation, indirect);
 }
 
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase(LinearStream &commandStream, uint64_t startAddress, AluRegisters regA, AluRegisters regB,
                                                                                  CompareOperation compareOperation, bool indirect) {
     EncodeAluHelper<Family, 4> aluHelper;
-    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, regA);
-    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, regB);
-    aluHelper.setNextAlu(AluRegisters::OPCODE_SUB);
+    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, regA);
+    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, regB);
+    aluHelper.setNextAlu(AluRegisters::opcodeSub);
 
-    if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::NotEqual)) {
-        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ZF);
-    } else if ((compareOperation == CompareOperation::GreaterOrEqual) || (compareOperation == CompareOperation::Less)) {
-        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_CF);
+    if ((compareOperation == CompareOperation::equal) || (compareOperation == CompareOperation::notEqual)) {
+        aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::zf);
+    } else if ((compareOperation == CompareOperation::greaterOrEqual) || (compareOperation == CompareOperation::less)) {
+        aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::cf);
     } else {
         UNRECOVERABLE_IF(true);
     }
@@ -939,7 +939,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase
     EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csPredicateResult2, RegisterOffsets::csGprR7);
 
     MiPredicateType predicateType = MiPredicateType::noopOnResult2Clear; // Equal or Less
-    if ((compareOperation == CompareOperation::NotEqual) || (compareOperation == CompareOperation::GreaterOrEqual)) {
+    if ((compareOperation == CompareOperation::notEqual) || (compareOperation == CompareOperation::greaterOrEqual)) {
         predicateType = MiPredicateType::noopOnResult2Set;
     }
 

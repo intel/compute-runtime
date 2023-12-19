@@ -46,12 +46,12 @@ class CommandQueueHw : public CommandQueue {
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
 
         if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
-            priority = QueuePriority::LOW;
+            priority = QueuePriority::low;
             this->gpgpuEngine = &device->getNearestGenericSubDevice(0)->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::lowPriority);
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
-            priority = QueuePriority::MEDIUM;
+            priority = QueuePriority::medium;
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_HIGH_KHR)) {
-            priority = QueuePriority::HIGH;
+            priority = QueuePriority::high;
         }
 
         auto clThrottle = getCmdQueueProperties<cl_queue_throttle_khr>(properties, CL_QUEUE_THROTTLE_KHR);

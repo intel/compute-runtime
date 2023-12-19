@@ -59,7 +59,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     const TranslationInput &input,
     TranslationOutput &output) {
     if (false == isCompilerAvailable(input.srcType, input.outType)) {
-        return TranslationOutput::ErrorCode::CompilerNotAvailable;
+        return TranslationOutput::ErrorCode::compilerNotAvailable;
     }
 
     IGC::CodeType::CodeType_t srcCodeType = input.srcType;
@@ -87,7 +87,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
                                                   input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
-            return TranslationOutput::ErrorCode::Success;
+            return TranslationOutput::ErrorCode::success;
         }
     }
 
@@ -114,13 +114,13 @@ TranslationOutput::ErrorCode CompilerInterface::build(
                                    fclOptions.get(), fclInternalOptions.get());
 
         if (fclOutput == nullptr) {
-            return TranslationOutput::ErrorCode::UnknownError;
+            return TranslationOutput::ErrorCode::unknownError;
         }
 
         TranslationOutput::makeCopy(output.frontendCompilerLog, fclOutput->GetBuildLog());
 
         if (fclOutput->Successful() == false) {
-            return TranslationOutput::ErrorCode::BuildFailure;
+            return TranslationOutput::ErrorCode::buildFailure;
         }
 
         output.intermediateCodeType = intermediateCodeType;
@@ -143,7 +143,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
                                                   input.internalOptions, specIdsRef, specValuesRef, igcRevision, igcLibSize, igcLibMTime);
         output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
         if (output.deviceBinary.mem) {
-            return TranslationOutput::ErrorCode::Success;
+            return TranslationOutput::ErrorCode::success;
         }
     }
 
@@ -153,13 +153,13 @@ TranslationOutput::ErrorCode CompilerInterface::build(
                                fclOptions.get(), fclInternalOptions.get(), input.gtPinInput);
 
     if (igcOutput == nullptr) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
     TranslationOutput::makeCopy(output.backendCompilerLog, igcOutput->GetBuildLog());
 
     if (igcOutput->Successful() == false) {
-        return TranslationOutput::ErrorCode::BuildFailure;
+        return TranslationOutput::ErrorCode::buildFailure;
     }
 
     if (cache != nullptr && cache->getConfig().enabled) {
@@ -169,7 +169,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     TranslationOutput::makeCopy(output.deviceBinary, igcOutput->GetOutput());
     TranslationOutput::makeCopy(output.debugData, igcOutput->GetDebugData());
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 
 TranslationOutput::ErrorCode CompilerInterface::compile(
@@ -178,11 +178,11 @@ TranslationOutput::ErrorCode CompilerInterface::compile(
     TranslationOutput &output) {
 
     if ((IGC::CodeType::oclC != input.srcType) && (IGC::CodeType::elf != input.srcType)) {
-        return TranslationOutput::ErrorCode::AlreadyCompiled;
+        return TranslationOutput::ErrorCode::alreadyCompiled;
     }
 
     if (false == isCompilerAvailable(input.srcType, input.outType)) {
-        return TranslationOutput::ErrorCode::CompilerNotAvailable;
+        return TranslationOutput::ErrorCode::compilerNotAvailable;
     }
 
     auto outType = input.outType;
@@ -201,19 +201,19 @@ TranslationOutput::ErrorCode CompilerInterface::compile(
                                fclOptions.get(), fclInternalOptions.get());
 
     if (fclOutput == nullptr) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
     TranslationOutput::makeCopy(output.frontendCompilerLog, fclOutput->GetBuildLog());
 
     if (fclOutput->Successful() == false) {
-        return TranslationOutput::ErrorCode::CompilationFailure;
+        return TranslationOutput::ErrorCode::compilationFailure;
     }
 
     output.intermediateCodeType = outType;
     TranslationOutput::makeCopy(output.intermediateRepresentation, fclOutput->GetOutput());
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 
 TranslationOutput::ErrorCode CompilerInterface::link(
@@ -221,7 +221,7 @@ TranslationOutput::ErrorCode CompilerInterface::link(
     const TranslationInput &input,
     TranslationOutput &output) {
     if (false == isCompilerAvailable(input.srcType, input.outType)) {
-        return TranslationOutput::ErrorCode::CompilerNotAvailable;
+        return TranslationOutput::ErrorCode::compilerNotAvailable;
     }
 
     auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.src.begin(), input.src.size());
@@ -229,7 +229,7 @@ TranslationOutput::ErrorCode CompilerInterface::link(
     auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.internalOptions.begin(), input.internalOptions.size());
 
     if (inSrc == nullptr) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
     CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
@@ -246,12 +246,12 @@ TranslationOutput::ErrorCode CompilerInterface::link(
                             igcOptions.get(), igcInternalOptions.get(), input.gtPinInput);
 
         if (currOut == nullptr) {
-            return TranslationOutput::ErrorCode::UnknownError;
+            return TranslationOutput::ErrorCode::unknownError;
         }
 
         if (currOut->Successful() == false) {
             TranslationOutput::makeCopy(output.backendCompilerLog, currOut->GetBuildLog());
-            return TranslationOutput::ErrorCode::LinkFailure;
+            return TranslationOutput::ErrorCode::linkFailure;
         }
 
         currOut->GetOutput()->Retain(); // shared with currSrc
@@ -262,12 +262,12 @@ TranslationOutput::ErrorCode CompilerInterface::link(
     TranslationOutput::makeCopy(output.deviceBinary, currOut->GetOutput());
     TranslationOutput::makeCopy(output.debugData, currOut->GetDebugData());
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 
 TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) {
     if (false == isIgcAvailable()) {
-        return TranslationOutput::ErrorCode::CompilerNotAvailable;
+        return TranslationOutput::ErrorCode::compilerNotAvailable;
     }
 
     auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
@@ -279,10 +279,10 @@ TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::
     auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), output.idsBuffer.get(), output.sizesBuffer.get());
 
     if (!retVal) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 
 TranslationOutput::ErrorCode CompilerInterface::createLibrary(
@@ -290,7 +290,7 @@ TranslationOutput::ErrorCode CompilerInterface::createLibrary(
     const TranslationInput &input,
     TranslationOutput &output) {
     if (false == isIgcAvailable()) {
-        return TranslationOutput::ErrorCode::CompilerNotAvailable;
+        return TranslationOutput::ErrorCode::compilerNotAvailable;
     }
 
     auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.src.begin(), input.src.size());
@@ -304,25 +304,25 @@ TranslationOutput::ErrorCode CompilerInterface::createLibrary(
                                igcOptions.get(), igcInternalOptions.get());
 
     if (igcOutput == nullptr) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
     TranslationOutput::makeCopy(output.backendCompilerLog, igcOutput->GetBuildLog());
 
     if (igcOutput->Successful() == false) {
-        return TranslationOutput::ErrorCode::LinkFailure;
+        return TranslationOutput::ErrorCode::linkFailure;
     }
 
     output.intermediateCodeType = intermediateRepresentation;
     TranslationOutput::makeCopy(output.intermediateRepresentation, igcOutput->GetOutput());
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 
 TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &device, SipKernelType type, std::vector<char> &retBinary,
                                                                    std::vector<char> &stateSaveAreaHeader) {
     if (false == isIgcAvailable()) {
-        return TranslationOutput::ErrorCode::CompilerNotAvailable;
+        return TranslationOutput::ErrorCode::compilerNotAvailable;
     }
 
     bool bindlessSip = false;
@@ -348,7 +348,7 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
     auto deviceCtx = getIgcDeviceCtx(device);
 
     if (deviceCtx == nullptr) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
     auto systemRoutineBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
@@ -360,13 +360,13 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
                                               stateSaveAreaBuffer.get());
 
     if (!result) {
-        return TranslationOutput::ErrorCode::UnknownError;
+        return TranslationOutput::ErrorCode::unknownError;
     }
 
     retBinary.assign(systemRoutineBuffer->GetMemory<char>(), systemRoutineBuffer->GetMemory<char>() + systemRoutineBuffer->GetSizeRaw());
     stateSaveAreaHeader.assign(stateSaveAreaBuffer->GetMemory<char>(), stateSaveAreaBuffer->GetMemory<char>() + stateSaveAreaBuffer->GetSizeRaw());
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 
 CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> CompilerInterface::getIgcFeaturesAndWorkarounds(NEO::Device const &device) {

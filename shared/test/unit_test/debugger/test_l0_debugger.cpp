@@ -182,7 +182,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
     auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
         memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
-        return BlitOperationResult::Success;
+        return BlitOperationResult::success;
     };
     VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
@@ -223,7 +223,7 @@ HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenRes
     auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
         memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
-        return BlitOperationResult::Success;
+        return BlitOperationResult::success;
     };
     VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
@@ -247,7 +247,7 @@ HWTEST_F(L0DebuggerTest, givenUseBindlessDebugSipZeroWhenModuleHeapDebugAreaIsCr
     auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
         memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
-        return BlitOperationResult::Success;
+        return BlitOperationResult::success;
     };
     VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);

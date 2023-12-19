@@ -47,13 +47,13 @@ struct TranslationInput {
 
 struct TranslationOutput {
     enum class ErrorCode {
-        Success = 0,
-        CompilerNotAvailable,
-        CompilationFailure,
-        BuildFailure,
-        LinkFailure,
-        AlreadyCompiled,
-        UnknownError,
+        success = 0,
+        compilerNotAvailable,
+        compilationFailure,
+        buildFailure,
+        linkFailure,
+        alreadyCompiled,
+        unknownError,
     };
 
     struct MemAndSize {

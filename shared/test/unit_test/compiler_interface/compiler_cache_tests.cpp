@@ -358,7 +358,7 @@ TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsRet
     inputArgs.allowCaching = true;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, err);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -387,7 +387,7 @@ TEST(CompilerInterfaceCachedTests, GivenCachedBinaryWhenBuildingThenSuccessIsRet
     TranslationOutput translationOutput;
     MockDevice device;
     auto err = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -418,7 +418,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
     auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, retVal);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, retVal);
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
@@ -442,7 +442,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCo
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;
     auto retVal = compilerInterface->build(device, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::BuildFailure, retVal);
+    EXPECT_EQ(TranslationOutput::ErrorCode::buildFailure, retVal);
 
     gEnvironment->fclPopDebugVars();
 }

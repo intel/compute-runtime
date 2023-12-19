@@ -41,27 +41,27 @@ struct EncodeConditionalBatchBufferStartTest : public ::testing::Test {
         EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
 
         auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeLoad), miAluCmd->DW0.BitField.ALUOpcode);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::srca), miAluCmd->DW0.BitField.Operand1);
         EXPECT_EQ(static_cast<uint32_t>(regA), miAluCmd->DW0.BitField.Operand2);
 
         miAluCmd++;
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeLoad), miAluCmd->DW0.BitField.ALUOpcode);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::srcb), miAluCmd->DW0.BitField.Operand1);
         EXPECT_EQ(static_cast<uint32_t>(regB), miAluCmd->DW0.BitField.Operand2);
 
         miAluCmd++;
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_SUB), miAluCmd->DW0.BitField.ALUOpcode);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeSub), miAluCmd->DW0.BitField.ALUOpcode);
         EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
         EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
 
         miAluCmd++;
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STORE), miAluCmd->DW0.BitField.ALUOpcode);
-        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand1);
-        if (compareOperation == CompareOperation::Equal || compareOperation == CompareOperation::NotEqual) {
-            EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ZF), miAluCmd->DW0.BitField.Operand2);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeStore), miAluCmd->DW0.BitField.ALUOpcode);
+        EXPECT_EQ(static_cast<uint32_t>(AluRegisters::gpr7), miAluCmd->DW0.BitField.Operand1);
+        if (compareOperation == CompareOperation::equal || compareOperation == CompareOperation::notEqual) {
+            EXPECT_EQ(static_cast<uint32_t>(AluRegisters::zf), miAluCmd->DW0.BitField.Operand2);
         } else {
-            EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_CF), miAluCmd->DW0.BitField.Operand2);
+            EXPECT_EQ(static_cast<uint32_t>(AluRegisters::cf), miAluCmd->DW0.BitField.Operand2);
         }
 
         auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miAluCmd);
@@ -69,7 +69,7 @@ struct EncodeConditionalBatchBufferStartTest : public ::testing::Test {
         EXPECT_EQ(RegisterOffsets::csGprR7, lrrCmd->getSourceRegisterAddress());
 
         auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
-        if (compareOperation == CompareOperation::Equal) {
+        if (compareOperation == CompareOperation::equal) {
             EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::noopOnResult2Clear), predicateCmd->getPredicateEnable());
         } else {
             EXPECT_EQ(static_cast<uint32_t>(MiPredicateType::noopOnResult2Set), predicateCmd->getPredicateEnable());
@@ -102,7 +102,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataM
     constexpr uint64_t compareAddress = 0x56780000;
     constexpr uint32_t compareData = 9876;
 
-    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+    for (auto compareOperation : {CompareOperation::equal, CompareOperation::notEqual, CompareOperation::greaterOrEqual}) {
         for (bool indirect : {false, true}) {
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
@@ -127,7 +127,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataM
             EXPECT_EQ(RegisterOffsets::csGprR8 + 4, lriCmd->getRegisterOffset());
             EXPECT_EQ(0u, lriCmd->getDataDword());
 
-            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
         }
     }
 }
@@ -147,7 +147,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
     constexpr uint64_t compareAddress = 0x56780000;
     constexpr uint64_t compareData = 0x12345678'12345678;
 
-    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+    for (auto compareOperation : {CompareOperation::equal, CompareOperation::notEqual, CompareOperation::greaterOrEqual}) {
         for (bool indirect : {false, true}) {
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
@@ -172,7 +172,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
             EXPECT_EQ(RegisterOffsets::csGprR8 + 4, lriCmd->getRegisterOffset());
             EXPECT_EQ(static_cast<uint32_t>(compareData >> 32), lriCmd->getDataDword());
 
-            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
         }
     }
 }
@@ -192,7 +192,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataR
     constexpr uint32_t compareReg = RegisterOffsets::csGprR1;
     constexpr uint32_t compareData = 9876;
 
-    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+    for (auto compareOperation : {CompareOperation::equal, CompareOperation::notEqual, CompareOperation::greaterOrEqual}) {
         for (bool indirect : {false, true}) {
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
@@ -217,7 +217,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataR
             EXPECT_EQ(RegisterOffsets::csGprR8 + 4, lriCmd->getRegisterOffset());
             EXPECT_EQ(0u, lriCmd->getDataDword());
 
-            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
         }
     }
 }
@@ -237,7 +237,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
     constexpr uint32_t compareReg = RegisterOffsets::csGprR1;
     constexpr uint64_t compareData = 0x12345678'12345678;
 
-    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+    for (auto compareOperation : {CompareOperation::equal, CompareOperation::notEqual, CompareOperation::greaterOrEqual}) {
         for (bool indirect : {false, true}) {
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
@@ -262,7 +262,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
             EXPECT_EQ(RegisterOffsets::csGprR8 + 4, lriCmd->getRegisterOffset());
             EXPECT_EQ(static_cast<uint32_t>(compareData >> 32), lriCmd->getDataDword());
 
-            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+            validateBaseProgramming<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
         }
     }
 }
@@ -276,10 +276,10 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalRegRe
     EXPECT_EQ(expectedSize, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalRegRegBatchBufferStart());
 
     constexpr uint64_t startAddress = 0x12340000;
-    constexpr AluRegisters compareReg1 = AluRegisters::R_1;
-    constexpr AluRegisters compareReg2 = AluRegisters::R_2;
+    constexpr AluRegisters compareReg1 = AluRegisters::gpr1;
+    constexpr AluRegisters compareReg2 = AluRegisters::gpr2;
 
-    for (auto compareOperation : {CompareOperation::Equal, CompareOperation::NotEqual, CompareOperation::GreaterOrEqual}) {
+    for (auto compareOperation : {CompareOperation::equal, CompareOperation::notEqual, CompareOperation::greaterOrEqual}) {
         for (bool indirect : {false, true}) {
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);

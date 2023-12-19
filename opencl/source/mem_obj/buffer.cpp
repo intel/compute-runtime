@@ -219,13 +219,13 @@ bool inline copyHostPointer(Buffer *buffer,
             memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
             return true;
         } else {
-            auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
+            auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
 
             if (productHelper.isBlitterFullySupported(hwInfo) && isLocalMemory) {
                 blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
             }
 
-            if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
+            if (blitMemoryToAllocationResult != BlitOperationResult::success) {
                 auto context = buffer->getContext();
                 auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
                 auto mapAllocation = buffer->getMapAllocation(rootDeviceIndex);

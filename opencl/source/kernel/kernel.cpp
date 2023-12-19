@@ -1199,7 +1199,7 @@ void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, c
             KernelSubmissionData submissionData;
             submissionData.kernelStandardTimestamps = std::make_unique<TimestampPacketContainer>();
             submissionData.kernelSubdeviceTimestamps = std::make_unique<TimestampPacketContainer>();
-            submissionData.status = TunningStatus::STANDARD_TUNNING_IN_PROGRESS;
+            submissionData.status = TunningStatus::standardTunningInProgress;
             submissionData.kernelStandardTimestamps->assignAndIncrementNodesRefCounts(*timestampContainer);
             this->kernelSubmissionMap[config] = std::move(submissionData);
             this->singleSubdevicePreferredInCurrentEnqueue = false;
@@ -1208,13 +1208,13 @@ void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, c
 
         auto &submissionData = submissionDataIt->second;
 
-        if (submissionData.status == TunningStatus::TUNNING_DONE) {
+        if (submissionData.status == TunningStatus::tunningDone) {
             this->singleSubdevicePreferredInCurrentEnqueue = submissionData.singleSubdevicePreferred;
         }
 
-        if (submissionData.status == TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS) {
+        if (submissionData.status == TunningStatus::subdeviceTunningInProgress) {
             if (this->hasTunningFinished(submissionData)) {
-                submissionData.status = TunningStatus::TUNNING_DONE;
+                submissionData.status = TunningStatus::tunningDone;
                 submissionData.kernelStandardTimestamps.reset();
                 submissionData.kernelSubdeviceTimestamps.reset();
                 this->singleSubdevicePreferredInCurrentEnqueue = submissionData.singleSubdevicePreferred;
@@ -1223,8 +1223,8 @@ void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, c
             }
         }
 
-        if (submissionData.status == TunningStatus::STANDARD_TUNNING_IN_PROGRESS) {
-            submissionData.status = TunningStatus::SUBDEVICE_TUNNING_IN_PROGRESS;
+        if (submissionData.status == TunningStatus::standardTunningInProgress) {
+            submissionData.status = TunningStatus::subdeviceTunningInProgress;
             submissionData.kernelSubdeviceTimestamps->assignAndIncrementNodesRefCounts(*timestampContainer);
             this->singleSubdevicePreferredInCurrentEnqueue = true;
         }

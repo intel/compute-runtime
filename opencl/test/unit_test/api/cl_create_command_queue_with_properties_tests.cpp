@@ -474,9 +474,9 @@ HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPr
 }
 
 std::pair<uint32_t, QueuePriority> priorityParams[3]{
-    std::make_pair(CL_QUEUE_PRIORITY_LOW_KHR, QueuePriority::LOW),
-    std::make_pair(CL_QUEUE_PRIORITY_MED_KHR, QueuePriority::MEDIUM),
-    std::make_pair(CL_QUEUE_PRIORITY_HIGH_KHR, QueuePriority::HIGH)};
+    std::make_pair(CL_QUEUE_PRIORITY_LOW_KHR, QueuePriority::low),
+    std::make_pair(CL_QUEUE_PRIORITY_MED_KHR, QueuePriority::medium),
+    std::make_pair(CL_QUEUE_PRIORITY_HIGH_KHR, QueuePriority::high)};
 
 class ClCreateCommandQueueWithPropertiesApiPriority : public ClCreateCommandQueueWithPropertiesApi,
                                                       public ::testing::WithParamInterface<std::pair<uint32_t, QueuePriority>> {

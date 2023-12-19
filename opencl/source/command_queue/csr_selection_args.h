@@ -33,7 +33,7 @@ struct CsrSelectionArgs {
     CsrSelectionArgs(cl_command_type cmdType, const size_t *size)
         : cmdType(cmdType),
           size(size),
-          direction(TransferDirection::HostToHost) {}
+          direction(TransferDirection::hostToHost) {}
 
     template <typename ResourceType>
     CsrSelectionArgs(cl_command_type cmdType, ResourceType *src, ResourceType *dst, uint32_t rootDeviceIndex, const size_t *size)

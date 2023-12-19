@@ -75,9 +75,9 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     };
 
     enum class TunningStatus {
-        STANDARD_TUNNING_IN_PROGRESS,
-        SUBDEVICE_TUNNING_IN_PROGRESS,
-        TUNNING_DONE
+        standardTunningInProgress,
+        subdeviceTunningInProgress,
+        tunningDone
     };
 
     enum class TunningType {

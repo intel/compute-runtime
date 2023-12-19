@@ -195,7 +195,7 @@ BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
         container.push_back(blitProperties);
         bcsCsr->flushBcsTask(container, true, false, const_cast<Device &>(device));
 
-        return BlitOperationResult::Success;
+        return BlitOperationResult::success;
     };
     blitMemoryToAllocationFuncBackup = mockBlitMemoryToAllocation;
 }

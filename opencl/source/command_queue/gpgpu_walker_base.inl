@@ -64,22 +64,22 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 
     // Setup first operand of MI_MATH - load CS_GPR_R0 into register A
     cmdAluParam.DW0.BitField.ALUOpcode =
-        static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
+        static_cast<uint32_t>(AluRegisters::opcodeLoad);
     cmdAluParam.DW0.BitField.Operand1 =
-        static_cast<uint32_t>(AluRegisters::R_SRCA);
+        static_cast<uint32_t>(AluRegisters::srca);
     cmdAluParam.DW0.BitField.Operand2 =
-        static_cast<uint32_t>(AluRegisters::R_0);
+        static_cast<uint32_t>(AluRegisters::gpr0);
     *pAluParam = cmdAluParam;
     pAluParam++;
 
     cmdAluParam.DW0.Value = 0x0;
     // Setup second operand of MI_MATH - load CS_GPR_R1 into register B
     cmdAluParam.DW0.BitField.ALUOpcode =
-        static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
+        static_cast<uint32_t>(AluRegisters::opcodeLoad);
     cmdAluParam.DW0.BitField.Operand1 =
-        static_cast<uint32_t>(AluRegisters::R_SRCB);
+        static_cast<uint32_t>(AluRegisters::srcb);
     cmdAluParam.DW0.BitField.Operand2 =
-        static_cast<uint32_t>(AluRegisters::R_1);
+        static_cast<uint32_t>(AluRegisters::gpr1);
     *pAluParam = cmdAluParam;
     pAluParam++;
 
@@ -94,11 +94,11 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     cmdAluParam.DW0.Value = 0x0;
     // Setup fourth operand of MI_MATH - store result into CS_GPR_R0
     cmdAluParam.DW0.BitField.ALUOpcode =
-        static_cast<uint32_t>(AluRegisters::OPCODE_STORE);
+        static_cast<uint32_t>(AluRegisters::opcodeStore);
     cmdAluParam.DW0.BitField.Operand1 =
-        static_cast<uint32_t>(AluRegisters::R_0);
+        static_cast<uint32_t>(AluRegisters::gpr0);
     cmdAluParam.DW0.BitField.Operand2 =
-        static_cast<uint32_t>(AluRegisters::R_ACCU);
+        static_cast<uint32_t>(AluRegisters::accu);
     *pAluParam = cmdAluParam;
 
     // LOAD value of CS_GPR_R0 into "Register"

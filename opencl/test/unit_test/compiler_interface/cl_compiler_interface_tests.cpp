@@ -70,7 +70,7 @@ TEST_F(ClCompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtension
     gEnvironment->fclPushDebugVars(debugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_TRUE(hasSubstr(receivedInternalOptions, pClDevice->peekCompilerExtensions()));
     gEnvironment->fclPopDebugVars();
 }
@@ -84,7 +84,7 @@ TEST_F(ClCompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtensi
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
-    EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
     EXPECT_TRUE(hasSubstr(receivedInternalOptions, pClDevice->peekCompilerExtensions()));
     gEnvironment->fclPopDebugVars();
 }

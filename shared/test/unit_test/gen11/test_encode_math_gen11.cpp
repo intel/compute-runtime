@@ -65,5 +65,5 @@ GEN11TEST_F(CommandEncoderMathTestGen11, WhenAppendsAGreaterThanThenPredicateCor
 
     auto cmdALU = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmdMATH + 3);
     EXPECT_EQ(cmdALU->DW0.BitField.ALUOpcode,
-              static_cast<uint32_t>(AluRegisters::OPCODE_SUB));
+              static_cast<uint32_t>(AluRegisters::opcodeSub));
 }

@@ -116,7 +116,7 @@ struct TimestampPacketHelper {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
 
             EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(cmdStream, 0, compareAddress + compareOffset, TimestampPacketConstants::initValue,
-                                                                                              NEO::CompareOperation::Equal, true, false);
+                                                                                              NEO::CompareOperation::equal, true, false);
         }
     }
 

@@ -91,7 +91,7 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
 
         NEO::Elf::ElfRela<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> relocationsWithAddend;
         relocationsWithAddend.addend = 0x1a8;
-        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RELOCATION_X8664_TYPE::relocation64);
         relocationsWithAddend.offset = 8;
 
         elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SpecialSectionNames::debugInfo, ArrayRef<const uint8_t>(dummyData, sizeof(dummyData)));
@@ -108,7 +108,7 @@ struct MockElfEncoder : public NEO::Elf::ElfEncoder<numBits> {
         relaDebugSection->info = debugSectionIndex;
 
         relocationsWithAddend.addend = 0;
-        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+        relocationsWithAddend.info = static_cast<decltype(relocationsWithAddend.info)>(textSectionIndex) << 32 | uint32_t(NEO::Elf::RELOCATION_X8664_TYPE::relocation64);
         relocationsWithAddend.offset = 0;
 
         elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Elf::SpecialSectionNames::debug.str() + "_line",

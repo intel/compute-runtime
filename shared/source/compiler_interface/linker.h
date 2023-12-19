@@ -37,9 +37,9 @@ enum class SegmentType : uint32_t {
 };
 
 enum class LinkingStatus : uint32_t {
-    Error,
-    LinkedFully,
-    LinkedPartially
+    error,
+    linkedFully,
+    linkedPartially
 };
 
 inline const char *asString(SegmentType segment) {

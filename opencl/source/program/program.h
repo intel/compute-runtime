@@ -50,15 +50,15 @@ constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
     switch (err) {
     default:
         return CL_OUT_OF_HOST_MEMORY;
-    case TranslationOutput::ErrorCode::Success:
+    case TranslationOutput::ErrorCode::success:
         return CL_SUCCESS;
-    case TranslationOutput::ErrorCode::CompilerNotAvailable:
+    case TranslationOutput::ErrorCode::compilerNotAvailable:
         return CL_COMPILER_NOT_AVAILABLE;
-    case TranslationOutput::ErrorCode::CompilationFailure:
+    case TranslationOutput::ErrorCode::compilationFailure:
         return CL_COMPILE_PROGRAM_FAILURE;
-    case TranslationOutput::ErrorCode::BuildFailure:
+    case TranslationOutput::ErrorCode::buildFailure:
         return CL_BUILD_PROGRAM_FAILURE;
-    case TranslationOutput::ErrorCode::LinkFailure:
+    case TranslationOutput::ErrorCode::linkFailure:
         return CL_LINK_PROGRAM_FAILURE;
     }
 }

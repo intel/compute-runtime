@@ -31,7 +31,7 @@ class EncodeAluHelper {
     }
 
     void setNextAlu(AluRegisters opcode) {
-        setNextAlu(opcode, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE);
+        setNextAlu(opcode, AluRegisters::opcodeNone, AluRegisters::opcodeNone);
     }
 
     void setNextAlu(AluRegisters opcode, AluRegisters operand1, AluRegisters operand2) {

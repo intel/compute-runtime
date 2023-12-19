@@ -25,7 +25,7 @@ TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Devi
     output.deviceBinary.size = size;
     output.intermediateCodeType = IGC::CodeType::spirV;
 
-    return TranslationOutput::ErrorCode::Success;
+    return TranslationOutput::ErrorCode::success;
 }
 TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) {
     return this->compile(device, input, out);

@@ -205,7 +205,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
     auto mockBlitMemoryToAllocation = [&blitsCounter](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                       Vec3<size_t> size) -> BlitOperationResult {
         blitsCounter++;
-        return BlitOperationResult::Success;
+        return BlitOperationResult::success;
     };
     VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
         &BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation};

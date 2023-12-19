@@ -1097,7 +1097,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, RegisterOffsets::csGprR1, 0, CompareOperation::equal, true)) {
         return false;
     }
 
@@ -1166,43 +1166,43 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_2)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr2)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr6)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeShl, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::accu)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr7)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_6, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr6, AluRegisters::accu)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOADIND, AluRegisters::R_0, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoadind, AluRegisters::gpr0, AluRegisters::accu)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_RD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeFenceRd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
@@ -1218,13 +1218,13 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miPredicate++;
-    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::R_1, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::gpr1, false)) {
         return false;
     }
 
     auto cmds = ptrOffset(miPredicate, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement());
 
-    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(cmds, AluRegisters::R_2, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(cmds, AluRegisters::gpr2, false)) {
         return false;
     }
 
@@ -1238,7 +1238,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, RegisterOffsets::csGprR1, 0, CompareOperation::equal, true)) {
         return false;
     }
 
@@ -1271,59 +1271,59 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr1)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr7)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeShl, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::accu)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr7)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOADIND, AluRegisters::R_7, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoadind, AluRegisters::gpr7, AluRegisters::accu)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_RD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeFenceRd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_6)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr6)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD0, AluRegisters::R_SRCB, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad0, AluRegisters::srcb, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStoreind, AluRegisters::accu, AluRegisters::gpr7)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_WR, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeFenceWr, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
@@ -1335,14 +1335,14 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miPredicate++;
-    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::R_2, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::gpr2, true)) {
         return false;
     }
 
     cmds = ptrOffset(miPredicate, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement());
 
     if (!RelaxedOrderingCommandsHelper::verifyConditionalRegRegBbStart<FamilyType>(cmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                                                   AluRegisters::R_1, AluRegisters::R_2, CompareOperation::NotEqual, false)) {
+                                                                                   AluRegisters::gpr1, AluRegisters::gpr2, CompareOperation::notEqual, false)) {
         return false;
     }
 
@@ -1364,14 +1364,14 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++arbCheck, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                                                    RegisterOffsets::csGprR1, expectedQueueSizeLimit, CompareOperation::GreaterOrEqual, false)) {
+                                                                                    RegisterOffsets::csGprR1, expectedQueueSizeLimit, CompareOperation::greaterOrEqual, false)) {
         return false;
     }
 
     auto conditionalBbStartcmds = ptrOffset(arbCheck, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));
 
     if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(conditionalBbStartcmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                                                    RegisterOffsets::csGprR5, 1, CompareOperation::Equal, false)) {
+                                                                                    RegisterOffsets::csGprR5, 1, CompareOperation::equal, false)) {
         return false;
     }
 
@@ -1398,23 +1398,23 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_9)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr9)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_10)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr10)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_0, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr0, AluRegisters::accu)) {
         return false;
     }
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalRegMemBbStart<FamilyType>(++miAluCmd, 0, semaphoreGpuVa, RegisterOffsets::csGprR11, CompareOperation::GreaterOrEqual, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalRegMemBbStart<FamilyType>(++miAluCmd, 0, semaphoreGpuVa, RegisterOffsets::csGprR11, CompareOperation::greaterOrEqual, true)) {
         return false;
     }
 
@@ -1796,25 +1796,25 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr1));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeShl, AluRegisters::opcodeNone, AluRegisters::opcodeNone));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_8, AluRegisters::R_ACCU));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr8, AluRegisters::accu));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_8));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr8));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr6));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeStoreind, AluRegisters::accu, AluRegisters::gpr7));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_WR, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::opcodeFenceWr, AluRegisters::opcodeNone, AluRegisters::opcodeNone));
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(++miAluCmd, AluRegisters::R_1, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(++miAluCmd, AluRegisters::gpr1, true));
 }
 
 HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSectionWhenDispatchingThenSwitchRingBuffers) {
@@ -1898,7 +1898,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispa
                       EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false);
     uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, false));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, RegisterOffsets::csGprR1, 0, CompareOperation::equal, false));
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));
@@ -1999,7 +1999,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
                       EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false);
     uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
 
-    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, RegisterOffsets::csGprR1, 0, CompareOperation::Equal, false));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, RegisterOffsets::csGprR1, 0, CompareOperation::equal, false));
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart(false));

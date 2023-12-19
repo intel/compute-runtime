@@ -46,7 +46,7 @@ struct BlitEnqueueTests : public ::testing::Test {
             auto mockBlitMemoryToAllocation = [this](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                      Vec3<size_t> size) -> BlitOperationResult {
                 if (!device.getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported) {
-                    return BlitOperationResult::Unsupported;
+                    return BlitOperationResult::unsupported;
                 }
 
                 auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
@@ -59,7 +59,7 @@ struct BlitEnqueueTests : public ::testing::Test {
                 container.push_back(blitProperties);
                 bcsCsr->flushBcsTask(container, true, false, const_cast<Device &>(device));
 
-                return BlitOperationResult::Success;
+                return BlitOperationResult::success;
             };
             blitMemoryToAllocationFuncBackup = mockBlitMemoryToAllocation;
         }

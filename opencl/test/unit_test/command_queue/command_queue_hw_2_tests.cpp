@@ -314,37 +314,37 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenCheckIsSplitEnqueueBlit
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useBlitSplit = true;
     {
-        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_TRUE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
     {
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToHost, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToLocal, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToHost, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 64 * MemoryConstants::megaByte, cmdQHw->getGpgpuCommandStreamReceiver()));
     }
     {
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToHost, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToLocal, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToHost, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 4 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
     {
         debugManager.flags.SplitBcsCopy.set(0);
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
     {
         debugManager.flags.SplitBcsCopy.set(-1);
         ultHwConfig.useBlitSplit = false;
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::LocalToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::localToHost, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 64 * MemoryConstants::megaByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
 }
 
@@ -356,11 +356,11 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsSizeSetWhenCheckIsSplitEnqueueB
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useBlitSplit = true;
     {
-        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 150 * MemoryConstants::kiloByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_FALSE(cmdQHw->isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 150 * MemoryConstants::kiloByte, *cmdQHw->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
     }
     {
         MockCommandQueueHw<FamilyType> queue(this->pContext, this->pClDevice, nullptr);
-        EXPECT_TRUE(queue.isSplitEnqueueBlitNeeded(TransferDirection::HostToLocal, 150 * MemoryConstants::kiloByte, *queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
+        EXPECT_TRUE(queue.isSplitEnqueueBlitNeeded(TransferDirection::hostToLocal, 150 * MemoryConstants::kiloByte, *queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)));
         EXPECT_EQ(queue.minimalSizeForBcsSplit, 100 * MemoryConstants::kiloByte);
     }
 }

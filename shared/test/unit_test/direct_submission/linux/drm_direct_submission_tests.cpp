@@ -229,7 +229,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionThenP
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
 
     EXPECT_NE(nullptr, directSubmission.pciBarrierPtr);
-    EXPECT_NE(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_NE(DirectSubmissionSfenceMode::disabled, directSubmission.sfenceMode);
     EXPECT_FALSE(directSubmission.miMemFenceRequired);
 
     SysCalls::munmap(ptr, MemoryConstants::pageSize);
@@ -250,7 +250,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionAndMm
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
 
     EXPECT_EQ(nullptr, directSubmission.pciBarrierPtr);
-    EXPECT_NE(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_NE(DirectSubmissionSfenceMode::disabled, directSubmission.sfenceMode);
     auto expectMiMemFence = device->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : device->getRootDeviceEnvironment().getHelper<ProductHelper>().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo());
     EXPECT_EQ(directSubmission.miMemFenceRequired, expectMiMemFence);
 
@@ -271,7 +271,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierDisabledWhenCreateDirectSubmiss
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
 
     EXPECT_EQ(nullptr, directSubmission.pciBarrierPtr);
-    EXPECT_NE(DirectSubmissionSfenceMode::Disabled, directSubmission.sfenceMode);
+    EXPECT_NE(DirectSubmissionSfenceMode::disabled, directSubmission.sfenceMode);
     auto expectMiMemFence = device->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : device->getRootDeviceEnvironment().getHelper<ProductHelper>().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo());
     EXPECT_EQ(directSubmission.miMemFenceRequired, expectMiMemFence);
 

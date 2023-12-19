@@ -30,7 +30,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
                                                             const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
     const auto &hwInfo = device.getHardwareInfo();
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
-        return BlitOperationResult::Unsupported;
+        return BlitOperationResult::unsupported;
     }
     auto &gfxCoreHelper = device.getGfxCoreHelper();
 
@@ -52,7 +52,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::internal : EngineUsage::regular;
         auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
         if (!bcsEngine) {
-            return BlitOperationResult::Unsupported;
+            return BlitOperationResult::unsupported;
         }
 
         bcsEngine->commandStreamReceiver->initializeResources();
@@ -67,11 +67,11 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
 
         const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
         if (newTaskCount == CompletionStamp::gpuHang) {
-            return BlitOperationResult::GpuHang;
+            return BlitOperationResult::gpuHang;
         }
     }
 
-    return BlitOperationResult::Success;
+    return BlitOperationResult::success;
 }
 
 } // namespace NEO

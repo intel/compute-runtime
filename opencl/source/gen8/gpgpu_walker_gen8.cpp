@@ -20,7 +20,7 @@ void GpgpuWalkerHelper<Family>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream
     if (disablePerfMode) {
         if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
             // Set bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<Family>::addAluReadModifyWriteRegister(pCommandStream, RegisterOffsets::l3sqcReg4, AluRegisters::OPCODE_OR, RegisterConstants::l3SqcBitLqscR0PerfDis);
+            GpgpuWalkerHelper<Family>::addAluReadModifyWriteRegister(pCommandStream, RegisterOffsets::l3sqcReg4, AluRegisters::opcodeOr, RegisterConstants::l3SqcBitLqscR0PerfDis);
         }
     } else {
         if (kernel.getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages) {
@@ -31,7 +31,7 @@ void GpgpuWalkerHelper<Family>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream
             pipeControl.setCommandStreamerStallEnable(true);
             *pipeControlSpace = pipeControl;
             // Clear bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
-            GpgpuWalkerHelper<Family>::addAluReadModifyWriteRegister(pCommandStream, RegisterOffsets::l3sqcReg4, AluRegisters::OPCODE_AND, ~RegisterConstants::l3SqcBitLqscR0PerfDis);
+            GpgpuWalkerHelper<Family>::addAluReadModifyWriteRegister(pCommandStream, RegisterOffsets::l3sqcReg4, AluRegisters::opcodeAnd, ~RegisterConstants::l3SqcBitLqscR0PerfDis);
         }
     }
 }

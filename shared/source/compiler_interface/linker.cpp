@@ -319,7 +319,7 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
     auto initialUnresolvedExternalsCount = outUnresolvedExternals.size();
     success = success && relocateSymbols(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo, instructionsSegments, constantsInitDataSize, variablesInitDataSize);
     if (!success) {
-        return LinkingStatus::Error;
+        return LinkingStatus::error;
     }
     patchInstructionsSegments(instructionsSegments, outUnresolvedExternals, kernelDescriptors);
     patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
@@ -329,13 +329,13 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
     resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
 
     if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
-        return LinkingStatus::LinkedPartially;
+        return LinkingStatus::linkedPartially;
     }
     success = resolveExternalFunctions(kernelDescriptors, externalFunctions);
     if (!success) {
-        return LinkingStatus::Error;
+        return LinkingStatus::error;
     }
-    return LinkingStatus::LinkedFully;
+    return LinkingStatus::linkedFully;
 }
 
 bool Linker::relocateSymbols(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings,
@@ -603,9 +603,9 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
         auto targetSectionOffset = decodedElf.sectionHeaders[reloc.targetSectionIndex].header->offset;
         auto relocLocation = reinterpret_cast<uint64_t>(inputOutputElf.begin()) + targetSectionOffset + reloc.offset;
 
-        if (static_cast<Elf::RELOCATION_X8664_TYPE>(reloc.relocType) == Elf::RELOCATION_X8664_TYPE::R_X8664_64) {
+        if (static_cast<Elf::RELOCATION_X8664_TYPE>(reloc.relocType) == Elf::RELOCATION_X8664_TYPE::relocation64) {
             *reinterpret_cast<uint64_t *>(relocLocation) = symbolAddress;
-        } else if (static_cast<Elf::RELOCATION_X8664_TYPE>(reloc.relocType) == Elf::RELOCATION_X8664_TYPE::R_X8664_32) {
+        } else if (static_cast<Elf::RELOCATION_X8664_TYPE>(reloc.relocType) == Elf::RELOCATION_X8664_TYPE::relocation32) {
             *reinterpret_cast<uint32_t *>(relocLocation) = static_cast<uint32_t>(symbolAddress & uint32_t(-1));
         }
     }

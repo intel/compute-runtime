@@ -132,7 +132,7 @@ class MockCompilerInterface : public CompilerInterface {
         if (this->sipKernelBinaryOverride.size() > 0) {
             retBinary = this->sipKernelBinaryOverride;
             this->requestedSipKernel = type;
-            return TranslationOutput::ErrorCode::Success;
+            return TranslationOutput::ErrorCode::success;
         } else {
             return CompilerInterface::getSipKernelBinary(device, type, retBinary, stateAreaHeader);
         }
@@ -200,7 +200,7 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
         copy(out.deviceBinary, output.intermediateRepresentation);
         out.intermediateCodeType = output.intermediateCodeType;
 
-        return TranslationOutput::ErrorCode::Success;
+        return TranslationOutput::ErrorCode::success;
     }
 
     TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {

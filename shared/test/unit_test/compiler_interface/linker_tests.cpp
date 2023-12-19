@@ -750,7 +750,7 @@ HWTEST_F(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
         globalVar, globalConst, exportedFunc, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -772,7 +772,7 @@ HWTEST_F(LinkerTests, givenInvalidLinkerInputThenLinkerFails) {
         globalVar, globalConst, exportedFunc, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, extFuncs);
-    EXPECT_EQ(NEO::LinkingStatus::Error, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::error, linkResult);
 }
 
 HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledThenSubDeviceIDSymbolsAreRemoved) {
@@ -886,7 +886,7 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPar
         globalVar, globalConst, exportedFunc, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
     ASSERT_EQ(1U, unresolvedExternals.size());
@@ -997,7 +997,7 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsAreP
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
         pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(3U, relocatedSymbols.size());
@@ -1061,7 +1061,7 @@ HWTEST_F(LinkerTests, givenInvalidSymbolOffsetWhenPatchingInstructionsThenReloca
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::Error, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::error, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -1071,7 +1071,7 @@ HWTEST_F(LinkerTests, givenInvalidSymbolOffsetWhenPatchingInstructionsThenReloca
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
         pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 }
 
 HWTEST_F(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
@@ -1113,7 +1113,7 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFail
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(1U, relocatedSymbols.size());
     ASSERT_EQ(1U, unresolvedExternals.size());
@@ -1124,7 +1124,7 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFail
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 }
 
 HWTEST_F(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocationFails) {
@@ -1168,7 +1168,7 @@ HWTEST_F(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocati
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::Error, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::error, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
     ASSERT_EQ(0U, unresolvedExternals.size());
@@ -1177,7 +1177,7 @@ HWTEST_F(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocati
     linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                              patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
                              unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
 }
 
 HWTEST_F(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsProperlyPatched) {
@@ -1216,7 +1216,7 @@ HWTEST_F(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsP
         {}, {}, {}, stringSegment,
         nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
         pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_TRUE(linker.extractRelocatedSymbols().empty());
 
@@ -1371,7 +1371,7 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
 
     auto constantsAddr = globalConstantsSegmentInfo.gpuAddress;
@@ -1522,7 +1522,7 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchi
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, patchableInstructionSegments,
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
 
     auto globalConstantsSegmentAddr = reinterpret_cast<uint64_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer());
@@ -1569,7 +1569,7 @@ HWTEST_F(LinkerTests, givenInvalidSymbolWhenPatchingDataSegmentsThenRelocationIs
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData), initGlobalVariablesData,
                                   sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
 }
 
@@ -1608,7 +1608,7 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenRe
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
 }
 
@@ -1634,7 +1634,7 @@ HWTEST_F(LinkerTests, givenInvalidRelocationSegmentWhenPatchingDataSegmentsThenR
     auto linkResult = linker.link(globalSegment, {}, {}, {},
                                   nullptr, nullptr, {},
                                   unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
 }
 
@@ -1674,7 +1674,7 @@ HWTEST_F(LinkerTests, given32BitBinaryWithValidSymbolsAndRelocationsWhenPatching
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData), initGlobalVariablesData,
                                   sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
 
     EXPECT_EQ(globalVariablesSegmentInfo.gpuAddress & 0xffffffff, *(uint32_t *)(globalConstantsSegmentInfo.gpuAddress));
@@ -1826,7 +1826,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc0 = {};
     reloc0.offset = 64;
-    reloc0.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc0.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation64);
     reloc0.symbolName = ".debug_abbrev";
     reloc0.symbolSectionIndex = 3;
     reloc0.symbolTableIndex = 0;
@@ -1837,7 +1837,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc1 = {};
     reloc1.offset = 32;
-    reloc1.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_32);
+    reloc1.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation32);
     reloc1.symbolName = ".debug_line";
     reloc1.symbolSectionIndex = 4;
     reloc1.symbolTableIndex = 0;
@@ -1848,7 +1848,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2 = {};
     reloc2.offset = 32;
-    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation64);
     reloc2.symbolName = ".text";
     reloc2.symbolSectionIndex = 0;
     reloc2.symbolTableIndex = 0;
@@ -1859,7 +1859,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
 
     NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3 = {};
     reloc3.offset = 0;
-    reloc3.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
+    reloc3.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::relocation64);
     reloc3.symbolName = ".data";
     reloc3.symbolSectionIndex = 1;
     reloc3.symbolTableIndex = 0;
@@ -1971,7 +1971,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWi
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   deviceFactory.rootDevices[0], nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -2033,7 +2033,7 @@ TEST_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebugg
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   device, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -2082,7 +2082,7 @@ TEST_F(LinkerDebuggingSupportedTests, givenNoImplicitArgRelocationAndEnabledDebu
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   device, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -2138,7 +2138,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebugg
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   device, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -2182,7 +2182,7 @@ TEST_F(LinkerTests, givenNoImplicitArgRelocationAndStackCallsThenImplicitArgsAre
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   deviceFactory.rootDevices[0], nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -2239,7 +2239,7 @@ TEST_F(LinkerTests, givenMultipleImplicitArgsRelocationsWithinSingleKernelWhenLi
     auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
                                   nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
                                   deviceFactory.rootDevices[0], nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -2266,7 +2266,7 @@ HWTEST_F(LinkerTests, givenDependencyOnMissingExternalFunctionWhenLinkingThenFai
         globalVar, globalConst, exportedFunc, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(LinkingStatus::Error, linkResult);
+    EXPECT_EQ(LinkingStatus::error, linkResult);
 }
 
 HWTEST_F(LinkerTests, givenDependencyOnMissingExternalFunctionAndNoExternalFunctionInfosWhenLinkingThenDoNotResolveDependenciesAndReturnSuccess) {
@@ -2284,7 +2284,7 @@ HWTEST_F(LinkerTests, givenDependencyOnMissingExternalFunctionAndNoExternalFunct
         globalVar, globalConst, exportedFunc, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
-    EXPECT_EQ(LinkingStatus::LinkedFully, linkResult);
+    EXPECT_EQ(LinkingStatus::linkedFully, linkResult);
 }
 
 TEST_F(LinkerTests, givenRelaWhenPatchingInstructionsSegmentThenAddendIsAdded) {

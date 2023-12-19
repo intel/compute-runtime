@@ -83,10 +83,10 @@ enum class MiPredicateType : uint32_t {
 };
 
 enum class CompareOperation : uint32_t {
-    Equal = 0,
-    NotEqual = 1,
-    GreaterOrEqual = 2,
-    Less = 3,
+    equal = 0,
+    notEqual = 1,
+    greaterOrEqual = 2,
+    less = 3,
 };
 
 struct EncodeWalkerArgs {
@@ -281,8 +281,8 @@ struct EncodeMathMMIO {
 
   protected:
     enum class IncrementOrDecrementOperation {
-        Increment = 0,
-        Decrement = 1,
+        increment = 0,
+        decrement = 1,
     };
 
     static void encodeIncrementOrDecrement(LinearStream &cmdStream, AluRegisters operandRegister, IncrementOrDecrementOperation operationType);

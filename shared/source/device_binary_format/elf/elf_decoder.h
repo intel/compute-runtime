@@ -18,8 +18,8 @@ namespace NEO {
 namespace Elf {
 
 enum class RELOCATION_X8664_TYPE : uint32_t {
-    R_X8664_64 = 0x1,
-    R_X8664_32 = 0xa
+    relocation64 = 0x1,
+    relocation32 = 0xa
 };
 
 template <ELF_IDENTIFIER_CLASS numBits = EI_CLASS_64>

@@ -95,27 +95,27 @@ bool verifyIncrementOrDecrement(void *cmds, AluRegisters aluRegister, bool incre
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, aluRegister)) {
+    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, aluRegister)) {
         return false;
     }
 
     miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7)) {
+    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr7)) {
         return false;
     }
 
     miAluCmd++;
 
-    if (increment && !verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (increment && !verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
-    if (!increment && !verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_SUB, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!increment && !verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeSub, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
     miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_STORE, aluRegister, AluRegisters::R_ACCU)) {
+    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeStore, aluRegister, AluRegisters::accu)) {
         return false;
     }
 
@@ -163,28 +163,28 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, regA)) {
+    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srca, regA)) {
         return false;
     }
 
     miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, regB)) {
+    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeLoad, AluRegisters::srcb, regB)) {
         return false;
     }
 
     miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_SUB, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeSub, AluRegisters::opcodeNone, AluRegisters::opcodeNone)) {
         return false;
     }
 
     miAluCmd++;
 
-    if (compareOperation == CompareOperation::Equal || compareOperation == CompareOperation::NotEqual) {
-        if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ZF)) {
+    if (compareOperation == CompareOperation::equal || compareOperation == CompareOperation::notEqual) {
+        if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::zf)) {
             return false;
         }
     } else {
-        if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_CF)) {
+        if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::cf)) {
             return false;
         }
     }
@@ -195,7 +195,7 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
     }
 
     auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
-    if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::Less)) {
+    if ((compareOperation == CompareOperation::equal) || (compareOperation == CompareOperation::less)) {
         if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::noopOnResult2Clear)) {
             return false;
         }
@@ -259,7 +259,7 @@ bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t 
         return false;
     }
 
-    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
 }
 
 template <typename FamilyType>
@@ -288,7 +288,7 @@ bool verifyConditionalDataRegBbStart(void *cmds, uint64_t startAddress, uint32_t
         return false;
     }
 
-    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
 }
 
 template <typename FamilyType>
@@ -318,7 +318,7 @@ bool verifyConditionalRegMemBbStart(void *cmds, uint64_t startAddress, uint64_t 
         return false;
     }
 
-    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::gpr7, AluRegisters::gpr8);
 }
 
 } // namespace RelaxedOrderingCommandsHelper

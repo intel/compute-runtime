@@ -2377,7 +2377,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
 
         EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, eventEndGpuVa, static_cast<uint64_t>(Event::STATE_CLEARED),
-                                                                                               NEO::CompareOperation::Equal, true, false));
+                                                                                               NEO::CompareOperation::equal, true, false));
 
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
         ASSERT_NE(nullptr, sdiCmd);

@@ -2930,7 +2930,7 @@ struct SpecializationConstantProgramMock : public MockProgram {
 };
 
 struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
-    TranslationOutput::ErrorCode retVal = TranslationOutput::ErrorCode::Success;
+    TranslationOutput::ErrorCode retVal = TranslationOutput::ErrorCode::success;
     int counter = 0;
     const char *spirV = nullptr;
     TranslationOutput::ErrorCode getSpecConstantsInfo(const NEO::Device &device, ArrayRef<const char> srcSpirV, SpecConstantInfo &output) override {
@@ -2939,7 +2939,7 @@ struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
         return retVal;
     }
     void returnError() {
-        retVal = TranslationOutput::ErrorCode::CompilationFailure;
+        retVal = TranslationOutput::ErrorCode::compilationFailure;
     }
 };
 

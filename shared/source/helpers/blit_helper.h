@@ -17,10 +17,10 @@ class Device;
 class GraphicsAllocation;
 
 enum class BlitOperationResult {
-    Unsupported,
-    Fail,
-    Success,
-    GpuHang
+    unsupported,
+    fail,
+    success,
+    gpuHang
 };
 
 namespace BlitHelperFunctions {

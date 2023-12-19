@@ -161,7 +161,7 @@ bool ModuleTranslationUnit::processSpecConstantInfo(NEO::CompilerInterface *comp
     if (pConstants) {
         NEO::SpecConstantInfo specConstInfo;
         auto retVal = compilerInterface->getSpecConstantsInfo(*device->getNEODevice(), ArrayRef<const char>(input, inputSize), specConstInfo);
-        if (retVal != NEO::TranslationOutput::ErrorCode::Success) {
+        if (retVal != NEO::TranslationOutput::ErrorCode::success) {
             return false;
         }
         for (uint32_t i = 0; i < pConstants->numConstants; i++) {
@@ -208,7 +208,7 @@ ze_result_t ModuleTranslationUnit::compileGenBinary(NEO::TranslationInput &input
     this->updateBuildLog(compilerOuput.frontendCompilerLog);
     this->updateBuildLog(compilerOuput.backendCompilerLog);
 
-    if (NEO::TranslationOutput::ErrorCode::Success != compilerErr) {
+    if (NEO::TranslationOutput::ErrorCode::success != compilerErr) {
         driverHandle->clearErrorDescription();
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
@@ -1110,7 +1110,7 @@ bool ModuleImp::linkBinary() {
                                   translationUnit->programInfo.globalVariables.size,
                                   kernelDescriptors, translationUnit->programInfo.externalFunctions);
     this->symbols = linker.extractRelocatedSymbols();
-    if (LinkingStatus::LinkedFully != linkStatus) {
+    if (LinkingStatus::linkedFully != linkStatus) {
         if (moduleBuildLog) {
             std::vector<std::string> kernelNames;
             for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
@@ -1120,7 +1120,7 @@ bool ModuleImp::linkBinary() {
             moduleBuildLog->appendString(error.c_str(), error.size());
         }
         isFullyLinked = false;
-        return LinkingStatus::LinkedPartially == linkStatus;
+        return LinkingStatus::linkedPartially == linkStatus;
     } else if (type != ModuleType::builtin) {
         copyPatchedSegments(isaSegmentsForPatching);
     } else {

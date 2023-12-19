@@ -105,9 +105,9 @@ void BcsSplit::releaseResources() {
 }
 
 std::vector<CommandQueue *> &BcsSplit::getCmdQsForSplit(NEO::TransferDirection direction) {
-    if (direction == NEO::TransferDirection::HostToLocal) {
+    if (direction == NEO::TransferDirection::hostToLocal) {
         return this->h2dCmdQs;
-    } else if (direction == NEO::TransferDirection::LocalToHost) {
+    } else if (direction == NEO::TransferDirection::localToHost) {
         return this->d2hCmdQs;
     }
 

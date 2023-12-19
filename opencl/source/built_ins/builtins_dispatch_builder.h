@@ -51,7 +51,7 @@ struct BuiltinOpParams {
     uint32_t dstMipLevel = 0;
     void *userPtrForPostOperationCpuCopy = nullptr;
     bool bcsSplit = false;
-    TransferDirection direction = TransferDirection::LocalToLocal;
+    TransferDirection direction = TransferDirection::localToLocal;
 };
 
 class BuiltinDispatchInfoBuilder {
